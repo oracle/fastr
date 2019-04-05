@@ -42,7 +42,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNodeFactory.GenerateValueNonDefaultOptimizedNodeGen;
 import com.oracle.truffle.r.nodes.function.call.CallerFrameClosureProvider;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
@@ -60,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNodeFactory.GenerateValueForEagerPromiseNodeGen;
 
 /**
  * Holds {@link RPromise}-related functionality that cannot be implemented in
@@ -141,8 +141,10 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         }
     }
 
+    protected static final int RECURSIVE_PROMISE_LIMIT = 2;
+
     public PromiseHelperNode() {
-        this((byte) 0);
+        this((byte) DSLConfig.getCacheSize(RECURSIVE_PROMISE_LIMIT));
     }
 
     public PromiseHelperNode(byte recursiveCounter) {
@@ -151,11 +153,12 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
 
     private final byte recursiveCounter;
     @Child private InlineCacheNode promiseClosureCache;
+    @Child private PromiseHelperNode nextNode = null;
 
     @CompilationFinal private PrimitiveValueProfile optStateProfile = PrimitiveValueProfile.createEqualityProfile();
     @CompilationFinal private ConditionProfile inOriginProfile = ConditionProfile.createBinaryProfile();
     @Child private SetVisibilityNode setVisibility;
-    @Child private GenerateValueNonDefaultOptimizedNode generateValueNonDefaultOptimizedNode;
+    @Child private GenerateValueForEagerPromiseNode generateValueNonDefaultOptimizedNode;
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
 
     private static void checkFullPromise(Frame frame) {
@@ -213,7 +216,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         // function that supplied them and that would mean frame materialization, we first try
         // to see if the promise can be optimized.
 
-        if (isDefaultOptProfile.profile(PromiseState.isFullPromise(state))) {
+        if (isFullPromiseProfile.profile(PromiseState.isFullPromise(state))) {
             return generateValueFromFullPromise(frame, promise, visibleExec);
         } else {
             return generateValueFromEagerPromise(frame, state, (EagerPromise) promise, visibleExec);
@@ -246,11 +249,36 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
             }
             assert promise.getRawValue() == null;
             assert value != null;
+
+            if (value instanceof RPromise) {
+                RPromise nextPromise = (RPromise) value;
+                value = evaluateNextNode(frame, visibleExec, nextPromise);
+            }
+
             promise.setValue(value);
             return value;
         } finally {
             promise.resetUnderEvaluation();
         }
+    }
+
+    private Object evaluateNextNode(VirtualFrame frame, boolean visibleExec, RPromise nextPromise) {
+        Object value;
+        if (recursiveCounter == 0) {
+            value = evaluateNextNodeSlowPath(frame.materialize(), nextPromise);
+        } else {
+            if (nextNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                nextNode = insert(new PromiseHelperNode((byte) (recursiveCounter - 1)));
+            }
+            value = visibleExec ? nextNode.visibleEvaluate(frame, nextPromise) : nextNode.evaluate(frame, nextPromise);
+        }
+        return value;
+    }
+
+    @TruffleBoundary
+    private static Object evaluateNextNodeSlowPath(MaterializedFrame frame, RPromise nextPromise) {
+        return evaluateSlowPath(frame, nextPromise);
     }
 
     @TruffleBoundary
@@ -263,7 +291,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         if (!isDeoptimized(promise)) {
             if (generateValueNonDefaultOptimizedNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                generateValueNonDefaultOptimizedNode = insert(GenerateValueNonDefaultOptimizedNodeGen.create(recursiveCounter));
+                generateValueNonDefaultOptimizedNode = insert(GenerateValueForEagerPromiseNodeGen.create(recursiveCounter));
             }
             Object result = generateValueNonDefaultOptimizedNode.execute(frame, state, promise, visibleExec);
             if (result != null) {
@@ -289,6 +317,10 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
     }
 
     public static Object evaluateSlowPath(VirtualFrame frame, RPromise promise) {
+        return evaluateSlowPath(frame, promise, false);
+    }
+
+    public static Object evaluateSlowPath(VirtualFrame frame, RPromise promise, boolean visibleExec) {
         CompilerAsserts.neverPartOfCompilation();
         if (promise.isEvaluated()) {
             return promise.getValue();
@@ -300,7 +332,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
                 if (promise.isEvaluated()) {
                     return promise.getValue();
                 }
-                Object obj = generateValueFromFullPromiseSlowPath(frame, promise);
+                Object obj = generateValueFromFullPromiseSlowPath(frame, promise, visibleExec);
                 // if the value is temporary, we increment the reference count. The reason is that
                 // temporary values are considered available to be reused and altered (e.g. as a
                 // result of arithmetic operation), which is what we do not want to happen to a
@@ -318,15 +350,15 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         Object obj;
         if (PromiseState.isFullPromise(state)) {
             // Evaluate guarded by underEvaluation
-            obj = generateValueFromFullPromiseSlowPath(frame, promise);
+            obj = generateValueFromFullPromiseSlowPath(frame, promise, visibleExec);
         } else {
-            obj = generateValueFromEagerPromiseSlowPath(frame, state, (EagerPromise) promise);
+            obj = generateValueFromEagerPromiseSlowPath(frame, state, (EagerPromise) promise, visibleExec);
         }
         promise.setValue(obj);
         return obj;
     }
 
-    private static Object generateValueFromFullPromiseSlowPath(VirtualFrame frame, RPromise promise) {
+    private static Object generateValueFromFullPromiseSlowPath(VirtualFrame frame, RPromise promise, boolean visibleExec) {
         checkFullPromise(frame);
 
         // Check for dependency cycle
@@ -336,11 +368,19 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         try {
             promise.setUnderEvaluation();
 
+            MaterializedFrame evalFrame;
+            Object res;
             if (promise.isInOriginFrame(frame)) {
-                return promise.getClosure().eval(frame.materialize());
+                evalFrame = frame.materialize();
+                res = promise.getClosure().eval(evalFrame);
             } else {
-                return promise.getClosure().eval(wrapPromiseFrame(frame, promise.getFrame(), frame != null ? frame.materialize() : null));
+                evalFrame = wrapPromiseFrame(frame, promise.getFrame(), frame != null ? frame.materialize() : null);
+                res = promise.getClosure().eval(evalFrame);
             }
+            if (visibleExec && evalFrame != null) {
+                SetVisibilityNode.executeSlowPath(frame, getVisibilitySlowPath(evalFrame));
+            }
+            return res;
         } finally {
             promise.resetUnderEvaluation();
         }
@@ -351,7 +391,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), callerFrameObject, RCaller.createForPromise(RArguments.getCall(promiseFrame), RArguments.getCall(frame)));
     }
 
-    private static Object generateValueFromEagerPromiseSlowPath(VirtualFrame frame, int state, EagerPromise promise) {
+    private static Object generateValueFromEagerPromiseSlowPath(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec) {
         assert !PromiseState.isFullPromise(state);
         if (!promise.isDeoptimized()) {
             Assumption eagerAssumption = promise.getIsValidAssumption();
@@ -377,7 +417,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
             checkFullPromise(frame);
         }
         // Call
-        return generateValueFromFullPromiseSlowPath(frame, promise);
+        return generateValueFromFullPromiseSlowPath(frame, promise, visibleExec);
     }
 
     /**
@@ -385,7 +425,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
      * <code>null</code>
      */
     public void materialize(RPromise promise) {
-        if (!isDefaultOptProfile.profile(PromiseState.isFullPromise(promise.getState()))) {
+        if (!isFullPromiseProfile.profile(PromiseState.isFullPromise(promise.getState()))) {
             EagerPromise eager = (EagerPromise) promise;
             eager.materialize();
         }
@@ -420,7 +460,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
 
     // Eager
     private final ConditionProfile isExplicitProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isDefaultOptProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isFullPromiseProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
 
     /**
@@ -458,11 +498,10 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
      */
     @ImportStatic(DSLConfig.class)
     @ReportPolymorphism
-    protected abstract static class GenerateValueNonDefaultOptimizedNode extends Node {
+    protected abstract static class GenerateValueForEagerPromiseNode extends Node {
 
         protected static final int ASSUMPTION_CACHE_SIZE = ArgumentStatePush.MAX_COUNTED_ARGS + 4;
         protected static final int CACHE_SIZE = ArgumentStatePush.MAX_COUNTED_ARGS * 2;
-        protected static final int RECURSIVE_PROMISE_LIMIT = 3;
 
         // If set to -1, then no further recursion should take place
         // This avoids having to invoke DSLConfig.getCacheSize in PE'd code
@@ -470,12 +509,8 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         @Child private PromiseHelperNode nextNode = null;
         @Child private SetVisibilityNode visibility;
 
-        protected GenerateValueNonDefaultOptimizedNode(byte recursiveCounter) {
-            if (recursiveCounter > DSLConfig.getCacheSize(RECURSIVE_PROMISE_LIMIT)) {
-                this.recursiveCounter = -1;
-            } else {
-                this.recursiveCounter = recursiveCounter;
-            }
+        protected GenerateValueForEagerPromiseNode(byte recursiveCounter) {
+            this.recursiveCounter = recursiveCounter;
         }
 
         public abstract Object execute(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec);
@@ -502,11 +537,9 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         // @formatter:on
 
         @Specialization(guards = {
-                        "promise.getIsValidAssumption() == eagerAssumption",
-                        "eagerAssumption.isValid()",
+                        "eagerAssumption == promise.getIsValidAssumption()",
                         "isCompatibleEagerValueProfile(eagerValueProfile, state)",
-                        "isCompatibleWrapNode(wrapArgumentNode, promise, state)"}, //
-                        limit = "getCacheSize(ASSUMPTION_CACHE_SIZE)")
+                        "isCompatibleWrapNode(wrapArgumentNode, promise, state)"}, limit = "getCacheSize(ASSUMPTION_CACHE_SIZE)", assumptions = "eagerAssumption")
         Object doCachedAssumption(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec,
                         @SuppressWarnings("unused") @Cached("promise.getIsValidAssumption()") Assumption eagerAssumption,
                         @Cached("createEagerValueProfile(state)") ValueProfile eagerValueProfile,
@@ -539,12 +572,12 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         // If promise evaluates to another promise, we create another RPromiseHelperNode to evaluate
         // that, but only up to certain recursion level
         private Object evaluateNextNode(VirtualFrame frame, RPromise nextPromise, boolean visibleExec) {
-            if (recursiveCounter == -1) {
-                evaluateNextNodeSlowPath(frame.materialize(), nextPromise);
+            if (recursiveCounter == 0) {
+                return evaluateNextNodeSlowPath(frame.materialize(), nextPromise, visibleExec);
             }
             if (nextNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                nextNode = insert(new PromiseHelperNode((byte) (recursiveCounter + 1)));
+                nextNode = insert(new PromiseHelperNode((byte) (recursiveCounter - 1)));
             }
             return visibleExec
                             ? nextNode.visibleEvaluate(frame, nextPromise)
@@ -552,8 +585,8 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         }
 
         @TruffleBoundary
-        private static void evaluateNextNodeSlowPath(MaterializedFrame frame, RPromise nextPromise) {
-            PromiseHelperNode.evaluateSlowPath(frame, nextPromise);
+        private static Object evaluateNextNodeSlowPath(MaterializedFrame frame, RPromise nextPromise, boolean visibleExec) {
+            return PromiseHelperNode.evaluateSlowPath(frame, nextPromise, visibleExec);
         }
 
         private Object generateValue(VirtualFrame frame, int state, EagerPromise promise, WrapArgumentNode wrapArgumentNode, ValueProfile eagerValueProfile, boolean visibleExec) {

@@ -52,9 +52,9 @@ import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
+import com.oracle.truffle.r.nodes.function.call.SlowPathExplicitCall;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
-import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -316,20 +316,6 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                 }
             }
             return false;
-        }
-    }
-
-    static class SlowPathExplicitCall extends TruffleBoundaryNode {
-        @Child private RExplicitCallNode slowPathCallNode;
-
-        public static SlowPathExplicitCall create() {
-            return new SlowPathExplicitCall();
-        }
-
-        @TruffleBoundary
-        public Object execute(MaterializedFrame evalFrame, Object callerFrame, RCaller caller, RFunction func, RArgsValuesAndNames args) {
-            slowPathCallNode = insert(RExplicitCallNode.create());
-            return slowPathCallNode.execute(evalFrame, func, args, caller, callerFrame);
         }
     }
 }

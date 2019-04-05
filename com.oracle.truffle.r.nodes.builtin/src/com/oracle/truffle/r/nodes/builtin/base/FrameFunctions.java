@@ -340,7 +340,7 @@ public class FrameFunctions {
             RCallNode callNode = (RCallNode) call.getSyntaxElement();
             CallArgumentsNode callArgs = callNode.createArguments(null, false, true);
             ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
-            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), callArgs, inputVarArgSignature, null, null, true).getArguments();
+            RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), callArgs, inputVarArgSignature, null, null, true, null).getArguments();
             ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();
             // expand any varargs
             ArrayList<RSyntaxNode> nodes = new ArrayList<>();

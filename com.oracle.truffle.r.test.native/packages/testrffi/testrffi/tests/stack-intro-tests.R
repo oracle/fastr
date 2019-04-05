@@ -437,23 +437,23 @@ x <- fst(0); assert(x, c(0L, 1L))
 # but the promise being evaluated should be able to access the environment of "foo"
 # NOTE: this is not working on master yet too
 
-#foo <- function(foovar) foovar
-#bar <- function(barvar) foo(barvar)
-#fork2 <- function(fork2var) sys.frame(fork2var)
-#fork <- function(forkvar) fork2(forkvar)
-#boo <- function(boovar) bar(fork(boovar))
-#fst <- function(fstvar) boo(fstvar)
+foo <- function(foovar) foovar
+bar <- function(barvar) foo(barvar)
+fork2 <- function(fork2var) sys.frame(fork2var)
+fork <- function(forkvar) fork2(forkvar)
+boo <- function(boovar) bar(fork(boovar))
+fst <- function(fstvar) boo(fstvar)
 
-#x <- fst(1); checkDeepest(x, "fst");
+x <- fst(1); checkDeepest(x, "fst");
 
-#beginNoIterateFrames()
-#x <- fst(1); check(x, "fst");
-#x <- fst(2); check(x, "boo");
-#x <- fst(3); check(x, "bar");
-#x <- fst(4); check(x, "foo");
-#x <- fst(5); check(x, "fork");
-#x <- fst(6); check(x, "fork2");
-#endNoIterateFrames()
+beginNoIterateFrames()
+x <- fst(1); check(x, "fst");
+x <- fst(2); check(x, "boo");
+x <- fst(3); check(x, "bar");
+x <- fst(4); check(x, "foo");
+x <- fst(5); check(x, "fork");
+x <- fst(6); check(x, "fork2");
+endNoIterateFrames()
 # fst(7); # not that many frames on the stack
 
 # -----------------
@@ -867,48 +867,48 @@ x <- fn(base::eval, 7); check(x[[1]], "global")
 # -----------------
 # sys.frame and Recall: like with eval
 
-# foo <- function(foovar) sys.frame(foovar)
-# dispatcher <- function(name, x) {
-#     if (name == "bar") {
-#         barvar <- x
-#         foo(barvar)
-#     } else if (name == "boo") {
-#         boovar <- x
-#         Recall("bar", boovar)
-#     }
-# }
-# fst <- function(fstvar) dispatcher("boo", fstvar)
-#
-# x <- fst(0); checkDeepest(x);
-#
-# x <- fst(0); check(x, "global");
-# x <- fst(1); check(x, "fst");
-# x <- fst(2); check(x, "boo");
-# x <- fst(3); check(x, "Recall"); # Note: empty env, hard to guess what it is, probably env of the Recall R wrapper
-# x <- fst(4); check(x, "bar");
-# x <- fst(5); check(x, "foo");
-# # fst(6);  # not that many frames on the stack
+ foo <- function(foovar) sys.frame(foovar)
+ dispatcher <- function(name, x) {
+     if (name == "bar") {
+         barvar <- x
+         foo(barvar)
+     } else if (name == "boo") {
+         boovar <- x
+         Recall("bar", boovar)
+     }
+ }
+ fst <- function(fstvar) dispatcher("boo", fstvar)
+
+ x <- fst(0); checkDeepest(x, "global");
+
+ x <- fst(0); check(x, "global");
+ x <- fst(1); check(x, "fst");
+ x <- fst(2); check(x, "boo");
+ x <- fst(3); check(x, "Recall"); # Note: empty env, hard to guess what it is, probably env of the Recall R wrapper
+ x <- fst(4); check(x, "bar");
+ x <- fst(5); check(x, "foo");
+# fst(6);  # not that many frames on the stack
 
 # -----------------
 # parent.frame and Recall: only the last frame from Recalled function counts
 
-# foo <- function(foovar) parent.frame(foovar)
-# dispatcher <- function(name, x) {
-#     if (name == "bar") {
-#         barvar <- x
-#         foo(barvar)
-#     } else if (name == "boo") {
-#         boovar <- x
-#         Recall("bar", boovar)
-#     }
-# }
-# fst <- function(fstvar) dispatcher("boo", fstvar)
-#
-# x <- fst(3); checkDeepest(x);
-#
-# x <- fst(1); check(x, "bar");
-# x <- fst(2); check(x, "fst"); # Note: empty env, hard to guess what it is, probably env of the Recall R wrapper
-# x <- fst(3); check(x, "global");
+ foo <- function(foovar) parent.frame(foovar)
+ dispatcher <- function(name, x) {
+     if (name == "bar") {
+         barvar <- x
+         foo(barvar)
+     } else if (name == "boo") {
+         boovar <- x
+         Recall("bar", boovar)
+     }
+ }
+ fst <- function(fstvar) dispatcher("boo", fstvar)
+
+x <- fst(3); checkDeepest(x, "global");
+
+x <- fst(1); check(x, "bar");
+x <- fst(2); check(x, "fst"); # Note: empty env, hard to guess what it is, probably env of the Recall R wrapper
+x <- fst(3); check(x, "global");
 
 # -----------------
 # sys.call: returns the correct caller from a given level

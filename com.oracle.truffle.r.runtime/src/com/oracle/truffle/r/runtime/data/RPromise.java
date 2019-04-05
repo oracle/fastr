@@ -271,6 +271,7 @@ public class RPromise extends RObject implements RTypedValue {
         return "[" + state + ", " + execFrame + ", expr=" + getRep() + ", " + value + "]";
     }
 
+//@formatter:off
     /**
      * This is a {@link RPromise} implementation that performs two optimizations:
      * <ul>
@@ -282,14 +283,18 @@ public class RPromise extends RObject implements RTypedValue {
      * on first read</li>
      * </ul>
      * The 1. optimization is only possible if the {@link EagerPromise} does not leave the stack it
-     * was created in, e.g. by the means of "sys.frame", "function" or similar. If it needs to be
+     * was created in, e.g. by means of "sys.frame", "function" or similar. If it needs to be
      * present for any reason, {@link #materialize()} is called (see
      * {@code PromiseHelperNode.PromiseDeoptimizeFrameNode}).<br/>
-     * The 2. optimization is only possible as long as it can be guaranteed that the symbol it was
-     * originally read from has not been altered in the mean time. If this cannot be guaranteed for
-     * any reason, this promise gets {@link #deoptimize() deoptimized} (which includes
-     * {@link #materialize() materialization}).
+     * For symbol-lookup promises, the 2. optimization is only possible as long as it can be
+     * guaranteed that the symbol it was originally read from has not been altered in the mean time.
+     * If this cannot be guaranteed for any reason, this promise gets {@link #deoptimize()
+     * deoptimized} (which includes {@link #materialize() materialization}). (See
+     * {@code OptVariablePromiseBaseNode})<br/>
+     * For forced promises, the 2. optimization is only possible as long as either the promise
+     * expression has no side-effects (see {@code OptForcedEagerPromiseNode}).
      */
+//@formatter:on
     public static final class EagerPromise extends RPromise {
         private final Object eagerValue;
 

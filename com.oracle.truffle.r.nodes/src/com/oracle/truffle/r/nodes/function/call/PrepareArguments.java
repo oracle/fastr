@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.function.call;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -67,6 +69,7 @@ public abstract class PrepareArguments extends Node {
         protected final boolean noOpt;
         @Child private ShareObjectNode sharedObject;
         @Child private UnShareObjectNode unsharedObject;
+        private final Assumption allArgPromisesCanOptimize = Truffle.getRuntime().createAssumption("All argument promises can optimize");
 
         static final class ArgumentsAndSignature extends Node {
             @Children private final RNode[] matchedArguments;
@@ -89,7 +92,7 @@ public abstract class PrepareArguments extends Node {
         }
 
         protected ArgumentsAndSignature createArguments(RBaseNode call, ArgumentsSignature varArgSignature, S3DefaultArguments s3DefaultArguments) {
-            Arguments<RNode> matched = ArgumentMatcher.matchArguments(target, sourceArguments, varArgSignature, s3DefaultArguments, call, noOpt);
+            Arguments<RNode> matched = ArgumentMatcher.matchArguments(target, sourceArguments, varArgSignature, s3DefaultArguments, call, noOpt, allArgPromisesCanOptimize);
             return new ArgumentsAndSignature(matched.getArguments(), matched.getSignature());
         }
 

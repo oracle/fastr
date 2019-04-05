@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -73,7 +74,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * <p>
  * {@link ArgumentMatcher} serves the purpose of matching {@link CallArgumentsNode} to
  * {@link FormalArguments} of a specific function, see
- * {@link #matchArguments(RRootNode, CallArgumentsNode, ArgumentsSignature, S3DefaultArguments, RBaseNode, boolean)}
+ * {@link #matchArguments(RRootNode, CallArgumentsNode, ArgumentsSignature, S3DefaultArguments, RBaseNode, boolean, Assumption)}
  * . The other match functions are used for special cases, where builtins make it necessary to
  * re-match parameters, e.g.:
  * {@link #matchArgumentsEvaluated(RRootNode, RArgsValuesAndNames, S3DefaultArguments, RBaseNode)}
@@ -91,8 +92,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * algorithm taking into consideration the names and positions of arguments as well as their number.
  * After that, the resulting arguments (potentially reordered and eventually wrapped into "...") are
  * wrapped into additional {@link PromiseNode}s which are basically an abstraction layer for normal
- * and inlined functions. See {@link PromiseNode#create(RPromiseFactory, boolean, boolean)} for
- * details on the types of {@link PromiseNode promise nodes}.<br/>
+ * and inlined functions. See
+ * {@link PromiseNode#create(RPromiseFactory, boolean, boolean, com.oracle.truffle.api.Assumption)}
+ * for details on the types of {@link PromiseNode promise nodes}.<br/>
  * The resulting {@link RNode}s are cached inside {@link RCallNode} and executed every call (the
  * cache is not invalidated): Depending on whether the function to be called is a normal or inlined
  * function, or a separate argument needs special treatment, the {@link PromiseNode} returns either
@@ -152,7 +154,7 @@ public class ArgumentMatcher {
      *         {@link PromiseNode}s
      */
     public static Arguments<RNode> matchArguments(RRootNode target, CallArgumentsNode arguments, ArgumentsSignature varArgSignature, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode,
-                    boolean noOpt) {
+                    boolean noOpt, Assumption allArgPromisesCanOptimize) {
         CompilerAsserts.neverPartOfCompilation();
         assert !RBuiltinDescriptor.lookupVarArgs(target.getBuiltin()) || arguments.containsVarArgsSymbol() == (varArgSignature != null);
 
@@ -166,7 +168,7 @@ public class ArgumentMatcher {
             argNodes = arguments.getArguments();
             signature = arguments.getSignature();
         }
-        return ArgumentMatcher.matchNodes(target, argNodes, signature, s3DefaultArguments, callingNode, arguments.getClosureCache(), noOpt);
+        return ArgumentMatcher.matchNodes(target, argNodes, signature, s3DefaultArguments, callingNode, arguments.getClosureCache(), noOpt, allArgPromisesCanOptimize);
     }
 
     public static MatchPermutation matchArguments(ArgumentsSignature supplied, ArgumentsSignature formal, RBaseNode callingNode, RBuiltinDescriptor builtin) {
@@ -353,7 +355,7 @@ public class ArgumentMatcher {
      *         accordingly.
      */
     private static Arguments<RNode> matchNodes(RRootNode target, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode,
-                    RNodeClosureCache closureCache, boolean noOpt) {
+                    RNodeClosureCache closureCache, boolean noOpt, Assumption allArgPromisesCanOptimize) {
         CompilerAsserts.neverPartOfCompilation();
         assert suppliedArgs.length == suppliedSignature.getLength();
 
@@ -448,17 +450,17 @@ public class ArgumentMatcher {
                     resArgs[formalIndex] = PromiseNode.createVarArgsInlined(newVarArgs, signature);
                 } else {
                     boolean forcedEager = fastPath != null && fastPath.forcedEagerPromise(formalIndex);
-                    resArgs[formalIndex] = PromiseNode.createVarArgs(newVarArgs, signature, closureCache, forcedEager);
+                    resArgs[formalIndex] = PromiseNode.createVarArgs(newVarArgs, signature, closureCache, forcedEager, allArgPromisesCanOptimize);
                 }
             } else if (suppliedIndex == MatchPermutation.UNMATCHED || suppliedArgs[suppliedIndex] == null) {
                 Object defaultValue = getS3DefaultArgumentValue(s3DefaultArguments, formals, formalIndex);
                 if (defaultValue == null) {
-                    resArgs[formalIndex] = wrapUnmatched(formals, builtin, formalIndex, noOpt && hasAssignment);
+                    resArgs[formalIndex] = wrapUnmatched(formals, builtin, formalIndex, noOpt && hasAssignment, allArgPromisesCanOptimize);
                 } else {
                     resArgs[formalIndex] = ConstantNode.create(defaultValue);
                 }
             } else {
-                resArgs[formalIndex] = wrapMatched(formals, builtin, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt || hasAssignment, fastPath);
+                resArgs[formalIndex] = wrapMatched(formals, builtin, closureCache, suppliedArgs[suppliedIndex], formalIndex, noOpt || hasAssignment, fastPath, allArgPromisesCanOptimize);
             }
         }
         return Arguments.create(resArgs, match.resultSignature);
@@ -525,7 +527,7 @@ public class ArgumentMatcher {
         return node;
     }
 
-    private static RNode wrapUnmatched(FormalArguments formals, RBuiltinDescriptor builtin, int formalIndex, boolean noOpt) {
+    private static RNode wrapUnmatched(FormalArguments formals, RBuiltinDescriptor builtin, int formalIndex, boolean noOpt, Assumption allArgPromisesCanOptimize) {
         if (builtin != null && !builtin.evaluatesArg(formalIndex) && formals.getDefaultArgument(formalIndex) != null) {
             /*
              * this is a non-evaluated builtin argument, create a proper promise (might have been
@@ -534,12 +536,13 @@ public class ArgumentMatcher {
              */
             RNode defaultArg = formals.getDefaultArgument(formalIndex);
             Closure defaultClosure = formals.getClosureCache().getOrCreatePromiseClosure(defaultArg);
-            return PromiseNode.create(RPromiseFactory.create(PromiseState.Default, defaultClosure), noOpt, false);
+            return PromiseNode.create(RPromiseFactory.create(PromiseState.Default, defaultClosure), noOpt, false, allArgPromisesCanOptimize);
         }
         return ConstantNode.create(formals.getInternalDefaultArgumentAt(formalIndex));
     }
 
-    private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, RNodeClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt, FastPathFactory fastPath) {
+    private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, RNodeClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt, FastPathFactory fastPath,
+                    Assumption allArgPromisesCanOptimize) {
         // Create promise, unless it's the empty value. Note that MissingNode relies on this and
         // expects empty argument values (REmpty instances) to be never wrapped in a promise.
         if (suppliedArg instanceof ConstantNode) {
@@ -553,7 +556,7 @@ public class ArgumentMatcher {
         } else {
             Closure closure = closureCache.getOrCreatePromiseClosure(suppliedArg);
             boolean forcedEager = fastPath != null && fastPath.forcedEagerPromise(formalIndex);
-            return PromiseNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), noOpt, forcedEager);
+            return PromiseNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), noOpt, forcedEager, allArgPromisesCanOptimize);
         }
     }
 

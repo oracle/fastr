@@ -36,7 +36,6 @@ public class TestBuiltin_asDatecharacter extends TestBase {
         assertEval("{ as.Date('2017-01-31') }");
         assertEval("{ as.Date('2017-01-32') }");
         assertEval("{ as.Date('2017-02-28') }");
-        assertEval("{ as.Date('2017-02-29') }");
         assertEval("{ as.Date('2016-02-29') }");
         assertEval("{ as.Date('2017-02-30') }");
         assertEval("{ as.Date('2017-03-31') }");

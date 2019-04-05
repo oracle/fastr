@@ -44,7 +44,8 @@ public class TestBuiltin_sysframe extends TestBase {
                                         "bar <- function(vbar) do.call(boo, list(vbar), envir = parent.frame(2));" +
                                         "baz <- function(vbaz) bar(vbaz);" +
                                         "start <- function(vstart) baz(vstart);" +
-                                        "lapply(lapply(0:8, function(i) start(i)), function(env) sort(tolower(ls(env)))); }");
+                                        "res <- lapply(0:7, function(i) start(i));" +
+                                        "lapply(res, function(env) sort(tolower(ls(env)))); }");
     }
 
     private final String[] envirValues = {"-6", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "6"};

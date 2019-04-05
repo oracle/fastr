@@ -38,8 +38,7 @@ public class TestBuiltin_syscalls extends TestBase {
     public void testSysCallsPromises() {
         assertEval("{ f <- function(x) x; g <- function() f(sys.calls()); g() }");
         assertEval("{ f <- function(x) x; g <- function() f(sys.calls()); length(try(g())) }");
-        // f is not on the stack because z=u() is being evaluated eagerly and not inside f
-        assertEval(Ignored.ImplementationError, "{ v <- function() sys.calls() ; u<- function() v(); f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+        assertEval("{ v <- function() sys.calls() ; u<- function() v(); f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
 
     @Test

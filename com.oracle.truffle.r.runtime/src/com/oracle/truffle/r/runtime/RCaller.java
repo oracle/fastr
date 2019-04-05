@@ -150,6 +150,12 @@ public final class RCaller {
      */
     private final Object payload;
 
+    /**
+     * This flag instructs {@code PromiseHelperNode} to evaluate eager promises only. Otherwise, it
+     * throws {@code CannotOptimizePromise}. Also see {@code OptForcedEagerPromiseNode}.
+     */
+    private boolean evaluateOnlyEagerPromises;
+
     private RCaller(Frame callingFrame, Object payload) {
         this(depthFromFrame(callingFrame), parentFromFrame(callingFrame), payload);
     }
@@ -455,6 +461,14 @@ public final class RCaller {
     public RCaller withLogicalParent(RCaller logicalParent) {
         assert !isPromise();
         return new RCaller(this.depth, this.previous, new NonPromiseLogicalParent(logicalParent, this.payload));
+    }
+
+    public boolean evaluateOnlyEagerPromises() {
+        return evaluateOnlyEagerPromises;
+    }
+
+    public void setEvaluateOnlyEagerPromises(boolean evaluateOnlyEagerPromises) {
+        this.evaluateOnlyEagerPromises = evaluateOnlyEagerPromises;
     }
 
     /**
