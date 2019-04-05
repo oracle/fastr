@@ -49,7 +49,6 @@ classInt,0.2-3,https://mran.microsoft.com/snapshot/2018-06-20/src/contrib/classI
 cli,1.0.0,https://mran.microsoft.com/snapshot/2018-06-20/src/contrib/cli_1.0.0.tar.gz,false
 clipr,0.4.0,https://mran.microsoft.com/snapshot/2018-06-20/src/contrib/clipr_0.4.0.tar.gz,false
 clisymbols,1.2.0,https://mran.microsoft.com/snapshot/2018-06-20/src/contrib/clisymbols_1.2.0.tar.gz,false
-cluster,2.0.7-1,https://mran.microsoft.com/snapshot/2018-06-20/src/contrib/cluster_2.0.7-1.tar.gz,true
 coda,0.19-1,https://mran.microsoft.com/snapshot/2018-06-20/src/contrib/coda_0.19-1.tar.gz,true
 codetools,0.2-15,https://mran.microsoft.com/snapshot/2018-06-20/src/contrib/codetools_0.2-15.tar.gz,true
 coin,1.2-2,https://mran.microsoft.com/snapshot/2018-06-20/src/contrib/coin_1.2-2.tar.gz,true
