@@ -147,9 +147,13 @@ def prepare_r_install_arguments(args):
     # GnuR in an accessible location.
     if '--repos' in args:
         repos_idx = args.index('--repos')
-        if repos_idx + 1 < len(args) and args[repos_idx + 1] == 'SNAPSHOT':
-            logging.info("Overwriting '--repos SNAPSHOT' with '--repos %s'" % default_cran_mirror_url)
-            args[repos_idx + 1] = default_cran_mirror_url
+        if repos_idx + 1 < len(args):
+            if args[repos_idx + 1] == 'SNAPSHOT':
+                logging.info("Overwriting '--repos SNAPSHOT' with '--repos %s'" % default_cran_mirror_url)
+                args[repos_idx + 1] = default_cran_mirror_url
+            elif args[repos_idx + 1] == 'FASTR':
+                logging.info("Overwriting '--repos FASTR' with '--repos FASTR,%s'" % default_cran_mirror_url)
+                args[repos_idx + 1] = "FASTR," + default_cran_mirror_url
     else:
         logging.info("No '--repos' specified, using default CRAN mirror: " + default_cran_mirror_url)
         args += [ "--repos", default_cran_mirror_url]

@@ -305,6 +305,19 @@ abort <- function(msg) {
 	quit("no", status=100)
 }
 
+get.default.cran.mirror <- function() {
+    tryCatch({
+        con <- file("etc/DEFAULT_CRAN_MIRROR", "r");
+        cran.mirror <<- readLines(con)[[1]]
+        close(con)
+        cran.mirror
+    }, error = function(err) {
+        cat("ERROR while getting etc/DEFAULT_CRAN_MIRROR, are you running this in FastR home directory and did you build it?")
+        print(err)
+        quit("no", status=1)
+    })
+}
+
 set.repos <- function() {
 	# Based on the value of repos.list we set the "repos" option
 	# which is used by available.packages etc.
@@ -328,28 +341,24 @@ set.repos <- function() {
 				# not set on command line
 				cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cloud.r-project.org/")
 			} else {
-				cran.mirror <- uri
+				cran.mirror <<- uri
 			}
 			repos[["CRAN"]] <- cran.mirror
 		} else if (name == "FASTR") {
 			# set the FastR internal repo
 			repos[["FASTR"]] <- paste0("file://", normalizePath("com.oracle.truffle.r.test.native/packages/repo"))
 		} else if (name == "SNAPSHOT") {
-			tryCatch({
-				con <- file("etc/DEFAULT_CRAN_MIRROR", "r");
-				cran.mirror <<- readLines(con)[[1]]
-				close(con)
-			}, error = function(err) {
-				cat("ERROR while getting etc/DEFAULT_CRAN_MIRROR, are you running this in FastR home directory and did you build it?")
-				print(err)
-                quit("no", status=1)
-			})
-			repos[["CRAN"]] <- cran.mirror
+			repos[["CRAN"]] <- get.default.cran.mirror()
 		} else {
 			# User defined
 			repos[[name]] <- uri
 		}
 	}
+
+    if (("FASTR" %in% names(repos)) && !("CRAN" %in% names(repos))) { 
+        log.message("'--repos FASTR' specified but no CRAN mirror set; setting 'CRAN=", get.default.cran.mirror(), "'\n", level=1)
+        repos[["CRAN"]] <- get.default.cran.mirror()
+    }
 	options(repos = repos)
 }
 
@@ -823,7 +832,8 @@ install.pkg <- function(pkgname) {
 
     # save and restore working dir in case the installation process doesn't
     prev.wd <- getwd()
-    rc <- pkg.cache.internal.install(pkg.cache, pkgname, contrib.url(getOption("repos"), "source")[[1]], lib.install)
+
+    rc <- pkg.cache.internal.install(pkg.cache, pkgname, contrib.url(getOption("repos"), "source"), lib.install)
     setwd(prev.wd)
 
     success <- FALSE
