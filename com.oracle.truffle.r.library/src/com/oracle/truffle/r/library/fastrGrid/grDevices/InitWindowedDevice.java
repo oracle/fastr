@@ -75,6 +75,9 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         // check if we got custom Graphics2D object as 3rd parameter
         boolean isFastRDevice = args.getArgument(0).equals(".FASTR.AWT");
         if (isFastRDevice && args.getLength() > 3) {
+            if (FastRConfig.UseRemoteGridAwtDevice) {
+                throw error(Message.GENERIC, "Using custom Graphics2D object is not supported on the remote grid device.");
+            }
             Object arg3 = args.getArgument(3);
             boolean isForeignTruffleObj = RRuntime.isForeignObject(arg3);
             TruffleLanguage.Env env = RContext.getInstance().getEnv();
