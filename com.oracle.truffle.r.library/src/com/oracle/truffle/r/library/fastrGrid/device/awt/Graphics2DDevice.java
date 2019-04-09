@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
+import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
@@ -59,7 +60,7 @@ public class Graphics2DDevice implements GridDevice {
     // may wish to apply his/her own transformations to the graphics object and we should not
     // interfere with these. In cases we do use transformation, we make sure to set back the
     // original one after we're done.
-    static final double AWT_POINTS_IN_INCH = GraphicsEnvironment.isHeadless() ? 72. : Toolkit.getDefaultToolkit().getScreenResolution();
+    static final double AWT_POINTS_IN_INCH = FastRConfig.UseRemoteGridAwtDevice || GraphicsEnvironment.isHeadless() ? 72. : Toolkit.getDefaultToolkit().getScreenResolution();
 
     private static final BasicStroke blankStroke = new BasicStroke(0f);
 
