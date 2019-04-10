@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ OSNAME := $(shell uname)
 
 all:
 	mkdir -p $(REPO_DIR)
-	cp packages/PACKAGES $(REPO_DIR)
 	$(MAKE) -C urand
 	$(MAKE) -C packages
 ifneq ($(OSNAME), SunOS)

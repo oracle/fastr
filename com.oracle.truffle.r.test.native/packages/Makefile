@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,7 +21,7 @@
 # questions.
 #
 
-.PHONY: all clean make_subdirs clean_subdirs clean_recommended
+.PHONY: all clean repo clean_repo clean_recommended
 
 SUBDIRS = testrffi vanilla tests4 gnurtests
 NATIVE_RECOMMENDED_PROJECT = $(subst test.native,native.recommended,$(TOPDIR))
@@ -40,24 +40,28 @@ GNUR_RECOMMENDED := $(wildcard $(GNUR_HOME_BINARY)/src/library/Recommended/*.tgz
 # WARNING: If you add/delete anything in this project you must update mx_fastr_dists.py
 # to reflect the changes, e.g., adding a new SUBDIR
 
-all: make_subdirs copy_recommended
+all: repo copy_recommended
 
-make_subdirs:
+# runs make in all the packages directories
+# creates the PACKAGES, PACAKGES.gz, etc. files in the pkgs repository
+repo:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir || exit 1; \
 	done
+	(cd $(REPO_DIR); $(GNUR_HOME_BINARY)/bin/R --vanilla --slave -e "tools::write_PACKAGES('.', type='source')")
 
 copy_recommended:
 	mkdir -p recommended
 	cp $(GNUR_RECOMMENDED) recommended
 	touch copy_recommended
 
-clean: clean_subdirs clean_recommended
+clean: clean_repo clean_recommended
 
-clean_subdirs:
+clean_repo:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir clean || exit 1; \
 	done
+	rm $(REPO_DIR)/PACKAGES*
 	
 clean_recommended:
 	rm -rf recommended copy_recommended
