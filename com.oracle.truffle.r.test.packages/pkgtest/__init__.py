@@ -308,8 +308,7 @@ class OutputCapture:
                 if time_match:
                     pkg_name = time_match.group(1)
                     test_time = time_match.group(2)
-                    with open(join(_pkg_testdir('fastr', pkg_name), 'test_time'), 'w') as f:
-                        f.write(test_time)
+                    get_pkg_test_status(self.test_info, pkg_name).test_time = test_time
 
 
 class TestFileStatus:
@@ -318,7 +317,8 @@ class TestFileStatus:
     The latter means that the file had a .fail extension.
     '''
 
-    def __init__(self, status, abspath):
+    def __init__(self, test_status, status, abspath):
+        self.test_status = test_status
         self.status = status
         self.abspath = abspath
         if status == "OK":
@@ -331,6 +331,17 @@ class TestFileStatus:
         else:
             raise ValueError('Invalid test file status: %s (allowed: "OK", "FAILED")' % status)
 
+    def set_report(self, ok, skipped, failed):
+        self.report = ok, skipped, failed
+
+    def get_report(self):
+        if self.test_status.is_status_indeterminate():
+            ok, skipped, failed = self.report
+            return ok, 0, skipped + failed
+        else:
+            return self.report
+
+
 
 class TestStatus:
     '''Records the test status of a package. status ends up as either "OK" or "FAILED",
@@ -342,17 +353,57 @@ class TestStatus:
     def __init__(self):
         self.status = "UNKNOWN"
         self.testfile_outputs = dict()
+        self.test_time = 0.0
+
+    def set_status_indeterminate(self):
+        self.status = "INDETERMINATE"
+        self.test_time = -1.0
+
+    def is_status_indeterminate(self):
+        if self.status == "INDETERMINATE":
+            assert self.test_time == -1.0
+            return True
+        return False
+
+    def set_status_code(self, new_status):
+        if self.status == "INDETERMINATE":
+            assert self.test_time < 0.0
+        elif self.status == "FAILED" and new_status == "INDETERMINATE":
+            self.set_status_indeterminate()
+        else:
+            assert self.status == "OK" or self.status == "FAILED" or self.status == "UNKNOWN"
+            assert new_status in ["OK", "FAILED", "INDETERMINATE"]
+            if new_status == "INDETERMINATE":
+                self.set_status_indeterminate()
+            else:
+                self.status = new_status
+
+    def __str__(self):
+        return "Test Status:\n%s (time: %s s)" % (self.status, self.test_time)
 
 
 def _pkg_testdir(rvm, pkg_name):
     return join(get_fastr_repo_dir(), 'test.' + rvm, pkg_name)
 
 
+def get_pkg_test_status(test_info, pkg_name):
+    '''
+    Get the test status (class TestStatus) for a given package.
+    It is created on demand if does not exist yet.
+    '''
+    test_status = test_info.get(pkg_name)
+    if not test_status:
+        test_status = TestStatus()
+        test_info[pkg_name] = test_status
+    return test_status
+
+
 def _get_test_outputs(rvm, pkg_name, test_info):
     pkg_testdir = _pkg_testdir(rvm, pkg_name)
+    test_status = None
     for root, _, files in os.walk(pkg_testdir):
-        if not test_info.has_key(pkg_name):
-            test_info[pkg_name] = TestStatus()
+        if not test_status:
+            test_status = get_pkg_test_status(test_info, pkg_name)
         for f in files:
             ext = os.path.splitext(f)[1]
             # suppress .pdf's for now (we can't compare them)
@@ -370,7 +421,7 @@ def _get_test_outputs(rvm, pkg_name, test_info):
 
             absfile = join(root, f)
             relfile = relpath(absfile, pkg_testdir)
-            test_info[pkg_name].testfile_outputs[relfile] = TestFileStatus(status, absfile)
+            test_status.testfile_outputs[relfile] = TestFileStatus(test_status, status, absfile)
 
 
 def _args_to_forward_to_gnur(args):
@@ -451,24 +502,27 @@ def _set_test_status(fastr_test_info):
             # In addition to the similar comment for GNU R, this can happen
             # if, say, the JVM crashes (possible with native code packages)
             logging.info("{0}: FastR test had .fail outputs".format(pkg))
-            fastr_test_status.status = "FAILED"
+            fastr_test_status.set_status_code("FAILED")
 
         # Now for each successful GNU R output we compare content (assuming FastR didn't fail)
         for gnur_test_output_relpath, gnur_testfile_status in gnur_outputs.iteritems():
             # Can't compare if either GNUR or FastR failed
             if gnur_testfile_status.status == "FAILED":
-                fastr_test_status.status = "INDETERMINATE"
-                break
+                fastr_test_status.set_status_code("INDETERMINATE")
+                continue
 
             if not gnur_test_output_relpath in fastr_outputs:
                 # FastR crashed on this test
-                fastr_test_status.status = "FAILED"
+                fastr_test_status.set_status_code("FAILED")
                 logging.info("{0}: FastR is missing output file: {1}".format(pkg, gnur_test_output_relpath))
-                break
+                continue
 
             fastr_testfile_status = fastr_outputs[gnur_test_output_relpath]
             if fastr_testfile_status.status == "FAILED":
-                break
+                # Don't do fuzzy-compare.
+                # It may only be fuzzy-compare because if we would have a test framework, the status would not be
+                # "FAILED" since a test framework cannot produce ".fail" output files.
+                continue
 
             gnur_content = None
             with open(gnur_testfile_status.abspath) as f:
@@ -499,18 +553,18 @@ def _set_test_status(fastr_test_info):
 
                 if fastr_invalid_numbers or total_fastr > total_gnur:
                     # If FastR's numbers are invalid or GnuR ran fewer tests than FastR, we cannot trust the FastR numbers
-                    fastr_testfile_status.report = 0, gnur_skipped, gnur_ok + gnur_failed
-                    fastr_test_status.status = "FAILED"
+                    fastr_testfile_status.set_report(0, gnur_skipped, gnur_ok + gnur_failed)
+                    fastr_test_status.set_status_code("FAILED")
                     fastr_testfile_status.status = "FAILED"
                 elif total_fastr < total_gnur:
                     # If FastR ran fewer tests than GnuR, we complement the missing ones as failing
-                    fastr_testfile_status.report = ok, skipped, failed + (total_gnur - total_fastr)
-                    fastr_test_status.status = "FAILED"
+                    fastr_testfile_status.set_report(ok, skipped, failed + (total_gnur - total_fastr))
+                    fastr_test_status.set_status_code("FAILED")
                     fastr_testfile_status.status = "FAILED"
                 else:
                     # The total numbers are equal, so we are fine.
                     fastr_testfile_status.status = "OK"
-                    fastr_testfile_status.report = ok, skipped, failed
+                    fastr_testfile_status.set_report(ok, skipped, failed)
             else:
                 result, n_tests_passed, n_tests_failed = fuzzy_compare(gnur_content, fastr_content,
                                                                         gnur_testfile_status.abspath,
@@ -519,23 +573,21 @@ def _set_test_status(fastr_test_info):
                                                                         dump_preprocessed=get_opts().dump_preprocessed)
                 if result == -1:
                     logging.info("{0}: content malformed: {1}".format(pkg, gnur_test_output_relpath))
-                    fastr_test_status.status = "INDETERMINATE"
+                    fastr_test_status.set_status_code("INDETERMINATE")
                     # we don't know how many tests are in there, so consider the whole file to be one big skipped test
-                    fastr_testfile_status.report = 0, 1, 0
-                    # break
+                    fastr_testfile_status.set_report(0, 1, 0)
                 elif result != 0:
-                    fastr_test_status.status = "FAILED"
+                    fastr_test_status.set_status_code("FAILED")
                     fastr_testfile_status.status = "FAILED"
-                    fastr_testfile_status.report = n_tests_passed, 0, n_tests_failed
+                    fastr_testfile_status.set_report(n_tests_passed, 0, n_tests_failed)
                     logging.info("{0}: FastR output mismatch: {1}".format(pkg, gnur_test_output_relpath))
-                    # break
                 else:
                     fastr_testfile_status.status = "OK"
-                    fastr_testfile_status.report = n_tests_passed, 0, n_tests_failed
+                    fastr_testfile_status.set_report(n_tests_passed, 0, n_tests_failed)
 
         # we started out as UNKNOWN
         if not (fastr_test_status.status == "INDETERMINATE" or fastr_test_status.status == "FAILED"):
-            fastr_test_status.status = "OK"
+            fastr_test_status.set_status_code("OK")
 
         # write out a file with the test status for each output (that exists)
         with open(join(_pkg_testdir('fastr', pkg), 'testfile_status'), 'w') as f:
@@ -546,7 +598,7 @@ def _set_test_status(fastr_test_info):
                 test_output_file = join(_pkg_testdir('fastr', pkg), relpath)
 
                 if os.path.exists(test_output_file):
-                    ok, skipped, failed = fastr_testfile_status.report
+                    ok, skipped, failed = fastr_testfile_status.get_report()
                     f.write("{0} {1} {2} {3}\n".format(relpath, ok, skipped, failed))
                 elif fastr_testfile_status.status == "FAILED":
                     # In case of status == "FAILED", also try suffix ".fail" because we just do not know if the test
@@ -554,12 +606,16 @@ def _set_test_status(fastr_test_info):
                     relpath_fail = fastr_relpath + ".fail"
                     test_output_file_fail = join(_pkg_testdir('fastr', pkg), relpath_fail)
                     if os.path.exists(test_output_file_fail):
-                        ok, skipped, failed = fastr_testfile_status.report
+                        ok, skipped, failed = fastr_testfile_status.get_report()
                         f.write("{0} {1} {2} {3}\n".format(relpath_fail, ok, skipped, failed))
                     else:
                         logging.info("File {0} or {1} does not exist".format(test_output_file, test_output_file_fail))
                 else:
                     logging.info("File {0} does not exist".format(test_output_file))
+
+
+        with open(join(_pkg_testdir('fastr', pkg), 'test_time'), 'w') as f:
+            f.write(str(fastr_test_status.test_time))
 
         logging.info('END checking ' + pkg)
 
@@ -666,6 +722,64 @@ def _parse_runit_result(lines):
 def installpkgs(args, **kwargs):
     rargs = util.parse_arguments(args)
     return _installpkgs(rargs)
+
+
+def pkgtest_check(args):
+    '''
+    This function allows to do only the checking part on an existing test output
+    (i.e. 'test.fastr' and 'test.gnur' directories).
+    It will try to re-create
+    :param args:
+    :return:
+    '''
+    parser = argparse.ArgumentParser(prog="pkgtest", description='FastR package testing.')
+    parser.add_argument('--fastr-home', metavar='FASTR_HOME', dest="fastr_home", type=str, default=None,
+                        required=True, help='The FastR standalone repo home directory (required).')
+    parser.add_argument('-v', '--verbose', dest="verbose", action="store_const", const=1, default=0,
+                        help='Do verbose logging.')
+    parser.add_argument('-V', '--very-verbose', dest="verbose", action="store_const", const=2,
+                        help='Do verbose logging.')
+    parser.add_argument('--dump-preprocessed', dest="dump_preprocessed", action="store_true",
+                        help='Dump processed output files where replacement filters have been applied.')
+    parser.add_argument('pkg_name', metavar="PKG_NAME",
+                        help='Package name for checking.')
+
+    import util
+    _opts = parser.parse_args(args=args, namespace=util.get_opts())
+
+    log_format = '%(message)s'
+    if _opts.verbose == 1:
+        log_level = logging.DEBUG
+    elif _opts.verbose == 2:
+        log_level = VERY_VERBOSE
+    else:
+        log_level = logging.INFO
+    logging.basicConfig(level=log_level, format=log_format)
+
+    # also log to console
+    console_handler = logging.StreamHandler(stream=sys.stdout)
+    console_handler.setLevel(log_level)
+    console_handler.setFormatter(logging.Formatter(log_format))
+    logging.getLogger("").addHandler(console_handler)
+
+    # if not :
+    #     print("Missing required argument 'pkg_name'")
+    #     return 1
+
+    pkg_name = _opts.pkg_name
+    fastr_testdir = _pkg_testdir("fastr", pkg_name)
+    if not os.path.isdir(fastr_testdir):
+        print("test directory '%s' does not exist" % fastr_testdir)
+        return 1
+
+    gnur_testdir = _pkg_testdir("gnur", pkg_name)
+    if not os.path.isdir(gnur_testdir):
+        print("test directory '%s' does not exist" % gnur_testdir)
+        return 1
+
+    fastr_test_info = dict()
+    _get_test_outputs("fastr", pkg_name, fastr_test_info)
+    return _set_test_status(fastr_test_info)
 
 
 def pkgtest_cmp(args):
