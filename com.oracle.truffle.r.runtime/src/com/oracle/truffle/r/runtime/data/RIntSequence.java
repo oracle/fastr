@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,9 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     }
 
     public int getIndexFor(int element) {
-        if (element < getStart() || element > getEnd()) {
+        int first = Math.min(getStart(), getEnd());
+        int last = Math.max(getStart(), getEnd());
+        if (element < first || element > last) {
             return -1;
         }
         if ((element - getStart()) % getStride() == 0) {
@@ -117,6 +119,7 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return "[" + start + " - " + getEnd() + "]";
     }
 
+    // NOTE: it does not hold that getStart() <= getEnd()!
     public int getEnd() {
         return start + (getLength() - 1) * stride;
     }

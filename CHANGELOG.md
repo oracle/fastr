@@ -1,3 +1,9 @@
+# 1.0 RC 16
+
+Bug fixes:
+
+* `match` worked incorrectly with descending sequences (e.g., `3:1`)
+
 # 1.0 RC 15
 
 * `ActiveBinding` objects do not support the `UNBOX` message anymore
