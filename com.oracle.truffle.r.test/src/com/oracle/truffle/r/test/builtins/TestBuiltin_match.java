@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -421,6 +421,10 @@ public class TestBuiltin_match extends TestBase {
         testMatchStringSequence("a", "b");
         testMatchStringSequence("", "b");
         testMatchStringSequence("", "");
+
+        assertEval("match(1:3, 3:1)");
+        assertEval("match(as.character(1:3), as.character(3:1))");
+        assertEval("match(1:3, numeric(0))");
     }
 
     private void testMatchStringSequence(String preffix, String suffix) {
