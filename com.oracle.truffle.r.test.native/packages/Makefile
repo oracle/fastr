@@ -61,7 +61,7 @@ clean_repo:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) PACKAGE=$$dir -C $$dir clean || exit 1; \
 	done
-	rm $(REPO_DIR)/PACKAGES*
+	rm -f $(REPO_DIR)/PACKAGES*
 	
 clean_recommended:
 	rm -rf recommended copy_recommended
