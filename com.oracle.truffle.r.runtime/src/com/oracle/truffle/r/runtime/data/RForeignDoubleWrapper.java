@@ -73,6 +73,7 @@ public final class RForeignDoubleWrapper extends RForeignVectorWrapper implement
         }
     }
 
+    @TruffleBoundary
     private static double unbox(TruffleObject value, ClassCastException e) throws RuntimeException {
         if (getInterop().isNull(value)) {
             return RRuntime.DOUBLE_NA;
@@ -148,6 +149,7 @@ public final class RForeignDoubleWrapper extends RForeignVectorWrapper implement
         }
 
         @Override
+        @TruffleBoundary
         protected double getDoubleImpl(AccessIterator accessIter, int index) {
             RForeignDoubleWrapper vector = (RForeignDoubleWrapper) accessIter.getStore();
             Object value = null;

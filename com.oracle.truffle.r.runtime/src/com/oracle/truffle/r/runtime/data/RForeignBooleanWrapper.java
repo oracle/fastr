@@ -70,6 +70,7 @@ public final class RForeignBooleanWrapper extends RForeignVectorWrapper implemen
         }
     }
 
+    @TruffleBoundary
     private static byte unbox(TruffleObject value, ClassCastException e) throws RuntimeException {
         if (getInterop().isNull(value)) {
             return RRuntime.LOGICAL_NA;
@@ -138,6 +139,7 @@ public final class RForeignBooleanWrapper extends RForeignVectorWrapper implemen
         }
 
         @Override
+        @TruffleBoundary
         protected byte getLogicalImpl(AccessIterator accessIter, int index) {
             RForeignBooleanWrapper vector = (RForeignBooleanWrapper) accessIter.getStore();
             Object value = null;

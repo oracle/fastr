@@ -132,6 +132,7 @@ public final class RForeignNamedListWrapper extends RForeignVectorWrapper implem
         }
 
         @Override
+        @TruffleBoundary
         protected Object getListElementImpl(AccessIterator accessIter, int index) {
             RForeignNamedListWrapper vector = (RForeignNamedListWrapper) accessIter.getStore();
             try {
