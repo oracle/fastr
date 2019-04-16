@@ -105,5 +105,6 @@ public class ParserGeneration {
         "allow 'function(...=NULL)', which has no effect, but also causes not error in GNU-R",
         "report tokens and other metadata to the code builder",
         "convert to ANTLR4",
+        "use character classes instead of character sets in lexer"
     };
 }
