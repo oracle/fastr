@@ -837,13 +837,29 @@ public abstract class ConnectionFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object readBin(RAbstractRawVector con, String what, int n, int sizeInput, boolean signed, boolean swap) {
+        protected Object readBin(RAbstractRawVector vec, String what, int n, int sizeInput, boolean signed, boolean swap) {
             Object result;
             switch (what) {
                 case "character":
-                    result = readString(con, con.getLength());
+                    result = readString(vec, n);
                     break;
-
+                case "raw":
+                    result = readRaw(vec, n);
+                    break;
+                case "logical":
+                    result = RDataFactory.createEmptyLogicalVector();
+                    break;
+                case "int":
+                case "integer":
+                    result = RDataFactory.createEmptyIntVector();
+                    break;
+                case "double":
+                case "numeric":
+                    result = RDataFactory.createEmptyDoubleVector();
+                    break;
+                case "complex":
+                    result = RDataFactory.createEmptyComplexVector();
+                    break;
                 default:
                     throw RInternalError.unimplemented();
             }
@@ -997,7 +1013,7 @@ public abstract class ConnectionFunctions {
         }
 
         private static RStringVector readString(RAbstractRawVector vec, int n) {
-            ArrayList<String> strings = new ArrayList<>(n);
+            String[] stringData = new String[n];
             byte[] chars;
             if (vec instanceof RRaw) {
                 chars = new byte[1];
@@ -1005,12 +1021,23 @@ public abstract class ConnectionFunctions {
             } else {
                 chars = ((RRawVector) vec).getReadonlyData();
             }
-            strings.add(new String(chars, 0, n));
-
+            stringData[0] = new String(chars, 0, vec.getLength());
+            for (int i = 1; i < stringData.length; i++) {
+                stringData[i] = "";
+            }
             // There is no special encoding for NA_character_
-            String[] stringData = new String[1];
-            strings.toArray(stringData);
             return RDataFactory.createStringVector(stringData, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private static RAbstractRawVector readRaw(RAbstractRawVector vec, int n) {
+            byte[] b;
+            if (vec instanceof RRaw) {
+                return vec;
+            }
+            int length = Math.min(vec.getLength(), n);
+            b = new byte[length];
+            System.arraycopy(((RRawVector) vec).getReadonlyData(), 0, b, 0, length);
+            return RDataFactory.createRawVector(b);
         }
 
         private static RRawVector readRaw(RConnection con, int n) throws IOException {
