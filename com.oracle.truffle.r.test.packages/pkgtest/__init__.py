@@ -315,48 +315,12 @@ class OutputCapture:
                     get_pkg_test_status(self.test_info, pkg_name).test_time = test_time
 
 
-class TestFileStatus:
+class TestStatus(object):
     '''
-    Records the status of a test file. status is either "OK" or "FAILED".
-    The latter means that the file had a .fail extension.
+    The base class for any test status.
     '''
-
-    def __init__(self, test_status, status, abspath):
-        self.test_status = test_status
-        self.status = status
-        self.abspath = abspath
-        if status == "OK":
-            # At this point, status == "OK" means that we had no '.fail' output file and we will investigate the single
-            # test cases. So, initially we claim the test was skipped because if GnuR failed on the test, we state that
-            # we skipped it.
-            self.report = 0, 1, 0
-        elif status == "FAILED":
-            self.report = 0, 0, 1
-        else:
-            raise ValueError('Invalid test file status: %s (allowed: "OK", "FAILED")' % status)
-
-    def set_report(self, ok, skipped, failed):
-        self.report = ok, skipped, failed
-
-    def get_report(self):
-        if self.test_status.is_status_indeterminate():
-            ok, skipped, failed = self.report
-            return ok, 0, skipped + failed
-        else:
-            return self.report
-
-
-
-class TestStatus:
-    '''Records the test status of a package. status ends up as either "OK" or "FAILED",
-    unless GnuR also failed in which case it stays as UNKNOWN.
-    The testfile_outputs dict is keyed by the relative path of the output file to
-    the 'test/pkgname' directory. The value is an instance of TestFileStatus.
-    '''
-
     def __init__(self):
         self.status = "UNKNOWN"
-        self.testfile_outputs = dict()
         self.test_time = 0.0
 
     def set_status_indeterminate(self):
@@ -370,20 +334,75 @@ class TestStatus:
         return False
 
     def set_status_code(self, new_status):
-        if self.status == "INDETERMINATE":
-            assert self.test_time < 0.0
-        elif self.status == "FAILED" and new_status == "INDETERMINATE":
+        if new_status == "INDETERMINATE":
+            assert self.status in ["OK", "FAILED", "INDETERMINATE", "UNKNOWN"]
             self.set_status_indeterminate()
+        elif new_status == "FAILED":
+            assert self.status in ["OK", "FAILED", "UNKNOWN"]
+            self.status = "FAILED"
+        elif new_status == "OK":
+            assert self.status in ["OK", "UNKNOWN"]
+            self.status = "OK"
         else:
-            assert self.status == "OK" or self.status == "FAILED" or self.status == "UNKNOWN"
-            assert new_status in ["OK", "FAILED", "INDETERMINATE"]
-            if new_status == "INDETERMINATE":
-                self.set_status_indeterminate()
-            else:
-                self.status = new_status
+            raise ValueError("cannot do transition from %s to %s" % (self.status, new_status))
+
+
+class TestFileStatus(TestStatus):
+    '''
+    Records the status of a test file. status is either "OK", "FAILED", or "INDETERMINATE".
+    "FAILED" means that the file had a .fail extension.
+    "INDETERMINATE" (only applicable for a FastR test output file) means that the corresponding GnuR test output file
+    had a .fail extension.
+    '''
+
+    def __init__(self, test_status, status, abspath):
+        super(TestFileStatus, self).__init__()
+
+        self.test_status = test_status
+        self.status = status
+        self.abspath = abspath
+        if status == "OK":
+            # At this point, status == "OK" means that we had no '.fail' output file and we will investigate the single
+            # test cases. So, initially we claim the test was skipped because if GnuR failed on the test, we state that
+            # we skipped it.
+            self.report = 0, 1, 0
+        elif status == "FAILED":
+            self.report = 0, 0, 1
+        else:
+            raise ValueError('Invalid initial test file status: %s (allowed: "OK", "FAILED")' % status)
+
+    def set_status_code(self, new_status):
+        super(TestFileStatus, self).set_status_code(new_status)
+        self.test_status.set_status_code(new_status)
+
+    def set_report(self, ok, skipped, failed):
+        self.report = ok, skipped, failed
+
+    def get_report(self):
+        if self.is_status_indeterminate():
+            ok, skipped, failed = self.report
+            return ok, 0, skipped + failed
+        else:
+            return self.report
 
     def __str__(self):
         return "Test Status:\n%s (time: %s s)" % (self.status, self.test_time)
+
+
+
+class PkgTestStatus(TestStatus):
+    '''Records the test status of a package. status ends up as either "OK", or "FAILED",
+    unless GnuR also failed in which case it stays as "INDETERMINATE".
+    The testfile_outputs dict is keyed by the relative path of the output file to
+    the 'test/pkgname' directory. The value is an instance of TestFileStatus.
+    '''
+
+    def __init__(self):
+        super(PkgTestStatus, self).__init__()
+        self.testfile_outputs = dict()
+
+    def __str__(self):
+        return "Overall package test status:\n%s (time: %s s)" % (self.status, self.test_time)
 
 
 def _pkg_testdir(rvm, pkg_name):
@@ -397,7 +416,7 @@ def get_pkg_test_status(test_info, pkg_name):
     '''
     test_status = test_info.get(pkg_name)
     if not test_status:
-        test_status = TestStatus()
+        test_status = PkgTestStatus()
         test_info[pkg_name] = test_status
     return test_status
 
@@ -482,7 +501,7 @@ def _set_test_status(fastr_test_info):
         '''
         for _, testfile_status in outputs.iteritems():
             if testfile_status.status == "FAILED":
-                return True
+                return [testfile_status.abspath]
         return False
 
     gnur_test_info = dict()
@@ -496,34 +515,42 @@ def _set_test_status(fastr_test_info):
         fastr_test_status = fastr_test_info[pkg]
         gnur_outputs = gnur_test_status.testfile_outputs
         fastr_outputs = fastr_test_status.testfile_outputs
-        if _failed_outputs(gnur_outputs):
+
+        gnur_failed_outputs = _failed_outputs(gnur_outputs)
+        if gnur_failed_outputs:
             # What this likely means is that some native package is not
             # installed on the system so GNUR can't run the tests.
             # Ideally this never happens.
-            logging.info("{0}: GnuR test had .fail outputs".format(pkg))
+            logging.info("{0}: GnuR test had .fail outputs: {1}".format(pkg, str(gnur_failed_outputs)))
 
-        if _failed_outputs(fastr_outputs):
+        fastr_failed_outputs = _failed_outputs(fastr_outputs)
+        if fastr_failed_outputs:
             # In addition to the similar comment for GNU R, this can happen
             # if, say, the JVM crashes (possible with native code packages)
-            logging.info("{0}: FastR test had .fail outputs".format(pkg))
+            logging.info("{0}: FastR test had .fail outputs: {1}".format(pkg, str(fastr_failed_outputs)))
             fastr_test_status.set_status_code("FAILED")
 
         # Now for each successful GNU R output we compare content (assuming FastR didn't fail)
         for gnur_test_output_relpath, gnur_testfile_status in gnur_outputs.iteritems():
-            # Can't compare if either GNUR or FastR failed
-            if gnur_testfile_status.status == "FAILED":
-                fastr_test_status.set_status_code("INDETERMINATE")
-                continue
 
+            # If FastR does not have a corresponding test output file ...
             if not gnur_test_output_relpath in fastr_outputs:
                 # FastR crashed on this test
                 fastr_test_status.set_status_code("FAILED")
                 logging.info("{0}: FastR is missing output file: {1}".format(pkg, gnur_test_output_relpath))
                 continue
 
+            # Get corresponding FastR test output file
             fastr_testfile_status = fastr_outputs[gnur_test_output_relpath]
+
+            # Can't compare if either GNUR or FastR failed
+            if gnur_testfile_status.status == "FAILED":
+                fastr_testfile_status.set_status_code("INDETERMINATE")
+                continue
+
+            # If the test output file's status is "FAILED" at this point, we know that there was a ".fail" output
+            # file. So, don't do fuzzy-compare.
             if fastr_testfile_status.status == "FAILED":
-                # Don't do fuzzy-compare.
                 # It may only be fuzzy-compare because if we would have a test framework, the status would not be
                 # "FAILED" since a test framework cannot produce ".fail" output files.
                 continue
@@ -571,10 +598,10 @@ def _set_test_status(fastr_test_info):
                     fastr_testfile_status.set_report(ok, skipped, failed)
             else:
                 result, n_tests_passed, n_tests_failed = fuzzy_compare(gnur_content, fastr_content,
-                                                                        gnur_testfile_status.abspath,
-                                                                        fastr_testfile_status.abspath,
-                                                                        custom_filters=filters,
-                                                                        dump_preprocessed=get_opts().dump_preprocessed)
+                                                                       gnur_testfile_status.abspath,
+                                                                       fastr_testfile_status.abspath,
+                                                                       custom_filters=filters,
+                                                                       dump_preprocessed=get_opts().dump_preprocessed)
                 if result == -1:
                     logging.info("{0}: content malformed: {1}".format(pkg, gnur_test_output_relpath))
                     fastr_test_status.set_status_code("INDETERMINATE")
@@ -603,7 +630,7 @@ def _set_test_status(fastr_test_info):
 
                 if os.path.exists(test_output_file):
                     ok, skipped, failed = fastr_testfile_status.get_report()
-                    f.write("{0} {1} {2} {3}\n".format(relpath, ok, skipped, failed))
+                    f.write("{0} {1} {2} {3} {4}\n".format(relpath, ok, skipped, failed, fastr_testfile_status.test_time))
                 elif fastr_testfile_status.status == "FAILED":
                     # In case of status == "FAILED", also try suffix ".fail" because we just do not know if the test
                     # failed and finished or just never finished.
@@ -611,7 +638,7 @@ def _set_test_status(fastr_test_info):
                     test_output_file_fail = join(_pkg_testdir('fastr', pkg), relpath_fail)
                     if os.path.exists(test_output_file_fail):
                         ok, skipped, failed = fastr_testfile_status.get_report()
-                        f.write("{0} {1} {2} {3}\n".format(relpath_fail, ok, skipped, failed))
+                        f.write("{0} {1} {2} {3} {4}\n".format(relpath_fail, ok, skipped, failed, fastr_testfile_status.test_time))
                     else:
                         logging.info("File {0} or {1} does not exist".format(test_output_file, test_output_file_fail))
                 else:
