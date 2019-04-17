@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,10 +34,18 @@ import java.util.HashMap;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RCompression;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.OpenMode;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
+import java.util.zip.GZIPOutputStream;
 
 public class SocketConnections {
     /**
@@ -51,6 +59,8 @@ public class SocketConnections {
         protected final String host;
         protected final int port;
         protected final int timeout;
+        private String description;
+        private RCompression.Type cType = RCompression.Type.NONE;
 
         public RSocketConnection(String modeString, boolean server, String host, int port, boolean blocking, int timeout, String encoding) throws IOException {
             super(ConnectionClass.Socket, modeString, AbstractOpenMode.Read, blocking, encoding);
@@ -58,13 +68,21 @@ public class SocketConnections {
             this.host = host;
             this.port = port;
             this.timeout = timeout;
+            this.description = (server ? "<-" : "->") + host + ":" + port;
             openNonLazyConnection();
         }
 
         @Override
         public boolean canRead() {
-            // socket connections can always be read
-            return true;
+            if (cType == RCompression.Type.GZIP) {
+                // yes, this means that even if we created a 'read' connection
+                // once 'gzcon' was applied, it can't be read anymore
+                // see also: gzcon_open() in main/connections.c
+                return !canWrite();
+            } else {
+                // non gz socket connections can always be read
+                return true;
+            }
         }
 
         @Override
@@ -76,8 +94,14 @@ public class SocketConnections {
         @Override
         @TruffleBoundary
         protected void createDelegateConnection() throws IOException {
+            setDelegate(createDelegateConnectionImpl());
+        }
+
+        private DelegateRConnection createDelegateConnectionImpl() throws IOException {
             DelegateRConnection delegate;
-            if (server) {
+            if (cType == RCompression.Type.GZIP) {
+                delegate = new RClientSocketGZipConnection(this);
+            } else if (server) {
                 delegate = new RServerSocketConnection(this);
             } else {
                 if (isBlocking()) {
@@ -86,12 +110,51 @@ public class SocketConnections {
                     delegate = new RClientSocketNonBlockConnection(this);
                 }
             }
-            setDelegate(delegate);
+            return delegate;
         }
 
         @Override
         public String getSummaryDescription() {
-            return (server ? "<-" : "->") + host + ":" + port;
+            return description;
+        }
+
+        @Override
+        @TruffleBoundary
+        public void setCompressionType(RCompression.Type cType) throws IOException {
+            assert cType == RCompression.Type.GZIP;
+
+            ConnectionSupport.OpenMode openMode = getOpenMode();
+            AbstractOpenMode mode = openMode.abstractOpenMode;
+            if (mode == Lazy) {
+                mode = AbstractOpenMode.getOpenMode(openMode.modeString);
+            }
+            ConnectionSupport.OpenMode newOpenMode = null;
+            switch (mode) {
+                case Read:
+                    if (!"r".equals(openMode.modeString)) {
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+                    }
+                    newOpenMode = new OpenMode(AbstractOpenMode.ReadBinary);
+                    break;
+                case Write:
+                    if (!"w".equals(openMode.modeString)) {
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+                    }
+                    newOpenMode = new OpenMode(AbstractOpenMode.WriteBinary);
+                    break;
+                case ReadBinary:
+                case WriteBinary:
+                    newOpenMode = getOpenMode();
+                    break;
+                default:
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+            }
+            assert newOpenMode != null;
+
+            this.cType = cType;
+            description = new StringBuilder().append("gzcon(").append(description).append(")").toString();
+            setDelegate(createDelegateConnectionImpl(), opened, newOpenMode);
+
         }
 
         @TruffleBoundary
@@ -125,7 +188,11 @@ public class SocketConnections {
         }
     }
 
-    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection {
+    private interface RSocketDelegateConection {
+        SocketChannel getSocketChannel();
+    }
+
+    private abstract static class RSocketReadWriteConnection extends DelegateReadWriteRConnection implements RSocketDelegateConection {
         private Socket socket;
         private SocketChannel channel;
         protected final RSocketConnection thisBase;
@@ -157,12 +224,69 @@ public class SocketConnections {
         }
 
         @Override
+        public SocketChannel getSocketChannel() {
+            return channel;
+        }
+
+        @Override
         public boolean isSeekable() {
             return false;
         }
     }
 
-    private abstract static class RSocketReadWriteNonBlockConnection extends DelegateReadWriteRConnection {
+    private abstract static class RSocketGZipConnection extends DelegateReadWriteRConnection {
+        private Socket socket;
+        private ByteChannel channel;
+
+        protected RSocketGZipConnection(RSocketConnection base) {
+            super(base, 0);
+        }
+
+        protected void openStreams(SocketChannel socketArg) throws IOException {
+            socket = socketArg.socket();
+            if (!socketArg.isBlocking()) {
+                // have to block with GZIPOutputStream
+                socketArg.configureBlocking(true);
+            }
+            GZIPOutputStream gzipOS = new GZIPOutputStream(socket.getOutputStream());
+            WritableByteChannel writableChannel = Channels.newChannel(gzipOS);
+            channel = new ByteChannel() {
+                @Override
+                public int read(ByteBuffer dst) throws IOException {
+                    // read not possible for gzcon-ed socket connections
+                    // see also #canRead()
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.CANNOT_READ_CONNECTION);
+                }
+
+                @Override
+                public boolean isOpen() {
+                    return writableChannel.isOpen();
+                }
+
+                @Override
+                public void close() throws IOException {
+                    writableChannel.close();
+                }
+
+                @Override
+                public int write(ByteBuffer src) throws IOException {
+                    return writableChannel.write(src);
+                }
+            };
+        }
+
+        @Override
+        public ByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
+        }
+    }
+
+    private abstract static class RSocketReadWriteNonBlockConnection extends DelegateReadWriteRConnection implements RSocketDelegateConection {
         private Socket socket;
         private SocketChannel socketChannel;
 
@@ -188,12 +312,17 @@ public class SocketConnections {
         }
 
         @Override
+        public SocketChannel getSocketChannel() {
+            return socketChannel;
+        }
+
+        @Override
         public boolean isSeekable() {
             return false;
         }
     }
 
-    private static class RServerSocketConnection extends RSocketReadWriteConnection {
+    private static class RServerSocketConnection extends RSocketReadWriteConnection implements RSocketDelegateConection {
         private final SocketChannel connectionSocket;
 
         RServerSocketConnection(RSocketConnection base) throws IOException {
@@ -223,6 +352,11 @@ public class SocketConnections {
             return connectionSocket;
         }
 
+        @Override
+        public SocketChannel getSocketChannel() {
+            return connectionSocket;
+        }
+
     }
 
     private static class RClientSocketConnection extends RSocketReadWriteConnection {
@@ -240,6 +374,15 @@ public class SocketConnections {
             super(base);
             SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress(base.host, base.port));
             openStreams(socketChannel.socket());
+        }
+    }
+
+    private static class RClientSocketGZipConnection extends RSocketGZipConnection {
+        RClientSocketGZipConnection(RSocketConnection base) throws IOException {
+            super(base);
+            assert base.theConnection instanceof RSocketDelegateConection : "can make gzcon only from a RSocketDelegateConection";
+            SocketChannel socketChannel = ((RSocketDelegateConection) base.theConnection).getSocketChannel();
+            openStreams(socketChannel);
         }
     }
 }
