@@ -3,6 +3,8 @@
 Bug fixes:
 
 * `match` worked incorrectly with descending sequences (e.g., `3:1`)
+* `match` did not handle descending sequences properly (e.g. `match(1:3, 3:1)`)
+* lexer allows any "letter" in identifiers including, e.g., Japanese, which matches GNU-R behavior
 
 # 1.0 RC 15
 
