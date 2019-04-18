@@ -70,20 +70,25 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.HeadPhaseBuilder;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RCompression;
+import static com.oracle.truffle.r.runtime.RCompression.Type.GZIP;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.ChannelConnections.ChannelRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass.GZCon;
 import com.oracle.truffle.r.runtime.conn.FifoConnections.FifoRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.CompressedRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
@@ -339,6 +344,36 @@ public abstract class ConnectionFunctions {
         static {
             createCasts(XZFile.class, RCompression.Type.XZ);
         }
+    }
+
+    @RBuiltin(name = "gzcon", kind = INTERNAL, parameterNames = {"con", "level", "allowNonCompressed", "text"}, behavior = PURE)
+    public abstract static class GZCon extends RBuiltinNode.Arg4 {
+
+        static {
+            Casts casts = new Casts(GZCon.class);
+            casts.arg("con").defaultError(RError.Message.NOT_CONNECTION, "con").mustNotBeNull().asIntegerVector().findFirst();
+            casts.arg("level").asIntegerVector().findFirst();
+            casts.arg("allowNonCompressed").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("text").asLogicalVector().findFirst().map(toBoolean());
+        }
+
+        @Specialization
+        public RAbstractIntVector gzcon(int conIndex, @SuppressWarnings("unused") int level, @SuppressWarnings("unused") boolean allowNonCompressed, @SuppressWarnings("unused") boolean text,
+                        @Cached("createBinaryProfile()") ConditionProfile gzConProfile) {
+            BaseRConnection base = RConnection.fromIndex(conIndex);
+            if (gzConProfile.profile(base.getConnectionClass() == ConnectionSupport.ConnectionClass.GZCon)) {
+                RError.warning(this, RError.Message.IS_GZCON);
+                return base.asVector();
+            }
+            try {
+                base.setCompressionType(GZIP);
+                base.updateConnectionClass(GZCon);
+            } catch (IOException ex) {
+                throw error(RError.Message.GENERIC, ex.getMessage());
+            }
+            return base.asVector();
+        }
+
     }
 
     @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"description", "text", "open", "env", "encoding"}, behavior = IO)
