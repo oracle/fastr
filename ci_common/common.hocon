@@ -43,13 +43,7 @@ logfiles : [
     "**/com.oracle.truffle.r.native/gnur/tests/log/all.diff"
     "**/com.oracle.truffle.r.test.native/embedded/*.output"
     "**/com.oracle.truffle.r.test.native/embedded/src/*.output"
-    # Uncomment to debug pkgtest issues, produces lot of logs!
-    "**/test.fastr/**/*.Rout"
-    "**/test.fastr/**/*.fail"
-    "**/test.fastr/**/*-tests/*.Rout"
-    "**/test.gnur/**/*.Rout"
-    "**/test.gnur/**/*-tests/*.Rout"
-    "**/test.gnur/**/*.fail"
+    "test.gnur/**/*.fail"
     # Uncomment to debug the event loop hanging issue. It must be accompanied by enabling
     # the logging by setting the TRACE_EVENT_LOOP env var to true.
     # "traceEventLoop.log"
@@ -105,7 +99,8 @@ packagesDarwin : {
 common : ${java8Downloads} {
   logs: ${logfiles}
   catch_files : [
-    "Graal diagnostic output saved in (?P<filename>.+\.zip)"
+    "Graal diagnostic output saved in (?P<filename>.+\.zip)",
+    "output mismatch file: (?P<filename>.+\.Rout)"
   ]
   timelimit : "1:00:00"
   environment : {

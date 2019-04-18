@@ -585,6 +585,8 @@ def _set_test_status(fastr_test_info):
                     fastr_testfile_status.status = "FAILED"
                     fastr_testfile_status.set_report(n_tests_passed, 0, n_tests_failed)
                     logging.info("{0}: FastR output mismatch: {1}".format(pkg, gnur_test_output_relpath))
+                    logging.info("    output mismatch file: {0}".format(join(_pkg_testdir('fastr', pkg), gnur_test_output_relpath)))
+                    logging.info("    output mismatch file: {0}".format(join(_pkg_testdir('gnur', pkg), gnur_test_output_relpath)))
                 else:
                     fastr_testfile_status.status = "OK"
                     fastr_testfile_status.set_report(n_tests_passed, 0, n_tests_failed)
