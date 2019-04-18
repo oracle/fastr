@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,7 @@ public abstract class IsElementFastPath extends RFastPathNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = "el.getLength() == 1")
+    @Specialization(guards = {"el.getLength() == 1", "set.getStride() >= 0"})
     protected Byte isElementOneSequence(RAbstractDoubleVector el, RIntSequence set,
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
         double element = el.getDataAt(0);

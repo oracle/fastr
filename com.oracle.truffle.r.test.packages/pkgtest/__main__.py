@@ -21,6 +21,19 @@
 # questions.
 #
 import sys
-from . import pkgtest
+from . import pkgtest, pkgtest_cmp, pkgtest_check
 
-pkgtest(sys.argv)
+rc = 1
+if sys.argv:
+    # argv[0] will be the script/executable
+    command = sys.argv[1]
+
+    if command == "compare":
+        rc = pkgtest_cmp(sys.argv[2:])
+    elif command == "check":
+        rc = pkgtest_check(sys.argv[2:])
+    else:
+        rc = pkgtest(sys.argv)
+
+# ensure we propagate the exit code
+sys.exit(rc)

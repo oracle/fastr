@@ -210,6 +210,8 @@ public class TestBuiltin_subset extends TestBase {
 
         assertEval("{z <- 1 ; f <- function(d) { b <- matrix(1:4,nrow=2,ncol=2) ; invisible(b[[{z<<-z+1;1},{z<<-z*2;2},drop=z<<-z*10]]) }; f(0) ; z; f(1L) ; z}");
         assertEval(Output.IgnoreWarningContext, "{z <- 1 ; f <- function(d) { b <- data.frame(x='a', y='b') ; invisible(b[[{z<<-z+1;1},{z<<-z*2;2},drop=z<<-z*10]]) }; f(0) ; z; f(1L) ; z}");
+
+        assertEval("{z <- c(3,4,2); z[3:1] <- 3:1;}");
     }
 
     @Test

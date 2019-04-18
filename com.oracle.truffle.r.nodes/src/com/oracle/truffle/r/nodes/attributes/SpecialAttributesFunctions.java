@@ -1401,6 +1401,7 @@ public final class SpecialAttributesFunctions {
     public abstract static class SetCommentAttributeNode extends SetSpecialAttributeNode {
 
         private final ConditionProfile nullCommentProfile = ConditionProfile.createBinaryProfile();
+        private final NACheck naCheck = NACheck.create();
 
         @Child private CastToVectorNode castVector;
 
@@ -1427,7 +1428,6 @@ public final class SpecialAttributesFunctions {
                     comment = castVector.doCast(value);
                 } else if (value instanceof RAbstractStringVector) {
                     RAbstractStringVector str = (RAbstractStringVector) value;
-                    NACheck naCheck = NACheck.create();
                     naCheck.enable(str);
                     for (int j = str.getLength() - 1; j >= 0; j--) {
                         if (!naCheck.check(str.getDataAt(j))) {

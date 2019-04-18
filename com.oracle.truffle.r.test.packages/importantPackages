@@ -16,7 +16,6 @@ caTools,1.17.1,https://cloud.r-project.org/src/contrib/caTools_1.17.1.tar.gz,tru
 cellranger,1.1.0,https://cloud.r-project.org/src/contrib/cellranger_1.1.0.tar.gz,true
 checkmate,1.8.5,https://cloud.r-project.org/src/contrib/checkmate_1.8.5.tar.gz,true
 class,7.3-14,https://cloud.r-project.org/src/contrib/class_7.3-14.tar.gz,true
-cluster,2.0.6,https://cloud.r-project.org/src/contrib/cluster_2.0.6.tar.gz,true
 coda,0.19-1,https://cloud.r-project.org/src/contrib/coda_0.19-1.tar.gz,true
 codetools,0.2-15,https://cloud.r-project.org/src/contrib/codetools_0.2-15.tar.gz,true
 coin,1.2-2,https://cloud.r-project.org/src/contrib/coin_1.2-2.tar.gz,true

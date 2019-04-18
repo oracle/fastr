@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,8 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
         return getStride();
     }
 
-    public double getEnd() {
+    // NOTE: it does not hold that getStart() <= getEnd()!
+    private double getEnd() {
         return start + (getLength() - 1) * stride;
     }
 
