@@ -1,3 +1,9 @@
+# 1.0 RC 17
+
+Bug fixes:
+
+* fatal error on Linux when pressing CTRL+C during long computation
+
 # 1.0 RC 16
 
 Bug fixes:

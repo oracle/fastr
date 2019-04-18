@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1997--2018  The R Core Team
- *  Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ *  Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -83,44 +83,12 @@ int R_SelectEx(int  n,  fd_set  *readfds,  fd_set  *writefds,
 	       void (*intr)(void))
 {
     if (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)
-	/* Is it right for select calls with a timeout to be
-	   non-interruptable? LT */
-	return select(n, readfds, writefds, exceptfds, timeout);
+        /* Is it right for select calls with a timeout to be
+           non-interruptable? LT */
+        return select(n, readfds, writefds, exceptfds, timeout);
     else {
-	volatile sel_intr_handler_t myintr = intr != NULL ?
-	    intr : onintrNoResume;
-	volatile int old_interrupts_suspended = R_interrupts_suspended;
-	if (SIGSETJMP(seljmpbuf, 1)) {
-	    myintr();
-	    R_interrupts_suspended = old_interrupts_suspended;
-	    error(_("interrupt handler must not return"));
-	    return 0; /* not reached */
-	}
-	else {
-	    int val;
-
-	    /* make sure interrupts are enabled -- this will be
-	       restored if there is a LONGJMP from myintr() to another
-	       context. */
-	    R_interrupts_suspended = FALSE;
-
-	    /* install a temporary signal handler for breaking out of
-	       a blocking select */
-	    oldSigintHandler = signal(SIGINT, handleSelectInterrupt);
-
-	    /* once the new sinal handler is in place we need to check
-	       for and handle any pending interrupt registered by the
-	       standard handler. */
-	    if (R_interrupts_pending)
-		myintr();
-
-	    /* now do the (possibly blocking) select, restore the
-	       signal handler, and return the result of the select. */
-	    val = select(n, readfds, writefds, exceptfds, timeout);
-	    signal(SIGINT, oldSigintHandler);
-	    R_interrupts_suspended = old_interrupts_suspended;
-	    return val;
-	}
+        // FastR: we do not use the variant with signals as it doesn't play well with JVM
+        return select(n, readfds, writefds, exceptfds, timeout);
     }
 }
 
