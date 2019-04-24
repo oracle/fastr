@@ -30,8 +30,11 @@ relevant fixes and improvements.
 File `share/R/examples-footer.R` may occasionally change.
 FastR copy is in `com.oracle.truffle.r.native/run/examples-footer.R`.
 
-File `com.oracle.truffle.r.native/run/configure.ac` is taken from GNU-R and modified.
-See the comments inside the FastR version of that file.
+Following files are taken from GNU-R and modified.
+See the comments inside the FastR version of that files.
+
+* `com.oracle.truffle.r.native/run/configure.ac`
+* `com.oracle.truffle.r.native/run/Renviron.in`
 
 Tips:
 

@@ -1,5 +1,10 @@
 # 1.0 RC 17
 
+New features:
+
+* the default `Renviron` file sets `R_LIBS_USER` to a directory inside the current user's home
+  * running the `configure_fastr` will change this to a path that also contains GraalVM version and will create the directory
+
 Bug fixes:
 
 * fatal error on Linux when pressing CTRL+C during long computation
