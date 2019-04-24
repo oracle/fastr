@@ -337,14 +337,11 @@ class TestStatus(object):
         if new_status == "INDETERMINATE":
             assert self.status in ["OK", "FAILED", "INDETERMINATE", "UNKNOWN"]
             self.set_status_indeterminate()
-        elif new_status == "FAILED":
-            assert self.status in ["OK", "FAILED", "UNKNOWN"]
+        elif new_status == "FAILED" and (self.status in ["OK", "FAILED", "UNKNOWN"]):
             self.status = "FAILED"
-        elif new_status == "OK":
-            assert self.status in ["OK", "UNKNOWN"]
+        elif new_status == "OK" and (self.status in ["OK", "UNKNOWN"]):
             self.status = "OK"
-        else:
-            raise ValueError("cannot do transition from %s to %s" % (self.status, new_status))
+        # any other transition is not possible
 
 
 class TestFileStatus(TestStatus):
