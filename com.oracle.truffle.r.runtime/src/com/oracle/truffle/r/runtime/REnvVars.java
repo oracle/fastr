@@ -372,6 +372,16 @@ public final class REnvVars implements RContext.ContextState {
             }
             assert !cranMirrors.isEmpty();
             cranMirror = cranMirrors.get(0);
+            // If FASTR_MRAN_MIRROR is exported, we replace the MRAN base URL with our
+            // overlay, but keep the path including the date
+            String mranMirrorOverlay = System.getenv("FASTR_MRAN_MIRROR");
+            if (mranMirrorOverlay != null && !mranMirrorOverlay.trim().isEmpty()) {
+                String date = cranMirror.substring(cranMirror.length() - "2000-00-00".length());
+                if (!mranMirrorOverlay.endsWith("/")) {
+                    mranMirrorOverlay += '/';
+                }
+                cranMirror = mranMirrorOverlay + "snapshot/" + date;
+            }
         }
         return cranMirror;
     }

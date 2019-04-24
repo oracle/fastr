@@ -96,6 +96,12 @@ def get_default_cran_mirror():
         url = f.readline()
         if url:
             url = url.strip()
+        if 'FASTR_MRAN_MIRROR' in os.environ:
+            overlay = os.environ['FASTR_MRAN_MIRROR'].strip()
+            overlay += '' if overlay.endswith('/') else '/'
+            date = url[-len('2000-00-00'):]
+            url = overlay + 'snapshot/' + date
+            logging.info("Using '{0}' instead of the default MRAN mirror.".format(url))
     except IOError as e:
         logging.error("Could not read %s: %s" % (default_cran_mirror_file, e))
     finally:
