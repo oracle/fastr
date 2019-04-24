@@ -299,6 +299,10 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     ],
     include_in_polyglot=False,
     post_install_msg="NOTES:\n---------------\n" +
+"The user specific library directory was not created automatically. " +
+"You can either create the directory manually or edit file ${graalvm_home}/jre/languages/R/etc/Renviron to change it to any desired location. " +
+"Without user specific library directory, users will need write permission for the GraalVM home directory in order to install R packages. " +
+"\n\n" +
 "Some R packages need a system-dependent configuration before they can be installed. " +
 "A generic configuration that works out of the box in most cases is provided by default. " +
 "If you wish to fine-tune the configuration to your system or should you encounter any " +
