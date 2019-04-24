@@ -81,10 +81,10 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	 sed -e 's!      exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!      FASTR_INTERNAL_ARGS=`echo "$${FASTR_INTERNAL_ARGS} $${args}" | $${SED} -e 's/^[[:space:]]*//' | $${SED} -e 's/[[:blank:]]*$$//'` exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!') < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
 	chmod +x $(FASTR_BIN_DIR)/R
 	touch $(FASTR_ETC_DIR)/ldpaths
-	sed -e "s|\(R_LIBS_USER=.*-'\)\(.*\)'}|\1$(FASTR_R_HOME)/library'}|" < $(shell uname)/Renviron > $(FASTR_ETC_DIR)/Renviron
+	cp $(shell uname)/Renviron $(FASTR_ETC_DIR)/Renviron
 	mkdir -p $(FASTR_ETC_DIR)/src/include
 	cp config.h.in $(FASTR_ETC_DIR)/src/include
-	cp $(GNUR_HOME_BINARY)/etc/Renviron.in $(FASTR_ETC_DIR)/Renviron.in
+	cp Renviron.in $(FASTR_ETC_DIR)/Renviron.in
 	cp $(GNUR_HOME_BINARY)/etc/ldpaths.in $(FASTR_ETC_DIR)/ldpaths.in
 	cp $(GNUR_HOME_BINARY)/etc/Makeconf Makeconf.etc
 	cp $(GNUR_HOME_BINARY)/etc/javaconf $(FASTR_ETC_DIR)/javaconf

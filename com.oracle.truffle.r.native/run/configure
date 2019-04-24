@@ -985,7 +985,8 @@ PACKAGE_VERSION
 PACKAGE_TARNAME
 PACKAGE_NAME
 PATH_SEPARATOR
-SHELL'
+SHELL
+GRAALVM_VERSION'
 ac_subst_files='r_cc_rules_frag
 r_cc_lo_rules_frag
 r_cxx_rules_frag
@@ -3522,7 +3523,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-### FASTR PATH:
+### FASTR PATCH:
 #AC_CONFIG_SRCDIR([src/include/Defn.h])
 ac_aux_dir=
 for ac_dir in tools "$srcdir"/tools; do
@@ -25230,7 +25231,7 @@ _ACEOF
 # flags.
 r_save_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $r_verb"
-(eval echo $as_me:25233: \"$ac_link\") >&5
+(eval echo $as_me:25234: \"$ac_link\") >&5
 r_c_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$r_c_v_output" >&5
 CFLAGS=$r_save_CFLAGS
@@ -25305,7 +25306,7 @@ _ACEOF
 # flags.
 r_save_CFLAGS=$CFLAGS
 CFLAGS="$CFLAGS $r_cv_prog_c_v"
-(eval echo $as_me:25308: \"$ac_link\") >&5
+(eval echo $as_me:25309: \"$ac_link\") >&5
 r_c_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$r_c_v_output" >&5
 CFLAGS=$r_save_CFLAGS

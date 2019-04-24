@@ -36,9 +36,14 @@ while [ -h "$source" ] ; do
   fi
 done
 
-( 
+(
+  export GRAALVM_VERSION=`grep -o 'GRAALVM_VERSION=.*' "$( dirname "$source" )/../../../../release" | cut -d= -f2`
   cd -P "$( dirname "$source" )/../etc"
   ./configure --with-x=no --with-aqua=no --enable-memory-profiling FFLAGS=-O2 $@
-  ed Makeconf < edMakeconf.etc  
+  ed Makeconf < edMakeconf.etc
+  export R_DEFAULT_PACKAGES=base
+  R_LIBS_USER=`"$( dirname "$source" )/../bin/R" --slave -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'`
+  echo "Creating user specific library directory: $R_LIBS_USER"
+  mkdir -p "$R_LIBS_USER"
   echo "DONE"
 )

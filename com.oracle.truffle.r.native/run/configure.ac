@@ -28,6 +28,7 @@
 ###  - copy & paste this script to GNU-R home
 ###  - run autoconf in GNU-R home
 ###  - move the generated configure script next to the original FastR's configure.ac 
+### Do not forget to update also Renviron.in if applicable
 
 ### FASTR BEGIN - the AM_CONDITIONAL macro may not be available, so this re-definition
 ### makes the patching process easier.
@@ -76,6 +77,11 @@ m4_include([m4/libtool.m4])
 
 ### FASTR END
 
+### FASTR BEGIN - export GRAALVM_VERSION to be used in Renviron.in
+
+AC_SUBST(GRAALVM_VERSION)
+
+### FASTR END
 
 AC_PREREQ(2.62)
 
