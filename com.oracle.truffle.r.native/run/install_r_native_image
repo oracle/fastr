@@ -74,7 +74,7 @@ if [[ $silent -eq 0 ]]; then
 fi
 
 cd "$fastr_home/bin"
-../../../../bin/native-image --initialize-at-build-time --no-server --language:R
+../../../../bin/native-image --initialize-at-build-time --no-server -cp "$fastr_home/fastr-launcher.jar:$fastr_home/../../lib/graalvm/launcher-common.jar" --language:R --tool:chromeinspector --tool:profiler -H:Class=com.oracle.truffle.r.launcher.RMain -H:Name=RMain
 cp "exec/R" "exec_R.backup"
 cp "Rscript" "Rscript.backup"
 sed -e '/^## REMOVE FOR NATIVE IMAGE: BEGIN/,/^## REMOVE FOR NATIVE IMAGE: END/d;' "exec_R.backup" | \
