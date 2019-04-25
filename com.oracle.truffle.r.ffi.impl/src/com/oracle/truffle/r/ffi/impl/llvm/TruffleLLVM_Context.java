@@ -59,7 +59,7 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
  * A facade for the context state for the Truffle LLVM factory. Delegates to the various
  * module-specific pieces of state.
  */
-public class TruffleLLVM_Context extends RFFIContext {
+public final class TruffleLLVM_Context extends RFFIContext {
 
     private final TruffleLLVM_DLL.ContextStateImpl dllState = new TruffleLLVM_DLL.ContextStateImpl();
     final TruffleLLVM_Call.ContextStateImpl callState = new TruffleLLVM_Call.ContextStateImpl();
@@ -177,11 +177,6 @@ public class TruffleLLVM_Context extends RFFIContext {
             lookupObjects[i] = (TruffleObject) parsedIRs[i].lookupObject;
         }
         return lookupObjects;
-    }
-
-    @Override
-    public final Object protectChild(Object parent, Object child, RFFIFactory.Type rffiType) {
-        return child;
     }
 
 }

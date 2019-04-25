@@ -26,8 +26,10 @@ import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -311,14 +313,24 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         return result;
     }
 
-    @ExportMessage
+    @Ignore
     public Object car() {
-        if (closure != null) {
-            // TODO: maybe we need to wipe the closure here?
-            return getDataAtAsObject(0);
+        return RPairListLibrary.getUncached().car(this);
+    }
+
+    @ExportMessage
+    static class Car {
+
+        @Specialization(guards = "!pl.hasClosure()")
+        static Object withoutClosure(RPairList pl) {
+            pl.mayBeClosure = false;
+            return pl.car;
         }
-        ensurePairList();
-        return car;
+
+        @Specialization(guards = "pl.hasClosure()")
+        static Object withClosure(RPairList pl) {
+            return pl.getDataAtAsObject(0);
+        }
     }
 
     public void setCar(Object newCar) {
@@ -327,9 +339,26 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         car = newCar;
     }
 
+    @Ignore
     public Object cdr() {
-        ensurePairList();
-        return cdr;
+        return RPairListLibrary.getUncached().cdr(this);
+    }
+
+    @ExportMessage
+    static class Cdr {
+
+        @Specialization(guards = "!pl.hasClosure()")
+        static Object withoutClosure(RPairList pl) {
+            pl.mayBeClosure = false;
+            return pl.cdr;
+        }
+
+        @Specialization(guards = "pl.hasClosure()")
+        static Object withClosure(RPairList pl) {
+            pl.mayBeClosure = false;
+            pl.convertToPairList();
+            return pl.cdr;
+        }
     }
 
     public void setCdr(Object newCdr) {
@@ -354,11 +383,31 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         return pl.car();
     }
 
+    @Ignore
     public Object getTag() {
-        if (closure != null) {
-            return closure.getSyntaxLHSName() == null ? RNull.instance : closure.getSyntaxLHSName();
-        } else {
-            return tag;
+        return RPairListLibrary.getUncached().getTag(this);
+    }
+
+    @ExportMessage
+    static class GetTag {
+
+        @Specialization(guards = "!pl.hasClosure()")
+        static Object withoutClosure(RPairList pl) {
+            return pl.tag;
+        }
+
+        static boolean hasSyntaxLHSName(RPairList pl) {
+            return pl.closure.getSyntaxLHSName() != null;
+        }
+
+        @Specialization(guards = {"pl.hasClosure()", "hasSyntaxLHSName(pl)"})
+        static Object withClosureAndLHSName(RPairList pl) {
+            return pl.closure.getSyntaxLHSName();
+        }
+
+        @Specialization(guards = {"pl.hasClosure()", "!hasSyntaxLHSName(pl)"})
+        static Object withClosureAndNoLHSName(@SuppressWarnings("unused") RPairList pl) {
+            return RNull.instance;
         }
     }
 

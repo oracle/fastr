@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
-public class TruffleMixed_Context extends RFFIContext {
+public final class TruffleMixed_Context extends RFFIContext {
 
     private final TruffleLLVM_Context llvmContext;
     private final TruffleNFI_Context nfiContext;

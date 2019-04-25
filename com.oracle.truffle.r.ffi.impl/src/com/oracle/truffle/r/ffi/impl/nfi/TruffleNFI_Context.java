@@ -22,12 +22,15 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
+
 import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -47,7 +50,6 @@ import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
-import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -69,9 +71,6 @@ import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 import sun.misc.Unsafe;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 class UnsafeAdapter {
     public static final Unsafe UNSAFE = initUnsafe();
@@ -423,27 +422,4 @@ public class TruffleNFI_Context extends RFFIContext {
         accessLock.unlock();
     }
 
-    /**
-     * Establish a weak relationship between an object and its owner to prevent a premature garbage
-     * collecting of the object. See <code>com.oracle.truffle.r.ffi.processor.RFFIResultOwner</code>
-     * for more commentary.
-     *
-     * Note: It is meant to be applied only on certain return values from upcalls.
-     *
-     * @param parent
-     * @param child
-     * @return the child
-     *
-     */
-    @TruffleBoundary
-    @Override
-    public final Object protectChild(Object parent, Object child, RFFIFactory.Type rffiType) {
-        Set<Object> children = rffiContextState.protectedChildren.get(parent);
-        if (children == null) {
-            children = new HashSet<>();
-            rffiContextState.protectedChildren.put(parent, children);
-        }
-        children.add(child);
-        return child;
-    }
 }

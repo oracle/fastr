@@ -297,6 +297,10 @@ public final class RArguments {
         frame.getArguments()[INDEX_ENVIRONMENT] = env;
     }
 
+    public static void setCall(Frame frame, RCaller call) {
+        frame.getArguments()[INDEX_CALL] = call;
+    }
+
     public static void setIsIrregular(Frame frame, boolean isIrregularFrame) {
         frame.getArguments()[INDEX_IS_IRREGULAR] = isIrregularFrame;
     }

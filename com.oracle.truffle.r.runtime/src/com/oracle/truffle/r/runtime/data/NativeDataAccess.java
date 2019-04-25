@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
+
 import java.lang.management.ManagementFactory;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -31,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -47,18 +50,15 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import java.util.logging.Level;
 
 import sun.misc.Unsafe;
-import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
 
 abstract class InteropRootNode extends RootNode {
     InteropRootNode() {
@@ -145,26 +145,32 @@ public final class NativeDataAccess {
     private static void initNativeRefQueueThread() {
         Thread thread = nativeRefQueueThread.get();
         if (thread == null) {
-            thread = new Thread(
-                            new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        while (true) {
-                                            Reference<?> ref = nativeRefQueue.remove();
-                                            if (ref instanceof Releasable) {
-                                                ((Releasable) ref).release();
-                                            }
+            createNativeRefQueueThread();
+        }
+    }
+
+    @TruffleBoundary
+    private static void createNativeRefQueueThread() {
+        Thread thread;
+        thread = new Thread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    while (true) {
+                                        Reference<?> ref = nativeRefQueue.remove();
+                                        if (ref instanceof Releasable) {
+                                            ((Releasable) ref).release();
                                         }
-                                    } catch (InterruptedException ex) {
                                     }
+                                } catch (InterruptedException ex) {
                                 }
-                            },
-                            "Native-Reference-Queue-Worker");
-            if (nativeRefQueueThread.compareAndSet(null, thread)) {
-                thread.setDaemon(true);
-                thread.start();
-            }
+                            }
+                        },
+                        "Native-Reference-Queue-Worker");
+        if (nativeRefQueueThread.compareAndSet(null, thread)) {
+            thread.setDaemon(true);
+            thread.start();
         }
     }
 

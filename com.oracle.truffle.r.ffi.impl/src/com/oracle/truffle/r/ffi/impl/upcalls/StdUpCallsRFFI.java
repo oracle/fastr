@@ -74,6 +74,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.RNCharNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RSetExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RfFindFun;
 import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.VectorElementGetterNode;
@@ -420,6 +421,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(RfEvalNode.class)
     Object Rf_eval(Object expr, Object env);
 
+    @RFFIUpCallNode(RfFindFun.class)
     Object Rf_findFun(Object symbolObj, Object envObj);
 
     Object Rf_GetOption1(Object tag);

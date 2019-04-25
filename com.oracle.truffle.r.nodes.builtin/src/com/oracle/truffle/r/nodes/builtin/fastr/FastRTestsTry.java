@@ -60,6 +60,7 @@ public abstract class FastRTestsTry extends RBuiltinNode.Arg1 {
             // try to recover from a possibly incosistent state when running tests:
             // some handlers might still be lying around and interfere with subsequent calls
             RErrorHandling.resetStacks();
+            ex.printStackTrace();
             return formatError(ex);
         }
         return RRuntime.LOGICAL_TRUE;

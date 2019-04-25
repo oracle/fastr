@@ -47,6 +47,7 @@ import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Eval.EvalEnvCast;
+import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
@@ -162,6 +163,10 @@ public class GetFunctions {
         @Child private Helper helper = new Helper();
 
         private final ConditionProfile inheritsProfile = ConditionProfile.createBinaryProfile();
+
+        public static Get create() {
+            return GetNodeGen.create();
+        }
 
         public abstract Object execute(VirtualFrame frame, Object what, Object where, String name, boolean inherits);
 
