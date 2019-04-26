@@ -679,6 +679,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     @SuppressFBWarnings(value = "ES_COMPARING_STRINGS_WITH_EQ", justification = "all three string constants below are supposed to be used as identities")
+    @TruffleBoundary
     public final RVector<ArrayT> copyRegAttributesFrom(RAbstractContainer vector) {
         DynamicObject orgAttributes = vector.getAttributes();
         if (orgAttributes != null) {
