@@ -286,6 +286,7 @@ public final class RAttributesLayout {
         }
 
         @Override
+        @TruffleBoundary
         public boolean hasNext() {
             return iter.hasNext();
         }
