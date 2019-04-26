@@ -74,7 +74,22 @@ if [[ $silent -eq 0 ]]; then
 fi
 
 cd "$fastr_home/bin"
-../../../../bin/native-image --initialize-at-build-time=com.oracle.truffle --no-server --no-fallback -cp "$fastr_home/fastr-launcher.jar:$fastr_home/../../lib/graalvm/launcher-common.jar" --language:R --tool:chromeinspector --tool:profiler -H:Class=com.oracle.truffle.r.launcher.RMain -H:Name=RMain
+
+fastr_launcher_ni_args=(
+    --no-fallback
+    --initialize-at-build-time
+    --no-server
+    -cp "$fastr_home/fastr-launcher.jar:$fastr_home/../../lib/graalvm/launcher-common.jar"
+    --language:R
+    --tool:all
+    -Dorg.graalvm.version=1.0.0-rc18-dev
+    -H:-ParseRuntimeOptions
+    -Dorg.graalvm.launcher.relative.language.home=bin/RMain
+    -Dorg.graalvm.launcher.classpath=jre/lib/graalvm/launcher-common.jar:jre/languages/R/fastr-launcher.jar
+    -H:Class=com.oracle.truffle.r.launcher.RMain
+)
+
+../../../../bin/native-image "${fastr_launcher_ni_args[@]}" -H:Name=RMain
 cp "exec/R" "exec_R.backup"
 cp "Rscript" "Rscript.backup"
 sed -e '/^## REMOVE FOR NATIVE IMAGE: BEGIN/,/^## REMOVE FOR NATIVE IMAGE: END/d;' "exec_R.backup" | \
