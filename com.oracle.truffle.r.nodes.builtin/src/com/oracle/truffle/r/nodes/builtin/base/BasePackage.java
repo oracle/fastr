@@ -148,6 +148,7 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRSyntaxTree;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSyntaxTreeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTestsTry;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTestsTryNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRThrowCompilerError;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRThrowIt;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRThrowItNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTrace;
@@ -513,6 +514,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRSlotAssign.class, FastRSlotAssignNodeGen::create);
         add(FastRSyntaxTree.class, FastRSyntaxTreeNodeGen::create);
         add(FastRThrowIt.class, FastRThrowItNodeGen::create);
+        add(FastRThrowCompilerError.class, FastRThrowCompilerError::new);
         add(FastRTrace.Trace.class, FastRTraceFactory.TraceNodeGen::create);
         add(FastRTrace.Untrace.class, FastRTraceFactory.UntraceNodeGen::create);
         add(FastRTree.class, FastRTreeNodeGen::create);
