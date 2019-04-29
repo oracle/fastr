@@ -36,7 +36,11 @@ LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 # at a minimum we need to know where libpcre/libz/libgfortran/libquadmath are located,
 # to keep the Java side simpler, we (may) copy them to $(FASTR_LIB_DIR) unless
 # they were found in the standard system locations
+ifeq ($(FASTR_RFFI),llvm)
 OTHER_LIB_TARGETS = pcre z gfortran quadmath gcc_s
+else
+OTHER_LIB_TARGETS = pcre z
+endif
 
 .PHONY: all
 
