@@ -5,6 +5,10 @@ New features:
 * the default `Renviron` file sets `R_LIBS_USER` to a directory inside the current user's home
   * running the `configure_fastr` will change this to a path that also contains GraalVM version and will create the directory
 
+Added missing C APIs:
+
+* `S_realloc`
+
 Bug fixes:
 
 * fatal error on Linux when pressing CTRL+C during long computation
@@ -23,7 +27,7 @@ Bug fixes:
 * new Truffle interop converts `double` values to `int` values if they fit in the integer range
   * see the changes in the [spec tests](https://github.com/oracle/fastr/commit/e08e2b19571479dddb6167d9a1d492a14cb4c7b2#diff-c842fa11097793b19bd410589c36af99)
 
-Added missing R builtins and C APIa
+Added missing R builtins and C APIs
 
 * simple support for the weak reference API functions (`R_MakeWeakRef`, `R_MakeWeakRefC`, `R_WeakRefKey`, `R_WeakRefValue`)
 * `Rf_i1mach`
