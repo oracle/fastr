@@ -111,6 +111,9 @@ def copylib(args):
         parts = os.environ['PKG_LDFLAGS_OVERRIDE'].split(' ')
         ext = 'dylib' if platform.system() == 'Darwin' else 'so'
         lib_prefix = 'lib' + args[0] + '.'
+        ver_env_key = 'FASTR_LIB' + args[0].upper() + '_VER'
+        if os.environ.has_key(ver_env_key):
+            lib_prefix += os.environ[ver_env_key] + '.'
         plain_libpath_base = lib_prefix + ext
         for part in parts:
             path = part.strip('"').lstrip('-L')
