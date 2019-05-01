@@ -129,6 +129,7 @@ gateCmd : ["mx", "-v", "--strict-compliance", "rgate", "-B=--force-deprecation-a
 gateTestCommon : {
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: with specials,Rembedded"]
+    [mx, r, "-e", "extSoftVersion()"]
   ]
 }
 
