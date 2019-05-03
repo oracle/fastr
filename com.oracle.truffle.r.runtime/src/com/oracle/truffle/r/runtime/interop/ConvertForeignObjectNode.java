@@ -66,21 +66,21 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * explicitely requested.<br>
  * </ul>
  * </p>
- * 
+ *
  * <p>
  * <b>Multi dimensional arrays</b> are, depending on the <b>recursive</b> parameter, either
  * converted recursively or only the first dimension array is read and a list with the particular
  * foreign objects is returned.
  * </p>
- * 
+ *
  * <p>
  * Rectangular <b>array dimensions</b> (or a n-dim equivalent) are, depending on the
  * <b>dropDimensions</b> parameter, either honored by the conversion or a flat vector/list is
  * returned.
  * </p>
- * 
- * <b>Note</b> currently are {@link RForeignVectorWrapper}-s used only in case of homogenous 1-dimensional
- * arrays resulting to a logical, double, integer or character vector.
+ *
+ * <b>Note</b> currently are {@link RForeignVectorWrapper}-s used only in case of homogenous
+ * 1-dimensional arrays resulting to a logical, double, integer or character vector.
  */
 @ImportStatic({Message.class, RRuntime.class, RType.class})
 public abstract class ConvertForeignObjectNode extends RBaseNode {
@@ -158,12 +158,12 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
 
     /**
      * Converts the provided foreign object to a list.
-     * 
+     *
      * <p>
      * If the provided object isn't an array, then a named list will be created from it's keys and
      * their values.
      * </p>
-     * 
+     *
      * @param truffleObject foreign object
      * @param recursive if <code>true</code> then the dimensions in a multi dimensional array will
      *            be taken in count and resolved recursively, otherwise only the first array
@@ -179,7 +179,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
 
     /**
      * Determines whether the provided object is a foreign array or not.
-     * 
+     *
      * @param obj
      * @return <code>true</code> if the provided object is an array, otherwise <code>false</code>
      */
@@ -189,7 +189,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
 
     /**
      * Determines whether the provided object is a foreign array or not.
-     * 
+     *
      * @param obj
      * @param hasSizeNode
      * @return <code>true</code> if the provided object is an array, otherwise <code>false</code>

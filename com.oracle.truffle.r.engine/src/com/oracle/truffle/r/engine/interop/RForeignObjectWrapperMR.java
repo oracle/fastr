@@ -47,7 +47,6 @@ public class RForeignObjectWrapperMR {
         }
     }
 
-    
     @Resolve(message = "KEY_INFO")
     public abstract static class KeyInfoNode extends Node {
 

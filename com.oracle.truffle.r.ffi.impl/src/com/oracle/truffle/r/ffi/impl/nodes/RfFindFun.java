@@ -45,7 +45,7 @@ public abstract class RfFindFun extends FFIUpCallNode.Arg2 {
         return RfFindFunNodeGen.create();
     }
 
-    @Specialization(limit = "SYM_CACHE_SIZE", guards = {"funSym.getName() == cachedFunName", "env.getFrame().getFrameDescriptor() == cachedFrameDesc"})
+    @Specialization(limit = "SYM_CACHE_SIZE", guards = {"cachedFunName.equals(funSym.getName())", "env.getFrame().getFrameDescriptor() == cachedFrameDesc"})
     Object findFunCached(@SuppressWarnings("unused") RSymbol funSym, REnvironment env,
                     @SuppressWarnings("unused") @Cached("funSym.getName()") String cachedFunName,
                     @SuppressWarnings("unused") @Cached("env.getFrame().getFrameDescriptor()") FrameDescriptor cachedFrameDesc,

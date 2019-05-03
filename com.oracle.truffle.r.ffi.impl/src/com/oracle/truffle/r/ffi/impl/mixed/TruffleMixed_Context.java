@@ -179,7 +179,7 @@ public final class TruffleMixed_Context extends RFFIContext {
     }
 
     @Override
-    public final Object protectChild(Object parent, Object child, RFFIFactory.Type rffiType) {
+    public Object protectChild(Object parent, Object child, RFFIFactory.Type rffiType) {
         switch (rffiType) {
             case LLVM:
                 return llvmContext.protectChild(parent, child, rffiType);

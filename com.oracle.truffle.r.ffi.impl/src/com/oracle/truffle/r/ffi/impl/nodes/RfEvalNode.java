@@ -274,7 +274,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
                         @Cached("createClassProfile()") ValueProfile frameAccessProfile,
                         @Cached("create()") BranchProfile ignoredProfile) {
             Object fun = readFunNode.execute(frameProfile.profile(env.getFrame(frameAccessProfile)));
-            if (funSym.getName() == "{" || funSym.getName() == "if") {
+            if ("{".equals(funSym.getName()) || "if".equals(funSym.getName())) {
                 ignoredProfile.enter();
                 return null; // TODO: Try to handle the block and "if" too
             }
@@ -287,7 +287,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
                         @Cached("createClassProfile()") ValueProfile frameAccessProfile,
                         @Cached("create()") BranchProfile ignoredProfile) {
             Object fun = ReadVariableNode.lookupFunction(funSym.getName(), frameProfile.profile(env.getFrame(frameAccessProfile)));
-            if (funSym.getName() == "{" || funSym.getName() == "if") {
+            if ("{".equals(funSym.getName()) || "if".equals(funSym.getName())) {
                 ignoredProfile.enter();
                 return null; // TODO: Try to handle the block and "if" too
             }

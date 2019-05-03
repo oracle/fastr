@@ -154,7 +154,8 @@ public abstract class RFFIContext extends RFFI {
 
     /**
      * @param before the value returned by the corresponding call to
-     *            {@link #beforeDowncall(VirtualFrame, com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}.
+     *            {@link #beforeDowncall(VirtualFrame, com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}
+     *            .
      */
     public void afterDowncall(long before, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         rffiContextState.downcallFrameStack.remove(rffiContextState.downcallFrameStack.size() - 1);
