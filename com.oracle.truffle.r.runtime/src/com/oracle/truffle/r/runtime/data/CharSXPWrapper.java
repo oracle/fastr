@@ -22,16 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-
-import java.lang.ref.WeakReference;
-import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * Internally GNU R distinguishes "strings" and "vectors of strings" using the {@code CHARSXP} and
@@ -137,9 +136,14 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject, RTy
 
     private byte[] getBytes() {
         if (bytes == null && !NativeDataAccess.isAllocated(this)) {
-            bytes = contents.getBytes(StandardCharsets.UTF_8);
+            bytes = getUTF8Bytes();
         }
         return bytes;
+    }
+
+    @TruffleBoundary
+    private byte[] getUTF8Bytes() {
+        return contents.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override

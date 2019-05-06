@@ -58,6 +58,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.RCallNode.ExplicitArgs;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -82,6 +83,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
@@ -265,7 +267,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
         abstract FunctionInfo execute(Object fun, Object argList, REnvironment env);
 
-        @Specialization(limit = "SYM_CACHE_SIZE", guards = {"funSym.getName() == cachedFunName", "env.getFrame().getFrameDescriptor() == cachedFrameDesc"})
+        @Specialization(limit = "SYM_CACHE_SIZE", guards = {"cachedFunName.equals(funSym.getName())", "env.getFrame().getFrameDescriptor() == cachedFrameDesc"})
         FunctionInfo createFunctionInfoFromSymbolCached(@SuppressWarnings("unused") RSymbol funSym, RPairList argList, REnvironment env,
                         @SuppressWarnings("unused") @Cached("funSym.getName()") String cachedFunName,
                         @SuppressWarnings("unused") @Cached("env.getFrame().getFrameDescriptor()") FrameDescriptor cachedFrameDesc,
@@ -340,7 +342,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
             if (pp instanceof RPairList) {
                 branchProfile1.enter();
                 p = plLib.car(pp);
-                if (p instanceof RSymbol && evalq == ((RSymbol) p).getName()) {
+                if (p instanceof RSymbol && evalq.equals(((RSymbol) p).getName())) {
                     branchProfile2.enter();
                     pp = plLib.cdr(pp);
                     if (pp instanceof RPairList) {
@@ -371,7 +373,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
         boolean isTryCatchWrappedCall(RPairList expr) {
             Object p = expr.car();
-            return p instanceof RSymbol && tryCatch == ((RSymbol) p).getName();
+            return p instanceof RSymbol && tryCatch.equals(((RSymbol) p).getName());
         }
 
     }
@@ -504,7 +506,8 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     Object handleLanguage(RPairList expr, Object envArg,
                     @Cached("create()") BranchProfile noDowncallFrameFunProfile,
                     @Cached("create()") BranchProfile nullFunProfile,
-                    @Cached("create()") FunctionInfoNode funInfoNode) {
+                    @Cached("create()") FunctionInfoNode funInfoNode,
+                    @Cached("create()") ShareObjectNode updateRefCountNode) {
         MaterializedFrame downcallFrame = getCurrentRFrame();
         if (downcallFrame == null) {
             noDowncallFrameFunProfile.enter();
@@ -524,7 +527,8 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         }
 
         try {
-            return functionEvalNode.execute(downcallFrame, functionInfo);
+            Object res = functionEvalNode.execute(downcallFrame, functionInfo);
+            return updateRefCountNode.execute(res);
         } catch (RuntimeException e) {
             throw e;
         }
