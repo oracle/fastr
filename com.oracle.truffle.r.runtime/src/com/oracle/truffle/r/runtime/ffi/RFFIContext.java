@@ -201,7 +201,7 @@ public abstract class RFFIContext extends RFFI {
      *
      */
     @TruffleBoundary
-    public Object protectChild(Object parent, Object child, RFFIFactory.Type rffiType) {
+    public Object protectChild(Object parent, Object child, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         Set<Object> children = rffiContextState.protectedChildren.get(parent);
         if (children == null) {
             children = new HashSet<>();

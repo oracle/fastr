@@ -247,7 +247,6 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI.HandleUpCallExceptionNode;\n");
         w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
-        w.append("import com.oracle.truffle.r.runtime.ffi.RFFIFactory;\n");
         w.append("import com.oracle.truffle.api.TruffleLanguage.ContextReference;\n");
 
         if (needsUnwrapImport) {
@@ -261,16 +260,9 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("\n");
         w.append("final class " + callName + " implements RTruffleObject {\n");
         w.append('\n');
-        if (nodeClass == null) {
-            w.append("    private final UpCallsRFFI upCallsImpl;\n");
-            w.append('\n');
-        }
         w.append("    private final ForeignAccess access;\n");
         w.append("    " + callName + "(UpCallsRFFI upCallsImpl) {\n");
         w.append("        assert upCallsImpl != null;\n");
-        if (nodeClass == null) {
-            w.append("        this.upCallsImpl = upCallsImpl;\n");
-        }
         w.append("        this.access = ForeignAccess.createAccess(new " + callName + "Factory(upCallsImpl), null);\n");
         w.append("    }\n");
         w.append('\n');
@@ -407,7 +399,7 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("                    return 0; // void return type\n");
         } else {
             if (!returnKind.isPrimitive() && m.getAnnotationsByType(RFFICpointer.class).length == 0) {
-                w.append("                    if (upCallsImpl.getRFFIType() == RFFIFactory.Type.NFI) {\n");
+                w.append("                    if (upCallsImpl.getRFFIType() == com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type.NFI) {\n");
                 w.append("                       ctx.registerReferenceUsedInNative(resultRObj); \n");
                 w.append("                    }\n");
             }

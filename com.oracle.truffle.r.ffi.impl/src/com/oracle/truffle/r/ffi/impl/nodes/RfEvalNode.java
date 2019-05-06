@@ -58,8 +58,8 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.RCallNode.ExplicitArgs;
-import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -83,7 +83,6 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
@@ -165,6 +164,9 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         return RContext.getEngine().eval(expr, env, createCall(env));
     }
 
+    /**
+     * The representation of a function call.
+     */
     static final class FunctionInfo {
         final RFunction function;
         final RPairList argList;
@@ -256,6 +258,10 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     }
 
+    /**
+     * Creates a {@code FunctionInfo} instance for a recognized function call. The function can be
+     * represented either by a {@link RFunction function} object or by a {@link RSymbol symbol}.
+     */
     abstract static class FunctionInfoFactoryNode extends Node {
 
         protected static final int CACHE_SIZE = DSLConfig.getCacheSize(100);
@@ -314,6 +320,13 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     }
 
+    private static final String tryCatch = "tryCatch";
+    private static final String evalq = "evalq";
+
+    /**
+     * Extracts information about a function call in an expression. Currently, two situations are
+     * recognized: a simple function call and a function call wrapped in the try-catch envelope.
+     */
     abstract static class FunctionInfoNode extends Node {
 
         abstract FunctionInfo execute(RPairList expr, REnvironment env);
@@ -378,9 +391,10 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     }
 
-    private static final String tryCatch = "tryCatch";
-    private static final String evalq = "evalq";
-
+    /**
+     * The root node for the call target called by {@code FunctionEvalCallNode}. It evaluates the
+     * function call using {@code RCallBaseNode}.
+     */
     static final class FunctionEvalRootNode extends RootNode {
 
         @Child RCallBaseNode callNode;
@@ -407,6 +421,10 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     }
 
+    /**
+     * This is a helper intermediary node that is used by {@code FunctionEvalNode} to insert a new
+     * frame on the Truffle stack.
+     */
     static final class FunctionEvalCallNode extends Node {
 
         private final RFrameSlot argsIdentifier = RFrameSlot.createTemp(true);
@@ -425,6 +443,8 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
                 funFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), funIdentifier, FrameSlotKind.Object);
             }
             try {
+                // the two slots are used to pass the explicit args and the called function to the
+                // FunctionEvalRootNode
                 FrameSlotChangeMonitor.setObject(evalFrame, argsFrameSlot, new ExplicitArgs(args, explicitCaller, callerFrame));
                 FrameSlotChangeMonitor.setObject(evalFrame, funFrameSlot, function);
                 return directCallNode.call(evalFrame);
@@ -446,6 +466,9 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         }
     }
 
+    /**
+     * Evaluates the function call defined in {@code FunctionInfo} in the fast path.
+     */
     abstract static class FunctionEvalNode extends Node {
 
         protected static final int CACHE_SIZE = DSLConfig.getCacheSize(100);
@@ -502,6 +525,12 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     @Child private FunctionEvalNode functionEvalNode;
 
+    /**
+     * This specialization attempts to retrieve a function call from the expression and evaluate it
+     * in the fast path. Otherwise it falls back into the default slow path expression evaluation.
+     * It uses {@code FunctionInfoNode} to retrieve the function call from the expression and
+     * {@code FunctionEvalNode} to evaluate the function call in the fast path.
+     */
     @Specialization(guards = "expr.isLanguage()")
     Object handleLanguage(RPairList expr, Object envArg,
                     @Cached("create()") BranchProfile noDowncallFrameFunProfile,

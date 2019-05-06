@@ -118,9 +118,6 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         this.tag = RNull.instance;
     }
 
-    private static final String tryCatch = "tryCatch";
-    private static final String evalq = "evalq";
-
     /**
      * Normal pairlist with values for car, cdr, tag and type.
      */
