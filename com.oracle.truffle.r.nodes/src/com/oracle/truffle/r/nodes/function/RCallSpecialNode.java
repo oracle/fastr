@@ -102,7 +102,7 @@ abstract class ClassCheckNode extends RNode {
     }
 
     protected static boolean hasAttributes(RAttributeStorage storage) {
-        return storage.getAttributes() == null;
+        return storage.getAttributes() != null;
     }
 
     protected static boolean isAttributableStorage(Object obj) {
