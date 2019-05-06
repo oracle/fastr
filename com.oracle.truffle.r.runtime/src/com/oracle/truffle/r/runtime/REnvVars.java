@@ -24,11 +24,11 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -64,9 +64,10 @@ public final class REnvVars implements RContext.ContextState {
             envVars.put("R_DEFAULT_PACKAGES", defaultPackages);
         }
         // set the standard vars defined by R
-        checkRHome();
+        String home = rHome();
+        envVars.put(R_HOME, home);
         // Always read the system file
-        TruffleFile rHomeDir = context.getEnv().getTruffleFile(rHome);
+        TruffleFile rHomeDir = context.getEnv().getTruffleFile(home);
         safeReadEnvironFile(rHomeDir.resolve("etc").resolve("Renviron").getPath());
 
         String internalArgs = System.getenv("FASTR_INTERNAL_ARGS");
@@ -216,7 +217,7 @@ public final class REnvVars implements RContext.ContextState {
     /**
      * Cached value of {@code R_HOME}.
      */
-    private static String rHome;
+    private static AtomicReference<String> rHome = new AtomicReference<>();
 
     /**
      * Returns a file that serves to distinguish a FastR {@code R_HOME}.
@@ -233,35 +234,31 @@ public final class REnvVars implements RContext.ContextState {
      */
     @TruffleBoundary
     public static String rHome() {
-        if (rHome == null) {
-            rHome = System.getenv(R_HOME);
-            TruffleFile rHomePath;
-            if (rHome == null) {
-                rHomePath = getRHomePath();
-            } else {
-                rHomePath = RContext.getInstance().getEnv().getTruffleFile(rHome);
+        if (rHome.get() == null) {
+            RContext ctx = RContext.getInstance();
+            String home = System.getenv(R_HOME);
+            if (home == null) {
+                TruffleFile rHomePath = getRHomePath(ctx);
+                if (rHomePath == null) {
+                    throw RInternalError.shouldNotReachHere("Cannot find R home directory");
+                }
+                home = rHomePath.toString();
             }
-            if (!validateRHome(rHomePath, markerFile())) {
-                RSuicide.rSuicide("R_HOME is not set correctly");
-            }
-            rHome = rHomePath.toString();
+            rHome.set(home);
+            assert validateRHome(ctx.getEnv().getTruffleFile(home), markerFile());
         }
-        return rHome;
+        return rHome.get();
     }
-
-    private static final CodeSource codeSource = REnvVars.class.getProtectionDomain().getCodeSource();
 
     /**
      * In the case where {@code R_HOME} is not set, which should only occur when FastR is invoked
      * from a {@link org.graalvm.polyglot.Engine} created by another language, we try to locate the
-     * {@code R_HOME} dynamically by using the location of this class. The logic varies depending on
-     * whether this class was stored in a {@code .jar} file or in a {@code .class} file in a
-     * directory.
+     * {@code R_HOME} dynamically by using the home location reported by Truffle.
      *
      * @return either a valid {@code R_HOME} or {@code null}
      */
-    private static TruffleFile getRHomePath() {
-        TruffleFile rHomePath = RContext.getInstance().getEnv().getTruffleFile(codeSource.getLocation().getPath()).getParent();
+    private static TruffleFile getRHomePath(RContext ctx) {
+        TruffleFile rHomePath = ctx.getEnv().getTruffleFile(ctx.getLanguage().getRHome());
         String markerFile = markerFile();
         while (rHomePath != null) {
             if (validateRHome(rHomePath, markerFile)) {
@@ -299,19 +296,9 @@ public final class REnvVars implements RContext.ContextState {
         return false;
     }
 
-    private void checkRHome() {
-        String envRHome = envVars.get(R_HOME);
-        if (envRHome == null) {
-            envVars.put(R_HOME, rHome());
-        } else {
-            if (rHome == null) {
-                rHome = envRHome;
-            }
-        }
-    }
-
     public String put(String key, String value) {
-        // TODO need to set value for sub-processes
+        // TODO we set the value for sub-processes via ProcessBuilder, but native code will not see
+        // this environment variable. We need to set it at the system level
         return envVars.put(key, value);
     }
 
