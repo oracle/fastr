@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -51,11 +51,16 @@ endif
 
 # order matters due to inter-package dependencies
 ifdef FASTR_RELEASE
+ifdef FASTR_NO_RECOMMENDED
+GNUR_RECOMMENDED_PKGNAMES := codetools
+else
 GNUR_RECOMMENDED_PKGNAMES := codetools MASS boot class cluster lattice nnet spatial Matrix survival KernSmooth foreign nlme rpart
+endif
 else
 # codetools must always be installed because of S4
 GNUR_RECOMMENDED_PKGNAMES := codetools
-endif
+endif # FASTR_RELEASE
+
 GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME_BINARY)/src/library/Recommended/$(pkg).tgz)
 
 all: install.recommended
