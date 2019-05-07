@@ -93,6 +93,9 @@
 .jcall <- function(obj, returnSig="V", method, ..., evalArray=TRUE, 
 	evalString=TRUE, check=TRUE, interface="RcallMethod", 
 	simplify=FALSE, use.true.class = FALSE) {
+  # force arguments:
+  obj; returnSig; method;
+
   if (check) .jcheck()
   iaddr <- .env[[interface]]
   # TODO
@@ -135,7 +138,7 @@
           if(inherits(r, "externalptr")) {
               o <- attr(r, "external.object")
           }
-          clazzname <- attr(r, "external.classname")
+          clazzname <- attr(r, "external.classname", exact=T)
           if(is.null(clazzname)) {
               # returnSig is not primitive, but we might have an unboxed primitive value              
               # typicaly, this can happen when called from .jrcall (in cases like rJavaObject$someMethodReturningInt())
