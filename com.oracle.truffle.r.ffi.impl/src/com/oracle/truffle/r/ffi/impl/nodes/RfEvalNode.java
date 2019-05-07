@@ -106,7 +106,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     @TruffleBoundary
     private static RCaller createCall(REnvironment env) {
-        Frame frame = getCurrentRFrame();
+        Frame frame = getCurrentRFrameFastPath();
         if (frame == null) {
             // Is it necessary?
             // Warning: Utils.getActualCurrentFrame causes deopt
@@ -137,9 +137,8 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     }
 
     @Specialization
-    @TruffleBoundary
     Object handlePromise(RPromise expr, @SuppressWarnings("unused") RNull nulLEnv) {
-        return getPromiseHelper().visibleEvaluate(Utils.getActualCurrentFrame().materialize(), expr);
+        return getPromiseHelper().visibleEvaluate(getCurrentRFrame(), expr);
     }
 
     @Specialization
@@ -341,20 +340,19 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
             return funInfoFactory.execute(expr.car(), expr.cdr(), env);
         }
 
-        @Specialization(guards = "isTryCatchWrappedCall(expr)", limit = "1")
+        @Specialization(guards = "isTryCatchWrappedCall(expr)")
         FunctionInfo handleTryCatchWrappedCall(RPairList expr, @SuppressWarnings("unused") REnvironment env,
-                        @CachedLibrary("expr") RPairListLibrary plLib,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("create()") BranchProfile branchProfile1,
                         @Cached("create()") BranchProfile branchProfile2,
                         @Cached("create()") BranchProfile branchProfile3,
                         @Cached("create()") BranchProfile branchProfile4,
                         @Cached("create()") FunctionInfoFactoryNode funInfoFactory) {
-            Object p = plLib.car(expr);
             Object pp = plLib.cdr(expr);
             pp = plLib.car(pp);
             if (pp instanceof RPairList) {
                 branchProfile1.enter();
-                p = plLib.car(pp);
+                Object p = plLib.car(pp);
                 if (p instanceof RSymbol && evalq.equals(((RSymbol) p).getName())) {
                     branchProfile2.enter();
                     pp = plLib.cdr(pp);
@@ -482,7 +480,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         Object evalFastPath(Object downcallFrame, FunctionInfo functionInfo,
                         @SuppressWarnings("unused") @Cached("functionInfo.env.getFrame().getFrameDescriptor()") FrameDescriptor cachedDesc,
                         @Cached("new()") FunctionEvalCallNode callNode,
-                        @CachedLibrary("functionInfo.argList") RPairListLibrary plLib,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("create()") BranchProfile symbolArgProfile,
                         @Cached("create()") BranchProfile pairListArgProfile,
                         @Cached("create()") BranchProfile namedArgsProfile) {
@@ -498,10 +496,10 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
             return resultValue;
         }
 
-        @Specialization(limit = "1", replaces = "evalFastPath")
+        @Specialization(replaces = "evalFastPath")
         Object evalSlowPath(Object downcallFrame, FunctionInfo functionInfo,
                         @Cached("new()") SlowPathFunctionEvalCallNode slowPathCallNode,
-                        @CachedLibrary("functionInfo.argList") RPairListLibrary plLib,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("create()") BranchProfile symbolArgProfile,
                         @Cached("create()") BranchProfile pairListArgProfile,
                         @Cached("create()") BranchProfile namedArgsProfile) {
@@ -537,7 +535,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
                     @Cached("create()") BranchProfile nullFunProfile,
                     @Cached("create()") FunctionInfoNode funInfoNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
-        MaterializedFrame downcallFrame = getCurrentRFrame();
+        MaterializedFrame downcallFrame = getCurrentRFrameFastPath();
         if (downcallFrame == null) {
             noDowncallFrameFunProfile.enter();
             return handleLanguageDefault(expr, envArg);
@@ -563,9 +561,19 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         }
     }
 
-    private static MaterializedFrame getCurrentRFrame() {
+    private static MaterializedFrame getCurrentRFrameFastPath() {
         RFFIContext context = RContext.getInstance().getStateRFFI();
-        return context.rffiContextState.downcallFrameStack.isEmpty() ? null : context.rffiContextState.downcallFrameStack.get(context.rffiContextState.downcallFrameStack.size() - 1);
+        return context.rffiContextState.currentDowncallFrame;
+    }
+
+    @TruffleBoundary
+    private static MaterializedFrame getCurrentRFrameSlowPath() {
+        return Utils.getActualCurrentFrame().materialize();
+    }
+
+    private static MaterializedFrame getCurrentRFrame() {
+        MaterializedFrame frame = getCurrentRFrameFastPath();
+        return frame != null ? frame : getCurrentRFrameSlowPath();
     }
 
     @TruffleBoundary

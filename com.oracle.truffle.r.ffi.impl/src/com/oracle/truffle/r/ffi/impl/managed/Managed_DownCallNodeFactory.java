@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
             }
 
             @Override
-            protected long beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args) {
+            protected Object beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args) {
                 // Report unsupported functions at invocation time
                 if (function instanceof DummyFunctionObject) {
                     throw Managed_RFFIFactory.unsupported(((DummyFunctionObject) function).function.getCallName());
@@ -81,7 +81,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
             }
 
             @Override
-            protected void afterCall(long before, NativeFunction function, TruffleObject target, Object[] args) {
+            protected void afterCall(Object before, NativeFunction function, TruffleObject target, Object[] args) {
                 // nop
             }
         };

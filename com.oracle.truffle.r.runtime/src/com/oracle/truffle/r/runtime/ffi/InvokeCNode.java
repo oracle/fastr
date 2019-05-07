@@ -71,7 +71,7 @@ public abstract class InvokeCNode extends RBaseNode {
         Object[] preparedArgs = argsWrapperNode.execute(args.getArguments());
 
         RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-        long before = stateRFFI.beforeDowncall(frame, nativeCallInfo.dllInfo.handle.getRFFIType());
+        Object before = stateRFFI.beforeDowncall(frame, nativeCallInfo.dllInfo.handle.getRFFIType());
         try {
             execute(nativeCallInfo, preparedArgs);
             return RDataFactory.createList(argsUnwrapperNode.execute(preparedArgs), validateArgNames(preparedArgs.length, args.getSignature()));

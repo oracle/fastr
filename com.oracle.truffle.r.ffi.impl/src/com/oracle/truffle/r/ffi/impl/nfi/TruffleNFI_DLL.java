@@ -67,7 +67,7 @@ public class TruffleNFI_DLL implements DLLRFFI {
             // Do not call before/afterDowncall when loading libR to prevent the pushing/popping of
             // the callback array, which requires that the libR have already been loaded
             boolean notifyStateRFFI = !librffiPath.equals(path);
-            long before = notifyStateRFFI ? RContext.getInstance().getStateRFFI().beforeDowncall(null, RFFIFactory.Type.NFI) : 0;
+            Object before = notifyStateRFFI ? RContext.getInstance().getStateRFFI().beforeDowncall(null, RFFIFactory.Type.NFI) : 0;
             try {
                 String libName = DLL.libName(path);
                 Env env = RContext.getInstance().getEnv();

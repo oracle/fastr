@@ -278,7 +278,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             RContext context = RContext.getInstance();
             final Env env = context.getEnv();
             RFFIContext stateRFFI = context.getStateRFFI();
-            long before = stateRFFI.beforeDowncall(null, RFFIFactory.Type.LLVM);
+            Object before = stateRFFI.beforeDowncall(null, RFFIFactory.Type.LLVM);
 
             try {
                 LLVMArchive ar = getZipLLVMIR(path, new ZipFileUtilsProvider() {

@@ -25,6 +25,9 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RRuntime;
 
+/**
+ * This class enables that foreign objects be passed from R to the native code and back.
+ */
 public final class RForeignObjectWrapper extends RObject implements RTruffleObject {
 
     private final TruffleObject delegate;

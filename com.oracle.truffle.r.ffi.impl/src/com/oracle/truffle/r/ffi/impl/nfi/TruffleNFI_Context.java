@@ -377,19 +377,20 @@ public class TruffleNFI_Context extends RFFIContext {
     }
 
     @Override
-    public long beforeDowncall(VirtualFrame frame, RFFIFactory.Type rffiType) {
-        super.beforeDowncall(frame, RFFIFactory.Type.NFI);
+    public Object beforeDowncall(VirtualFrame frame, RFFIFactory.Type rffiType) {
+        Object tokenFromSuper = super.beforeDowncall(frame, RFFIFactory.Type.NFI);
         transientAllocations.push(new ArrayList<>());
         if (hasAccessLock) {
             acquireLock();
         }
-        return pushCallbacks();
+        return new Object[]{tokenFromSuper, pushCallbacks()};
     }
 
     @Override
-    public void afterDowncall(long beforeValue, RFFIFactory.Type rffiType) {
-        super.afterDowncall(beforeValue, rffiType);
-        popCallbacks(beforeValue);
+    public void afterDowncall(Object beforeValue, RFFIFactory.Type rffiType) {
+        Object[] tokens = (Object[]) beforeValue;
+        super.afterDowncall(tokens[0], rffiType);
+        popCallbacks((long) tokens[1]);
         for (Long ptr : transientAllocations.pop()) {
             UnsafeAdapter.UNSAFE.freeMemory(ptr);
         }

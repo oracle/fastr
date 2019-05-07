@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,7 +65,7 @@ public abstract class DownCallNodeFactory {
          * NFI where the array should be passed as Java array, not as Truffle Object.
          */
         public final Object call(Object... args) {
-            long before = -1;
+            Object before = -1;
             try {
                 if (message == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -94,7 +94,7 @@ public abstract class DownCallNodeFactory {
          * Allows to transform the arguments before the execute message is sent to the result of
          * {@link #getTarget(NativeFunction)}.
          */
-        protected abstract long beforeCall(NativeFunction nativeFunction, TruffleObject f, Object[] args);
+        protected abstract Object beforeCall(NativeFunction nativeFunction, TruffleObject f, Object[] args);
 
         /**
          * Allows to post-process the arguments after the execute message was sent to the result of
@@ -102,6 +102,6 @@ public abstract class DownCallNodeFactory {
          * {@link #beforeCall(NativeFunction, TruffleObject, Object[])} was not successfull, the
          * {@code before} parameter will have value {@code -1}.
          */
-        protected abstract void afterCall(long before, NativeFunction f, TruffleObject t, Object[] args);
+        protected abstract void afterCall(Object before, NativeFunction f, TruffleObject t, Object[] args);
     }
 }

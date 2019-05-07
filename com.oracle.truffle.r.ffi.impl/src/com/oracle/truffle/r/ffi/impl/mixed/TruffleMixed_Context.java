@@ -125,7 +125,7 @@ public final class TruffleMixed_Context extends RFFIContext {
     }
 
     @Override
-    public long beforeDowncall(VirtualFrame frame, Type rffiType) {
+    public Object beforeDowncall(VirtualFrame frame, Type rffiType) {
         Type actualRffiType = rffiType == null ? Type.LLVM : rffiType;
         assert rffiType != null;
         switch (rffiType) {
@@ -141,7 +141,7 @@ public final class TruffleMixed_Context extends RFFIContext {
     }
 
     @Override
-    public void afterDowncall(long before, Type rffiType) {
+    public void afterDowncall(Object before, Type rffiType) {
         switch (rffiType) {
             case LLVM:
                 llvmContext.afterDowncall(before, rffiType);

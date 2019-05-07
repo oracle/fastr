@@ -74,7 +74,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         public void execute(VirtualFrame frame, int seed) {
             init(NativeFunction.unif_init, null);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
+            Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
             try {
                 ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget, seed);
             } catch (InteropException ex) {
@@ -91,7 +91,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         public double execute(VirtualFrame frame) {
             init(NativeFunction.unif_rand, NativeFunction.read_pointer_double);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
+            Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
             try {
                 Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
                 return (double) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address);
@@ -109,7 +109,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         public int execute(VirtualFrame frame) {
             init(NativeFunction.unif_nseed, NativeFunction.read_pointer_int);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
+            Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
             try {
                 Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
                 return (int) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address);
@@ -127,7 +127,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         public void execute(VirtualFrame frame, int[] n) {
             init(NativeFunction.unif_seedloc, NativeFunction.read_array_int);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
+            Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
             try {
                 Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
                 for (int i = 0; i < n.length; i++) {

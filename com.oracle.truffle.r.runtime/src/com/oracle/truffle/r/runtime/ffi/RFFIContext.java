@@ -77,7 +77,7 @@ public abstract class RFFIContext extends RFFI {
          */
         public final ArrayList<RObject> protectStack = new ArrayList<>();
 
-        public final ArrayList<MaterializedFrame> downcallFrameStack = new ArrayList<>();
+        public MaterializedFrame currentDowncallFrame = null;
     }
 
     /**
@@ -146,10 +146,11 @@ public abstract class RFFIContext extends RFFI {
      *            truffle boundary
      * @param rffiType the type of the RFFI backend
      */
-    public long beforeDowncall(VirtualFrame frame, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+    public Object beforeDowncall(VirtualFrame frame, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         rffiContextState.callDepth++;
-        rffiContextState.downcallFrameStack.add(frame == null || !RArguments.isRFrame(frame) ? null : frame.materialize());
-        return 0;
+        MaterializedFrame savedDowncallFrame = rffiContextState.currentDowncallFrame;
+        rffiContextState.currentDowncallFrame = frame == null || !RArguments.isRFrame(frame) ? null : frame.materialize();
+        return savedDowncallFrame;
     }
 
     /**
@@ -157,8 +158,8 @@ public abstract class RFFIContext extends RFFI {
      *            {@link #beforeDowncall(VirtualFrame, com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}
      *            .
      */
-    public void afterDowncall(long before, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
-        rffiContextState.downcallFrameStack.remove(rffiContextState.downcallFrameStack.size() - 1);
+    public void afterDowncall(Object before, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+        rffiContextState.currentDowncallFrame = (MaterializedFrame) before;
         rffiContextState.callDepth--;
         if (rffiContextState.callDepth == 0) {
             cooperativeGc();
@@ -185,18 +186,6 @@ public abstract class RFFIContext extends RFFI {
      * @param parent
      * @param child
      * @param rffiType the type of the RFFI backend from which the child protection is requested
-     * @return the child
-     *
-     */
-    /**
-     * Establish a weak relationship between an object and its owner to prevent a premature garbage
-     * collecting of the object. See <code>com.oracle.truffle.r.ffi.processor.RFFIResultOwner</code>
-     * for more commentary.
-     *
-     * Note: It is meant to be applied only on certain return values from upcalls.
-     *
-     * @param parent
-     * @param child
      * @return the child
      *
      */

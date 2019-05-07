@@ -161,5 +161,4 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     public Object R_alloc(int n, int size) {
         throw RInternalError.unimplemented("R_alloc for LLVM");
     }
-
 }
