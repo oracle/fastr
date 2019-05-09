@@ -51,9 +51,19 @@ check <- function(env, name) {
         }
         TRUE
     }
+    envMustBeEmpty <- function() {
+        if (length(ls(env)) > 0) {
+            cat("Error:\n expected empty environment: ");
+            cat("   actual: "); print(ls(env)); cat("\n");
+            errorsCount <<- errorsCount + 1L
+            FALSE
+        }
+        TRUE
+    }
     res <- switch(name,
         do.call = checkvars("args", "envir", "quote", "what"),
         eval = checkvars("expr", "envir", "enclos"),
+        Rf_eval = envMustBeEmpty(),
         Recall = assert(length(ls(env)), 0L),
         checkvars(paste0(name, "var")))
     invisible(res)
@@ -790,6 +800,122 @@ x <- fst(4); check(x, "boo");
 x <- fst(5); check(x, "second");
 x <- fst(6); check(x, "fst");
 x <- fst(7); check(x, "global");
+endNoIterateFrames()
+
+# ===============================================
+# Rf_eval
+
+# -----------------
+# sys.frame and Rf_eval:
+
+foo <- function(foovar)    sys.frame(foovar)
+bar <- function(barvar)    foo(barvar)
+boo <- function(boovar)    api.Rf_eval(quote(bar(boovar)), environment())
+fst <- function(fstvar)    boo(fstvar)
+
+x <- fst(1); checkDeepest(x, "fst");
+
+beginNoIterateFrames()
+x <- fst(0); check(x, "global");
+x <- fst(1); check(x, "fst");
+x <- fst(2); check(x, "boo");
+x <- fst(3); check(x, "Rf_eval");
+x <- fst(4); check(x, "bar");
+x <- fst(5); check(x, "foo");
+# fst(6);  # not that many frames on the stack
+endNoIterateFrames()
+
+# -----------------
+# parent.frame and Rf_eval:
+
+foo <- function(foovar) parent.frame(foovar)
+bar <- function(barvar) foo(barvar)
+boo <- function(boovar) api.Rf_eval(quote(bar(boovar)), environment())
+fst <- function(fstvar) boo(fstvar)
+
+x <- fst(1); checkDeepest(x, "bar");
+
+beginNoIterateFrames()
+x <- fst(1); check(x, "bar");
+x <- fst(2); check(x, "boo");
+x <- fst(3); check(x, "fst");
+x <- fst(4); check(x, "global");
+endNoIterateFrames()
+
+# -----------------
+# sys.frame and Rf_eval and custom environment
+
+foo <- function(foovar) sys.frame(foovar)
+bar <- function(barvar) foo(barvar)
+boo <- function(boovar) { env$n <- boovar; api.Rf_eval(quote(bar(n)), env);}
+fst <- function(fstvar) boo(fstvar)
+
+x <- fst(1); checkDeepest(x, "fst");
+
+beginNoIterateFrames()
+x <- fst(0); check(x, "global");
+x <- fst(1); check(x, "fst");
+x <- fst(2); check(x, "boo");
+x <- fst(3); check(x, "Rf_eval");
+x <- fst(4); check(x, "bar");
+x <- fst(5); check(x, "foo");
+# fst(6);  # not that many frames on the stack
+endNoIterateFrames()
+
+# -----------------
+# parent.frame and Rf_eval and custom environment
+
+foo <- function(foovar) parent.frame(foovar)
+bar <- function(barvar) foo(barvar)
+boo <- function(boovar) { env$n <- boovar; api.Rf_eval(quote(bar(n)), env);}
+fst <- function(fstvar) boo(fstvar)
+
+x <- fst(1); checkDeepest(x, "bar");
+
+beginNoIterateFrames()
+x <- fst(1); check(x, "bar");
+x <- fst(2); check(x, "customenv");
+x <- fst(3); check(x, "global");
+endNoIterateFrames()
+
+# -----------------
+# sys.frame and Rf_eval and other function's environment
+
+foo <- function(foovar) sys.frame(foovar)
+bar <- function(barvar) foo(barvar)
+boo <- function(boovar) { env <- parent.frame(); check(env, "second"); api.Rf_eval(quote(bar(secondvar)), env);}
+second <- function(secondvar) boo(secondvar)
+fst <- function(fstvar) second(fstvar)
+
+x <- fst(1); checkDeepest(x, "fst");
+
+beginNoIterateFrames()
+x <- fst(0); check(x, "global");
+x <- fst(1); check(x, "fst");
+x <- fst(2); check(x, "second");
+x <- fst(3); check(x, "boo");
+x <- fst(4); check(x, "Rf_eval");
+x <- fst(5); check(x, "bar");
+x <- fst(6); check(x, "foo");
+# fst(7);  # not that many frames on the stack
+endNoIterateFrames()
+
+# -----------------
+# parent.frame and Rf_eval and other function's environment
+
+foo <- function(foovar) parent.frame(foovar)
+bar <- function(barvar) foo(barvar)
+boo <- function(boovar) { env <- parent.frame(); check(env, "second"); api.Rf_eval(quote(bar(secondvar)), env);}
+second <- function(secondvar) boo(secondvar)
+fst <- function(fstvar) second(fstvar)
+
+x <- fst(3); checkDeepest(x, "fst");
+
+beginNoIterateFrames()
+x <- fst(1); check(x, "bar");
+x <- fst(2); check(x, "second");
+x <- fst(3); check(x, "fst");
+x <- fst(4); check(x, "global");
 endNoIterateFrames()
 
 # ===============================================
