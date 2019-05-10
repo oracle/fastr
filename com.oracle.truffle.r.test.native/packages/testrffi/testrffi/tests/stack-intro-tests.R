@@ -805,6 +805,8 @@ endNoIterateFrames()
 # ===============================================
 # Rf_eval
 
+library(testrffi)
+
 # -----------------
 # sys.frame and Rf_eval:
 
