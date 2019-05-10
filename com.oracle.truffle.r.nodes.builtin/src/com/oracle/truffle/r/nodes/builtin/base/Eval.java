@@ -55,11 +55,15 @@ import com.oracle.truffle.r.nodes.builtin.base.EvalNodeGen.FunctionEvalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysFrame;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionEvalCallNode;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfo;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfoNode;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.SlowPathFunctionEvalCallNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -185,7 +189,6 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
     @Child private EvalEnvCast envCast = EvalEnvCastNodeGen.create();
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
-    @Child private FunctionEvalNode functionEvalNode;
 
     static {
         Casts casts = new Casts(Eval.class);
@@ -197,34 +200,22 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
     @Specialization(guards = "expr.isLanguage()")
     protected Object doEval(VirtualFrame frame, RPairList expr, Object envir, Object enclos,
                     @Cached("create()") BranchProfile nullFunProfile,
-                    @Cached("create()") FunctionInfoNode funInfoNode) {
+                    @Cached("create()") FunctionInfoNode funInfoNode,
+                    @Cached("create()") FunctionEvalNode functionEvalNode) {
         REnvironment environment = envCast.execute(frame, envir, enclos);
         RCaller call = RArguments.getCall(frame);
         RCaller rCaller = getCaller(frame, call.isValidCaller() ? () -> call.getSyntaxNode() : null);
 
-        FunctionInfo functionInfo = funInfoNode.execute(expr, environment);
-        if (functionInfo == null) {
-            nullFunProfile.enter();
-            return doEvalLanguageSlowPath(frame, expr, environment, rCaller);
-        }
-
-        if (functionEvalNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            functionEvalNode = insert(FunctionEvalNodeGen.create());
-        }
-
         try {
+            FunctionInfo functionInfo = funInfoNode.execute(expr, environment);
+            if (functionInfo == null) {
+                // if (true) {
+                nullFunProfile.enter();
+                return doEvalLanguageSlowPath(frame, expr, environment, rCaller);
+            }
+
             return functionEvalNode.execute(frame, functionInfo, rCaller);
-        } catch (RuntimeException e) {
-            throw e;
-        }
 
-    }
-
-    private Object doEvalLanguageSlowPath(VirtualFrame frame, RPairList expr, REnvironment environment, RCaller rCaller) {
-        try {
-            RFunction evalFun = getFunctionArgument();
-            return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
         } catch (ReturnException ret) {
             if (returnTopLevelProfile.profile(ret.getTarget() == rCaller)) {
                 return ret.getResult();
@@ -234,6 +225,12 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         } finally {
             visibility.executeAfterCall(frame, rCaller);
         }
+
+    }
+
+    private static Object doEvalLanguageSlowPath(VirtualFrame frame, RPairList expr, REnvironment environment, RCaller rCaller) {
+        RFunction evalFun = getFunctionArgument();
+        return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
     }
 
     @Specialization
@@ -352,41 +349,72 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
         private final RFunction evalFunction = getFunctionArgument();
 
+        static FunctionEvalNode create() {
+            return FunctionEvalNodeGen.create();
+        }
+
         abstract Object execute(VirtualFrame frame, FunctionInfo functionInfo, RCaller rCaller);
 
         @Specialization(limit = "CACHE_SIZE", guards = {"functionInfo.env.getFrame().getFrameDescriptor() == cachedDesc"})
-        Object evalFastPath(VirtualFrame frame, FunctionInfo functionInfo, RCaller caller,
+        Object evalFastPath(VirtualFrame frame, FunctionInfo functionInfo, RCaller evalCaller,
                         @SuppressWarnings("unused") @Cached("functionInfo.env.getFrame().getFrameDescriptor()") FrameDescriptor cachedDesc,
                         @Cached("new()") FunctionEvalCallNode callNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("create()") BranchProfile symbolArgProfile,
                         @Cached("create()") BranchProfile pairListArgProfile,
-                        @Cached("create()") BranchProfile namedArgsProfile) {
+                        @Cached("create()") GetVisibilityNode getVisibilityNode,
+                        @Cached("create()") SetVisibilityNode setVisibilityNode,
+                        @Cached("new()") PromiseHelperNode promiseHelper,
+                        @Cached("create()") ShareObjectNode sharedObjectNode) {
             MaterializedFrame materializedFrame = frame.materialize();
             MaterializedFrame promiseFrame = frameProfile.profile(functionInfo.env.getFrame(frameAccessProfile)).materialize();
-            MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, caller);
-            RArgsValuesAndNames args = functionInfo.prepareArguments(evalFrame, symbolArgProfile, pairListArgProfile, namedArgsProfile, plLib);
+            MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, evalCaller);
+            RArgsValuesAndNames args = functionInfo.prepareArguments(materializedFrame, evalFrame, symbolArgProfile, pairListArgProfile, plLib, promiseHelper, sharedObjectNode);
+
+            RCaller caller = createCaller(functionInfo, evalCaller, evalFrame, args);
 
             Object resultValue = callNode.execute(evalFrame, functionInfo.function, args, caller, materializedFrame);
-            // setVisibility ???
+
+            boolean isResultVisible = getVisibilityNode.execute(evalFrame);
+            setVisibilityNode.execute(frame, isResultVisible);
+
             return resultValue;
         }
 
         @Specialization(replaces = "evalFastPath")
-        Object evalSlowPath(VirtualFrame frame, FunctionInfo functionInfo, RCaller caller,
+        Object evalSlowPath(VirtualFrame frame, FunctionInfo functionInfo, RCaller evalCaller,
                         @Cached("new()") SlowPathFunctionEvalCallNode slowPathCallNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("create()") BranchProfile symbolArgProfile,
                         @Cached("create()") BranchProfile pairListArgProfile,
-                        @Cached("create()") BranchProfile namedArgsProfile) {
+                        @Cached("create()") GetVisibilityNode getVisibilityNode,
+                        @Cached("create()") SetVisibilityNode setVisibilityNode,
+                        @Cached("new()") PromiseHelperNode promiseHelper,
+                        @Cached("create()") ShareObjectNode sharedObjectNode) {
             MaterializedFrame materializedFrame = frame.materialize();
             MaterializedFrame promiseFrame = frameProfile.profile(functionInfo.env.getFrame(frameAccessProfile)).materialize();
-            MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, caller);
-            RArgsValuesAndNames args = functionInfo.prepareArguments(evalFrame, symbolArgProfile, pairListArgProfile, namedArgsProfile, plLib);
+            MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, evalCaller);
+            RArgsValuesAndNames args = functionInfo.prepareArguments(materializedFrame, evalFrame, symbolArgProfile, pairListArgProfile, plLib, promiseHelper, sharedObjectNode);
+
+            RCaller caller = createCaller(functionInfo, evalCaller, evalFrame, args);
 
             Object resultValue = slowPathCallNode.execute(evalFrame, materializedFrame, caller, functionInfo.function, args);
-            // setVisibility ???
+
+            boolean isResultVisible = getVisibilityNode.execute(evalFrame);
+            setVisibilityNode.execute(frame, isResultVisible);
+
             return resultValue;
+        }
+
+        private static RCaller createCaller(FunctionInfo functionInfo, RCaller evalCaller, MaterializedFrame evalFrame, RArgsValuesAndNames args) {
+            RCaller promiseCaller;
+            if (functionInfo.env == REnvironment.globalEnv(RContext.getInstance())) {
+                promiseCaller = RCaller.createForPromise(evalCaller, evalCaller);
+            } else {
+                promiseCaller = RCaller.createForPromise(evalCaller, functionInfo.env, evalCaller);
+            }
+
+            return RCallerHelper.getExplicitCaller(evalFrame, functionInfo.name, functionInfo.function, args, promiseCaller);
         }
 
         private MaterializedFrame getEvalFrame(VirtualFrame currentFrame, MaterializedFrame envFrame, RCaller caller) {

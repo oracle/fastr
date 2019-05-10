@@ -45,4 +45,6 @@ public abstract class RPairListLibrary extends Library {
 
     public abstract Object getTag(Object target);
 
+    public abstract Closure getClosure(Object target);
+
 }

@@ -849,6 +849,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         return closure != null;
     }
 
+    @Ignore
     public Closure getClosure(ClosureCache<RBaseNode> cache) {
         if (closure != null) {
             return closure;
@@ -867,8 +868,23 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         return result;
     }
 
+    @Ignore
     public Closure getClosure() {
-        return getClosure(null);
+        return RPairListLibrary.getUncached().getClosure(this);
+    }
+
+    @ExportMessage
+    static class GetClosure {
+
+        @Specialization(guards = "!pl.hasClosure()")
+        static Closure withoutClosure(RPairList pl) {
+            return pl.createClosure(null);
+        }
+
+        @Specialization(guards = "pl.hasClosure()")
+        static Closure withClosure(RPairList pl) {
+            return pl.closure;
+        }
     }
 
     @TruffleBoundary

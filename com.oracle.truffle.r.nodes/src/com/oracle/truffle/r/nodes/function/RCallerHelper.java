@@ -26,6 +26,8 @@ import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -33,6 +35,9 @@ import com.oracle.truffle.r.nodes.function.signature.VarArgsHelper;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.VirtualEvalFrame;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -158,6 +163,61 @@ public final class RCallerHelper {
         };
     }
 
+    public static RCaller getPromiseCallerForExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, REnvironment env) {
+        RCaller currentCall = RArguments.getCall(virtualFrame);
+        RCaller originalPromiseCaller = REnvironment.globalEnv() == env ? RCaller.topLevel : currentCall;
+        if (env instanceof REnvironment.Function) {
+            originalPromiseCaller = RArguments.getCall(envFrame);
+        } else if (env instanceof REnvironment.NewEnv) {
+            originalPromiseCaller = RArguments.getCall(envFrame);
+            if (!RCaller.isValidCaller(originalPromiseCaller)) {
+                RCaller validOrigCaller = tryToFindEnvCaller(envFrame);
+                if (validOrigCaller != null) {
+                    originalPromiseCaller = validOrigCaller;
+                }
+            }
+        }
+
+        // Note: it is OK that there is actually no frame for the "fakePromiseCaller" since
+        // artificial frames for promises are anyway ignored when walking the stack. Even in the
+        // case of real promises, there may be not actual frame created for their evaluation:
+        // see InlineCacheNode.
+        RCaller promiseCaller;
+        if (env == REnvironment.globalEnv(RContext.getInstance())) {
+            promiseCaller = RCaller.createForPromise(originalPromiseCaller, currentCall);
+        } else {
+            promiseCaller = RCaller.createForPromise(originalPromiseCaller, env, currentCall);
+        }
+        return promiseCaller;
+    }
+
+    /**
+     * Try to find the valid original caller stored in the original frame of a VirtualEvalFrame that
+     * is the same as envFrame. Note: It's a very slow operation due to the frame iteration.
+     */
+    @TruffleBoundary
+    public static RCaller tryToFindEnvCaller(MaterializedFrame envFrame) {
+        RCaller validOrigCaller = Utils.iterateRFrames(FrameAccess.READ_ONLY, (f) -> {
+            if (f instanceof VirtualEvalFrame && ((VirtualEvalFrame) f).getOriginalFrame() == envFrame) {
+                return RArguments.getCall(f);
+            } else {
+                return null;
+            }
+        });
+        return validOrigCaller;
+    }
+
+    public static RCaller getExplicitCaller(VirtualFrame virtualFrame, String funcName, RFunction func, RArgsValuesAndNames args, RCaller promiseParentCaller) {
+        RCaller currentCall = RArguments.getCall(virtualFrame);
+        Supplier<RSyntaxElement> callerSyntax;
+        if (funcName != null) {
+            callerSyntax = RCallerHelper.createFromArguments(funcName, args);
+        } else {
+            callerSyntax = RCallerHelper.createFromArguments(func, args);
+        }
+        return RCaller.create(currentCall.getDepth() + 1, promiseParentCaller, callerSyntax);
+    }
+
     /**
      * If the call leads to actual call via
      * {@link com.oracle.truffle.r.nodes.function.call.CallRFunctionNode}, which creates new frame
@@ -171,23 +231,9 @@ public final class RCallerHelper {
      */
     public static RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, REnvironment env, String funcName, RFunction func,
                     RArgsValuesAndNames args) {
-        Supplier<RSyntaxElement> callerSyntax;
-        if (funcName != null) {
-            callerSyntax = RCallerHelper.createFromArguments(funcName, args);
-        } else {
-            callerSyntax = RCallerHelper.createFromArguments(func, args);
-        }
-        RCaller originalPromiseCaller = RCaller.topLevel;
-        if (env instanceof REnvironment.Function) {
-            originalPromiseCaller = RArguments.getCall(envFrame);
-        }
-        RCaller currentCall = RArguments.getCall(virtualFrame);
-        // Note: it is OK that there is actually no frame for the "fakePromiseCaller" since
-        // artificial frames for promises are anyway ignored when walking the stack. Even in the
-        // case of real promises, there may be not actual frame created for their evaluation:
-        // see InlineCacheNode.
-        RCaller fakePromiseCaller = RCaller.createForPromise(originalPromiseCaller, env, currentCall);
-        return RCaller.create(currentCall.getDepth() + 1, fakePromiseCaller, callerSyntax);
+        RCaller fakePromiseCaller = getPromiseCallerForExplicitCaller(virtualFrame, envFrame, env);
+
+        return getExplicitCaller(virtualFrame, funcName, func, args, fakePromiseCaller);
     }
 
 }

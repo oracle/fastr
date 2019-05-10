@@ -441,11 +441,6 @@ x <- fst(0); assert(x, c(0L, 1L))
 # sys.frame and promise that does few more R functions calls before calling sys.frame
 # all the functions are linearized into the sys.frame output
 #
-# FASTR ERROR TODO:
-# here we have a problem that the optimized promise for "foovar" is evaluated
-# in "bar" instead of "foo" so then the "foo" (and it's frame) is not on the call-stack,
-# but the promise being evaluated should be able to access the environment of "foo"
-# NOTE: this is not working on master yet too
 
 foo <- function(foovar) foovar
 bar <- function(barvar) foo(barvar)
@@ -990,7 +985,7 @@ x <- fn(base::eval, 6); check(x[[1]], "fn")
 x <- fn(base::eval, 7); check(x[[1]], "global")
 
 # ===============================================
-# TODO: Recall
+# Recall
 
 # -----------------
 # sys.frame and Recall: like with eval

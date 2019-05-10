@@ -47,6 +47,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.RCallNode.ExplicitArgs;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodesFactory.FunctionInfoFactoryNodeGen;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodesFactory.FunctionInfoNodeGen;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -82,34 +83,37 @@ public class RFunctionEvalNodes {
      */
     public static final class FunctionInfo {
         public final RFunction function;
+        public final String name;
         public final RPairList argList;
         public final REnvironment env;
         public final boolean noArgs;
 
-        FunctionInfo(RFunction function, RPairList argList, REnvironment env) {
+        FunctionInfo(RFunction function, String name, RPairList argList, REnvironment env) {
             this.function = function;
+            this.name = name;
             this.argList = argList != null ? argList : RDataFactory.createPairList();
             this.env = env;
             this.noArgs = argList == null;
         }
 
-        public RArgsValuesAndNames prepareArguments(MaterializedFrame promiseEvalFrame, BranchProfile symbolArgProfile, BranchProfile pairListArgProfile, BranchProfile namedArgsProfile,
-                        RPairListLibrary plLib) {
+        public RArgsValuesAndNames prepareArguments(MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame, BranchProfile symbolArgProfile, BranchProfile pairListArgProfile,
+                        RPairListLibrary plLib, PromiseHelperNode promiseHelper, ShareObjectNode sharedObjectNode) {
             if (noArgs) {
                 return new RArgsValuesAndNames(new Object[0], ArgumentsSignature.empty(0));
             }
 
             int len = 0;
-            boolean named = false;
-            for (RPairList item : argList) {
-                named = named || !item.isNullTag();
+            for (@SuppressWarnings("unused")
+            RPairList item : argList) {
                 len++;
             }
+
             Object[] args = new Object[len];
-            String[] names = named ? new String[len] : null;
+            Object[] names = new Object[len];
             int i = 0;
             RBuiltinDescriptor rBuiltin = function.getRBuiltin();
             boolean isFieldAccess = rBuiltin != null ? rBuiltin.isFieldAccess() : false;
+            RArgsValuesAndNames varArgs = null;
             for (RPairList plt : argList) {
                 Object a = plLib.car(plt);
 
@@ -123,48 +127,107 @@ public class RFunctionEvalNodes {
                         isFieldAccess = false;
                     } else {
                         RSyntaxNode lookupSyntaxNode = createLookupNode(a);
-                        Closure closure = Closure.createPromiseClosure(wrapSymbolArgNode(i, lookupSyntaxNode));
-                        args[i] = RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
+                        Closure closure = Closure.createPromiseClosure(wrapArgNode(i, lookupSyntaxNode));
+                        if (ArgumentsSignature.VARARG_NAME.equals(symName)) {
+                            if (varArgs == null) {
+                                RPromise promise = RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
+                                varArgs = (RArgsValuesAndNames) promiseHelper.evaluate(currentFrame, promise);
+                            }
+                            args[i] = varArgs;
+                        } else {
+                            args[i] = RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
+                        }
+
                     }
 
                 } else if (a instanceof RPairList) {
                     pairListArgProfile.enter();
                     RPairList aPL = (RPairList) a;
                     aPL = RDataFactory.createPairList(plLib.car(aPL), plLib.cdr(aPL), plLib.getTag(aPL), SEXPTYPE.LANGSXP);
-                    args[i] = createPromise(promiseEvalFrame, aPL, ((RAttributable) a).getAttributes());
+                    args[i] = createPromise(promiseEvalFrame, aPL, ((RAttributable) a).getAttributes(), i);
                 } else {
-                    args[i] = a;
+                    args[i] = sharedObjectNode.execute(a);
                 }
 
-                if (named) {
-                    namedArgsProfile.enter();
-                    Object ptag = plLib.getTag(plt);
-                    if (RPairList.isNull(ptag)) {
-                        names[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
-                    } else if (ptag instanceof RSymbol) {
-                        names[i] = ((RSymbol) ptag).getName();
-                    } else {
-                        names[i] = RRuntime.asString(ptag);
-                        assert names[i] != null : "unexpected type of tag in RPairList";
-                    }
+                Object ptag = plLib.getTag(plt);
+                if (args[i] == varArgs && varArgs != null) {
+                    names[i] = varArgs.getSignature();
+                } else if (RPairList.isNull(ptag)) {
+                    names[i] = null;
+                } else if (ptag instanceof RSymbol) {
+                    names[i] = ((RSymbol) ptag).getName();
+                } else {
+                    names[i] = RRuntime.asString(ptag);
+                    assert names[i] != null : "unexpected type of tag in RPairList";
                 }
                 i++;
             }
 
-            return new RArgsValuesAndNames(args, named ? ArgumentsSignature.get(names) : ArgumentsSignature.empty(len));
+            Object[] flattenedArgs = flattenArgs(args);
+            return new RArgsValuesAndNames(flattenedArgs, ArgumentsSignature.get(flattenNames(names, flattenedArgs.length)));
         }
 
         @TruffleBoundary
-        private static RNode wrapSymbolArgNode(int i, RSyntaxNode lookupSyntaxNode) {
-            return WrapArgumentNode.create(lookupSyntaxNode.asRNode(), i);
+        private static Closure createClosure(int i, RPairList aPL) {
+            RSyntaxNode syntaxNode = aPL.createNode();
+            Closure closure = Closure.createPromiseClosure(wrapArgNode(i, syntaxNode));
+            return closure;
+        }
+
+        private static Object[] flattenArgs(Object[] args) {
+            int len = 0;
+            for (Object arg : args) {
+                if (arg instanceof RArgsValuesAndNames) {
+                    len += ((RArgsValuesAndNames) arg).getLength();
+                } else {
+                    len++;
+                }
+            }
+
+            Object[] flattened = new Object[len];
+            int i = 0;
+            for (Object arg : args) {
+                if (arg instanceof RArgsValuesAndNames) {
+                    RArgsValuesAndNames varArgs = (RArgsValuesAndNames) arg;
+                    for (Object varArg : varArgs.getArguments()) {
+                        flattened[i++] = varArg;
+                    }
+                } else {
+                    flattened[i++] = arg;
+                }
+            }
+
+            return flattened;
+        }
+
+        private static String[] flattenNames(Object[] names, int len) {
+            String[] flattened = new String[len];
+            int i = 0;
+            for (Object name : names) {
+                if (name instanceof ArgumentsSignature) {
+                    ArgumentsSignature varArgSig = (ArgumentsSignature) name;
+                    for (int j = 0; j < varArgSig.getLength(); j++) {
+                        flattened[i++] = varArgSig.getName(j);
+                    }
+                } else {
+                    flattened[i++] = (String) name;
+                }
+            }
+
+            return flattened;
         }
 
         @TruffleBoundary
-        private static RPromise createPromise(MaterializedFrame promiseEvalFrame, RPairList aPL, DynamicObject attributes) {
+        private static RNode wrapArgNode(int i, RSyntaxNode syntaxNode) {
+            return WrapArgumentNode.create(syntaxNode.asRNode(), i);
+        }
+
+        @TruffleBoundary
+        private static RPromise createPromise(MaterializedFrame promiseEvalFrame, RPairList aPL, DynamicObject attributes, int i) {
             if (attributes != null) {
                 RAttributable.copyAttributes(aPL, attributes);
             }
-            Closure closure = aPL.getClosure();
+            Closure closure = createClosure(i, aPL);
             return RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
         }
 
@@ -200,11 +263,12 @@ public class RFunctionEvalNodes {
                         @Cached("createClassProfile()") ValueProfile frameAccessProfile,
                         @Cached("create()") BranchProfile ignoredProfile) {
             Object fun = readFunNode.execute(frameProfile.profile(env.getFrame(frameAccessProfile)));
-            if ("{".equals(funSym.getName()) || "if".equals(funSym.getName())) {
+            if (!(fun instanceof RFunction) || ((RFunction) fun).isBuiltin()) {
+                // if (true) {
                 ignoredProfile.enter();
-                return null; // TODO: Try to handle the block and "if" too
+                return null; // TODO: Try to handle builtins too
             }
-            return new FunctionInfo((RFunction) fun, argList, env);
+            return new FunctionInfo((RFunction) fun, funSym.getName(), argList, env);
         }
 
         @Specialization(replaces = "createFunctionInfoFromSymbolCached")
@@ -213,21 +277,22 @@ public class RFunctionEvalNodes {
                         @Cached("createClassProfile()") ValueProfile frameAccessProfile,
                         @Cached("create()") BranchProfile ignoredProfile) {
             Object fun = ReadVariableNode.lookupFunction(funSym.getName(), frameProfile.profile(env.getFrame(frameAccessProfile)));
-            if ("{".equals(funSym.getName()) || "if".equals(funSym.getName())) {
+            if (!(fun instanceof RFunction) || ((RFunction) fun).isBuiltin()) {
+                // if (true) {
                 ignoredProfile.enter();
-                return null; // TODO: Try to handle the block and "if" too
+                return null; // TODO: Try to handle builtins too
             }
-            return new FunctionInfo((RFunction) fun, argList, env);
+            return new FunctionInfo((RFunction) fun, funSym.getName(), argList, env);
         }
 
         @Specialization
         FunctionInfo createFunctionInfo(RFunction fun, @SuppressWarnings("unused") RNull argList, REnvironment env) {
-            return new FunctionInfo(fun, null, env);
+            return new FunctionInfo(fun, fun.getName(), null, env);
         }
 
         @Specialization
         FunctionInfo createFunctionInfo(RFunction fun, RPairList argList, REnvironment env) {
-            return new FunctionInfo(fun, argList, env);
+            return new FunctionInfo(fun, fun.getName(), argList, env);
         }
 
         @SuppressWarnings("unused")
@@ -250,13 +315,14 @@ public class RFunctionEvalNodes {
             return FunctionInfoNodeGen.create();
         }
 
-        @Specialization(guards = "isSimpleCall(expr)")
+        @Specialization(guards = "isSimpleCall(expr, plLib)")
         FunctionInfo handleSimpleCall(RPairList expr, REnvironment env,
-                        @Cached("create()") FunctionInfoFactoryNode funInfoFactory) {
-            return funInfoFactory.execute(expr.car(), expr.cdr(), env);
+                        @Cached("create()") FunctionInfoFactoryNode funInfoFactory,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+            return funInfoFactory.execute(plLib.car(expr), plLib.cdr(expr), env);
         }
 
-        @Specialization(guards = "isTryCatchWrappedCall(expr)")
+        @Specialization(guards = "isTryCatchWrappedCall(expr, plLib)")
         FunctionInfo handleTryCatchWrappedCall(RPairList expr, @SuppressWarnings("unused") REnvironment env,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("create()") BranchProfile branchProfile1,
@@ -294,12 +360,13 @@ public class RFunctionEvalNodes {
             return null;
         }
 
-        boolean isSimpleCall(RPairList expr) {
-            return expr.car() instanceof RFunction;
+        boolean isSimpleCall(RPairList expr, RPairListLibrary plLib) {
+            Object fn = plLib.car(expr);
+            return fn instanceof RFunction || (fn instanceof RSymbol && !TRYCATCH.equals(((RSymbol) fn).getName()));
         }
 
-        boolean isTryCatchWrappedCall(RPairList expr) {
-            Object p = expr.car();
+        boolean isTryCatchWrappedCall(RPairList expr, RPairListLibrary plLib) {
+            Object p = plLib.car(expr);
             return p instanceof RSymbol && TRYCATCH.equals(((RSymbol) p).getName());
         }
 

@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.ATTRIBNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.CopyMostAttribNodeGen;
@@ -61,6 +62,7 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -192,8 +194,9 @@ public final class AttributesAccessNodes {
     public abstract static class TAG extends FFIUpCallNode.Arg1 {
 
         @Specialization
-        public Object doPairlist(RPairList obj) {
-            return obj.getTag();
+        public Object doPairlist(RPairList obj,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+            return plLib.getTag(obj);
         }
 
         @Specialization
@@ -276,10 +279,11 @@ public final class AttributesAccessNodes {
 
         @Specialization
         protected Object doIt(RSharingAttributeStorage target, RPairList attributes,
-                        @Cached("create()") SetAttributeNode setAttribNode) {
+                        @Cached("create()") SetAttributeNode setAttribNode,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             clearAttrs(target);
             for (RPairList attr : attributes) {
-                Object tag = attr.getTag();
+                Object tag = plLib.getTag(attr);
                 if (!(tag instanceof RSymbol)) {
                     CompilerDirectives.transferToInterpreter();
                     // GNUR seems to set the attr name to NULL and fails when printing
@@ -287,7 +291,7 @@ public final class AttributesAccessNodes {
                     RError.warning(NO_CALLER, Message.NO_TAG_IN_SET_ATTRIB, Utils.getTypeName(tag));
                     continue;
                 }
-                setAttribNode.execute(target, ((RSymbol) tag).getName(), attr.car());
+                setAttribNode.execute(target, ((RSymbol) tag).getName(), plLib.car(attr));
             }
             return RNull.instance;
         }

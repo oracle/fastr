@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -47,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -189,10 +191,11 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @Specialization(guards = {"recursive", "!list.isLanguage()"})
     protected int doPairListRecursive(RPairList list, boolean recursive,
-                    @Cached("createRecursive()") PrecedenceNode precedenceNode) {
+                    @Cached("createRecursive()") PrecedenceNode precedenceNode,
+                    @CachedLibrary(limit = "1") RPairListLibrary plLib) {
         int precedence = -1;
         for (RPairList item : list) {
-            precedence = Math.max(precedence, precedenceNode.executeInteger(item.car(), recursive));
+            precedence = Math.max(precedence, precedenceNode.executeInteger(plLib.car(item), recursive));
         }
         return precedence;
     }
