@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -388,57 +388,5 @@ public abstract class RBaseNode extends Node {
     public final RError error(RError.Message message, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6) {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(getErrorContext(), message, arg1, arg2, arg3, arg4, arg5, arg6);
-    }
-
-    @CompilationFinal boolean hasSeenWarning;
-
-    /**
-     * Raises the given warning with the error context determined by {@link #getErrorContext()}.
-     * This function is profiled so that it will only use a real call if a warning was issued from
-     * this node before.
-     */
-    public final void warning(Message msg) {
-        warning((RBaseNode) null, msg);
-    }
-
-    public final void warning(RBaseNode ctx, Message msg) {
-        if (!hasSeenWarning) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            hasSeenWarning = true;
-        }
-        RError.warning(ctx != null ? ctx : getErrorContext(), msg);
-    }
-
-    /**
-     * @see #warning(Message)
-     */
-    public final void warning(Message msg, Object arg1) {
-        if (!hasSeenWarning) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            hasSeenWarning = true;
-        }
-        RError.warning(getErrorContext(), msg, arg1);
-    }
-
-    /**
-     * @see #warning(Message)
-     */
-    public final void warning(Message msg, Object arg1, Object arg2) {
-        if (!hasSeenWarning) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            hasSeenWarning = true;
-        }
-        RError.warning(getErrorContext(), msg, arg1, arg2);
-    }
-
-    /**
-     * @see #warning(Message)
-     */
-    public final void warning(Message msg, Object arg1, Object arg2, Object arg3) {
-        if (!hasSeenWarning) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            hasSeenWarning = true;
-        }
-        RError.warning(getErrorContext(), msg, arg1, arg2, arg3);
     }
 }

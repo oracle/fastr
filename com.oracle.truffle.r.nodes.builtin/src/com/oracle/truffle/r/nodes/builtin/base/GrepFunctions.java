@@ -61,7 +61,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -129,7 +129,7 @@ public class GrepFunctions {
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public static class CommonCodeNode extends RBaseNode {
+    public static class CommonCodeNode extends RBaseNodeWithWarnings {
         @Child protected PCRERFFI.MaketablesNode maketablesNode = RFFIFactory.getPCRERFFI().createMaketablesNode();
         @Child protected PCRERFFI.CompileNode compileNode = RFFIFactory.getPCRERFFI().createCompileNode();
 

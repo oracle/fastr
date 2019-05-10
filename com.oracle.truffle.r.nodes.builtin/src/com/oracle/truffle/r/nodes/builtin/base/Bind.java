@@ -82,11 +82,11 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ReportPolymorphism
-public abstract class Bind extends RBaseNode {
+public abstract class Bind extends RBaseNodeWithWarnings {
 
     protected enum BindType {
         rbind,

@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -63,7 +64,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 @ImportStatic({RRuntime.class, DSLConfig.class})
 @TypeSystemReference(RTypes.class)
-public abstract class UnaryArithmeticReduceNode extends RBaseNode {
+public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
 
     public abstract Object executeReduce(Object value, boolean naRm, boolean finite);
 

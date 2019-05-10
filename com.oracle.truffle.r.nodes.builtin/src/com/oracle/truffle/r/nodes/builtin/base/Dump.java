@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 
 @RBuiltin(name = "dump", visibility = OFF, kind = INTERNAL, parameterNames = {"list", "file", "envir", "opts", "evaluate"}, behavior = IO)
 public abstract class Dump extends RBuiltinNode.Arg5 {
@@ -112,7 +112,7 @@ public abstract class Dump extends RBuiltinNode.Arg5 {
         return evaluate ? opts : opts | RDeparse.DELAYPROMISES;
     }
 
-    private static final class Helper extends RBaseNode {
+    private static final class Helper extends RBaseNodeWithWarnings {
 
         @Child private PromiseHelperNode promiseHelper;
 

@@ -57,8 +57,9 @@ import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignTypeCheck;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 
-abstract class AccessForeignObjectNode extends RBaseNode {
+abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
 
     @ImportStatic({RRuntime.class, Message.class})
     protected abstract static class ReadElementsNode extends AccessForeignObjectNode {

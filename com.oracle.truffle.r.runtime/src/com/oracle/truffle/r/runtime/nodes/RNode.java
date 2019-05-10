@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RTypesGen;
 import com.oracle.truffle.r.runtime.nodes.instrumentation.RNodeWrapper;
 
 @TypeSystemReference(RTypes.class)
-public abstract class RNode extends RBaseNode implements RInstrumentableNode {
+public abstract class RNode extends RBaseNodeWithWarnings implements RInstrumentableNode {
 
     @Override
     public boolean isInstrumentable() {
