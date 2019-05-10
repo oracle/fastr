@@ -23,11 +23,9 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
@@ -45,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
+import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNodeGen;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
@@ -149,9 +147,8 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     protected Object setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
-        Node executeNode = Message.EXECUTE.createNode();
         try {
-            return FFIUnwrapNode.unwrap(ForeignAccess.sendExecute(executeNode, setSymbolHandle, dllInfo, nstOrd, routines, index));
+            return FFIUnwrapNodeGen.getUncached().execute(InteropLibrary.getFactory().getUncached().execute(setSymbolHandle, dllInfo, nstOrd, routines, index));
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }

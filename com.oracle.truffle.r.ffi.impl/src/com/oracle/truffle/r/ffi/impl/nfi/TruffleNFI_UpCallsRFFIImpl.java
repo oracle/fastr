@@ -25,15 +25,14 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.runtime.RError;
@@ -50,7 +49,6 @@ import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
-    private final Node asPointer = Message.AS_POINTER.createNode();
     private AtomicReference<CallTarget> setSymbolCallTarget = new AtomicReference<>();
 
     @Override
@@ -65,7 +63,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         // TODO: handle encoding properly
         long address;
         try {
-            address = ForeignAccess.sendAsPointer(asPointer, (TruffleObject) bytes);
+            address = InteropLibrary.getFactory().getUncached().asPointer(bytes);
         } catch (UnsupportedMessageException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
@@ -92,27 +90,35 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     @Override
     @TruffleBoundary
     protected DotSymbol setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
-        setSymbolCallTarget.compareAndSet(null, Truffle.getRuntime().createCallTarget(new RootNode(null) {
-            @Child private Node executeNode = Message.EXECUTE.createNode();
-            @Child private FFIUnwrapNode unwrapNode = FFIUnwrapNode.create();
-
-            @Override
-            public Object execute(VirtualFrame frame) {
-                try {
-                    TruffleObject setSymFun = lookupSetSymbol();
-                    Object result = ForeignAccess.sendExecute(executeNode, setSymFun, frame.getArguments());
-                    return unwrapNode.execute(result);
-                } catch (InteropException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
-                }
-            }
-
-            @TruffleBoundary
-            private TruffleObject lookupSetSymbol() {
-                return TruffleNFI_Context.getInstance().lookupNativeFunction(NativeFunction.Rdynload_setSymbol);
-            }
-        }));
+        setSymbolCallTarget.compareAndSet(null, Truffle.getRuntime().createCallTarget(new SetSymbolRootNode()));
         return (DotSymbol) setSymbolCallTarget.get().call(dllInfo, nstOrd, routines, index);
+    }
+
+    private class SetSymbolRootNode extends RootNode {
+        @CompilationFinal TruffleObject setSymFun;
+        @Child private InteropLibrary interop;
+        @Child private FFIUnwrapNode unwrapNode = FFIUnwrapNode.create();
+
+        SetSymbolRootNode() {
+            super(null);
+            setSymFun = lookupSetSymbol();
+            interop = InteropLibrary.getFactory().create(setSymFun);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            try {
+                Object result = interop.execute(setSymFun, frame.getArguments());
+                return unwrapNode.execute(result);
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
+            }
+        }
+    }
+
+    @TruffleBoundary
+    private static TruffleObject lookupSetSymbol() {
+        return TruffleNFI_Context.getInstance().lookupNativeFunction(NativeFunction.Rdynload_setSymbol);
     }
 
     @Override

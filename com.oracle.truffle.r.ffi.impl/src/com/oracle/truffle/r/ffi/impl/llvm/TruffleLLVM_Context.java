@@ -26,12 +26,10 @@ import java.nio.file.FileSystems;
 import java.util.EnumMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.ParsedLLVM_IR;
@@ -152,10 +150,9 @@ public final class TruffleLLVM_Context extends RFFIContext {
                 lookupObjects = getLookupObjects(dllInfo);
             }
             TruffleObject target = null;
-            final Node lookupNode = Message.READ.createNode();
             for (int i = 0; i < lookupObjects.length; i++) {
                 try {
-                    target = (TruffleObject) ForeignAccess.sendRead(lookupNode, lookupObjects[i], function.getCallName());
+                    target = (TruffleObject) InteropLibrary.getFactory().getUncached().readMember(lookupObjects[i], function.getCallName());
                     break;
                 } catch (UnknownIdentifierException e) {
                     continue;

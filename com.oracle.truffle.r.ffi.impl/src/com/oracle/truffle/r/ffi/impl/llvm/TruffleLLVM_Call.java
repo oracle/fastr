@@ -25,14 +25,13 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_CallFactory.ToNativeNodeGen;
@@ -41,6 +40,7 @@ import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.ffi.impl.llvm.upcalls.BytesToNativeCharArrayCall;
 import com.oracle.truffle.r.ffi.impl.llvm.upcalls.CharSXPToNativeArrayCall;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
@@ -105,10 +105,9 @@ public final class TruffleLLVM_Call implements CallRFFI {
 
                 LLVM_Handle rdllInfo = (LLVM_Handle) DLL.getRdllInfo().handle;
                 SymbolHandle setClbkAddrSymbolHandle = new SymbolHandle(rdllInfo.parsedIRs[0].lookup("Rinternals_setCallbacksAddress"));
-                Node setClbkAddrExecuteNode = Message.EXECUTE.createNode();
                 setCallbacksAddress = setClbkAddrSymbolHandle.asTruffleObject();
                 // Initialize the callbacks global variable
-                ForeignAccess.sendExecute(setClbkAddrExecuteNode, setCallbacksAddress, context.getEnv().asGuestValue(new TruffleObject[0]));
+                InteropLibrary.getFactory().getUncached().execute(setCallbacksAddress, context.getEnv().asGuestValue(new TruffleObject[0]));
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             }
@@ -140,7 +139,6 @@ public final class TruffleLLVM_Call implements CallRFFI {
                 throw RInternalError.shouldNotReachHere(e);
             }
         }
-        Node executeNode = Message.EXECUTE.createNode();
         RFFIVariables[] variables = RFFIVariables.initialize(context);
         boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
         try {
@@ -152,11 +150,11 @@ public final class TruffleLLVM_Call implements CallRFFI {
                 }
                 try {
                     if (value instanceof Double) {
-                        ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
+                        InteropLibrary.getFactory().getUncached().execute(INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
                     } else if (value instanceof Integer) {
-                        ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
+                        InteropLibrary.getFactory().getUncached().execute(INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
                     } else if (value instanceof TruffleObject) {
-                        ForeignAccess.sendExecute(executeNode, INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, value);
+                        InteropLibrary.getFactory().getUncached().execute(INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, value);
                     }
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
@@ -207,7 +205,6 @@ public final class TruffleLLVM_Call implements CallRFFI {
         }
     }
 
-    @ImportStatic({Message.class})
     abstract static class TruffleLLVM_InvokeCallNode extends Node implements InvokeCallNode {
 
         @Child private FFIUnwrapNode unwrap;
@@ -217,7 +214,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
 
         protected TruffleLLVM_InvokeCallNode(boolean isVoid) {
             this.isVoid = isVoid;
-            this.unwrap = isVoid ? null : new FFIUnwrapNode();
+            this.unwrap = isVoid ? null : FFIUnwrapNode.create();
         }
 
         protected static ToNativeNode[] createConvertNodes(int length) {
@@ -240,22 +237,23 @@ public final class TruffleLLVM_Call implements CallRFFI {
         }
 
         @Specialization(guards = {"cachedNativeCallInfo.name.equals(nativeCallInfo.name)", "args.length == cachedArgCount"})
-        protected Object invokeCallCached(NativeCallInfo nativeCallInfo, Object[] args,
+        protected Object invokeCallCached(@SuppressWarnings("unused") NativeCallInfo nativeCallInfo, Object[] args,
                         @SuppressWarnings("unused") @Cached("nativeCallInfo") NativeCallInfo cachedNativeCallInfo,
                         @SuppressWarnings("unused") @Cached("argCount(args)") int cachedArgCount,
-                        @Cached("createMessageNode()") Node cachedMessageNode,
-                        @Cached("createConvertNodes(cachedArgCount)") ToNativeNode[] convert) {
-            return doInvoke(cachedMessageNode, nativeCallInfo, args, convert);
+                        @Cached("createConvertNodes(cachedArgCount)") ToNativeNode[] convert,
+                        @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject truffleObject,
+                        @CachedLibrary("truffleObject") InteropLibrary interop) {
+            return doInvoke(interop, truffleObject, args, convert);
         }
 
         @Specialization(replaces = "invokeCallCached")
         @TruffleBoundary
         protected Object invokeCallNormal(NativeCallInfo nativeCallInfo, Object[] args) {
-            return doInvoke(Message.EXECUTE.createNode(), nativeCallInfo, args, null);
+            return doInvoke(InteropLibrary.getFactory().getUncached(), nativeCallInfo.address.asTruffleObject(), args, null);
         }
 
         @ExplodeLoop
-        private Object doInvoke(Node messageNode, NativeCallInfo nativeCallInfo, Object[] args, ToNativeNode[] convert) {
+        private Object doInvoke(InteropLibrary interop, TruffleObject truffleObject, Object[] args, ToNativeNode[] convert) {
             boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
             try {
                 if (convert != null) {
@@ -263,7 +261,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
                         args[i] = convert[i].execute(args[i]);
                     }
                 }
-                Object result = ForeignAccess.sendExecute(messageNode, nativeCallInfo.address.asTruffleObject(), args);
+                Object result = interop.execute(truffleObject, args);
                 if (!isVoid) {
                     result = unwrap.execute(result);
                 }
@@ -285,10 +283,6 @@ public final class TruffleLLVM_Call implements CallRFFI {
 
         public int argCount(Object[] args) {
             return args.length;
-        }
-
-        public Node createMessageNode() {
-            return Message.EXECUTE.createNode();
         }
     }
 
@@ -322,11 +316,11 @@ public final class TruffleLLVM_Call implements CallRFFI {
     }
 
     public static final class PushCallbacksNode extends Node {
-        @Child private Node setCallbacksNode = Message.EXECUTE.createNode();
+        @Child private InteropLibrary interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
 
         public void execute(TruffleObject setCallbacksAddress, TruffleObject callbacks) {
             try {
-                ForeignAccess.sendExecute(setCallbacksNode, setCallbacksAddress, callbacks);
+                interop.execute(setCallbacksAddress, callbacks);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,12 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -44,19 +43,6 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
  * Direct access to native {@code dlopen} for libraries for which no LLVM code is available.
  */
 class TruffleLLVM_NativeDLL {
-    enum Function {
-        dlopen,
-        dlclose;
-
-        private final Node executeNode;
-        private final String callName;
-
-        Function() {
-            executeNode = Message.EXECUTE.createNode();
-            callName = "call_" + name();
-        }
-    }
-
     public interface ErrorCallback {
         void setResult(String errorMessage);
 
@@ -103,16 +89,19 @@ class TruffleLLVM_NativeDLL {
     }
 
     static class TruffleLLVM_NativeDLOpen extends Node {
-        @CompilationFinal private SymbolHandle symbolHandle;
+        @Child private InteropLibrary interop;
+        @CompilationFinal private TruffleObject symbolHandleTO;
+
+        TruffleLLVM_NativeDLOpen() {
+            SymbolHandle symbolHandle = DLL.findSymbol("call_dlopen", null);
+            symbolHandleTO = symbolHandle.asTruffleObject();
+            interop = InteropLibrary.getFactory().create(symbolHandleTO);
+        }
 
         public long execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError {
             try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(Function.dlopen.callName, null);
-                }
                 ErrorCallbackImpl errorCallbackImpl = new ErrorCallbackImpl();
-                long result = (long) ForeignAccess.sendExecute(Function.dlopen.executeNode, symbolHandle.asTruffleObject(), errorCallbackImpl, new NativeCharArray(path.getBytes()), local ? 1 : 0,
+                long result = (long) interop.execute(symbolHandleTO, errorCallbackImpl, new NativeCharArray(path.getBytes()), local ? 1 : 0,
                                 now ? 1 : 0);
                 if (result == 0) {
                     throw new UnsatisfiedLinkError(errorCallbackImpl.errorMessage + " : " + path);
@@ -125,15 +114,18 @@ class TruffleLLVM_NativeDLL {
     }
 
     static class TruffleLLVM_NativeDLClose extends Node {
-        @CompilationFinal private SymbolHandle symbolHandle;
+        @Child private InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+        @CompilationFinal private TruffleObject symbolHandleTO;
+
+        TruffleLLVM_NativeDLClose() {
+            SymbolHandle symbolHandle = DLL.findSymbol("call_dlclose", null);
+            symbolHandleTO = symbolHandle.asTruffleObject();
+            interop = InteropLibrary.getFactory().create(symbolHandleTO);
+        }
 
         public int execute(long handle) {
             try {
-                if (symbolHandle == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    symbolHandle = DLL.findSymbol(Function.dlclose.callName, null);
-                }
-                int result = (int) ForeignAccess.sendExecute(Function.dlclose.executeNode, symbolHandle.asTruffleObject(), handle);
+                int result = (int) interop.execute(symbolHandleTO, handle);
                 return result;
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);

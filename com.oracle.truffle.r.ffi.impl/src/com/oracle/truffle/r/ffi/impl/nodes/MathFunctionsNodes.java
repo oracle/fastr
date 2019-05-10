@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,14 +24,16 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -51,69 +53,42 @@ import com.oracle.truffle.r.runtime.nmath.distr.Pnorm.PnormBoth;
 
 public final class MathFunctionsNodes {
 
+    @ImportStatic(DSLConfig.class)
     public abstract static class RfPnormBothNode extends FFIUpCallNode.Arg5 {
 
-        @Child private Node cumIsPointerNode = Message.IS_POINTER.createNode();
-        @Child private Node cumAsPointerNode;
-        @Child private Node cumRead;
-        @Child private Node cumWrite;
-        @Child private Node ccumIsPointerNode = Message.IS_POINTER.createNode();
-        @Child private Node ccumAsPointerNode;
-        @Child private Node ccumWrite;
-
-        @Specialization
-        protected Object evaluate(double x, Object cum, Object ccum, int lowerTail, int logP) {
+        @Specialization(limit = "getInteropLibraryCacheSize()")
+        protected Object evaluate(double x, Object cum, Object ccum, int lowerTail, int logP,
+                        @CachedLibrary("cum") InteropLibrary cumInterop,
+                        @CachedLibrary("ccum") InteropLibrary ccumInterop) {
             // cum is R/W double* with size==1 and ccum is Writeonly double* with size==1
             double[] cumArr = new double[1];
             double[] ccumArr = new double[1];
             long cumPtr;
             long ccumPtr;
-            TruffleObject cumTO = (TruffleObject) cum;
-            if (ForeignAccess.sendIsPointer(cumIsPointerNode, cumTO)) {
-                if (cumAsPointerNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    cumAsPointerNode = insert(Message.AS_POINTER.createNode());
-                }
+            if (cumInterop.isPointer(cum)) {
                 try {
-                    cumPtr = ForeignAccess.sendAsPointer(cumAsPointerNode, cumTO);
+                    cumPtr = cumInterop.asPointer(cum);
                     cumArr[0] = UnsafeAdapter.UNSAFE.getDouble(cumPtr);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             } else {
                 cumPtr = 0L;
-                if (cumRead == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    cumRead = insert(Message.READ.createNode());
-                }
-                if (cumWrite == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    cumWrite = insert(Message.WRITE.createNode());
-                }
                 try {
-                    cumArr[0] = ((Number) ForeignAccess.sendRead(cumRead, cumTO, 0)).doubleValue();
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                    cumArr[0] = ((Number) cumInterop.readArrayElement(cum, 0)).doubleValue();
+                } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
             }
 
-            TruffleObject ccumTO = (TruffleObject) ccum;
-            if (ForeignAccess.sendIsPointer(ccumIsPointerNode, ccumTO)) {
-                if (ccumAsPointerNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ccumAsPointerNode = insert(Message.AS_POINTER.createNode());
-                }
+            if (ccumInterop.isPointer(ccum)) {
                 try {
-                    ccumPtr = ForeignAccess.sendAsPointer(ccumAsPointerNode, ccumTO);
+                    ccumPtr = ccumInterop.asPointer(ccum);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             } else {
                 ccumPtr = 0L;
-                if (ccumWrite == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ccumWrite = insert(Message.WRITE.createNode());
-                }
             }
 
             PnormBoth.evaluate(x, cumArr, ccumArr, lowerTail != 0, logP != 0);
@@ -121,7 +96,7 @@ public final class MathFunctionsNodes {
                 UnsafeAdapter.UNSAFE.putDouble(cumPtr, cumArr[0]);
             } else {
                 try {
-                    ForeignAccess.sendWrite(cumWrite, cumTO, 0, cumArr[0]);
+                    cumInterop.writeArrayElement(cum, 0, cumArr[0]);
                 } catch (InteropException e) {
                     throw RInternalError.shouldNotReachHere("WRITE message support expected");
                 }
@@ -130,7 +105,7 @@ public final class MathFunctionsNodes {
                 UnsafeAdapter.UNSAFE.putDouble(ccumPtr, ccumArr[0]);
             } else {
                 try {
-                    ForeignAccess.sendWrite(ccumWrite, ccumTO, 0, ccumArr[0]);
+                    ccumInterop.writeArrayElement(ccum, 0, ccumArr[0]);
                 } catch (InteropException e) {
                     throw RInternalError.shouldNotReachHere("WRITE message support expected");
                 }
@@ -227,42 +202,26 @@ public final class MathFunctionsNodes {
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     public abstract static class LGammafnSignNode extends FFIUpCallNode.Arg2 {
 
-        @Child private Node sgnIsPointerNode = Message.IS_POINTER.createNode();
-        @Child private Node sgnAsPointerNode;
-        @Child private Node sgnRead;
-        @Child private Node sgnWrite;
-
-        @Specialization
-        protected Object evaluate(double a, Object sgn) {
+        @Specialization(limit = "getInteropLibraryCacheSize()")
+        protected Object evaluate(double a, Object sgn,
+                        @CachedLibrary("sgn") InteropLibrary sgnInterop) {
             int[] sgnArr = new int[1];
             long sgnPtr;
-            TruffleObject sgnTO = (TruffleObject) sgn;
-            if (ForeignAccess.sendIsPointer(sgnIsPointerNode, sgnTO)) {
-                if (sgnAsPointerNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    sgnAsPointerNode = insert(Message.AS_POINTER.createNode());
-                }
+            if (sgnInterop.isPointer(sgn)) {
                 try {
-                    sgnPtr = ForeignAccess.sendAsPointer(sgnAsPointerNode, sgnTO);
+                    sgnPtr = sgnInterop.asPointer(sgn);
                     sgnArr[0] = UnsafeAdapter.UNSAFE.getInt(sgnPtr);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             } else {
                 sgnPtr = 0L;
-                if (sgnRead == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    sgnRead = insert(Message.READ.createNode());
-                }
-                if (sgnWrite == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    sgnWrite = insert(Message.WRITE.createNode());
-                }
                 try {
-                    sgnArr[0] = ((Number) ForeignAccess.sendRead(sgnRead, sgnTO, 0)).intValue();
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                    sgnArr[0] = ((Number) sgnInterop.readArrayElement(sgn, 0)).intValue();
+                } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
             }
@@ -272,7 +231,7 @@ public final class MathFunctionsNodes {
                 UnsafeAdapter.UNSAFE.putInt(sgnPtr, sgnArr[0]);
             } else {
                 try {
-                    ForeignAccess.sendWrite(sgnWrite, sgnTO, 0, sgnArr[0]);
+                    sgnInterop.writeArrayElement(sgn, 0, sgnArr[0]);
                 } catch (InteropException e) {
                     throw RInternalError.shouldNotReachHere("WRITE message support expected");
                 }
@@ -285,116 +244,67 @@ public final class MathFunctionsNodes {
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     public abstract static class DpsiFnNode extends FFIUpCallNode.Arg7 {
 
-        @Child private Node ansIsPointerNode = Message.IS_POINTER.createNode();
-        @Child private Node ansAsPointerNode;
-        @Child private Node ansRead;
-        @Child private Node ansWrite;
-        @Child private Node nzIsPointerNode = Message.IS_POINTER.createNode();
-        @Child private Node nzAsPointerNode;
-        @Child private Node nzRead;
-        @Child private Node nzWrite;
-        @Child private Node ierrIsPointerNode = Message.IS_POINTER.createNode();
-        @Child private Node ierrAsPointerNode;
-        @Child private Node ierrRead;
-        @Child private Node ierrWrite;
-
-        @Specialization
-        protected Object evaluate(double x, int n, int kode, @SuppressWarnings("unused") int m, Object ans, Object nz, Object ierr) {
+        @Specialization(limit = "getInteropLibraryCacheSize()")
+        protected Object evaluate(double x, int n, int kode, @SuppressWarnings("unused") int m, Object ans, Object nz, Object ierr,
+                        @CachedLibrary("ans") InteropLibrary ansInterop,
+                        @CachedLibrary("nz") InteropLibrary nzInterop,
+                        @CachedLibrary("ierr") InteropLibrary ierrInterop) {
             // ans is R/W double* size==1 and nz is R/W int* size==1
             // ierr is R/W int* size==1
             double ansIn;
             int nzIn;
             int ierrIn;
-            TruffleObject ansTO = (TruffleObject) ans;
             long ansPtr;
-            if (ForeignAccess.sendIsPointer(ansIsPointerNode, ansTO)) {
-                if (ansAsPointerNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ansAsPointerNode = insert(Message.AS_POINTER.createNode());
-                }
+            if (ansInterop.isPointer(ans)) {
                 try {
-                    ansPtr = ForeignAccess.sendAsPointer(ansAsPointerNode, ansTO);
+                    ansPtr = ansInterop.asPointer(ans);
                     ansIn = UnsafeAdapter.UNSAFE.getDouble(ansPtr);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             } else {
                 ansPtr = 0L;
-                if (ansRead == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ansRead = insert(Message.READ.createNode());
-                }
-                if (ansWrite == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ansWrite = insert(Message.WRITE.createNode());
-                }
                 try {
-                    ansIn = ((Number) ForeignAccess.sendRead(ansRead, ansTO, 0)).doubleValue();
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                    ansIn = ((Number) ansInterop.readArrayElement(ans, 0)).doubleValue();
+                } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
             }
 
-            TruffleObject nzTO = (TruffleObject) nz;
             long nzPtr;
-            if (ForeignAccess.sendIsPointer(nzIsPointerNode, nzTO)) {
-                if (nzAsPointerNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    nzAsPointerNode = insert(Message.AS_POINTER.createNode());
-                }
+            if (nzInterop.isPointer(nz)) {
                 try {
-                    nzPtr = ForeignAccess.sendAsPointer(nzAsPointerNode, nzTO);
+                    nzPtr = nzInterop.asPointer(nz);
                     nzIn = UnsafeAdapter.UNSAFE.getInt(nzPtr);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             } else {
                 nzPtr = 0L;
-                if (nzRead == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    nzRead = insert(Message.READ.createNode());
-                }
-                if (nzWrite == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    nzWrite = insert(Message.WRITE.createNode());
-                }
 
                 try {
-                    nzIn = ((Number) ForeignAccess.sendRead(nzRead, nzTO, 0)).intValue();
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                    nzIn = ((Number) nzInterop.readArrayElement(nz, 0)).intValue();
+                } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
             }
 
-            TruffleObject ierrTO = (TruffleObject) ierr;
             long ierrPtr;
-            if (ForeignAccess.sendIsPointer(ierrIsPointerNode, ierrTO)) {
-                if (ierrAsPointerNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ierrAsPointerNode = insert(Message.AS_POINTER.createNode());
-                }
+            if (ierrInterop.isPointer(ierr)) {
                 try {
-                    ierrPtr = ForeignAccess.sendAsPointer(ierrAsPointerNode, ierrTO);
+                    ierrPtr = ierrInterop.asPointer(ierr);
                     ierrIn = UnsafeAdapter.UNSAFE.getInt(ierrPtr);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             } else {
                 ierrPtr = 0L;
-                if (ierrRead == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ierrRead = insert(Message.READ.createNode());
-
-                }
-                if (ierrWrite == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ierrWrite = insert(Message.WRITE.createNode());
-                }
                 try {
-                    ierrIn = ((Number) ForeignAccess.sendRead(ierrRead, ierrTO, 0)).intValue();
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                    ierrIn = ((Number) ierrInterop.readArrayElement(ierr, 0)).intValue();
+                } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
             }
@@ -404,7 +314,7 @@ public final class MathFunctionsNodes {
                 UnsafeAdapter.UNSAFE.putDouble(ansPtr, result.ans);
             } else {
                 try {
-                    ForeignAccess.sendWrite(ansWrite, ansTO, 0, result.ans);
+                    ansInterop.writeArrayElement(ans, 0, result.ans);
                 } catch (InteropException e) {
                     throw RInternalError.shouldNotReachHere("WRITE message support expected");
                 }
@@ -413,7 +323,7 @@ public final class MathFunctionsNodes {
                 UnsafeAdapter.UNSAFE.putInt(nzPtr, result.nz);
             } else {
                 try {
-                    ForeignAccess.sendWrite(nzWrite, nzTO, 0, result.nz);
+                    nzInterop.writeArrayElement(nz, 0, result.nz);
                 } catch (InteropException e) {
                     throw RInternalError.shouldNotReachHere("WRITE message support expected");
                 }
@@ -422,7 +332,7 @@ public final class MathFunctionsNodes {
                 UnsafeAdapter.UNSAFE.putInt(ierrPtr, result.ierr);
             } else {
                 try {
-                    ForeignAccess.sendWrite(ierrWrite, ierrTO, 0, result.ierr);
+                    ierrInterop.writeArrayElement(ierr, 0, result.ierr);
                 } catch (InteropException e) {
                     throw RInternalError.shouldNotReachHere("WRITE message support expected");
                 }
@@ -691,27 +601,22 @@ public final class MathFunctionsNodes {
 
     }
 
+    @ImportStatic(DSLConfig.class)
     abstract static class BesselExNode extends Node {
 
-        @Child private Node bIsPointerNode = Message.IS_POINTER.createNode();
-        @Child private Node bAsPointerNode;
         @Child private ConvertForeignObjectNode bConvertForeign;
 
         public abstract double execute(BesselExCaller caller, Object b);
 
-        @Specialization
+        @Specialization(limit = "getInteropLibraryCacheSize()")
         protected double besselEx(BesselExCaller caller, Object b,
-                        @Cached("create()") GetReadonlyData.Double bReadonlyData) {
+                        @Cached("create()") GetReadonlyData.Double bReadonlyData,
+                        @CachedLibrary("b") InteropLibrary bInterop) {
             RAbstractDoubleVector bVec;
-            TruffleObject bTO = (TruffleObject) b;
-            if (ForeignAccess.sendIsPointer(bIsPointerNode, bTO)) {
-                if (bAsPointerNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    bAsPointerNode = insert(Message.AS_POINTER.createNode());
-                }
+            if (bInterop.isPointer(b)) {
                 long addr;
                 try {
-                    addr = ForeignAccess.sendAsPointer(bAsPointerNode, bTO);
+                    addr = bInterop.asPointer(b);
                     bVec = RDataFactory.createDoubleVectorFromNative(addr, caller.arrLen());
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
@@ -721,7 +626,7 @@ public final class MathFunctionsNodes {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     bConvertForeign = insert(ConvertForeignObjectNode.create());
                 }
-                bVec = (RAbstractDoubleVector) bConvertForeign.convert(bTO);
+                bVec = (RAbstractDoubleVector) bConvertForeign.convert((TruffleObject) b);
             }
 
             return caller.call(bReadonlyData.execute(bVec.materialize()));
