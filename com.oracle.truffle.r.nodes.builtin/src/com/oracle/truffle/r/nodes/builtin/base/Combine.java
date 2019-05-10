@@ -53,6 +53,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractD
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -201,9 +202,10 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     protected Object combineGeneric(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
                     @Cached("create()") BranchProfile naNameBranch,
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
+                    @Cached("create()") GetNamesAttributeNode getNamesNode,
+                    @Cached("create()") GenericCastNode genericCastNode) {
         int cachedPrecedence = precedence(args, args.getLength());
-        return combineCached(args, false, args.getSignature(), cachedPrecedence, createCast(cachedPrecedence), naNameBranch, hasNamesProfile, getNamesNode);
+        return combineCached(args, false, args.getSignature(), cachedPrecedence, genericCastNode.get(cachedPrecedence), naNameBranch, hasNamesProfile, getNamesNode);
     }
 
     @Specialization(guards = "recursive")
@@ -429,6 +431,28 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
                 return null;
             default:
                 throw RError.nyi(null, "unsupported combine type");
+        }
+    }
+
+    protected static final class GenericCastNode extends TruffleBoundaryNode {
+        @Child private CastNode cachedCastNode;
+        private int cachedPrecedence = NO_PRECEDENCE;
+
+        protected static GenericCastNode create() {
+            return new GenericCastNode();
+        }
+
+        private CastNode get(int precedence) {
+            CompilerAsserts.neverPartOfCompilation();
+            if (precedence == NO_PRECEDENCE) {
+                return null;
+            }
+            CastNode current = cachedCastNode;
+            if (current == null || cachedPrecedence != precedence) {
+                cachedPrecedence = precedence;
+                return cachedCastNode = insert(createCast(precedence));
+            }
+            return current;
         }
     }
 
