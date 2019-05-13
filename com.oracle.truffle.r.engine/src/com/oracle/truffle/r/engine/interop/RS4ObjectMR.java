@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -199,7 +199,7 @@ public class RS4ObjectMR {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 foreign2R = insert(Foreign2RNodeGen.create());
             }
-            Object value = foreign2R.execute(valueObj);
+            Object value = foreign2R.convert(valueObj);
             if (setAttributeNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setAttributeNode = insert(SetAttributeNode.create());

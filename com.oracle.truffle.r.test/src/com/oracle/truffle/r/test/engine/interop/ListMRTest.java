@@ -157,7 +157,6 @@ public class ListMRTest extends AbstractMRTest {
     }
 
     @Override
-    // XXX RExpression???
     protected TruffleObject[] createTruffleObjects() throws Exception {
         return new TruffleObject[]{create("list", testValues), create("pairlist", testValues), create("expression", testValues)};
     }

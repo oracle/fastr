@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
-import com.oracle.truffle.r.test.library.fastr.TestJavaInterop.TestClass.TestPOJO;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
 import org.graalvm.polyglot.proxy.ProxyObject;
@@ -362,7 +361,12 @@ public class TestJavaInterop extends TestBase {
     }
 
     private void testForValue(String member, Object value) {
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$" + member, getRValue(value));
+        if ((member.startsWith("fieldLong") || member.startsWith("methodLong")) && !member.contains("Array")) {
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$" + member,
+                            "cat('[1] 9.223372e+18\nWarning message:\nPossible precission loss by coercion of long 9223372036854775807 to double 9223372036854776000.000000\n')");
+        } else {
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$" + member, getRValue(value));
+        }
     }
 
     @Test
@@ -486,7 +490,7 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to['x']", errorIn("to[\"x\"]", "invalid index/identifier during foreign access: x"));
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[1]", errorIn("to[1]", "invalid index/identifier during foreign access: 0.0"));
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[c(1, 5)]", errorIn("to$fieldIntegerArray[c(1, 5)]", "invalid index/identifier during foreign access: 4.0"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[c(1, 5)]", errorIn("to$fieldIntegerArray[c(1, 5)]", "invalid index/identifier during foreign access: 4"));
     }
 
     @Test
@@ -718,7 +722,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$booleanArray2, 'list')", "list(c(T, F, T), c(T, F, T))");
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$booleanArray3, 'list')", "list(list(c(T, F, T), c(T, F, T)), list(c(T, F, T), c(T, F, T)))");
 
-        assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$)", "list(1, 'a', '1')");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$heterogenousPrimitiveArray)", "list(1, 'a', '1')");
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$heterogenousPrimitiveArray2HomDimensions)", "list(c('a', 'b', 'c'), c(1, 2, 3))");
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$heterogenousPrimitiveArray2)", "list(list(1, 'a', '1'), list(2, 'b', '2'))");
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$heterogenousPrimitiveArray3)", "list(list(c(1, 2, 3), list(2, 'b', '2')), list(c('a', 'b', 'c'), list(2, 'b', '2')))");
@@ -727,6 +731,8 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$heterogenousArray2NotSquare2)", "list(list(1, 'a', '1'), list(1, 'a', 'b', 2))");
 
         testConvertObjectArray("as.vector");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$longArrayMinMax)", toRVectorFromFieldValue(new TestArraysClass(), "longArrayMinMax"));
 
         assertEvalFastR(Ignored.ImplementationError, "as.vector(new(java.type('java.lang.Integer[]'), 1))", "integer()");
 
@@ -1153,6 +1159,8 @@ public class TestJavaInterop extends TestBase {
                     assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
                 } else if (asXXX.equals("as.symbol") && (name.contains("Null"))) {
                     assertEvalFastR(Output.IgnoreErrorContext, expr, getAsXXX(f.get(t), asXXX));
+                } else if (name.contains("Long")) {
+                    assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
                 } else {
                     assertEvalFastR(expr, getAsXXX(f.get(t), asXXX));
                 }
@@ -1209,9 +1217,10 @@ public class TestJavaInterop extends TestBase {
     public void testNoCopyOncast(String type, String closure, String... fields) throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
         for (String field : fields) {
             if (!"character".equals(type) && field.contains("String")) {
-                assertEvalFastR(Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + "as." + type + "(as.vector(to$" + field + "));", "as." + type + "(" + toRVector(new TestClass(), field) + ")");
+                assertEvalFastR(Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + "as." + type + "(as.vector(to$" + field + "));",
+                                "as." + type + "(" + toRVectorFromFieldValue(new TestClass(), field) + ")");
             } else {
-                assertEvalFastR(CREATE_TRUFFLE_OBJECT + "as." + type + "(as.vector(to$" + field + "));", "as." + type + "(" + toRVector(new TestClass(), field) + ")");
+                assertEvalFastR(CREATE_TRUFFLE_OBJECT + "as." + type + "(as.vector(to$" + field + "));", "as." + type + "(" + toRVectorFromFieldValue(new TestClass(), field) + ")");
             }
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as." + type + "(as.vector(to$" + field + ")));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
             assertEvalFastR(CREATE_TRUFFLE_OBJECT +
@@ -1253,6 +1262,7 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testFor() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "for(i in to$fieldIntegerArray) print(i)", "for(i in c(1,2,3)) print(i)");
+        assertEvalFastR("pojo <- new('" + TestPOJO.class.getName() + "', 'testestest'); for(v in pojo) if(is.vector(v)) print(v)", "'testestest'");
     }
 
     @Test
@@ -1301,27 +1311,27 @@ public class TestJavaInterop extends TestBase {
         String expectedOK;
         String expectedKO;
 
-        expectedOK = toRVector(t, vec) + " + 1";
+        expectedOK = toRVectorFromFieldValue(t, vec) + " + 1";
         expectedKO = errorIn("to$" + vec + " + 1", "non-numeric argument to binary operator");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " + 1", fail ? expectedKO : expectedOK);
 
-        expectedOK = toRVector(t, vec) + " + c(1, 2, 3)";
+        expectedOK = toRVectorFromFieldValue(t, vec) + " + c(1, 2, 3)";
         expectedKO = errorIn("to$" + vec + " + c(1, 2, 3)", "non-numeric argument to binary operator");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " + c(1, 2, 3)", fail ? expectedKO : expectedOK);
 
-        expectedOK = "1 + " + toRVector(t, vec);
+        expectedOK = "1 + " + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("1 + to$" + vec, "non-numeric argument to binary operator");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "1 + to$" + vec, fail ? expectedKO : expectedOK);
 
-        expectedOK = "c(1, 2, 3) + " + toRVector(t, vec);
+        expectedOK = "c(1, 2, 3) + " + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("c(1, 2, 3) + to$" + vec + "", "non-numeric argument to binary operator");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(1, 2, 3) + to$" + vec, fail ? expectedKO : expectedOK);
 
-        expectedOK = toRVector(t, vec) + " + " + toRVector(t, vec);
+        expectedOK = toRVectorFromFieldValue(t, vec) + " + " + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("to$" + vec + " + to$" + vec + "", "non-numeric argument to binary operator");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " + to$" + vec, fail ? expectedKO : expectedOK);
 
-        expectedOK = "-" + toRVector(t, vec);
+        expectedOK = "-" + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("-(to$" + vec + ")", "invalid argument to unary operator");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "-(to$" + vec + ")", fail ? expectedKO : expectedOK);
 
@@ -1356,27 +1366,27 @@ public class TestJavaInterop extends TestBase {
         String expectedOK;
         String expectedKO;
 
-        expectedOK = toRVector(t, vec) + " & T";
+        expectedOK = toRVectorFromFieldValue(t, vec) + " & T";
         expectedKO = errorIn("to$" + vec + " & T", "operations are possible only for numeric, logical or complex types");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " & T", fail ? expectedKO : expectedOK);
 
-        expectedOK = toRVector(t, vec) + " & c(T, T, F)";
+        expectedOK = toRVectorFromFieldValue(t, vec) + " & c(T, T, F)";
         expectedKO = errorIn("to$" + vec + " & c(T, T, F)", "operations are possible only for numeric, logical or complex types");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " & c(T, T, F)", fail ? expectedKO : expectedOK);
 
-        expectedOK = "T & " + toRVector(t, vec);
+        expectedOK = "T & " + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("T & to$" + vec, "operations are possible only for numeric, logical or complex types");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "T & to$" + vec, fail ? expectedKO : expectedOK);
 
-        expectedOK = "c(T, T, F) & " + toRVector(t, vec);
+        expectedOK = "c(T, T, F) & " + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("c(T, T, F) & to$" + vec + "", "operations are possible only for numeric, logical or complex types");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(T, T, F) & to$" + vec, fail ? expectedKO : expectedOK);
 
-        expectedOK = toRVector(t, vec) + " & " + toRVector(t, vec);
+        expectedOK = toRVectorFromFieldValue(t, vec) + " & " + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("to$" + vec + " & to$" + vec + "", "operations are possible only for numeric, logical or complex types");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " & to$" + vec, fail ? expectedKO : expectedOK);
 
-        expectedOK = "!" + toRVector(t, vec);
+        expectedOK = "!" + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("!(to$" + vec + ")", "invalid argument type");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "!(to$" + vec + ")", fail ? expectedKO : expectedOK);
 
@@ -1420,23 +1430,23 @@ public class TestJavaInterop extends TestBase {
         String expectedOK;
         String expectedKO;
 
-        expectedOK = toRVector(t, vec) + operator + " T";
+        expectedOK = toRVectorFromFieldValue(t, vec) + operator + " T";
         expectedKO = errorIn("to$" + vec + " " + operator + " T", "invalid 'x' type in 'x " + operator + " y'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " " + operator + " T", fail ? expectedKO : expectedOK);
 
-        expectedOK = toRVector(t, vec) + operator + " c(T, T, F)";
+        expectedOK = toRVectorFromFieldValue(t, vec) + operator + " c(T, T, F)";
         expectedKO = errorIn("to$" + vec + " " + operator + " c(T, T, F)", "invalid 'x' type in 'x " + operator + " y'", false, false, "");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " " + operator + " c(T, T, F)", fail ? expectedKO : expectedOK);
 
-        expectedOK = "T " + operator + " " + toRVector(t, vec);
+        expectedOK = "T " + operator + " " + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("T " + operator + " to$" + vec + "", "invalid 'y' type in 'x " + operator + " y'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "T " + operator + " to$" + vec, fail && !operator.equals("||") ? expectedKO : expectedOK);
 
-        expectedOK = "c(T, T, F) " + operator + " " + toRVector(t, vec);
+        expectedOK = "c(T, T, F) " + operator + " " + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("c(T, T, F) " + operator + " to$" + vec + "", "invalid 'y' type in 'x " + operator + " y'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " c(T, T, F) " + operator + " to$" + vec, fail && !operator.equals("||") ? expectedKO : expectedOK);
 
-        expectedOK = toRVector(t, vec) + " " + operator + " " + toRVector(t, vec);
+        expectedOK = toRVectorFromFieldValue(t, vec) + " " + operator + " " + toRVectorFromFieldValue(t, vec);
         expectedKO = errorIn("to$" + vec + " " + operator + " to$" + vec, "invalid 'x' type in 'x " + operator + " y'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " " + operator + " to$" + vec, fail ? expectedKO : expectedOK);
 
@@ -1646,7 +1656,7 @@ public class TestJavaInterop extends TestBase {
         return value.toString();
     }
 
-    private String toRVector(TestClass t, String fieldName) throws NoSuchFieldException, IllegalAccessException {
+    private String toRVectorFromFieldValue(Object t, String fieldName) throws NoSuchFieldException, IllegalAccessException {
         Field fld = t.getClass().getDeclaredField(fieldName);
         return toRVector(fld.get(t), null);
     }
@@ -1823,8 +1833,8 @@ public class TestJavaInterop extends TestBase {
     }
 
     public static class TestNamesClass extends TestNamesClassSuper {
-        public Object field;
-        public static Object staticField;
+        public Object field = "field";
+        public static Object staticField = "staticField";
 
         public void method() {
         }
@@ -1834,7 +1844,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     public static class TestNamesClassSuper {
-        public Object superField;
+        public Object superField = "superField";
 
         public void superMethod() {
 
@@ -2088,23 +2098,6 @@ public class TestJavaInterop extends TestBase {
         }
 
         public Element[] arrayObject = new Element[]{new Element("a"), new Element("b"), new Element("c"), null};
-
-        public static class TestPOJO {
-            public final String data;
-
-            public TestPOJO(String data) {
-                this.data = data;
-            }
-
-            public String getData() {
-                return data;
-            }
-
-            @Override
-            public String toString() {
-                return String.format("TestPOJO[data='%s']", data);
-            }
-        }
 
         public TestClass() {
             this(true, Byte.MAX_VALUE, 'a', Double.MAX_VALUE, 1.1f, Integer.MAX_VALUE, Long.MAX_VALUE, Short.MAX_VALUE, "a string");
@@ -2449,6 +2442,23 @@ public class TestJavaInterop extends TestBase {
         }
     }
 
+    public static class TestPOJO {
+        public final String data;
+
+        public TestPOJO(String data) {
+            this.data = data;
+        }
+
+        public String getData() {
+            return data;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("TestPOJO[data='%s']", data);
+        }
+    }
+
     public static class TestArraysClass {
         public Object[] objectEmpty = new Object[0];
 
@@ -2494,6 +2504,7 @@ public class TestJavaInterop extends TestBase {
         public int[][][][] integerArray2x3x4x5 = new int[2][3][4][5];
 
         public long[] longArray = {1L, 2L, 3L};
+        public long[] longArrayMinMax = {Long.MIN_VALUE, 2L, Long.MAX_VALUE};
         public long[][] longArray2 = {{1L, 2L, 3L}, {1L, 2L, 3L}};
         public long[][][] longArray3 = {{{1L, 2L, 3L}, {1L, 2L, 3L}}, {{1L, 2L, 3L}, {1L, 2L, 3L}}};
         public long[][] longArray2NotSquare = new long[][]{{1, 2, 3}, {4, 5, 6, 7}};

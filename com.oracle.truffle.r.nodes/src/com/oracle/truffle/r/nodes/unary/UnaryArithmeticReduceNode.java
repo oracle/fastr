@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,9 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
@@ -62,7 +64,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  *
  * FastR handles finite consistently (setting na.rm = TRUE if finite = TRUE) in the range builtin.
  */
-@ImportStatic({RRuntime.class, DSLConfig.class})
+@ImportStatic({RRuntime.class, DSLConfig.class, ConvertForeignObjectNode.class})
 @TypeSystemReference(RTypes.class)
 public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
 
@@ -424,14 +426,18 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
         return result;
     }
 
-    @Specialization(guards = {"isForeignObject(obj)"})
+    @Specialization(guards = {"isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
     protected Object doForeignVector(TruffleObject obj, boolean naRm, boolean finite,
                     @Cached("create()") ConvertForeignObjectNode convertForeign,
-                    @Cached("createRecursive()") UnaryArithmeticReduceNode recursive) {
-        if (convertForeign.isForeignArray(obj)) {
-            Object vec = convertForeign.convert(obj);
-            return recursive.executeReduce(vec, naRm, finite);
-        }
+                    @Cached("createRecursive()") UnaryArithmeticReduceNode recursive,
+                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
+        Object vec = convertForeign.convert(obj);
+        return recursive.executeReduce(vec, naRm, finite);
+    }
+
+    @Specialization(guards = {"isForeignObject(obj)", "!isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
+    protected Object doForeignVector(TruffleObject obj, boolean naRm, boolean finite,
+                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
         return doFallback(obj, naRm, finite);
     }
 

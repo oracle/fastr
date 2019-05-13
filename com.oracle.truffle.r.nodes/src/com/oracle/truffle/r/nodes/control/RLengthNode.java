@@ -23,16 +23,12 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -50,7 +46,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * overridden for some S3/S4 classes. Check if you need to get actual length, or what the 'length'
  * function returns, like in {@code seq_along}.
  */
-@ImportStatic({Message.class})
 @ReportPolymorphism
 public abstract class RLengthNode extends RBaseNode {
 
@@ -145,30 +140,20 @@ public abstract class RLengthNode extends RBaseNode {
         return 1;
     }
 
-    protected static Node createGetSize() {
-        return Message.GET_SIZE.createNode();
-    }
-
-    protected static Node createHasSize() {
-        return Message.HAS_SIZE.createNode();
-    }
-
     protected static boolean isForeignObject(TruffleObject object) {
         return RRuntime.isForeignObject(object);
     }
 
-    @Specialization(guards = {"isForeignObject(object)"})
-    protected int getForeignSize(TruffleObject object,
-                    @Cached("createHasSize()") Node hasSizeNode,
-                    @Cached("createGetSize()") Node getSizeNode) {
-        try {
-            if (!(boolean) ForeignAccess.send(hasSizeNode, object)) {
-                return 1;
-            }
-            return (int) ForeignAccess.send(getSizeNode, object);
-        } catch (InteropException e) {
-            throw RError.interopError(this, e, object);
-        }
+    @Specialization(guards = {"isForeignObject(object)", "interop.hasArrayElements(object)"}, limit = "getInteropLibraryCacheSize()")
+    protected int getForeignArraySize(TruffleObject object,
+                    @CachedLibrary("object") InteropLibrary interop) {
+        return RRuntime.getForeignArraySize(object, interop);
+    }
+
+    @Specialization(guards = {"isForeignObject(object)", "!interop.hasArrayElements(object)"}, limit = "getInteropLibraryCacheSize()")
+    protected int getForeignObjectSize(@SuppressWarnings("unused") TruffleObject object,
+                    @SuppressWarnings("unused") @CachedLibrary("object") InteropLibrary interop) {
+        return 1;
     }
 
 }

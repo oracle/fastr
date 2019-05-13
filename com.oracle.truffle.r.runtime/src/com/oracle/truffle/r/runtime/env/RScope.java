@@ -300,7 +300,7 @@ public final class RScope {
                         throw UnsupportedMessageException.raise(Message.WRITE);
                     }
                     try {
-                        varMap.frameAccess.put(name, foreign2R.execute(value));
+                        varMap.frameAccess.put(name, foreign2R.convert(value));
                         return value;
                     } catch (PutException e) {
                         throw RInternalError.shouldNotReachHere(e);

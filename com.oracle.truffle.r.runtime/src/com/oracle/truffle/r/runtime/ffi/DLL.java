@@ -33,7 +33,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
@@ -456,12 +456,8 @@ public class DLL {
 
         @TruffleBoundary
         private static long asAddressTO(TruffleObject val) {
-            Node isPointer = com.oracle.truffle.api.interop.Message.IS_POINTER.createNode();
             try {
-                if (ForeignAccess.sendIsPointer(isPointer, val)) {
-                    Node asPointer = com.oracle.truffle.api.interop.Message.AS_POINTER.createNode();
-                    return ForeignAccess.sendAsPointer(asPointer, val);
-                }
+                return InteropLibrary.getFactory().getUncached().asPointer(val);
             } catch (UnsupportedMessageException ex) {
                 // Let it flow to throw RInternalError
             }

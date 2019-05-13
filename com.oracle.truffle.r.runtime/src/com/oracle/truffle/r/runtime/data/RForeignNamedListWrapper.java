@@ -23,12 +23,10 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -77,7 +75,7 @@ public final class RForeignNamedListWrapper extends RForeignVectorWrapper implem
     @TruffleBoundary
     public Object getDataAt(int index) {
         try {
-            return FOREIGN_TO_R.execute(ForeignAccess.sendRead(READ, delegate, names.getDataAt(index)));
+            return unbox(getInterop().readMember(delegate, names.getDataAt(index)));
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
@@ -85,11 +83,13 @@ public final class RForeignNamedListWrapper extends RForeignVectorWrapper implem
 
     private static final class FastPathAccess extends FastPathFromListAccess {
 
+        @Child private InteropLibrary delegateInterop;
+
         FastPathAccess(RAbstractContainer value) {
             super(value);
+            delegateInterop = InteropLibrary.getFactory().create(((RForeignVectorWrapper) value).delegate);
         }
 
-        @Child private Node read = Message.READ.createNode();
         @Child private Foreign2R foreign2r = Foreign2R.create();
 
         @Override
@@ -106,7 +106,7 @@ public final class RForeignNamedListWrapper extends RForeignVectorWrapper implem
         protected Object getListElementImpl(AccessIterator accessIter, int index) {
             try {
                 RForeignNamedListWrapper wrapper = (RForeignNamedListWrapper) accessIter.getStore();
-                return foreign2r.execute(ForeignAccess.sendRead(read, wrapper.delegate, wrapper.names.getDataAt(index)));
+                return foreign2r.convert(delegateInterop.readMember(wrapper.delegate, wrapper.names.getDataAt(index)));
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
@@ -118,9 +118,8 @@ public final class RForeignNamedListWrapper extends RForeignVectorWrapper implem
         return new FastPathAccess(this);
     }
 
-    private static final Foreign2R FOREIGN_TO_R = Foreign2R.create();
-
     private static final SlowPathFromListAccess SLOW_PATH_ACCESS = new SlowPathFromListAccess() {
+
         @Override
         public RType getType() {
             return RType.List;
@@ -136,7 +135,7 @@ public final class RForeignNamedListWrapper extends RForeignVectorWrapper implem
         protected Object getListElementImpl(AccessIterator accessIter, int index) {
             RForeignNamedListWrapper vector = (RForeignNamedListWrapper) accessIter.getStore();
             try {
-                return FOREIGN_TO_R.execute(ForeignAccess.sendRead(READ, vector.delegate, vector.names.getDataAt(index)));
+                return unbox(getInterop().readMember(vector.delegate, vector.names.getDataAt(index)));
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,7 +64,7 @@ public class RFunctionMR {
         protected Object access(RFunction receiver, Object[] arguments) {
             Object[] convertedArguments = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
-                convertedArguments[i] = foreign2R.execute(arguments[i]);
+                convertedArguments[i] = foreign2R.convert(arguments[i]);
             }
             MaterializedFrame globalFrame = RContext.getInstance().stateREnvironment.getGlobalFrame();
             RArgsValuesAndNames argsAndValues = new RArgsValuesAndNames(convertedArguments, ArgumentsSignature.empty(arguments.length));

@@ -31,13 +31,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -82,13 +80,10 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * <b>Note</b> currently are {@link RForeignVectorWrapper}-s used only in case of homogenous
  * 1-dimensional arrays resulting to a logical, double, integer or character vector.
  */
-@ImportStatic({Message.class, RRuntime.class, RType.class})
+@ImportStatic({RRuntime.class, RType.class})
 public abstract class ConvertForeignObjectNode extends RBaseNode {
 
-    @Child protected Node hasSizeNode = Message.HAS_SIZE.createNode();
-    @Child protected Node readNode;
     @Child protected Foreign2R foreign2RNode;
-    @Child protected Node keyInfoNode;
     @Child private ConvertForeignObjectNode recurseNode;
     @Child private ForeignArrayToListNode arrayToList;
     @Child private ForeignArrayToVectorNode arrayToVector;
@@ -207,21 +202,11 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
      * Determines whether the provided object is a foreign array or not.
      *
      * @param obj
+     * @param interop
      * @return <code>true</code> if the provided object is an array, otherwise <code>false</code>
      */
-    public boolean isForeignArray(Object obj) {
-        return RRuntime.isForeignObject(obj) && ForeignAccess.sendHasSize(hasSizeNode, (TruffleObject) obj);
-    }
-
-    /**
-     * Determines whether the provided object is a foreign array or not.
-     *
-     * @param obj
-     * @param hasSizeNode
-     * @return <code>true</code> if the provided object is an array, otherwise <code>false</code>
-     */
-    public static boolean isForeignArray(Object obj, Node hasSizeNode) {
-        return RRuntime.isForeignObject(obj) && ForeignAccess.sendHasSize(hasSizeNode, (TruffleObject) obj);
+    public static boolean isForeignArray(Object obj, InteropLibrary interop) {
+        return RRuntime.isForeignObject(obj) && interop.hasArrayElements(obj);
     }
 
     /**
@@ -383,9 +368,10 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         return idx;
     }
 
-    @Specialization(guards = {"isForeignArray(truffleObject)", "!toList"})
-    protected Object convertArray(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean toList, @SuppressWarnings("unused") boolean byteToRaw,
-                    @Cached("create(byteToRaw)") InspectForeignArrayNode inspectTruffleObject) {
+    @Specialization(guards = {"isForeignArray(truffleObject, interop)", "!toList"}, limit = "getInteropLibraryCacheSize()")
+    protected Object convertArray(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean toList, boolean byteToRaw,
+                    @Cached("create(byteToRaw)") InspectForeignArrayNode inspectTruffleObject,
+                    @SuppressWarnings("unused") @CachedLibrary("truffleObject") InteropLibrary interop) {
         ArrayInfo arrayInfo = new ArrayInfo(byteToRaw);
         inspectTruffleObject.execute(truffleObject, recursive, arrayInfo, 0, true);
 
@@ -445,18 +431,20 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         }
     }
 
-    @Specialization(guards = {"isForeignArray(truffleObject)", "toList"})
+    @Specialization(guards = {"isForeignArray(truffleObject, interop)", "toList"}, limit = "getInteropLibraryCacheSize()")
     protected Object convertArrayToList(TruffleObject truffleObject, boolean recursive, @SuppressWarnings("unused") boolean dropDimensions, @SuppressWarnings("unused") boolean toList,
-                    @SuppressWarnings("unused") boolean byteToRaw) {
+                    @SuppressWarnings("unused") boolean byteToRaw,
+                    @SuppressWarnings("unused") @CachedLibrary("truffleObject") InteropLibrary interop) {
         return getArrayToListNode().toList(truffleObject, recursive);
     }
 
-    @Specialization(guards = {"isForeignObject(truffleObject)", "!isForeignArray(truffleObject)", "toList"})
-    @TruffleBoundary
+    @Specialization(guards = {"isForeignObject(truffleObject)", "!isForeignArray(truffleObject, interop)", "toList"}, limit = "getInteropLibraryCacheSize()")
     protected Object convertObjectToList(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean toList,
                     @SuppressWarnings("unused") boolean byteToRaw,
-                    @Cached("create()") GetForeignKeysNode namesNode) {
-        Object namesObj = namesNode.execute(truffleObject, false);
+                    @Cached("create()") GetForeignMembersNode membersNode,
+                    @CachedLibrary("truffleObject") InteropLibrary interop,
+                    @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary memberInterop) {
+        Object namesObj = membersNode.execute(truffleObject, false);
         if (namesObj == RNull.instance) {
             return RDataFactory.createList();
         }
@@ -466,11 +454,10 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         for (int i = 0; i < names.getLength(); i++) {
             String name = names.getDataAt(i);
             try {
-                int keyInfo = ForeignAccess.sendKeyInfo(getKeyInfoNode(), truffleObject, name);
-                if (KeyInfo.isReadable(keyInfo) && !KeyInfo.isInvocable(keyInfo)) {
-                    Object o = ForeignAccess.sendRead(getReadNode(), truffleObject, name);
-                    o = getForeign2RNode().execute(o);
-                    if (isForeignArray(o, hasSizeNode)) {
+                if (interop.isMemberReadable(truffleObject, name) && !interop.isMemberInvocable(truffleObject, name)) {
+                    Object o = interop.readMember(truffleObject, name);
+                    o = getForeign2RNode().convert(o);
+                    if (isForeignArray(o, memberInterop)) {
                         o = getRecurseNode().execute(o, recursive, dropDimensions, false, false);
                     }
                     elements.add(o);
@@ -483,18 +470,15 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         return RDataFactory.createList(elements.toArray(new Object[elements.size()]), RDataFactory.createStringVector(elementNames.toArray(new String[elementNames.size()]), true));
     }
 
-    @Specialization(guards = {"doNotConvert(obj, toList)"})
+    @Specialization(guards = {"doNotConvert(obj, interop, toList)"}, limit = "getInteropLibraryCacheSize()")
     protected Object doObject(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean dropDimensions,
-                    @SuppressWarnings("unused") boolean toList, @SuppressWarnings("unused") boolean byteToRaw) {
+                    @SuppressWarnings("unused") boolean toList, @SuppressWarnings("unused") boolean byteToRaw,
+                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
         return obj;
     }
 
-    protected boolean doNotConvert(Object obj, boolean toList) {
-        return !RRuntime.isForeignObject(obj) || (!isForeignArray(obj) && !toList);
-    }
-
-    protected boolean doNotConvert(Object obj, RType type) {
-        return !RRuntime.isForeignObject(obj) || (!isForeignArray(obj) && type != RType.List);
+    protected boolean doNotConvert(Object obj, InteropLibrary interop, boolean toList) {
+        return !RRuntime.isForeignObject(obj) || (!isForeignArray(obj, interop) && !toList);
     }
 
     private ConvertForeignObjectNode getRecurseNode() {
@@ -503,22 +487,6 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
             recurseNode = insert(create());
         }
         return recurseNode;
-    }
-
-    private Node getReadNode() {
-        if (readNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            readNode = insert(Message.READ.createNode());
-        }
-        return readNode;
-    }
-
-    private Node getKeyInfoNode() {
-        if (keyInfoNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            keyInfoNode = insert(Message.KEY_INFO.createNode());
-        }
-        return keyInfoNode;
     }
 
     private Foreign2R getForeign2RNode() {

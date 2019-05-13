@@ -26,12 +26,11 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -40,15 +39,11 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import java.util.ArrayList;
 import java.util.List;
 
-@ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class})
+@ImportStatic(ConvertForeignObjectNode.class)
 public abstract class InspectForeignArrayNode extends RBaseNode {
 
-    @Child protected Node hasSize = Message.HAS_SIZE.createNode();
-    @Child Node getSize = Message.GET_SIZE.createNode();
-
-    @Child protected Node read;
-    @Child protected InspectForeignArrayNode inspectTruffleObject;
-    @Child protected Foreign2R foreign2R;
+    @Child private InspectForeignArrayNode inspectTruffleObject;
+    @Child private Foreign2R foreign2R;
 
     private final boolean preserveByte;
 
@@ -80,32 +75,33 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
 
     protected abstract boolean execute(Object obj, boolean recursive, ArrayInfo data, int depth, boolean skipIfList);
 
-    @Specialization(guards = {"isForeignArray(obj, hasSize)"})
-    @CompilerDirectives.TruffleBoundary
-    protected boolean inspectArray(TruffleObject obj, boolean recursive, ArrayInfo data, int depth, boolean skipIfList) {
+    @Specialization(guards = {"isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
+    protected boolean inspectArray(TruffleObject obj, boolean recursive, ArrayInfo data, int depth, boolean skipIfList,
+                    @CachedLibrary("obj") InteropLibrary interop,
+                    @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary elementInterop) {
         try {
             ArrayInfo arrayInfo = data == null ? new ArrayInfo(preserveByte) : data;
-            int size = (int) ForeignAccess.sendGetSize(getSize, obj);
+            int size = RRuntime.getForeignArraySize(obj, interop);
 
             arrayInfo.addDimension(depth, size);
 
             if (size > 0) {
                 for (int i = 0; i < size; i++) {
-                    Object element = ForeignAccess.sendRead(getRead(), obj, i);
-                    boolean isArray = isForeignArray(element, hasSize);
+                    Object element = interop.readArrayElement(obj, i);
+                    boolean isArray = isForeignArray(element, elementInterop);
 
                     if (recursive && isArray) {
                         if (!recurse(arrayInfo, element, depth, skipIfList)) {
                             return false;
                         }
                     } else if (!recursive && isArray) {
-                        arrayInfo.typeCheck.check(getForeign2R().execute(element));
+                        arrayInfo.typeCheck.check(getForeign2R().convert(element, preserveByte, false));
                         arrayInfo.canUseDims = false;
                         // it is already clear, that this will result in a flat list,
                         // we do not need to inspect the remaining dimensions or types
                         return false;
                     } else {
-                        RType elementType = arrayInfo.typeCheck.check(getForeign2R().execute(element));
+                        RType elementType = arrayInfo.typeCheck.check(getForeign2R().convert(element, preserveByte, false));
                         if (skipIfList && elementType == RType.List) {
                             return false;
                         }
@@ -113,7 +109,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
                 }
             }
             return true;
-        } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+        } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
             throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
         }
     }
@@ -127,7 +123,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
     private boolean recurse(ArrayInfo arrayInfo, Object element, int depth, boolean skipIfList) {
         if (inspectTruffleObject == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            inspectTruffleObject = insert(create());
+            inspectTruffleObject = insert(create(preserveByte));
         }
         return inspectTruffleObject.execute(element, true, arrayInfo, depth + 1, skipIfList);
     }
@@ -179,18 +175,10 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
         }
     }
 
-    protected Node getRead() {
-        if (read == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            read = insert(Message.READ.createNode());
-        }
-        return read;
-    }
-
     protected Foreign2R getForeign2R() {
         if (foreign2R == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            foreign2R = insert(Foreign2RNodeGen.create(preserveByte));
+            foreign2R = insert(Foreign2RNodeGen.create());
         }
         return foreign2R;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,102 +22,80 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
 
 /**
  * Unwraps a value that is arriving from the native side. This unwrapping should only happen for
  * arguments and return values that represent R data structures, not for primitive values.
  */
-public final class FFIUnwrapNode extends Node {
+@GenerateUncached
+@ImportStatic({RRuntime.class, DSLConfig.class})
+public abstract class FFIUnwrapNode extends Node {
 
-    @Child private Node isPointer;
-    @Child private Node asPointer;
+    public abstract Object execute(Object x);
 
-    @Child private Node isBoxed;
-    @Child private Node unbox;
+    @Specialization()
+    public Object unwrap(String x) {
+        return x;
+    }
 
-    private final BranchProfile isRTruffleObject = BranchProfile.create();
-    private final BranchProfile isNonBoxed = BranchProfile.create();
-    private final BranchProfile isString = BranchProfile.create();
+    @Specialization()
+    public Object unwrap(RTruffleObject x) {
+        return x;
+    }
 
-    public Object execute(Object x) {
-        if (x instanceof RTruffleObject) {
-            isRTruffleObject.enter();
-            return x;
-        } else if (x instanceof TruffleObject) {
-            TruffleObject xTo = (TruffleObject) x;
-            Node isPointerNode = isPointer;
-            if (isPointerNode == null || ForeignAccess.sendIsPointer(isPointerNode, xTo)) {
-                if (asPointer == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    asPointer = insert(Message.AS_POINTER.createNode());
-                }
-                try {
-                    long address = ForeignAccess.sendAsPointer(asPointer, xTo);
-                    if (address == 0) {
-                        // Users are expected to use R_NULL, but at least when embedding, GNU R
-                        // seems to be tolerant to NULLs.
-                        return RNull.instance;
-                    }
-                    return NativeDataAccess.lookup(address);
-                } catch (UnsupportedMessageException e) {
-                    if (isPointerNode == null) {
-                        // only create IS_POINTER if we've seen AS_POINTER failing
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        isPointer = insert(Message.IS_POINTER.createNode());
-                    } else {
-                        throw RInternalError.shouldNotReachHere(e);
-                    }
-                }
+    @Specialization(guards = {"isForeignObject(x)", "interop.isPointer(x)"}, limit = "getInteropLibraryCacheSize()")
+    public Object unwrapPointer(TruffleObject x,
+                    @CachedLibrary("x") InteropLibrary interop) {
+        try {
+            long address = interop.asPointer(x);
+            if (address == 0) {
+                // Users are expected to use R_NULL, but at least when embedding, GNU R
+                // seems to be tolerant to NULLs.
+                return RNull.instance;
             }
-            Node isBoxedNode = isBoxed;
-            if (isBoxedNode == null || ForeignAccess.sendIsBoxed(isBoxedNode, xTo)) {
-                if (unbox == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    unbox = insert(Message.UNBOX.createNode());
-                }
-                try {
-                    return ForeignAccess.sendUnbox(unbox, xTo);
-                } catch (UnsupportedMessageException e) {
-                    if (isBoxedNode == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        isBoxed = insert(Message.IS_BOXED.createNode());
-                    } else {
-                        throw RInternalError.shouldNotReachHere(e);
-                    }
-                }
-            }
-            isNonBoxed.enter();
-            return x;
-        } else if (x instanceof String) {
-            isString.enter();
-            return x;
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            throw RInternalError.shouldNotReachHere("unexpected primitive value of class " + x.getClass().getSimpleName());
+            return NativeDataAccess.lookup(address);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere();
         }
+    }
 
+    @Specialization(guards = {"isForeignObject(x)", "!interop.isPointer(x)"}, limit = "getInteropLibraryCacheSize()")
+    public Object unwrapForeign(TruffleObject x,
+                    @CachedLibrary("x") InteropLibrary interop) {
+        try {
+            return Foreign2R.unbox(x, interop);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Specialization(guards = "!isStringORTruffleObject(x)")
+    public Object unwrapFallback(Object x) {
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere("unexpected primitive value of class " + x.getClass().getSimpleName());
+    }
+
+    protected static boolean isStringORTruffleObject(Object x) {
+        return x instanceof String || x instanceof TruffleObject;
     }
 
     public static FFIUnwrapNode create() {
-        return new FFIUnwrapNode();
-    }
-
-    private static final FFIUnwrapNode unwrap = new FFIUnwrapNode();
-
-    public static Object unwrap(Object value) {
-        CompilerAsserts.neverPartOfCompilation();
-        return unwrap.execute(value);
+        return FFIUnwrapNodeGen.create();
     }
 }

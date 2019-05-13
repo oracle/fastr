@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -26,9 +26,9 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @TypeSystemReference(RTypes.class)
-@ImportStatic({ConvertForeignObjectNode.class, Message.class})
+@ImportStatic({ConvertForeignObjectNode.class})
 public abstract class CastTypeNode extends RBaseNode {
 
     protected static final int NUMBER_OF_TYPES = RType.values().length;
@@ -102,24 +102,19 @@ public abstract class CastTypeNode extends RBaseNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"isForeignArray(value, hasSize)", "typeof.execute(value) != type",
+    @Specialization(guards = {"isForeignArray(value, interop)", "typeof.execute(value) != type",
                     "type == cachedType", "!isNull(cast)"}, limit = "NUMBER_OF_TYPES")
     protected static Object doCast(TruffleObject value, RType type,
                     @Cached("type") RType cachedType,
                     @Cached("createCast(cachedType)") CastNode cast,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @CachedLibrary("value") InteropLibrary interop,
                     @Cached("create()") ConvertForeignObjectNode convertForeign) {
         return cast.doCast(convertForeign.convert(value));
     }
 
     @TruffleBoundary
-    public static CastNode createCast(RType type) {
+    protected static CastNode createCast(RType type) {
         return createCast(type, false, false, false, false);
-    }
-
-    @TruffleBoundary
-    public static CastNode createCast(RType type, boolean reuseNonShared) {
-        return createCast(type, false, false, false, reuseNonShared);
     }
 
     public static CastTypeNode create() {

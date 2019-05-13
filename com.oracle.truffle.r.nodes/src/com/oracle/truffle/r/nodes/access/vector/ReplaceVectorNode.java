@@ -31,7 +31,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.access.vector.AccessForeignObjectNode.WriteElementsNode;
+import com.oracle.truffle.r.nodes.access.vector.AccessForeignObjectNode.WritePositionsNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.ExtractSingleName;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
@@ -59,7 +59,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Syntax node for element writes.
  */
 
-@ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class, DSLConfig.class})
+@ImportStatic({RRuntime.class, DSLConfig.class})
 public abstract class ReplaceVectorNode extends RBaseNode {
 
     protected final ElementAccessMode mode;
@@ -249,7 +249,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
 
     @Specialization(guards = {"isForeignObject(object)"})
     protected Object accessField(TruffleObject object, Object[] positions, Object value,
-                    @Cached("create()") WriteElementsNode writeNode) {
+                    @Cached("create()") WritePositionsNode writeNode) {
         return writeNode.execute(object, positions, value);
     }
 

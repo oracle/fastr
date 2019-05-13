@@ -464,6 +464,7 @@ public final class RError extends RuntimeException implements TruffleException {
         REPLACEMENT_DIAGONAL_LENGTH("replacement diagonal has wrong length"),
         NA_INTRODUCED_COERCION("NAs introduced by coercion"),
         NA_INTRODUCED_COERCION_INT("NAs introduced by coercion to integer range"),
+        PRECISSION_LOSS_BY_CONVERSION("Possible precission loss by coercion of long %d to double %f"),
         ARGUMENT_WHICH_NOT_LOGICAL("argument to 'which' is not logical"),
         X_LONGER_THAN_Y("'%s' is longer than '%s'"),
         X_NUMERIC("'x' must be numeric"),

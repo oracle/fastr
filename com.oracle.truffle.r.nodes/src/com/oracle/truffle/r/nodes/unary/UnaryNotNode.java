@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,8 +32,9 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
@@ -54,7 +55,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-@ImportStatic({RRuntime.class, ConvertForeignObjectNode.class, Message.class, RType.class})
+@ImportStatic({RRuntime.class, ConvertForeignObjectNode.class, RType.class})
 @RBuiltin(name = "!", kind = PRIMITIVE, parameterNames = {""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
 public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
 
@@ -187,14 +188,18 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
         return doVectorCached(vector, vector.slowPathAccess(), VectorAccess.createSlowPathNew(RType.Logical), VectorAccess.createSlowPathNew(RType.Raw), factory);
     }
 
-    @Specialization(guards = {"isForeignObject(obj)"})
+    @Specialization(guards = {"isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
     protected Object doForeign(VirtualFrame frame, TruffleObject obj,
                     @Cached("create()") ConvertForeignObjectNode convertForeign,
-                    @Cached("createRecursive()") UnaryNotNode recursive) {
-        if (convertForeign.isForeignArray(obj)) {
-            Object vec = convertForeign.convert(obj);
-            return recursive.execute(frame, vec);
-        }
+                    @Cached("createRecursive()") UnaryNotNode recursive,
+                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
+        Object vec = convertForeign.convert(obj);
+        return recursive.execute(frame, vec);
+    }
+
+    @Specialization(guards = {"isForeignObject(obj)", "!isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
+    protected Object doForeign(@SuppressWarnings("unused") VirtualFrame frame, TruffleObject obj,
+                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
         return invalidArgType(obj);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,10 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 
@@ -43,7 +42,7 @@ public final class REmbedRFFI {
     }
 
     public static final class ReadConsoleNode extends NativeCallNode {
-        @Child private Node unboxNode;
+        @Child private InteropLibrary interop;
 
         private ReadConsoleNode(DownCallNodeFactory factory) {
             super(factory.createDownCallNode(NativeFunction.rembedded_read_console));
@@ -55,13 +54,15 @@ public final class REmbedRFFI {
                 return (String) result;
             }
             assert result instanceof TruffleObject : "NFI is expected to send us TruffleObject or String";
-            if (unboxNode == null) {
+            if (interop == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                unboxNode = insert(Message.UNBOX.createNode());
+                interop = insert(InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize()));
             }
+            assert interop.isString(result) : "NFI is expected to send us TruffleObject or String";
+
             try {
-                return (String) ForeignAccess.sendUnbox(unboxNode, (TruffleObject) result);
-            } catch (ClassCastException | UnsupportedMessageException e) {
+                return interop.asString(result);
+            } catch (UnsupportedMessageException e) {
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("Unboxing TruffleObject from NFI, which should be String wrapper, failed. " + e.getMessage());
             }

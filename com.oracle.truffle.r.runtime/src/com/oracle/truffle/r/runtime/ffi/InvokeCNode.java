@@ -26,10 +26,10 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -84,18 +84,14 @@ public abstract class InvokeCNode extends RBaseNode {
         return functionGetterNode.execute(address, arity, nativeCallInfo);
     }
 
-    public static Node createExecute() {
-        return Message.EXECUTE.createNode();
-    }
-
     @Specialization(guards = {"args.length == cachedArgsLength", "nativeCallInfo.address.asTruffleObject() == cachedAddress"})
     protected void invokeCallCached(@SuppressWarnings("unused") NativeCallInfo nativeCallInfo, Object[] args,
                     @SuppressWarnings("unused") @Cached("args.length") int cachedArgsLength,
-                    @Cached("createExecute()") Node executeNode,
                     @SuppressWarnings("unused") @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
-                    @Cached("getFunction(cachedAddress, cachedArgsLength, nativeCallInfo)") TruffleObject cachedFunction) {
+                    @Cached("getFunction(cachedAddress, cachedArgsLength, nativeCallInfo)") TruffleObject cachedFunction,
+                    @CachedLibrary("cachedFunction") InteropLibrary cachedInterop) {
         try {
-            ForeignAccess.sendExecute(executeNode, cachedFunction, args);
+            cachedInterop.execute(cachedFunction, args);
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
@@ -104,9 +100,9 @@ public abstract class InvokeCNode extends RBaseNode {
     @Specialization(replaces = "invokeCallCached", limit = "99", guards = "args.length == cachedArgsLength")
     protected void invokeCallCachedLength(NativeCallInfo nativeCallInfo, Object[] args,
                     @Cached("args.length") int cachedArgsLength,
-                    @Cached("createExecute()") Node executeNode) {
+                    @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
         try {
-            ForeignAccess.sendExecute(executeNode, getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength, nativeCallInfo), args);
+            interop.execute(getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength, nativeCallInfo), args);
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }

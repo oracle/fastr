@@ -29,13 +29,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -67,7 +65,7 @@ import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class, Foreign2R.class})
+@ImportStatic({RRuntime.class, ConvertForeignObjectNode.class, Foreign2R.class})
 public abstract class PrecedenceNode extends RBaseNode {
 
     public static final int NO_PRECEDENCE = -1;
@@ -258,18 +256,17 @@ public abstract class PrecedenceNode extends RBaseNode {
         return precedenceNode.executeInteger(args.getArgument(0), recursive);
     }
 
-    @Specialization(guards = {"isForeignObject(to)", "!isForeignArray(to, hasSize)"})
+    @Specialization(guards = {"isForeignObject(to)", "!isForeignArray(to, interop)"}, limit = "getInteropLibraryCacheSize()")
     @SuppressWarnings("unused")
     protected int doForeignObject(TruffleObject to, boolean recursive,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize) {
+                    @CachedLibrary("to") InteropLibrary interop) {
         return LIST_PRECEDENCE;
     }
 
-    @Specialization(guards = {"isForeignArray(obj, hasSize)"})
+    @Specialization(guards = {"isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
     protected int doForeignArray(TruffleObject obj, boolean recursive,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
-                    @Cached("GET_SIZE.createNode()") Node getSize,
-                    @Cached("READ.createNode()") Node read,
+                    @CachedLibrary("obj") InteropLibrary interop,
+                    @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary elementInterop,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode,
                     @Cached("create()") Foreign2R foreign2R) {
         int precedence = -1;
@@ -283,17 +280,19 @@ public abstract class PrecedenceNode extends RBaseNode {
                     return prc;
                 }
             }
-            int size = (int) ForeignAccess.sendGetSize(getSize, obj);
+            int size = RRuntime.getForeignArraySize(obj, interop);
             for (int i = 0; i < size; i++) {
-                Object element = ForeignAccess.sendRead(read, obj, i);
-                element = foreign2R.execute(element);
-                if (!recursive && (isForeignArray(element, hasSize))) {
-                    return LIST_PRECEDENCE;
+                Object element = interop.readArrayElement(obj, i);
+                element = foreign2R.convert(element);
+                if (!recursive) {
+                    if (isForeignArray(element, elementInterop)) {
+                        return LIST_PRECEDENCE;
+                    }
                 } else {
                     precedence = Math.max(precedence, precedenceNode.executeInteger(element, recursive));
                 }
             }
-        } catch (UnknownIdentifierException | UnsupportedMessageException ex) {
+        } catch (InvalidArrayIndexException | UnsupportedMessageException ex) {
             throw error(RError.Message.GENERIC, "error while accessing array: " + ex.getMessage());
         }
         return precedence;

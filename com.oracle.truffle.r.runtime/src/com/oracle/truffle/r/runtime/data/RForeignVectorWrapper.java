@@ -23,26 +23,17 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArrayToVectorNode;
 
 public abstract class RForeignVectorWrapper implements RAbstractVector {
-
-    protected static final Node GET_SIZE = Message.GET_SIZE.createNode();
-    protected static final Node IS_NULL = Message.IS_NULL.createNode();
-    protected static final Node IS_BOXED = Message.IS_BOXED.createNode();
-    protected static final Node UNBOX = Message.UNBOX.createNode();
-    protected static final Node READ = Message.READ.createNode();
-
-    private static final ForeignArrayToVectorNode COPY_ARRAY = ForeignArrayToVectorNode.create();
 
     protected final TruffleObject delegate;
 
@@ -50,14 +41,14 @@ public abstract class RForeignVectorWrapper implements RAbstractVector {
         this.delegate = delegate;
     }
 
+    protected static final InteropLibrary getInterop() {
+        return InteropLibrary.getFactory().getUncached();
+    }
+
     @Override
     @TruffleBoundary
     public int getLength() {
-        try {
-            return (int) ForeignAccess.sendGetSize(GET_SIZE, delegate);
-        } catch (UnsupportedMessageException e) {
-            throw RInternalError.shouldNotReachHere(e);
-        }
+        return RRuntime.getForeignArraySize(delegate, getInterop());
     }
 
     @Override
@@ -92,7 +83,7 @@ public abstract class RForeignVectorWrapper implements RAbstractVector {
 
     @Override
     public final RAbstractVector copy() {
-        return COPY_ARRAY.toVector(delegate, getRType());
+        return ForeignArrayToVectorNode.getUncached().toVector(delegate, getRType());
     }
 
     @Override
@@ -225,5 +216,10 @@ public abstract class RForeignVectorWrapper implements RAbstractVector {
     @Override
     public void setTrueLength(int l) {
         throw RInternalError.shouldNotReachHere();
+    }
+
+    @TruffleBoundary
+    public static Object unbox(Object obj) {
+        return Foreign2R.getUncached().convert(obj);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,11 +26,10 @@ import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
@@ -69,7 +68,7 @@ public final class PCRERFFI {
     }
 
     public static final class MaketablesNode extends NativeCallNode {
-        @Child private Node asPointerNode;
+        @Child private InteropLibrary interop;
 
         private MaketablesNode(DownCallNodeFactory factory) {
             super(factory.createDownCallNode(NativeFunction.maketables));
@@ -81,12 +80,12 @@ public final class PCRERFFI {
                 return (long) result;
             }
             assert result instanceof TruffleObject;
-            if (asPointerNode == null) {
+            if (interop == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                asPointerNode = insert(Message.AS_POINTER.createNode());
+                interop = insert(InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize()));
             }
             try {
-                return ForeignAccess.sendAsPointer(asPointerNode, (TruffleObject) result);
+                return interop.asPointer(result);
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere("PCRE function maketables should return long or TruffleObject that represents a pointer.");
             }

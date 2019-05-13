@@ -31,10 +31,9 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
@@ -45,6 +44,7 @@ import com.oracle.truffle.r.nodes.builtin.base.UnlistNodeGen.UnlistLengthNodeGen
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -68,7 +68,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 
-@ImportStatic({Message.class, RRuntime.class})
+@ImportStatic({RRuntime.class, ConvertForeignObjectNode.class})
 @RBuiltin(name = "unlist", kind = INTERNAL, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "recursive", "use.names"}, behavior = PURE)
 public abstract class Unlist extends RBuiltinNode.Arg3 {
 
@@ -84,10 +84,9 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     @Child private UnlistLength lengthNode;
     @Child private RecursiveLength recursiveLengthNode;
     @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
-    @Child private Node hasSizeNode;
     @Child private ConvertForeignObjectNode convertForeignNode;
 
-    @ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class})
+    @ImportStatic({RRuntime.class, ConvertForeignObjectNode.class})
     @TypeSystemReference(RTypes.class)
     protected abstract static class UnlistLength extends Node {
 
@@ -112,7 +111,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         }
     }
 
-    @ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class})
+    @ImportStatic({RRuntime.class, ConvertForeignObjectNode.class, DSLConfig.class})
     @TypeSystemReference(RTypes.class)
     protected abstract static class RecursiveLength extends Node {
 
@@ -183,29 +182,27 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
             return totalSize;
         }
 
-        @Specialization(guards = {"isForeignArray(obj, hasSize)"})
+        @Specialization(guards = {"isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
         protected int getForeignArrayLength(TruffleObject obj,
-                        @Cached("READ.createNode()") Node read,
-                        @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
-                        @Cached("GET_SIZE.createNode()") Node getSize,
+                        @CachedLibrary("obj") InteropLibrary interop,
                         @Cached("create()") Foreign2R foreign2R) {
             int totalSize = 0;
             try {
-                int size = (int) ForeignAccess.sendGetSize(getSize, obj);
+                int size = RRuntime.getForeignArraySize(obj, interop);
                 for (int i = 0; i < size; i++) {
-                    Object element = ForeignAccess.sendRead(read, obj, i);
-                    element = foreign2R.execute(element);
+                    Object element = interop.readArrayElement(obj, i);
+                    element = foreign2R.convert(element);
                     totalSize += getRecursiveLength(element);
                 }
-            } catch (UnknownIdentifierException | UnsupportedMessageException ex) {
+            } catch (InvalidArrayIndexException | UnsupportedMessageException ex) {
                 throw RError.interopError(RError.findParentRBase(this), ex, obj);
             }
             return totalSize;
         }
 
-        @Specialization(guards = {"isForeignObject(obj)", "!isForeignArray(obj, hasSize)"})
+        @Specialization(guards = {"isForeignObject(obj)", "!isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
         protected int getForeignObject(@SuppressWarnings("unused") TruffleObject obj,
-                        @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize) {
+                        @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
             return 1;
         }
     }
@@ -265,7 +262,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         if (precedence == PrecedenceNode.NO_PRECEDENCE) {
             return RNull.instance;
         } else {
-            return unlistHelper(list, recursive, useNames, precedence, totalSize);
+            return unlistHelper(list, recursive, useNames, precedence, totalSize, null);
         }
     }
 
@@ -278,10 +275,10 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         return unlistList(list.toRList(), recursive, useNames);
     }
 
-    @Specialization(guards = {"isForeignArray(obj)"})
+    @Specialization(guards = {"isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
     protected Object unlistForeignArray(VirtualFrame frame, TruffleObject obj, boolean recursive, boolean useNames,
-                    @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
-                    @Cached("create()") ConvertForeignObjectNode convertForeign) {
+                    @Cached("create()") ConvertForeignObjectNode convertForeign,
+                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
         return unlistForeign(frame, obj, recursive, useNames, convertForeign);
     }
 
@@ -293,8 +290,9 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         return result;
     }
 
-    @Specialization(guards = {"isForeignObject(obj)", "!isForeignArray(obj)"})
-    protected Object unlistForeign(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean useNames) {
+    @Specialization(guards = {"isForeignObject(obj)", "!isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
+    protected Object unlistForeign(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean useNames,
+                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
         return obj;
     }
 
@@ -304,17 +302,17 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         return o;
     }
 
-    protected boolean isForeignArray(Object obj) {
-        return ConvertForeignObjectNode.isForeignArray(obj, getHasSizeNode());
+    protected boolean isForeignArray(Object obj, InteropLibrary interop) {
+        return interop != null && ConvertForeignObjectNode.isForeignArray(obj, interop);
     }
 
     /**
      * Converts foreign object to RAbstractVector.
      *
-     * @param obj the foreign object. Has to be ensured it is a foreign array or java iterable.
+     * @param obj the foreign object. Has to be ensured it is a foreign array.
      */
     private RAbstractVector foreignToVector(TruffleObject obj, boolean recursive) {
-        assert isForeignArray(obj);
+        assert ConvertForeignObjectNode.isForeignArray(obj, InteropLibrary.getFactory().getUncached());
         return (RAbstractVector) getForeignArray2RNode().convert(obj, recursive);
     }
 
@@ -326,16 +324,8 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         return convertForeignNode;
     }
 
-    private Node getHasSizeNode() {
-        if (hasSizeNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            hasSizeNode = insert(Message.HAS_SIZE.createNode());
-        }
-        return hasSizeNode;
-    }
-
     @TruffleBoundary
-    private RAbstractVector unlistHelper(RList list, boolean recursive, boolean useNames, int precedence, int totalSize) {
+    private RAbstractVector unlistHelper(RList list, boolean recursive, boolean useNames, int precedence, int totalSize, InteropLibrary interop) {
         String[] namesData = useNames ? new String[totalSize] : null;
         NamesInfo namesInfo = useNames ? new NamesInfo() : null;
         switch (precedence) {
@@ -363,11 +353,11 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
-                            position = unlistHelperLogical(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                            position = unlistHelperLogical(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames, interop);
                         }
                     }
                 } else {
-                    unlistHelperLogical(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
+                    unlistHelperLogical(result, namesData, 0, namesInfo, list, null, null, recursive, useNames, interop);
                 }
                 return RDataFactory.createLogicalVector(result, RDataFactory.INCOMPLETE_VECTOR,
                                 namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
@@ -380,11 +370,11 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
-                            position = unlistHelperInt(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                            position = unlistHelperInt(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames, interop);
                         }
                     }
                 } else {
-                    unlistHelperInt(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
+                    unlistHelperInt(result, namesData, 0, namesInfo, list, null, null, recursive, useNames, interop);
                 }
                 return RDataFactory.createIntVector(result, RDataFactory.INCOMPLETE_VECTOR,
                                 namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
@@ -397,11 +387,11 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
-                            position = unlistHelperDouble(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                            position = unlistHelperDouble(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames, interop);
                         }
                     }
                 } else {
-                    unlistHelperDouble(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
+                    unlistHelperDouble(result, namesData, 0, namesInfo, list, null, null, recursive, useNames, interop);
                 }
                 return RDataFactory.createDoubleVector(result, RDataFactory.INCOMPLETE_VECTOR,
                                 namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
@@ -431,11 +421,11 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
-                            position = unlistHelperString(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                            position = unlistHelperString(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames, interop);
                         }
                     }
                 } else {
-                    unlistHelperString(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
+                    unlistHelperString(result, namesData, 0, namesInfo, list, null, null, recursive, useNames, interop);
                 }
                 return RDataFactory.createStringVector(result, RDataFactory.INCOMPLETE_VECTOR,
                                 namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
@@ -449,11 +439,11 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                     int position = 0;
                     for (int i = 0; i < list.getLength(); i++) {
                         if (list.getDataAt(i) != RNull.instance) {
-                            position = unlistHelperList(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames);
+                            position = unlistHelperList(result, namesData, position, namesInfo, list.getDataAt(i), null, itemName(listNames, i), recursive, useNames, interop);
                         }
                     }
                 } else {
-                    unlistHelperList(result, namesData, 0, namesInfo, list, null, null, recursive, useNames);
+                    unlistHelperList(result, namesData, 0, namesInfo, list, null, null, recursive, useNames, interop);
                 }
                 return RDataFactory.createList(result, namesInfo != null && namesInfo.namesAssigned ? RDataFactory.createStringVector(namesData, RDataFactory.INCOMPLETE_VECTOR) : null);
             }
@@ -519,7 +509,8 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     @TruffleBoundary
-    private int unlistHelperLogical(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperLogical(byte[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames,
+                    InteropLibrary interop) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -542,16 +533,16 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (RRuntime.isForeignObject(cur)) {
-                    position = unlistHelperForeignLogical(result, position, (TruffleObject) cur, recursive);
+                    position = unlistHelperForeignLogical(result, position, (TruffleObject) cur, recursive, interop);
                 } else if (v instanceof RList && recursive) {
-                    position = unlistHelperLogical(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                    position = unlistHelperLogical(result, namesData, position, namesInfo, cur, base, name, recursive, useNames, interop);
                 } else {
                     assignName(name, base, position, namesData, namesInfo, useNames);
                     result[position++] = unlistValueLogical(cur);
                 }
             }
         } else if (RRuntime.isForeignObject(o)) {
-            position = unlistHelperForeignLogical(result, position, (TruffleObject) o, recursive);
+            position = unlistHelperForeignLogical(result, position, (TruffleObject) o, recursive, interop);
         } else if (o != RNull.instance) {
             assignName(null, base, position, namesData, namesInfo, useNames);
             result[position++] = unlistValueLogical(o);
@@ -561,7 +552,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     @TruffleBoundary
-    private int unlistHelperInt(int[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperInt(int[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames, InteropLibrary interop) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -584,16 +575,16 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (RRuntime.isForeignObject(cur)) {
-                    position = unlistHelperForeignInt(result, position, (TruffleObject) cur, recursive);
+                    position = unlistHelperForeignInt(result, position, (TruffleObject) cur, recursive, interop);
                 } else if (v instanceof RList && recursive) {
-                    position = unlistHelperInt(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                    position = unlistHelperInt(result, namesData, position, namesInfo, cur, base, name, recursive, useNames, interop);
                 } else {
                     assignName(name, base, position, namesData, namesInfo, useNames);
                     result[position++] = unlistValueInt(cur);
                 }
             }
         } else if (RRuntime.isForeignObject(o)) {
-            position = unlistHelperForeignInt(result, position, (TruffleObject) o, recursive);
+            position = unlistHelperForeignInt(result, position, (TruffleObject) o, recursive, interop);
         } else if (o != RNull.instance) {
             assignName(null, base, position, namesData, namesInfo, useNames);
             result[position++] = unlistValueInt(o);
@@ -603,7 +594,8 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     @TruffleBoundary
-    private int unlistHelperDouble(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperDouble(double[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames,
+                    InteropLibrary interop) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -626,16 +618,16 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (RRuntime.isForeignObject(cur)) {
-                    position = unlistHelperForeignDouble(result, position, (TruffleObject) cur, recursive);
+                    position = unlistHelperForeignDouble(result, position, (TruffleObject) cur, recursive, interop);
                 } else if (v instanceof RList && recursive) {
-                    position = unlistHelperDouble(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                    position = unlistHelperDouble(result, namesData, position, namesInfo, cur, base, name, recursive, useNames, interop);
                 } else {
                     assignName(name, base, position, namesData, namesInfo, useNames);
                     result[position++] = unlistValueDouble(cur);
                 }
             }
         } else if (RRuntime.isForeignObject(o)) {
-            position = unlistHelperForeignDouble(result, position, (TruffleObject) o, recursive);
+            position = unlistHelperForeignDouble(result, position, (TruffleObject) o, recursive, interop);
         } else if (o != RNull.instance) {
             assignName(null, base, position, namesData, namesInfo, useNames);
             result[position++] = unlistValueDouble(o);
@@ -687,9 +679,10 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     @TruffleBoundary
-    private int unlistHelperList(Object[] result, String[] namesData, int pos, NamesInfo namesInfo, Object obj, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperList(Object[] result, String[] namesData, int pos, NamesInfo namesInfo, Object obj, String outerBase, String tag, boolean recursive, boolean useNames,
+                    InteropLibrary interop) {
         Object o;
-        if (isForeignArray(obj)) {
+        if (isForeignArray(obj, interop)) {
             o = foreignToVector((TruffleObject) obj, recursive);
         } else {
             o = handlePairList(obj);
@@ -714,10 +707,10 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
             for (int i = 0; i < v.getLength(); i++) {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
-                if (recursive && isForeignArray(obj)) {
-                    position = unlistHelperForeign(result, position, (TruffleObject) cur, recursive);
+                if (recursive && isForeignArray(obj, interop)) {
+                    position = unlistHelperForeign(result, position, (TruffleObject) cur, recursive, interop);
                 } else if (v instanceof RList && recursive) {
-                    position = unlistHelperList(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                    position = unlistHelperList(result, namesData, position, namesInfo, cur, base, name, recursive, useNames, interop);
                 } else {
                     assignName(name, base, position, namesData, namesInfo, useNames);
                     result[position++] = cur;
@@ -732,14 +725,14 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     @TruffleBoundary
-    private int unlistHelperForeign(Object[] result, int pos, TruffleObject obj, boolean recursive) {
+    private int unlistHelperForeign(Object[] result, int pos, TruffleObject obj, boolean recursive, InteropLibrary interop) {
         int position = pos;
-        if (recursive && isForeignArray(obj)) {
+        if (recursive && isForeignArray(obj, interop)) {
             RAbstractVector v = foreignToVector(obj, recursive);
             for (int i = 0; i < v.getLength(); i++) {
                 Object cur = v.getDataAtAsObject(i);
-                if (isForeignArray(cur)) {
-                    position = unlistHelperForeign(result, position, (TruffleObject) cur, recursive);
+                if (isForeignArray(cur, interop)) {
+                    position = unlistHelperForeign(result, position, (TruffleObject) cur, recursive, interop);
                 } else {
                     result[position++] = cur;
                 }
@@ -749,75 +742,76 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     @TruffleBoundary
-    private int unlistHelperForeignLogical(byte[] result, int pos, TruffleObject obj, boolean recursive) {
+    private int unlistHelperForeignLogical(byte[] result, int pos, TruffleObject obj, boolean recursive, InteropLibrary interop) {
         int position = pos;
         RAbstractVector v = foreignToVector(obj, recursive);
         for (int i = 0; i < v.getLength(); i++) {
             Object cur = v.getDataAtAsObject(i);
             if (!RRuntime.isForeignObject(cur)) {
                 result[position++] = unlistValueLogical(cur);
-            } else if (recursive && isForeignArray(cur)) {
-                position = unlistHelperForeignLogical(result, position, (TruffleObject) cur, recursive);
+            } else if (recursive && isForeignArray(cur, interop)) {
+                position = unlistHelperForeignLogical(result, position, (TruffleObject) cur, recursive, interop);
             } else {
-                assert false : "recursive=" + recursive + ", isArray=" + isForeignArray(cur);
+                assert false : "recursive=" + recursive + ", isArray=" + isForeignArray(cur, interop);
             }
         }
         return position;
     }
 
     @TruffleBoundary
-    private int unlistHelperForeignInt(int[] result, int pos, TruffleObject obj, boolean recursive) {
+    private int unlistHelperForeignInt(int[] result, int pos, TruffleObject obj, boolean recursive, InteropLibrary interop) {
         int position = pos;
         RAbstractVector v = foreignToVector(obj, recursive);
         for (int i = 0; i < v.getLength(); i++) {
             Object cur = v.getDataAtAsObject(i);
             if (!RRuntime.isForeignObject(cur)) {
                 result[position++] = unlistValueInt(cur);
-            } else if (recursive && isForeignArray(cur)) {
-                position = unlistHelperForeignInt(result, position, (TruffleObject) cur, recursive);
+            } else if (recursive && isForeignArray(cur, interop)) {
+                position = unlistHelperForeignInt(result, position, (TruffleObject) cur, recursive, interop);
             } else {
-                assert false : "recursive=" + recursive + ", isArray=" + isForeignArray(cur);
+                assert false : "recursive=" + recursive + ", isArray=" + isForeignArray(cur, interop);
             }
         }
         return position;
     }
 
     @TruffleBoundary
-    private int unlistHelperForeignDouble(double[] result, int pos, TruffleObject obj, boolean recursive) {
+    private int unlistHelperForeignDouble(double[] result, int pos, TruffleObject obj, boolean recursive, InteropLibrary interop) {
         int position = pos;
         RAbstractVector v = foreignToVector(obj, recursive);
         for (int i = 0; i < v.getLength(); i++) {
             Object cur = v.getDataAtAsObject(i);
             if (!RRuntime.isForeignObject(cur)) {
                 result[position++] = unlistValueDouble(cur);
-            } else if (recursive && isForeignArray(cur)) {
-                position = unlistHelperForeignDouble(result, position, (TruffleObject) cur, recursive);
+            } else if (recursive && isForeignArray(cur, interop)) {
+                position = unlistHelperForeignDouble(result, position, (TruffleObject) cur, recursive, interop);
             } else {
-                assert false : "recursive=" + recursive + ", isArray=" + isForeignArray(cur);
+                assert false : "recursive=" + recursive + ", isArray=" + isForeignArray(cur, interop);
             }
         }
         return position;
     }
 
     @TruffleBoundary
-    private int unlistHelperForeignString(String[] result, int pos, TruffleObject obj, boolean recursive) {
+    private int unlistHelperForeignString(String[] result, int pos, TruffleObject obj, boolean recursive, InteropLibrary interop) {
         int position = pos;
         RAbstractVector v = foreignToVector(obj, recursive);
         for (int i = 0; i < v.getLength(); i++) {
             Object cur = v.getDataAtAsObject(i);
             if (!RRuntime.isForeignObject(cur)) {
                 result[position++] = unlistValueString(cur);
-            } else if (recursive && isForeignArray(cur)) {
-                position = unlistHelperForeignString(result, position, (TruffleObject) cur, recursive);
+            } else if (recursive && isForeignArray(cur, interop)) {
+                position = unlistHelperForeignString(result, position, (TruffleObject) cur, recursive, interop);
             } else {
-                assert false : "recursive=" + recursive + ", isArray=" + isForeignArray(cur);
+                assert false : "recursive=" + recursive + ", isArray=" + isForeignArray(cur, interop);
             }
         }
         return position;
     }
 
     @TruffleBoundary
-    private int unlistHelperString(String[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames) {
+    private int unlistHelperString(String[] result, String[] namesData, int pos, NamesInfo namesInfo, Object oIn, String outerBase, String tag, boolean recursive, boolean useNames,
+                    InteropLibrary interop) {
         int position = pos;
         int saveFirstPos = 0;
         int saveSeqNo = 0;
@@ -840,16 +834,16 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                 String name = itemName(listNames, i);
                 Object cur = v.getDataAtAsObject(i);
                 if (RRuntime.isForeignObject(cur)) {
-                    position = unlistHelperForeignString(result, position, (TruffleObject) cur, recursive);
+                    position = unlistHelperForeignString(result, position, (TruffleObject) cur, recursive, interop);
                 } else if (v instanceof RList && recursive) {
-                    position = unlistHelperString(result, namesData, position, namesInfo, cur, base, name, recursive, useNames);
+                    position = unlistHelperString(result, namesData, position, namesInfo, cur, base, name, recursive, useNames, interop);
                 } else {
                     assignName(name, base, position, namesData, namesInfo, useNames);
                     result[position++] = unlistValueString(v.getDataAtAsObject(i));
                 }
             }
         } else if (RRuntime.isForeignObject(o)) {
-            position = unlistHelperForeignString(result, position, (TruffleObject) o, recursive);
+            position = unlistHelperForeignString(result, position, (TruffleObject) o, recursive, interop);
         } else if (o != RNull.instance) {
             assignName(null, base, position, namesData, namesInfo, useNames);
             result[position++] = unlistValueString(o);

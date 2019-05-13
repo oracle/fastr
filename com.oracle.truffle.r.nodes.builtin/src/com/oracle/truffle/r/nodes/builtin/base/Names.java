@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.interop.GetForeignKeysNode;
+import com.oracle.truffle.r.runtime.interop.GetForeignMembersNode;
 
 @ImportStatic(RRuntime.class)
 @RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
@@ -72,8 +72,8 @@ public abstract class Names extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = "isForeignObject(obj)")
     protected Object getNames(TruffleObject obj,
-                    @Cached("create()") GetForeignKeysNode foreignKeys) {
-        return foreignKeys.execute(obj, true);
+                    @Cached("create()") GetForeignMembersNode membersNode) {
+        return membersNode.execute(obj, true);
     }
 
     @Fallback
