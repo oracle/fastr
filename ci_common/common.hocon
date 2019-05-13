@@ -66,6 +66,7 @@ environmentDarwin : {
     PATH : "/usr/local/bin:$JAVA_HOME/bin:$PATH"
     F77: "/usr/local/bin/gfortran-4.9"
     TZDIR: "/usr/share/zoneinfo"
+    FASTR_LIBZ_VER: "1.2.11"
   }
 }
 
@@ -129,6 +130,7 @@ gateCmd : ["mx", "-v", "--strict-compliance", "rgate", "-B=--force-deprecation-a
 gateTestCommon : {
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: with specials,Rembedded"]
+    [mx, r, "-e", "extSoftVersion()"]
   ]
 }
 
