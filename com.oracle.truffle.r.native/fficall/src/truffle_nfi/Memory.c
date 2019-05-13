@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,8 +37,11 @@ char *S_alloc(long n, int size) {
     return p;
 }
 
-char *S_realloc(char *p, long a, long b, int size) {
-    return unimplemented("S_realloc");
+char *S_realloc(char *p, long new_size, long old_size, int elt_size) {
+    char* res = R_alloc(new_size, elt_size);
+    long min_size = new_size < old_size ? new_size : old_size;
+    memcpy(res, p, min_size * elt_size);
+    return res;
 }
 
 void *R_chk_calloc(size_t nelem, size_t elsize) {
