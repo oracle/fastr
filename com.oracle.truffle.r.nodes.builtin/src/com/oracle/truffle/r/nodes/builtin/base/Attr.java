@@ -127,7 +127,7 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
     }
 
     @ImportStatic(DSLConfig.class)
-    protected static abstract class PartialSearchCache extends Node {
+    protected abstract static class PartialSearchCache extends Node {
         @Child protected ForEachAttributeNode iterAttrAccess = ForEachAttributeNode.create(new PartialAttrSearchAction());
 
         public abstract Object execute(DynamicObject attributes, String name);

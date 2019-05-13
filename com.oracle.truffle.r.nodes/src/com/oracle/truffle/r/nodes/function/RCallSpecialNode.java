@@ -94,7 +94,7 @@ abstract class ClassCheckNode extends RNode {
 
     @Specialization(guards = "hasAttributes(storage)")
     protected static RAttributeStorage doEmptyAttrStorage(RAttributeStorage storage,
-                                                          @Cached("createClass()") GetFixedAttributeNode getClassAttrNode) {
+                    @Cached("createClass()") GetFixedAttributeNode getClassAttrNode) {
         if (getClassAttrNode.execute(storage) != null) {
             throw RSpecialFactory.throwFullCallNeeded();
         }

@@ -356,8 +356,8 @@ public class MethodsListDispatch {
 
         @Specialization
         protected byte identC(RAbstractStringVector e1In, RAbstractStringVector e2In,
-                                @Cached("createClassProfile()") ValueProfile e1Profile,
-                                @Cached("createClassProfile()") ValueProfile e2Profile) {
+                        @Cached("createClassProfile()") ValueProfile e1Profile,
+                        @Cached("createClassProfile()") ValueProfile e2Profile) {
             RAbstractStringVector e1 = e1Profile.profile(e1In);
             RAbstractStringVector e2 = e2Profile.profile(e2In);
             return RRuntime.asLogical(e1.getLength() == 1 && e2.getLength() == 1 && e1.getDataAt(0).equals(e2.getDataAt(0)));

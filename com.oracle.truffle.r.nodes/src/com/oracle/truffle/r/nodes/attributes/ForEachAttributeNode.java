@@ -56,7 +56,7 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
      * the parameter passed to {@link #execute(DynamicObject, Object)} and to the result, which
      * should be set by this function.
      */
-    public static abstract class AttributeAction extends Node {
+    public abstract static class AttributeAction extends Node {
         public void init(Context context) {
             // nop
         }
