@@ -57,7 +57,7 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
      * should be set by this function.
      */
     public abstract static class AttributeAction extends Node {
-        public void init(Context context) {
+        public void init(@SuppressWarnings("unused") Context context) {
             // nop
         }
 

@@ -101,7 +101,8 @@ common : ${java8Downloads} {
   logs: ${logfiles}
   catch_files : [
     "Graal diagnostic output saved in (?P<filename>.+\.zip)",
-    "output mismatch file: (?P<filename>.+\.Rout)"
+    "output mismatch file: (?P<filename>.+\.Rout)",
+    "test had .fail outputs: \['(?P<filename>.+)'\]"
   ]
   timelimit : "1:00:00"
   environment : {

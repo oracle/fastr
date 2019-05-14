@@ -494,7 +494,7 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
 def _set_test_status(fastr_test_info):
     def _failed_outputs(outputs):
         '''
-        return True iff outputs has any .fail files
+        return False iff outputs has no .fail files
         '''
         for _, testfile_status in outputs.iteritems():
             if testfile_status.status == "FAILED":
@@ -518,7 +518,7 @@ def _set_test_status(fastr_test_info):
             # What this likely means is that some native package is not
             # installed on the system so GNUR can't run the tests.
             # Ideally this never happens.
-            logging.info("{0}: GnuR test had .fail outputs: {1}".format(pkg, str(gnur_failed_outputs)))
+            logging.info("{0}: GnuR test had .fail outputs: {1}".format(pkg, str([s + '.fail' for s in gnur_failed_outputs])))
 
         fastr_failed_outputs = _failed_outputs(fastr_outputs)
         if fastr_failed_outputs:

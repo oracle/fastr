@@ -133,7 +133,7 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
         public abstract Object execute(DynamicObject attributes, String name);
 
         @Specialization(guards = {"attrs.getShape() == cachedShape", "name.equals(cachedName)"}, limit = "getCacheSize(8)")
-        protected Object doCached(DynamicObject attrs, String name,
+        protected Object doCached(@SuppressWarnings("unused") DynamicObject attrs, @SuppressWarnings("unused") String name,
                         @SuppressWarnings("unused") @Cached("attrs.getShape()") Shape cachedShape,
                         @SuppressWarnings("unused") @Cached("name") String cachedName,
                         @Cached("iterAttrAccess.execute(attrs,name)") Object result) {
