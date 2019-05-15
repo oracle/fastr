@@ -109,6 +109,10 @@ extern SEXP test_createNativeConnection(void);
 
 extern SEXP test_ParseVector(SEXP src);
 
+extern SEXP test_lapply(SEXP list, SEXP fn, SEXP rho);
+
+extern SEXP test_RfFindFunAndRfEval(SEXP x, SEXP y);
+
 extern SEXP test_RfEvalWithPromiseInPairList(void);
 
 extern SEXP test_isNAString(SEXP vec);

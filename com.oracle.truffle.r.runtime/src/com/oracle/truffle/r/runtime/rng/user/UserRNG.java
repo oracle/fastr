@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -104,12 +104,12 @@ public final class UserRNG implements RandomNumberGenerator {
             Function function = (Function) args[0];
             switch (function) {
                 case Init:
-                    initNode.execute((int) args[1]);
+                    initNode.execute(frame, (int) args[1]);
                     return RNull.instance;
                 case NSeed:
-                    return nSeedNode.execute();
+                    return nSeedNode.execute(frame);
                 case Seedloc:
-                    seedsNode.execute((int[]) args[1]);
+                    seedsNode.execute(frame, (int[]) args[1]);
                     return RNull.instance;
                 default:
                     throw RInternalError.shouldNotReachHere();
@@ -121,7 +121,7 @@ public final class UserRNG implements RandomNumberGenerator {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            return randNode.execute();
+            return randNode.execute(frame);
         }
     }
 

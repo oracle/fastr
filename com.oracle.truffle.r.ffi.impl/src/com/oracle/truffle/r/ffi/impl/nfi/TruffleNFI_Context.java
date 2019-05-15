@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
+
 import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -32,6 +37,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -44,7 +50,6 @@ import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
-import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -66,9 +71,6 @@ import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 import sun.misc.Unsafe;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 class UnsafeAdapter {
     public static final Unsafe UNSAFE = initUnsafe();
@@ -375,19 +377,20 @@ public class TruffleNFI_Context extends RFFIContext {
     }
 
     @Override
-    public long beforeDowncall(RFFIFactory.Type rffiType) {
-        super.beforeDowncall(RFFIFactory.Type.NFI);
+    public Object beforeDowncall(VirtualFrame frame, RFFIFactory.Type rffiType) {
+        Object tokenFromSuper = super.beforeDowncall(frame, RFFIFactory.Type.NFI);
         transientAllocations.push(new ArrayList<>());
         if (hasAccessLock) {
             acquireLock();
         }
-        return pushCallbacks();
+        return new Object[]{tokenFromSuper, pushCallbacks()};
     }
 
     @Override
-    public void afterDowncall(long beforeValue, RFFIFactory.Type rffiType) {
-        super.afterDowncall(beforeValue, rffiType);
-        popCallbacks(beforeValue);
+    public void afterDowncall(Object beforeValue, RFFIFactory.Type rffiType) {
+        Object[] tokens = (Object[]) beforeValue;
+        super.afterDowncall(tokens[0], rffiType);
+        popCallbacks((long) tokens[1]);
         for (Long ptr : transientAllocations.pop()) {
             UnsafeAdapter.UNSAFE.freeMemory(ptr);
         }
@@ -419,4 +422,5 @@ public class TruffleNFI_Context extends RFFIContext {
     private static void releaseLock() {
         accessLock.unlock();
     }
+
 }

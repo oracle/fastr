@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,16 +24,20 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.function.Supplier;
 
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.signature.VarArgsHelper;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -153,4 +157,37 @@ public final class RCallerHelper {
             }
         };
     }
+
+    /**
+     * If the call leads to actual call via
+     * {@link com.oracle.truffle.r.nodes.function.call.CallRFunctionNode}, which creates new frame
+     * and new set of arguments for it, then for this new arguments we explicitly provide
+     * {@link RCaller} that looks like the function was called from the explicitly given environment
+     * (it will be its parent call), but at the same time its depth is one above the do.call
+     * function that actually invoked it.
+     *
+     * @see RCaller
+     * @see RArguments
+     */
+    public static RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, REnvironment env, String funcName, RFunction func,
+                    RArgsValuesAndNames args) {
+        Supplier<RSyntaxElement> callerSyntax;
+        if (funcName != null) {
+            callerSyntax = RCallerHelper.createFromArguments(funcName, args);
+        } else {
+            callerSyntax = RCallerHelper.createFromArguments(func, args);
+        }
+        RCaller originalPromiseCaller = RCaller.topLevel;
+        if (env instanceof REnvironment.Function) {
+            originalPromiseCaller = RArguments.getCall(envFrame);
+        }
+        RCaller currentCall = RArguments.getCall(virtualFrame);
+        // Note: it is OK that there is actually no frame for the "fakePromiseCaller" since
+        // artificial frames for promises are anyway ignored when walking the stack. Even in the
+        // case of real promises, there may be not actual frame created for their evaluation:
+        // see InlineCacheNode.
+        RCaller fakePromiseCaller = RCaller.createForPromise(originalPromiseCaller, env, currentCall);
+        return RCaller.create(currentCall.getDepth() + 1, fakePromiseCaller, callerSyntax);
+    }
+
 }

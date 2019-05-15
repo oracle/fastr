@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.mixed;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Context;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DownCallNodeFactory;
@@ -38,12 +39,13 @@ import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
-public class TruffleMixed_Context extends RFFIContext {
+public final class TruffleMixed_Context extends RFFIContext {
 
     private final TruffleLLVM_Context llvmContext;
     private final TruffleNFI_Context nfiContext;
@@ -123,15 +125,15 @@ public class TruffleMixed_Context extends RFFIContext {
     }
 
     @Override
-    public long beforeDowncall(Type rffiType) {
+    public Object beforeDowncall(VirtualFrame frame, Type rffiType) {
         Type actualRffiType = rffiType == null ? Type.LLVM : rffiType;
         assert rffiType != null;
         switch (rffiType) {
             case LLVM:
-                return llvmContext.beforeDowncall(actualRffiType);
+                return llvmContext.beforeDowncall(frame, actualRffiType);
 
             case NFI:
-                return nfiContext.beforeDowncall(actualRffiType);
+                return nfiContext.beforeDowncall(frame, actualRffiType);
 
             default:
                 throw RInternalError.shouldNotReachHere();
@@ -139,7 +141,7 @@ public class TruffleMixed_Context extends RFFIContext {
     }
 
     @Override
-    public void afterDowncall(long before, Type rffiType) {
+    public void afterDowncall(Object before, Type rffiType) {
         switch (rffiType) {
             case LLVM:
                 llvmContext.afterDowncall(before, rffiType);
@@ -174,6 +176,20 @@ public class TruffleMixed_Context extends RFFIContext {
         } catch (Exception e) {
         }
         return result != null ? result : nfiContext.lookupNativeFunction(function);
+    }
+
+    @Override
+    public Object protectChild(Object parent, Object child, RFFIFactory.Type rffiType) {
+        switch (rffiType) {
+            case LLVM:
+                return llvmContext.protectChild(parent, child, rffiType);
+
+            case NFI:
+                return nfiContext.protectChild(parent, child, rffiType);
+
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
     }
 
 }

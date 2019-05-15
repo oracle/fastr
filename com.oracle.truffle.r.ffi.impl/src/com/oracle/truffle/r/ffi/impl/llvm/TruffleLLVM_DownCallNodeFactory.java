@@ -83,7 +83,7 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
 
             @Override
             @ExplodeLoop
-            protected long beforeCall(NativeFunction nativeFunction, TruffleObject fn, Object[] args) {
+            protected Object beforeCall(NativeFunction nativeFunction, TruffleObject fn, Object[] args) {
                 assert !(fn instanceof RFunction);
 
                 for (int i = 0; i < args.length; i++) {
@@ -108,7 +108,7 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
 
             @Override
             @ExplodeLoop
-            protected void afterCall(long before, NativeFunction fn, TruffleObject target, Object[] args) {
+            protected void afterCall(Object before, NativeFunction fn, TruffleObject target, Object[] args) {
                 assert !(target instanceof RFunction);
 
                 for (int i = 0; i < args.length; i++) {

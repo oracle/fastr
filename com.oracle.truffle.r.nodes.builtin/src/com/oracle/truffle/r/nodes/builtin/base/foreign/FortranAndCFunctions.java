@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -120,7 +120,7 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(nativeCallInfo, naok, dup, args);
+                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args);
             }
         }
 
@@ -143,7 +143,7 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
+                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
             }
         }
 
@@ -223,7 +223,7 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(nativeCallInfo, naok, dup, args);
+                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args);
             }
         }
 
@@ -253,7 +253,7 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
+                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
             }
         }
 

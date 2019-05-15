@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInterface;
 
 /**
@@ -30,22 +31,22 @@ import com.oracle.truffle.api.nodes.NodeInterface;
 public interface UserRngRFFI {
     interface InitNode extends NodeInterface {
 
-        void execute(int seed);
+        void execute(VirtualFrame frame, int seed);
     }
 
     interface RandNode extends NodeInterface {
 
-        double execute();
+        double execute(VirtualFrame frame);
     }
 
     interface NSeedNode extends NodeInterface {
 
-        int execute();
+        int execute(VirtualFrame frame);
     }
 
     interface SeedsNode extends NodeInterface {
 
-        void execute(int[] n);
+        void execute(VirtualFrame frame, int[] n);
     }
 
     InitNode createInitNode();

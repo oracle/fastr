@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 
@@ -41,7 +42,7 @@ public interface RSyntaxCall extends RSyntaxElement {
      * Helper function: creates a synthetic RSyntaxCall.
      */
     static RSyntaxCall createDummyCall(SourceSection originalSource, RSyntaxElement lhs, ArgumentsSignature signature, RSyntaxElement[] arguments) {
-        return new RSyntaxCall() {
+        class DummyCall implements RSyntaxCall, RSyntaxNode {
             @Override
             public SourceSection getLazySourceSection() {
                 return originalSource;
@@ -71,7 +72,13 @@ public interface RSyntaxCall extends RSyntaxElement {
             public void setSourceSection(SourceSection src) {
                 // ignored
             }
-        };
+
+            @Override
+            public void setAttributes(DynamicObject attributes) {
+                // ignored
+            }
+        }
+        return new DummyCall();
     }
 
     static boolean isCallTo(RSyntaxElement element, String functionName) {

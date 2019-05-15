@@ -878,19 +878,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object Rf_findFun(Object symbolObj, Object envObj) {
-        guaranteeInstanceOf(envObj, REnvironment.class);
-        REnvironment env = (REnvironment) envObj;
-        guarantee(symbolObj instanceof RSymbol);
-        RSymbol symbol = (RSymbol) symbolObj;
-        // Works but not remotely efficient
-        Source source = RSource.fromTextInternal("get(\"" + symbol.getName() + "\", mode=\"function\")", RSource.Internal.RF_FINDFUN);
-        try {
-            return RContext.getEngine().parseAndEval(source, env.getFrame(), false);
-        } catch (ParseException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
+        throw implementedAsNode();
     }
 
     @Override

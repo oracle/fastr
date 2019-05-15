@@ -37,12 +37,12 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 public interface CallRFFI {
     interface InvokeCallNode extends NodeInterface {
 
-        default Object dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
+        default Object dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
             DLLInfo dllInfo = nativeCallInfo.dllInfo;
             LibHandle handle = dllInfo == null ? null : dllInfo.handle;
             Type rffiType = handle == null ? null : handle.getRFFIType();
-            long before = stateRFFI.beforeDowncall(rffiType);
+            Object before = stateRFFI.beforeDowncall(frame, rffiType);
             try {
                 return execute(nativeCallInfo, args);
             } finally {
@@ -59,11 +59,11 @@ public interface CallRFFI {
     }
 
     interface InvokeVoidCallNode extends NodeInterface {
-        default void dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
+        default void dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall(nativeCallInfo.dllInfo.handle.getRFFIType());
+            Object before = stateRFFI.beforeDowncall(frame, nativeCallInfo.dllInfo.handle.getRFFIType());
             try {
-                execute(nativeCallInfo, args);
+                execute(frame, nativeCallInfo, args);
             } finally {
                 stateRFFI.afterDowncall(before, nativeCallInfo.dllInfo.handle.getRFFIType());
             }
@@ -72,7 +72,7 @@ public interface CallRFFI {
         /**
          * Variant that does not return a result (primarily for library "init" methods).
          */
-        void execute(NativeCallInfo nativeCallInfo, Object[] args);
+        void execute(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args);
     }
 
     InvokeCallNode createInvokeCallNode();
@@ -87,7 +87,7 @@ public interface CallRFFI {
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = frame.getArguments();
-            return rffiNode.dispatch((NativeCallInfo) args[0], (Object[]) args[1]);
+            return rffiNode.dispatch(frame, (NativeCallInfo) args[0], (Object[]) args[1]);
         }
 
         public static CallTarget create(RContext context) {
@@ -104,7 +104,7 @@ public interface CallRFFI {
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = frame.getArguments();
-            rffiNode.dispatch((NativeCallInfo) args[0], (Object[]) args[1]);
+            rffiNode.dispatch(frame, (NativeCallInfo) args[0], (Object[]) args[1]);
             return RNull.instance; // unused
         }
 

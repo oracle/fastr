@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
@@ -76,7 +77,7 @@ public final class DuplicateNodes {
         }
 
         protected static boolean isReusableForDuplicate(Object o) {
-            return o == RNull.instance || o instanceof REnvironment || o instanceof RSymbol || RMissingHelper.isMissing(o);
+            return o == RNull.instance || o instanceof REnvironment || o instanceof RSymbol || RMissingHelper.isMissing(o) || o instanceof RForeignObjectWrapper;
         }
 
         public static DuplicateNode create() {

@@ -222,6 +222,14 @@ rffi.parseVector <- function(x) {
     .Call('test_ParseVector', x);
 }
 
+rffi.test_lapply <- function(a, fn, env) {
+	.Call("test_lapply", a, fn, env)
+}
+
+rffi.test_RfFindFunAndRfEval <- function(x, y) {
+    .Call('test_RfFindFunAndRfEval', x, y)
+}
+
 rffi.RfEvalWithPromiseInPairList <- function() {
     .Call('test_RfEvalWithPromiseInPairList')
 }

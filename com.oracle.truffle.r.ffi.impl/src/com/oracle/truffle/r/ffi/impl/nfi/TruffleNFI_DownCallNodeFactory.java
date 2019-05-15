@@ -49,7 +49,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
 
             @Override
             @ExplodeLoop
-            protected long beforeCall(NativeFunction fn, TruffleObject target, Object[] args) {
+            protected Object beforeCall(NativeFunction fn, TruffleObject target, Object[] args) {
                 for (int i = 0; i < args.length; i++) {
                     RContext context = RContext.getInstance();
                     Object obj = args[i];
@@ -74,7 +74,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
                 }
 
                 if (fn.hasComplexInteraction()) {
-                    return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(RFFIFactory.Type.NFI);
+                    return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(null, RFFIFactory.Type.NFI);
                 }
                 return 0;
             }
@@ -89,7 +89,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
 
             @Override
             @ExplodeLoop
-            protected void afterCall(long before, NativeFunction fn, TruffleObject target, Object[] args) {
+            protected void afterCall(Object before, NativeFunction fn, TruffleObject target, Object[] args) {
                 if (fn.hasComplexInteraction()) {
                     (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI);
                 }

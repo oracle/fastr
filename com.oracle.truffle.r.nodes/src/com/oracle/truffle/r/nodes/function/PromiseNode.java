@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.getOptimizableConstant;
 import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimizableVariable;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -63,11 +64,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * These {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s.
- * 
+ *
  * All these classes are created during/after argument matching first time we execute a function
  * call and they get cached for that given function call. Their purpose is to produce instances of
  * {@link RPromise} -- the values of the arguments passed to the called function.
- * 
+ *
  * Basic promise remembers its execution frame and the expression and when asked for its value it
  * evaluates the expression in the exec frame. Optimized promises are trying to avoid having to
  * carry along their execution frame (which has to be materialized for that purpose) and having to
@@ -105,7 +106,7 @@ public abstract class PromiseNode extends RNode {
      *         implementation
      */
     @TruffleBoundary
-    static RNode create(RPromiseFactory factory, boolean noOpt, boolean forcedEager) {
+    static RNode create(RPromiseFactory factory, boolean noOpt, boolean forcedEager, Assumption allArgPromisesCanOptimize) {
         assert factory.getState() != PromiseState.Explicit;
 
         // For ARG_DEFAULT, expr == defaultExpr!
@@ -116,7 +117,7 @@ public abstract class PromiseNode extends RNode {
             wrapIndex = ((WrapArgumentNode) arg).getIndex();
         }
         if (forcedEager && EvaluatedArgumentsVisitor.isSimpleArgument(expr.asRSyntaxNode())) {
-            return new OptForcedEagerPromiseNode(factory, wrapIndex);
+            return new OptForcedEagerPromiseNode(factory, wrapIndex, allArgPromisesCanOptimize);
         } else {
             Object optimizableConstant = getOptimizableConstant(expr);
             if (optimizableConstant != null) {
@@ -155,8 +156,8 @@ public abstract class PromiseNode extends RNode {
     /**
      * A {@link PromiseNode} for supplied arguments.
      */
-    private static final class PromisedNode extends PromiseNode {
-        private PromisedNode(RPromiseFactory factory) {
+    public static final class PromisedNode extends PromiseNode {
+        public PromisedNode(RPromiseFactory factory) {
             super(factory);
         }
 
@@ -361,8 +362,8 @@ public abstract class PromiseNode extends RNode {
     }
 
     @TruffleBoundary
-    static RNode createVarArgs(RNode[] nodes, ArgumentsSignature signature, RNodeClosureCache closureCache, boolean forcedEager) {
-        return new VarArgsPromiseNode(nodes, signature, closureCache, forcedEager);
+    static RNode createVarArgs(RNode[] nodes, ArgumentsSignature signature, RNodeClosureCache closureCache, boolean forcedEager, Assumption allArgPromisesCanOptimize) {
+        return new VarArgsPromiseNode(nodes, signature, closureCache, forcedEager, allArgPromisesCanOptimize);
     }
 
     /**
@@ -373,7 +374,7 @@ public abstract class PromiseNode extends RNode {
         private final Closure[] closures;
         private final ArgumentsSignature signature;
 
-        private VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, RNodeClosureCache closureCache, boolean forcedEager) {
+        private VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, RNodeClosureCache closureCache, boolean forcedEager, Assumption allArgPromisesCanOptimize) {
             this.promised = new RNode[nodes.length];
             this.closures = new Closure[nodes.length];
             boolean noOpt = false;
@@ -388,7 +389,7 @@ public abstract class PromiseNode extends RNode {
                 if (RASTUtils.isLookup(nodes[i], ArgumentsSignature.VARARG_NAME)) {
                     this.promised[i] = nodes[i];
                 } else {
-                    this.promised[i] = PromiseNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), noOpt, !noOpt && forcedEager);
+                    this.promised[i] = PromiseNode.create(RPromiseFactory.create(PromiseState.Supplied, closure), noOpt, !noOpt && forcedEager, allArgPromisesCanOptimize);
                 }
             }
             this.signature = signature;

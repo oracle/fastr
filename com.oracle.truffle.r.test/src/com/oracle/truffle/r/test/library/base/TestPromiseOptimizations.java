@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,4 +68,14 @@ public class TestPromiseOptimizations extends TestBase {
         // similar situation as above
         assertEval("{ delayedAssign('x', c(1,2,3)); x/180; x }");
     }
+
+    @Test
+    public void testInterferingPromises() {
+        assertEval("{ a <- 3; bar <- function(x) { assign('a', 4, env=.GlobalEnv); x }; bar(a) }");
+        assertEval("{ foo <- function(a,b) a == b ; bar <- function(x,y) foo(x,y); a <- 3; bar(assign('a', 4, env=.GlobalEnv), a) }");
+        assertEval("{ foo <- function(a,b) a == b; bar <- function(x,y) foo(x,y); a <- 3; bar(a, a <<- 4) }");
+        assertEval("{ foo <- function(a,b) b < a; bar <- function(x,y) foo(x,y); a <- 3; bar(a <<- 4, a) }");
+        assertEval("{ foo <- function(a,b,c) if (c) b < a else a > b; bar <- function(x,y,c) foo(x,y,c); a <- 3; bar(a <<- 4, a, TRUE) }");
+    }
+
 }

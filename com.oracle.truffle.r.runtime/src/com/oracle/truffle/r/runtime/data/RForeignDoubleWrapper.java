@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public final class RForeignDoubleWrapper extends RForeignWrapper implements RAbstractDoubleVector {
+public final class RForeignDoubleWrapper extends RForeignVectorWrapper implements RAbstractDoubleVector {
 
     public RForeignDoubleWrapper(TruffleObject delegate) {
         super(delegate);
@@ -110,7 +110,7 @@ public final class RForeignDoubleWrapper extends RForeignWrapper implements RAbs
         @Override
         protected int getLength(RAbstractContainer vector) {
             try {
-                return (int) ForeignAccess.sendGetSize(getSize, ((RForeignWrapper) vector).delegate);
+                return (int) ForeignAccess.sendGetSize(getSize, ((RForeignVectorWrapper) vector).delegate);
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }

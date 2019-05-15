@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,7 +65,7 @@ public final class ToolsRFFI {
                         assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
                         nativeCallInfo = new NativeCallInfo(C_PARSE_RD, symbolHandle, toolsDLLInfo);
                     }
-                    return callRFFINode.dispatch(nativeCallInfo,
+                    return callRFFINode.dispatch(null, nativeCallInfo,
                                     new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
                 } catch (Throwable ex) {
                     throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing" + ex.getMessage());

@@ -30,7 +30,10 @@ import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RObject;
@@ -66,7 +69,7 @@ public abstract class RFFIContext extends RFFI {
          */
         public final IdentityHashMap<RObject, AtomicInteger> preserveList = new IdentityHashMap<>();
 
-        private final WeakHashMap<Object, Set<Object>> protectedChildren = new WeakHashMap<>();
+        public final WeakHashMap<Object, Set<Object>> protectedChildren = new WeakHashMap<>();
         /**
          * Stack used by RFFI to implement the PROTECT/UNPROTECT functions. Objects registered on
          * this stack do necessarily not have to be {@linke #registerReferenceUsedInNative}, but
@@ -74,6 +77,7 @@ public abstract class RFFIContext extends RFFI {
          */
         public final ArrayList<RObject> protectStack = new ArrayList<>();
 
+        public MaterializedFrame currentDowncallFrame = null;
     }
 
     /**
@@ -114,7 +118,7 @@ public abstract class RFFIContext extends RFFI {
      *            {@link RFFIContext#registerReferenceUsedInNative(Object)}.
      */
     public void afterUpcall(boolean canRunGc, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
-        if (canRunGc) {
+        if (canRunGc && rffiType == RFFIFactory.Type.NFI) {
             cooperativeGc();
         }
     }
@@ -137,16 +141,25 @@ public abstract class RFFIContext extends RFFI {
         throw RInternalError.unimplemented("R Embedding not supported with " + this.getClass().getSimpleName() + " RFFI backend.");
     }
 
-    public long beforeDowncall(@SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+    /**
+     * @param frame the last FastR frame before the downcall or null if the this call is beyond the
+     *            truffle boundary
+     * @param rffiType the type of the RFFI backend
+     */
+    public Object beforeDowncall(VirtualFrame frame, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         rffiContextState.callDepth++;
-        return 0;
+        MaterializedFrame savedDowncallFrame = rffiContextState.currentDowncallFrame;
+        rffiContextState.currentDowncallFrame = frame == null || !RArguments.isRFrame(frame) ? null : frame.materialize();
+        return savedDowncallFrame;
     }
 
     /**
      * @param before the value returned by the corresponding call to
-     *            {@link #beforeDowncall(com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}.
+     *            {@link #beforeDowncall(VirtualFrame, com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}
+     *            .
      */
-    public void afterDowncall(long before, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+    public void afterDowncall(Object before, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+        rffiContextState.currentDowncallFrame = (MaterializedFrame) before;
         rffiContextState.callDepth--;
         if (rffiContextState.callDepth == 0) {
             cooperativeGc();
@@ -172,10 +185,12 @@ public abstract class RFFIContext extends RFFI {
      *
      * @param parent
      * @param child
+     * @param rffiType the type of the RFFI backend from which the child protection is requested
      * @return the child
      *
      */
-    public final Object protectChild(Object parent, Object child) {
+    @TruffleBoundary
+    public Object protectChild(Object parent, Object child, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         Set<Object> children = rffiContextState.protectedChildren.get(parent);
         if (children == null) {
             children = new HashSet<>();
