@@ -352,6 +352,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ConnectionFunctions.GZFile.class, ConnectionFunctionsFactory.GZFileNodeGen::create);
         add(ConnectionFunctions.BZFile.class, ConnectionFunctionsFactory.BZFileNodeGen::create);
         add(ConnectionFunctions.XZFile.class, ConnectionFunctionsFactory.XZFileNodeGen::create);
+        add(ConnectionFunctions.GZCon.class, ConnectionFunctionsFactory.GZConNodeGen::create);
         add(ConnectionFunctions.GetAllConnections.class, ConnectionFunctionsFactory.GetAllConnectionsNodeGen::create);
         add(ConnectionFunctions.GetConnection.class, ConnectionFunctionsFactory.GetConnectionNodeGen::create);
         add(ConnectionFunctions.IsOpen.class, ConnectionFunctionsFactory.IsOpenNodeGen::create);
@@ -582,7 +583,6 @@ public class BasePackage extends RBuiltinPackage {
         add(GrepFunctions.Regexec.class, GrepFunctionsFactory.RegexecNodeGen::create);
         add(GrepFunctions.Strsplit.class, GrepFunctionsFactory.StrsplitNodeGen::create);
         add(GrepFunctions.Sub.class, GrepFunctionsFactory.SubNodeGen::create);
-        add(GZCon.class, GZConNodeGen::create);
         add(HiddenInternalFunctions.GetRegisteredRoutines.class, HiddenInternalFunctionsFactory.GetRegisteredRoutinesNodeGen::create);
         add(HiddenInternalFunctions.ImportIntoEnv.class, HiddenInternalFunctionsFactory.ImportIntoEnvNodeGen::create);
         add(HiddenInternalFunctions.LazyLoadDBFetch.class, HiddenInternalFunctionsFactory.LazyLoadDBFetchNodeGen::create);

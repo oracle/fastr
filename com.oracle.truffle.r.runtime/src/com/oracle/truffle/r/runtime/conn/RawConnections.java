@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RCompression;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
@@ -30,15 +32,19 @@ import java.util.Objects;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import java.io.BufferedInputStream;
+import java.nio.channels.ByteChannel;
 
 public class RawConnections {
 
     public static class RawRConnection extends BaseRConnection {
 
         private final SeekableMemoryByteChannel channel;
-        private final String description;
+        private String description;
+        private RCompression.Type cType = RCompression.Type.NONE;
 
         public RawRConnection(String description, byte[] dataTemp, String open) throws IOException {
             super(ConnectionClass.RAW, open, AbstractOpenMode.Read);
@@ -49,15 +55,19 @@ public class RawConnections {
 
         @Override
         protected void createDelegateConnection() throws IOException {
+            setDelegate(createDelegateConnectionImpl());
+        }
+
+        private DelegateRConnection createDelegateConnectionImpl() throws IOException, RError {
             DelegateRConnection delegate = null;
             switch (getOpenMode().abstractOpenMode) {
                 case Read:
                 case ReadBinary:
-                    delegate = new RawReadRConnection(this, channel);
+                    delegate = createReadConection();
                     break;
                 case Write:
                 case WriteBinary:
-                    delegate = new RawWriteBinaryConnection(this, channel, false);
+                    delegate = createWriteBinaryConection();
                     break;
                 case Append:
                     delegate = new RawWriteBinaryConnection(this, channel, true);
@@ -74,7 +84,58 @@ public class RawConnections {
                 default:
                     throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
             }
-            setDelegate(delegate);
+            return delegate;
+        }
+
+        @TruffleBoundary
+        @Override
+        public void setCompressionType(RCompression.Type cType) throws IOException {
+            assert cType == RCompression.Type.GZIP;
+
+            ConnectionSupport.OpenMode openMode = getOpenMode();
+            AbstractOpenMode mode = openMode.abstractOpenMode;
+            if (mode == Lazy) {
+                mode = AbstractOpenMode.getOpenMode(openMode.modeString);
+            }
+            switch (mode) {
+                case Append:
+                case ReadAppend:
+                case ReadWrite:
+                case ReadWriteBinary:
+                case ReadWriteTrunc:
+                case ReadWriteTruncBinary:
+                case Write:
+                    if ("w".equals(openMode.modeString)) {
+                        break;
+                    }
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+            }
+
+            this.cType = cType;
+            description = new StringBuilder().append("gzcon(").append(description).append(")").toString();
+            setDelegate(createDelegateConnectionImpl(), opened);
+        }
+
+        private DelegateRConnection createReadConection() throws IOException {
+            switch (cType) {
+                case NONE:
+                    return new RawReadRConnection(this, channel);
+                case GZIP:
+                    return new RawReadGZipRConnection(this, channel);
+                default:
+                    throw RInternalError.shouldNotReachHere("unsupported compression type. Can be GZIP or NONE");
+            }
+        }
+
+        private DelegateRConnection createWriteBinaryConection() throws IOException {
+            switch (cType) {
+                case NONE:
+                    return new RawWriteBinaryConnection(this, channel, false);
+                case GZIP:
+                    return new RawWriteGZipConnection(this, channel);
+                default:
+                    throw RInternalError.shouldNotReachHere("unsupported compression type. Can be GZIP or NONE");
+            }
         }
 
         @Override
@@ -88,6 +149,17 @@ public class RawConnections {
         }
 
         public byte[] getValue() {
+            if (getOpenMode().canWrite() && cType == RCompression.Type.GZIP) {
+                try {
+                    // force writing of gzip trailer
+                    theConnection.close();
+                    // new delegate opened for a potentional append
+                    // TODO would be better to have it only on demand
+                    setDelegate(createDelegateConnectionImpl(), opened);
+                } catch (IOException ex) {
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, ex.getMessage());
+                }
+            }
             return channel.getBuffer();
         }
 
@@ -162,6 +234,32 @@ public class RawConnections {
         }
     }
 
+    static class RawReadGZipRConnection extends DelegateReadRConnection {
+        private ByteChannel channel;
+
+        RawReadGZipRConnection(BaseRConnection base, SeekableMemoryByteChannel channel) throws IOException {
+            super(base, 0);
+            try {
+                // we have to reset the position
+                // gzipstream checks the header
+                channel.position(0L);
+            } catch (IOException e) {
+                RInternalError.shouldNotReachHere();
+            }
+            this.channel = createGZIPDelegateInputConnection(base, new BufferedInputStream(channel.getInputStream()));
+        }
+
+        @Override
+        public ByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
+        }
+    }
+
     private static class RawWriteBinaryConnection extends DelegateWriteRConnection {
         private final SeekableMemoryByteChannel channel;
 
@@ -195,6 +293,25 @@ public class RawConnections {
         @Override
         public void truncate() throws IOException {
             channel.truncate(channel.position());
+        }
+    }
+
+    private static class RawWriteGZipConnection extends DelegateWriteRConnection {
+        private final DelegateRConnection channel;
+
+        RawWriteGZipConnection(BaseRConnection base, SeekableMemoryByteChannel channel) throws IOException {
+            super(base);
+            this.channel = createGZIPDelegateOutputConnection(base, channel.getOutputStream());
+        }
+
+        @Override
+        public ByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
         }
     }
 

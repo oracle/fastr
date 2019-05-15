@@ -161,6 +161,10 @@ if(any(R.version$engine == "FastR")) {
     intArray <- new(java.type('int[]'), 3)
     intArray[1] <- 1; intArray[2] <- 2; intArray[3] <- 3
 
+    # new byte[] {Byte.MIN_VALUE, 0, Byte.MAX_VALUE}
+    byteArray <- new(java.type('byte[]'), 3)
+    byteArray[1] <- java.type('java.lang.Byte')$MIN_VALUE; byteArray[2] <- 0; byteArray[3] <- java.type('java.lang.Byte')$MAX_VALUE
+
     # new int[] {{1, 2, 3}, {1, 2, 3}}
     int2DArray <- new(java.type('int[][]'), c(2L, 3L))
     int2DArray[1][1] <- 1; int2DArray[1][2] <- 2; int2DArray[1][3] <- 3;
@@ -321,11 +325,11 @@ if(any(R.version$engine == "FastR")) {
         pattern='b')
 
     ###############################################################
-    # EXPLICT CONVERSIONS TO A VECTOR
+    # EXPLICIT CONVERSIONS TO A VECTOR
     ###############################################################
 
     ###############################################################
-    # EXPLICT CONVERSIONS TO A VECTOR - HOMOGENOUS ARRAY
+    # EXPLICIT CONVERSIONS TO A VECTOR - HOMOGENOUS ARRAY
 
     # homogenous one-dimensional array
     # e.g. as.vector(int[] {1, 2, 3}) == c(1, 2, 3)
@@ -364,7 +368,26 @@ if(any(R.version$engine == "FastR")) {
         desc='int[][] {{1, 2}, {1, 2, 3}}')
 
     ###############################################################
-    # EXPLICT CONVERSIONS TO A VECTOR - HETEROGENOUS ARRAY
+    # EXPLICIT CONVERSIONS TO A VECTOR - java byte array and as.vector vs as.raw
+
+    # java byte arrays are by default converted to an integer vector - this can happen
+    # either in scope of an explicit as.vector call or when passed to a builtin.
+    # In difference to that - in case of as.raw it is obvious that 
+    # the attempt is made to get the according byte value.
+
+    checkAllEqual(
+        actual=as.raw(byteArray),
+        expected=as.raw(c(0x80, 0x00, 0x7f)),
+        desc='as.raw(byte[] {1, 2, 3})')
+    
+    # and compare with     
+    checkAllEqual(
+        actual=as.vector(byteArray),
+        expected=c(-128L, 0L, 127L),
+        desc='as.vector(byte[] {1, 2, 3})')
+
+    ###############################################################
+    # EXPLICIT CONVERSIONS TO A VECTOR - HETEROGENOUS ARRAY
 
     # if 'mode' is not set in 'as.vector' then 
     # a heterogenous one-dimensional array is converted to a list 
@@ -409,7 +432,7 @@ if(any(R.version$engine == "FastR")) {
         desc='as.vector(Object[][] {{1, 2, 3}, {"a", "b", "c"}}, "character"')
 
     ###############################################################
-    # EXPLICT CONVERSIONS TO A VECTOR - NON ARRAY FOREIGN OBJECT
+    # EXPLICIT CONVERSIONS TO A VECTOR - NON ARRAY FOREIGN OBJECT
     # results in an error
     checkError(
         fun=function() as.vector(new(java.type('java.lang.Object'))), 
@@ -417,7 +440,7 @@ if(any(R.version$engine == "FastR")) {
         desc='as.vector(java.lang.Object)')
 
     ###############################################################
-    # EXPLICT CONVERSIONS TO A LIST        
+    # EXPLICIT CONVERSIONS TO A LIST        
     ###############################################################
 
     # a one-dimensional array is converted to a plain list    
@@ -508,7 +531,7 @@ if(any(R.version$engine == "FastR")) {
         desc='as.list(TestAsListClassMixed)')
 
     ###############################################################
-    # EXPLICT CONVERSIONS TO A MATRIX
+    # EXPLICIT CONVERSIONS TO A MATRIX
     # array is first implicitly converted to a vector or list and 
     # then passed over to as.matrix
     ###############################################################
@@ -550,7 +573,7 @@ if(any(R.version$engine == "FastR")) {
         desc='as.matrix(int[][]{{1, "b"}, {"a", 2, "c"}})')
 
     ###############################################################
-    # EXPLICT CONVERSIONS TO AN ARRAY
+    # EXPLICIT CONVERSIONS TO AN ARRAY
     # array is first implicitly converted to a vector or list and 
     # then passed over to as.array
     ###############################################################
@@ -592,7 +615,7 @@ if(any(R.version$engine == "FastR")) {
         desc='as.array(int[][]{{1, "b"}, {"a", 2, "c"}})')
 
     ###############################################################
-    # EXPLICT CONVERSIONS TO A DATA FRAME
+    # EXPLICIT CONVERSIONS TO A DATA FRAME
     # array is first implicitly converted to a vector or list and 
     # then passed over to as.array
     ###############################################################

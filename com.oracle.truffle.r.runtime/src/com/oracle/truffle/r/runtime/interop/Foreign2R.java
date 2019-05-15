@@ -49,8 +49,18 @@ public abstract class Foreign2R extends RBaseNode {
     @Child private Node isBoxed;
     @Child private Node unbox;
 
+    private final boolean preserveByte;
+
+    Foreign2R(boolean preserveByte) {
+        this.preserveByte = preserveByte;
+    }
+
     public static Foreign2R create() {
-        return Foreign2RNodeGen.create();
+        return Foreign2RNodeGen.create(false);
+    }
+
+    public static Foreign2R create(boolean preserveByte) {
+        return Foreign2RNodeGen.create(preserveByte);
     }
 
     public abstract Object execute(Object obj);
@@ -60,9 +70,14 @@ public abstract class Foreign2R extends RBaseNode {
         return RRuntime.asLogical(obj);
     }
 
-    @Specialization
+    @Specialization(guards = "!isPreserveByte()")
     public int doByte(byte obj) {
         return ((Byte) obj).intValue();
+    }
+
+    @Specialization(guards = "isPreserveByte()")
+    public byte doBytePreserved(byte obj) {
+        return obj;
     }
 
     @Specialization
@@ -161,5 +176,9 @@ public abstract class Foreign2R extends RBaseNode {
 
     protected boolean isNull(Object o) {
         return o == null;
+    }
+
+    protected boolean isPreserveByte() {
+        return preserveByte;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,8 +50,18 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
     @Child protected InspectForeignArrayNode inspectTruffleObject;
     @Child protected Foreign2R foreign2R;
 
+    private final boolean preserveByte;
+
+    InspectForeignArrayNode(boolean preserveByte) {
+        this.preserveByte = preserveByte;
+    }
+
     public static InspectForeignArrayNode create() {
-        return InspectForeignArrayNodeGen.create();
+        return InspectForeignArrayNodeGen.create(false);
+    }
+
+    public static InspectForeignArrayNode create(boolean preserveByte) {
+        return InspectForeignArrayNodeGen.create(preserveByte);
     }
 
     /**
@@ -74,7 +84,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
     @CompilerDirectives.TruffleBoundary
     protected boolean inspectArray(TruffleObject obj, boolean recursive, ArrayInfo data, int depth, boolean skipIfList) {
         try {
-            ArrayInfo arrayInfo = data == null ? new ArrayInfo() : data;
+            ArrayInfo arrayInfo = data == null ? new ArrayInfo(preserveByte) : data;
             int size = (int) ForeignAccess.sendGetSize(getSize, obj);
 
             arrayInfo.addDimension(depth, size);
@@ -123,10 +133,18 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
     }
 
     public static final class ArrayInfo {
-        private final ForeignTypeCheck typeCheck = new ForeignTypeCheck();
+        private final ForeignTypeCheck typeCheck;
         private final List<Integer> dims = new ArrayList<>();
 
         private boolean canUseDims = false;
+
+        public ArrayInfo() {
+            this(false);
+        }
+
+        ArrayInfo(boolean byteToRaw) {
+            typeCheck = new ForeignTypeCheck(byteToRaw);
+        }
 
         RType getType() {
             return typeCheck.getType();
@@ -172,7 +190,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
     protected Foreign2R getForeign2R() {
         if (foreign2R == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            foreign2R = insert(Foreign2RNodeGen.create());
+            foreign2R = insert(Foreign2RNodeGen.create(preserveByte));
         }
         return foreign2R;
     }

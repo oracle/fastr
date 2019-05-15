@@ -70,20 +70,25 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.HeadPhaseBuilder;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RCompression;
+import static com.oracle.truffle.r.runtime.RCompression.Type.GZIP;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.ChannelConnections.ChannelRConnection;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass.GZCon;
 import com.oracle.truffle.r.runtime.conn.FifoConnections.FifoRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.CompressedRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
@@ -165,7 +170,7 @@ public abstract class ConnectionFunctions {
 
         private static HeadPhaseBuilder<String> openMode(Casts casts) {
             return open(casts).mustBe(equalTo("").or(equalTo("r")).or(equalTo("rt")).or(equalTo("rb")).or(equalTo("r+")).or(equalTo("r+b")).or(equalTo("w")).or(equalTo("wt")).or(equalTo("wb")).or(
-                            equalTo("w+")).or(equalTo("w+b")).or(equalTo("a")).or(equalTo("a+")), RError.Message.UNSUPPORTED_MODE);
+                            equalTo("wr")).or(equalTo("w+")).or(equalTo("w+b")).or(equalTo("a")).or(equalTo("at")).or(equalTo("a+")), RError.Message.UNSUPPORTED_MODE);
         }
 
         private static void encoding(Casts casts) {
@@ -341,6 +346,36 @@ public abstract class ConnectionFunctions {
         }
     }
 
+    @RBuiltin(name = "gzcon", kind = INTERNAL, parameterNames = {"con", "level", "allowNonCompressed", "text"}, behavior = PURE)
+    public abstract static class GZCon extends RBuiltinNode.Arg4 {
+
+        static {
+            Casts casts = new Casts(GZCon.class);
+            casts.arg("con").defaultError(RError.Message.NOT_CONNECTION, "con").mustNotBeNull().asIntegerVector().findFirst();
+            casts.arg("level").asIntegerVector().findFirst();
+            casts.arg("allowNonCompressed").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("text").asLogicalVector().findFirst().map(toBoolean());
+        }
+
+        @Specialization
+        public RAbstractIntVector gzcon(int conIndex, @SuppressWarnings("unused") int level, @SuppressWarnings("unused") boolean allowNonCompressed, @SuppressWarnings("unused") boolean text,
+                        @Cached("createBinaryProfile()") ConditionProfile gzConProfile) {
+            BaseRConnection base = RConnection.fromIndex(conIndex);
+            if (gzConProfile.profile(base.getConnectionClass() == ConnectionSupport.ConnectionClass.GZCon)) {
+                RError.warning(this, RError.Message.IS_GZCON);
+                return base.asVector();
+            }
+            try {
+                base.setCompressionType(GZIP);
+                base.updateConnectionClass(GZCon);
+            } catch (IOException ex) {
+                throw error(RError.Message.GENERIC, ex.getMessage());
+            }
+            return base.asVector();
+        }
+
+    }
+
     @RBuiltin(name = "textConnection", kind = INTERNAL, parameterNames = {"description", "text", "open", "env", "encoding"}, behavior = IO)
     public abstract static class TextConnection extends RBuiltinNode.Arg5 {
 
@@ -348,7 +383,7 @@ public abstract class ConnectionFunctions {
             Casts casts = new Casts(TextConnection.class);
             CastsHelper.description(casts);
             casts.arg("text").allowNull().mustBe(stringValue());
-            CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a").or(equalTo("wr"))))), RError.Message.UNSUPPORTED_MODE);
+            CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("rt").or(equalTo("w").or(equalTo("wt").or(equalTo("a").or(equalTo("wr"))))))), RError.Message.UNSUPPORTED_MODE);
             casts.arg("env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
             casts.arg("encoding").asIntegerVector().findFirst().mustNotBeNA();
         }
@@ -837,13 +872,29 @@ public abstract class ConnectionFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object readBin(RAbstractRawVector con, String what, int n, int sizeInput, boolean signed, boolean swap) {
+        protected Object readBin(RAbstractRawVector vec, String what, int n, int sizeInput, boolean signed, boolean swap) {
             Object result;
             switch (what) {
                 case "character":
-                    result = readString(con, con.getLength());
+                    result = readString(vec, n);
                     break;
-
+                case "raw":
+                    result = readRaw(vec, n);
+                    break;
+                case "logical":
+                    result = RDataFactory.createEmptyLogicalVector();
+                    break;
+                case "int":
+                case "integer":
+                    result = RDataFactory.createEmptyIntVector();
+                    break;
+                case "double":
+                case "numeric":
+                    result = RDataFactory.createEmptyDoubleVector();
+                    break;
+                case "complex":
+                    result = RDataFactory.createEmptyComplexVector();
+                    break;
                 default:
                     throw RInternalError.unimplemented();
             }
@@ -997,7 +1048,7 @@ public abstract class ConnectionFunctions {
         }
 
         private static RStringVector readString(RAbstractRawVector vec, int n) {
-            ArrayList<String> strings = new ArrayList<>(n);
+            String[] stringData = new String[n];
             byte[] chars;
             if (vec instanceof RRaw) {
                 chars = new byte[1];
@@ -1005,12 +1056,23 @@ public abstract class ConnectionFunctions {
             } else {
                 chars = ((RRawVector) vec).getReadonlyData();
             }
-            strings.add(new String(chars, 0, n));
-
+            stringData[0] = new String(chars, 0, vec.getLength());
+            for (int i = 1; i < stringData.length; i++) {
+                stringData[i] = "";
+            }
             // There is no special encoding for NA_character_
-            String[] stringData = new String[1];
-            strings.toArray(stringData);
             return RDataFactory.createStringVector(stringData, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private static RAbstractRawVector readRaw(RAbstractRawVector vec, int n) {
+            byte[] b;
+            if (vec instanceof RRaw) {
+                return vec;
+            }
+            int length = Math.min(vec.getLength(), n);
+            b = new byte[length];
+            System.arraycopy(((RRawVector) vec).getReadonlyData(), 0, b, 0, length);
+            return RDataFactory.createRawVector(b);
         }
 
         private static RRawVector readRaw(RConnection con, int n) throws IOException {

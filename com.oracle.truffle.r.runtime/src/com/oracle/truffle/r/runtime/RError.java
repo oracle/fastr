@@ -1047,7 +1047,10 @@ public final class RError extends RuntimeException implements TruffleException {
         CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb"),
         INVALID_POLYNOMIAL_COEFFICIENT("invalid polynomial coefficient"),
         ROOT_FINDING_FAILED("root finding code failed"),
-        IS_GZCON("this is already a 'gzcon' connection");
+        IS_GZCON("this is already a 'gzcon' connection"),
+        USING_TEXT_MODE_NOT_WORK_CORRECTLY("using a text-mode '%s' connection may not work correctly"),
+        CAN_USE_ONLY_R_OR_W_CONNECTIONS("can only use read- or write- binary connections"),
+        CANNOT_CREATE_GZCON("cannot create a '%s' connection from a writable %s; maybe use %s");
 
         public final String message;
         final boolean hasArgs;

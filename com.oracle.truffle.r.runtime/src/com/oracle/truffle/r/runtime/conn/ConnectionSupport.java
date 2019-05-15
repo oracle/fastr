@@ -753,8 +753,20 @@ public class ConnectionSupport {
         }
 
         protected void setDelegate(DelegateRConnection conn, boolean opened) {
+            setDelegate(conn, opened, null);
+        }
+
+        protected void setDelegate(DelegateRConnection conn, boolean opened, OpenMode mode) {
             this.theConnection = conn;
             this.opened = opened;
+            if (mode != null) {
+                this.openMode = mode;
+            }
+        }
+
+        protected void setOpenMode(OpenMode mode) {
+            assert mode != null;
+            this.openMode = mode;
         }
 
         protected String[] readLinesInternal(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
@@ -875,8 +887,8 @@ public class ConnectionSupport {
          */
         protected abstract void createDelegateConnection() throws IOException;
 
-        public void setCompressiontype(@SuppressWarnings("unused") RCompression.Type cType) throws IOException {
-            throw new IOException();
+        public void setCompressionType(@SuppressWarnings("unused") RCompression.Type cType) throws IOException {
+            throw new IOException("Not yet implemented");
         }
 
         /**
@@ -1103,7 +1115,7 @@ public class ConnectionSupport {
         protected final String path;
 
         /** The description used in the call (required summary output). */
-        protected final String description;
+        protected String description;
 
         protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, String encoding) throws IOException {
             this(description, path, connectionClass, modeString, AbstractOpenMode.Read, encoding);

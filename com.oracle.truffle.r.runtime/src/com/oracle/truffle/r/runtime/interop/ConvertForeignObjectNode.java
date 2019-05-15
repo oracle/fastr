@@ -97,7 +97,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         return ConvertForeignObjectNodeGen.create();
     }
 
-    protected abstract Object execute(Object obj, boolean recursive, boolean dropDimensions, boolean toList);
+    protected abstract Object execute(Object obj, boolean recursive, boolean dropDimensions, boolean toList, boolean byteToRaw);
 
     /**
      * Converts the provided foreign array to a vector or list.
@@ -153,7 +153,29 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
      *
      */
     public Object convert(TruffleObject truffleObject, boolean recursive, boolean dropDimensions) {
-        return execute(truffleObject, recursive, dropDimensions, false);
+        return convertIntern(truffleObject, recursive, dropDimensions, false, false);
+    }
+
+    /**
+     * Converts the provided foreign array to a vector or list.
+     * <p>
+     * The returned vector type will be implicitly determined by the values from the foreign array.
+     * </p>
+     *
+     * @param truffleObject foreign array
+     * @param recursive if <code>true</code> then the dimensions in a multi dimensional array will
+     *            be taken in count and resolved recursively, otherwise only the first array
+     *            dimension will be read and returned in a list.
+     * @param dropDimensions if <code>true</code> a flat vector or list without dimensions will be
+     *            returned. <b>Note</b> that the positioning of the particular values in the result
+     *            vector will be done by columns, as this is the default e.g. when creating a R
+     *            matrix.
+     * @param byteToRaw determines whether bytes should converted to raw or integer respectively
+     * @return a vector or list if <code>truffleObject</code> is a foreign array otherwise
+     *         <code>truffleObject</code>
+     */
+    public Object convert(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, boolean byteToRaw) {
+        return convertIntern(truffleObject, recursive, dropDimensions, false, byteToRaw);
     }
 
     /**
@@ -174,7 +196,11 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
      * @return a list if obj is a foreign array, otherwise obj
      */
     public Object convertToList(TruffleObject truffleObject, boolean recursive, boolean dropDimensions) {
-        return execute(truffleObject, recursive, dropDimensions, true);
+        return convertIntern(truffleObject, recursive, dropDimensions, true, false);
+    }
+
+    private Object convertIntern(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, boolean toList, boolean byteToRaw) {
+        return execute(truffleObject, recursive, dropDimensions, toList, byteToRaw);
     }
 
     /**
@@ -269,6 +295,17 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                 } else {
                     return createFlatVector(size, stringArray, wsa, (complete) -> RDataFactory.createStringVector(stringArray, complete));
                 }
+            case Raw:
+                wba = (byte[] array, int resultIdx, int sourceIdx, boolean[] complete) -> {
+                    Object value = elements[sourceIdx];
+                    array[resultIdx] = value == RNull.instance ? 0 : ((Number) value).byteValue();
+                };
+                byteArray = new byte[size];
+                if (dims != null) {
+                    return createByColVector(dims, byteArray, wba, (complete) -> RDataFactory.createRawVector(byteArray, dropDimensions ? null : dims));
+                } else {
+                    return createFlatVector(size, byteArray, wba, (complete) -> RDataFactory.createRawVector(byteArray));
+                }
             case List:
             case Null:
                 if (dims != null) {
@@ -347,9 +384,9 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
     }
 
     @Specialization(guards = {"isForeignArray(truffleObject)", "!toList"})
-    protected Object convertArray(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean toList,
-                    @Cached("create()") InspectForeignArrayNode inspectTruffleObject) {
-        ArrayInfo arrayInfo = new ArrayInfo();
+    protected Object convertArray(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean toList, @SuppressWarnings("unused") boolean byteToRaw,
+                    @Cached("create(byteToRaw)") InspectForeignArrayNode inspectTruffleObject) {
+        ArrayInfo arrayInfo = new ArrayInfo(byteToRaw);
         inspectTruffleObject.execute(truffleObject, recursive, arrayInfo, 0, true);
 
         RType inspectedType = arrayInfo.getType();
@@ -394,6 +431,12 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                         throw error(RError.Message.GENERIC, "A non rectangular array cannot be converted to a vector, only to a list.");
                     }
                 }
+            case Raw:
+                if (arrayInfo.isOneDim() || arrayInfo.isRectMultiDim()) {
+                    return getArrayToVectorNode().toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                } else {
+                    throw error(RError.Message.GENERIC, "A non rectangular array cannot be converted to a vector, only to a list.");
+                }
             case List:
             case Null:
                 return getArrayToListNode().toList(truffleObject, recursive);
@@ -403,13 +446,15 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
     }
 
     @Specialization(guards = {"isForeignArray(truffleObject)", "toList"})
-    protected Object convertArrayToList(TruffleObject truffleObject, boolean recursive, @SuppressWarnings("unused") boolean dropDimensions, @SuppressWarnings("unused") boolean toList) {
+    protected Object convertArrayToList(TruffleObject truffleObject, boolean recursive, @SuppressWarnings("unused") boolean dropDimensions, @SuppressWarnings("unused") boolean toList,
+                    @SuppressWarnings("unused") boolean byteToRaw) {
         return getArrayToListNode().toList(truffleObject, recursive);
     }
 
     @Specialization(guards = {"isForeignObject(truffleObject)", "!isForeignArray(truffleObject)", "toList"})
     @TruffleBoundary
     protected Object convertObjectToList(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean toList,
+                    @SuppressWarnings("unused") boolean byteToRaw,
                     @Cached("create()") GetForeignKeysNode namesNode) {
         Object namesObj = namesNode.execute(truffleObject, false);
         if (namesObj == RNull.instance) {
@@ -426,7 +471,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                     Object o = ForeignAccess.sendRead(getReadNode(), truffleObject, name);
                     o = getForeign2RNode().execute(o);
                     if (isForeignArray(o, hasSizeNode)) {
-                        o = getRecurseNode().execute(o, recursive, dropDimensions, false);
+                        o = getRecurseNode().execute(o, recursive, dropDimensions, false, false);
                     }
                     elements.add(o);
                     elementNames.add(name);
@@ -440,7 +485,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
 
     @Specialization(guards = {"doNotConvert(obj, toList)"})
     protected Object doObject(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean dropDimensions,
-                    @SuppressWarnings("unused") boolean toList) {
+                    @SuppressWarnings("unused") boolean toList, @SuppressWarnings("unused") boolean byteToRaw) {
         return obj;
     }
 

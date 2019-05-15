@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,10 +27,19 @@ import com.oracle.truffle.r.runtime.data.RNull;
 
 public class ForeignTypeCheck {
     private RType type = null;
+    private final boolean byteToRaw;
+
+    public ForeignTypeCheck() {
+        this(false);
+    }
+
+    ForeignTypeCheck(boolean byteToRaw) {
+        this.byteToRaw = byteToRaw;
+    }
 
     public RType check(Object value) {
         if (value instanceof Byte) {
-            setType(RType.Logical);
+            setType(byteToRaw ? RType.Raw : RType.Logical);
         } else if (value instanceof Integer) {
             setType(RType.Integer);
         } else if (value instanceof Double) {

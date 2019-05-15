@@ -1114,6 +1114,11 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testAsRaw() {
+        assertEvalFastR("ta <- new('" + TestArraysClass.class.getName() + "'); as.raw(ta$byteArrayMinMax)", "as.raw(c(0x80, 0x00, 0x7f))");
+    }
+
+    @Test
     public void testAsXXX() throws IllegalArgumentException, IllegalAccessException {
         testAsXXX("as.character", "character");
         testAsXXX("as.complex", "complex");
@@ -2458,6 +2463,7 @@ public class TestJavaInterop extends TestBase {
         public byte[][][] byteArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
         public byte[][] byteArray2NotSquare = new byte[][]{{1, 2, 3}, {1, 2, 3, 4}};
         public byte[][][] byteArray3NotSquare = new byte[][][]{{{1, 2, 3}, {1, 2, 3, 4}}, {{1, 2, 3}, {1, 2, 3, 4}}};
+        public byte[] byteArrayMinMax = {Byte.MIN_VALUE, 0, Byte.MAX_VALUE};
 
         public char[] charArray = {'a', 'b', 'c'};
         public char[][] charArray2 = {{'a', 'b', 'c'}, {'a', 'b', 'c'}};
