@@ -621,6 +621,11 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testExecutableIsFunction() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " is.function(to$methodInteger)", "TRUE");
+    }
+
+    @Test
     public void testAddToList() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l <- list(to); is.list(l)", "TRUE");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l <- list();  l$foreignobject <- to; identical(to, l$foreignobject)", "TRUE");
