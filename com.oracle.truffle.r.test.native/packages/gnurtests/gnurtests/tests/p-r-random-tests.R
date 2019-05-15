@@ -48,6 +48,7 @@ dkwtest <- function(stub = "norm", ...,
 
 .proctime00 <- proc.time() # start timing
 
+set.seed(422)
 
 dkwtest("binom",size =   1,prob = 0.2)
 dkwtest("binom",size =   2,prob = 0.2)
