@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
@@ -148,6 +149,7 @@ public class NativeConnections {
             if (result instanceof RLogicalVector) {
                 return ((RLogicalVector) result).getDataAt(0) == RRuntime.LOGICAL_TRUE;
             }
+            CompilerDirectives.transferToInterpreter();
             throw new RInternalError("could not get value of flag " + name);
         }
     }

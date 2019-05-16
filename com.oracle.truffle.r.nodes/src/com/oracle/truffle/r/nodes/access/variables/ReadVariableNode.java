@@ -279,6 +279,7 @@ public final class ReadVariableNode extends RBaseNode {
                     result = read.execute(frame, variableFrame);
                 } catch (InvalidAssumptionException | LayoutChangedException | FrameSlotTypeException e2) {
                     if (iterations > 10) {
+                        CompilerDirectives.transferToInterpreter();
                         throw new RInternalError("too many iterations during RVN initialization: " + identifier + " " + e2 + " " + read + " " + getRootNode());
                     }
                     continue;
@@ -905,6 +906,7 @@ public final class ReadVariableNode extends RBaseNode {
                 return getValue(seenValueKinds, variableFrame, frameSlot);
             }
         } catch (FrameSlotTypeException e) {
+            CompilerDirectives.transferToInterpreter();
             throw new RInternalError(e, "unexpected frame slot type mismatch");
         }
     }

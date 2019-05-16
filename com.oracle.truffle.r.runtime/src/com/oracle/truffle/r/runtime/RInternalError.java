@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Date;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleException;
@@ -64,6 +65,7 @@ public final class RInternalError extends Error implements TruffleException {
 
     public RInternalError(Throwable cause, String message, Object... args) {
         super(Utils.stringFormat(message, args), cause);
+        CompilerAsserts.neverPartOfCompilation();
         verboseStackTrace = createVerboseStackTrace();
     }
 
@@ -73,6 +75,7 @@ public final class RInternalError extends Error implements TruffleException {
      */
     public RInternalError(Throwable cause, String message) {
         super(message, cause);
+        CompilerAsserts.neverPartOfCompilation();
         verboseStackTrace = createVerboseStackTrace();
     }
 
