@@ -316,14 +316,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                  * top level. exitHandlers must be suppressed and the exceptions must pass through
                  * unchanged; they are not errors
                  */
-                CompilerDirectives.transferToInterpreter();
                 runOnExitHandlers = false;
                 throw e;
             } else if (e instanceof FastRInteropTryException) {
-                CompilerDirectives.transferToInterpreter();
                 throw e;
             } else if (e instanceof TruffleException && !((TruffleException) e).isInternalError()) {
-                CompilerDirectives.transferToInterpreter();
                 throw e;
             } else {
                 runOnExitHandlers = false;
