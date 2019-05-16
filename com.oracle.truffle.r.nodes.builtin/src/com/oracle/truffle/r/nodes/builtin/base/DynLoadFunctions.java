@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -122,7 +122,7 @@ public class DynLoadFunctions {
                 data[i] = dllInfo.toRList();
             }
             RList result = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
-            setClassAttrNode.execute(result, RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS));
+            setClassAttrNode.setAttr(result, RDataFactory.createStringVectorFromScalar(DLLINFOLIST_CLASS));
             return result;
         }
     }

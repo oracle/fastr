@@ -463,7 +463,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 container.initAttributes(RAttributesLayout.createNames(newNames1));
             } else {
                 // from an RPairList extraction that set a name
-                RStringVector oldNames = (RStringVector) namesAttrGetter.execute(container.getAttributes());
+                RStringVector oldNames = (RStringVector) namesAttrGetter.execute(container);
                 assert oldNames.getLength() == newNames.getLength();
                 assert oldNames.toString().equals(newNames1.toString());
                 // i.e. nothing actually needs to be done

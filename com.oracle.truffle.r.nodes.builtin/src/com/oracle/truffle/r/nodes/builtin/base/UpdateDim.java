@@ -57,7 +57,7 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
     @Specialization(guards = "reuseNonSharedNode.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected RAbstractVector updateDimNull(RAbstractVector vector, @SuppressWarnings("unused") RNull dimensions,
                     @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
-        RVector<?> result = reuseNonSharedNode.getResult(vector).materialize();
+        RVector<?> result = (RVector<?>) reuseNonSharedNode.getMaterializedResult(vector);
         // Note: resetDimensions already removes names and dimnames
         result.resetDimensions(null);
         return result;
@@ -79,7 +79,7 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
         RIntVector dimensionsMaterialized = dimensions.materialize();
         int[] dimsData = dimensionsMaterialized.getDataCopy();
         RVector.verifyDimensions(vector.getLength(), dimsData, this);
-        RVector<?> result = reuseNonSharedNode.getResult(vector).materialize();
+        RVector<?> result = (RVector<?>) reuseNonSharedNode.getMaterializedResult(vector);
         removeNames.execute(result);
         removeDimNames.execute(result);
 
@@ -88,7 +88,7 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
             attrs = RAttributesLayout.createDim(dimensionsMaterialized);
             result.initAttributes(attrs);
         } else {
-            putDimensions.setAttr(attrs, dimensionsMaterialized);
+            putDimensions.setAttr(result, dimensionsMaterialized);
         }
         return result;
     }

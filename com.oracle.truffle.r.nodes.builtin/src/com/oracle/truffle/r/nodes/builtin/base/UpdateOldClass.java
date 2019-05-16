@@ -60,7 +60,7 @@ public abstract class UpdateOldClass extends RBuiltinNode.Arg2 {
             return setOldClass(arg, RNull.instance);
         }
         RAttributable result = (RAttributable) getShareObjectNode().execute(arg);
-        setClassAttributeNode.execute(result, className);
+        setClassAttributeNode.setAttr(result, className);
         return result;
     }
 

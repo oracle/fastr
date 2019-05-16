@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -150,11 +150,30 @@ public class TestBuiltin_namesassign extends TestBase {
         assertEval("{ x <- quote(plot(x = age, y = weight)); names(x)<- c(\"\", \"a\", \"b\", \"d\")}");
         assertEval("{ x <- quote(plot(x = age, y = weight)); names(x)<- c(\"\", \"a\", \"b\"); x}");
         assertEval("{ x <- quote(plot(x = age, y = weight)); x$x <- \"random\"; x}");
+        assertEval("{ { x <- quote(plot(x = age, y = weight)); names(x)<- c('b', 'd')}; names(x) }");
 
         assertEval("{ names(NULL) <- NULL}");
         assertEval("{ names(NULL) <- 'a'}");
         assertEval("{ nnnull <- NULL; names(nnnull) <- nnnull; nnnull}");
         assertEval("{ nnnull <- NULL; names(nnnull) <- 'a'; nnnull}");
+    }
+
+    @Test
+    public void testTheSameAsInAttrAssignTests() {
+        String[] values = new String[]{"c(3,9)", "1:2", "as.pairlist(list(1,2))", "quote(foo(3))"};
+        // cast of names preserves attributes
+        assertEval(template("{ x <- %0; names(x) <- structure(c(1,2), names=c('q','r'), abc=3); names(x) }", values));
+        // but making them longer will drop the attributes
+        assertEval(template("{ x <- %0; names(x) <- structure(1, names=c('q'), abc=3); names(x) }", values));
+        // names will be made longer to match the owner length
+        assertEval(template("{ x <- %0; names(x) <- 1; names(x) }", values));
+    }
+
+    @Test
+    public void testAsCharacterConversion() {
+        assertEval("{ as.character.namesAssignCls <- function(x) x+1; x <- 1; names(x) <- structure(2, class='namesAssignCls'); names(x) }");
+        // names vector is shorter and gets filled with NAs:
+        assertEval("{ as.character.namesAssignCls <- function(x) x+1; x <- c(3,6); names(x) <- structure(2, class='namesAssignCls'); names(x) }");
     }
 
     @Test

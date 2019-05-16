@@ -294,7 +294,7 @@ public final class SeqFunctions {
         public boolean hasClass(RArgsValuesAndNames args, GetClassAttributeNode getClassAttributeNode) {
             if (args.getLength() > 0) {
                 Object arg = args.getArgument(0);
-                if (arg instanceof RAbstractVector && getClassAttributeNode.execute(arg) != null) {
+                if (arg instanceof RAbstractVector && getClassAttributeNode.execute((RAbstractVector) arg) != null) {
                     return true;
                 }
             }

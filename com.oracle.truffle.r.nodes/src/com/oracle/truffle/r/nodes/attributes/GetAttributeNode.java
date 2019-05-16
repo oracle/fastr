@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Location;
-import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -37,17 +33,12 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNa
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
- * This node is responsible for retrieving a value from an arbitrary attribute. It accepts both
- * {@link DynamicObject} and {@link RAttributable} instances as the first argument. If the first
- * argument is {@link RAttributable} and its attributes are initialized, the recursive instance of
- * this class is used to get the attribute value from the attributes.
+ * This node is responsible for retrieving a value from an arbitrary attribute. Use
+ * {@link GetFixedPropertyNode} is the attribute name is fixed, i.e. can be passed in constructor.
  */
 public abstract class GetAttributeNode extends AttributeAccessNode {
-
-    @Child private GetAttributeNode recursive;
 
     protected GetAttributeNode() {
     }
@@ -56,44 +47,28 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
         return GetAttributeNodeGen.create();
     }
 
-    public abstract Object execute(Object attrs, String name);
-
-    @Specialization
-    protected RNull attr(RNull container, @SuppressWarnings("unused") String name) {
-        return container;
-    }
+    /**
+     * Returns the attribute value or {@code null} if the attribute is not present.
+     */
+    public abstract Object execute(RAttributable attrs, String name);
 
     @Specialization(guards = "isRowNamesAttr(name)")
-    protected Object getRowNames(DynamicObject attrs, @SuppressWarnings("unused") String name,
+    protected static Object getRowNames(RAttributable x, @SuppressWarnings("unused") String name,
                     @Cached("create()") GetRowNamesAttributeNode getRowNamesNode) {
-        return GetRowNamesAttributeNode.convertRowNamesToSeq(getRowNamesNode.execute(attrs));
+        Object result = getRowNamesNode.execute(x);
+        return result == null ? null : GetRowNamesAttributeNode.convertRowNamesToSeq(result);
     }
 
     @Specialization(guards = "isNamesAttr(name)")
-    protected Object getNames(DynamicObject attrs, @SuppressWarnings("unused") String name,
+    protected static Object getNames(RAttributable x, @SuppressWarnings("unused") String name,
                     @Cached("create()") GetNamesAttributeNode getNamesAttributeNode) {
-        return getNamesAttributeNode.execute(attrs);
+        return getNamesAttributeNode.execute(x);
     }
 
-    @Specialization(limit = "getCacheSize(3)", //
-                    guards = {"!isSpecialAttribute(name)", "cachedName.equals(name)", "shapeCheck(shape, attrs)"}, //
-                    assumptions = {"shape.getValidAssumption()"})
-    protected Object getAttrCached(DynamicObject attrs, @SuppressWarnings("unused") String name,
-                    @SuppressWarnings("unused") @Cached("name") String cachedName,
-                    @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupLocation(shape, name)") Location location) {
-        return location == null ? null : location.get(attrs, shape);
-    }
-
-    @TruffleBoundary
-    @Specialization(replaces = "getAttrCached", guards = "!isSpecialAttribute(name)")
-    protected Object getAttrFallback(DynamicObject attrs, String name) {
-        return attrs.get(name);
-    }
-
-    @Specialization
-    protected Object getAttrFromAttributable(RAttributable x, String name,
+    @Specialization(guards = "!isSpecialAttribute(name)")
+    protected static Object getAttrFromAttributable(RAttributable x, String name,
                     @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached("create()") GetPropertyNode getPropertyNode,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                     @Cached("createClassProfile()") ValueProfile xTypeProfile) {
 
@@ -109,12 +84,7 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
             return null;
         }
 
-        if (recursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursive = insert(create());
-        }
-
-        return recursive.execute(attributes, name);
+        return getPropertyNode.execute(attributes, name);
     }
 
     public static boolean isRowNamesAttr(String name) {

@@ -22,13 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Location;
-import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -39,14 +35,9 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 /**
- * This node is responsible for retrieving a value from the predefined (fixed) attribute. It accepts
- * both {@link DynamicObject} and {@link RAttributable} instances as the first argument. If the
- * first argument is {@link RAttributable} and its attributes are initialized, the recursive
- * instance of this class is used to get the attribute value from the attributes.
+ * This node is responsible for retrieving a value from the predefined (fixed) attribute.
  */
 public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
-
-    @Child private GetFixedAttributeNode recursive;
 
     protected GetFixedAttributeNode(String name) {
         super(name);
@@ -72,30 +63,15 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
         return GetClassAttributeNode.create();
     }
 
-    public abstract Object execute(Object attr);
-
-    protected boolean hasProperty(Shape shape) {
-        return shape.hasProperty(name);
-    }
-
-    @Specialization(limit = "getCacheLimit()", //
-                    guards = {"shapeCheck(shape, attrs)"}, //
-                    assumptions = {"shape.getValidAssumption()"})
-    protected Object getAttrCached(DynamicObject attrs,
-                    @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupLocation(shape, name)") Location location) {
-        return location == null ? null : location.get(attrs, shape);
-    }
-
-    @Specialization(replaces = "getAttrCached")
-    @TruffleBoundary
-    protected Object getAttrFallback(DynamicObject attrs) {
-        return attrs.get(name);
-    }
+    /**
+     * Returns the attribute value or {@code null} if the attribute is not present.
+     */
+    public abstract Object execute(RAttributable attr);
 
     @Specialization
     protected Object getAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached("create(name)") GetFixedPropertyNode getFixedPropertyNode,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                     @Cached("createClassProfile()") ValueProfile xTypeProfile) {
 
@@ -111,11 +87,6 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
             return null;
         }
 
-        if (recursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursive = insert(create(name));
-        }
-
-        return recursive.execute(attributes);
+        return getFixedPropertyNode.execute(attributes);
     }
 }

@@ -22,75 +22,60 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Location;
-import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveClassAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveDimAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveNamesAttributeNode;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
-
-    @Child private RemoveFixedAttributeNode recursive;
 
     protected RemoveFixedAttributeNode(String name) {
         super(name);
     }
 
     public static RemoveFixedAttributeNode create(String name) {
-        if (SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name)) {
-            return SpecialAttributesFunctions.createRemoveSpecialAttributeNode(name);
-        } else {
-            return RemoveFixedAttributeNodeGen.create(name);
-        }
+        return RemoveFixedAttributeNodeGen.create(name);
     }
 
     public static RemoveFixedAttributeNode createNames() {
-        return RemoveNamesAttributeNode.create();
+        return create(RRuntime.NAMES_ATTR_KEY);
+    }
+
+    public static RemoveFixedAttributeNode createRowNames() {
+        return create(RRuntime.ROWNAMES_ATTR_KEY);
     }
 
     public static RemoveFixedAttributeNode createDim() {
-        return RemoveDimAttributeNode.create();
+        return create(RRuntime.DIM_ATTR_KEY);
     }
 
     public static RemoveFixedAttributeNode createDimNames() {
-        return RemoveDimNamesAttributeNode.create();
+        return create(RRuntime.DIMNAMES_ATTR_KEY);
     }
 
     public static RemoveFixedAttributeNode createClass() {
-        return RemoveClassAttributeNode.create();
+        return create(RRuntime.CLASS_ATTR_KEY);
     }
 
-    public abstract void execute(Object attrs);
-
-    @Specialization(limit = "getCacheLimit()", //
-                    guards = {"shapeCheck(shape, attrs)", "location == null"}, //
-                    assumptions = {"shape.getValidAssumption()"})
-    protected void removeNonExistantAttr(@SuppressWarnings("unused") DynamicObject attrs,
-                    @SuppressWarnings("unused") @Cached("lookupShape(attrs)") Shape shape,
-                    @SuppressWarnings("unused") @Cached("lookupLocation(shape, name)") Location location) {
-        // do nothing
+    public static RemoveFixedAttributeNode createTsp() {
+        return create(RRuntime.TSP_ATTR_KEY);
     }
+
+    public static RemoveFixedAttributeNode createComment() {
+        return create(RRuntime.COMMENT_ATTR_KEY);
+    }
+
+    public abstract void execute(RAttributable attrs);
 
     @Specialization
-    @TruffleBoundary
-    protected void removeAttrFallback(DynamicObject attrs) {
-        attrs.delete(this.name);
-    }
-
-    @Specialization
-    protected void removeAttrFromAttributable(RAttributable x,
+    protected static void removeAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached("create(name)") RemoveFixedPropertyNode removeFixedPropertyNode,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                     @Cached("createClassProfile()") ValueProfile xTypeProfile,
                     @Cached("create()") BranchProfile emptyAttrProfile) {
@@ -105,13 +90,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
             attrNullProfile.enter();
             return;
         }
-
-        if (recursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursive = insert(create(name));
-        }
-
-        recursive.execute(attributes);
+        removeFixedPropertyNode.execute(attributes);
 
         if (attributes.isEmpty()) {
             emptyAttrProfile.enter();

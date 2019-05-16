@@ -25,6 +25,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetPropertyNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -53,7 +54,7 @@ public abstract class UpdateSlotNode extends RBaseNode {
 
     @Specialization(guards = {"!isData(name)"})
     protected Object updateSlotS4Cached(RAttributable object, String name, Object value,
-                    @Cached("createAttrUpdate()") SetAttributeNode attributeUpdate,
+                    @Cached("create()") SetPropertyNode attributeUpdate,
                     @Cached("create()") InitAttributesNode initAttributes) {
         assert Utils.isInterned(name);
         attributeUpdate.execute(initAttributes.execute(object), name, prepareValue(value));

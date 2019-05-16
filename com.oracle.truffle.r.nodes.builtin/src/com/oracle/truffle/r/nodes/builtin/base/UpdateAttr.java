@@ -30,13 +30,13 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetCommentAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetTspAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -45,7 +45,6 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
-import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -62,11 +61,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", "value"}, behavior = PURE)
 public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
 
-    @Child private UpdateNames updateNames;
+    @Child private SetNamesAttributeNode updateNames;
     @Child private UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
     @Child private CastDoubleNode castDouble;
@@ -91,9 +91,10 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
     private RAbstractContainer updateNames(RAbstractContainer container, Object o) {
         if (updateNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateNames = insert(UpdateNamesNodeGen.create());
+            updateNames = insert(SetNamesAttributeNode.create());
         }
-        return (RAbstractContainer) updateNames.executeStringVector(container, o);
+        updateNames.setAttr(container, o);
+        return container;
     }
 
     private RAbstractContainer updateDimNames(RAbstractContainer container, Object o) {
@@ -133,12 +134,12 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
         return RNull.instance;
     }
 
-    @Specialization
-    protected RAbstractContainer updateAttr(RAbstractContainer container, String name, RNull value,
-                    @Cached("create()") RemoveAttributeNode removeAttrNode,
-                    @Cached("create()") GetNonSharedNode nonShared) {
+    @Specialization(guards = "vectorReuse.supports(container)", limit = "getCacheSize(3)")
+    protected RAbstractContainer removeAttr(RAbstractContainer container, String name, RNull value,
+                    @Cached("createNonShared(container)") VectorReuse vectorReuse,
+                    @Cached("create()") RemoveAttributeNode removeAttrNode) {
         String internedName = intern.execute(name);
-        RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
+        RAbstractContainer result = vectorReuse.getMaterializedResult(container);
         // the name is interned, so identity comparison is sufficient
         if (Utils.identityEquals(internedName, RRuntime.DIM_ATTR_KEY)) {
             if (setDimNode == null) {
@@ -181,6 +182,13 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
         return result;
     }
 
+    @Specialization(replaces = "removeAttr")
+    protected RAbstractContainer removeAttrGeneric(RAbstractContainer container, String name, RNull value,
+                    @Cached("createNonSharedGeneric()") VectorReuse vectorReuse,
+                    @Cached("create()") RemoveAttributeNode removeAttrNode) {
+        return removeAttr(container, name, value, vectorReuse, removeAttrNode);
+    }
+
     @TruffleBoundary
     protected static RStringVector convertClassAttrFromObject(Object value) {
         if (value instanceof RStringVector) {
@@ -194,11 +202,11 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
         }
     }
 
-    @Specialization(guards = "!isRNull(value)")
+    @Specialization(guards = {"!isRNull(value)", "vectorReuse.supports(container)"}, limit = "getCacheSize(3)")
     protected RAbstractContainer updateAttr(RAbstractContainer container, String name, Object value,
-                    @Cached("create()") GetNonSharedNode nonShared) {
+                    @Cached("createNonShared(container)") VectorReuse vectorReuse) {
         String internedName = intern.execute(name);
-        RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
+        RAbstractContainer result = vectorReuse.getMaterializedResult(container);
         // the name is interned, so identity comparison is sufficient
         if (Utils.identityEquals(internedName, RRuntime.DIM_ATTR_KEY)) {
             RAbstractIntVector dimsVector = castInteger(castVector(value));
@@ -219,7 +227,7 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setClassAttrNode = insert(SetClassAttributeNode.create());
             }
-            setClassAttrNode.execute(result, convertClassAttrFromObject(value));
+            setClassAttrNode.setAttr(result, convertClassAttrFromObject(value));
             return result;
         } else if (Utils.identityEquals(internedName, RRuntime.ROWNAMES_ATTR_KEY)) {
             if (setRowNamesAttrNode == null) {
@@ -252,12 +260,18 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
         return result;
     }
 
+    @Specialization(guards = "!isRNull(value)")
+    protected RAbstractContainer updateAttrGeneric(RAbstractContainer container, String name, Object value,
+                    @Cached("createNonSharedGeneric()") VectorReuse vectorReuse) {
+        return updateAttr(container, name, value, vectorReuse);
+    }
+
     /**
-     * All other, non-performance centric, {@link RAttributable} types.
+     * All other, non-performance centric, {@link RAttributable} types and {@link RNull}.
      */
-    @Fallback
+    @Specialization(guards = "!isRAbstractContainer(obj)")
     @TruffleBoundary
-    protected Object updateAttr(Object obj, Object name, Object value) {
+    protected Object updateAttrOthers(Object obj, Object name, Object value) {
         assert name instanceof String : "casts should not pass anything but String";
         Object object = obj;
         if (object instanceof RShareable) {

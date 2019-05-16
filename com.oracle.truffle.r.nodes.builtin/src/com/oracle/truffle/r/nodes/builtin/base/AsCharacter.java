@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,7 +62,7 @@ public abstract class AsCharacter extends RBuiltinNode.Arg2 {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            RAbstractStringVector res = reuseTemporaryNode.getResult(v).materialize();
+            RStringVector res = (RStringVector) reuseTemporaryNode.getMaterializedResult(v);
             res.resetAllAttributes(true);
             return res;
         }

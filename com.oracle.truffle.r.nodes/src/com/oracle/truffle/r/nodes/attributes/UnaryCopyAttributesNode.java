@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
@@ -89,9 +88,9 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
                     @Cached("createDim()") RemoveFixedAttributeNode removeDim,
                     @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames,
                     @Cached("create()") InitAttributesNode initAttributes,
-                    @Cached("createNames()") SetFixedAttributeNode putNames,
-                    @Cached("createDim()") SetFixedAttributeNode putDim,
-                    @Cached("createDimNames()") SetFixedAttributeNode putDimNames,
+                    @Cached("createNames()") SetFixedPropertyNode putNames,
+                    @Cached("createDim()") SetFixedPropertyNode putDim,
+                    @Cached("createDimNames()") SetFixedPropertyNode putDimNames,
                     @Cached("createBinaryProfile()") ConditionProfile noDimensions,
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesSource,
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
@@ -106,27 +105,23 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
         int[] newDimensions = getDimsNode.getDimensions(source);
         if (noDimensions.profile(newDimensions == null)) {
-            DynamicObject attributes = result.getAttributes();
-            if (attributes != null) {
-                removeDim.execute(attributes);
-                removeDimNames.execute(attributes);
-            }
-
+            removeDim.execute(result);
+            removeDimNames.execute(result);
             RStringVector vecNames = getNamesNode.getNames(source);
             if (hasNamesSource.profile(vecNames != null)) {
                 updateRefCountNode.execute(updateChildRefCountNode.updateState(source, vecNames));
-                putNames.setAttr(initAttributes.execute(result), vecNames);
+                putNames.execute(initAttributes.execute(result), vecNames);
                 return result;
             }
             return result;
         }
 
-        putDim.setAttr(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
+        putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
 
         RList newDimNames = extractDimNamesNode.execute(source);
         if (hasDimNames.profile(newDimNames != null)) {
             updateRefCountNode.execute(updateChildRefCountNode.updateState(source, newDimNames));
-            putDimNames.setAttr(result.getAttributes(), newDimNames);
+            putDimNames.execute(result.getAttributes(), newDimNames);
             return result;
         }
         return result;

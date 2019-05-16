@@ -121,7 +121,7 @@ public abstract class Inspect extends RBuiltinNode.Arg2 {
         }
         sb.append(' ').append(type.code).append(' ').append(type.name());
         sb.append(" [");
-        boolean isObject = (obj instanceof RSharingAttributeStorage) ? getClassNode.isObject(obj) : false;
+        boolean isObject = (obj instanceof RSharingAttributeStorage) ? getClassNode.isObject((RSharingAttributeStorage) obj) : false;
         if (isObject) {
             sb.append("OBJ");
         }

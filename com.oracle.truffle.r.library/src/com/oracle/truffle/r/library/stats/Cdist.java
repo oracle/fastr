@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
@@ -80,7 +79,6 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             rdistance(xAccess, xIter, nr, nc, ans, false, methodObj, p);
         }
         RDoubleVector result = RDataFactory.createDoubleVector(ans, naCheck.neverSeenNA());
-        DynamicObject resultAttrs = result.initAttributes();
 
         RStringVector names = (RStringVector) getNamesAttrNode.execute(list);
         if (names != null) {
@@ -88,9 +86,9 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 String name = names.getDataAt(i);
                 Object listValue = list.getDataAt(i);
                 if (name.equals(RRuntime.CLASS_ATTR_KEY)) {
-                    setClassAttrNode.execute(result, listValue instanceof RStringVector ? (RStringVector) listValue : RDataFactory.createStringVectorFromScalar((String) listValue));
+                    setClassAttrNode.setAttr(result, listValue instanceof RStringVector ? (RStringVector) listValue : RDataFactory.createStringVectorFromScalar((String) listValue));
                 } else {
-                    setAttrNode.execute(resultAttrs, name, listValue);
+                    setAttrNode.execute(result, name, listValue);
                 }
             }
         }

@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
@@ -67,7 +68,7 @@ public abstract class AsRaw extends RBuiltinNode.Arg1 {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            RAbstractRawVector res = reuseTemporaryNode.getResult(v).materialize();
+            RRawVector res = (RRawVector) reuseTemporaryNode.getMaterializedResult(v);
             res.resetAllAttributes(true);
             return res;
         }

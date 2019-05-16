@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,7 +68,7 @@ public abstract class ShortRowNames extends RBuiltinNode.Arg2 {
         if (operand instanceof RAbstractContainer) {
             rowNames = getRowNamesNode.getRowNames((RAbstractContainer) operand);
         } else if (operand instanceof REnvironment) {
-            rowNames = getRowNamesNode.execute(operand);
+            rowNames = getRowNamesNode.execute((REnvironment) operand);
         } else {
             // for any other type GnuR returns 0
             return 0;
@@ -92,7 +92,7 @@ public abstract class ShortRowNames extends RBuiltinNode.Arg2 {
     }
 
     private int calculateN(Object rowNames) {
-        if (rowNames == null || rowNames instanceof RNull) {
+        if (rowNames == null || rowNames == RNull.instance) {
             return 0;
         } else if (rowNames instanceof RAbstractIntVector) {
             RAbstractIntVector intVector = ((RAbstractIntVector) rowNames);

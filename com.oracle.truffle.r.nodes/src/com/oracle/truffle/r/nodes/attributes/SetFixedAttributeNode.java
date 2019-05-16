@@ -22,36 +22,34 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.FinalLocationException;
-import com.oracle.truffle.api.object.IncompatibleLocationException;
-import com.oracle.truffle.api.object.Location;
-import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 /**
- * This node is responsible for setting a value to the predefined (fixed) attribute. It accepts both
- * {@link DynamicObject} and {@link RAttributable} instances as the first argument. If the first
- * argument is {@link RAttributable} and the attribute is a special one (i.e. names, dims, dimnames,
- * rownames), a corresponding node defined in the {@link SpecialAttributesFunctions} class is
- * created and the processing is delegated to it. If the first argument is {@link RAttributable} and
- * the attribute is not a special one, it is made sure that the attributes in the first argument are
- * initialized. Then the recursive instance of this class is used to set the attribute value to the
- * attributes.
+ * This node is responsible for setting a value to the predefined (fixed) attribute. Its
+ * functionality should correspond to the function {@code setAttrib} in GNU-R. This node is not
+ * responsible for handling the sharing state of the target vector, the callers should use
+ * {@link com.oracle.truffle.r.runtime.data.nodes.VectorReuse} where applicable.
+ *
+ * There are specialized versions (subclasses) for some attributes (e.g. "names"), these should
+ * match the corresponding specialized functions that GNU-R delegates to from inside
+ * {@code setAttrib}. The specialized nodes should handle the same coercion and other functionality
+ * and as GNU-R in its specialized functions.
+ *
+ * There is some additional functionality handled in the builtins, e.g. {@code do_namesgets} in
+ * GNU-R, which we should also implement only in the builtins.
  */
 public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
 
-    @Child private SetFixedAttributeNode recursive;
+    private final BranchProfile fixupRHS = BranchProfile.create();
 
     protected SetFixedAttributeNode(String name) {
         super(name);
@@ -81,7 +79,18 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         return SpecialAttributesFunctions.SetClassAttributeNode.create();
     }
 
-    public final void setAttr(Object attr, Object value) {
+    public final void setAttr(RAttributable attr, Object valueIn) {
+        Object value = valueIn;
+        if (attr == value) {
+            // TODO: in theory we should inspect the whole object (attributes and elements for
+            // lists/envs/...) to see if there is potential cycle
+            fixupRHS.enter();
+            if (value instanceof RSharingAttributeStorage) {
+                value = ((RSharingAttributeStorage) value).deepCopy();
+            } else {
+                RSharingAttributeStorage.verify(value);
+            }
+        }
         execute(attr, castValue(value));
     }
 
@@ -94,47 +103,10 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         return value;
     }
 
-    @Specialization(limit = "getCacheLimit()", //
-                    guards = {"shapeCheck(shape, attrs)", "location != null", "canSet(location, value)"}, //
-                    assumptions = {"shape.getValidAssumption()"})
-    protected void setAttrCached(DynamicObject attrs, Object value,
-                    @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupLocation(shape, name)") Location location) {
-        try {
-            location.set(attrs, value, shape);
-        } catch (IncompatibleLocationException | FinalLocationException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
-    }
-
-    @Specialization(limit = "getCacheLimit()", //
-                    guards = {"shapeCheck(oldShape, attrs)", "oldLocation == null", "canStore(newLocation, value)"}, //
-                    assumptions = {"oldShape.getValidAssumption()", "newShape.getValidAssumption()"})
-    protected static void setNewAttrCached(DynamicObject attrs, Object value,
-                    @Cached("lookupShape(attrs)") Shape oldShape,
-                    @SuppressWarnings("unused") @Cached("lookupLocation(oldShape, name)") Location oldLocation,
-                    @Cached("defineProperty(oldShape, name, value)") Shape newShape,
-                    @Cached("lookupLocation(newShape, name)") Location newLocation) {
-        try {
-            newLocation.set(attrs, value, oldShape, newShape);
-        } catch (IncompatibleLocationException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
-    }
-
-    protected static Shape defineProperty(Shape oldShape, Object name, Object value) {
-        return oldShape.defineProperty(name, value, 0);
-    }
-
-    @Specialization(replaces = "setAttrCached")
-    @TruffleBoundary
-    protected void setFallback(DynamicObject attrs, Object value) {
-        attrs.define(name, value);
-    }
-
     @Specialization
     protected void setAttrInAttributable(RAttributable x, Object value,
                     @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached("create(name)") SetFixedPropertyNode setFixedPropertyNode,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                     @Cached("createClassProfile()") ValueProfile xTypeProfile,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
@@ -149,14 +121,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
             attrNullProfile.enter();
             attributes = x.initAttributes();
         }
-
-        if (recursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursive = insert(create(name));
-        }
-
-        recursive.setAttr(attributes, value);
-
+        setFixedPropertyNode.execute(attributes, value);
         updateRefCountNode.execute(value);
     }
 }

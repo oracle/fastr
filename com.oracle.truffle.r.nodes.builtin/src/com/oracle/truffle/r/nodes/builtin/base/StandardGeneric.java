@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNode;
@@ -67,7 +67,7 @@ public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
 
     // TODO: for now, we always go through generic dispatch
 
-    @Child private GetFixedAttributeNode genericAttrAccess;
+    @Child private GetFixedPropertyNode genericAttrAccess;
     @Child private FrameFunctions.SysFunction sysFunction;
     @Child private LocalReadVariableNode readMTableFirst = LocalReadVariableNode.create(RRuntime.DOT_ALL_MTABLE, true);
     @Child private LocalReadVariableNode readSigLength = LocalReadVariableNode.create(RRuntime.DOT_SIG_LENGTH, true);
@@ -137,7 +137,7 @@ public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
         }
         if (genericAttrAccess == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            genericAttrAccess = insert(GetFixedAttributeNode.create(RRuntime.GENERIC_ATTR_KEY));
+            genericAttrAccess = insert(GetFixedPropertyNode.create(RRuntime.GENERIC_ATTR_KEY));
         }
         genObj = genericAttrAccess.execute(attributes);
         if (genObj == null) {

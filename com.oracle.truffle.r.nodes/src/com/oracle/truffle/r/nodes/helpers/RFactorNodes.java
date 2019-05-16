@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,7 @@ public final class RFactorNodes {
         @Child private GetFixedAttributeNode isOrderedAccess = GetFixedAttributeNode.create(RRuntime.ORDERED_ATTR_KEY);
 
         public boolean execute(RAbstractIntVector factor) {
-            Object value = isOrderedAccess.execute(factor.getAttributes());
+            Object value = isOrderedAccess.execute(factor);
             if (value instanceof RAbstractLogicalVector) {
                 RAbstractLogicalVector vec = (RAbstractLogicalVector) value;
                 return vec.getLength() > 0 && RRuntime.fromLogical(vec.getDataAt(0));
@@ -86,7 +86,7 @@ public final class RFactorNodes {
          * cast is done. May return null, if the 'levels' attribute is not present.
          */
         public RStringVector execute(RAbstractIntVector factor) {
-            Object attr = updateAttrValue.updateState(factor, attrAccess.execute(factor.getAttributes()));
+            Object attr = updateAttrValue.updateState(factor, attrAccess.execute(factor));
 
             // Convert scalars to vector if necessary
             RAbstractVector vec;

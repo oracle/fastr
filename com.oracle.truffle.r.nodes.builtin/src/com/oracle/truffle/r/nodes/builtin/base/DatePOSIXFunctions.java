@@ -360,7 +360,7 @@ public class DatePOSIXFunctions {
                 }
             }
             RDoubleVector result = RDataFactory.createDoubleVector(data, complete);
-            setClassAttrNode.execute(result, CLASS_ATTR);
+            setClassAttrNode.setAttr(result, CLASS_ATTR);
             return result;
         }
     }

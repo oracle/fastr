@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Location;
-import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -37,8 +33,6 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 public abstract class RemoveAttributeNode extends AttributeAccessNode {
 
-    @Child private RemoveAttributeNode recursive;
-
     protected RemoveAttributeNode() {
     }
 
@@ -46,34 +40,12 @@ public abstract class RemoveAttributeNode extends AttributeAccessNode {
         return RemoveAttributeNodeGen.create();
     }
 
-    public abstract void execute(Object attrs, String name);
-
-    @Specialization(limit = "getCacheSize(3)", //
-                    guards = {
-                                    "cachedName.equals(name)",
-                                    "shapeCheck(shape, attrs)",
-                                    "location == null"
-                    }, //
-                    assumptions = {
-                                    "shape.getValidAssumption()"
-                    })
-    @SuppressWarnings("unused")
-    protected void removeNonExistantAttr(DynamicObject attrs, String name,
-                    @Cached("name") String cachedName,
-                    @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupLocation(shape, cachedName)") Location location) {
-        // do nothing
-    }
+    public abstract void execute(RAttributable attrs, String name);
 
     @Specialization
-    @TruffleBoundary
-    protected void removeAttrFallback(DynamicObject attrs, String name) {
-        attrs.delete(name);
-    }
-
-    @Specialization
-    protected void removeAttrFromAttributable(RAttributable x, String name,
+    protected static void removeAttrFromAttributable(RAttributable x, String name,
                     @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached("create()") RemovePropertyNode removePropertyNode,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                     @Cached("createClassProfile()") ValueProfile xTypeProfile,
                     @Cached("create()") BranchProfile emptyAttrProfile) {
@@ -89,12 +61,7 @@ public abstract class RemoveAttributeNode extends AttributeAccessNode {
             return;
         }
 
-        if (recursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursive = insert(create());
-        }
-
-        recursive.execute(attributes, name);
+        removePropertyNode.execute(attributes, name);
 
         if (attributes.isEmpty()) {
             emptyAttrProfile.enter();

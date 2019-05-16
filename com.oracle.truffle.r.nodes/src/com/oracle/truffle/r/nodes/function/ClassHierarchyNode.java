@@ -34,7 +34,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNode;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -92,7 +92,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     private static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("polyglot.value");
 
-    @Child private GetFixedAttributeNode access;
+    @Child private GetFixedPropertyNode access;
     @Child private S4Class s4Class;
     @Child private ImplicitClassHierarchyNode implicit;
 
@@ -206,7 +206,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         if (noAttributesProfile.profile(attributes != null)) {
             if (access == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                access = insert(GetFixedAttributeNode.createClass());
+                access = insert(GetFixedPropertyNode.createClass());
             }
             RStringVector classHierarchy = (RStringVector) access.execute(attributes);
             if (nullAttributeProfile.profile(classHierarchy != null)) {

@@ -80,7 +80,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     protected final boolean onlyDimAttribute(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(attributes) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyDimAttribute(source)")
@@ -90,7 +90,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     protected final boolean onlyNamesAttribute(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(attributes) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyNamesAttribute(source)")
@@ -100,14 +100,14 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     protected final boolean onlyClassAttribute(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(attributes) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
     protected void copyClassOnly(RAttributeStorage source, RVector<?> target,
                     @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
-        Object classAttr = classAttrGetter.execute(source.getAttributes());
+        Object classAttr = classAttrGetter.execute(source);
         updateRefCountNode.execute(updateChildRefCountNode.updateState(source, classAttr));
         target.initAttributes(RAttributesLayout.createClass(classAttr));
     }

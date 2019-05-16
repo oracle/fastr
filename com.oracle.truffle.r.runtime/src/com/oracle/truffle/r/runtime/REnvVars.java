@@ -36,6 +36,7 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
@@ -71,11 +72,21 @@ public final class REnvVars implements RContext.ContextState {
         safeReadEnvironFile(rHomeDir.resolve("etc").resolve("Renviron").getPath());
 
         String internalArgs = System.getenv("FASTR_INTERNAL_ARGS");
+        // Allow host access in FastR subprocesses if allowed here
         if (context.getEnv().isHostLookupAllowed()) {
             if (internalArgs == null) {
                 internalArgs = "--jvm";
             } else if (!internalArgs.contains("--jvm")) {
                 internalArgs += " --jvm";
+            }
+        }
+        // Forward some FastR options to FastR subprocesses
+        String forwardedOptions = FastROptions.getForwardedOptions(context);
+        if (forwardedOptions != null) {
+            if (internalArgs == null) {
+                internalArgs = forwardedOptions;
+            } else {
+                internalArgs += ' ' + forwardedOptions;
             }
         }
         if (internalArgs != null) {

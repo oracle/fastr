@@ -44,6 +44,7 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -431,7 +432,7 @@ public class ListMR {
                         @Cached("createBinaryProfile()") ConditionProfile noNames,
                         @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
                         @Cached("createNamesNode()") GetNamesAttributeNode namesNode) {
-            RStringVector names = namesNode.getNames(receiver);
+            RStringVector names = getNames(receiver, namesNode);
             if (noNames.profile(names == null)) {
                 return KeyInfo.NONE;
             }
@@ -495,7 +496,11 @@ public class ListMR {
     }
 
     private static Object listKeys(TruffleObject receiver, GetNamesAttributeNode getNamesNode) {
-        RStringVector names = getNamesNode.getNames(receiver);
+        RStringVector names = getNames(receiver, getNamesNode);
         return names != null ? names : RDataFactory.createEmptyStringVector();
+    }
+
+    private static RStringVector getNames(TruffleObject receiver, GetNamesAttributeNode getNamesNode) {
+        return receiver instanceof RAttributable ? getNamesNode.getNames((RAttributable) receiver) : null;
     }
 }

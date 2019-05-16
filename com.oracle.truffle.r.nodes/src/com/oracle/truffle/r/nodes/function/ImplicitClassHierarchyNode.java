@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,7 +106,7 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
                     @Cached("createBinaryProfile()") ConditionProfile isArray,
                     @Cached("createBinaryProfile()") ConditionProfile isMatrix,
                     @Cached("create()") GetDimAttributeNode getDim) {
-        int[] dimensions = getDim.getDimensions(value);
+        int[] dimensions = getDim.getDimensions((RAttributable) value);
         if (isMatrix.profile(GetDimAttributeNode.isMatrix(dimensions))) {
             return implicitMatrixClass;
         } else if (isArray.profile(GetDimAttributeNode.isArray(dimensions))) {

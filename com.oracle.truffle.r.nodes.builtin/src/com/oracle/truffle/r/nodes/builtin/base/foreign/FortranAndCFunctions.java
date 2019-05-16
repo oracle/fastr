@@ -187,7 +187,7 @@ public class FortranAndCFunctions {
                         }
                     }
                 }
-                namesSetter.execute(result, RDataFactory.createStringVector(names, true));
+                namesSetter.setAttr(result, RDataFactory.createStringVector(names, true));
             }
 
             return result;

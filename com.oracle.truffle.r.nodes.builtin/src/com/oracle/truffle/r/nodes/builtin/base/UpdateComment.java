@@ -31,8 +31,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetCommentAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveCommentAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
@@ -60,7 +61,7 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
                     @Cached("createNonShared(container)") VectorReuse vectorReuse,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
         updateRefCountNode.execute(value);
-        RAbstractVector res = vectorReuse.getResult(container).materialize();
+        RVector<?> res = (RVector<?>) vectorReuse.getMaterializedResult(container);
         setCommentAttrNode.setAttr(res, value);
         return res;
     }
@@ -83,14 +84,14 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
         } else {
             RSharingAttributeStorage.verify(result);
         }
-        setCommentAttrNode.setAttr(result, value);
+        setCommentAttrNode.setAttr((RAttributable) result, value);
         return result;
     }
 
     @Specialization(guards = "vectorReuse.supports(container)", limit = "getVectorAccessCacheSize()")
     protected Object updateCommentNull(RAbstractVector container, @SuppressWarnings("unused") RNull value,
                     @Cached("createNonShared(container)") VectorReuse vectorReuse,
-                    @Cached("create()") RemoveCommentAttributeNode removeCommentNode) {
+                    @Cached("createComment()") RemoveFixedAttributeNode removeCommentNode) {
         RAbstractVector res = vectorReuse.getResult(container);
         removeCommentNode.execute(res);
         return res;
@@ -99,21 +100,21 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
     @Specialization(replaces = "updateCommentNull")
     protected Object updateCommentNullGeneric(RAbstractVector container, @SuppressWarnings("unused") RNull value,
                     @Cached("createNonSharedGeneric()") VectorReuse vectorReuse,
-                    @Cached("create()") RemoveCommentAttributeNode removeCommentNode) {
+                    @Cached("createComment()") RemoveFixedAttributeNode removeCommentNode) {
         return updateCommentNull(container, value, vectorReuse, removeCommentNode);
     }
 
     @Specialization(guards = "!isRAbstractVector(container)")
     protected Object updateCommentNullNonVector(RAttributable container, @SuppressWarnings("unused") RNull value,
                     @Cached("createClassProfile()") ValueProfile classProfile,
-                    @Cached("create()") RemoveCommentAttributeNode removeCommentNode) {
+                    @Cached("createComment()") RemoveFixedAttributeNode removeCommentNode) {
         Object result = classProfile.profile(container);
         if (result instanceof RShareable) {
             result = ((RShareable) result).copy();
         } else {
             RSharingAttributeStorage.verify(result);
         }
-        removeCommentNode.execute(result);
+        removeCommentNode.execute((RAttributable) result);
         return result;
     }
 

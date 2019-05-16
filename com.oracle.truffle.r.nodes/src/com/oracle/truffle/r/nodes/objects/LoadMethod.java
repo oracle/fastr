@@ -82,25 +82,25 @@ abstract class LoadMethod extends RBaseNode {
         assert fdef.isBuiltin() || attributes != null;
         int found;
         if (attributes != null) {
-            Object nextMethodAttr = nextMethodAttrAccess.execute(attributes);
+            Object nextMethodAttr = nextMethodAttrAccess.execute(fdef);
             // it's an optimization only where it's expected that either 2 or 4 attributes total
             // will be
             // present - anything else triggers execution of a generic S4 function
             if (noNextMethodAttr.profile(nextMethodAttr == null)) {
                 found = 4; // class attribute plus three others are expected
-                Object targetAttr = targetAttrAccess.execute(attributes);
+                Object targetAttr = targetAttrAccess.execute(fdef);
                 if (noTargetAttr.profile(targetAttr == null)) {
                     found--;
                 } else {
                     writeRTarget.execute(frame, targetAttr);
                 }
-                Object definedAttr = definedAttrAccess.execute(attributes);
+                Object definedAttr = definedAttrAccess.execute(fdef);
                 if (noDefinedAttr.profile(definedAttr == null)) {
                     found--;
                 } else {
                     writeRDefined.execute(frame, definedAttr);
                 }
-                Object sourceAttr = sourceAttrAccess.execute(attributes);
+                Object sourceAttr = sourceAttrAccess.execute(fdef);
                 if (sourceAttr == null) {
                     noSourceAttr.enter();
                     found--;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ public interface RAbstractVector extends RAbstractContainer {
      * the vector is to be updated upon copying, the corresponding {@code copyResetData()} method
      * should be used.
      */
+    @Override
     RAbstractVector copy();
 
     default RAbstractVector deepCopy() {

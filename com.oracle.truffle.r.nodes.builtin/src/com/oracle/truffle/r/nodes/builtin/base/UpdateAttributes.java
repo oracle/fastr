@@ -97,7 +97,7 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateNames = insert(UpdateNamesNodeGen.create());
         }
-        return (RAbstractContainer) updateNames.executeStringVector(container, o);
+        return (RAbstractContainer) updateNames.executeStringVector(null, container, o);
     }
 
     private RAbstractContainer updateDimNames(RAbstractContainer container, Object o) {
@@ -232,7 +232,7 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
                 if (value == RNull.instance) {
                     setClassNode.reset(res);
                 } else {
-                    setClassNode.execute(res, UpdateAttr.convertClassAttrFromObject(value));
+                    setClassNode.setAttr(res, UpdateAttr.convertClassAttrFromObject(value));
                 }
             } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 if (setRowNamesNode == null) {

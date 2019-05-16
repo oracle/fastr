@@ -22,12 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
-import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Location;
-import com.oracle.truffle.api.object.Property;
-import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -38,53 +33,5 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public abstract class AttributeAccessNode extends RBaseNode {
 
     protected AttributeAccessNode() {
-    }
-
-    protected static Shape lookupShape(DynamicObject attrs) {
-        CompilerAsserts.neverPartOfCompilation();
-        return attrs.getShape();
-    }
-
-    protected static Property lookupProperty(Shape shape, Object name) {
-        /* Initialization of cached values always happens in a slow path. */
-        CompilerAsserts.neverPartOfCompilation();
-
-        Property property = shape.getProperty(name);
-        if (property == null) {
-            /* Property does not exist. */
-            return null;
-        }
-
-        return property;
-    }
-
-    protected static Location lookupLocation(Shape shape, Object name) {
-        Property p = lookupProperty(shape, name);
-        return p == null ? null : p.getLocation();
-    }
-
-    protected static boolean shapeCheck(Shape shape, DynamicObject attrs) {
-        return shape != null && shape.check(attrs);
-    }
-
-    protected static Shape defineProperty(Shape oldShape, Object name, Object value) {
-        return oldShape.defineProperty(name, value, 0);
-    }
-
-    /**
-     * There is a subtle difference between {@link Location#canSet} and {@link Location#canStore}.
-     * We need {@link Location#canSet} for the guard of {@code setExistingAttrCached} because there
-     * we call {@link Location#set}. We use the more relaxed {@link Location#canStore} for the guard
-     * of {@code setNewAttrCached} because there we perform a shape transition, i.e., we are not
-     * actually setting the value of the new location - we only transition to this location as part
-     * of the shape change.
-     */
-    protected static boolean canSet(Location location, Object value) {
-        return location.canSet(value);
-    }
-
-    /** See {@link #canSet} for the difference between the two methods. */
-    protected static boolean canStore(Location location, Object value) {
-        return location.canStore(value);
     }
 }

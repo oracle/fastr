@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -36,6 +36,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -78,13 +79,15 @@ public abstract class CumMin extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(RAbstractDoubleVector emptyVec) {
-        return RDataFactory.createDoubleVector(new double[0], true, emptyVec.getNames());
+    protected RAbstractVector cumEmpty(RAbstractDoubleVector emptyVec,
+                    @Cached("create()") GetNamesAttributeNode getNames) {
+        return RDataFactory.createDoubleVector(new double[0], true, getNames.getNames(emptyVec));
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(RAbstractIntVector emptyVec) {
-        return RDataFactory.createIntVector(new int[0], true, emptyVec.getNames());
+    protected RAbstractVector cumEmpty(RAbstractIntVector emptyVec,
+                    @Cached("create()") GetNamesAttributeNode getNames) {
+        return RDataFactory.createIntVector(new int[0], true, getNames.getNames(emptyVec));
     }
 
     @Specialization

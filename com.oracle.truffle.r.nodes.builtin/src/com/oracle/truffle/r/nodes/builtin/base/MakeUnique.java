@@ -69,7 +69,7 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
         if (trivialSizeProfile.profile(names.getLength() == 0 || names.getLength() == 1)) {
             return names;
         }
-        RStringVector reused = reuseNonSharedNode.getResult(names).materialize();
+        RStringVector reused = (RStringVector) reuseNonSharedNode.getMaterializedResult(names);
         return doLargeVector(reused, sep);
     }
 
