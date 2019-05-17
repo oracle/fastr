@@ -36,6 +36,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -56,8 +57,8 @@ import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysFrame;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionEvalCallNode;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfo;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfoNode;
@@ -209,7 +210,6 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         try {
             FunctionInfo functionInfo = funInfoNode.execute(expr, environment);
             if (functionInfo == null) {
-                // if (true) {
                 nullFunProfile.enter();
                 return doEvalLanguageSlowPath(frame, expr, environment, rCaller);
             }
@@ -222,15 +222,17 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             } else {
                 throw ret;
             }
-        } finally {
-            visibility.executeAfterCall(frame, rCaller);
         }
 
     }
 
-    private static Object doEvalLanguageSlowPath(VirtualFrame frame, RPairList expr, REnvironment environment, RCaller rCaller) {
-        RFunction evalFun = getFunctionArgument();
-        return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
+    private Object doEvalLanguageSlowPath(VirtualFrame frame, RPairList expr, REnvironment environment, RCaller rCaller) {
+        try {
+            RFunction evalFun = getFunctionArgument();
+            return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
+        } finally {
+            visibility.executeAfterCall(frame, rCaller);
+        }
     }
 
     @Specialization
@@ -387,8 +389,6 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("create()") BranchProfile symbolArgProfile,
                         @Cached("create()") BranchProfile pairListArgProfile,
-                        @Cached("create()") GetVisibilityNode getVisibilityNode,
-                        @Cached("create()") SetVisibilityNode setVisibilityNode,
                         @Cached("new()") PromiseHelperNode promiseHelper,
                         @Cached("create()") ShareObjectNode sharedObjectNode) {
             MaterializedFrame materializedFrame = frame.materialize();
@@ -400,10 +400,14 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
             Object resultValue = slowPathCallNode.execute(evalFrame, materializedFrame, caller, functionInfo.function, args);
 
-            boolean isResultVisible = getVisibilityNode.execute(evalFrame);
-            setVisibilityNode.execute(frame, isResultVisible);
+            setVisibilitySlowPath(materializedFrame, evalFrame);
 
             return resultValue;
+        }
+
+        @TruffleBoundary
+        private static void setVisibilitySlowPath(MaterializedFrame frame, MaterializedFrame clonedFrame) {
+            SetVisibilityNode.executeSlowPath(frame, GetVisibilityNode.executeSlowPath(clonedFrame));
         }
 
         private static RCaller createCaller(FunctionInfo functionInfo, RCaller evalCaller, MaterializedFrame evalFrame, RArgsValuesAndNames args) {

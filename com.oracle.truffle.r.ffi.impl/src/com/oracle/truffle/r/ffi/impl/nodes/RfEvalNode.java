@@ -218,7 +218,6 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         REnvironment env = getEnv(envArg);
         FunctionInfo functionInfo = funInfoNode.execute(expr, env);
         if (functionInfo == null) {
-            // if (true) {
             nullFunProfile.enter();
             return handleLanguageDefault(expr, envArg);
         }
