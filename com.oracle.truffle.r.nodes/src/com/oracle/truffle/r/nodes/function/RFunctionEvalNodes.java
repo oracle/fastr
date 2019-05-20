@@ -417,11 +417,13 @@ public class RFunctionEvalNodes {
         @Child private DirectCallNode directCallNode = DirectCallNode.create(funEvalRootNode.getCallTarget());
 
         public Object execute(VirtualFrame evalFrame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame) {
-            if (argsFrameSlot == null) {
+            if (argsFrameSlot == null || funFrameSlot == null) {
                 assert funFrameSlot == null;
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), argsIdentifier, FrameSlotKind.Object);
-                funFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), funIdentifier, FrameSlotKind.Object);
+                synchronized (FrameSlotChangeMonitor.class) {
+                    argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), argsIdentifier, FrameSlotKind.Object);
+                    funFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), funIdentifier, FrameSlotKind.Object);
+                }
             }
             try {
                 // the two slots are used to pass the explicit args and the called function to the

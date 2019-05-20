@@ -337,7 +337,12 @@ public class FrameFunctions {
              * "...". This process has a lot in common with MatchArguments, which we use as a
              * starting point
              */
-            RCallNode callNode = (RCallNode) call.getSyntaxElement();
+            RCallNode callNode;
+            if (!call.hasClosure()) {
+                callNode = (RCallNode) call.getClosure().getExpr();
+            } else {
+                callNode = (RCallNode) call.getSyntaxElement();
+            }
             CallArgumentsNode callArgs = callNode.createArguments(null, false, true);
             ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
             RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), callArgs, inputVarArgSignature, null, null, true, null).getArguments();
