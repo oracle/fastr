@@ -82,7 +82,7 @@ fastr_launcher_ni_args=(
     -cp "$fastr_home/fastr-launcher.jar:$fastr_home/../../lib/graalvm/launcher-common.jar"
     --language:R
     --tool:all
-    -Dorg.graalvm.version=1.0.0-rc18-dev
+    -Dorg.graalvm.version=20.0.0-beta.01-dev
     -H:-ParseRuntimeOptions
     -Dorg.graalvm.launcher.relative.language.home=bin/RMain
     -Dorg.graalvm.launcher.classpath=jre/lib/graalvm/launcher-common.jar:jre/languages/R/fastr-launcher.jar
