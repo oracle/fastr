@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -37,6 +39,7 @@ public abstract class RSuicide {
      * Please use {@link #rSuicide(RContext, String)} overload whenever the context is available.
      */
     public static RuntimeException rSuicide(String msg) {
+        CompilerAsserts.neverPartOfCompilation();
         throw rSuicide(RContext.getInstance(), msg);
     }
 
@@ -46,11 +49,13 @@ public abstract class RSuicide {
      * invoke the default eventually).
      */
     public static RuntimeException rSuicide(RContext ctx, String msg) {
+        CompilerDirectives.transferToInterpreter();
         invokeUserDefinedSuicide(ctx, msg);
         throw rSuicideDefault(msg);
     }
 
     public static RuntimeException rSuicide(RContext ctx, Throwable cause, String msg) {
+        CompilerDirectives.transferToInterpreter();
         RInternalError.reportError(cause);
         invokeUserDefinedSuicide(ctx, msg);
         throw rSuicideDefault(msg);
@@ -63,6 +68,7 @@ public abstract class RSuicide {
      * @param msg
      */
     public static RuntimeException rSuicideDefault(String msg) {
+        CompilerDirectives.transferToInterpreter();
         System.err.println("FastR unexpected failure: " + msg);
         throw new ExitException(2, false);
     }

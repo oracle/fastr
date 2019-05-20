@@ -415,12 +415,14 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public void openNewPage() {
         encodeOp(OPEN_NEW_PAGE);
         addNoResultRequest();
     }
 
     @Override
+    @TruffleBoundary
     public void close() throws DeviceCloseException {
         encodeOp(CLOSE);
         int[] releaseDrawingContextIds;
@@ -449,6 +451,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public void drawRect(DrawingContext ctx, double leftX, double bottomY, double width, double height, double rotationAnticlockWise) {
         if (encodeOpAndDrawingContext(DRAW_RECT, ctx)) {
             paramsEncoder.writeDouble(leftX);
@@ -463,6 +466,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public void drawPolyLines(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
         if (encodeOpAndDrawingContext(DRAW_POLY_LINES, ctx)) {
             paramsEncoder.writeDoubleArray(x);
@@ -476,6 +480,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public void drawPolygon(DrawingContext ctx, double[] x, double[] y, int startIndex, int length) {
         if (encodeOpAndDrawingContext(DRAW_POLYGON, ctx)) {
             paramsEncoder.writeDoubleArray(x);
@@ -489,6 +494,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public void drawCircle(DrawingContext ctx, double centerX, double centerY, double radius) {
         if (encodeOpAndDrawingContext(DRAW_CIRCLE, ctx)) {
             paramsEncoder.writeDouble(centerX);
@@ -501,6 +507,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
         encodeOp(DRAW_RASTER);
         paramsEncoder.writeDouble(leftX);
@@ -514,6 +521,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public void drawString(DrawingContext ctx, double leftX, double bottomY, double rotationAnticlockWise, String text) {
         if (encodeOpAndDrawingContext(DRAW_STRING, ctx)) {
             paramsEncoder.writeDouble(leftX);
@@ -527,6 +535,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public double getWidth() {
         encodeOp(GET_WIDTH);
         RemoteDeviceDataExchange resultDecoder = addResultRequest(true);
@@ -534,6 +543,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public double getHeight() {
         encodeOp(GET_HEIGHT);
         RemoteDeviceDataExchange resultDecoder = addResultRequest(true);
@@ -541,6 +551,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public int getNativeWidth() {
         encodeOp(GET_NATIVE_WIDTH);
         RemoteDeviceDataExchange resultDecoder = addResultRequest(true);
@@ -548,6 +559,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public int getNativeHeight() {
         encodeOp(GET_NATIVE_HEIGHT);
         RemoteDeviceDataExchange resultDecoder = addResultRequest(true);
@@ -555,6 +567,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public double getStringWidth(DrawingContext ctx, String text) {
         if (encodeOpAndDrawingContext(GET_STRING_WIDTH, ctx)) {
             paramsEncoder.writeString(text);
@@ -566,6 +579,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @Override
+    @TruffleBoundary
     public double getStringHeight(DrawingContext ctx, String text) {
         if (encodeOpAndDrawingContext(GET_STRING_HEIGHT, ctx)) {
             paramsEncoder.writeString(text);

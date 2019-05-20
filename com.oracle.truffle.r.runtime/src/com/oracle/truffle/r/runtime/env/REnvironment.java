@@ -30,6 +30,7 @@ import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
@@ -908,6 +909,7 @@ public abstract class REnvironment extends RAttributeStorage {
         try {
             put(key, value);
         } catch (PutException ex) {
+            CompilerDirectives.transferToInterpreter();
             RSuicide.rSuicide("exception in safePut");
         }
     }
