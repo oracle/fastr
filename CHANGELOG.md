@@ -1,4 +1,4 @@
-# 1.0 RC 17
+# 19.0.0
 
 New features:
 
