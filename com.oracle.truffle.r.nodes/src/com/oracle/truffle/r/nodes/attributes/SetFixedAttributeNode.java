@@ -103,7 +103,11 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         return value;
     }
 
-    @Specialization
+    protected boolean defaultImplGuard(@SuppressWarnings("unused") Object target, @SuppressWarnings("unused") Object value) {
+        return true;
+    }
+
+    @Specialization(guards = "defaultImplGuard(x, value)")
     protected void setAttrInAttributable(RAttributable x, Object value,
                     @Cached("create()") BranchProfile attrNullProfile,
                     @Cached("create(name)") SetFixedPropertyNode setFixedPropertyNode,

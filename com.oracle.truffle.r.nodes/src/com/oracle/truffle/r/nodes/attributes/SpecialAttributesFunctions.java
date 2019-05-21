@@ -273,6 +273,11 @@ public final class SpecialAttributesFunctions {
         protected SetSpecialAttributeNode(String name) {
             super(name);
         }
+
+        @Override
+        protected boolean defaultImplGuard(Object target, Object value) {
+            return value != RNull.instance;
+        }
     }
 
     public abstract static class SetNamesAttributeNode extends SetSpecialAttributeNode {

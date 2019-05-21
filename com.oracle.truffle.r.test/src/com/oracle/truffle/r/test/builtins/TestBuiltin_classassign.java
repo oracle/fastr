@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -222,5 +222,8 @@ public class TestBuiltin_classassign extends TestBase {
         assertEval("{ x<-function() 42; class(x)<-\"foo\"; class(x)<-NULL; x }");
 
         assertEval("{ a<-1; class(a)<-c('x','y'); b<-choose(a,1); class(b)[1]<-'z'; a; }");
+
+        // This tests specific activation order of specializations in SetFixedAttributeNode:
+        assertEval("{ foo <- function(x,y) { attributes(x) <- y; x }; list(before = foo(as.pairlist(1), list(class='ahoj')), after = foo(as.pairlist(1), list(class=NULL))) }");
     }
 }
