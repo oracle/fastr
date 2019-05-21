@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,11 +84,13 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                     @Cached("createWriteVariable(indexName)") WriteVariableNode writeIndexNode,
                     @Cached("createWriteVariable(rangeName)") WriteVariableNode writeRangeNode,
                     @Cached("createWriteVariable(lengthName)") WriteVariableNode writeLengthNode,
+                    @Cached("createWriteInitialElementNode()") WriteVariableNode writeInitialElementNode,
                     @Cached("create()") RLengthNode length,
                     @Cached("createForIndexLoopNode(indexName, lengthName, rangeName)") LoopNode l) {
         writeIndexNode.execute(frame, 1);
         writeRangeNode.execute(frame, range);
         writeLengthNode.execute(frame, length.executeInteger(range));
+        writeInitialElementNode.execute(frame);
 
         l.executeLoop(frame);
 
@@ -103,10 +105,11 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                     @Cached("createWriteVariable(indexName)") WriteVariableNode writeIndexNode,
                     @Cached("createWriteVariable(rangeName)") WriteVariableNode writeRangeNode,
                     @Cached("createWriteVariable(lengthName)") WriteVariableNode writeLengthNode,
+                    @Cached("createWriteInitialElementNode()") WriteVariableNode writeInitialElementNode,
                     @Cached("create()") RLengthNode length,
                     @Cached("createForIndexLoopNode(indexName, lengthName, rangeName)") LoopNode l,
                     @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSize) {
-        return iterate(frame, range, indexName, rangeName, lengthName, writeIndexNode, writeRangeNode, writeLengthNode, length, l);
+        return iterate(frame, range, indexName, rangeName, lengthName, writeIndexNode, writeRangeNode, writeLengthNode, writeInitialElementNode, length, l);
     }
 
     @Specialization(guards = {"isForeignObject(range)", "!isForeignArray(range, hasSizeNode)"})
@@ -120,6 +123,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                     @Cached("createWriteVariable(rangeName)") WriteVariableNode writeRangeNode,
                     @Cached("createWriteVariable(keysName)") WriteVariableNode writeKeysNode,
                     @Cached("createWriteVariable(lengthName)") WriteVariableNode writeLengthNode,
+                    @Cached("createWriteInitialElementNode()") WriteVariableNode writeInitialElementNode,
                     @Cached("createForKeysLoopNode(indexName, positionName, lengthName, rangeName, keysName)") LoopNode l,
                     @Cached("KEYS.createNode()") Node keysNode,
                     @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSizeNode,
@@ -130,6 +134,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
             writeRangeNode.execute(frame, range);
             writeKeysNode.execute(frame, keys);
             writeLengthNode.execute(frame, getKeysLength(keys, sizeNode));
+            writeInitialElementNode.execute(frame);
 
             l.executeLoop(frame);
         } catch (UnsupportedMessageException ex) {
@@ -164,6 +169,10 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
 
     protected String createFrameVariable(String name) {
         return AnonymousFrameVariable.create(name);
+    }
+
+    protected WriteVariableNode createWriteInitialElementNode() {
+        return WriteVariableNode.createAnonymous(var.getIdentifier(), Mode.REGULAR, (RNode) RContext.getASTBuilder().constant(RSyntaxNode.INTERNAL, RNull.instance), false);
     }
 
     protected WriteVariableNode createWriteVariable(String name) {
