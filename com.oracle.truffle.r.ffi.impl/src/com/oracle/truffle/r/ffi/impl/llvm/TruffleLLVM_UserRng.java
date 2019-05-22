@@ -22,14 +22,13 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Context;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -41,42 +40,33 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
 
     private abstract static class RNGNode extends Node {
 
-        @CompilationFinal protected Node userFunctionNode;
-        @CompilationFinal protected Node readPointerNode;
+        @Child protected InteropLibrary userFunctionInterop;
+        @Child protected InteropLibrary readPointerInterop;
         @CompilationFinal protected TruffleObject userFunctionTarget;
         @CompilationFinal protected TruffleObject readPointerTarget;
 
-        protected void init(NativeFunction userFunction, NativeFunction readFunction) {
-            if (userFunctionNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                userFunctionNode = Message.EXECUTE.createNode();
-            }
-            if (userFunctionTarget == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                userFunctionTarget = RContext.getInstance().getStateRFFI().lookupNativeFunction(userFunction);
-            }
+        protected RNGNode(NativeFunction userFunction, NativeFunction readFunction) {
+            userFunctionTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(userFunction);
+            userFunctionInterop = InteropLibrary.getFactory().create(userFunctionTarget);
             if (readFunction != null) {
-                if (readPointerNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    readPointerNode = Message.EXECUTE.createNode();
-                }
-                if (readPointerTarget == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    readPointerTarget = RContext.getInstance().getStateRFFI().lookupNativeFunction(readFunction);
-                }
+                readPointerTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(readFunction);
+                readPointerInterop = InteropLibrary.getFactory().create(readPointerTarget);
             }
         }
     }
 
     private static final class TruffleLLVMInitNode extends RNGNode implements InitNode {
 
+        TruffleLLVMInitNode() {
+            super(NativeFunction.unif_init, null);
+        }
+
         @Override
         public void execute(VirtualFrame frame, int seed) {
-            init(NativeFunction.unif_init, null);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
             Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.LLVM);
             try {
-                ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget, seed);
+                userFunctionInterop.execute(userFunctionTarget, seed);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
@@ -87,14 +77,17 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
 
     private static final class TruffleLLVM_RandNode extends RNGNode implements RandNode {
 
+        TruffleLLVM_RandNode() {
+            super(NativeFunction.unif_rand, NativeFunction.read_pointer_double);
+        }
+
         @Override
         public double execute(VirtualFrame frame) {
-            init(NativeFunction.unif_rand, NativeFunction.read_pointer_double);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
             Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.LLVM);
             try {
-                Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
-                return (double) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address);
+                Object address = userFunctionInterop.execute(userFunctionTarget);
+                return (double) readPointerInterop.execute(readPointerTarget, address);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
@@ -105,14 +98,17 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
 
     private static final class TruffleLLVM_NSeedNode extends RNGNode implements NSeedNode {
 
+        TruffleLLVM_NSeedNode() {
+            super(NativeFunction.unif_nseed, NativeFunction.read_pointer_int);
+        }
+
         @Override
         public int execute(VirtualFrame frame) {
-            init(NativeFunction.unif_nseed, NativeFunction.read_pointer_int);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
             Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.LLVM);
             try {
-                Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
-                return (int) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address);
+                Object address = userFunctionInterop.execute(userFunctionTarget);
+                return (int) readPointerInterop.execute(readPointerTarget, address);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
@@ -123,15 +119,18 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
 
     private static final class TruffleLLVM_SeedsNode extends RNGNode implements SeedsNode {
 
+        TruffleLLVM_SeedsNode() {
+            super(NativeFunction.unif_seedloc, NativeFunction.read_array_int);
+        }
+
         @Override
         public void execute(VirtualFrame frame, int[] n) {
-            init(NativeFunction.unif_seedloc, NativeFunction.read_array_int);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
             Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.LLVM);
             try {
-                Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
+                Object address = userFunctionInterop.execute(userFunctionTarget);
                 for (int i = 0; i < n.length; i++) {
-                    n[i] = (int) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address, i);
+                    n[i] = (int) readPointerInterop.execute(readPointerTarget, address, i);
                 }
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);

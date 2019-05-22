@@ -24,14 +24,13 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -62,9 +61,9 @@ public final class RForeignIntWrapper extends RForeignVectorWrapper implements R
     public int getDataAt(int index) {
         Object value = null;
         try {
-            value = ForeignAccess.sendRead(READ, delegate, index);
+            value = getInterop().readArrayElement(delegate, index);
             return ((Number) value).intValue();
-        } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+        } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
             throw RInternalError.shouldNotReachHere(e);
         } catch (ClassCastException e) {
             if (value instanceof TruffleObject) {
@@ -78,17 +77,18 @@ public final class RForeignIntWrapper extends RForeignVectorWrapper implements R
     }
 
     private static int unbox(TruffleObject value, ClassCastException e) throws RuntimeException {
-        if (ForeignAccess.sendIsNull(IS_NULL, value)) {
+        if (getInterop().isNull(value)) {
             return RRuntime.INT_NA;
         }
-        if (ForeignAccess.sendIsBoxed(IS_BOXED, value)) {
-            try {
-                return ((Number) ForeignAccess.sendUnbox(UNBOX, value)).intValue();
-            } catch (UnsupportedMessageException | ClassCastException ex) {
-                throw RInternalError.shouldNotReachHere(e);
+        try {
+            if (getInterop().isNumber(value)) {
+                return getInterop().asInt(value);
+            } else {
+                return getInterop().asString(value).charAt(0);
             }
+        } catch (UnsupportedMessageException | ClassCastException ex) {
+            throw RInternalError.shouldNotReachHere(e);
         }
-        throw RInternalError.shouldNotReachHere(e);
     }
 
     @Override
@@ -98,62 +98,60 @@ public final class RForeignIntWrapper extends RForeignVectorWrapper implements R
 
     private static final class FastPathAccess extends FastPathFromIntAccess {
 
-        FastPathAccess(RAbstractContainer value) {
-            super(value);
-        }
+        @Child private InteropLibrary delegateInterop;
+        @Child private InteropLibrary elementInterop;
 
         private final ValueProfile resultProfile = ValueProfile.createClassProfile();
         private final ConditionProfile isTruffleObjectProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile isIntProfile = ConditionProfile.createBinaryProfile();
-        @Child private Node getSize = Message.GET_SIZE.createNode();
-        @Child private Node read = Message.READ.createNode();
-        @Child private Node isNull;
-        @Child private Node isBoxed;
-        @Child private Node unbox;
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+            delegateInterop = InteropLibrary.getFactory().create(((RForeignVectorWrapper) value).delegate);
+        }
+
+        @Override
+        public boolean supports(Object value) {
+            return super.supports(value) && delegateInterop.accepts(((RForeignVectorWrapper) value).delegate);
+        }
 
         @Override
         protected int getLength(RAbstractContainer vector) {
-            try {
-                return (int) ForeignAccess.sendGetSize(getSize, ((RForeignVectorWrapper) vector).delegate);
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return RRuntime.getForeignArraySize(((RForeignVectorWrapper) vector).delegate, delegateInterop);
         }
 
         @Override
         public int getIntImpl(AccessIterator accessIter, int index) {
             Object value;
             try {
-                value = ForeignAccess.sendRead(read, (TruffleObject) accessIter.getStore(), index);
+                value = delegateInterop.readArrayElement(accessIter.getStore(), index);
+
                 if (isTruffleObjectProfile.profile(value instanceof TruffleObject)) {
-                    if (isNull == null) {
+                    if (elementInterop == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        isNull = insert(Message.IS_NULL.createNode());
+                        elementInterop = insert(InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize()));
                     }
-                    if (ForeignAccess.sendIsNull(isNull, (TruffleObject) value)) {
+                    if (elementInterop.isNumber(value)) {
+                        value = elementInterop.asInt(value);
+                    } else if (elementInterop.isNull(value)) {
                         return RRuntime.INT_NA;
-                    }
-                    if (isBoxed == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        isBoxed = insert(Message.IS_BOXED.createNode());
-                    }
-                    if (ForeignAccess.sendIsBoxed(isBoxed, (TruffleObject) value)) {
-                        if (unbox == null) {
-                            CompilerDirectives.transferToInterpreterAndInvalidate();
-                            unbox = insert(Message.UNBOX.createNode());
-                        }
-                        value = ForeignAccess.sendUnbox(unbox, (TruffleObject) value);
+                    } else {
+                        value = elementInterop.asString(value).charAt(0);
                     }
                 }
+
                 if (isIntProfile.profile(value instanceof Number)) {
                     return ((Number) resultProfile.profile(value)).intValue();
                 } else {
                     return (Character) resultProfile.profile(value);
                 }
-            } catch (UnsupportedMessageException | UnknownIdentifierException | ClassCastException e) {
+            } catch (UnsupportedMessageException | InvalidArrayIndexException |
+
+                            ClassCastException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
         }
+
     }
 
     @Override
@@ -165,11 +163,7 @@ public final class RForeignIntWrapper extends RForeignVectorWrapper implements R
         @Override
         @TruffleBoundary
         protected int getLength(RAbstractContainer vector) {
-            try {
-                return (int) ForeignAccess.sendGetSize(GET_SIZE, ((RForeignIntWrapper) vector).delegate);
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return RRuntime.getForeignArraySize(((RForeignVectorWrapper) vector).delegate, getInterop());
         }
 
         @Override
@@ -177,9 +171,9 @@ public final class RForeignIntWrapper extends RForeignVectorWrapper implements R
             RForeignIntWrapper vector = (RForeignIntWrapper) accessIter.getStore();
             Object value = null;
             try {
-                value = ForeignAccess.sendRead(READ, vector.delegate, index);
+                value = getInterop().readArrayElement(vector.delegate, index);
                 return ((Number) value).intValue();
-            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+            } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                 throw RInternalError.shouldNotReachHere(e);
             } catch (ClassCastException e) {
                 if (value instanceof TruffleObject) {

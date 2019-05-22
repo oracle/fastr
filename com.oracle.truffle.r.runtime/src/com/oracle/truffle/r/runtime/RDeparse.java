@@ -822,7 +822,7 @@ public class RDeparse {
                     append("<unevaluated>");
                 }
             } else if (value instanceof TruffleObject) {
-                Object rObject = new TruffleObjectConverter().convert((TruffleObject) value);
+                Object rObject = TruffleObjectConverter.convert((TruffleObject) value);
                 if (rObject == value) {
                     append("<foreign object>");
                 } else if (rObject == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,16 @@
  */
 package com.oracle.truffle.r.runtime.interop;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -47,20 +47,18 @@ import java.util.List;
  * <b>Note</b> that it has to be assured by the caller that the array is homogenous and that the
  * provided type corresponds to the arrays elements.
  */
-@ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class, RType.class})
+@GenerateUncached
+@ImportStatic({RRuntime.class, ConvertForeignObjectNode.class})
 public abstract class ForeignArrayToVectorNode extends RBaseNode {
-
-    @Child protected Node hasSize = Message.HAS_SIZE.createNode();
-    @Child Node getSize = Message.GET_SIZE.createNode();
-
-    @Child protected Node read;
-    @Child protected Foreign2R foreign2R;
-    @Child protected ForeignArrayToVectorNode recurse;
 
     protected abstract List<Object> execute(Object obj, boolean recursive, List<Object> elements);
 
     public static ForeignArrayToVectorNode create() {
         return ForeignArrayToVectorNodeGen.create();
+    }
+
+    public static ForeignArrayToVectorNode getUncached() {
+        return ForeignArrayToVectorNodeGen.getUncached();
     }
 
     /**
@@ -93,39 +91,32 @@ public abstract class ForeignArrayToVectorNode extends RBaseNode {
         return ConvertForeignObjectNode.asAbstractVector(res.toArray(new Object[res.size()]), dims, type, dropDimensions);
     }
 
-    @Specialization(guards = {"isForeignArray(obj, hasSize)"})
-    @CompilerDirectives.TruffleBoundary
-    protected List<Object> copyArray(TruffleObject obj, boolean recursive, List<Object> elements) {
+    @Specialization(guards = {"isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
+    protected List<Object> copyArray(TruffleObject obj, boolean recursive, List<Object> elements,
+                    @Cached("create()") Foreign2R foreign2R,
+                    @Cached("create()") ForeignArrayToVectorNode recurse,
+                    @CachedLibrary("obj") InteropLibrary interop,
+                    @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary elementInterop) {
         try {
             List<Object> arrayElements = elements == null ? new ArrayList<>() : elements;
-
-            int size = (int) ForeignAccess.sendGetSize(getSize, obj);
-
+            int size = RRuntime.getForeignArraySize(obj, interop);
             if (size == 0) {
                 return arrayElements;
             }
             for (int i = 0; i < size; i++) {
-                Object element = ForeignAccess.sendRead(getRead(), obj, i);
-                element = getForeign2R().execute(element);
-                if (recursive && (isForeignArray(element, hasSize))) {
-                    recurse(element, arrayElements);
+                Object element = interop.readArrayElement(obj, i);
+                element = foreign2R.convert(element);
+                if (recursive && (isForeignArray(element, elementInterop))) {
+                    recurse.execute(element, true, arrayElements);
                 } else {
                     arrayElements.add(element);
                 }
             }
             return arrayElements;
 
-        } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+        } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
             throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
         }
-    }
-
-    private Object recurse(Object element, List<Object> elements) {
-        if (recurse == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recurse = insert(create());
-        }
-        return recurse.execute(element, true, elements);
     }
 
     @Fallback
@@ -133,19 +124,4 @@ public abstract class ForeignArrayToVectorNode extends RBaseNode {
         throw RInternalError.shouldNotReachHere();
     }
 
-    protected Node getRead() {
-        if (read == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            read = insert(Message.READ.createNode());
-        }
-        return read;
-    }
-
-    protected Foreign2R getForeign2R() {
-        if (foreign2R == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            foreign2R = insert(Foreign2RNodeGen.create());
-        }
-        return foreign2R;
-    }
 }

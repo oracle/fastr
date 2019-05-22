@@ -29,7 +29,9 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen.LogicalScalarCastNodeGen;
@@ -87,7 +89,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
         return left;
     }
 
-    @ImportStatic({RRuntime.class, DSLConfig.class})
+    @ImportStatic({RRuntime.class, DSLConfig.class, ConvertForeignObjectNode.class})
     protected abstract static class LogicalScalarCastNode extends RBaseNode {
 
         protected static final int CACHE_LIMIT = 3;
@@ -151,14 +153,18 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
             return null;
         }
 
-        @Specialization(guards = {"isForeignObject(operand)"})
+        @Specialization(guards = {"isForeignArray(operand, interop)"}, limit = "getInteropLibraryCacheSize()")
         protected byte doForeignVector(TruffleObject operand,
                         @Cached("create()") ConvertForeignObjectNode convertForeign,
-                        @Cached("createRecursive()") LogicalScalarCastNode recursive) {
-            if (convertForeign.isForeignArray(operand)) {
-                Object o = convertForeign.convert(operand);
-                return recursive.executeCast(o);
-            }
+                        @Cached("createRecursive()") LogicalScalarCastNode recursive,
+                        @SuppressWarnings("unused") @CachedLibrary("operand") InteropLibrary interop) {
+            Object o = convertForeign.convert(operand);
+            return recursive.executeCast(o);
+        }
+
+        @Specialization(guards = {"isForeignObject(operand)", "!isForeignArray(operand, interop)"}, limit = "getInteropLibraryCacheSize()")
+        protected byte fallbackForeignVector(TruffleObject operand,
+                        @SuppressWarnings("unused") @CachedLibrary("operand") InteropLibrary interop) {
             return doFallback(operand);
         }
 

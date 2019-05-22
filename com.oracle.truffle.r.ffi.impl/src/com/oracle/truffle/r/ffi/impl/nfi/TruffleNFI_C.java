@@ -24,11 +24,9 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
@@ -60,14 +58,12 @@ public class TruffleNFI_C implements CRFFI {
 
     public static final class NFIFunctionObjectGetter extends FunctionObjectGetter {
 
-        @Child private Node bindNode = Message.INVOKE.createNode();
-
         @Override
         @TruffleBoundary
         public TruffleObject execute(TruffleObject address, int arity, NativeCallInfo nativeCallInfo) {
             // cache signatures
             try {
-                return (TruffleObject) ForeignAccess.sendInvoke(bindNode, address, "bind",
+                return (TruffleObject) InteropLibrary.getFactory().getUncached().invokeMember(address, "bind",
                                 getSignatureForArity(arity));
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);

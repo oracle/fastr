@@ -65,13 +65,11 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RStartParams;
@@ -970,21 +968,6 @@ public final class RContext {
         }
     };
 
-    public TruffleObject toJavaStatic(TruffleObject obj, Node readNode, Node executeNode)
-                    throws UnknownIdentifierException, UnsupportedMessageException, UnsupportedTypeException, ArityException {
-        Env e = getEnv();
-        assert e.isHostLookupAllowed() && e.isHostObject(obj) && !(e.asHostObject(obj) instanceof Class);
-
-        if (e.isHostLookupAllowed()) {
-            TruffleObject gcf = (TruffleObject) ForeignAccess.sendRead(readNode, obj, "getClass");
-            TruffleObject clazz = (TruffleObject) ForeignAccess.sendExecute(executeNode, gcf);
-            TruffleObject cnf = (TruffleObject) ForeignAccess.sendRead(readNode, clazz, "getName");
-            String className = (String) ForeignAccess.sendExecute(executeNode, cnf);
-            return (TruffleObject) e.lookupHostSymbol(className);
-        }
-        return null;
-    }
-
     public final class ConsoleIO {
 
         private final CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
@@ -1083,16 +1066,14 @@ public final class RContext {
             }
         }
 
-        private final Node read = Message.READ.createNode();
-        private final Node execute = Message.EXECUTE.createNode();
-
         @TruffleBoundary
         public String getPrompt() {
             if (handler != null) {
                 Object result;
                 try {
-                    Object f = ForeignAccess.sendRead(read, handler, "getPrompt");
-                    result = ForeignAccess.sendExecute(execute, (TruffleObject) f);
+                    InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+                    Object f = interop.readMember(handler, "getPrompt");
+                    result = interop.execute(f);
                 } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException | ClassCastException e) {
                     throw new RInternalError(e, "error while reading prompt");
                 }
@@ -1105,8 +1086,9 @@ public final class RContext {
         public void setPrompt(String prompt) {
             if (handler != null) {
                 try {
-                    Object f = ForeignAccess.sendRead(read, handler, "setPrompt");
-                    ForeignAccess.sendExecute(execute, (TruffleObject) f, prompt);
+                    InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+                    Object f = interop.readMember(handler, "setPrompt");
+                    interop.execute(f, prompt);
                 } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException | ClassCastException e) {
                     throw new RInternalError(e, "error while writing prompt from object " + handler);
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,11 @@ package com.oracle.truffle.r.nodes.builtin.casts;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
@@ -37,6 +39,7 @@ import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 public final class CastForeignNode extends CastNode {
 
     @Child private ConvertForeignObjectNode convertForeign;
+    @Child private InteropLibrary interop;
 
     @CompilationFinal private ConditionProfile isForeign;
     @CompilationFinal private ConditionProfile isInteropScalar;
@@ -58,7 +61,11 @@ public final class CastForeignNode extends CastNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             isInteropScalar = ConditionProfile.createBinaryProfile();
         }
-        if (isForeign.profile(convertForeign.isForeignArray(obj))) {
+        if (interop == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            interop = insert(InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize()));
+        }
+        if (isForeign.profile(ConvertForeignObjectNode.isForeignArray(obj, interop))) {
             return convertForeign.convert((TruffleObject) obj);
         } else if (isInteropScalar.profile(isInteropScalar(obj))) {
             return ((RInteropScalar) obj).getRValue();

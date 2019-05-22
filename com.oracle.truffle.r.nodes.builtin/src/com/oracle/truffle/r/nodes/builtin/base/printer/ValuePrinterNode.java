@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,16 +66,13 @@ public final class ValuePrinterNode extends RBaseNode {
      */
     public static final class ConvertTruffleObjectNode extends Node {
 
-        private final TruffleObjectConverter converter;
-
         public ConvertTruffleObjectNode() {
-            converter = new TruffleObjectConverter();
-            insert(converter.getSubNodes());
+            insert(TruffleObjectConverter.getSubNodes());
         }
 
         @TruffleBoundary
-        public Object convert(TruffleObject obj) {
-            return converter.convert(obj);
+        public static Object convert(TruffleObject obj) {
+            return TruffleObjectConverter.convert(obj);
         }
 
     }
@@ -118,7 +115,7 @@ public final class ValuePrinterNode extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 convertTruffleObject = insert(new ConvertTruffleObjectNode());
             }
-            return convertTruffleObject.convert((TruffleObject) o);
+            return ConvertTruffleObjectNode.convert((TruffleObject) o);
         }
         return null;
     }

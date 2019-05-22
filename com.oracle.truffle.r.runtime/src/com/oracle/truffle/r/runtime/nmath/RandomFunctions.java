@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.nmath;
 
 import com.oracle.truffle.r.runtime.nmath.distr.SExp;
 import com.oracle.truffle.r.runtime.nmath.distr.SNorm;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 import com.oracle.truffle.r.runtime.rng.RRNG.NormKind;
 import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
  * implement common code for the vectorized versions.
  */
 public class RandomFunctions {
-    public abstract static class RandFunction3_Double extends RBaseNode {
+    public abstract static class RandFunction3_Double extends RBaseNodeWithWarnings {
         public abstract double execute(double a, double b, double c, RandomNumberProvider rand);
     }
 

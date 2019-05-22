@@ -38,11 +38,9 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
@@ -162,8 +160,9 @@ public class TruffleNFI_Context extends RFFIContext {
                 dllInfo = ((NFIHandle) lib.handle).libHandle;
             }
             try {
-                TruffleObject symbol = ((TruffleObject) ForeignAccess.sendRead(Message.READ.createNode(), dllInfo, function.getCallName()));
-                TruffleObject target = (TruffleObject) ForeignAccess.sendInvoke(Message.INVOKE.createNode(), symbol, "bind", function.getSignature());
+                InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+                TruffleObject symbol = ((TruffleObject) interop.readMember(dllInfo, function.getCallName()));
+                TruffleObject target = (TruffleObject) interop.invokeMember(symbol, "bind", function.getSignature());
                 nativeFunctions.put(function, target);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
@@ -181,7 +180,6 @@ public class TruffleNFI_Context extends RFFIContext {
         synchronized (TruffleNFI_Context.class) {
             if (!variablesInitialized) {
                 variablesInitialized = true;
-                Node executeNode = Message.EXECUTE.createNode();
                 RFFIVariables[] variables = RFFIVariables.initialize(context);
                 boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
                 try {
@@ -192,14 +190,15 @@ public class TruffleNFI_Context extends RFFIContext {
                             continue;
                         }
                         try {
+                            InteropLibrary interop = InteropLibrary.getFactory().getUncached();
                             if (value instanceof Double) {
-                                ForeignAccess.sendExecute(executeNode, lookupNativeFunction(NativeFunction.initvar_double), i, value);
+                                interop.execute(lookupNativeFunction(NativeFunction.initvar_double), i, value);
                             } else if (value instanceof Integer) {
-                                ForeignAccess.sendExecute(executeNode, lookupNativeFunction(NativeFunction.initvar_int), i, value);
+                                interop.execute(lookupNativeFunction(NativeFunction.initvar_int), i, value);
                             } else if (value instanceof String) {
-                                ForeignAccess.sendExecute(executeNode, lookupNativeFunction(NativeFunction.initvar_string), i, value);
+                                interop.execute(lookupNativeFunction(NativeFunction.initvar_string), i, value);
                             } else {
-                                ForeignAccess.sendExecute(executeNode, lookupNativeFunction(NativeFunction.initvar_obj), i, value);
+                                interop.execute(lookupNativeFunction(NativeFunction.initvar_obj), i, value);
                             }
                         } catch (InteropException ex) {
                             throw RInternalError.shouldNotReachHere(ex);
@@ -221,10 +220,9 @@ public class TruffleNFI_Context extends RFFIContext {
     private static long initCallbacksAddress() {
         // get the address of the native thread local
         try {
-            Node bind = Message.INVOKE.createNode();
-            Node executeNode = Message.EXECUTE.createNode();
-            TruffleObject getCallbacksAddressFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, DLL.findSymbol("Rinternals_getCallbacksAddress", null).asTruffleObject(), "bind", "(): sint64");
-            return (long) ForeignAccess.sendExecute(executeNode, getCallbacksAddressFunction);
+            InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+            TruffleObject getCallbacksAddressFunction = (TruffleObject) interop.invokeMember(DLL.findSymbol("Rinternals_getCallbacksAddress", null).asTruffleObject(), "bind", "(): sint64");
+            return (long) interop.execute(getCallbacksAddressFunction);
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
@@ -234,15 +232,14 @@ public class TruffleNFI_Context extends RFFIContext {
         if (context.getKind() == ContextKind.SHARE_NOTHING) {
             // create and fill a new callbacks table
             callbacks = UnsafeAdapter.UNSAFE.allocateMemory(Callbacks.values().length * Unsafe.ARRAY_LONG_INDEX_SCALE);
-            Node bind = Message.INVOKE.createNode();
-            Node executeNode = Message.EXECUTE.createNode();
             SymbolHandle symbolHandle = DLL.findSymbol("Rinternals_addCallback", null);
             try {
                 Callbacks.createCalls(new TruffleNFI_UpCallsRFFIImpl());
                 for (Callbacks callback : Callbacks.values()) {
                     String addCallbackSignature = String.format("(env, sint64, sint32, %s): void", callback.nfiSignature);
-                    TruffleObject addCallbackFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, symbolHandle.asTruffleObject(), "bind", addCallbackSignature);
-                    ForeignAccess.sendExecute(executeNode, addCallbackFunction, callbacks, callback.ordinal(), callback.call);
+                    InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+                    TruffleObject addCallbackFunction = (TruffleObject) interop.invokeMember(symbolHandle.asTruffleObject(), "bind", addCallbackSignature);
+                    interop.execute(addCallbackFunction, callbacks, callback.ordinal(), callback.call);
                 }
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);

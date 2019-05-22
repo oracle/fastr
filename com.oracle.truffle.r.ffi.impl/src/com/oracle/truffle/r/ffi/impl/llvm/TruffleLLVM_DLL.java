@@ -48,13 +48,12 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RPlatform;
@@ -154,7 +153,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
 
         Object lookup(String symbol) throws UnknownIdentifierException {
             try {
-                return ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) lookupObject, symbol);
+                return InteropLibrary.getFactory().getUncached().readMember(lookupObject, symbol);
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
@@ -349,7 +348,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     }
 
     private static class TruffleLLVM_DLSymNode extends Node implements DLSymNode {
-        @Child private Node lookupNode = Message.READ.createNode();
+        @Child InteropLibrary interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
 
         @Override
         public SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError {
@@ -359,7 +358,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             for (int i = 0; i < llvmHandle.parsedIRs.length; i++) {
                 ParsedLLVM_IR pir = llvmHandle.parsedIRs[i];
                 try {
-                    symValue = ForeignAccess.sendRead(lookupNode, (TruffleObject) pir.lookupObject, symbol);
+                    symValue = interop.readMember(pir.lookupObject, symbol);
                     break;
                 } catch (UnknownIdentifierException e) {
                     continue;

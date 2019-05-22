@@ -24,9 +24,8 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -45,7 +44,7 @@ public abstract class DownCallNodeFactory {
     public abstract static class DownCallNode extends Node {
 
         private final NativeFunction function;
-        @Child private Node message;
+        @Child private InteropLibrary interop;
         // TODO: can this be really shared across contexts?
         @CompilationFinal private TruffleObject target;
 
@@ -67,16 +66,16 @@ public abstract class DownCallNodeFactory {
         public final Object call(Object... args) {
             Object before = -1;
             try {
-                if (message == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    message = insert(Message.EXECUTE.createNode());
-                }
                 if (target == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     target = getTarget(function);
                 }
                 before = beforeCall(function, target, args);
-                return ForeignAccess.sendExecute(message, target, args);
+                if (interop == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    interop = insert(InteropLibrary.getFactory().create(target));
+                }
+                return interop.execute(target, args);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             } finally {

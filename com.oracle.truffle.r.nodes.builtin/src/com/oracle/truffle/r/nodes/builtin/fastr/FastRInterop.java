@@ -49,13 +49,14 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.LanguageInfo;
 import com.oracle.truffle.api.nodes.Node;
@@ -71,6 +72,7 @@ import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -142,7 +144,7 @@ public class FastRInterop {
                         @Cached("code") String cachedSource,
                         @Cached("createCall(languageId, code)") DirectCallNode call) {
             try {
-                return foreign2rNode.execute(call.call(EMPTY_OBJECT_ARRAY));
+                return foreign2rNode.convert(call.call(EMPTY_OBJECT_ARRAY));
             } finally {
                 setVisibilityNode.execute(frame, true);
             }
@@ -151,7 +153,7 @@ public class FastRInterop {
         @Specialization(replaces = "evalCached")
         protected Object eval(VirtualFrame frame, String languageId, String code, @SuppressWarnings("unused") RMissing path) {
             try {
-                return foreign2rNode.execute(parseAndCall(code, languageId));
+                return foreign2rNode.convert(parseAndCall(code, languageId));
             } finally {
                 setVisibilityNode.execute(frame, true);
             }
@@ -190,7 +192,7 @@ public class FastRInterop {
         @Specialization
         protected Object eval(VirtualFrame frame, String languageId, @SuppressWarnings("unused") RMissing code, String path) {
             try {
-                return foreign2rNode.execute(parseFileAndCall(path, languageId));
+                return foreign2rNode.convert(parseFileAndCall(path, languageId));
             } catch (RuntimeException e) {
                 if (e instanceof TruffleException && !(e instanceof RError)) {
                     throw RErrorHandling.handleInteropException(this, e);
@@ -209,7 +211,7 @@ public class FastRInterop {
         @Specialization
         protected Object eval(VirtualFrame frame, @SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") RMissing code, String path) {
             try {
-                return foreign2rNode.execute(parseFileAndCall(path, null));
+                return foreign2rNode.convert(parseFileAndCall(path, null));
             } finally {
                 setVisibilityNode.execute(frame, false);
             }
@@ -315,7 +317,7 @@ public class FastRInterop {
             if (object == null) {
                 throw error(RError.Message.NO_IMPORT_OBJECT, name);
             }
-            return foreign2R.execute(object);
+            return foreign2R.convert(object);
         }
     }
 
@@ -714,12 +716,10 @@ public class FastRInterop {
         }
     }
 
-    @ImportStatic(Message.class)
     @RBuiltin(name = ".fastr.interop.asJavaArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"x", "className", "flat"}, behavior = COMPLEX)
     public abstract static class ToJavaArray extends RBuiltinNode.Arg3 {
 
         BranchProfile interopExceptionProfile = BranchProfile.create();
-        private Node writeNode;
 
         static {
             Casts casts = new Casts(ToJavaArray.class);
@@ -898,11 +898,7 @@ public class FastRInterop {
                 for (int i = 0; i < dim; i++) {
                     try {
                         Object value = r2Foreign.execute(vec.getDataAtAsObject(i));
-                        if (writeNode == null) {
-                            CompilerDirectives.transferToInterpreterAndInvalidate();
-                            writeNode = insert(Message.WRITE.createNode());
-                        }
-                        ForeignAccess.sendWrite(writeNode, truffleArray, i, value);
+                        InteropLibrary.getFactory().getUncached().writeArrayElement(truffleArray, i, value);
                     } catch (InteropException ex) {
                         throw error(RError.Message.GENERIC, ex.getMessage());
                     }
@@ -917,11 +913,9 @@ public class FastRInterop {
 
         @Specialization(guards = "isJavaObject(obj)")
         @TruffleBoundary
-        public Object toArray(TruffleObject obj, @SuppressWarnings("unused") RMissing missing, @SuppressWarnings("unused") boolean flat,
-                        @Cached("HAS_SIZE.createNode()") Node hasSize,
-                        @Cached("WRITE.createNode()") Node write) {
-
-            if (ForeignAccess.sendHasSize(hasSize, obj)) {
+        public Object toArray(TruffleObject obj, @SuppressWarnings("unused") RMissing missing, @SuppressWarnings("unused") boolean flat) {
+            InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+            if (interop.hasArrayElements(obj)) {
                 // TODO should return copy?
                 return obj;
             }
@@ -932,9 +926,9 @@ public class FastRInterop {
                     return obj;
                 }
                 TruffleObject array = (TruffleObject) context.getEnv().asGuestValue(Array.newInstance(o.getClass(), 1));
-                ForeignAccess.sendWrite(write, array, 0, obj);
+                interop.writeArrayElement(array, 0, obj);
                 return array;
-            } catch (UnsupportedTypeException | UnsupportedMessageException | UnknownIdentifierException e) {
+            } catch (UnsupportedTypeException | UnsupportedMessageException | InvalidArrayIndexException e) {
                 throw error(RError.Message.GENERIC, "error while creating array: " + e.getMessage());
             }
         }
@@ -977,7 +971,7 @@ public class FastRInterop {
         }
     }
 
-    @ImportStatic({Message.class, RRuntime.class})
+    @ImportStatic(RRuntime.class)
     @RBuiltin(name = ".fastr.interop.asVector", visibility = ON, kind = PRIMITIVE, parameterNames = {"array", "recursive", "dropDimensions", "charToInt"}, behavior = COMPLEX)
     public abstract static class AsVector extends RBuiltinNode.Arg4 {
 
@@ -992,13 +986,13 @@ public class FastRInterop {
                             notLogicalNA()).map(Predef.toBoolean());
         }
 
-        @Specialization(guards = {"isForeignObject(obj)", "!charToInt"})
+        @Specialization(guards = {"isForeignObject(obj)", "!charToInt"}, limit = "getInteropLibraryCacheSize()")
         @TruffleBoundary
         public Object asVector(TruffleObject obj, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean charToInt,
-                        @Cached("HAS_SIZE.createNode()") Node hasSize,
+                        @CachedLibrary("obj") InteropLibrary interop,
                         @Cached("create()") ConvertForeignObjectNode convertForeign,
                         @Cached("createBinaryProfile()") ConditionProfile isArrayProfile) {
-            if (isArrayProfile.profile(ForeignAccess.sendHasSize(hasSize, obj))) {
+            if (isArrayProfile.profile(interop.hasArrayElements(obj))) {
                 return convertForeign.convert(obj, recursive, dropDimensions);
             } else {
                 // a non-array we can convert only to List
@@ -1028,20 +1022,20 @@ public class FastRInterop {
         }
     }
 
-    @ImportStatic({Message.class, RRuntime.class})
+    @ImportStatic(RRuntime.class)
     @RBuiltin(name = ".fastr.interop.new", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "..."}, behavior = COMPLEX)
     public abstract static class InteropNew extends RBuiltinNode.Arg2 {
 
-        @Child private Node sendInvoke;
+        @Child private InteropLibrary invokeInterop;
 
         static {
             Casts.noCasts(InteropNew.class);
         }
 
-        @Specialization(guards = {"isForeignObject(clazz)"})
+        @Specialization(guards = {"isForeignObject(clazz)"}, limit = "getInteropLibraryCacheSize()")
         @TruffleBoundary
         public Object interopNew(TruffleObject clazz, RArgsValuesAndNames args,
-                        @Cached("NEW.createNode()") Node sendNew,
+                        @CachedLibrary("clazz") InteropLibrary interop,
                         @Cached("create()") R2Foreign r2Foreign,
                         @Cached("create()") Foreign2R foreign2R) {
             try {
@@ -1049,8 +1043,8 @@ public class FastRInterop {
                 for (int i = 0; i < argValues.length; i++) {
                     argValues[i] = r2Foreign.execute(args.getArgument(i));
                 }
-                Object result = ForeignAccess.sendNew(sendNew, clazz, argValues);
-                return foreign2R.execute(result);
+                Object result = interop.instantiate(clazz, argValues);
+                return foreign2R.convert(result);
             } catch (UnsupportedTypeException ute) {
                 RContext context = RContext.getInstance();
                 Env env = RContext.getInstance().getEnv();
@@ -1075,13 +1069,13 @@ public class FastRInterop {
                                     cls = cls.getComponentType();
                                 }
 
-                                if (sendInvoke == null) {
+                                if (invokeInterop == null) {
                                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                                    sendInvoke = insert(Message.INVOKE.createNode());
+                                    invokeInterop = insert(InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize()));
                                 }
                                 TruffleObject arrayCompanion = (TruffleObject) env.lookupHostSymbol("java.lang.reflect.Array");
                                 try {
-                                    return ForeignAccess.sendInvoke(sendInvoke, arrayCompanion, "newInstance", context.getEnv().asGuestValue(cls), context.getEnv().asGuestValue(dims));
+                                    return invokeInterop.invokeMember(arrayCompanion, "newInstance", context.getEnv().asGuestValue(cls), context.getEnv().asGuestValue(dims));
                                 } catch (ArityException | UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException ex) {
                                     throw javaInstantiationError(ute);
                                 }

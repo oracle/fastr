@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,12 +24,14 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -208,30 +210,24 @@ public final class RandFunctionsNodes {
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     public abstract static class RfRMultinomNode extends FFIUpCallNode.Arg4 {
 
-        @Child private Node probIsPointerNode = Message.IS_POINTER.createNode();
-        @Child private Node probAsPointerNode;
-        @Child private Node rNIsPointerNode = Message.IS_POINTER.createNode();
-        @Child private Node rNAsPointerNode;
         @Child private ConvertForeignObjectNode probConvertForeign;
         @Child private ConvertForeignObjectNode rNConvertForeign;
         @Child private DoRMultinomNode doRMultinomNode = RandFunctionsNodesFactory.DoRMultinomNodeGen.create();
 
-        @Specialization
-        protected Object evaluate(int n, Object prob, int k, Object rN) {
+        @Specialization(limit = "getInteropLibraryCacheSize()")
+        protected Object evaluate(int n, Object prob, int k, Object rN,
+                        @CachedLibrary("prob") InteropLibrary probInterop,
+                        @CachedLibrary("rN") InteropLibrary rNInterop) {
             // prob is double* and rN is int*
             // Return a vector data in rN rN[1:K] {K := length(prob)}
             RAbstractDoubleVector probVector;
-            TruffleObject probTO = (TruffleObject) prob;
-            if (ForeignAccess.sendIsPointer(probIsPointerNode, probTO)) {
-                if (probAsPointerNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    probAsPointerNode = insert(Message.AS_POINTER.createNode());
-                }
+            if (probInterop.isPointer(prob)) {
                 long addr;
                 try {
-                    addr = ForeignAccess.sendAsPointer(probAsPointerNode, probTO);
+                    addr = probInterop.asPointer(prob);
                     probVector = RDataFactory.createDoubleVectorFromNative(addr, k);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
@@ -241,19 +237,14 @@ public final class RandFunctionsNodes {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     probConvertForeign = insert(ConvertForeignObjectNode.create());
                 }
-                probVector = (RAbstractDoubleVector) probConvertForeign.convert(probTO);
+                probVector = (RAbstractDoubleVector) probConvertForeign.convert((TruffleObject) prob);
             }
 
             RAbstractIntVector rNVector;
-            TruffleObject rNTO = (TruffleObject) rN;
-            if (ForeignAccess.sendIsPointer(rNIsPointerNode, rNTO)) {
-                if (rNAsPointerNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    rNAsPointerNode = insert(Message.AS_POINTER.createNode());
-                }
+            if (rNInterop.isPointer(rN)) {
                 long addr;
                 try {
-                    addr = ForeignAccess.sendAsPointer(rNAsPointerNode, rNTO);
+                    addr = rNInterop.asPointer(rN);
                     rNVector = RDataFactory.createIntVectorFromNative(addr, k);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
@@ -263,7 +254,7 @@ public final class RandFunctionsNodes {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     rNConvertForeign = insert(ConvertForeignObjectNode.create());
                 }
-                rNVector = (RAbstractIntVector) rNConvertForeign.convert(probTO);
+                rNVector = (RAbstractIntVector) rNConvertForeign.convert((TruffleObject) rN);
             }
 
             doRMultinomNode.execute(n, probVector, k, rNVector);

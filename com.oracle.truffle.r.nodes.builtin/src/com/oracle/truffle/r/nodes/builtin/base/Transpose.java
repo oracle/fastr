@@ -28,7 +28,9 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
@@ -279,14 +281,18 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         }
     }
 
-    @Specialization(guards = {"isForeignObject(x)"})
+    @Specialization(guards = {"isForeignArray(x, interop)"}, limit = "getInteropLibraryCacheSize()")
     protected Object transposeForeign(TruffleObject x,
                     @Cached("create()") ConvertForeignObjectNode convertForeign,
-                    @Cached("create()") Transpose recursive) {
-        if (convertForeign.isForeignArray(x)) {
-            RAbstractVector vec = (RAbstractVector) convertForeign.convert(x);
-            return recursive.execute(vec);
-        }
+                    @Cached("create()") Transpose recursive,
+                    @SuppressWarnings("unused") @CachedLibrary("x") InteropLibrary interop) {
+        RAbstractVector vec = (RAbstractVector) convertForeign.convert(x);
+        return recursive.execute(vec);
+    }
+
+    @Specialization(guards = {"isForeignObject(x)", "!isForeignArray(x, interop)"}, limit = "getInteropLibraryCacheSize()")
+    protected Object transposeForeign(@SuppressWarnings("unused") TruffleObject x,
+                    @SuppressWarnings("unused") @CachedLibrary("x") InteropLibrary interop) {
         throw error(Message.ARGUMENT_NOT_MATRIX);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,24 +23,23 @@
 package com.oracle.truffle.r.runtime.interop;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -55,26 +54,19 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 public final class TruffleObjectConverter {
 
-    private Node hasSizeNode = Message.HAS_SIZE.createNode();
-    private Node getSizeNode = Message.GET_SIZE.createNode();
-    private Node executeNode = Message.EXECUTE.createNode();
-    private Node readNode = Message.READ.createNode();
-    private Node keysNode = Message.KEYS.createNode();
-    private Foreign2R f2r = Foreign2R.create();
-
-    public Node[] getSubNodes() {
-        return new Node[]{hasSizeNode, getSizeNode, executeNode, readNode, keysNode, f2r};
+    public static Node[] getSubNodes() {
+        return new Node[]{getInterop(), Foreign2R.getUncached()};
     }
 
     @TruffleBoundary
-    public Object convert(TruffleObject obj) {
+    public static Object convert(TruffleObject obj) {
         try {
-            if (ForeignAccess.sendHasSize(hasSizeNode, obj)) {
-                int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, obj);
+            if (getInterop().hasArrayElements(obj)) {
+                int size = RRuntime.getForeignArraySize(obj, getInterop());
                 ForeignTypeCheck typeCheck = new ForeignTypeCheck();
                 for (int i = 0; i < size; i++) {
-                    Object value = ForeignAccess.sendRead(readNode, obj, i);
-                    if (typeCheck.check(f2r.execute(value)) == RType.List) {
+                    Object value = getInterop().readArrayElement(obj, i);
+                    if (typeCheck.check(Foreign2R.getUncached().convert(value)) == RType.List) {
                         break;
                     }
                 }
@@ -96,23 +88,19 @@ public final class TruffleObjectConverter {
             }
 
             try {
-                RContext context = RContext.getInstance();
-                TruffleLanguage.Env env = context.getEnv();
                 TruffleObject classStatic = null;
                 String[] staticNames = null;
-                if (env.isHostObject(obj) && !(env.asHostObject(obj) instanceof Class)) {
-                    if (!ConvertForeignObjectNode.isForeignArray(obj, hasSizeNode)) {
-                        try {
-                            classStatic = context.toJavaStatic(obj, readNode, executeNode);
-                            staticNames = readKeys(classStatic);
-                        } catch (UnknownIdentifierException | NoSuchFieldError | UnsupportedMessageException e) {
-                        }
+                if (!ConvertForeignObjectNode.isForeignArray(obj, getInterop())) {
+                    try {
+                        classStatic = ToJavaStaticNode.getUncached().execute(obj);
+                        staticNames = classStatic != null ? readMembers(classStatic) : null;
+                    } catch (UnknownIdentifierException | NoSuchFieldError | UnsupportedMessageException e) {
                     }
                 }
 
                 String[] names;
                 try {
-                    names = readKeys(obj);
+                    names = readMembers(obj);
                 } catch (UnsupportedMessageException e) {
                     names = null;
                 }
@@ -143,21 +131,20 @@ public final class TruffleObjectConverter {
         return obj;
     }
 
-    private String[] readKeys(TruffleObject obj)
-                    throws UnknownIdentifierException, InteropException, UnsupportedMessageException {
-        TruffleObject keys = ForeignAccess.sendKeys(keysNode, obj);
-        int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, keys);
+    private static String[] readMembers(TruffleObject obj)
+                    throws InteropException, UnsupportedMessageException {
+        InteropLibrary interop = getInterop();
+        Object members = interop.getMembers(obj);
+        int size = RRuntime.getForeignArraySize(members, getInterop());
         String[] names = new String[size];
         for (int i = 0; i < size; i++) {
-            Object value = ForeignAccess.sendRead(readNode, keys, i);
+            Object value = interop.readArrayElement(members, i);
             names[i] = (String) value;
         }
         return names;
     }
 
     private static final class CompoundNamedListWrapper implements RAbstractListVector {
-
-        private static final Node READ = Message.READ.createNode();
 
         private TruffleObject classDelegate;
 
@@ -233,8 +220,8 @@ public final class TruffleObjectConverter {
         public Object getDataAt(int index) {
             try {
                 return (index < staticNamesLen)
-                                ? FOREIGN_TO_R.execute(ForeignAccess.sendRead(READ, classDelegate, names.getDataAt(index)))
-                                : FOREIGN_TO_R.execute(ForeignAccess.sendRead(READ, delegate, names.getDataAt(index)));
+                                ? RForeignVectorWrapper.unbox(getInterop().readMember(classDelegate, names.getDataAt(index)))
+                                : RForeignVectorWrapper.unbox(getInterop().readMember(delegate, names.getDataAt(index)));
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
@@ -370,12 +357,32 @@ public final class TruffleObjectConverter {
 
         private static final class FastPathAccess extends FastPathFromListAccess {
 
+            @Child private InteropLibrary delegateInterop;
+            @Child private InteropLibrary classDelegateInterop;
+            @Child private Foreign2R foreign2r = Foreign2R.create();
+
             FastPathAccess(RAbstractContainer value) {
                 super(value);
+                CompoundNamedListWrapper wrapper = (CompoundNamedListWrapper) value;
+                delegateInterop = InteropLibrary.getFactory().create(wrapper.delegate);
+                if (wrapper.classDelegate != null) {
+                    classDelegateInterop = InteropLibrary.getFactory().create(wrapper.classDelegate);
+                }
             }
 
-            @Child private Node read = Message.READ.createNode();
-            @Child private Foreign2R foreign2r = Foreign2R.create();
+            @Override
+            public boolean supports(Object value) {
+                if (!(value instanceof CompoundNamedListWrapper)) {
+                    return false;
+                }
+                CompoundNamedListWrapper wrapper = (CompoundNamedListWrapper) value;
+                if (wrapper.classDelegate == null) {
+                    return super.supports(value) && delegateInterop.accepts(wrapper.delegate);
+                } else {
+                    return super.supports(value) && delegateInterop.accepts(wrapper.delegate) && classDelegateInterop.accepts(wrapper.classDelegate);
+                }
+
+            }
 
             @Override
             public RType getType() {
@@ -384,7 +391,7 @@ public final class TruffleObjectConverter {
 
             @Override
             protected int getLength(RAbstractContainer vector) {
-                return ((CompoundNamedListWrapper) vector).getLength();
+                return vector.getLength();
             }
 
             @Override
@@ -392,8 +399,8 @@ public final class TruffleObjectConverter {
                 try {
                     CompoundNamedListWrapper wrapper = (CompoundNamedListWrapper) accessIter.getStore();
                     return (index < wrapper.staticNamesLen)
-                                    ? foreign2r.execute(ForeignAccess.sendRead(read, wrapper.classDelegate, wrapper.names.getDataAt(index)))
-                                    : foreign2r.execute(ForeignAccess.sendRead(read, wrapper.delegate, wrapper.names.getDataAt(index)));
+                                    ? foreign2r.convert(classDelegateInterop.readMember(wrapper.classDelegate, wrapper.names.getDataAt(index)))
+                                    : foreign2r.convert(delegateInterop.readMember(wrapper.delegate, wrapper.names.getDataAt(index)));
                 } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
@@ -404,8 +411,6 @@ public final class TruffleObjectConverter {
         public VectorAccess access() {
             return new FastPathAccess(this);
         }
-
-        private static final Foreign2R FOREIGN_TO_R = Foreign2R.create();
 
         private static final SlowPathFromListAccess SLOW_PATH_ACCESS = new SlowPathFromListAccess() {
 
@@ -424,8 +429,8 @@ public final class TruffleObjectConverter {
                 CompoundNamedListWrapper vector = (CompoundNamedListWrapper) accessIter.getStore();
                 try {
                     return (index < vector.staticNamesLen)
-                                    ? FOREIGN_TO_R.execute(ForeignAccess.sendRead(READ, vector.classDelegate, vector.names.getDataAt(index)))
-                                    : FOREIGN_TO_R.execute(ForeignAccess.sendRead(READ, vector.delegate, vector.names.getDataAt(index)));
+                                    ? RForeignVectorWrapper.unbox(getInterop().readMember(vector.classDelegate, vector.names.getDataAt(index)))
+                                    : RForeignVectorWrapper.unbox(getInterop().readMember(vector.delegate, vector.names.getDataAt(index)));
                 } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
@@ -436,6 +441,10 @@ public final class TruffleObjectConverter {
         public VectorAccess slowPathAccess() {
             return SLOW_PATH_ACCESS;
         }
+    }
+
+    private static InteropLibrary getInterop() {
+        return InteropLibrary.getFactory().getUncached();
     }
 
 }

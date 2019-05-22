@@ -29,10 +29,9 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.access.vector.AccessForeignObjectNode.ReadElementsNode;
+import com.oracle.truffle.r.nodes.access.vector.AccessForeignObjectNode.ReadPositionsNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen.ExtractSingleNameNodeGen;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
@@ -57,7 +56,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class, DSLConfig.class})
+@ImportStatic({RRuntime.class, DSLConfig.class})
 public abstract class ExtractVectorNode extends RBaseNode {
 
     protected final ElementAccessMode mode;
@@ -226,7 +225,6 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return this;
     }
 
-    @ImportStatic(Message.class)
     protected static final class GenericVectorExtractNode extends TruffleBoundaryNode {
 
         @Child private CachedExtractVectorNode cached;
@@ -255,7 +253,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
     @Specialization(guards = {"isForeignObject(object)"})
     protected Object accessFieldByVectorPositions(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
-                    @Cached("create()") ReadElementsNode readElements) {
+                    @Cached("create()") ReadPositionsNode readElements) {
         return readElements.execute(object, positions);
     }
 

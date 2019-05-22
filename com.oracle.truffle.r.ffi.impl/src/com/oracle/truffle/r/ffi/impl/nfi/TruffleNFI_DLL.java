@@ -22,12 +22,10 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.Env;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.nodes.Node;
@@ -96,19 +94,14 @@ public class TruffleNFI_DLL implements DLLRFFI {
 
     private static class TruffleNFI_DLSymNode extends Node implements DLLRFFI.DLSymNode {
 
-        @Child private Node lookupSymbol;
-
         @Override
         @TruffleBoundary
         public SymbolHandle execute(Object handle, String symbol) {
             assert handle instanceof NFIHandle;
             NFIHandle nfiHandle = (NFIHandle) handle;
-            if (lookupSymbol == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                lookupSymbol = insert(Message.READ.createNode());
-            }
+
             try {
-                TruffleObject result = (TruffleObject) ForeignAccess.sendRead(lookupSymbol, nfiHandle.libHandle, symbol);
+                TruffleObject result = (TruffleObject) InteropLibrary.getFactory().getUncached().readMember(nfiHandle.libHandle, symbol);
                 return new SymbolHandle(result);
             } catch (UnknownIdentifierException e) {
                 throw new UnsatisfiedLinkError();

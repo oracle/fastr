@@ -22,163 +22,179 @@
  */
 package com.oracle.truffle.r.runtime.interop;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Converts 'primitive' values from the outside world to internal FastR representations. For
  * conversion of more complex cases see {@link ConvertForeignObjectNode}.
  */
-@ImportStatic({RRuntime.class})
-public abstract class Foreign2R extends RBaseNode {
-
-    @Child private Foreign2R recursive;
-    @Child private Node isNull;
-    @Child private Node isBoxed;
-    @Child private Node unbox;
-
-    private final boolean preserveByte;
-
-    Foreign2R(boolean preserveByte) {
-        this.preserveByte = preserveByte;
-    }
+@GenerateUncached
+@ImportStatic({DSLConfig.class, RRuntime.class})
+public abstract class Foreign2R extends Node {
 
     public static Foreign2R create() {
-        return Foreign2RNodeGen.create(false);
+        return Foreign2RNodeGen.create();
     }
 
-    public static Foreign2R create(boolean preserveByte) {
-        return Foreign2RNodeGen.create(preserveByte);
+    public static Foreign2R getUncached() {
+        return Foreign2RNodeGen.getUncached();
     }
 
-    public abstract Object execute(Object obj);
+    public Object convert(Object obj) {
+        return execute(obj, false, true);
+    }
+
+    public Object convert(Object obj, boolean preserveByte, boolean printWarning) {
+        return execute(obj, preserveByte, printWarning);
+    }
+
+    protected abstract Object execute(Object obj, boolean preserveByte, boolean printWarning);
 
     @Specialization
-    public byte doBoolean(boolean obj) {
+    public byte doBoolean(boolean obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return RRuntime.asLogical(obj);
     }
 
-    @Specialization(guards = "!isPreserveByte()")
-    public int doByte(byte obj) {
+    @Specialization(guards = "!preserveByte")
+    public int doByte(byte obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return ((Byte) obj).intValue();
     }
 
-    @Specialization(guards = "isPreserveByte()")
-    public byte doBytePreserved(byte obj) {
+    @Specialization(guards = "preserveByte")
+    public byte doBytePreserved(byte obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return obj;
     }
 
     @Specialization
-    public int doShort(short obj) {
+    public int doShort(short obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return ((Short) obj).intValue();
     }
 
-    @Specialization
-    public double doLong(long obj) {
-        return (((Long) obj).doubleValue());
+    @Specialization(guards = "interop.fitsInDouble(l)", limit = "getInteropLibraryCacheSize()")
+    public double doLongDouble(long l, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning,
+                    @SuppressWarnings("unused") @CachedLibrary("l") InteropLibrary interop) {
+        try {
+            return interop.asDouble(l);
+        } catch (UnsupportedMessageException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Specialization(guards = {"!interop.fitsInDouble(l)", "printWarning"}, limit = "getInteropLibraryCacheSize()")
+    public double doLongPrecissionLossWarning(long l, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning,
+                    @SuppressWarnings("unused") @CachedLibrary("l") InteropLibrary interop) {
+        double d = (((Long) l).doubleValue());
+        RError.warning(RError.SHOW_CALLER, RError.Message.PRECISSION_LOSS_BY_CONVERSION, l, d);
+        return d;
+    }
+
+    @Specialization(guards = {"!interop.fitsInDouble(l)", "!printWarning"}, limit = "getInteropLibraryCacheSize()")
+    public double doLongPrecissionLoss(long l, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning,
+                    @SuppressWarnings("unused") @CachedLibrary("l") InteropLibrary interop) {
+        return (((Long) l).doubleValue());
     }
 
     @Specialization
-    public double doFloat(float obj) {
+    public double doFloat(float obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return (((Float) obj).doubleValue());
     }
 
     @Specialization
-    public String doChar(char obj) {
+    public String doChar(char obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return ((Character) obj).toString();
     }
 
     @Specialization
-    public Object doInteropNA(RInteropNA interopNA) {
+    public Object doInteropNA(RInteropNA interopNA, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return interopNA.getValue();
     }
 
     @Specialization(guards = "isNA(d)")
-    public double doDoubleNA(@SuppressWarnings("unused") double d) {
+    public double doDoubleNA(@SuppressWarnings("unused") double d, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return Double.NaN;
     }
 
     @Specialization(guards = "!isNA(d)")
-    public double doDouble(double d) {
+    public double doDouble(double d, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return d;
     }
 
     @Specialization(guards = "isNA(i)")
-    public double doIntNA(int i) {
+    public double doIntNA(int i, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return i;
     }
 
     @Specialization(guards = "!isNA(i)")
-    public int doInt(int i) {
+    public int doInt(int i, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return i;
     }
 
-    @Specialization(guards = "isNull(obj)")
-    public RNull doNull(@SuppressWarnings("unused") Object obj) {
+    @Specialization(guards = {"isForeignObject(obj)", "interop.isNull(obj)"}, limit = "getInteropLibraryCacheSize()")
+    public RNull doNull(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning,
+                    @SuppressWarnings("unused") @CachedLibrary("obj") InteropLibrary interop) {
         return RNull.instance;
     }
 
-    @Specialization(guards = "isForeignObject(obj)")
-    public Object doForeignObject(TruffleObject obj) {
-        if (isNull == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            isNull = insert(Message.IS_NULL.createNode());
-        }
-        if (ForeignAccess.sendIsNull(isNull, obj)) {
-            return RNull.instance;
-        }
-
-        /*
-         * For the time being, we have to ask "IS_BOXED" all the time (instead of simply trying
-         * UNBOX first), because some TruffleObjects return bogus values from UNBOX when IS_BOXED is
-         * false.
-         */
-        if (isBoxed == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            isBoxed = insert(Message.IS_BOXED.createNode());
-        }
-        if (ForeignAccess.sendIsBoxed(isBoxed, obj)) {
-            if (unbox == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                unbox = insert(Message.UNBOX.createNode());
+    @Specialization(guards = {"isForeignObject(obj)", "!interop.isNull(obj)"}, limit = "getInteropLibraryCacheSize()")
+    public Object doForeignObject(TruffleObject obj, boolean preserveByte, boolean printWarning,
+                    @Cached("create()") Foreign2R recursive,
+                    @CachedLibrary("obj") InteropLibrary interop) {
+        try {
+            Object unboxed = unbox(obj, interop);
+            if (unboxed != null) {
+                return recursive.execute(unboxed, preserveByte, printWarning);
             }
-            try {
-                Object unboxed = ForeignAccess.sendUnbox(unbox, obj);
-                if (recursive == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    recursive = insert(Foreign2RNodeGen.create());
-                }
-                return recursive.execute(unboxed);
-            } catch (UnsupportedMessageException e) {
-                CompilerDirectives.transferToInterpreter();
-                throw RInternalError.shouldNotReachHere(e, "object does not support UNBOX message even though IS_BOXED == true: " + obj.getClass().getSimpleName());
-            }
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere();
         }
         return obj;
     }
 
     @Fallback
-    public Object doObject(Object obj) {
+    public Object doObject(Object obj, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return obj;
+    }
+
+    public static Object unbox(Object obj, InteropLibrary interop) throws UnsupportedMessageException {
+        if (interop.isBoolean(obj)) {
+            return interop.asBoolean(obj);
+        } else if (interop.isString(obj)) {
+            return interop.asString(obj);
+        } else if (interop.isNumber(obj)) {
+            if (interop.fitsInByte(obj)) {
+                return interop.asByte(obj);
+            } else if (interop.fitsInShort(obj)) {
+                return interop.asShort(obj);
+            } else if (interop.fitsInInt(obj)) {
+                return interop.asInt(obj);
+            } else if (interop.fitsInLong(obj)) {
+                return interop.asLong(obj);
+            } else if (interop.fitsInFloat(obj)) {
+                return interop.asFloat(obj);
+            } else if (interop.fitsInDouble(obj)) {
+                return interop.asDouble(obj);
+            }
+        }
+        return null;
     }
 
     protected boolean isNull(Object o) {
         return o == null;
     }
 
-    protected boolean isPreserveByte() {
-        return preserveByte;
-    }
 }

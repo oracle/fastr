@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,33 +22,30 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 public final class RMakeExternalPtrNode extends FFIUpCallNode.Arg3 {
 
-    @Child Node asPointerNode = Message.AS_POINTER.createNode();
-    @Child Node isPointerNode = Message.IS_POINTER.createNode();
-    @Child Node toNativeNode = Message.TO_NATIVE.createNode();
+    @Child private InteropLibrary interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
+
     private final ConditionProfile isPointerProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     public Object executeObject(Object addrObj, Object tag, Object prot) {
         try {
             long addr;
-            if (isPointerProfile.profile(ForeignAccess.sendIsPointer(isPointerNode, (TruffleObject) addrObj))) {
-                addr = ForeignAccess.sendAsPointer(asPointerNode, (TruffleObject) addrObj);
+            if (isPointerProfile.profile(interop.isPointer(addrObj))) {
+                addr = interop.asPointer(addrObj);
             } else {
-                TruffleObject nativized = (TruffleObject) ForeignAccess.sendToNative(toNativeNode, (TruffleObject) addrObj);
-                assert ForeignAccess.sendIsPointer(isPointerNode, nativized);
-                addr = ForeignAccess.sendAsPointer(asPointerNode, nativized);
+                interop.toNative(addrObj);
+                assert interop.isPointer(addrObj);
+                addr = interop.asPointer(addrObj);
             }
             return RDataFactory.createExternalPtr(new SymbolHandle(addr), tag, prot);
         } catch (InteropException e) {

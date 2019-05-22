@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,20 +24,19 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import static com.oracle.truffle.r.runtime.data.NativeDataAccess.readNativeString;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 
+@ImportStatic(DSLConfig.class)
 public abstract class NativeStringCastNode extends Node {
-
-    @Child private Node isPtrNode;
 
     public static NativeStringCastNode create() {
         return NativeStringCastNodeGen.create();
@@ -51,36 +50,26 @@ public abstract class NativeStringCastNode extends Node {
         return s;
     }
 
-    protected static Node createAsPointerNode() {
-        return Message.AS_POINTER.createNode();
+    protected boolean isPointerNode(TruffleObject s, InteropLibrary interop) {
+        return interop.isPointer(s);
     }
 
-    protected static Node createToNativeNode() {
-        return Message.TO_NATIVE.createNode();
-    }
-
-    protected boolean isPointerNode(TruffleObject s) {
-        if (isPtrNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            isPtrNode = insert(Message.IS_POINTER.createNode());
-        }
-        return ForeignAccess.sendIsPointer(isPtrNode, s);
-    }
-
-    @Specialization(guards = "isPointerNode(s)")
-    String handlePointerAddress(TruffleObject s, @Cached("createAsPointerNode()") Node sAsPtrNode) {
+    @Specialization(guards = "interop.isPointer(s)", limit = "getInteropLibraryCacheSize()")
+    String handlePointerAddress(TruffleObject s,
+                    @CachedLibrary("s") InteropLibrary interop) {
         try {
-            return readNativeString(ForeignAccess.sendAsPointer(sAsPtrNode, s));
+            return readNativeString(interop.asPointer(s));
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
     }
 
-    @Specialization(guards = "!isPointerNode(s)")
-    String handleNonPointerAddress(TruffleObject s, @Cached("createToNativeNode()") Node sToNativeNode, @Cached("createAsPointerNode()") Node sAsPtrNode) {
+    @Specialization(guards = "!interop.isPointer(s)", limit = "getInteropLibraryCacheSize()")
+    String handleNonPointerAddress(TruffleObject s,
+                    @CachedLibrary("s") InteropLibrary interop) {
         try {
-            Object sNative = ForeignAccess.sendToNative(sToNativeNode, s);
-            return readNativeString(ForeignAccess.sendAsPointer(sAsPtrNode, (TruffleObject) sNative));
+            interop.toNative(s);
+            return readNativeString(interop.asPointer(s));
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere(e);
         }

@@ -24,11 +24,9 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -78,9 +76,6 @@ public class RFFILog {
             this.logNativeMirror = logNativeMirror;
         }
     }
-
-    private static Node isPointerNode;
-    private static Node asPointerNode;
 
     public static void logUpCall(String name, List<Object> args) {
         logCall(CallMode.UP, name, getContext().getCallDepth(), args.toArray());
@@ -137,9 +132,10 @@ public class RFFILog {
                 continue;
             }
             sb.append(arg.getClass().getSimpleName()).append('(').append(arg.hashCode()).append(';');
-            if (arg instanceof TruffleObject && ForeignAccess.sendIsPointer(getIsPointerNode(), (TruffleObject) arg)) {
+            InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+            if (arg instanceof TruffleObject && interop.isPointer(arg)) {
                 try {
-                    sb.append("ptr:").append(Long.toHexString(ForeignAccess.sendAsPointer(getAsPointerNode(), (TruffleObject) arg)));
+                    sb.append("ptr:").append(Long.toHexString(interop.asPointer(arg)));
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere();
                 }
@@ -190,19 +186,4 @@ public class RFFILog {
         // TODO log also ctx and thread?
         LOGGER.log(Level.FINE, message, parameters);
     }
-
-    private static Node getIsPointerNode() {
-        if (isPointerNode == null) {
-            isPointerNode = Message.IS_POINTER.createNode();
-        }
-        return isPointerNode;
-    }
-
-    private static Node getAsPointerNode() {
-        if (asPointerNode == null) {
-            asPointerNode = Message.AS_POINTER.createNode();
-        }
-        return asPointerNode;
-    }
-
 }

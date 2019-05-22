@@ -29,13 +29,11 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -47,6 +45,7 @@ import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -59,7 +58,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@ImportStatic({RRuntime.class, ConvertForeignObjectNode.class, Message.class})
+@ImportStatic({RRuntime.class, ConvertForeignObjectNode.class})
 @NodeChild(value = "range", type = RNode.class)
 public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall {
 
@@ -97,7 +96,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         return RNull.instance;
     }
 
-    @Specialization(guards = "isForeignArray(range, hasSize)")
+    @Specialization(guards = "isForeignArray(range, rangeInterop)", limit = "getInteropLibraryCacheSize()")
     protected Object iterateForeignArray(VirtualFrame frame, Object range,
                     @Cached("createIndexName()") String indexName,
                     @Cached("createRangeName()") String rangeName,
@@ -108,38 +107,42 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                     @Cached("createWriteInitialElementNode()") WriteVariableNode writeInitialElementNode,
                     @Cached("create()") RLengthNode length,
                     @Cached("createForIndexLoopNode(indexName, lengthName, rangeName)") LoopNode l,
-                    @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSize) {
+                    @CachedLibrary("range") @SuppressWarnings("unused") InteropLibrary rangeInterop) {
         return iterate(frame, range, indexName, rangeName, lengthName, writeIndexNode, writeRangeNode, writeLengthNode, writeInitialElementNode, length, l);
     }
 
-    @Specialization(guards = {"isForeignObject(range)", "!isForeignArray(range, hasSizeNode)"})
-    protected Object iterateKeys(VirtualFrame frame, Object range,
+    @Specialization(guards = {"isForeignObject(range)", "!isForeignArray(range, rangeInterop)", "rangeInterop.hasMembers(range)"}, limit = "getInteropLibraryCacheSize()")
+    protected Object iterateMembers(VirtualFrame frame, Object range,
                     @Cached("createIndexName()") @SuppressWarnings("unused") String indexName,
                     @Cached("createPositionName()") @SuppressWarnings("unused") String positionName,
                     @Cached("createRangeName()") @SuppressWarnings("unused") String rangeName,
-                    @Cached("createKeysName()") @SuppressWarnings("unused") String keysName,
+                    @Cached("createMembersName()") @SuppressWarnings("unused") String membersName,
                     @Cached("createLengthName()") @SuppressWarnings("unused") String lengthName,
                     @Cached("createWriteVariable(indexName)") WriteVariableNode writeIndexNode,
                     @Cached("createWriteVariable(rangeName)") WriteVariableNode writeRangeNode,
-                    @Cached("createWriteVariable(keysName)") WriteVariableNode writeKeysNode,
+                    @Cached("createWriteVariable(membersName)") WriteVariableNode writeMembersNode,
                     @Cached("createWriteVariable(lengthName)") WriteVariableNode writeLengthNode,
                     @Cached("createWriteInitialElementNode()") WriteVariableNode writeInitialElementNode,
-                    @Cached("createForKeysLoopNode(indexName, positionName, lengthName, rangeName, keysName)") LoopNode l,
-                    @Cached("KEYS.createNode()") Node keysNode,
-                    @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSizeNode,
-                    @Cached("GET_SIZE.createNode()") Node sizeNode) {
+                    @CachedLibrary("range") InteropLibrary rangeInterop,
+                    @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary membersInterop,
+                    @Cached("createForMembersLoopNode(indexName, positionName, lengthName, rangeName, membersName)") LoopNode l) {
         try {
-            TruffleObject keys = ForeignAccess.sendKeys(keysNode, (TruffleObject) range);
             writeIndexNode.execute(frame, 1);
             writeRangeNode.execute(frame, range);
-            writeKeysNode.execute(frame, keys);
-            writeLengthNode.execute(frame, getKeysLength(keys, sizeNode));
+            Object members = rangeInterop.getMembers(range);
+            writeMembersNode.execute(frame, members);
+            writeLengthNode.execute(frame, RRuntime.getForeignArraySize(members, membersInterop));
             writeInitialElementNode.execute(frame);
-
-            l.executeLoop(frame);
         } catch (UnsupportedMessageException ex) {
-
+            throw RInternalError.shouldNotReachHere();
         }
+        l.executeLoop(frame);
+        return RNull.instance;
+    }
+
+    @Specialization(guards = {"isForeignObject(range)", "!isForeignArray(range, rangeInterop)", "!rangeInterop.hasMembers(range)"}, limit = "getInteropLibraryCacheSize()")
+    protected Object iterateMembers(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object range,
+                    @SuppressWarnings("unused") @CachedLibrary("range") InteropLibrary rangeInterop) {
         return RNull.instance;
     }
 
@@ -163,8 +166,8 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         return AnonymousFrameVariable.create("FOR_ITERATOR");
     }
 
-    protected String createKeysName() {
-        return AnonymousFrameVariable.create("FOR_KEYS");
+    protected String createMembersName() {
+        return AnonymousFrameVariable.create("FOR_MEMBERS");
     }
 
     protected String createFrameVariable(String name) {
@@ -179,8 +182,8 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         return WriteVariableNode.createAnonymous(name, Mode.REGULAR, null);
     }
 
-    protected LoopNode createForKeysLoopNode(String indexName, String positionName, String lengthName, String rangeName, String keysName) {
-        return createLoopNode(new ForKeysRepeatingNode(this, var.getIdentifier(), RASTUtils.cloneNode(body), indexName, positionName, lengthName, rangeName, keysName));
+    protected LoopNode createForMembersLoopNode(String indexName, String positionName, String lengthName, String rangeName, String membersName) {
+        return createLoopNode(new ForMembersRepeatingNode(this, var.getIdentifier(), RASTUtils.cloneNode(body), indexName, positionName, lengthName, rangeName, membersName));
     }
 
     protected LoopNode createForIndexLoopNode(String indexName, String lengthName, String rangeName) {
@@ -189,14 +192,6 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
 
     private static LoopNode createLoopNode(AbstractRepeatingNode n) {
         return Truffle.getRuntime().createLoopNode(n);
-    }
-
-    private static int getKeysLength(TruffleObject keys, Node sizeNode) {
-        try {
-            return (int) ForeignAccess.sendGetSize(sizeNode, keys);
-        } catch (UnsupportedMessageException ex) {
-            throw RInternalError.shouldNotReachHere(ex, "has keys but could not read keys size: " + keys);
-        }
     }
 
     @Override
@@ -296,29 +291,29 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
 
     }
 
-    private static final class ForKeysRepeatingNode extends AbstractIndexRepeatingNode {
+    private static final class ForMembersRepeatingNode extends AbstractIndexRepeatingNode {
 
-        @Child private Node readForeignNode;
-        @Child private LocalReadVariableNode readKeysNode;
+        @Child private LocalReadVariableNode readMembersNode;
         @Child private WriteVariableNode writePositionNode;
+        @Child private InteropLibrary membersInterop;
 
-        ForKeysRepeatingNode(ForNode forNode, String var, RNode body, String indexName, String positionName, String lengthName, String rangeName, String keysName) {
+        ForMembersRepeatingNode(ForNode forNode, String var, RNode body, String indexName, String positionName, String lengthName, String rangeName, String membersName) {
             super(forNode, var, body, indexName, positionName, lengthName, rangeName);
 
             this.writePositionNode = WriteVariableNode.createAnonymous(positionName, Mode.REGULAR, null);
-            this.readKeysNode = LocalReadVariableNode.create(keysName, true);
-            readForeignNode = Message.READ.createNode();
+            this.readMembersNode = LocalReadVariableNode.create(membersName, true);
+            this.membersInterop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
         }
 
         @Override
         protected void writePosition(VirtualFrame frame, int index) {
             try {
-                TruffleObject keys = (TruffleObject) readKeysNode.execute(frame);
-                assert keys != null;
-                Object position = ForeignAccess.sendRead(readForeignNode, keys, index - 1);
+                Object members = readMembersNode.execute(frame);
+                assert members != null;
+                Object position = membersInterop.readArrayElement(members, index - 1);
                 writePositionNode.execute(frame, position);
-            } catch (UnknownIdentifierException | UnsupportedMessageException ex) {
-                throw RInternalError.shouldNotReachHere(ex, "could not read foreign key: " + (index - 1));
+            } catch (UnsupportedMessageException | InvalidArrayIndexException ex) {
+                throw RInternalError.shouldNotReachHere(ex, "could not read foreign member: " + (index - 1));
             }
         }
     }

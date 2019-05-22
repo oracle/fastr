@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,12 +26,11 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -43,13 +42,9 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Creates a list from a foreign array.
  * 
  */
-@ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class, RType.class})
+@ImportStatic(ConvertForeignObjectNode.class)
 abstract class ForeignArrayToListNode extends RBaseNode {
 
-    @Child protected Node hasSize = Message.HAS_SIZE.createNode();
-    @Child Node getSize = Message.GET_SIZE.createNode();
-
-    @Child protected Node read;
     @Child protected Foreign2R foreign2R;
     @Child protected ForeignArrayToListNode recurse;
 
@@ -69,12 +64,13 @@ abstract class ForeignArrayToListNode extends RBaseNode {
         return (RAbstractVector) execute(obj, recursive, RType.List);
     }
 
-    @Specialization(guards = {"isForeignArray(obj, hasSize)"})
-    @CompilerDirectives.TruffleBoundary
-    protected Object toList(TruffleObject obj, boolean recursive, RType type) {
+    @Specialization(guards = {"isForeignArray(obj, interop)"}, limit = "getInteropLibraryCacheSize()")
+    protected Object toList(TruffleObject obj, boolean recursive, RType type,
+                    @CachedLibrary("obj") InteropLibrary interop,
+                    @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary elementInterop) {
         try {
 
-            int size = (int) ForeignAccess.sendGetSize(getSize, obj);
+            int size = RRuntime.getForeignArraySize(obj, interop);
             if (size == 0) {
                 return RDataFactory.createList();
             }
@@ -82,8 +78,8 @@ abstract class ForeignArrayToListNode extends RBaseNode {
             Object[] currentElements = new Object[size];
             ForeignTypeCheck currentTypeCheck = new ForeignTypeCheck();
             for (int i = 0; i < size; i++) {
-                Object element = ForeignAccess.sendRead(getRead(), obj, i);
-                element = getForeign2R().execute(element);
+                Object element = elementInterop.readArrayElement(obj, i);
+                element = getForeign2R().convert(element);
                 currentTypeCheck.check(element);
                 if (recursive && (RRuntime.isForeignObject(element))) {
                     currentElements[i] = recurse(element, null);
@@ -92,7 +88,7 @@ abstract class ForeignArrayToListNode extends RBaseNode {
                 }
             }
             return ConvertForeignObjectNode.asAbstractVector(currentElements, type != null ? type : currentTypeCheck.getType());
-        } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+        } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
             throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
         }
     }
@@ -108,14 +104,6 @@ abstract class ForeignArrayToListNode extends RBaseNode {
     @Fallback
     public Object fallback(Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") RType type) {
         return obj;
-    }
-
-    protected Node getRead() {
-        if (read == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            read = insert(Message.READ.createNode());
-        }
-        return read;
     }
 
     protected Foreign2R getForeign2R() {

@@ -34,10 +34,9 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
@@ -261,6 +260,7 @@ public class IsTypeFunctions {
         }
     }
 
+    @ImportStatic(RRuntime.class)
     @RBuiltin(name = "is.function", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsFunction extends RBuiltinNode.Arg1 {
 
@@ -269,12 +269,18 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isType(@SuppressWarnings("unused") RFunction value) {
+        protected byte isFunction(@SuppressWarnings("unused") RFunction value) {
+            return RRuntime.LOGICAL_TRUE;
+        }
+
+        @Specialization(guards = {"isForeignObject(value)", "interop.isExecutable(value)"}, limit = "getInteropLibraryCacheSize()")
+        protected byte isFunction(@SuppressWarnings("unused") TruffleObject value,
+                        @SuppressWarnings("unused") @CachedLibrary("value") InteropLibrary interop) {
             return RRuntime.LOGICAL_TRUE;
         }
 
         @Fallback
-        protected byte isType(@SuppressWarnings("unused") Object value) {
+        protected byte isFunction(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
@@ -452,7 +458,7 @@ public class IsTypeFunctions {
         }
     }
 
-    @ImportStatic({RRuntime.class, Message.class})
+    @ImportStatic({RRuntime.class})
     @RBuiltin(name = "is.null", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsNull extends RBuiltinNode.Arg1 {
 
@@ -465,10 +471,10 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = "isForeignObject(value)")
+        @Specialization(guards = "isForeignObject(value)", limit = "getInteropLibraryCacheSize()")
         protected byte isType(Object value,
-                        @Cached("IS_NULL.createNode()") Node isNull) {
-            return RRuntime.asLogical(ForeignAccess.sendIsNull(isNull, (TruffleObject) value));
+                        @CachedLibrary("value") InteropLibrary interop) {
+            return RRuntime.asLogical(interop.isNull(value));
         }
 
         @Fallback

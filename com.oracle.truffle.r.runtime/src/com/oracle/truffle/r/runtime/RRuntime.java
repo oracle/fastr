@@ -22,6 +22,7 @@ package com.oracle.truffle.r.runtime;
 import java.math.BigInteger;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -29,7 +30,9 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
@@ -1043,6 +1046,21 @@ public class RRuntime {
 
     public static boolean isForeignObject(Object obj) {
         return obj instanceof TruffleObject && !(obj instanceof RTypedValue);
+    }
+
+    public static int getForeignArraySize(Object object, InteropLibrary interop) {
+        assert interop.hasArrayElements(object);
+        long size;
+        try {
+            size = interop.getArraySize(object);
+        } catch (UnsupportedMessageException ex) {
+            throw RInternalError.shouldNotReachHere();
+        }
+        if (size <= Integer.MAX_VALUE) {
+            return (int) size;
+        }
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "the foreign array " + object + " size " + size + " does not fit into a java integer");
     }
 
     /**

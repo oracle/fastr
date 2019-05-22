@@ -44,12 +44,12 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -650,7 +650,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         public Object execute(VirtualFrame frame, TruffleObject function) {
-            return getForeign2RNode().execute(sendExecuteMessage.execute(function, evaluateArgs(frame)));
+            return getForeign2RNode().convert(sendExecuteMessage.execute(function, evaluateArgs(frame)));
         }
     }
 
@@ -662,7 +662,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         public Object execute(VirtualFrame frame, DeferredFunctionValue function) {
-            return getForeign2RNode().execute(sendInvokeMessage.execute(function, evaluateArgs(frame)));
+            return getForeign2RNode().convert(sendInvokeMessage.execute(function, evaluateArgs(frame)));
         }
     }
 
@@ -689,16 +689,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         public abstract Object execute(TruffleObject function, Object[] args);
 
-        protected static Node createMessageNode() {
-            return Message.EXECUTE.createNode();
-        }
-
         @Specialization(guards = "argumentsArray.length == foreignCallArgCount", limit = "getCacheSize(8)")
         protected Object doCached(TruffleObject function, Object[] argumentsArray,
-                        @Cached("createMessageNode()") Node messageNode,
+                        @CachedLibrary("function") InteropLibrary interop,
                         @Cached("argumentsArray.length") @SuppressWarnings("unused") int foreignCallArgCount) {
             try {
-                return ForeignAccess.sendExecute(messageNode, function, args2Foreign(argumentsArray));
+                return interop.execute(function, args2Foreign(argumentsArray));
             } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException e) {
                 CompilerDirectives.transferToInterpreter();
                 RInternalError.reportError(e);
@@ -711,7 +707,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Specialization(replaces = "doCached")
         @TruffleBoundary
         protected Object doGeneric(TruffleObject function, Object[] argumentsArray) {
-            return doCached(function, argumentsArray, createMessageNode(), argumentsArray.length);
+            return doCached(function, argumentsArray, InteropLibrary.getFactory().getUncached(), argumentsArray.length);
         }
     }
 
@@ -722,18 +718,14 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         public abstract Object execute(DeferredFunctionValue function, Object[] args);
 
-        protected static Node createMessageNode() {
-            return Message.INVOKE.createNode();
-        }
-
         @Specialization(guards = "argumentsArray.length == foreignCallArgCount", limit = "getCacheSize(8)")
         protected Object doCached(DeferredFunctionValue lhs, Object[] argumentsArray,
-                        @Cached("createMessageNode()") Node messageNode,
+                        @CachedLibrary("lhs.getLHSReceiver()") InteropLibrary interop,
                         @Cached("argumentsArray.length") @SuppressWarnings("unused") int foreignCallArgCount) {
             TruffleObject receiver = lhs.getLHSReceiver();
             String member = lhs.getLHSMember();
             try {
-                return ForeignAccess.sendInvoke(messageNode, receiver, member, args2Foreign(argumentsArray));
+                return interop.invokeMember(receiver, member, args2Foreign(argumentsArray));
             } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException | UnknownIdentifierException e) {
                 CompilerDirectives.transferToInterpreter();
                 RInternalError.reportError(e);
@@ -744,7 +736,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Specialization(replaces = "doCached")
         @TruffleBoundary
         protected Object doGeneric(DeferredFunctionValue lhs, Object[] argumentsArray) {
-            return doCached(lhs, argumentsArray, createMessageNode(), argumentsArray.length);
+            return doCached(lhs, argumentsArray, InteropLibrary.getFactory().getUncached(), argumentsArray.length);
         }
     }
 

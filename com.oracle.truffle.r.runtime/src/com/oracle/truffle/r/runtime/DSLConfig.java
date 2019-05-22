@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.interop.InteropLibrary;
 
 /**
  * Class that should eventually contain all DSL (and AST rewriting) related constants.
@@ -67,6 +68,15 @@ public final class DSLConfig {
      */
     public static int getCacheSize(int suggestedSize) {
         return (int) (suggestedSize * cacheSizeFactor);
+    }
+
+    /**
+     * This method should be used to set any {@link InteropLibrary} cache size that can be
+     * configured, i.e. it does not matter how large the cache is and it can even be zero. If used,
+     * make sure that there is more generic specialization available.
+     */
+    public static int getInteropLibraryCacheSize() {
+        return getCacheSize(3);
     }
 
     /**
