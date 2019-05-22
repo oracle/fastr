@@ -35,6 +35,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
@@ -66,6 +67,7 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -219,14 +221,15 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
         }
 
         @Specialization(guards = {"o.isLanguage()", "o.getAttributes() != null"})
-        protected RPairList drop(@SuppressWarnings("unused") Object original, RPairList o) {
+        protected RPairList drop(@SuppressWarnings("unused") Object original, RPairList o,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             switch (targetType) {
                 case Any:
                 case PairList:
                 case List:
                     return o;
             }
-            return RDataFactory.createLanguage(o.getClosure());
+            return RDataFactory.createLanguage(plLib.getClosure(o));
         }
 
         @Specialization(guards = "o.getAttributes() != null")

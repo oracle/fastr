@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CARNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCARNodeGen;
@@ -35,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 
@@ -47,8 +49,9 @@ public final class ListAccessNodes {
     @TypeSystemReference(RTypes.class)
     public abstract static class CARNode extends FFIUpCallNode.Arg1 {
         @Specialization
-        protected Object car(RPairList pl) {
-            return pl.car();
+        protected Object car(RPairList pl,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+            return plLib.car(pl);
         }
 
         @Specialization
@@ -88,14 +91,16 @@ public final class ListAccessNodes {
     @TypeSystemReference(RTypes.class)
     public abstract static class CDRNode extends FFIUpCallNode.Arg1 {
         @Specialization
-        protected Object cdr(RPairList pl) {
-            return pl.cdr();
+        protected Object cdr(RPairList pl,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+            return plLib.cdr(pl);
         }
 
         @Specialization
-        protected Object cdr(RArgsValuesAndNames args) {
+        protected Object cdr(RArgsValuesAndNames args,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             // TODO: this is too late - "..." should be converted to pairlist earlier
-            return ((RPairList) args.toPairlist()).cdr();
+            return plLib.cdr(args.toPairlist());
         }
 
         @Specialization

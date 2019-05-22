@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -42,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -61,13 +63,14 @@ public abstract class RForceAndCallNode extends RBaseNode {
 
     @Specialization
     Object forceAndCall(Object e, RFunction fun, int n, REnvironment env,
-                    @Cached("createClassProfile()") ValueProfile accessProfile) {
-        Object el = ((RPairList) e).cdr();
+                    @Cached("createClassProfile()") ValueProfile accessProfile,
+                    @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+        Object el = plLib.cdr(e);
         List<Object> argValues = new LinkedList<>();
         RArgsValuesAndNames dotArgs = null;
         while (el != RNull.instance) {
             assert el instanceof RPairList;
-            Object arg = ((RPairList) el).car();
+            Object arg = plLib.car(el);
             Object argVal = arg;
             if (arg instanceof RSymbol) {
                 Object a = ReadVariableNode.lookupAny(((RSymbol) arg).getName(), env.getFrame(accessProfile), false);
@@ -79,11 +82,11 @@ public abstract class RForceAndCallNode extends RBaseNode {
 
             } else if (arg instanceof RPairList) {
                 RPairList argPL = (RPairList) arg;
-                argPL = RDataFactory.createPairList(argPL.car(), argPL.cdr(), argPL.getTag(), SEXPTYPE.LANGSXP);
-                argVal = RDataFactory.createPromise(PromiseState.Supplied, argPL.getClosure(), env.getFrame());
+                argPL = RDataFactory.createPairList(plLib.car(argPL), plLib.cdr(argPL), plLib.getTag(argPL), SEXPTYPE.LANGSXP);
+                argVal = RDataFactory.createPromise(PromiseState.Supplied, plLib.getClosure(argPL), env.getFrame());
             }
             argValues.add(argVal);
-            el = ((RPairList) el).cdr();
+            el = plLib.cdr(el);
         }
 
         final RArgsValuesAndNames argsAndNames;

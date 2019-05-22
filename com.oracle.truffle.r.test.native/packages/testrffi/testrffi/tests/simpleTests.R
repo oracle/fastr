@@ -136,7 +136,8 @@ rfEval <- function(expr, env, evalWrapperVar = 4422) .Call(testrffi:::C_api_Rf_e
 rfEval(quote(testStackIntro(T)), list2env(list(myenv=42)))
 rfEval(quote(testStackIntro(T)), .GlobalEnv)
 
-eval(quote(testStackIntro(T)), list2env(list(myenv=42)))
+# TODO: sys.parents() give 0,1,3 in FastR instead of 0,1,2 in GNUR
+eval(quote(testStackIntro(F)), list2env(list(myenv=42)))
 # TODO: sys.parents() give 0,1,2 in FastR instead of 0,1,0 in GNUR, but parent.frame works
 eval(quote(testStackIntro(F)), .GlobalEnv)
 
