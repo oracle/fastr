@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public abstract class DevSet extends RExternalBuiltinNode.Arg1 {
@@ -45,7 +46,11 @@ public abstract class DevSet extends RExternalBuiltinNode.Arg1 {
     public int doInteger(int deviceIdx) {
         RContext rCtx = RContext.getInstance();
         RGridGraphicsAdapter.fixupDevicesVariable(rCtx);
-        GridContext.getContext(rCtx).setCurrentDevice(deviceIdx - 1);
+        GridContext gridCtx = GridContext.getContext(rCtx);
+        if (deviceIdx <= 0 || deviceIdx > gridCtx.getDevicesSize()) {
+            throw error(Message.GENERIC, "dev.set with number of non-existing device is not supported in FastR.");
+        }
+        gridCtx.setCurrentDevice(deviceIdx - 1);
         return deviceIdx;
     }
 

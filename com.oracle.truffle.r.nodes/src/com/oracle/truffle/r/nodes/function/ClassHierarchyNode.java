@@ -55,6 +55,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RWeakRef;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -191,6 +192,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     @Specialization
     protected RStringVector getClassHrAttributable(RAttributable arg,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                    @Cached("createClassProfile()") ValueProfile valueClassProfile,
                     @Cached("createClassProfile()") ValueProfile argProfile) {
 
         DynamicObject attributes;
@@ -208,8 +210,9 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 access = insert(GetFixedPropertyNode.createClass());
             }
-            RStringVector classHierarchy = (RStringVector) access.execute(attributes);
-            if (nullAttributeProfile.profile(classHierarchy != null)) {
+            Object classHierarchyObj = access.execute(attributes);
+            if (nullAttributeProfile.profile(classHierarchyObj instanceof RAbstractStringVector)) {
+                RAbstractStringVector classHierarchy = valueClassProfile.profile((RAbstractStringVector) classHierarchyObj);
                 if (withS4 && argProfile.profile(arg).isS4() && isS4Profile.profile(classHierarchy.getLength() > 0)) {
                     if (s4Class == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -217,7 +220,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                     }
                     return s4Class.executeRStringVector(classHierarchy.getDataAt(0));
                 }
-                return classHierarchy;
+                return classHierarchy.materialize();
             }
         }
         if (withImplicitTypes) {
@@ -265,8 +268,9 @@ abstract class S4Class extends RBaseNode {
             RFunction sExtendsForS3Function = ReadVariableNode.lookupFunction(".extendsForS3", methodsEnv.getFrame());
             // the assumption here is that the R function can only return either a String or
             // RStringVector
-            s4Extends = (RStringVector) castToVector.doCast(
+            RAbstractStringVector s4ExtendsAbstract = (RAbstractStringVector) castToVector.doCast(
                             RContext.getEngine().evalFunction(sExtendsForS3Function, methodsEnv.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), true, null, classAttr));
+            s4Extends = s4ExtendsAbstract.materialize();
             RContext.getInstance().putS4Extends(classAttr, s4Extends);
         }
         return s4Extends;
