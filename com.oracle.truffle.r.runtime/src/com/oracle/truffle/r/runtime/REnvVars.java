@@ -251,12 +251,18 @@ public final class REnvVars implements RContext.ContextState {
             if (home == null) {
                 TruffleFile rHomePath = getRHomePath(ctx);
                 if (rHomePath == null) {
-                    throw RInternalError.shouldNotReachHere("Cannot find R home directory");
+                    // Create RError directly to avoid R error reporting, which may not be
+                    // initialized yet
+                    throw new RError("Cannot determine the R home. " +
+                                    "Please export environment variable R_HOME with path to the FastR home directory. " +
+                                    "FastR home is usually located in {GraalVM}/jre/languages/R.", RError.NO_CALLER);
                 }
                 home = rHomePath.toString();
+            } else if (!validateRHome(ctx.getEnv().getTruffleFile(home), markerFile())) {
+                throw new RError("The FastR home directory given in an environment variable R_HOME appears to be not valid FastR home directory. " +
+                                "FastR home is usually located in {GraalVM}/jre/languages/R.", RError.NO_CALLER);
             }
             rHome.set(home);
-            assert validateRHome(ctx.getEnv().getTruffleFile(home), markerFile());
         }
         return rHome.get();
     }
@@ -269,7 +275,11 @@ public final class REnvVars implements RContext.ContextState {
      * @return either a valid {@code R_HOME} or {@code null}
      */
     private static TruffleFile getRHomePath(RContext ctx) {
-        TruffleFile rHomePath = ctx.getEnv().getTruffleFile(ctx.getLanguage().getRHome());
+        String truffleRHome = ctx.getLanguage().getRHome();
+        if (truffleRHome == null) {
+            return null;
+        }
+        TruffleFile rHomePath = ctx.getEnv().getTruffleFile(truffleRHome);
         String markerFile = markerFile();
         while (rHomePath != null) {
             if (validateRHome(rHomePath, markerFile)) {
