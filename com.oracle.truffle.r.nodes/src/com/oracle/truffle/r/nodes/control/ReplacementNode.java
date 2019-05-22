@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory.FullCallNeededException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -212,6 +213,7 @@ abstract class ReplacementNode extends OperatorNode {
 
         @Override
         public final Object execute(VirtualFrame frame) {
+            RArguments.getCall(frame).checkEagerPromiseOnly();
             storeRhs.execute(frame);
             executeReplacement(frame);
             try {
@@ -227,6 +229,7 @@ abstract class ReplacementNode extends OperatorNode {
 
         @Override
         public final void voidExecute(VirtualFrame frame) {
+            RArguments.getCall(frame).checkEagerPromiseOnly();
             storeRhs.execute(frame);
             executeReplacement(frame);
             removeRhs.execute(frame);

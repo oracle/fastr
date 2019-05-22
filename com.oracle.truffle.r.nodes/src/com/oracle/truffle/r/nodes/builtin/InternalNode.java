@@ -41,11 +41,13 @@ import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -201,6 +203,7 @@ public abstract class InternalNode extends OperatorNode {
 
         protected final RBuiltinFactory factory;
         protected final int varArgIndex;
+        private final boolean pure;
 
         @Children protected final RNode[] arguments;
         @Child private RBuiltinNode builtin;
@@ -216,6 +219,9 @@ public abstract class InternalNode extends OperatorNode {
                 arguments[i] = ((RSyntaxNode) args[i]).asRNode();
             }
             this.varArgIndex = factory.getSignature().getVarArgIndex();
+
+            RBehavior behavior = factory.getBehavior();
+            pure = behavior != null ? behavior.isPure() : false;
         }
 
         @Override
@@ -227,6 +233,8 @@ public abstract class InternalNode extends OperatorNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
+            checkEagerPromiseOnly(frame);
+
             Object[] args = prepareArgs(frame);
             Object result = doInternalDispatch(frame, args);
             if (result == null) {
@@ -236,6 +244,12 @@ public abstract class InternalNode extends OperatorNode {
                 visibility.execute(frame, factory.getVisibility());
             }
             return result;
+        }
+
+        private void checkEagerPromiseOnly(VirtualFrame frame) {
+            if (!pure) {
+                RArguments.getCall(frame).checkEagerPromiseOnly();
+            }
         }
 
         private Object doInternalDispatch(VirtualFrame frame, Object[] args) {
@@ -251,6 +265,8 @@ public abstract class InternalNode extends OperatorNode {
 
         @Override
         public void voidExecute(VirtualFrame frame) {
+            checkEagerPromiseOnly(frame);
+
             builtin.call(frame, prepareArgs(frame));
         }
     }
