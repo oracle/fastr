@@ -92,6 +92,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -1008,6 +1009,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         private final FormalArguments formals;
         private final RBuiltinDescriptor builtinDescriptor;
         private final boolean explicitArgs;
+        private final boolean pure;
 
         public BuiltinCallNode(RBuiltinNode builtin, RBuiltinDescriptor builtinDescriptor, FormalArguments formalArguments, RCallNode originalCall, boolean explicitArgs) {
             super(originalCall);
@@ -1020,6 +1022,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             varArgSeen = new boolean[formals.getLength()];
             nonWrapSeen = new boolean[formals.getLength()];
             wrapSeen = new boolean[formals.getLength()];
+
+            RBehavior behavior = builtinDescriptor.getBehavior();
+            pure = behavior != null ? behavior.isPure() : false;
         }
 
         @Override
@@ -1137,6 +1142,10 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
+            if (!pure) {
+                RArguments.getCall(frame).checkEagerPromiseOnly();
+            }
+
             Object result = builtin.call(frame, forceArgPromises(frame, orderedArguments.getArguments()));
             assert result != null : "builtins cannot return 'null': " + builtinDescriptor.getName();
             assert !(result instanceof RConnection) : "builtins cannot return connection': " + builtinDescriptor.getName();

@@ -25,10 +25,12 @@ package com.oracle.truffle.r.runtime;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -165,6 +167,7 @@ public final class RCaller {
         this.depth = depth;
         this.previous = previous;
         this.payload = payload;
+        this.evaluateOnlyEagerPromises = previous != null ? previous.evaluateOnlyEagerPromises : false;
     }
 
     private static int depthFromFrame(Frame callingFrame) {
@@ -469,6 +472,13 @@ public final class RCaller {
 
     public void setEvaluateOnlyEagerPromises(boolean evaluateOnlyEagerPromises) {
         this.evaluateOnlyEagerPromises = evaluateOnlyEagerPromises;
+    }
+
+    public void checkEagerPromiseOnly() {
+        if (evaluateOnlyEagerPromises()) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            throw new CannotOptimizePromise();
+        }
     }
 
     /**

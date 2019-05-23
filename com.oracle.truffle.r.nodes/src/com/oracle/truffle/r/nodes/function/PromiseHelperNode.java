@@ -42,6 +42,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNodeFactory.GenerateValueForEagerPromiseNodeGen;
 import com.oracle.truffle.r.nodes.function.call.CallerFrameClosureProvider;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
@@ -57,9 +58,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNodeFactory.GenerateValueForEagerPromiseNodeGen;
 
 /**
  * Holds {@link RPromise}-related functionality that cannot be implemented in
@@ -161,14 +160,6 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
     @Child private GenerateValueForEagerPromiseNode generateValueNonDefaultOptimizedNode;
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
 
-    private static void checkFullPromise(Frame frame) {
-        if (frame != null) {
-            if (RArguments.getCall(frame).evaluateOnlyEagerPromises()) {
-                throw new CannotOptimizePromise();
-            }
-        }
-    }
-
     /**
      * Main entry point for proper evaluation of the given Promise when visibility updating is not
      * required; including {@link RPromise#isEvaluated()}, dependency cycles. Guarded by
@@ -224,8 +215,6 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
     }
 
     private Object generateValueFromFullPromise(VirtualFrame frame, RPromise promise, boolean visibleExec) {
-        checkFullPromise(frame);
-
         // Check for dependency cycle
         if (isUnderEvaluation(promise)) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
@@ -297,14 +286,11 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
             if (result != null) {
                 return result;
             } else {
-                checkFullPromise(frame);
                 // Fallback: eager evaluation failed, now take the slow path
                 CompilerDirectives.transferToInterpreter();
                 promise.notifyFailure();
                 promise.materialize();
             }
-        } else {
-            checkFullPromise(frame);
         }
 
         // Call
@@ -359,8 +345,6 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
     }
 
     private static Object generateValueFromFullPromiseSlowPath(VirtualFrame frame, RPromise promise, boolean visibleExec) {
-        checkFullPromise(frame);
-
         // Check for dependency cycle
         if (promise.isUnderEvaluation()) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
@@ -407,14 +391,11 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
                     return o;
                 }
             } else {
-                checkFullPromise(frame);
                 promise.notifyFailure();
 
                 // Fallback: eager evaluation failed, now take the slow path
                 promise.materialize();
             }
-        } else {
-            checkFullPromise(frame);
         }
         // Call
         return generateValueFromFullPromiseSlowPath(frame, promise, visibleExec);

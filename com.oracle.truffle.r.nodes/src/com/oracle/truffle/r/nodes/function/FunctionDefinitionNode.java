@@ -72,6 +72,7 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
@@ -318,7 +319,12 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                  */
                 runOnExitHandlers = false;
                 throw e;
+            } else if (e instanceof CannotOptimizePromise) {
+                assert RArguments.getCall(frame).evaluateOnlyEagerPromises();
+                runOnExitHandlers = false;
+                throw e;
             } else if (e instanceof FastRInteropTryException) {
+                assert !RArguments.getCall(frame).evaluateOnlyEagerPromises();
                 throw e;
             } else if (e instanceof TruffleException && !((TruffleException) e).isInternalError()) {
                 throw e;

@@ -116,7 +116,7 @@ public abstract class PromiseNode extends RNode {
         if (arg instanceof WrapArgumentNode) {
             wrapIndex = ((WrapArgumentNode) arg).getIndex();
         }
-        if (forcedEager && EvaluatedArgumentsVisitor.isSimpleArgument(expr.asRSyntaxNode())) {
+        if (forcedEager) {
             return new OptForcedEagerPromiseNode(factory, wrapIndex, allArgPromisesCanOptimize);
         } else {
             Object optimizableConstant = getOptimizableConstant(expr);

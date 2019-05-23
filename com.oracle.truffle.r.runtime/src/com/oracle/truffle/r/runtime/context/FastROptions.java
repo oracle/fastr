@@ -102,7 +102,7 @@ public class FastROptions {
     @Option(category = OptionCategory.INTERNAL, help = "Factor by which are multiplied all DSL 'limit' values where applicable.") //
     public static final OptionKey<Double> DSLCacheSizeFactor = new OptionKey<>(1.0);
     @Option(category = OptionCategory.EXPERT, help = "Aproximate block size limit given in AST nodes. Bigger blocks will be split into smaller units.") //
-    public static final OptionKey<Integer> BlockSizeLimit = new OptionKey<>(50);
+    public static final OptionKey<Integer> BlockSizeLimit = new OptionKey<>(400);
     @Option(category = OptionCategory.EXPERT, help = "Skip block size evaluation if amount of direct children nodes is <= than the given value.") //
     public static final OptionKey<Integer> BlockSequenceSizeLimit = new OptionKey<>(5);
 
@@ -116,8 +116,8 @@ public class FastROptions {
     @Option(category = OptionCategory.EXPERT, help = "Restrict force splitting of call targets") //
     public static final OptionKey<Boolean> RestrictForceSplitting = new OptionKey<>(true);
 
-    // Dicontinued since rc12
-    // only a warning is printed to use the default logger mechaninsm
+    // Discontinued since rc12
+    // only a warning is printed to use the default logger mechanism
     // TODO remove at some later point
     @Option(category = OptionCategory.EXPERT, help = "Print FastR performance warning") //
     public static final OptionKey<Boolean> PerformanceWarnings = new OptionKey<>(false);
