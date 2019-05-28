@@ -24,7 +24,6 @@ package com.oracle.truffle.r.test.engine.interop;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -34,7 +33,6 @@ import java.util.concurrent.Callable;
 
 import org.graalvm.polyglot.Context;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,17 +40,24 @@ import org.junit.Test;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import java.util.function.Function;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 public abstract class AbstractMRTest {
+
+    // XXX check if exceptions are raised properly
+    // XXX test all keyinfos whereever they are tested
 
     protected static Context context;
 
@@ -93,6 +98,10 @@ public abstract class AbstractMRTest {
      */
     protected abstract TruffleObject createEmptyTruffleObject() throws Exception;
 
+    protected boolean shouldTestKeys(@SuppressWarnings("unused") TruffleObject obj) {
+        return true;
+    }
+
     /**
      *
      * @param obj
@@ -102,11 +111,19 @@ public abstract class AbstractMRTest {
         throw new UnsupportedOperationException("override if HAS_KEYS returns true");
     }
 
+    protected Object[] getExecuteArguments(@SuppressWarnings("unused") TruffleObject obj) {
+        return new Object[]{};
+    }
+
+    protected Object getExecuteExpected(@SuppressWarnings("unused") TruffleObject obj) {
+        return null;
+    }
+
     protected boolean isNull(@SuppressWarnings("unused") TruffleObject obj) {
         return false;
     }
 
-    protected boolean testToNative(@SuppressWarnings("unused") TruffleObject obj) {
+    protected boolean shouldTestToNative(@SuppressWarnings("unused") TruffleObject obj) {
         return true;
     }
 
@@ -114,8 +131,24 @@ public abstract class AbstractMRTest {
         return false;
     }
 
+    protected Class<? extends InteropException> readException(@SuppressWarnings("unused") TruffleObject obj, @SuppressWarnings("unused") int index) {
+        return UnsupportedMessageException.class;
+    }
+
+    protected Class<? extends InteropException> readException(@SuppressWarnings("unused") TruffleObject obj, @SuppressWarnings("unused") String member) {
+        return UnsupportedMessageException.class;
+    }
+
     protected boolean canWrite(@SuppressWarnings("unused") TruffleObject obj) {
         return false;
+    }
+
+    protected Class<? extends InteropException> writeException(@SuppressWarnings("unused") TruffleObject obj, @SuppressWarnings("unused") int index) {
+        return UnsupportedMessageException.class;
+    }
+
+    protected Class<? extends InteropException> writeException(@SuppressWarnings("unused") TruffleObject obj, @SuppressWarnings("unused") String member) {
+        return UnsupportedMessageException.class;
     }
 
     protected int getSize(@SuppressWarnings("unused") TruffleObject obj) {
@@ -123,7 +156,7 @@ public abstract class AbstractMRTest {
     }
 
     protected Object getUnboxed(@SuppressWarnings("unused") TruffleObject obj) {
-        throw new UnsupportedOperationException("override if IS_BOXED returns true");
+        return null;
     }
 
     @Test
@@ -138,12 +171,22 @@ public abstract class AbstractMRTest {
         for (TruffleObject obj : createTruffleObjects()) {
             try {
                 // TODO if the need appears, also provide for args for execute
-                ForeignAccess.sendExecute(Message.EXECUTE.createNode(), obj);
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_EXECUTABLE", true, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
+                Object expected = getExecuteExpected(obj);
+                if (expected == null) {
+                    ForeignAccess.sendExecute(Message.EXECUTE.createNode(), obj, getExecuteArguments(obj));
+                } else {
+                    Object result = ForeignAccess.sendExecute(Message.EXECUTE.createNode(), obj, getExecuteArguments(obj));
+                    if (result instanceof RAbstractVector) {
+                        assertSingletonVector(expected, result);
+                    } else {
+                        assertEquals(expected, result);
+                    }
+                }
+                assertEquals(toString(obj) + " " + obj + " IS_EXECUTABLE", true, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
             } catch (UnsupportedTypeException | ArityException e) {
                 throw e;
             } catch (UnsupportedMessageException e) {
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_EXECUTABLE", false, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
+                assertEquals(toString(obj) + " " + obj + " IS_EXECUTABLE", false, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
             }
         }
     }
@@ -154,23 +197,11 @@ public abstract class AbstractMRTest {
             try {
                 // TODO if the need appears, also provide for args for new
                 ForeignAccess.sendNew(Message.NEW.createNode(), obj);
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_INSTANTIABLE", true, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
+                assertEquals(toString(obj) + " IS_INSTANTIABLE", true, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
             } catch (UnsupportedTypeException | ArityException e) {
                 throw e;
             } catch (UnsupportedMessageException e) {
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_INSTANTIABLE", false, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
-            }
-        }
-    }
-
-    @Test
-    public void testAsNativePointer() throws Exception {
-        for (TruffleObject obj : createTruffleObjects()) {
-            try {
-                assertNotNull(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj));
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", true, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
-            } catch (UnsupportedMessageException e) {
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", false, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
+                assertEquals(toString(obj) + " IS_INSTANTIABLE", false, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
             }
         }
     }
@@ -178,14 +209,25 @@ public abstract class AbstractMRTest {
     @Test
     public void testNativePointer() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
-            if (!testToNative(obj)) {
+            if (!shouldTestToNative(obj)) {
                 continue;
             }
             try {
-                assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
+                ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj);
+                assertTrue(toString(obj), ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
             } catch (UnsupportedMessageException e) {
+                // XXX if not supported, this should throw UnsupportedMessageException, but isnt
+                // always the case
             }
         }
+    }
+
+    private static String toString(TruffleObject obj) {
+        TruffleObject o = obj;
+        if (o instanceof RForeignObjectWrapper) {
+            o = ((RForeignObjectWrapper) o).getDelegate();
+        }
+        return o.getClass().getSimpleName() + " " + obj;
     }
 
     @Test
@@ -203,31 +245,85 @@ public abstract class AbstractMRTest {
         try {
             Object size = ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), obj);
             assertEquals(getSize(obj), size);
-            assertEquals(obj.getClass().getSimpleName() + " " + obj + " HAS_SIZE", true, ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj));
+            assertEquals(toString(obj) + " HAS_SIZE", true, ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj));
         } catch (UnsupportedMessageException e) {
-            assertEquals(obj.getClass().getSimpleName() + " " + obj + " HAS_SIZE", false, ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj));
+            assertEquals(toString(obj) + " HAS_SIZE", false, ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj));
         }
     }
 
     @Test
     public void testBoxed() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
-            testUnboxed(obj);
+            testBoxed(obj);
+            testBoxedLegacy(obj);
         }
         TruffleObject empty = createEmptyTruffleObject();
         if (empty != null) {
-            testUnboxed(empty);
+            testBoxed(empty);
+            testBoxedLegacy(empty);
         }
     }
 
-    private void testUnboxed(TruffleObject obj) {
+    private void testBoxed(TruffleObject obj) throws UnsupportedMessageException {
+        InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+        Object expectedUnboxed = getUnboxed(obj);
+        if (expectedUnboxed != null) {
+            assertEquals(toString(obj), interop.isBoolean(expectedUnboxed), interop.isBoolean(obj));
+            assertEquals(toString(obj), interop.isString(expectedUnboxed), interop.isString(obj));
+            assertEquals(toString(obj), interop.isNumber(expectedUnboxed), interop.isNumber(obj));
+
+            checkFitsInAs(obj, expectedUnboxed, (o) -> interop.fitsInByte(o), (o) -> interop.asByte(o));
+            checkFitsInAs(obj, expectedUnboxed, (o) -> interop.fitsInShort(o), (o) -> interop.asShort(o));
+            checkFitsInAs(obj, expectedUnboxed, (o) -> interop.fitsInInt(o), (o) -> interop.asInt(o));
+            checkFitsInAs(obj, expectedUnboxed, (o) -> interop.fitsInLong(o), (o) -> interop.asLong(o));
+            checkFitsInAs(obj, expectedUnboxed, (o) -> interop.fitsInFloat(o), (o) -> interop.asFloat(o));
+            checkFitsInAs(obj, expectedUnboxed, (o) -> interop.fitsInDouble(o), (o) -> interop.asDouble(o));
+        } else {
+            assertFalse(toString(obj), interop.isBoolean(obj));
+            assertFalse(toString(obj), interop.isString(obj));
+            assertFalse(toString(obj), interop.isNumber(obj));
+
+            checkFitsInAs(obj, (o) -> interop.fitsInByte(o), (o) -> interop.asByte(o));
+            checkFitsInAs(obj, (o) -> interop.fitsInShort(o), (o) -> interop.asShort(o));
+            checkFitsInAs(obj, (o) -> interop.fitsInInt(o), (o) -> interop.asInt(o));
+            checkFitsInAs(obj, (o) -> interop.fitsInLong(o), (o) -> interop.asLong(o));
+            checkFitsInAs(obj, (o) -> interop.fitsInFloat(o), (o) -> interop.asFloat(o));
+            checkFitsInAs(obj, (o) -> interop.fitsInDouble(o), (o) -> interop.asDouble(o));
+        }
+    }
+
+    private void testBoxedLegacy(TruffleObject obj) {
         try {
             Object unboxed = ForeignAccess.sendUnbox(Message.UNBOX.createNode(), obj);
-            assertEquals(getUnboxed(obj), unboxed);
-            assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_BOXED", true, ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
+            Object expectedUnboxed = getUnboxed(obj);
+            if (expectedUnboxed instanceof Number) {
+                assertTrue(((Number) expectedUnboxed).doubleValue() == ((Number) unboxed).doubleValue());
+            } else {
+                assertEquals(expectedUnboxed, unboxed);
+            }
+            assertTrue(toString(obj) + " IS_BOXED returns false but UNBOX returns " + unboxed, ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
         } catch (UnsupportedMessageException e) {
-            assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_BOXED", false, ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
+            assertFalse(toString(obj) + " IS_BOXED returns true but UBOX unsupported", ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
         }
+    }
+
+    private interface As<T, R> {
+        R apply(T t) throws UnsupportedMessageException;
+    }
+
+    private void checkFitsInAs(Object value, Object unboxedValue, Function<Object, Boolean> fitsIn, As<Object, Object> as) throws UnsupportedMessageException {
+        if (fitsIn.apply(unboxedValue)) {
+            assertTrue(fitsIn.apply(value));
+            assertEquals(as.apply(unboxedValue), as.apply(value));
+        } else {
+            assertFalse(fitsIn.apply(value));
+            assertInteropException(() -> as.apply(value), UnsupportedMessageException.class);
+        }
+    }
+
+    private void checkFitsInAs(Object value, Function<Object, Boolean> fitsIn, As<Object, Object> as) {
+        assertFalse(fitsIn.apply(value));
+        assertInteropException(() -> as.apply(value), UnsupportedMessageException.class);
     }
 
     @Test
@@ -246,8 +342,10 @@ public abstract class AbstractMRTest {
                 assertFalse(KeyInfo.isReadable(ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, i)));
             }
         }
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), obj, 0), UnsupportedMessageException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), obj, "doesnotexist"), UnsupportedMessageException.class);
+        int index = 100000000;
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), obj, index), readException(obj, index));
+        String doesnotexist = "doesnotexist";
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), obj, doesnotexist), readException(obj, doesnotexist));
     }
 
     @Test
@@ -266,8 +364,10 @@ public abstract class AbstractMRTest {
                 assertFalse(KeyInfo.isWritable(ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, i)));
             }
         }
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), obj, 0, 1), UnsupportedMessageException.class);
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), obj, "doesnotexist", 1), UnsupportedMessageException.class);
+        int index = 100000000;
+        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), obj, index, 1), writeException(obj, index));
+        String doesnotexist = "doesnotexist";
+        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), obj, doesnotexist, 1), writeException(obj, doesnotexist));
     }
 
     @Test
@@ -282,12 +382,15 @@ public abstract class AbstractMRTest {
     }
 
     private void testKeys(TruffleObject obj) throws UnknownIdentifierException {
+        if (!shouldTestKeys(obj)) {
+            return;
+        }
         try {
             TruffleObject keysObj = ForeignAccess.sendKeys(Message.KEYS.createNode(), obj);
 
             int size = (int) ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), keysObj);
             String[] keys = getKeys(obj);
-            assertEquals(keys.length, size);
+            assertEquals(toString(obj), keys.length, size);
 
             Set<Object> set = new HashSet<>();
             for (int i = 0; i < size; i++) {
@@ -297,9 +400,9 @@ public abstract class AbstractMRTest {
                 assertTrue(set.contains(key));
             }
 
-            assertEquals(obj.getClass().getSimpleName() + " " + obj + " HAS_KEYS", true, ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), obj));
+            assertEquals(toString(obj) + " HAS_KEYS", true, ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), obj));
         } catch (UnsupportedMessageException e) {
-            assertEquals(obj.getClass().getSimpleName() + " " + obj + " HAS_KEYS", false, ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), obj));
+            assertEquals(toString(obj) + " HAS_KEYS", false, ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), obj));
         }
     }
 
@@ -309,22 +412,22 @@ public abstract class AbstractMRTest {
         } catch (InteropException ex) {
             if (expectedClazz != null && ex.getClass() != expectedClazz) {
                 ex.printStackTrace();
-                Assert.fail(expectedClazz + " was expected but got instead: " + ex);
+                fail(this.getClass().getName() + " : " + expectedClazz + " was expected but got instead: " + ex);
             }
             return;
         } catch (Exception ex) {
             if (expectedClazz != null && ex.getClass() != expectedClazz) {
                 ex.printStackTrace();
-                Assert.fail(expectedClazz + " was expected but got instead: " + ex);
+                fail(this.getClass().getName() + " : " + expectedClazz + " was expected but got instead: " + ex);
             } else {
                 ex.printStackTrace();
-                Assert.fail("InteropException was expected but got instead: " + ex);
+                fail(this.getClass().getName() + " : " + "InteropException was expected but got instead: " + ex);
             }
         }
         if (expectedClazz != null) {
-            Assert.fail(expectedClazz + " was expected");
+            fail(expectedClazz + " was expected");
         } else {
-            Assert.fail("InteropException was expected");
+            fail(this.getClass().getName() + " : " + "InteropException was expected");
         }
     }
 

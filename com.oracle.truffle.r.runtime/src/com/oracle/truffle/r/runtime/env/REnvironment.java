@@ -33,11 +33,19 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -51,6 +59,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -64,6 +73,8 @@ import com.oracle.truffle.r.runtime.env.frame.NSBaseMaterializedFrame;
 import com.oracle.truffle.r.runtime.env.frame.REnvEmptyFrameAccess;
 import com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess;
 import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
 /**
  * Denotes an R {@code environment}.
@@ -115,6 +126,7 @@ import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
  * {@link com.oracle.truffle.r.runtime.context.RContext.ContextKind} is encapsulated in the
  * {@link #setupContext} method.
  */
+@ExportLibrary(InteropLibrary.class)
 public abstract class REnvironment extends RAttributeStorage {
 
     public static final class ContextStateImpl implements RContext.ContextState {
@@ -260,6 +272,127 @@ public abstract class REnvironment extends RAttributeStorage {
     private final String name;
     private final REnvFrameAccess frameAccess;
     private boolean locked;
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    void toNative() {
+        NativeDataAccess.asPointer(this);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasMembers() {
+        return true;
+    }
+
+    @ExportMessage
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+        return ls(true, null, true);
+    }
+
+    @ExportMessage
+    boolean isMemberReadable(String member) {
+        return get(member) != null;
+    }
+
+    @ExportMessage
+    boolean isMemberModifiable(String member) {
+        return get(member) != null && !isLocked() && !bindingIsLocked(member);
+    }
+
+    @ExportMessage
+    boolean isMemberInsertable(String member) {
+        return get(member) == null;
+    }
+
+    @ExportMessage
+    boolean isMemberRemovable(String member) {
+        return isMemberModifiable(member);
+    }
+
+    @ExportMessage
+    boolean isMemberInvocable(String member) {
+        return get(member) instanceof RFunction;
+    }
+
+    @ExportMessage
+    Object readMember(String member,
+                    @Cached() R2Foreign r2Foreign,
+                    @Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException {
+        Object res = get(member);
+        if (unknownIdentifier.profile(res == null)) {
+            throw UnknownIdentifierException.create(member);
+        }
+        return r2Foreign.convert(res);
+    }
+
+    @ExportMessage
+    void writeMember(String member, Object value,
+                    @Cached() Foreign2R foreign2R,
+                    @Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile roIdentifier) throws UnsupportedMessageException {
+
+        if (get(member) != null) {
+            if (roIdentifier.profile(!isMemberModifiable(member))) {
+                // TODO - this is a bit weird - should be Message.WRITE and identifier
+                throw UnsupportedMessageException.create();
+            }
+        } else if (isLocked()) {
+            throw UnsupportedMessageException.create();
+        }
+
+        try {
+            put(member, foreign2R.convert(value));
+        } catch (PutException ex) {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
+    @ExportMessage
+    void removeMember(String member,
+                    @Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException, UnsupportedMessageException {
+        if (unknownIdentifier.profile(get(member) == null)) {
+            throw UnknownIdentifierException.create(member);
+        }
+        if (!isMemberRemovable(member)) {
+            throw UnsupportedMessageException.create();
+        }
+
+        RContext.getRRuntimeASTAccess().removeFromEnv(this, member);
+    }
+
+    @ExportMessage
+    Object invokeMember(String member, Object[] arguments,
+                    @Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
+                    @Cached() RFunction.ExplicitCall c) throws UnknownIdentifierException, UnsupportedMessageException {
+        Object f = get(member);
+        if (unknownIdentifier.profile(f == null)) {
+            throw UnknownIdentifierException.create(member);
+        }
+        if (f instanceof RFunction) {
+            return c.execute((RFunction) f, arguments);
+        }
+        throw UnsupportedMessageException.create();
+    }
+
+    @ExportMessage
+    boolean hasMemberReadSideEffects(String member) {
+        return isActiveBinding(member);
+    }
+
+    @ExportMessage
+    boolean hasMemberWriteSideEffects(String member) {
+        return isActiveBinding(member);
+    }
 
     @Override
     public RType getRType() {

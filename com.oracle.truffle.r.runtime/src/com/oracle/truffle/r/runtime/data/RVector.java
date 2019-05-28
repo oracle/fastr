@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
- * Base class for all vectors.
+ * Base class for array based vectors.
  *
  * <pre>
  * Reference counting on vectors:

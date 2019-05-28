@@ -346,7 +346,7 @@ final class REngine implements Engine, Engine.Timings {
             for (int i = 0; i < statements.length - 1; i++) {
                 statements[i].execute(frame);
             }
-            return toForeignNode.execute(statements[statements.length - 1].execute(frame));
+            return toForeignNode.convert(statements[statements.length - 1].execute(frame));
         }
     }
 

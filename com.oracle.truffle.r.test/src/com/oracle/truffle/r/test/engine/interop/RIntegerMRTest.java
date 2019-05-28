@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import org.junit.Test;
 
@@ -36,12 +37,18 @@ public class RIntegerMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RInteger.valueOf(123)};
+        return new TruffleObject[]{RInteger.valueOf(123), RInteger.createNA()};
+    }
+
+    @Override
+    protected boolean shouldTestToNative(TruffleObject obj) {
+        return false;
     }
 
     @Override
     protected Object getUnboxed(TruffleObject obj) {
-        return ((RInteger) obj).getValue();
+        int unboxed = ((RInteger) obj).getValue();
+        return RRuntime.isNA(unboxed) ? null : unboxed;
     }
 
     @Override

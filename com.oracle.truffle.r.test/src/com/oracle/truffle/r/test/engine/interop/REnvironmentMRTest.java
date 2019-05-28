@@ -27,6 +27,7 @@ import static org.junit.Assert.assertFalse;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -86,9 +87,9 @@ public class REnvironmentMRTest extends AbstractMRTest {
         e.lock(false);
 
         // can't read/write via index
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), e, 0), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), e, 1f), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), e, 1, 321), UnknownIdentifierException.class);
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), e, 0), UnsupportedMessageException.class);
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), e, 1f), UnsupportedMessageException.class);
+        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), e, 1, 321), UnsupportedMessageException.class);
     }
 
     @Test
@@ -151,7 +152,21 @@ public class REnvironmentMRTest extends AbstractMRTest {
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), e, "s"), UnknownIdentifierException.class);
 
         e.lock(true);
-        assertFalse(ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "i"));
+        assertInteropException(() -> ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "i"), UnsupportedMessageException.class);
+    }
+
+    @Test
+    public void testInvokeMember() throws Exception {
+        TruffleObject o = createTruffleObjects()[0];
+
+        int info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), o, "fn");
+        assertTrue(KeyInfo.isExisting(info));
+        assertTrue(KeyInfo.isReadable(info));
+        assertTrue(KeyInfo.isWritable(info));
+        assertTrue(KeyInfo.isInvocable(info));
+        assertFalse(KeyInfo.isInternal(info));
+
+        assertSingletonVector(true, InteropLibrary.getFactory().getUncached().invokeMember(o, "fn", true));
     }
 
     @Test
@@ -175,7 +190,7 @@ public class REnvironmentMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return createEnv("e <- new.env(); e$s <- 'aaa'; e$i <- 123L; e$d <- 123.1; e$b <- TRUE; e$fn <- function() {}; e$n <- NULL; e$l <- 666; lockBinding('l', e); e");
+        return createEnv("e <- new.env(); e$s <- 'aaa'; e$i <- 123L; e$d <- 123.1; e$b <- TRUE; e$fn <- function(s) {s}; e$n <- NULL; e$l <- 666; lockBinding('l', e); e");
     }
 
     private static TruffleObject[] createEnv(String txt) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,14 +25,26 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RFunction.ExplicitCall;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
 /**
  * A simple wrapper class for passing the ... argument through RArguments
  */
+@ExportLibrary(InteropLibrary.class)
 public final class RArgsValuesAndNames extends RObject implements RTypedValue {
 
     /**
@@ -55,6 +67,121 @@ public final class RArgsValuesAndNames extends RObject implements RTypedValue {
         this.values = values;
         this.signature = signature;
         assert signature != null && signature.getLength() == values.length : Arrays.toString(values) + " " + signature;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    long getArraySize() {
+        return getLength();
+    }
+
+    @ExportMessage
+    boolean isArrayElementReadable(long index) {
+        return index >= 0 && index < getLength();
+    }
+
+    @ExportMessage
+    Object readArrayElement(long index,
+                    @Shared("r2Foreign") @Cached() R2Foreign r2Foreign,
+                    @Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws InvalidArrayIndexException {
+        if (unknownIdentifier.profile(!isArrayElementReadable(index))) {
+            throw InvalidArrayIndexException.create(index);
+        }
+        Object value = getArgument((int) index);
+        return r2Foreign.convert(value);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasMembers() {
+        return true;
+    }
+
+    @ExportMessage
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+        String[] names = signature.getNames();
+        if (names == null) {
+            return RDataFactory.createStringVector(new String[signature.getLength()], RDataFactory.COMPLETE_VECTOR);
+        }
+        return RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR).makeSharedPermanent();
+    }
+
+    @ExportMessage
+    boolean isMemberReadable(String member) {
+        return getMemberIndex(member) >= 0;
+    }
+
+    @ExportMessage
+    boolean isMemberInvocable(String member,
+                    @Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) {
+        int idx = getMemberIndex(member);
+        if (unknownIdentifier.profile(idx < 0)) {
+            return false;
+        }
+        return getArgument(idx) instanceof RFunction;
+    }
+
+    @ExportMessage
+    Object readMember(String member,
+                    @Shared("r2Foreign") @Cached() R2Foreign r2Foreign,
+                    @Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException {
+        int idx = getMemberIndex(member);
+        if (unknownIdentifier.profile(idx < 0)) {
+            throw UnknownIdentifierException.create(member);
+        }
+
+        Object value = getArgument(idx);
+        return r2Foreign.convert(value);
+    }
+
+    @ExportMessage
+    Object invokeMember(String member, Object[] arguments,
+                    @Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
+                    @Cached() ExplicitCall c) throws UnknownIdentifierException, UnsupportedMessageException {
+        int idx = getMemberIndex(member);
+        if (unknownIdentifier.profile(idx < 0)) {
+            throw UnknownIdentifierException.create(member);
+        }
+        Object arg = getArgument(idx);
+        if (arg instanceof RFunction) {
+            return c.execute((RFunction) arg, arguments);
+        }
+        throw UnsupportedMessageException.create();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    void toNative() {
+        NativeDataAccess.asPointer(this);
+    }
+
+    private int getMemberIndex(String member) {
+        ArgumentsSignature sig = getSignature();
+        String[] names = sig.getNames();
+        if (names == null) {
+            return -1;
+        }
+        for (int i = 0; i < names.length; i++) {
+            if (names[i].equals(member)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override

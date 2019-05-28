@@ -23,37 +23,28 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import org.graalvm.polyglot.Value;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class ListMRTest extends AbstractMRTest {
 
-    private static final String testValues = "i=1L, d=2.1, b=TRUE, fn=function() {}, n=NULL, 4";
-
-    @Override
-    @Test
-    public void testNativePointer() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
-        for (TruffleObject obj : new TruffleObject[]{create("list", testValues), create("pairlist", testValues)}) {
-            assertTrue(ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
-        }
-    }
+    private static final String testValues = "i=1L, d=2.1, b=TRUE, fn=function(s) {s}, n=NULL, 4";
 
     @Override
     protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
@@ -91,6 +82,12 @@ public class ListMRTest extends AbstractMRTest {
     public void testKeysInfo() {
         testKeysInfo("list");
         testKeysInfo("pairlist");
+    }
+
+    @Test
+    public void testInvokeMember() throws Exception {
+        assertSingletonVector(true, InteropLibrary.getFactory().getUncached().invokeMember(create("list", testValues), "fn", true));
+        assertSingletonVector(true, InteropLibrary.getFactory().getUncached().invokeMember(create("pairlist", testValues), "fn", true));
     }
 
     public void testKeysInfo(String createFun) {

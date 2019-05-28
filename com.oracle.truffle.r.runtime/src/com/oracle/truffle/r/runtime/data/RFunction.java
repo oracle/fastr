@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,13 +24,27 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunctionFactory.CachedExplicitCallNodeGen;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
+import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
 /**
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
@@ -44,6 +58,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * {@link #enclosingFrame}.
  * </ul>
  */
+@ExportLibrary(InteropLibrary.class)
 public final class RFunction extends RSharingAttributeStorage implements RTypedValue {
 
     public static final String NO_NAME = new String("");
@@ -65,6 +80,34 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
             RContext.getRRuntimeASTAccess().setFunctionName(getRootNode(), name);
         }
         this.enclosingFrame = enclosingFrame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) enclosingFrame).getOriginalFrame() : enclosingFrame;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isExecutable() {
+        return true;
+    }
+
+    @ExportMessage
+    Object execute(Object[] arguments,
+                    @Cached() ExplicitCall call) {
+        return call.execute(this, arguments);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    void toNative() {
+        NativeDataAccess.asPointer(this);
     }
 
     @Override
@@ -124,5 +167,53 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
 
     public void reassignEnclosingFrame(MaterializedFrame newEnclosingFrame) {
         this.enclosingFrame = newEnclosingFrame;
+    }
+
+    public interface ExplicitCall extends NodeInterface {
+        static ExplicitCall create() {
+            return DSLConfig.getInteropLibraryCacheSize() > 0 ? CachedExplicitCallNodeGen.create() : new UncachedExplicitCall();
+        }
+
+        static ExplicitCall getUncached() {
+            return new UncachedExplicitCall();
+        }
+
+        Object execute(RFunction function, Object[] args);
+    }
+
+    protected abstract static class CachedExplicitCall extends Node implements ExplicitCall {
+
+        @Specialization
+        Object call(RFunction function, Object[] arguments,
+                        @Cached("createCallNode()") RRuntimeASTAccess.ExplicitFunctionCall callNode,
+                        @Cached() Foreign2R foreign2R,
+                        @Cached() R2Foreign r2Foreign) {
+            Object[] convertedArguments = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                convertedArguments[i] = foreign2R.convert(arguments[i]);
+            }
+            MaterializedFrame globalFrame = RContext.getInstance().stateREnvironment.getGlobalFrame();
+            RArgsValuesAndNames argsAndValues = new RArgsValuesAndNames(convertedArguments, ArgumentsSignature.empty(arguments.length));
+            Object result = callNode.call(globalFrame, function, argsAndValues);
+            return r2Foreign.convert(result);
+        }
+
+        protected RRuntimeASTAccess.ExplicitFunctionCall createCallNode() {
+            return RContext.getRRuntimeASTAccess().createExplicitFunctionCall();
+        }
+    }
+
+    protected static class UncachedExplicitCall implements ExplicitCall {
+        private R2Foreign r2Foreign = R2ForeignNodeGen.getUncached();
+        private Foreign2R foreign2R = Foreign2R.getUncached();
+
+        @Override
+        public Object execute(RFunction function, Object[] arguments) {
+            Object[] convertedArguments = new Object[arguments.length];
+            for (int i = 0; i < arguments.length; i++) {
+                convertedArguments[i] = foreign2R.convert(arguments[i]);
+            }
+            return r2Foreign.convert(RContext.getRRuntimeASTAccess().callback(function, convertedArguments));
+        }
     }
 }

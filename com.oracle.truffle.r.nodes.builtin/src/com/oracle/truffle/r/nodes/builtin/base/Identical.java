@@ -347,9 +347,9 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
             Object tmpXCdr = x.cdr();
             Object tmpYCdr = y.cdr();
             while (true) {
-                if (RPairList.isNull(tmpXCdr) && RPairList.isNull(tmpYCdr)) {
+                if (RRuntime.isNull(tmpXCdr) && RRuntime.isNull(tmpYCdr)) {
                     break;
-                } else if (RPairList.isNull(tmpXCdr) || RPairList.isNull(tmpYCdr)) {
+                } else if (RRuntime.isNull(tmpXCdr) || RRuntime.isNull(tmpYCdr)) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
                     RPairList xSubList = (RPairList) tmpXCdr;
@@ -363,9 +363,9 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
                         tagY = RNull.instance;
                     }
 
-                    if (RPairList.isNull(tagX) && RPairList.isNull(tagY)) {
+                    if (RRuntime.isNull(tagX) && RRuntime.isNull(tagY)) {
                         // continue
-                    } else if (RPairList.isNull(tagX) || RPairList.isNull(tagY)) {
+                    } else if (RRuntime.isNull(tagX) || RRuntime.isNull(tagY)) {
                         return RRuntime.LOGICAL_FALSE;
                     } else {
                         if (tagX instanceof RSymbol && tagY instanceof RSymbol) {

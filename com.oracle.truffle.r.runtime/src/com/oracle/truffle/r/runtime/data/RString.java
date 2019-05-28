@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,11 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -35,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
+@ExportLibrary(InteropLibrary.class)
 public final class RString extends RScalarVector implements RAbstractStringVector {
 
     private final String value;
@@ -48,6 +54,19 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
     }
 
     public String getValue() {
+        return value;
+    }
+
+    @ExportMessage
+    boolean isString() {
+        return !RRuntime.isNA(value);
+    }
+
+    @ExportMessage
+    String asString(@Cached("createBinaryProfile()") ConditionProfile isString) throws UnsupportedMessageException {
+        if (!isString.profile(isString())) {
+            throw UnsupportedMessageException.create();
+        }
         return value;
     }
 

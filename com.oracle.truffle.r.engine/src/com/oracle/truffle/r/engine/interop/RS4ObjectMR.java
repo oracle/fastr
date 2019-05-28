@@ -158,7 +158,7 @@ public class RS4ObjectMR {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 r2Foreign = insert(R2Foreign.create());
             }
-            return r2Foreign.execute(value);
+            return r2Foreign.convert(value);
         }
 
         @Fallback

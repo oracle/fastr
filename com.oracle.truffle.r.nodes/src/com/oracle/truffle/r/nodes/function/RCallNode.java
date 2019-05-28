@@ -594,7 +594,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         // Note: since we are actually not executing the function prologue which would write default
         // values to local variables representing arguments with default values, we have to check
         // whether we need to provide default values ourselves. The next call invoked by the
-        // call.execute statement thinks that the formal signature is formal signature of the
+        // call.convert statement thinks that the formal signature is formal signature of the
         // concrete method, e.g. max.data.frame, which may not have default value for the same
         // arguments as the entry method, e.g. max(...,na.rm=TRUE). Unfortunately, in GnuR this is
         // inconsistent and only applies for 'Summary' group and not, for example, for Math group
@@ -677,7 +677,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 r2ForeignNode = insert(R2Foreign.create());
             }
             for (int i = 0; i < args.length; i++) {
-                args[i] = r2ForeignNode.execute(args[i]);
+                args[i] = r2ForeignNode.convert(args[i]);
             }
             return args;
         }

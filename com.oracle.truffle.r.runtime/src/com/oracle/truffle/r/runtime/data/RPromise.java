@@ -30,15 +30,23 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Denotes an R {@code promise}.
  */
 @ValueType
+@ExportLibrary(InteropLibrary.class)
 public class RPromise extends RObject implements RTypedValue {
 
     private static final int DEFAULT_BIT = 0x1;
@@ -47,6 +55,10 @@ public class RPromise extends RObject implements RTypedValue {
     private static final int EXPLICIT_BIT = 0x8;
     private static final int UNDER_EVALUATION_BIT = 0x10;
     private static final int UNDER_EVALUATION_MASK = 0x0f;
+
+    private static final String MEMBER_VALUE = "value";
+    private static final String MEMBER_IS_EVALUATED = "isEvaluated";
+    private static final String MEMBER_EXPR = "expression";
 
     /**
      * This enum encodes the source, optimization and current state of a promise.
@@ -141,6 +153,85 @@ public class RPromise extends RObject implements RTypedValue {
         this.value = value;
         // Not needed as already evaluated:
         this.execFrame = null;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasMembers() {
+        return true;
+    }
+
+    @ExportMessage
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+        return RDataFactory.createStringVector(new String[]{MEMBER_VALUE, MEMBER_IS_EVALUATED, MEMBER_EXPR}, true);
+    }
+
+    @ExportMessage
+    boolean isMemberReadable(String member) {
+        return MEMBER_EXPR.equals(member) || MEMBER_VALUE.equals(member) || MEMBER_IS_EVALUATED.equals(member);
+    }
+
+    @ExportMessage
+    Object readMember(String member) throws UnknownIdentifierException {
+        if (MEMBER_EXPR.equals(member)) {
+            return RDataFactory.createLanguage(getClosure());
+        }
+        if (MEMBER_IS_EVALUATED.equals(member)) {
+            return RRuntime.asLogical(isEvaluated());
+        }
+        if (MEMBER_VALUE.equals(member)) {
+            // only read value if evaluated
+            if (isEvaluated()) {
+                return getValue();
+            }
+            return RNull.instance;
+        }
+        throw UnknownIdentifierException.create(member);
+    }
+
+    @ExportMessage
+    boolean isMemberModifiable(String member) {
+        return member.equals(MEMBER_IS_EVALUATED);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isMemberInsertable(@SuppressWarnings("unused") String member) {
+        return false;
+    }
+
+    @ExportMessage
+    void writeMember(String member, Object newvalue) throws UnknownIdentifierException, UnsupportedTypeException {
+        if (MEMBER_IS_EVALUATED.equals(member)) {
+            if (!(newvalue instanceof Boolean)) {
+                throw UnsupportedTypeException.create(new Object[]{newvalue});
+            }
+
+            boolean newVal = (boolean) newvalue;
+            if (!isEvaluated() && newVal) {
+                RContext.getRRuntimeASTAccess().forcePromise(this);
+            } else if (isEvaluated() && !newVal) {
+                resetValue();
+            }
+        } else {
+            throw UnknownIdentifierException.create(member);
+        }
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    void toNative() {
+        NativeDataAccess.asPointer(this);
     }
 
     @Override

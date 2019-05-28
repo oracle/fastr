@@ -20,29 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine.interop;
+package com.oracle.truffle.r.test.engine.interop;
 
-import com.oracle.truffle.api.interop.CanResolve;
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropNA;
+import com.oracle.truffle.r.runtime.conn.FileConnections;
+import java.io.File;
+import org.junit.Test;
 
-@MessageResolution(receiverType = RInteropNA.class)
-public class RInteropNAMR {
-    @Resolve(message = "IS_NULL")
-    public abstract static class RInteropNAIsNullNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RInteropNA receiver) {
-            return true;
-        }
+public class RConnectionMRTest extends AbstractMRTest {
+
+    @Override
+    protected TruffleObject[] createTruffleObjects() throws Exception {
+        return new TruffleObject[]{new FileConnections.FileRConnection("test", File.createTempFile("fastrTestConnectiopnMR", null).getAbsolutePath(), "r", false, null, false, false)};
     }
 
-    @CanResolve
-    public abstract static class RInteropNACheck extends Node {
-        protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof RInteropNA;
-        }
+    @Test
+    @Override
+    public void testIsNull() throws Exception {
+        super.testIsNull(); // force inherited tests from AbstractMRTest
     }
 
+    @Override
+    protected TruffleObject createEmptyTruffleObject() throws Exception {
+        return null;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,16 +38,18 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess.ExplicitFunctionCall;
 
 /**
  * Helper node that allows to call a given function with explicit arguments.
  */
-public abstract class RExplicitCallNode extends Node {
+public abstract class RExplicitCallNode extends Node implements ExplicitFunctionCall {
 
     public static RExplicitCallNode create() {
         return RExplicitCallNodeGen.create();
     }
 
+    @Override
     public final Object call(VirtualFrame frame, RFunction function, RArgsValuesAndNames args) {
         return execute(frame, function, args, null, null);
     }

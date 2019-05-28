@@ -25,6 +25,14 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
@@ -35,8 +43,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+@ExportLibrary(InteropLibrary.class)
 public final class RExpression extends RVector<Object[]> implements RAbstractListBaseVector {
 
     private Object[] data;
@@ -46,6 +56,98 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
         this.data = data;
         initDimsNamesDimNames(dims, names, dimNames);
         assert RAbstractVector.verify(this);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    long getArraySize() {
+        return getLength();
+    }
+
+    @ExportMessage
+    boolean isArrayElementReadable(long index) {
+        return index >= 0 && index < getLength();
+    }
+
+    @ExportMessage
+    Object readArrayElement(long index,
+                    @Cached.Shared("r2Foreign") @Cached() R2Foreign r2Foreign,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile invalidIndex) throws InvalidArrayIndexException {
+        if (!invalidIndex.profile(isArrayElementReadable(index))) {
+            throw InvalidArrayIndexException.create(index);
+        }
+        return r2Foreign.convert(getDataAtAsObject((int) index));
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasMembers() {
+        return true;
+    }
+
+    @ExportMessage
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+        RStringVector names = getNames();
+        return names != null ? names : RDataFactory.createEmptyStringVector();
+    }
+
+    @ExportMessage
+    boolean isMemberReadable(String member) {
+        int idx = getElementIndexByName(member);
+        return isArrayElementReadable(idx);
+    }
+
+    @ExportMessage
+    boolean isMemberInvocable(String member) {
+        int idx = getElementIndexByName(member);
+        return isArrayElementReadable(idx) && getDataAtAsObject(idx) instanceof RFunction;
+    }
+
+    @ExportMessage
+    Object readMember(String member,
+                    @Cached.Shared("r2Foreign") @Cached() R2Foreign r2Foreign,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException {
+        int idx = getElementIndexByName(member);
+        if (unknownIdentifier.profile(!isArrayElementReadable(idx))) {
+            throw UnknownIdentifierException.create(member);
+        }
+        return r2Foreign.convert(getDataAtAsObject(idx));
+    }
+
+    @ExportMessage
+    Object invokeMember(String member, Object[] arguments,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
+                    @Cached() RFunction.ExplicitCall c) throws UnknownIdentifierException, UnsupportedMessageException {
+        int idx = getElementIndexByName(member);
+        if (unknownIdentifier.profile(!isArrayElementReadable(idx))) {
+            throw UnknownIdentifierException.create(member);
+        }
+        Object f = getDataAtAsObject(idx);
+        if (f instanceof RFunction) {
+            return c.execute((RFunction) f, arguments);
+        }
+        throw UnsupportedMessageException.create();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    void toNative() {
+        NativeDataAccess.asPointer(this);
     }
 
     @Override
