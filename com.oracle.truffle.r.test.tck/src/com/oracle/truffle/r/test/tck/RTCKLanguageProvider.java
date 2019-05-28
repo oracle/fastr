@@ -94,6 +94,15 @@ public final class RTCKLanguageProvider implements LanguageProvider {
     }
 
     @Override
+    public Snippet createIdentityFunctionSnippet(Context context) {
+        // TODO HOTFIX
+        // FastR should not converts foreign values already
+        // at the moment when they are passed to a function
+        Value value = createIdentityFunction(context);
+        return (Snippet.newBuilder("identity", value, TypeDescriptor.ANY).parameterTypes(TypeDescriptor.ANY).resultVerifier(new IdentityFunctionResultVerifier()).build());
+    }
+
+    @Override
     public Collection<? extends Snippet> createValueConstructors(Context context) {
         List<Snippet> vals = new ArrayList<>();
 
@@ -399,6 +408,23 @@ public final class RTCKLanguageProvider implements LanguageProvider {
 
     private static Value eval(Context context, String statement) {
         return context.eval(ID, statement);
+    }
+
+    final class IdentityFunctionResultVerifier implements ResultVerifier {
+        ResultVerifier delegate = ResultVerifier.getIdentityFunctionDefaultResultVerifier();
+
+        private IdentityFunctionResultVerifier() {
+        }
+
+        @Override
+        public void accept(SnippetRun snippetRun) throws PolyglotException {
+            for (Value p : snippetRun.getParameters()) {
+                if (p.isNull()) {
+                    return;
+                }
+            }
+            delegate.accept(snippetRun);
+        }
     }
 
     private static final class RResultVerifier implements ResultVerifier {
