@@ -76,6 +76,7 @@ public final class RForeignIntWrapper extends RForeignVectorWrapper implements R
         }
     }
 
+    @TruffleBoundary
     private static int unbox(TruffleObject value, ClassCastException e) throws RuntimeException {
         if (getInterop().isNull(value)) {
             return RRuntime.INT_NA;
@@ -167,6 +168,7 @@ public final class RForeignIntWrapper extends RForeignVectorWrapper implements R
         }
 
         @Override
+        @TruffleBoundary
         public int getIntImpl(AccessIterator accessIter, int index) {
             RForeignIntWrapper vector = (RForeignIntWrapper) accessIter.getStore();
             Object value = null;

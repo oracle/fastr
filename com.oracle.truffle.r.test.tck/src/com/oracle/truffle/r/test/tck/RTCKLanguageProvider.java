@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.test.tck;
 
 import static org.graalvm.polyglot.tck.TypeDescriptor.array;
-import static org.graalvm.polyglot.tck.TypeDescriptor.intersection;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -47,6 +46,7 @@ import org.graalvm.polyglot.tck.TypeDescriptor;
 import org.junit.Assert;
 import org.graalvm.polyglot.tck.LanguageProvider;
 import org.graalvm.polyglot.tck.ResultVerifier;
+import static org.graalvm.polyglot.tck.TypeDescriptor.intersection;
 
 public final class RTCKLanguageProvider implements LanguageProvider {
 
@@ -94,6 +94,15 @@ public final class RTCKLanguageProvider implements LanguageProvider {
     }
 
     @Override
+    public Snippet createIdentityFunctionSnippet(Context context) {
+        // TODO HOTFIX
+        // FastR should not converts foreign values already
+        // at the moment when they are passed to a function
+        Value value = createIdentityFunction(context);
+        return (Snippet.newBuilder("identity", value, TypeDescriptor.ANY).parameterTypes(TypeDescriptor.ANY).resultVerifier(new IdentityFunctionResultVerifier()).build());
+    }
+
+    @Override
     public Collection<? extends Snippet> createValueConstructors(Context context) {
         List<Snippet> vals = new ArrayList<>();
 
@@ -106,7 +115,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
                                                                            // type
 
         // TODO NULL, raw, s4, env, list, empty, ...
-        // vals.add(createValueConstructor(context, "NULL", TypeDescriptor.NULL));
+        vals.add(createValueConstructor(context, "NULL", TypeDescriptor.NULL));
 
         // Vectors & Lists
         Snippet v = createValueConstructor(context, "c(1L:10L)", TypeDescriptor.array(TypeDescriptor.NUMBER));
@@ -117,6 +126,8 @@ public final class RTCKLanguageProvider implements LanguageProvider {
 
         vals.add(createValueConstructor(context, "c(TRUE, FALSE)", TypeDescriptor.array(TypeDescriptor.BOOLEAN)));
         vals.add(createValueConstructor(context, "c(1L, 'STRING')", TypeDescriptor.array(TypeDescriptor.STRING)));
+        // vals.add(createValueConstructor(context, "c(1L, NULL)",
+        // TypeDescriptor.array(TypeDescriptor.OBJECT)));
         return Collections.unmodifiableList(vals);
     }
 
@@ -125,46 +136,53 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         List<Snippet> ops = new ArrayList<>();
         TypeDescriptor numOrBool = TypeDescriptor.union(TypeDescriptor.NUMBER, TypeDescriptor.BOOLEAN);
         TypeDescriptor numOrBoolOrNull = TypeDescriptor.union(numOrBool, TypeDescriptor.NULL);
+        TypeDescriptor numOrBoolOrArray = TypeDescriptor.union(numOrBool, TypeDescriptor.ARRAY);
+        TypeDescriptor numOrBoolOrArrayPrNull = TypeDescriptor.union(numOrBoolOrArray, TypeDescriptor.NULL);
         TypeDescriptor arrNumBool = TypeDescriptor.array(numOrBool);
         TypeDescriptor numOrBoolOrArrNumBool = TypeDescriptor.union(numOrBool, arrNumBool);
         TypeDescriptor numOrBoolOrNullOrArrNumBool = TypeDescriptor.union(numOrBoolOrNull, arrNumBool);
         TypeDescriptor boolOrArrBool = TypeDescriptor.union(TypeDescriptor.BOOLEAN, TypeDescriptor.array(TypeDescriptor.BOOLEAN));
 
-        // +
-        ops.add(createBinaryOperator(context, "+", numOrBoolOrArrNumBool, numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool,
-                        RResultVerifier.newBuilder(numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool).emptyArrayCheck().build()));
-        // -
-        ops.add(createBinaryOperator(context, "-", numOrBoolOrArrNumBool, numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool,
-                        RResultVerifier.newBuilder(numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool).emptyArrayCheck().build()));
-        // *
-        ops.add(createBinaryOperator(context, "*", numOrBoolOrArrNumBool, numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool,
-                        RResultVerifier.newBuilder(numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool).emptyArrayCheck().build()));
-        // /
-        ops.add(createBinaryOperator(context, "/", numOrBoolOrArrNumBool, numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool,
-                        RResultVerifier.newBuilder(numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool).emptyArrayCheck().build()));
+        TypeDescriptor[] acceptedParameterTypes = new TypeDescriptor[]{numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool};
+        TypeDescriptor[] declaredParameterTypes = new TypeDescriptor[]{numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull};
 
+        // +
+        ops.add(createBinaryOperator(context, "+", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).emptyArrayCheck().build()));
+        // -
+        ops.add(createBinaryOperator(context, "-", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).emptyArrayCheck().build()));
+        // *
+        ops.add(createBinaryOperator(context, "*", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).emptyArrayCheck().build()));
+        // /
+        ops.add(createBinaryOperator(context, "/", numOrBoolOrArrNumBool, numOrBoolOrArrayPrNull, numOrBoolOrArrayPrNull,
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).emptyArrayCheck().build()));
+
+        acceptedParameterTypes = new TypeDescriptor[]{TypeDescriptor.ANY, TypeDescriptor.ANY};
         // <
         ops.add(createBinaryOperator(context, "<", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
         // >
         ops.add(createBinaryOperator(context, ">", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
         // <=
         ops.add(createBinaryOperator(context, "<=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
         // >=
         ops.add(createBinaryOperator(context, ">=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
         // ==
         ops.add(createBinaryOperator(context, "==", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
         // !=
         ops.add(createBinaryOperator(context, "!=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
-                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+                        RResultVerifier.newBuilder(acceptedParameterTypes).compareParametersCheck().build()));
         // // TODO &, |, &&, ||
 
         // !
-        ops.add(createPrefixOperator(context, "!", boolOrArrBool, numOrBoolOrArrNumBool, null));
+        ops.add(createPrefixOperator(context, "!", boolOrArrBool, numOrBoolOrArray,
+                        RResultVerifier.newBuilder(new TypeDescriptor[]{numOrBoolOrNullOrArrNumBool}, new TypeDescriptor[]{numOrBoolOrArray}).emptyArrayCheck().build()));
 
         // TODO unary +, -, ...
 
@@ -176,28 +194,22 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         Collection<Snippet> res = new ArrayList<>();
         TypeDescriptor numberOrBoolean = TypeDescriptor.union(TypeDescriptor.NUMBER, TypeDescriptor.BOOLEAN);
         TypeDescriptor arrayNumberBoolean = TypeDescriptor.array(numberOrBoolean);
+        TypeDescriptor numOrBoolOrArray = TypeDescriptor.union(numberOrBoolean, TypeDescriptor.ARRAY);
         TypeDescriptor numberOrBooleanOrArrayNumberBoolean = TypeDescriptor.union(numberOrBoolean, arrayNumberBoolean);
 
+        TypeDescriptor[] acceptedParameterTypes = new TypeDescriptor[]{numberOrBooleanOrArrayNumberBoolean};
+        TypeDescriptor[] declaredParameterTypes = new TypeDescriptor[]{numOrBoolOrArray};
         // if
         String ifStatement = "if ({1}) '{'\n{0}<-TRUE\n'}' else '{'\n{0}<-FALSE\n'}'";
         res.add(createStatement(context, "if", ifStatement,
-                        RResultVerifier.newBuilder(numberOrBooleanOrArrayNumberBoolean).emptyArrayCheck().build(),
-                        TypeDescriptor.BOOLEAN, numberOrBooleanOrArrayNumberBoolean));
-
-        // ifelse
-        String ifelseStatement = "ifelse ({1}, TRUE, FALSE)";
-        res.add(createStatement(context, "ifelse", ifelseStatement, TypeDescriptor.NULL,
-                        TypeDescriptor.union(
-                                        TypeDescriptor.BOOLEAN,
-                                        TypeDescriptor.NUMBER,
-                                        TypeDescriptor.STRING,
-                                        TypeDescriptor.ARRAY)));
+                        RResultVerifier.newBuilder(acceptedParameterTypes, new TypeDescriptor[]{numOrBoolOrArray}).emptyArrayCheck().build(),
+                        TypeDescriptor.BOOLEAN, numOrBoolOrArray));
 
         // while
         String whileStatement = "while ({1})'{'\nbreak\n'}'";
         res.add(createStatement(context, "while", whileStatement,
-                        RResultVerifier.newBuilder(numberOrBooleanOrArrayNumberBoolean).emptyArrayCheck().build(),
-                        TypeDescriptor.NULL, numberOrBooleanOrArrayNumberBoolean));
+                        RResultVerifier.newBuilder(acceptedParameterTypes, declaredParameterTypes).emptyArrayCheck().build(),
+                        TypeDescriptor.NULL, numOrBoolOrArray));
 
         // for
         String forStatement = "for (val in {1}) '{'\n'}'";
@@ -398,41 +410,88 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         return context.eval(ID, statement);
     }
 
+    final class IdentityFunctionResultVerifier implements ResultVerifier {
+        ResultVerifier delegate = ResultVerifier.getIdentityFunctionDefaultResultVerifier();
+
+        private IdentityFunctionResultVerifier() {
+        }
+
+        @Override
+        public void accept(SnippetRun snippetRun) throws PolyglotException {
+            for (Value p : snippetRun.getParameters()) {
+                if (p.isNull()) {
+                    return;
+                }
+            }
+            delegate.accept(snippetRun);
+        }
+    }
+
     private static final class RResultVerifier implements ResultVerifier {
-        private TypeDescriptor[] expectedParameterTypes;
+        /**
+         * Declared is a superset of accepted; If a parameter is an object array, we declare it as
+         * such, but a conversion to a fastr vector accepts it only of it contains homogenous values
+         * of some specific type - e.g. new Object[] {Integer, Integer}
+         * 
+         */
+        private TypeDescriptor[] declaredParameterTypes;
+        private TypeDescriptor[] acceptedParameterTypes;
         BiFunction<Boolean, SnippetRun, Void> next;
 
         private RResultVerifier(
-                        TypeDescriptor[] expectedParameterTypes,
+                        TypeDescriptor[] acceptedParameterTypes,
+                        TypeDescriptor[] declaredParameterTypes,
                         BiFunction<Boolean, SnippetRun, Void> next) {
-            this.expectedParameterTypes = Objects.requireNonNull(expectedParameterTypes, "The expectedParameterTypes cannot be null.");
+            this.acceptedParameterTypes = Objects.requireNonNull(acceptedParameterTypes, "The acceptedParameterTypes cannot be null.");
+            this.declaredParameterTypes = declaredParameterTypes;
             this.next = Objects.requireNonNull(next, "The verifier chain cannot be null.");
         }
 
         @Override
         public void accept(SnippetRun snippetRun) throws PolyglotException {
-            next.apply(hasValidArgumentTypes(snippetRun.getParameters()), snippetRun);
+            boolean hasValidArgumentTypes = isAssignable(acceptedParameterTypes, snippetRun.getParameters());
+            List<? extends Value> args = snippetRun.getParameters();
+
+            boolean hasValidDeclaredTypes = isAssignable(declaredParameterTypes, args);
+            if (hasValidDeclaredTypes) {
+                if (hasValidArgumentTypes) {
+                    next.apply(hasValidArgumentTypes, snippetRun);
+                } else {
+                    return;
+                }
+            } else {
+                next.apply(hasValidArgumentTypes, snippetRun);
+            }
         }
 
-        private boolean hasValidArgumentTypes(List<? extends Value> args) {
-            for (int i = 0; i < expectedParameterTypes.length; i++) {
-                if (!expectedParameterTypes[i].isAssignable(TypeDescriptor.forValue(args.get(i)))) {
+        private static boolean isAssignable(TypeDescriptor[] types, List<? extends Value> args) {
+            if (types == null) {
+                return false;
+            }
+            for (int i = 0; i < types.length; i++) {
+                if (!types[i].isAssignable(TypeDescriptor.forValue(args.get(i)))) {
                     return false;
                 }
             }
             return true;
         }
 
-        static Builder newBuilder(TypeDescriptor... expectedParameterTypes) {
-            return new Builder(expectedParameterTypes);
+        static Builder newBuilder(TypeDescriptor[] acceptedParameterTypes) {
+            return new Builder(acceptedParameterTypes, null);
+        }
+
+        static Builder newBuilder(TypeDescriptor[] acceptedParameterTypes, TypeDescriptor[] declaredParameterTypes) {
+            return new Builder(acceptedParameterTypes, declaredParameterTypes);
         }
 
         static final class Builder {
-            private final TypeDescriptor[] expectedParameterTypes;
+            private final TypeDescriptor[] acceptedParameterTypes;
+            private final TypeDescriptor[] declaredParameterTypes;
             private BiFunction<Boolean, SnippetRun, Void> chain;
 
-            private Builder(TypeDescriptor[] expectedParameterTypes) {
-                this.expectedParameterTypes = expectedParameterTypes;
+            private Builder(TypeDescriptor[] acceptedParameterTypes, TypeDescriptor[] declaredParameterTypes) {
+                this.acceptedParameterTypes = acceptedParameterTypes;
+                this.declaredParameterTypes = declaredParameterTypes;
                 chain = (valid, snippetRun) -> {
                     ResultVerifier.getDefaultResultVerifier().accept(snippetRun);
                     return null;
@@ -539,7 +598,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
             }
 
             RResultVerifier build() {
-                return new RResultVerifier(expectedParameterTypes, chain);
+                return new RResultVerifier(acceptedParameterTypes, declaredParameterTypes, chain);
             }
         }
     }

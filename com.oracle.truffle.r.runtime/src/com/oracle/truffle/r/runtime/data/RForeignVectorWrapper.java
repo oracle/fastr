@@ -82,6 +82,7 @@ public abstract class RForeignVectorWrapper implements RAbstractVector {
     }
 
     @Override
+    @TruffleBoundary
     public final RAbstractVector copy() {
         return ForeignArrayToVectorNode.getUncached().toVector(delegate, getRType());
     }

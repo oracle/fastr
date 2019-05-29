@@ -229,7 +229,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         return asAbstractVector(elements, null, type, true);
     }
 
-    static RAbstractVector asAbstractVector(Object[] elements, int[] dims, RType type, boolean dropDimensions) {
+    public static RAbstractVector asAbstractVector(Object[] elements, int[] dims, RType type, boolean dropDimensions) {
         int size = elements.length;
         switch (type) {
             case Logical:
