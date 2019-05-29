@@ -1,3 +1,17 @@
+# 20.0.0-beta1
+
+New features:
+
+* `is.function` returns `true` for foreign executables
+* better error message when FastR cannot find its home directory
+
+Bug fixes:
+
+* strings '-Inf', '+NaN', and '-NaN' are correctly parsed to doubles including ignoring leading and trailing whitespace
+* avoid unhandled exceptions in `dev.set` #76
+* `for` loop creates and initializes the control variable even if there are no iterations #77
+* update the output of the `capabilities` builtin #78
+
 # 19.0.0
 
 New features:
