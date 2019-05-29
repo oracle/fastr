@@ -239,7 +239,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
             return builder.call(RSyntaxNode.INTERNAL, access, receiver, position).asRNode();
         }
 
-        protected abstract void writePosition(VirtualFrame frame, int index);
+        protected abstract boolean writePosition(VirtualFrame frame, int index);
 
         @Override
         public boolean executeRepeating(VirtualFrame frame) {
@@ -253,9 +253,10 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
             }
             try {
                 if (conditionProfile.profile(index <= length)) {
-                    writePosition(frame, index);
-                    writeElementNode.voidExecute(frame);
-                    body.voidExecute(frame);
+                    if (writePosition(frame, index)) {
+                        writeElementNode.voidExecute(frame);
+                        body.voidExecute(frame);
+                    }
                     return true;
                 } else {
                     return false;
@@ -285,8 +286,9 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         }
 
         @Override
-        protected void writePosition(VirtualFrame frame, int index) {
+        protected boolean writePosition(VirtualFrame frame, int index) {
             // index already used as position
+            return true;
         }
 
     }
@@ -294,24 +296,34 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
     private static final class ForMembersRepeatingNode extends AbstractIndexRepeatingNode {
 
         @Child private LocalReadVariableNode readMembersNode;
+        @Child private LocalReadVariableNode readRangeNode;
         @Child private WriteVariableNode writePositionNode;
         @Child private InteropLibrary membersInterop;
+        @Child private InteropLibrary rangeInterop;
 
         ForMembersRepeatingNode(ForNode forNode, String var, RNode body, String indexName, String positionName, String lengthName, String rangeName, String membersName) {
             super(forNode, var, body, indexName, positionName, lengthName, rangeName);
 
             this.writePositionNode = WriteVariableNode.createAnonymous(positionName, Mode.REGULAR, null);
             this.readMembersNode = LocalReadVariableNode.create(membersName, true);
+            this.readRangeNode = LocalReadVariableNode.create(rangeName, true);
             this.membersInterop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
+            this.rangeInterop = InteropLibrary.getFactory().createDispatched(1);
         }
 
         @Override
-        protected void writePosition(VirtualFrame frame, int index) {
+        protected boolean writePosition(VirtualFrame frame, int index) {
             try {
                 Object members = readMembersNode.execute(frame);
                 assert members != null;
+                Object range = readRangeNode.execute(frame);
                 Object position = membersInterop.readArrayElement(members, index - 1);
-                writePositionNode.execute(frame, position);
+                if (rangeInterop.isMemberReadable(range, (String) position)) {
+                    writePositionNode.execute(frame, position);
+                    return true;
+                } else {
+                    return false;
+                }
             } catch (UnsupportedMessageException | InvalidArrayIndexException ex) {
                 throw RInternalError.shouldNotReachHere(ex, "could not read foreign member: " + (index - 1));
             }
