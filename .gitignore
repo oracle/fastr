@@ -156,3 +156,4 @@ install.tmp.gnur
 lib.install.packages.fastr
 lib.install.packages.gnur
 /com.oracle.truffle.r.release/doc/
+.Rproj.user
