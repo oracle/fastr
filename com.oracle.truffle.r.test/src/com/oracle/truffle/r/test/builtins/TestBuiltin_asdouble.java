@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -201,6 +201,14 @@ public class TestBuiltin_asdouble extends TestBase {
         assertEval("{ f <- function() as.double('aaa'); f() }");
         assertEval("{ f <- function() as.numeric('aaa'); f() }");
         assertEval("{ f1 <- function() {f<- function() as.double('aaa'); f()}; f1() }");
+
+        assertEval("as.double('\t\n Inf\t\n ')");
+        assertEval("as.double('\t\n +Inf\t\n ')");
+        assertEval("as.double('\t\n -Inf\t\n ')");
+        assertEval("as.double('\t\n NaN\t\n ')");
+        assertEval("as.double('\t\n +NaN\t\n ')");
+        assertEval("as.double('\t\n -NaN\t\n ')");
+        assertEval("as.double('- Inf')");
     }
 
     @Test
