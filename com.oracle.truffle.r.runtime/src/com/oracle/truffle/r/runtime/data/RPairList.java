@@ -26,11 +26,17 @@ import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -47,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -71,6 +78,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * in GNUR: 0, 1, 2, 6, 10, 19, 21.
  */
 @ExportLibrary(RPairListLibrary.class)
+@ExportLibrary(InteropLibrary.class)
 public final class RPairList extends RSharingAttributeStorage implements RAbstractContainer, Iterable<RPairList> {
 
     private static final RSymbol FUNCTION_SYMBOL = RDataFactory.createSymbolInterned("function");
@@ -142,6 +150,98 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         this.mayBeClosure = true;
         copyAttributesFromClosure();
         // patternState = PatternState.none;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    long getArraySize() {
+        return getLength();
+    }
+
+    @ExportMessage
+    boolean isArrayElementReadable(long index) {
+        return index >= 0 && index < getLength();
+    }
+
+    @ExportMessage
+    Object readArrayElement(long index,
+                    @Cached.Shared("r2Foreign") @Cached() R2Foreign r2Foreign,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile invalidIndex) throws InvalidArrayIndexException {
+        if (!invalidIndex.profile(isArrayElementReadable(index))) {
+            throw InvalidArrayIndexException.create(index);
+        }
+        return r2Foreign.convert(getDataAtAsObject((int) index));
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasMembers() {
+        return true;
+    }
+
+    @ExportMessage
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+        RStringVector names = getNames();
+        return names != null ? names : RDataFactory.createEmptyStringVector();
+    }
+
+    @ExportMessage
+    boolean isMemberReadable(String member) {
+        int idx = getElementIndexByName(member);
+        return isArrayElementReadable(idx);
+    }
+
+    @ExportMessage
+    boolean isMemberInvocable(String member) {
+        int idx = getElementIndexByName(member);
+        return isArrayElementReadable(idx) && getDataAtAsObject(idx) instanceof RFunction;
+    }
+
+    @ExportMessage
+    Object readMember(String member,
+                    @Cached.Shared("r2Foreign") @Cached() R2Foreign r2Foreign,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException {
+        int idx = getElementIndexByName(member);
+        if (unknownIdentifier.profile(!isArrayElementReadable(idx))) {
+            throw UnknownIdentifierException.create(member);
+        }
+        return r2Foreign.convert(getDataAtAsObject(idx));
+    }
+
+    @ExportMessage
+    Object invokeMember(String member, Object[] arguments,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
+                    @Cached() RFunction.ExplicitCall c) throws UnknownIdentifierException, UnsupportedMessageException {
+        int idx = getElementIndexByName(member);
+        if (unknownIdentifier.profile(!isArrayElementReadable(idx))) {
+            throw UnknownIdentifierException.create(member);
+        }
+        Object f = getDataAtAsObject(idx);
+        if (f instanceof RFunction) {
+            return c.execute((RFunction) f, arguments);
+        }
+        throw UnsupportedMessageException.create();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    void toNative() {
+        NativeDataAccess.asPointer(this);
     }
 
     @TruffleBoundary
@@ -283,7 +383,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
             data[i] = plt.car();
             if (named) {
                 Object ptag = plt.getTag();
-                if (isNull(ptag)) {
+                if (RRuntime.isNull(ptag)) {
                     names[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
                 } else if (ptag instanceof RSymbol) {
                     names[i] = ((RSymbol) ptag).getName();
@@ -465,7 +565,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         } else {
             int result = 1;
             Object tcdr = cdr();
-            while (!isNull(tcdr) && tcdr instanceof RPairList) {
+            while (!RRuntime.isNull(tcdr) && tcdr instanceof RPairList) {
                 tcdr = ((RPairList) tcdr).cdr();
                 result++;
             }
@@ -533,7 +633,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
                 curr.setTag(origList.getTag());
                 curr.setType(origList.getType());
                 original = origList.cdr();
-                if (isNull(original)) {
+                if (RRuntime.isNull(original)) {
                     curr.setCdr(RNull.instance);
                     break;
                 }
@@ -586,7 +686,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         } else {
             Object pl = this;
             int i = 0;
-            while (!isNull(pl) && i < index && pl instanceof RPairList) {
+            while (!RRuntime.isNull(pl) && i < index && pl instanceof RPairList) {
                 pl = ((RPairList) pl).cdr();
                 i++;
             }
@@ -595,10 +695,6 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
             }
             return ((RPairList) pl).car();
         }
-    }
-
-    public static boolean isNull(Object obj) {
-        return obj == RNull.instance;
     }
 
     @Override
@@ -615,7 +711,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
                     hasNames = true;
                 }
                 Object next = current.cdr();
-                if (isNull(next)) {
+                if (RRuntime.isNull(next)) {
                     break;
                 }
                 current = (RPairList) next;
@@ -632,7 +728,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
                 assert name == RNull.instance || name instanceof RSymbol;
                 data[i] = name == RNull.instance ? "" : ((RSymbol) name).getName();
                 Object next = current.cdr();
-                if (isNull(next)) {
+                if (RRuntime.isNull(next)) {
                     break;
                 }
                 current = (RPairList) next;
@@ -648,7 +744,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     public void setNames(RStringVector newNames) {
         ensurePairList();
         Object p = this;
-        for (int i = 0; i < newNames.getLength() && !isNull(p); i++) {
+        for (int i = 0; i < newNames.getLength() && !RRuntime.isNull(p); i++) {
             RPairList pList = (RPairList) p;
             String newNameVal = newNames.getDataAt(i);
             Object newTag = newNameVal.isEmpty() ? RNull.instance : RDataFactory.createSymbolInterned(newNameVal);
@@ -665,7 +761,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
 
             @Override
             public boolean hasNext() {
-                return !isNull(plt);
+                return !RRuntime.isNull(plt);
             }
 
             @Override
@@ -676,6 +772,20 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
                 return curr;
             }
         };
+    }
+
+    @TruffleBoundary
+    public int getElementIndexByName(String name) {
+        if (getNames() == null) {
+            return -1;
+        }
+        RStringVector names = getNames();
+        for (int i = 0; i < names.getLength(); i++) {
+            if (names.getDataAt(i).equals(name)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**

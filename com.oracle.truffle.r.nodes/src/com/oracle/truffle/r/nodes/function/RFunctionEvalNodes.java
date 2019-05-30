@@ -152,7 +152,7 @@ public class RFunctionEvalNodes {
                 Object ptag = plLib.getTag(plt);
                 if (args[i] == varArgs && varArgs != null) {
                     names[i] = varArgs.getSignature();
-                } else if (RPairList.isNull(ptag)) {
+                } else if (RRuntime.isNull(ptag)) {
                     names[i] = null;
                 } else if (ptag instanceof RSymbol) {
                     names[i] = ((RSymbol) ptag).getName();

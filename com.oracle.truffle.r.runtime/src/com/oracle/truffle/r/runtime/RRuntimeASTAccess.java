@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -34,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -92,6 +96,25 @@ public interface RRuntimeASTAccess {
      * Force a promise by slow-path evaluation.
      */
     Object forcePromise(String identifier, Object val);
+
+    /**
+     * Access to Rm.removeFromEnv.
+     */
+    boolean removeFromEnv(REnvironment env, String key);
+
+    /**
+     * Force a promise by slow-path evaluation.
+     */
+    Object forcePromise(RPromise promise);
+
+    interface ExplicitFunctionCall extends NodeInterface {
+        Object call(VirtualFrame frame, RFunction function, RArgsValuesAndNames args);
+    }
+
+    /**
+     * Access to RExplicitCallNode.
+     */
+    ExplicitFunctionCall createExplicitFunctionCall();
 
     /**
      * Returns the {@link ArgumentsSignature} for {@code f}.

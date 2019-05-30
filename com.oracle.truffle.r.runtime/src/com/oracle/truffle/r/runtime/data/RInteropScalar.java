@@ -24,6 +24,13 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 
@@ -34,8 +41,81 @@ public abstract class RInteropScalar extends RScalar {
 
     public abstract Class<?> getJavaType();
 
+    protected abstract Object getValueObject();
+
+    @ImportStatic(DSLConfig.class)
+    @ExportLibrary(InteropLibrary.class)
+    protected abstract static class RNumericInteropScalar extends RInteropScalar {
+
+        @ExportMessage
+        @SuppressWarnings("static-method")
+        boolean isNumber() {
+            return true;
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        boolean fitsInByte(@CachedLibrary("this.getValueObject()") InteropLibrary interop) {
+            return interop.fitsInByte(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        byte asByte(@CachedLibrary("this.getValueObject()") InteropLibrary interop) throws UnsupportedMessageException {
+            return interop.asByte(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        boolean fitsInShort(@CachedLibrary("this.getValueObject()") InteropLibrary interop) {
+            return interop.fitsInShort(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        short asShort(@CachedLibrary("this.getValueObject()") InteropLibrary interop) throws UnsupportedMessageException {
+            return interop.asShort(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        boolean fitsInInt(@CachedLibrary("this.getValueObject()") InteropLibrary interop) {
+            return interop.fitsInShort(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        int asInt(@CachedLibrary("this.getValueObject()") InteropLibrary interop) throws UnsupportedMessageException {
+            return interop.asInt(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        boolean fitsInLong(@CachedLibrary("this.getValueObject()") InteropLibrary interop) {
+            return interop.fitsInLong(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        long asLong(@CachedLibrary("this.getValueObject()") InteropLibrary interop) throws UnsupportedMessageException {
+            return interop.asLong(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        boolean fitsInFloat(@CachedLibrary("this.getValueObject()") InteropLibrary interop) {
+            return interop.fitsInFloat(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        float asFloat(@CachedLibrary("this.getValueObject()") InteropLibrary interop) throws UnsupportedMessageException {
+            return interop.asFloat(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        boolean fitsInDouble(@CachedLibrary("this.getValueObject()") InteropLibrary interop) {
+            return interop.fitsInDouble(getValueObject());
+        }
+
+        @ExportMessage(limit = "getInteropLibraryCacheSize()")
+        double asDouble(@CachedLibrary("this.getValueObject()") InteropLibrary interop) throws UnsupportedMessageException {
+            return interop.asDouble(getValueObject());
+        }
+    }
+
     @ValueType
-    public static final class RInteropByte extends RInteropScalar {
+    public static final class RInteropByte extends RNumericInteropScalar {
 
         private final byte value;
 
@@ -49,6 +129,11 @@ public abstract class RInteropScalar extends RScalar {
 
         public byte getValue() {
             return value;
+        }
+
+        @Override
+        protected Object getValueObject() {
+            return getValue();
         }
 
         @Override
@@ -74,6 +159,7 @@ public abstract class RInteropScalar extends RScalar {
     }
 
     @ValueType
+    @ExportLibrary(InteropLibrary.class)
     public static final class RInteropChar extends RInteropScalar {
 
         private final char value;
@@ -82,12 +168,28 @@ public abstract class RInteropScalar extends RScalar {
             this.value = value;
         }
 
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        boolean isString() {
+            return true;
+        }
+
+        @ExportMessage
+        String asString() {
+            return Character.toString(value);
+        }
+
         public static RInteropChar valueOf(char value) {
             return new RInteropChar(value);
         }
 
         public char getValue() {
             return value;
+        }
+
+        @Override
+        protected Object getValueObject() {
+            return getValue();
         }
 
         @Override
@@ -113,7 +215,7 @@ public abstract class RInteropScalar extends RScalar {
     }
 
     @ValueType
-    public static final class RInteropFloat extends RInteropScalar {
+    public static final class RInteropFloat extends RNumericInteropScalar {
 
         private final float value;
 
@@ -127,6 +229,11 @@ public abstract class RInteropScalar extends RScalar {
 
         public float getValue() {
             return value;
+        }
+
+        @Override
+        protected Object getValueObject() {
+            return getValue();
         }
 
         @Override
@@ -152,7 +259,7 @@ public abstract class RInteropScalar extends RScalar {
     }
 
     @ValueType
-    public static final class RInteropLong extends RInteropScalar {
+    public static final class RInteropLong extends RNumericInteropScalar {
 
         private final long value;
 
@@ -166,6 +273,11 @@ public abstract class RInteropScalar extends RScalar {
 
         public long getValue() {
             return value;
+        }
+
+        @Override
+        protected Object getValueObject() {
+            return getValue();
         }
 
         @Override
@@ -191,7 +303,7 @@ public abstract class RInteropScalar extends RScalar {
     }
 
     @ValueType
-    public static final class RInteropShort extends RInteropScalar {
+    public static final class RInteropShort extends RNumericInteropScalar {
 
         private final short value;
 
@@ -205,6 +317,11 @@ public abstract class RInteropScalar extends RScalar {
 
         public short getValue() {
             return value;
+        }
+
+        @Override
+        protected Object getValueObject() {
+            return getValue();
         }
 
         @Override
@@ -234,6 +351,7 @@ public abstract class RInteropScalar extends RScalar {
      * FastR execution, it is only passed to interop and converted back to primitive value if passed
      * back to FastR.
      */
+    @ExportLibrary(InteropLibrary.class)
     public static final class RInteropNA implements RTruffleObject {
         public static final RInteropNA INT = new RInteropNA(RRuntime.INT_NA);
         public static final RInteropNA DOUBLE = new RInteropNA(RRuntime.DOUBLE_NA);
@@ -248,6 +366,12 @@ public abstract class RInteropScalar extends RScalar {
 
         public Object getValue() {
             return value;
+        }
+
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        boolean isNull() {
+            return true;
         }
     }
 }

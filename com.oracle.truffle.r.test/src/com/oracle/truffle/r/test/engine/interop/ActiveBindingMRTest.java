@@ -33,6 +33,11 @@ import org.junit.Test;
 
 public class ActiveBindingMRTest extends AbstractMRTest {
 
+    @Override
+    protected boolean shouldTestToNative(TruffleObject obj) {
+        return false;
+    }
+
     @Test
     @Override
     public void testIsNull() throws Exception {

@@ -162,7 +162,7 @@ public abstract class AccessForeignElementNode extends RBaseNode {
 
         private void write(InteropLibrary interop, R2Foreign r2Foreign, TruffleObject object, long position, Object value) throws RError {
             try {
-                interop.writeArrayElement(object, position, r2Foreign.execute(value));
+                interop.writeArrayElement(object, position, r2Foreign.convert(value));
             } catch (InvalidArrayIndexException e) {
 
                 throw invalidIdentifierError(position);
@@ -189,7 +189,7 @@ public abstract class AccessForeignElementNode extends RBaseNode {
                         @Cached("create()") R2Foreign r2Foreign,
                         @CachedLibrary("object") InteropLibrary interop) {
             try {
-                interop.writeMember(object, position, r2Foreign.execute(value));
+                interop.writeMember(object, position, r2Foreign.convert(value));
             } catch (UnknownIdentifierException e) {
                 throw invalidIdentifierError(position);
             } catch (InteropException ex) {
@@ -209,7 +209,7 @@ public abstract class AccessForeignElementNode extends RBaseNode {
                 if (clazz == null) {
                     throw invalidIdentifierError(position);
                 }
-                interop.writeMember(clazz, position, r2Foreign.execute(value));
+                interop.writeMember(clazz, position, r2Foreign.convert(value));
             } catch (UnknownIdentifierException e) {
                 throw invalidIdentifierError(position);
             } catch (InteropException e) {

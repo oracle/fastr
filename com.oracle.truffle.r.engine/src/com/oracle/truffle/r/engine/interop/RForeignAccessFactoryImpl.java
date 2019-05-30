@@ -72,57 +72,57 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
     @Override
     public ForeignAccess getForeignAccess(RTruffleObject obj) {
         if (obj instanceof RNull) {
-            return RNullMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RList) {
-            return RListMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RExpression) {
-            return RExpressionMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof REnvironment) {
-            return REnvironmentMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RPairList) {
-            return RPairListMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RFunction) {
-            return RFunctionMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RSymbol) {
-            return RSymbolMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RExternalPtr) {
-            return RExternalPtrMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RUnboundValue) {
-            return RUnboundValueMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RLogical) {
-            return RLogicalMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RInteger) {
-            return RIntegerMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RDouble) {
-            return RDoubleMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RComplex) {
-            return RComplexMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RRaw) {
-            return RRawMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RString) {
-            return RStringMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RConnection) {
-            return RConnectionMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RS4Object) {
             return RS4ObjectMRForeign.ACCESS;
         } else if (obj instanceof RPromise) {
-            return RPromiseMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RArgsValuesAndNames) {
-            return RArgsValuesAndNamesMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof ActiveBinding) {
-            return ActiveBindingMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RInteropScalar) {
-            return RInteropScalarMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RMissing) {
-            return RMissingMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof REmpty) {
-            return REmptyMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RInteropNA) {
-            return RInteropNAMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RAbstractAtomicVector) {
             return RAbstractVectorAccessFactory.ACCESS;
         } else if (obj instanceof RForeignObjectWrapper) {
-            return RForeignObjectWrapperMRForeign.ACCESS;
+            return null;
         } else {
             ForeignAccess access = FFI_RForeignAccessFactoryImpl.getForeignAccess(obj);
             if (access != null) {
@@ -135,6 +135,7 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
 
     @Override
     public boolean setIsNull(boolean value) {
-        return RNullMR.setIsNull(value);
+        return RNull.setIsNull(value);
     }
+
 }

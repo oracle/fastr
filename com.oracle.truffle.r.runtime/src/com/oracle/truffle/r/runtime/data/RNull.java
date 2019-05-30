@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.interop.RNullMRContextState;
 
+@ExportLibrary(InteropLibrary.class)
 public final class RNull extends RScalar {
 
     public static final RNull instance = new RNull();
@@ -41,5 +47,37 @@ public final class RNull extends RScalar {
     @Override
     public RType getRType() {
         return RType.Null;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isNull() {
+        return RContext.getInstance().stateRNullMR.isNull();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    void toNative() {
+        NativeDataAccess.asPointer(this);
+    }
+
+    /**
+     * Workaround to avoid NFI converting {@link RNull} to {@code null}.
+     */
+    public static boolean setIsNull(boolean value) {
+        RNullMRContextState state = RContext.getInstance().stateRNullMR;
+        boolean prev = state.isNull();
+        state.setIsNull(value);
+        return prev;
     }
 }

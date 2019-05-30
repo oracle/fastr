@@ -23,32 +23,20 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import org.junit.Test;
 
-public class RLogicalMRTest extends AbstractMRTest {
+public class RSymbolMRTest extends AbstractMRTest {
+
+    @Override
+    protected TruffleObject[] createTruffleObjects() throws Exception {
+        return new TruffleObject[]{RSymbol.MISSING};
+    }
 
     @Test
     @Override
     public void testIsNull() throws Exception {
         super.testIsNull(); // force inherited tests from AbstractMRTest
-    }
-
-    @Override
-    protected boolean shouldTestToNative(TruffleObject obj) {
-        return false;
-    }
-
-    @Override
-    protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RLogical.valueOf(true), RLogical.valueOf(false), RLogical.valueOf(RRuntime.LOGICAL_NA)};
-    }
-
-    @Override
-    protected Object getUnboxed(TruffleObject obj) {
-        byte unboxed = ((RLogical) obj).getValue();
-        return RRuntime.isNA(unboxed) ? null : RRuntime.fromLogical(unboxed);
     }
 
     @Override

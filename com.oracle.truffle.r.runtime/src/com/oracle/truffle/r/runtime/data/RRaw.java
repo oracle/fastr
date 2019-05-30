@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,11 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -34,12 +39,84 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
+@ExportLibrary(InteropLibrary.class)
 public final class RRaw extends RScalarVector implements RAbstractRawVector {
 
-    private final byte value;
+    protected final byte value;
 
     RRaw(byte value) {
         this.value = value;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    boolean isNumber() {
+        return true;
+    }
+
+    @ExportMessage
+    boolean fitsInByte(@CachedLibrary("this.value") InteropLibrary interop) {
+        return interop.fitsInByte(value);
+    }
+
+    @ExportMessage
+    byte asByte(@CachedLibrary("this.value") InteropLibrary interop) throws UnsupportedMessageException {
+        return interop.asByte(value);
+    }
+
+    @ExportMessage
+    boolean fitsInShort(@CachedLibrary("this.value") InteropLibrary interop) {
+        return interop.fitsInShort(value);
+    }
+
+    @ExportMessage
+    short asShort(@CachedLibrary("this.value") InteropLibrary interop) throws UnsupportedMessageException {
+        return interop.asShort(value);
+    }
+
+    @ExportMessage
+    boolean fitsInInt(@CachedLibrary("this.value") InteropLibrary interop) {
+        return interop.fitsInShort(value);
+    }
+
+    @ExportMessage
+    int asInt(@CachedLibrary("this.value") InteropLibrary interop) throws UnsupportedMessageException {
+        return interop.asInt(value);
+    }
+
+    @ExportMessage
+    boolean fitsInLong(@CachedLibrary("this.value") InteropLibrary interop) {
+        return interop.fitsInLong(value);
+    }
+
+    @ExportMessage
+    long asLong(@CachedLibrary("this.value") InteropLibrary interop) throws UnsupportedMessageException {
+        return interop.asLong(value);
+    }
+
+    @ExportMessage
+    boolean fitsInFloat(@CachedLibrary("this.value") InteropLibrary interop) {
+        return interop.fitsInFloat(value);
+    }
+
+    @ExportMessage
+    float asFloat(@CachedLibrary("this.value") InteropLibrary interop) throws UnsupportedMessageException {
+        return interop.asFloat(value);
+    }
+
+    @ExportMessage
+    boolean fitsInDouble(@CachedLibrary("this.value") InteropLibrary interop) {
+        return interop.fitsInDouble(value);
+    }
+
+    @ExportMessage
+    double asDouble(@CachedLibrary("this.value") InteropLibrary interop) throws UnsupportedMessageException {
+        return interop.asDouble(value);
+    }
+
+    @ExportMessage()
+    void toNative() {
+        NativeDataAccess.asPointer(this);
     }
 
     @Override

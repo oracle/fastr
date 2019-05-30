@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -129,11 +130,17 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
         assertFalse(KeyInfo.isInternal(info));
     }
 
+    @Test
+    public void testInvokeMember() throws Exception {
+        TruffleObject o = createTruffleObjects()[0];
+        assertSingletonVector(true, InteropLibrary.getFactory().getUncached().invokeMember(o, "fn", true));
+    }
+
     private String[] names = {"s", "i", "d", "b", "fn", "n"};
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        Source src = Source.newBuilder("R", "f=function() {}", "<testfunction>").internal(true).buildLiteral();
+        Source src = Source.newBuilder("R", "f=function(s) {s}", "<testfunction>").internal(true).buildLiteral();
         Value result = context.eval(src);
         RFunction fn = (RFunction) FastRSession.getReceiver(result);
         Object[] values = {"abc", 123, 1.1, RRuntime.asLogical(true), fn, RNull.instance};

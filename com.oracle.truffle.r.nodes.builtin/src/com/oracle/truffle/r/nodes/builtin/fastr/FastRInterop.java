@@ -678,11 +678,11 @@ public class FastRInterop {
 
         @Specialization(guards = {"isJavaObject(x1)"})
         public byte isInstance(TruffleObject x1, RInteropScalar x2,
-                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+                        @Cached() R2Foreign r2Foreign) {
             Object jo1 = RContext.getInstance().getEnv().asHostObject(x1);
             if (jo1 instanceof Class) {
                 Class<?> cl1 = (Class<?>) jo1;
-                return RRuntime.asLogical(cl1.isInstance(r2Foreign.execute(x2)));
+                return RRuntime.asLogical(cl1.isInstance(r2Foreign.convertNoBox(x2)));
             }
             return RRuntime.asLogical(jo1.getClass().isInstance(x2));
         }
@@ -711,9 +711,6 @@ public class FastRInterop {
             return obj instanceof RInteropScalar;
         }
 
-        protected R2Foreign createR2Foreign() {
-            return R2Foreign.create();
-        }
     }
 
     @RBuiltin(name = ".fastr.interop.asJavaArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"x", "className", "flat"}, behavior = COMPLEX)
@@ -734,22 +731,22 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         public Object toArray(RAbstractLogicalVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
-                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
-            return toArray(vec, flat, boolean.class, (array, i) -> Array.set(array, i, r2Foreign.execute(vec.getDataAt(i))));
+                        @Cached() R2Foreign r2Foreign) {
+            return toArray(vec, flat, boolean.class, (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
         }
 
         @Specialization
         @TruffleBoundary
         public Object toArray(RAbstractLogicalVector vec, String className, boolean flat,
-                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
-            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, r2Foreign.execute(vec.getDataAt(i))));
+                        @Cached() R2Foreign r2Foreign) {
+            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
         }
 
         @Specialization
         @TruffleBoundary
         public Object toArray(RAbstractIntVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
-                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
-            return toArray(vec, flat, int.class, (array, i) -> Array.set(array, i, r2Foreign.execute(vec.getDataAt(i))));
+                        @Cached() R2Foreign r2Foreign) {
+            return toArray(vec, flat, int.class, (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
         }
 
         @Specialization
@@ -829,35 +826,31 @@ public class FastRInterop {
         @Specialization(guards = "!isJavaLikeVector(vec)")
         @TruffleBoundary
         public Object toArray(RAbstractVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
-                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+                        @Cached() R2Foreign r2Foreign) {
             return toArray(vec, flat, Object.class, r2Foreign);
         }
 
         @Specialization(guards = "!isJavaLikeVector(vec)")
         @TruffleBoundary
         public Object toArray(RAbstractVector vec, String className, boolean flat,
-                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+                        @Cached() R2Foreign r2Foreign) {
             return toArray(vec, flat, getClazz(className), r2Foreign);
         }
 
         @Specialization
         @TruffleBoundary
         public Object toArray(RInteropScalar ri, String className, boolean flat,
-                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+                        @Cached() R2Foreign r2Foreign) {
             RList list = RDataFactory.createList(new Object[]{ri});
-            return toArray(list, flat, getClazz(className), (array, i) -> Array.set(array, i, r2Foreign.execute(list.getDataAt(i))));
+            return toArray(list, flat, getClazz(className), (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(list.getDataAt(i))));
         }
 
         @Specialization
         @TruffleBoundary
         public Object toArray(RInteropScalar ri, @SuppressWarnings("unused") RMissing className, boolean flat,
-                        @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+                        @Cached() R2Foreign r2Foreign) {
             RList list = RDataFactory.createList(new Object[]{ri});
-            return toArray(list, flat, ri.getJavaType(), (array, i) -> Array.set(array, i, r2Foreign.execute(list.getDataAt(i))));
-        }
-
-        protected R2Foreign createR2Foreign() {
-            return R2Foreign.createNoBox();
+            return toArray(list, flat, ri.getJavaType(), (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(list.getDataAt(i))));
         }
 
         private static int[] getDim(boolean flat, RAbstractVector vec) {
@@ -897,7 +890,7 @@ public class FastRInterop {
                 // TODO works only for flat
                 for (int i = 0; i < dim; i++) {
                     try {
-                        Object value = r2Foreign.execute(vec.getDataAtAsObject(i));
+                        Object value = r2Foreign.convertNoBox(vec.getDataAtAsObject(i));
                         InteropLibrary.getFactory().getUncached().writeArrayElement(truffleArray, i, value);
                     } catch (InteropException ex) {
                         throw error(RError.Message.GENERIC, ex.getMessage());
@@ -1036,12 +1029,12 @@ public class FastRInterop {
         @TruffleBoundary
         public Object interopNew(TruffleObject clazz, RArgsValuesAndNames args,
                         @CachedLibrary("clazz") InteropLibrary interop,
-                        @Cached("create()") R2Foreign r2Foreign,
-                        @Cached("create()") Foreign2R foreign2R) {
+                        @Cached() R2Foreign r2Foreign,
+                        @Cached() Foreign2R foreign2R) {
             try {
                 Object[] argValues = new Object[args.getLength()];
                 for (int i = 0; i < argValues.length; i++) {
-                    argValues[i] = r2Foreign.execute(args.getArgument(i));
+                    argValues[i] = r2Foreign.convert(args.getArgument(i));
                 }
                 Object result = interop.instantiate(clazz, argValues);
                 return foreign2R.convert(result);

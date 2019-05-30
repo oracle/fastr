@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,11 @@ import com.oracle.truffle.r.runtime.data.RInteropScalar;
 
 public class RInteropScalarMRTest extends AbstractMRTest {
 
+    @Override
+    protected boolean shouldTestToNative(TruffleObject obj) {
+        return false;
+    }
+
     @Test
     public void testRInteroptScalar() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
@@ -45,20 +50,29 @@ public class RInteropScalarMRTest extends AbstractMRTest {
     }
 
     private static void testRIS(TruffleObject obj, Class<?> unboxedType) throws Exception {
-        assertFalse(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), obj));
-        assertFalse(ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj));
+        assertFalse(obj.getClass().getName() + " " + obj + " isn't expected to be null", ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), obj));
+        assertFalse(obj.getClass().getName() + " " + obj + " isn't expected to have a size", ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj));
 
-        assertTrue(ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
+        assertTrue(obj.getClass().getName() + " " + obj + " is expected to be boxed", ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
         Object ub = ForeignAccess.sendUnbox(Message.UNBOX.createNode(), obj);
-        assertEquals(unboxedType, ub.getClass().getField("TYPE").get(null));
+        if (unboxedType == Character.TYPE) {
+            assertEquals(obj.getClass().getName() + " " + obj, String.class, ub.getClass());
+        } else {
+            assertEquals(obj.getClass().getName() + " " + obj, unboxedType, ub.getClass().getField("TYPE").get(null));
+        }
     }
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RInteropScalar.RInteropByte.valueOf(Byte.MAX_VALUE),
+        return new TruffleObject[]{
+                        RInteropScalar.RInteropByte.valueOf(Byte.MIN_VALUE),
+                        RInteropScalar.RInteropByte.valueOf(Byte.MAX_VALUE),
                         RInteropScalar.RInteropChar.valueOf('a'),
+                        RInteropScalar.RInteropFloat.valueOf(Float.MIN_VALUE),
                         RInteropScalar.RInteropFloat.valueOf(Float.MAX_VALUE),
+                        RInteropScalar.RInteropLong.valueOf(Long.MIN_VALUE),
                         RInteropScalar.RInteropLong.valueOf(Long.MAX_VALUE),
+                        RInteropScalar.RInteropShort.valueOf(Short.MIN_VALUE),
                         RInteropScalar.RInteropShort.valueOf(Short.MAX_VALUE)};
     }
 
@@ -66,7 +80,11 @@ public class RInteropScalarMRTest extends AbstractMRTest {
     protected Object getUnboxed(TruffleObject obj) {
         RInteropScalar is = (RInteropScalar) obj;
         try {
-            return is.getClass().getDeclaredMethod("getValue").invoke(is);
+            Object value = is.getClass().getDeclaredMethod("getValue").invoke(is);
+            if (value instanceof Character) {
+                return value.toString();
+            }
+            return value;
         } catch (Exception ex) {
             Assert.fail("can't read interop scalar value " + ex);
         }

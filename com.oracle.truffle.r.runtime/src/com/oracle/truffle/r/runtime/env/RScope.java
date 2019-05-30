@@ -285,7 +285,7 @@ public final class RScope {
                     if (value == null) {
                         throw UnknownIdentifierException.raise(name);
                     } else {
-                        return r2Foreign.execute(getInteropValue(value));
+                        return r2Foreign.convert(getInteropValue(value));
                     }
                 }
             }

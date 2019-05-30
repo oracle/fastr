@@ -255,6 +255,10 @@ public class RRuntime {
         return Double.isNaN(d);
     }
 
+    public static boolean isNull(Object obj) {
+        return obj == RNull.instance;
+    }
+
     @TruffleBoundary
     // TODO refactor this into RType so it is complete and more efficient
     public static String classToString(Class<?> c) {
@@ -1059,6 +1063,10 @@ public class RRuntime {
         } catch (UnsupportedMessageException ex) {
             throw RInternalError.shouldNotReachHere();
         }
+        return interopArraySizeToInt(size, object);
+    }
+
+    private static int interopArraySizeToInt(long size, Object object) throws RError {
         if (size <= Integer.MAX_VALUE) {
             return (int) size;
         }

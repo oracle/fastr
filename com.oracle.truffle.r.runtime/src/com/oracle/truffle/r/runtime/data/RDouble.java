@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,13 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -36,12 +43,102 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
+@ExportLibrary(InteropLibrary.class)
 public final class RDouble extends RScalarVector implements RAbstractDoubleVector {
 
-    private final double value;
+    protected final double value;
 
     private RDouble(double value) {
         this.value = value;
+    }
+
+    @ExportMessage
+    boolean isNumber() {
+        return !RRuntime.isNA(value);
+    }
+
+    @ExportMessage
+    boolean fitsInByte(@CachedLibrary("this.value") InteropLibrary interop) {
+        return isNumber() && interop.fitsInByte(value);
+    }
+
+    @ExportMessage
+    byte asByte(@CachedLibrary("this.value") InteropLibrary interop,
+                    @Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+        if (!isNumber.profile(isNumber())) {
+            throw UnsupportedMessageException.create();
+        }
+        return interop.asByte(value);
+    }
+
+    @ExportMessage
+    boolean fitsInShort(@CachedLibrary("this.value") InteropLibrary interop) {
+        return isNumber() && interop.fitsInShort(value);
+    }
+
+    @ExportMessage
+    short asShort(@CachedLibrary("this.value") InteropLibrary interop,
+                    @Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+        if (!isNumber.profile(isNumber())) {
+            throw UnsupportedMessageException.create();
+        }
+        return interop.asShort(value);
+    }
+
+    @ExportMessage
+    boolean fitsInInt(@CachedLibrary("this.value") InteropLibrary interop) {
+        return isNumber() && interop.fitsInShort(value);
+    }
+
+    @ExportMessage
+    int asInt(@CachedLibrary("this.value") InteropLibrary interop,
+                    @Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+        if (!isNumber.profile(isNumber())) {
+            throw UnsupportedMessageException.create();
+        }
+        return interop.asInt(value);
+    }
+
+    @ExportMessage
+    boolean fitsInLong(@CachedLibrary("this.value") InteropLibrary interop) {
+        return isNumber() && interop.fitsInLong(value);
+    }
+
+    @ExportMessage
+    long asLong(@CachedLibrary("this.value") InteropLibrary interop,
+                    @Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+        if (!isNumber.profile(isNumber())) {
+            throw UnsupportedMessageException.create();
+        }
+        return interop.asLong(value);
+    }
+
+    @ExportMessage
+    boolean fitsInFloat(@CachedLibrary("this.value") InteropLibrary interop) {
+        return isNumber() && interop.fitsInFloat(value);
+    }
+
+    @ExportMessage
+    float asFloat(@CachedLibrary("this.value") InteropLibrary interop,
+                    @Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+        if (!isNumber.profile(isNumber())) {
+            throw UnsupportedMessageException.create();
+        }
+        return interop.asFloat(value);
+    }
+
+    @ExportMessage
+    boolean fitsInDouble(@CachedLibrary("this.value") InteropLibrary interop) {
+        return isNumber() && interop.fitsInDouble(value);
+    }
+
+    @ExportMessage
+    double asDouble(@CachedLibrary("this.value") InteropLibrary interop,
+                    @Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+        if (!isNumber.profile(isNumber())) {
+            throw UnsupportedMessageException.create();
+        }
+        return interop.asDouble(value);
     }
 
     public static RDouble createNA() {

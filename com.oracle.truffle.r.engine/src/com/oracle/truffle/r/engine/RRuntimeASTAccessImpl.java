@@ -43,6 +43,7 @@ import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
+import com.oracle.truffle.r.nodes.builtin.base.Rm;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
@@ -54,7 +55,9 @@ import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.LoopTag;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -79,6 +82,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
@@ -116,6 +120,26 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         } else {
             return val;
         }
+    }
+
+    @TruffleBoundary
+    @Override
+    public boolean removeFromEnv(REnvironment env, String key) {
+        try {
+            return Rm.removeFromEnv(env, key, true);
+        } catch (REnvironment.PutException ex) {
+            return false;
+        }
+    }
+
+    @Override
+    public Object forcePromise(RPromise promise) {
+        return PromiseHelperNode.evaluateSlowPath(promise);
+    }
+
+    @Override
+    public ExplicitFunctionCall createExplicitFunctionCall() {
+        return RExplicitCallNode.create();
     }
 
     @Override

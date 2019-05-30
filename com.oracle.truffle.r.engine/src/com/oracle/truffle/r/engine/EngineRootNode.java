@@ -82,7 +82,7 @@ class EngineRootNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         Object actualFrame = executionFrame != null ? executionFrame : contextReference.get().stateREnvironment.getGlobalFrame();
         try {
-            return r2Foreign.execute(this.bodyNode.execute(actualFrame));
+            return r2Foreign.convert(this.bodyNode.execute(actualFrame));
         } catch (ReturnException ex) {
             return ex.getResult();
         } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath e) {

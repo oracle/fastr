@@ -55,7 +55,11 @@ import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -122,15 +126,15 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             Object value = extract.apply(receiver, positions, RLogical.TRUE, RLogical.TRUE);
             if (r2Foreign == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                r2Foreign = insert(R2Foreign.createNoBox());
+                r2Foreign = insert(R2Foreign.create());
             }
-            return r2Foreign.execute(value);
+            return r2Foreign.convertNoBox(value);
         }
 
         @Fallback
-        protected Object read(@SuppressWarnings("unused") Object receiver, Object indentifier) {
+        protected Object read(@SuppressWarnings("unused") Object receiver, @SuppressWarnings("unused") Object indentifier) {
             CompilerDirectives.transferToInterpreter();
-            throw UnknownIdentifierException.raise("" + indentifier);
+            throw UnsupportedMessageException.raise(Message.READ);
         }
 
         protected VectorKeyInfoImplNode createKeyInfoNode() {
@@ -223,6 +227,10 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
                 if (isEmpty.profile(arg.getLength() == 0)) {
                     return false;
                 }
+                if (!(arg instanceof RAbstractLogicalVector || arg instanceof RAbstractIntVector || arg instanceof RAbstractDoubleVector || arg instanceof RAbstractStringVector ||
+                                arg instanceof RAbstractRawVector)) {
+                    return false;
+                }
                 Object o = arg.getDataAtAsObject(0);
                 return arg.getLength() == 1 && !isNA(isNANode, o);
             }
@@ -275,10 +283,14 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             @Override
             public Object execute(VirtualFrame frame) {
                 RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
+                if (!(arg instanceof RAbstractLogicalVector || arg instanceof RAbstractIntVector || arg instanceof RAbstractDoubleVector || arg instanceof RAbstractStringVector ||
+                                arg instanceof RAbstractRawVector)) {
+                    throw UnsupportedMessageException.raise(Message.UNBOX);
+                }
                 if (arg.getLength() == 1) {
                     Object value = arg.getDataAtAsObject(0);
                     if (isLogical.profile(arg instanceof RAbstractLogicalVector)) {
-                        return RLogicalMR.unboxLogical((Byte) value);
+                        return unboxLogical((Byte) value);
                     } else if (!isNA(isNANode, value)) {
                         return value;
                     }
@@ -390,4 +402,10 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
 
     }
 
+    public static Object unboxLogical(byte value) {
+        if (RRuntime.isNA(value)) {
+            throw UnsupportedMessageException.raise(Message.UNBOX);
+        }
+        return RRuntime.fromLogical(value);
+    }
 }

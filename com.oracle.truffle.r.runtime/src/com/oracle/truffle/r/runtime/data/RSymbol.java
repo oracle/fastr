@@ -27,6 +27,9 @@ import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 
@@ -35,6 +38,7 @@ import com.oracle.truffle.r.runtime.Utils;
  * Truffle sense.
  */
 @ValueType
+@ExportLibrary(InteropLibrary.class)
 public final class RSymbol extends RAttributeStorage {
 
     /**
@@ -51,6 +55,22 @@ public final class RSymbol extends RAttributeStorage {
 
     private RSymbol(String name) {
         this.nameWrapper = CharSXPWrapper.createInterned(name);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    void toNative() {
+        NativeDataAccess.asPointer(this);
     }
 
     @TruffleBoundary

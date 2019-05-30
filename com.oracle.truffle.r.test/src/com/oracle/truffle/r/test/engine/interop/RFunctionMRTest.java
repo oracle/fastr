@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,19 +62,29 @@ public class RFunctionMRTest extends AbstractMRTest {
         f = create("function(a) { .fastr.interop.asShort(a) }");
         assertTrue(ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, 123) instanceof Short);
 
-        f = create("function(a) { NA }");
-        Object naVectorResult = ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, true);
+        f = create("function() { NA }");
+        Object naVectorResult = ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f);
         Object naValue = ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) naVectorResult, 0);
         assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) naValue));
 
-        f = create("function(a) { NULL }");
-        Object nullResult = ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, true);
+        f = create("function() { NULL }");
+        Object nullResult = ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f);
         assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) nullResult));
     }
 
     @Override
+    protected Object[] getExecuteArguments(TruffleObject obj) {
+        return new Object[]{true};
+    }
+
+    @Override
+    protected Object getExecuteExpected(TruffleObject obj) {
+        return true;
+    }
+
+    @Override
     protected TruffleObject[] createTruffleObjects() {
-        return new TruffleObject[]{create("function() {}")};
+        return new TruffleObject[]{create("function(s) {s}")};
     }
 
     private static RFunction create(String fun) {
