@@ -493,15 +493,18 @@ public class RRuntime {
     @TruffleBoundary
     public static double string2doubleNoCheck(String v, boolean exceptionOnFail) {
         // FIXME use R rules
-        if ("Inf".equals(v)) {
+        String trimmed = v.trim();
+        if ("Inf".equals(trimmed) || "+Inf".equals(trimmed)) {
             return Double.POSITIVE_INFINITY;
-        } else if ("NaN".equals(v)) {
+        } else if ("-Inf".equals(trimmed)) {
+            return Double.NEGATIVE_INFINITY;
+        } else if ("NaN".equals(trimmed) || "+NaN".equals(trimmed) || "-NaN".equals(trimmed)) {
             return Double.NaN;
-        } else if ("NA_real_".equals(v)) {
+        } else if ("NA_real_".equals(trimmed)) {
             return DOUBLE_NA;
         }
         try {
-            return Double.parseDouble(v);
+            return Double.parseDouble(trimmed);
         } catch (NumberFormatException e) {
             if (hasHexPrefix(v)) {
                 switch (v.charAt(0)) {

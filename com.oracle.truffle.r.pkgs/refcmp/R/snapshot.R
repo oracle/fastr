@@ -26,6 +26,8 @@ refcmpEnv$snapshot_dir <- 'snapshots'
 refcmpEnv$snapshot_id <- 0L
 refcmpEnv$equals <- all.equal
 
+log <- function(msg) cat("SNAPSHOT: ", msg, "\n")
+
 snapshot.isFastR <- function() {
     length(grep('FastR', R.Version()$version.string)) != 0
 }
@@ -35,6 +37,8 @@ snapshot.isFastR <- function() {
 #' @param dir The directory where to store snapshot to (default: 'snapshots')
 #' @param is_reference_run A function returning TRUE if snapshots should be taken and FALSE if values should be compared (default: snapshot dir does not exist)
 #' @param equalityFunction The function to use for comparing actual values to snapshotted values (default: 'all.equal')
+#' @param browserOnDiff Calls the "browser()" function on each difference to the reference run, this opens the 
+#' interactive command line debugger where you can further inspect the state.
 #' @examples
 #' # Only comparing using snapshots in directory "my/snapshot/dir" and using function 'identical' to compare values.
 #' snapshot.init(dir = "my/snapshot/dir", referenceRunPredicate = function() FALSE, equalityFunction = identical)
@@ -42,7 +46,8 @@ snapshot.isFastR <- function() {
 #' # This should do the job in most cases
 #' snapshot.init()
 #' @export
-snapshot.init <- function (dir, is_reference_run, equalityFunction) {
+snapshot.init <- function (dir, is_reference_run, equalityFunction, browserOnDiff = T) {
+    refcmpEnv$browser <- browserOnDiff
     if (!missing(dir)) {
         refcmpEnv$snaphost_dir <- dir
     }
@@ -50,6 +55,11 @@ snapshot.init <- function (dir, is_reference_run, equalityFunction) {
         refcmpEnv$is_reference_run <- is_reference_run
     } else {
         refcmpEnv$is_reference_run <- !file.exists(refcmpEnv$snapshot_dir)
+    }
+    if (refcmpEnv$is_reference_run) {
+        log(paste0(" Mode is reference run. The data will be saved to ", refcmpEnv$snapshot_dir))
+    } else {
+        log(paste0(" Mode is check run. The data will be compared to reference run data from ", refcmpEnv$snapshot_dir))
     }
     if (!missing(equalityFunction)) {
         refcmpEnv$equals <- equalityFunction
@@ -73,12 +83,12 @@ snapshot.init <- function (dir, is_reference_run, equalityFunction) {
 #' 
 #' snapshot(x, y, z)
 #' @export
-snapshot <- function(...) {
+snapshot <- function(..., ignore = F) {
     # the actual parameter expessions
     actParExprs <- as.list(match.call()[-1])
     valueList <- actParsToList(actParExprs, parent.frame())
     try({
-        snapshot.id(refcmpEnv$snapshot_id, valueList)
+        snapshot.id(refcmpEnv$snapshot_id, valueList, ignore)
         refcmpEnv$snapshot_id <- refcmpEnv$snapshot_id + 1
     })
 }
@@ -95,23 +105,27 @@ snapshot <- function(...) {
 #' I contrast to function 'snapshot', this function does not try to automatically determine the name of a value.
 #' It uses the names as provided in the arguments.
 #'
+#' The ignore parameter allows to skip snapshots that were examined, but still increments the ID sequence so that following comparisons can work.
+#'
 #' @examples
 #' snapshot.named(a = 10 + 20, b = 30, c = function() print("hello"))
 #' @export
-snapshot.named <- function (...) {
+snapshot.named <- function (..., ignore = F) {
     args <- list(...)
     valueList <- args[names(args) != ""] 
     try({
-        snapshot.id(refcmpEnv$snapshot_id, valueList)
+        snapshot.id(refcmpEnv$snapshot_id, valueList, ignore)
         refcmpEnv$snapshot_id <- refcmpEnv$snapshot_id + 1 
     })  
 }
 
-snapshot.id <- function(id, valueList) {
-    if(refcmpEnv$is_reference_run) {
-        snapshot.record(id, valueList)
-    } else {
+snapshot.id <- function(id, valueList, ignore = F) {
+    if(!refcmpEnv$is_reference_run) {
+        log(paste0(" Checking: id ", id, " values named: ", paste(names(valueList), collapse=",")))
         snapshot.check(id, valueList)
+    } else if (!ignore) {
+        log(paste0(" Recording: id ", id, " values named: ", paste(names(valueList), collapse=",")))
+        snapshot.record(id, valueList)
     }
 }
 
@@ -142,10 +156,18 @@ snapshot.check <- function(id, valueList) {
             expectedVal <- restoredVars[[var_names[[i]]]]
             equalsResult <- refcmpEnv$equals(expectedVal, actualVal)
             if(!is.logical(equalsResult) || !equalsResult) {
-                stop(paste0("Value of variable '", var_names[[i]], "' differs. Expected ", expectedVal, " but was ", actualVal))
+                cat("-------------------------------\n")
+                cat("ERROR: Value of variable '", var_names[[i]], "' differs.\n")
+                cat("Expected:\n"); str(expectedVal)
+                cat("\n---\nActual:\n"); str(actualVal)
+                cat("\n---\nEquality function result: \n")
+                print(equalsResult)
+                cat("-------------------------------\n")
+                if (refcmpEnv$browser) { browser() }
             }
         } else {
-            stop(paste0("Missing variable '", var_names[[i]], "' in recorded variables"))
+            cat("ERROR: Missing variable '", var_names[[i]], "' in recorded variables\n")
+            if (refcmpEnv$browser) { browser() }
         }
     }
 }
