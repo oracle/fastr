@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
+import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 
@@ -38,7 +39,7 @@ import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
  *
  * N.B. The usual implicit loading of {@code libRlapack} and {@code libRblas} that we get with
  * native {@code dlopen} via {@code libR} does not happen with LLVM, so we must force their loading
- * when this API is requested.
+ * when this API is requested. -- Note: not sure why this doesn't happen with embedded bitcode?
  *
  */
 final class TruffleLLVM_Lapack {
@@ -54,19 +55,22 @@ final class TruffleLLVM_Lapack {
         boolean useLLVM = System.getenv("FASTR_LLVM_LAPACK") != null;
         if (useLLVM) {
             callTarget = openLLVMLibraries();
+            callTarget.call(LibPaths.getBuiltinLibPath("Rblas"), false, false);
+            callTarget.call(LibPaths.getBuiltinLibPath("Rlapack"), false, false);
         } else {
-            callTarget = openNativeLibraries();
+            RContext ctx = RContext.getInstance();
+            // The following libraries should be loaded eagerly (i.e. with the last parameter true),
+            // however, they do not load on Linux due to unbound symbols, such as "xerbla_".
+            TruffleNFI_DLL.dlOpen(ctx, LibPaths.getBuiltinLibPath("Rblas"), false, false);
+            TruffleNFI_DLL.dlOpen(ctx, LibPaths.getBuiltinLibPath("Rlapack"), false, false);
             // libR must be loaded first to put the rpath mechanism in work. It's OS X specific.
-            callTarget.call(LibPaths.getBuiltinLibPath("R_dummy"), false, false);
-            callTarget.call(LibPaths.getBuiltinLibPath("gcc_s"), false, true);
-            callTarget.call(LibPaths.getBuiltinLibPath("quadmath"), false, true);
-            callTarget.call(LibPaths.getBuiltinLibPath("gfortran"), false, true);
+            // TODO: still necessary?
+//            callTarget.call(LibPaths.getBuiltinLibPath("R_dummy"), false, false);
+//            callTarget.call(LibPaths.getBuiltinLibPath("gcc_s"), false, true);
+//            callTarget.call(LibPaths.getBuiltinLibPath("quadmath"), false, true);
+//            callTarget.call(LibPaths.getBuiltinLibPath("gfortran"), false, true);
         }
 
-        // The following libraries should be loaded eagerly (i.e. with the last parameter true),
-        // however, they do not load on Linux due to unbound symbols, such as "xerbla_".
-        callTarget.call(LibPaths.getBuiltinLibPath("Rblas"), false, false);
-        callTarget.call(LibPaths.getBuiltinLibPath("Rlapack"), false, false);
     }
 
     private static RootCallTarget openLLVMLibraries() {

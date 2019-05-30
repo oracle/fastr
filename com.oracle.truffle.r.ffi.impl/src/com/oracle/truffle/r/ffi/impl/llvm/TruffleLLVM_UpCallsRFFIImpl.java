@@ -54,16 +54,7 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
  */
 public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
-    private TruffleObject setSymbolHandle;
-
-    void initialize() {
-        LLVM_Handle rdllInfo = (LLVM_Handle) DLL.getRdllInfo().handle;
-        try {
-            setSymbolHandle = (TruffleObject) rdllInfo.parsedIRs[0].lookup("Rdynload_setSymbol");
-        } catch (Exception e) {
-            RInternalError.shouldNotReachHere(e);
-        }
-    }
+    public TruffleObject setSymbolHandle;
 
     @Override
     public RFFIFactory.Type getRFFIType() {

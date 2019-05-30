@@ -32,7 +32,6 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
-import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.ParsedLLVM_IR;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
@@ -96,6 +95,9 @@ public final class TruffleLLVM_Context extends RFFIContext {
         String libf2cPath = FileSystems.getDefault().getPath(REnvVars.rHome(), "lib", "libf2c.so").toString();
         DLLRFFI.DLOpenRootNode.create(context).call(libf2cPath, false, false);
 
+        // Load dependencies that don't automatically get loaded:
+        TruffleLLVM_Lapack.load();
+
         if (context.isInitial()) {
             String librffiPath = LibPaths.getBuiltinLibPath("R");
             loadLibR(context, librffiPath);
@@ -110,15 +112,6 @@ public final class TruffleLLVM_Context extends RFFIContext {
     public void initializeVariables(RContext context) {
         super.initializeVariables(context);
         callState.initializeVariables();
-
-        // Load dependencies that don't automatically get loaded:
-        TruffleLLVM_Lapack.load();
-
-        String pcrePath = LibPaths.getBuiltinLibPath("pcre");
-        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath, false, true);
-
-        String libzPath = LibPaths.getBuiltinLibPath("z");
-        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(libzPath, false, true);
     }
 
     @Override
@@ -133,52 +126,30 @@ public final class TruffleLLVM_Context extends RFFIContext {
     public TruffleObject lookupNativeFunction(NativeFunction function) {
         CompilerAsserts.neverPartOfCompilation();
         if (!nativeFunctions.containsKey(function)) {
-            TruffleObject[] lookupObjects = new TruffleObject[0];
+            Object lookupObject;
             if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
-                TruffleObject lookupObject = (TruffleObject) ((LLVM_Handle) DLL.getRdllInfo().handle).parsedIRs[0].lookupObject;
-                lookupObjects = new TruffleObject[]{lookupObject};
+                lookupObject = ((LLVM_Handle) DLL.getRdllInfo().handle).handle;
             } else if (Utils.identityEquals(function.getLibrary(), NativeFunction.anyLibrary())) {
                 DLLInfo dllInfo = DLL.findLibraryContainingSymbol(RContext.getInstance(), function.getCallName());
                 if (dllInfo == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());
                 }
-                lookupObjects = getLookupObjects(dllInfo);
+                lookupObject = ((LLVM_Handle) dllInfo.handle).handle;
             } else {
                 DLLInfo dllInfo = DLL.findLibrary(function.getLibrary());
                 if (dllInfo == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library  " + function.getLibrary());
                 }
-                lookupObjects = getLookupObjects(dllInfo);
+                lookupObject = ((LLVM_Handle) dllInfo.handle).handle;
             }
             TruffleObject target = null;
-            for (int i = 0; i < lookupObjects.length; i++) {
-                try {
-                    target = (TruffleObject) InteropLibrary.getFactory().getUncached().readMember(lookupObjects[i], function.getCallName());
-                    break;
-                } catch (UnknownIdentifierException e) {
-                    continue;
-                } catch (UnsupportedMessageException e) {
-                    RInternalError.shouldNotReachHere();
-                }
+            try {
+                target = (TruffleObject) InteropLibrary.getFactory().getUncached().readMember(lookupObject, function.getCallName());
+            } catch (UnsupportedMessageException|UnknownIdentifierException e) {
+                RInternalError.shouldNotReachHere();
             }
             nativeFunctions.put(function, target);
         }
         return nativeFunctions.get(function);
     }
-
-    private static TruffleObject[] getLookupObjects(DLLInfo dllInfo) {
-        TruffleObject[] lookupObjects;
-        final ParsedLLVM_IR[] parsedIRs = ((LLVM_Handle) dllInfo.handle).parsedIRs;
-        lookupObjects = new TruffleObject[parsedIRs.length];
-        for (int i = 0; i < parsedIRs.length; i++) {
-            lookupObjects[i] = (TruffleObject) parsedIRs[i].lookupObject;
-        }
-        return lookupObjects;
-    }
-
-    @Override
-    public Type getDefaultRFFIType() {
-        return Type.LLVM;
-    }
-
 }

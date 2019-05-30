@@ -61,20 +61,24 @@ public class TruffleNFI_DLL implements DLLRFFI {
         @Override
         @TruffleBoundary
         public LibHandle execute(String path, boolean local, boolean now) {
-            String librffiPath = LibPaths.getBuiltinLibPath("R");
-            // Do not call before/afterDowncall when loading libR to prevent the pushing/popping of
-            // the callback array, which requires that the libR have already been loaded
-            boolean notifyStateRFFI = !librffiPath.equals(path);
-            Object before = notifyStateRFFI ? RContext.getInstance().getStateRFFI().beforeDowncall(null, RFFIFactory.Type.NFI) : 0;
-            try {
-                String libName = DLL.libName(path);
-                Env env = RContext.getInstance().getEnv();
-                TruffleObject libHandle = (TruffleObject) env.parse(Source.newBuilder("nfi", prepareLibraryOpen(path, local, now), path).build()).call();
-                return new NFIHandle(libName, libHandle);
-            } finally {
-                if (notifyStateRFFI) {
-                    RContext.getInstance().getStateRFFI().afterDowncall(before, RFFIFactory.Type.NFI);
-                }
+            return dlOpen(RContext.getInstance(), path, local, now);
+        }
+    }
+
+    public static LibHandle dlOpen(RContext ctx, String path, boolean local, boolean now) {
+        String librffiPath = LibPaths.getBuiltinLibPath("R");
+        // Do not call before/afterDowncall when loading libR to prevent the pushing/popping of
+        // the callback array, which requires that the libR have already been loaded
+        boolean notifyStateRFFI = !librffiPath.equals(path);
+        Object before = notifyStateRFFI ? ctx.getStateRFFI().beforeDowncall(null, Type.NFI) : 0;
+        try {
+            String libName = DLL.libName(path);
+            Env env = RContext.getInstance().getEnv();
+            TruffleObject libHandle = (TruffleObject) env.parse(Source.newBuilder("nfi", prepareLibraryOpen(path, local, now), path).build()).call();
+            return new NFIHandle(libName, libHandle);
+        } finally {
+            if (notifyStateRFFI) {
+                ctx.getStateRFFI().afterDowncall(before, Type.NFI);
             }
         }
     }

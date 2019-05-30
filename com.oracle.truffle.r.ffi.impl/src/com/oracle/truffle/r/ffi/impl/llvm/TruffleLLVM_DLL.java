@@ -49,11 +49,15 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.Source.SourceBuilder;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RPlatform;
@@ -69,29 +73,8 @@ import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 
-/**
- * The Truffle version of {@link DLLRFFI}. {@code dlopen} expects to find the LLVM IR in a "library"
- * that is actually a zip file of LLVM bitcode files.
- *
- * There is one major difference between native and LLVM libraries. There is a single global
- * instance of a native library and the symbols are, therefore, accessible from any {@link RContext}
- * instance . However, the (Truffle) function descriptors for an LLVM library are specific to the
- * {@link RContext} they are created (parsed) in. This has two important consequences:
- * <ol>
- * <li>It is theoretically possible to have different versions of libraries in different contexts.
- * </li>
- * <li>The {@code libR} library function descriptors must be made available in every context. At the
- * present time this can only be done by re-parsing the library contents.</li>
- * </ol>
- *
- */
 public class TruffleLLVM_DLL implements DLLRFFI {
-    /*
-     * The LIBS file, which is included in the LLVM archive, enumerates native dynamic libraries to
-     * be linked with the LLVM library in the archive.
-     */
-    private static final String LIBS = "LIBS";
-
+    // TODO: these dependencies were ignored for some reason, will it be a problem???
     private static final Set<String> ignoredNativeLibs = new HashSet<>();
     static {
         ignoredNativeLibs.add("Rblas");
@@ -109,69 +92,76 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         public ContextState initialize(RContext context) {
             // TODO: Is it really needed when using the new lookup mechanism?
             if (!context.isInitial()) {
-                for (LLVM_IR ir : truffleDLL.libRModules) {
-                    parseLLVM(context.getEnv(), "libR", ir);
-                }
+//                for (LLVM_IR ir : truffleDLL.libRModules) {
+//                    parseLLVM(context.getEnv(), "libR", ir);
+//                }
             }
             if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
-                // must propagate all LLVM library exports
-                ArrayList<DLLInfo> loadedDLLs = DLL.getLoadedDLLs();
-                for (DLLInfo dllInfo : loadedDLLs) {
-                    if (dllInfo.handle instanceof LLVM_Handle) {
-                        LLVM_Handle llvmHandle = (LLVM_Handle) dllInfo.handle;
-                        for (ParsedLLVM_IR parsedIR : llvmHandle.parsedIRs) {
-                            parseLLVM(context.getEnv(), llvmHandle.libName, parsedIR.ir);
-                        }
-                    }
-                }
+                // TODO: must propagate all LLVM library exports??
             }
             return this;
         }
     }
 
-    private static TruffleLLVM_DLL truffleDLL;
-
-    public TruffleLLVM_DLL() {
-        if (truffleDLL != null) {
-            libRModules = truffleDLL.libRModules;
+    private static final class TruffleLLVM_DLOpenNode extends Node implements DLOpenNode {
+        @Override
+        @TruffleBoundary
+        public LibHandle execute(String path, @SuppressWarnings("unused") boolean local, @SuppressWarnings("unused") boolean now) {
+            return dlOpen(RContext.getInstance(), path);
         }
-        truffleDLL = this;
     }
 
-    static ContextStateImpl newContextState() {
-        return new ContextStateImpl();
-    }
-
-    public static class ParsedLLVM_IR {
-        final LLVM_IR ir;
-        final Object lookupObject;
-
-        ParsedLLVM_IR(LLVM_IR ir, Object lookupObject) {
-            this.ir = ir;
-            this.lookupObject = lookupObject;
+    static LibHandle dlOpen(RContext context, String path) {
+        final Env env = context.getEnv();
+        RFFIContext stateRFFI = context.getStateRFFI();
+        TruffleFile file = env.getTruffleFile(path);
+        String libName = DLL.libName(file.getPath());
+        boolean isLibR = libName.equals("libR");
+        if (isLibR) {
+            file = env.getTruffleFile(path + "l"); // TODO: make it generic, if +"l" file exists, use that instead
         }
-
-        Object lookup(String symbol) throws UnknownIdentifierException {
-            try {
-                return InteropLibrary.getFactory().getUncached().readMember(lookupObject, symbol);
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere(e);
+        boolean isInitialization = isLibR;
+        Object before = null;
+        try {
+            if (!isInitialization) {
+                before = stateRFFI.beforeDowncall(null, Type.LLVM);
+            }
+            Source src = Source.newBuilder("llvm", file).internal(true).build();
+            Object lib = env.parse(src).call();
+            assert lib instanceof TruffleObject;
+            if (isLibR) {
+                // TODO: accessing what used to be a private field, this will be refactored
+                InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+                Object setSymbol = interop.readMember(lib, "Rdynload_setSymbol");
+                context.getStateRFFI(TruffleLLVM_Context.class).callState.upCallsRFFIImpl.setSymbolHandle = (TruffleObject) setSymbol;
+            }
+            return new LLVM_Handle(libName, lib);
+        } catch (IOException ex) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "Cannot load bitcode from library file: " + path);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere("Loaded library does not support readMember message");
+        } catch (UnknownIdentifierException e) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "Could not find function 'Rdynload_setSymbol' in libR on path: " + path);
+        } finally {
+            if (!isInitialization && before != null) {
+                stateRFFI.afterDowncall(before, Type.LLVM);
             }
         }
-
     }
 
     public static class LLVM_Handle implements LibHandle {
         final String libName;
-        final ParsedLLVM_IR[] parsedIRs;
+        final Object handle;
 
         public LLVM_Handle(LLVM_Handle libHandle) {
-            this(libHandle.libName, libHandle.parsedIRs);
+            this(libHandle.libName, libHandle.handle);
         }
 
-        public LLVM_Handle(String libName, ParsedLLVM_IR[] irs) {
+        public LLVM_Handle(String libName, Object handle) {
             this.libName = libName;
-            this.parsedIRs = irs;
+            this.handle = handle;
         }
 
         @Override
@@ -181,203 +171,28 @@ public class TruffleLLVM_DLL implements DLLRFFI {
 
     }
 
-    @FunctionalInterface
-    interface ModuleNameMatch {
-        boolean match(String name);
-    }
-
-    public static final class LLVMArchive {
-        public final LLVM_IR[] irs;
-        public final List<String> nativeLibs;
-
-        private LLVMArchive(LLVM_IR[] irs, List<String> nativeLibs) {
-            super();
-            this.irs = irs;
-            this.nativeLibs = nativeLibs;
-        }
-    }
-
-    public abstract static class ZipFileUtilsProvider {
-        public abstract String getFileName(String path);
-
-        public abstract OutputStream getOutputStream(String path1, String path2) throws IOException;
-
-        public abstract InputStream getInputStream(String path) throws IOException;
-    }
-
-    @TruffleBoundary
-    public static LLVMArchive getZipLLVMIR(String path, ZipFileUtilsProvider fileUtils) throws IOException {
-        List<String> nativeLibs = Collections.emptyList();
-        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fileUtils.getInputStream(path + "l")))) {
-            ArrayList<LLVM_IR> irList = new ArrayList<>();
-            while (true) {
-                ZipEntry entry = zis.getNextEntry();
-                if (entry == null) {
-                    break;
-                }
-                int size = (int) entry.getSize();
-                byte[] bytes = new byte[size];
-                int n;
-                int totalRead = 0;
-                while (totalRead < size && (n = zis.read(bytes, totalRead, size - totalRead)) != -1) {
-                    totalRead += n;
-                }
-                if (LIBS.equals(entry.getName())) {
-                    nativeLibs = getNativeLibs(bytes);
-                    continue;
-                }
-                String fileNamePath = fileUtils.getFileName(entry.getName());
-                assert fileNamePath != null;
-                String name = fileNamePath;
-                int ix = name.indexOf('.');
-                if (ix > 0) {
-                    name = name.substring(0, ix);
-                }
-                LLVM_IR.Binary ir = new LLVM_IR.Binary(name, bytes, path);
-                irList.add(ir);
-                // debugging
-                if (System.getenv("FASTR_LLVM_DEBUG") != null) {
-                    try (OutputStream bs = fileUtils.getOutputStream("tmpzip", name)) {
-                        bs.write(bytes);
-                    }
-                    try (PrintStream bs = new PrintStream(fileUtils.getOutputStream("tmpb64", name))) {
-                        bs.print(ir.base64);
-                    }
-                }
-            }
-            LLVM_IR[] result = new LLVM_IR[irList.size()];
-            irList.toArray(result);
-            return new LLVMArchive(result, nativeLibs);
-        }
-    }
-
-    private static List<String> getNativeLibs(byte[] bytes) throws IOException {
-        List<String> libs = new LinkedList<>();
-        try (BufferedReader libReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes)))) {
-            String lib = null;
-            while ((lib = libReader.readLine()) != null) {
-                libs.add(lib);
-            }
-        }
-        return libs;
-    }
-
-    private static final class TruffleLLVM_DLOpenNode extends Node implements DLOpenNode {
-        @Child private TruffleLLVM_NativeDLL.TruffleLLVM_NativeDLOpen nativeDLLOpenNode;
-
-        /**
-         * If a library is enabled for LLVM, the IR for all the modules is retrieved and analyzed.
-         * Every exported symbol in the module added to the parseStatus map for the current
-         * {@link RContext}. This allows {@code dlsym} to definitively locate any symbol, even if
-         * the IR has not been parsed yet.
-         */
-        @Override
-        @TruffleBoundary
-        public LibHandle execute(String path, boolean local, boolean now) {
-            RContext context = RContext.getInstance();
-            final Env env = context.getEnv();
-            RFFIContext stateRFFI = context.getStateRFFI();
-            Object before = stateRFFI.beforeDowncall(null, RFFIFactory.Type.LLVM);
-
-            try {
-                LLVMArchive ar = getZipLLVMIR(path, new ZipFileUtilsProvider() {
-                    @Override
-                    public String getFileName(String p) {
-                        return env.getTruffleFile(p).getName();
-                    }
-
-                    @Override
-                    public OutputStream getOutputStream(String path1, String path2) throws IOException {
-                        return env.getTruffleFile(path1).resolve(path2).newOutputStream();
-                    }
-
-                    @Override
-                    public InputStream getInputStream(String p) throws IOException {
-                        return env.getTruffleFile(p).newInputStream();
-                    }
-                });
-                LLVM_IR[] irs = ar.irs;
-                String libName = getLibName(env, path);
-                if (libName.equals("libR")) {
-                    // save for new RContexts
-                    truffleDLL.libRModules = irs;
-                } else {
-                    loadNativeLibs(ar.nativeLibs);
-                }
-                ParsedLLVM_IR[] parsedIRs = new ParsedLLVM_IR[irs.length];
-                for (int i = 0; i < irs.length; i++) {
-                    LLVM_IR ir = irs[i];
-                    Object irLookupObject = parseLLVM(env, libName, ir).call();
-                    parsedIRs[i] = new ParsedLLVM_IR(ir, irLookupObject);
-                }
-                return new LLVM_Handle(libName, parsedIRs);
-            } catch (Exception ex) {
-                CompilerDirectives.transferToInterpreter();
-                StringBuilder sb = new StringBuilder();
-                Throwable t = ex;
-                while (t != null) {
-                    if (t != ex) {
-                        sb.append(": ");
-                    }
-                    sb.append(t.getMessage());
-                    t = t.getCause();
-                }
-                throw new UnsatisfiedLinkError(sb.toString());
-            } finally {
-                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
-            }
-        }
-
-        private void loadNativeLibs(List<String> nativeLibs) {
-            OSInfo osInfo = RPlatform.getOSInfo();
-            for (String nativeLib : nativeLibs) {
-                if (ignoredNativeLibs.contains(nativeLib)) {
-                    continue;
-                }
-                String nativeLibName = "lib" + nativeLib + "." + osInfo.libExt;
-                tryOpenNative(nativeLibName, false, true);
-            }
-        }
-
-        private long tryOpenNative(String path, boolean local, boolean now) throws UnsatisfiedLinkError {
-            if (nativeDLLOpenNode == null) {
-                nativeDLLOpenNode = insert(new TruffleLLVM_NativeDLL.TruffleLLVM_NativeDLOpen());
-            }
-            return nativeDLLOpenNode.execute(path, local, now);
-        }
-    }
-
     private static class TruffleLLVM_DLSymNode extends Node implements DLSymNode {
         @Child InteropLibrary interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
 
         @Override
         public SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError {
-            assert handle instanceof LLVM_Handle;
-            LLVM_Handle llvmHandle = (LLVM_Handle) handle;
-            Object symValue = null;
-            for (int i = 0; i < llvmHandle.parsedIRs.length; i++) {
-                ParsedLLVM_IR pir = llvmHandle.parsedIRs[i];
-                try {
-                    symValue = interop.readMember(pir.lookupObject, symbol);
-                    break;
-                } catch (UnknownIdentifierException e) {
-                    continue;
-                } catch (UnsupportedMessageException e) {
-                    RInternalError.shouldNotReachHere();
-                }
-            }
-            if (symValue == null) {
+            assert handle instanceof LLVM_Handle && ((LLVM_Handle) handle).getRFFIType() == Type.LLVM;
+            try {
+                Object result = interop.readMember(((LLVM_Handle) handle).handle, symbol);
+                return new SymbolHandle(result);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere("LibHandle does not support readMember operation");
+            } catch (UnknownIdentifierException e) {
+                CompilerDirectives.transferToInterpreter();
                 throw new UnsatisfiedLinkError();
             }
-            return new SymbolHandle(symValue);
         }
-
     }
 
     private static class TruffleLLVM_DLCloseNode extends Node implements DLCloseNode {
         @Override
         public int execute(Object handle) {
-            assert handle instanceof LLVM_Handle;
+            assert handle instanceof LLVM_Handle && ((LLVM_Handle) handle).getRFFIType() == Type.LLVM;
             return 0;
         }
     }
@@ -397,91 +212,9 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         return new TruffleLLVM_DLCloseNode();
     }
 
-    private static String getLibName(Env env, String path) {
-        String fileName = env.getTruffleFile(path).getName();
-        int ix = fileName.lastIndexOf(".");
-        return fileName.substring(0, ix);
-    }
-
-    /**
-     * Record of the libR modules for subsequent parsing.
-     */
-    private LLVM_IR[] libRModules;
-
-    @TruffleBoundary
-    private static CallTarget parseLLVM(Env env, String libName, LLVM_IR ir) {
-        if (ir instanceof LLVM_IR.Binary) {
-            LLVM_IR.Binary bir = (LLVM_IR.Binary) ir;
-            return parseBinary(env, libName, bir);
-        } else {
-            throw RInternalError.unimplemented("LLVM text IR");
-        }
-    }
-
-    private static CallTarget parseBinary(Env env, String libName, LLVM_IR.Binary ir) {
-        long start = System.nanoTime();
-        RContext context = RContext.getInstance();
-        long nanos = 1000 * 1000 * 1000;
-        Source source;
-        boolean traceBitcode = isLibTraced(libName);
-        if (traceBitcode) {
-            String mimeType = "application/x-llvm-ir-bitcode";
-            String language = Source.findLanguage(mimeType);
-            try {
-                TruffleFile irFile = env.getTruffleFile(ir.libPath).getParent().resolve(ir.name + ".bc");
-                TruffleFile llFile = env.getTruffleFile(ir.libPath).getParent().resolve(ir.name + ".ll");
-                byte[] decoded = null;
-                if (!irFile.exists()) {
-                    decoded = Base64.getDecoder().decode(ir.base64);
-                    try (OutputStream out = irFile.newOutputStream()) {
-                        out.write(decoded);
-                    }
-                }
-                if (!llFile.exists()) {
-                    decoded = decoded != null ? decoded : Base64.getDecoder().decode(ir.base64);
-                    disassemble(llFile, decoded);
-                }
-                TruffleFile irTruffleFile = RContext.getInstance().getEnv().getTruffleFile(irFile.toUri());
-                source = Source.newBuilder(language, irTruffleFile).mimeType(mimeType).build();
-            } catch (IOException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
-        } else {
-            String mimeType = "application/x-llvm-ir-bitcode-base64";
-            String language = Source.findLanguage(mimeType);
-            source = Source.newBuilder(language, ir.base64, ir.name).mimeType(mimeType).build();
-        }
-        CallTarget result = context.getEnv().parse(source);
-
-        if (System.getenv("LLVM_PARSE_TIME") != null) {
-            System.out.println("WARNING: The LLVM_PARSE_TIME env variable was discontinued.\n" +
-                            "You can rerun FastR with --log.R." + TruffleLLVM_DLL.class.getName() + ".level=FINE");
-        }
-        TruffleLogger logger = RLogger.getLogger(TruffleLLVM_DLL.class.getName());
-        if (logger.isLoggable(Level.FINE)) {
-            long end = System.nanoTime();
-            logger.log(Level.FINE, "parsed {0}:{1} in {2} secs", new Object[]{libName, ir.name, ((double) (end - start)) / (double) nanos});
-        }
-        return result;
-    }
-
-    private static boolean isLibTraced(String libName) {
-        String tracedLibs = RContext.getInstance().getOption(FastROptions.DebugLLVMLibs);
-        if (tracedLibs == null || tracedLibs.isEmpty()) {
-            return false;
-        }
-
-        String[] libNames = tracedLibs.split(",");
-        for (String ln : libNames) {
-            if (libName.equals(ln)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     // Method used only for internal debugging, not run by default
+    // To be adjusted to the fact that we load bitcode embedded in native libraries
+    @SuppressWarnings("unused")
     private static void disassemble(TruffleFile llFile, byte[] ir) {
         try {
             ProcessBuilder pb = new ProcessBuilder("llvm-dis");
