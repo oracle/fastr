@@ -22,6 +22,24 @@
 #
 
 # Builds libR
+#
+# We build all the source files with the given compiler (CC), which may be the Labs LLVM clang that produces embedded bitcode.
+# When building the final artifact, we either build only libR.so from the source files in common and NFI specific directories,
+# and if FASTR_RFFI is "LLVM", we build also libR.sol, which is a regular so file with embedded bitcode, but that one is built
+# from the source files in common and LLVM specific directories.
+#
+# This is the only situation, where we produce different artifacts for NFI/LLVM. When building pacakges,
+# we produce only one so file with embedded bitcode that is supposed to be used for both NFI and LLVM execution
+# depending on the user's preference.
+#
+# The LLVM and NFI builds are done by Makefiles (invoked from here) in their resp. directories: truffle_nfi and truffle_llvm,
+# they also pull files from truffle_common. These two builds produce their output (object files) to "lib/nfi" and "lib/llvm"
+# directories, which are siblings to this file.
+#
+# The common files (which implement C functionality typically pulled from GNU-R and independent of FastR) have their own Makefile,
+# which also puts the results into "lib/common".
+#
+# All the Makefiles use $(TOPDIR)/platform.mk which defines CC, CFLAGS, etc.
 
 ifneq (,$(wildcard $(TOPDIR)/platform.mk))
 include $(TOPDIR)/platform.mk
@@ -34,7 +52,9 @@ endif
 .PHONY: all clean
 
 C_LIBNAME := libR$(DYLIB_EXT)
+LLVM_LIBNAME := libR$(DYLIB_EXT)l
 C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
+LLVM_LIB := $(FASTR_LIB_DIR)/$(LLVM_LIBNAME)
 R_LIBNAME := libR$(DYLIB_EXT)
 R_LIBNAME_DUMMY := libR_dummy$(DYLIB_EXT)
 R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
@@ -44,6 +64,7 @@ ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
 endif
 
+# TODO: can we remove those?
 BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
 LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 
@@ -58,6 +79,7 @@ ifeq ($(FASTR_RFFI),managed)
 	# nop
 else
 ifeq ($(OS_NAME),Darwin)
+	# TODO: fix Darwin build
 	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
 ifeq ($(FASTR_RFFI),llvm)
 	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
@@ -69,57 +91,43 @@ endif
 # check if we captured libpcre/libz, rpath those in libR
 	mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_LIB_DIR)
 else
-	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
+	# not Darwin:
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
 ifeq ($(FASTR_RFFI),llvm)
-	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
-	FASTR_RFFI="llvm-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.bc) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
-endif
-endif
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
+endif # llvm
+endif # Darwin
 endif # managed
 
 ifeq ($(FASTR_RFFI),managed)
 fficall.done: common.done
 	touch fficall.done
 else
-ifeq ($(FASTR_RFFI),nfi)
-fficall.done: common.done
+fficall.done: common.done fficallllvm.done
 	$(MAKE) -C src/truffle_nfi all
 	touch fficall.done
-
-else
 ifeq ($(FASTR_RFFI),llvm)
 export R_PACKAGE_DIR="lib"
-fficall.done: common.done
-	$(MAKE) FASTR_RFFI="nfi-only" -C src/truffle_nfi all
+fficallllvm.done: common.done
 	$(MAKE) FASTR_RFFI="llvm-only" -C src/truffle_llvm all
-	touch fficall.done
+	touch fficallllvm.done
 else
-	$(error unknown value for FASTR_RFFI)
+fficallllvm.done: common.done
+	touch fficallllvm.done
 endif #llvm
-endif #nfi
 endif #managed
 
 common.done:
-	echo "src/common FASTR_RFFI: $(FASTR_RFFI)"
 	$(MAKE) -C src/common all
 	touch common.done
 
 clean:
 	$(MAKE) -C src/common clean
-ifeq ($(FASTR_RFFI),nfi)
-	$(MAKE) -C src/truffle_nfi clean
-else
-ifeq ($(FASTR_RFFI),llvm)
-	$(MAKE) -C src/truffle_nfi clean
-	$(MAKE) -C src/truffle_llvm clean
-else
-ifneq ($(FASTR_RFFI),managed)
-	$(error unknown value for FASTR_RFFI)
-endif
-endif
-endif
+	rm -rf src/truffle_*/*.o
 	rm -rf $(R_LIB)
 	rm -rf $(R_LIB_DUMMY)
 	rm -rf "$(R_LIB)l"
 	rm -rf fficall.done
 	rm -rf common.done
+	rm -rf fficallllvm.done

@@ -28,7 +28,7 @@ endif
 .PHONY: all clean
 
 # location of compiled code (.o files)
-OBJ = ../../lib
+OBJ = ../../lib/nfi
 
 C_HDRS := $(wildcard *.h)
 

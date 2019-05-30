@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include "../truffle_nfi/rffiutils.h"
+#include <Rinternals.h>
 #include "rffi_upcalls.h"
 
 double Rf_dnorm(double a, double b, double c, int d) {

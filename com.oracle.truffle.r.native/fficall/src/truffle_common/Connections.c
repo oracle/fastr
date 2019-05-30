@@ -27,7 +27,7 @@
 // but does not include it -> the order is important
 
 #include "rffi_upcalls.h"
-#include "../truffle_nfi/rffiutils.h"
+#include <Rinternals.h>
 
 /*
  * Returns the file descriptor of the connection if possible.

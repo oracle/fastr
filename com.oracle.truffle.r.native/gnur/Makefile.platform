@@ -37,6 +37,7 @@ $(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
 	sed -f sedMakeconf $(GNUR_HOME)/Makeconf > /dev/null 2>&1
 	ed platform.mk.temp < edAddFASTR
 ifeq ($(FASTR_RFFI),llvm)
+	# This overrides the Fortran compiler with our f2c tool and CC with LABS_LLVM_CC
 	ed platform.mk.temp <edLLVM
 endif
 	echo OS_NAME = $(OS_NAME) >> platform.mk.temp

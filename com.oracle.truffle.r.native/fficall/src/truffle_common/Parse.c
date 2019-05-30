@@ -21,7 +21,7 @@
  * questions.
  */
 
-#include "../truffle_nfi/rffiutils.h"
+#include <Rinternals.h>
 #include "rffi_upcalls.h"
 
 #include <R_ext/Parse.h>

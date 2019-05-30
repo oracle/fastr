@@ -31,7 +31,7 @@ endif
 .PHONY: all clean
 
 # location of compiled code (.o files)
-OBJ = ../../lib
+OBJ = ../../lib/common
 
 GNUR_APPL_SRC = $(GNUR_HOME)/src/appl
 GNUR_APPL_F_FILES := $(notdir $(wildcard $(GNUR_APPL_SRC)/d*.f))

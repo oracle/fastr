@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include "../truffle_nfi/rffiutils.h"
+#include <Rinternals.h>
 #include "rffi_upcalls.h"
 
 SEXP Rf_matchE(SEXP itable, SEXP ix, int nmatch, SEXP env)

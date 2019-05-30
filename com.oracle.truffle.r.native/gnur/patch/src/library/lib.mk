@@ -102,16 +102,11 @@ $(OBJ):
 
 $(LIB_PKG): $(C_OBJECTS) $(F_OBJECTS) $(PKGDIR) $(XTRA_C_OBJECTS)
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(XTRA_C_OBJECTS) $(PKG_LIBS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -L$(FASTR_LIB_DIR) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(XTRA_C_OBJECTS) $(PKG_LIBS)
 	mkdir -p $(FASTR_LIBRARY_DIR)/$(PKG)/libs
 	cp "$(LIB_PKG)" $(FASTR_LIBRARY_DIR)/$(PKG)/libs
-ifeq ($(FASTR_RFFI),llvm)
-	cp "$(LIB_PKG)l" $(FASTR_LIBRARY_DIR)/$(PKG)/libs
-endif
 ifeq ($(OS_NAME),Darwin)
-ifneq ($(FASTR_RFFI),llvm)	
 	install_name_tool -id @rpath/../library/$(PKG)/libs/$(PKG).so $(FASTR_LIBRARY_DIR)/$(PKG)/libs/$(PKG).so
-endif
 endif
 
 $(OBJ)/%.o: $(SRC)/%.c $(H_SOURCES)

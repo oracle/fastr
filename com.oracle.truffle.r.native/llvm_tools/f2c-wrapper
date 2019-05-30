@@ -1,0 +1,102 @@
+#!/bin/bash
+#
+# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 3 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 3 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+SOURCE="$0"
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+log () {
+  if [[ "$LOG_F2CWRAPPER" != "" ]]; then
+    echo $*
+  fi
+}
+
+# Find F2C installation
+F2C=""
+F2C_H_INCLUDE="${DIR}/../include/"
+if [ -f "${DIR}/f2c" ]
+then
+	# For a package build
+	F2C="${DIR}/f2c"
+else
+	# For the FastR build
+	F2C="${DIR}/../../bin/f2c"
+fi
+
+# Analyze arguments: capture the output file, input file and include directories
+other_args=""
+source_file=""
+output_file=""
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -o)
+      shift
+      output_file=$1
+    ;;
+    -fPIC)
+      other_args="$other_args $1"
+    ;;
+    -c)
+      other_args="$other_args $1"
+    ;;    
+    f[0-9]{1,4})
+    ;;
+    -I)
+      shift
+    ;;
+    -*)
+    ;;
+    *)
+      source_file=$1
+    ;;
+  esac
+  shift
+done  
+
+log Parsed args:
+log output file: $output_file
+log source file: $source_file
+log other args: $other_args
+
+target_dir=`dirname $output_file`
+target_file=`basename ${source_file}`
+target_file=${target_file%%.*}
+target_file="${target_dir}/${target_file}.c"
+
+# Actual conversion from C to Fortran
+if [ -f "${source_file}_c" ]
+then
+  # Just copy the patched pre-transformed C source to the target dir,
+  # simulating so the f2c transformation
+  cp "${source_file}_c" "${target_file}"
+else  
+  log Running: $F2C "${source_file}" "-d${target_dir}"  
+  $F2C "${source_file}" "-d${target_dir}"  
+  ecode=$?
+  if [[ $ecode -ne 0 ]]; then
+    exit $ecode
+  fi
+fi
+
+# Compile the C source code
+log Running: $LABS_LLVM_CC "$other_args" -I${F2C_H_INCLUDE} -o "$output_file" "$target_file"
+$LABS_LLVM_CC $other_args -I${F2C_H_INCLUDE} -o "$output_file" "$target_file"

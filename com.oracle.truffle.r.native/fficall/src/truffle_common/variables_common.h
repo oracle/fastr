@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <Rinterface.h>
-#include <trufflenfi.h>
 #include "../common/rffi_variablesindex.h"
 
 Rboolean R_interrupts_suspended;

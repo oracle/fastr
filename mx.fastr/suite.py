@@ -13,6 +13,16 @@ suite = {
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
                 ]
             },
+            {
+               "name" : "sulong",
+               "subdir" : True,
+               # The version must be the same as the version of Truffle
+               "version" : "445077de669592367c0519ed38e5e1e5cbd7267d",
+               "urls" : [
+                    {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
+                    {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
+                ]
+            },
 
         ],
    },
@@ -140,9 +150,12 @@ suite = {
       "dependencies" : ["com.oracle.truffle.r.native"],
       "platformDependent" : True,
       "output" : "com.oracle.truffle.r.test.native",
+      "buildEnv" : {
+        "LABS_LLVM_CC": "<toolchainGetToolPath:native,CC>",
+        "LABS_LLVM_CXX": "<toolchainGetToolPath:native,CXX>",
+      },
       "results" :[
          "urand/lib/liburand.so",
-         "urand/lib/liburand.sol",
        ],
       "workingSets" : "FastR",
     },
@@ -249,7 +262,6 @@ suite = {
 
     "com.oracle.truffle.r.native" : {
       "sourceDirs" : [],
-#      "class" : "FastRNativeProject",
       "dependencies" : [
         "GNUR",
         "truffle:TRUFFLE_NFI_NATIVE",
@@ -259,6 +271,10 @@ suite = {
       "workingSets" : "FastR",
       "buildEnv" : {
         "NFI_INCLUDES" : "-I<path:truffle:TRUFFLE_NFI_NATIVE>/include",
+        "LLVM_INCLUDES" : "-I<path:sulong:SULONG_LEGACY>/include -I<path:sulong:SULONG_LIBS>/include",
+        # If FASTR_RFFI=='llvm', then this is set as CC/CXX in c.o.t.r.native/Makefile
+        "LABS_LLVM_CC": "<toolchainGetToolPath:native,CC>",
+        "LABS_LLVM_CXX": "<toolchainGetToolPath:native,CXX>",
       },
     },
 

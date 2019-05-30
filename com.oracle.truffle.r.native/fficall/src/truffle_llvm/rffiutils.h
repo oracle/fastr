@@ -27,7 +27,6 @@
 #include <string.h>
 #include <limits.h>
 #include <Rinternals.h>
-#include <truffle.h>
 
 extern int initEventLoop(char* fifoInPathParam, char* fifoOutPathParam);
 
