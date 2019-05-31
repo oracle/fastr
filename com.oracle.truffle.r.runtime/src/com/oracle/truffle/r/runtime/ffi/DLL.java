@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -140,7 +141,7 @@ public class DLL {
             return kind == ContextKind.SHARE_PARENT_RW || kind == ContextKind.SHARE_ALL;
         }
 
-        private void addLibR(DLLInfo dllInfo) {
+        public void addLibR(DLLInfo dllInfo) {
             assert list.isEmpty();
             list.add(dllInfo);
             libRdllInfo = dllInfo;
@@ -220,7 +221,7 @@ public class DLL {
         public final CharSXPWrapper nameSXP;
         public final CharSXPWrapper pathSXP;
 
-        public final LibHandle handle;
+        public LibHandle handle;
         private boolean dynamicLookup;
         private boolean forceSymbols;
         private final DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
@@ -522,11 +523,13 @@ public class DLL {
 
     /**
      * Loads a the {@code libR} library. This is an implementation specific library.
+     * 
+     * @return
      */
-    public static void loadLibR(RContext context, String path) {
+    public static DLLInfo loadLibR(RContext context, String path, Function<String, LibHandle> load) {
         LibHandle handle = null;
         try {
-            handle = (LibHandle) DLLRFFI.DLOpenRootNode.create(context).call(path, false, false);
+            handle = load.apply(path);
         } catch (UnsatisfiedLinkError ex) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + ".\n" +
                             "If running on the NFI backend, did you provide the location of libtrufflenfi.so as the value of the system " +
@@ -539,8 +542,7 @@ public class DLL {
         if (handle == null) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + "\n");
         }
-        ContextStateImpl dllContext = context.stateDLL;
-        dllContext.addLibR(DLLInfo.create(libName(path), path, true, handle, false));
+        return DLLInfo.create(libName(path), path, true, handle, false);
     }
 
     private static final class SynthLibHandle implements LibHandle {

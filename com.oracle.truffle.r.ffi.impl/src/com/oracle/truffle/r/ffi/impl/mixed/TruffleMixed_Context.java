@@ -25,6 +25,7 @@ package com.oracle.truffle.r.ffi.impl.mixed;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Context;
+import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DownCallNodeFactory;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_UserRng;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Context;
@@ -33,6 +34,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -56,14 +58,20 @@ public final class TruffleMixed_Context extends RFFIContext {
                         new ZipRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
                         new LapackRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new StatsRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
                         new ToolsRFFI(), new REmbedRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new MiscRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE));
-        llvmContext = new TruffleLLVM_Context(rffiContextState);
+        llvmContext = new TruffleLLVM_Context(rffiContextState) {
+            @Override
+            protected void addLibRToDLLContextState(RContext context, DLLInfo libR) {
+                // TODO: making handle public, will be refactored
+                libR.handle = new TruffleMixed_DLL.MixedLLVM_Handle((LLVM_Handle) libR.handle, nfiContext.getRLibDLLInfo().handle);
+                super.addLibRToDLLContextState(context, libR);
+            }
+        };
         nfiContext = new TruffleNFI_Context(rffiContextState) {
 
             @Override
-            protected void loadLibR(RContext context, String librffiPath) {
-                // Suppress loading libR, which is loaded by the LLVM context
+            protected void addLibRToDLLContextState(RContext context, DLLInfo libR) {
+                // nop: will be added by LLVM
             }
-
         };
 
     }
@@ -81,8 +89,8 @@ public final class TruffleMixed_Context extends RFFIContext {
 
     @Override
     public ContextState initialize(RContext context) {
-        llvmContext.initialize(context);
         nfiContext.initialize(context);
+        llvmContext.initialize(context);
         return this;
     }
 

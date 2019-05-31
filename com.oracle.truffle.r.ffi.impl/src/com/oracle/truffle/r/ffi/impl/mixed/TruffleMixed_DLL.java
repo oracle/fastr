@@ -74,7 +74,7 @@ public class TruffleMixed_DLL implements DLLRFFI {
             if (!Files.exists(Paths.get(path))) {
                 throw new UnsatisfiedLinkError(String.format("Neither NFI nor LLVM version of shared library %s found", path));
             }
-            LibHandle nfiLibHandle = null; //nfiDllOpenNode.execute(path, local, now);
+            LibHandle nfiLibHandle = nfiDllOpenNode.execute(path, local, now);
             LLVM_Handle llvmLibHandle = (LLVM_Handle) llvmDllOpenNode.execute(path, local, now);
             return new MixedLLVM_Handle(llvmLibHandle, nfiLibHandle);
         }
@@ -183,7 +183,6 @@ public class TruffleMixed_DLL implements DLLRFFI {
             super(llvmLibHandle);
             this.nfiLibHandle = nfiLibHandle;
         }
-
     }
 
 }

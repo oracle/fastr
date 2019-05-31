@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import java.nio.file.FileSystems;
 import java.util.EnumMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -32,7 +31,6 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
-import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -40,7 +38,6 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -56,7 +53,7 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
  * A facade for the context state for the Truffle LLVM factory. Delegates to the various
  * module-specific pieces of state.
  */
-public final class TruffleLLVM_Context extends RFFIContext {
+public class TruffleLLVM_Context extends RFFIContext {
 
     private final TruffleLLVM_DLL.ContextStateImpl dllState = new TruffleLLVM_DLL.ContextStateImpl();
     final TruffleLLVM_Call.ContextStateImpl callState = new TruffleLLVM_Call.ContextStateImpl();
@@ -88,21 +85,26 @@ public final class TruffleLLVM_Context extends RFFIContext {
         return context.getStateRFFI(TruffleLLVM_Context.class);
     }
 
+    protected void addLibRToDLLContextState(RContext context, DLLInfo libR) {
+        context.stateDLL.addLibR(libR);
+    }
+
     @Override
     public ContextState initialize(RContext context) {
-
-        // Load the f2c runtime library
-        String libf2cPath = FileSystems.getDefault().getPath(REnvVars.rHome(), "lib", "libf2c.so").toString();
-        DLLRFFI.DLOpenRootNode.create(context).call(libf2cPath, false, false);
-
-        // Load dependencies that don't automatically get loaded:
-        TruffleLLVM_Lapack.load();
-
+        // For now, the LLVM context is only used in the mixed mode, where we first load NFI
+        // NFI loads libR, which links with libRlapack and libRblas, therefore these native
+        // libraries are also loaded for us.
+        // Note that tricky thing w.r.t. libRlapack/blas is that they depend on "xerbla_", which is
+        // defined in libR itself. The native loader can probably deal with this dependency cycle,
+        // while Sulong cannot at the moment.
+        // We build the libR.sol on purpose without liking it to libRblas and libRlapack, so that
+        // Sulong is not trying to load these here.
         if (context.isInitial()) {
+            TruffleLLVM_DLL.dlOpen(context, LibPaths.getBuiltinLibPath("f2c"));
             String librffiPath = LibPaths.getBuiltinLibPath("R");
-            loadLibR(context, librffiPath);
+            DLLInfo libR = DLL.loadLibR(context, librffiPath, path -> TruffleLLVM_DLL.dlOpen(context, path));
+            addLibRToDLLContextState(context, libR);
         }
-
         dllState.initialize(context);
         callState.initialize(context);
         return this;
@@ -145,7 +147,7 @@ public final class TruffleLLVM_Context extends RFFIContext {
             TruffleObject target = null;
             try {
                 target = (TruffleObject) InteropLibrary.getFactory().getUncached().readMember(lookupObject, function.getCallName());
-            } catch (UnsupportedMessageException|UnknownIdentifierException e) {
+            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 RInternalError.shouldNotReachHere();
             }
             nativeFunctions.put(function, target);

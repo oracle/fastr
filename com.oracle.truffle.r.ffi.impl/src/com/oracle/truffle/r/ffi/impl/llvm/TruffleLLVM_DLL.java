@@ -22,51 +22,29 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
-import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
-import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.source.Source.SourceBuilder;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RLogger;
-import com.oracle.truffle.r.runtime.RPlatform;
-import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
-import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
@@ -92,9 +70,9 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         public ContextState initialize(RContext context) {
             // TODO: Is it really needed when using the new lookup mechanism?
             if (!context.isInitial()) {
-//                for (LLVM_IR ir : truffleDLL.libRModules) {
-//                    parseLLVM(context.getEnv(), "libR", ir);
-//                }
+                // for (LLVM_IR ir : truffleDLL.libRModules) {
+                // parseLLVM(context.getEnv(), "libR", ir);
+                // }
             }
             if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
                 // TODO: must propagate all LLVM library exports??
@@ -118,7 +96,8 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         String libName = DLL.libName(file.getPath());
         boolean isLibR = libName.equals("libR");
         if (isLibR) {
-            file = env.getTruffleFile(path + "l"); // TODO: make it generic, if +"l" file exists, use that instead
+            file = env.getTruffleFile(path + "l"); // TODO: make it generic, if +"l" file exists,
+                                                   // use that instead
         }
         boolean isInitialization = isLibR;
         Object before = null;

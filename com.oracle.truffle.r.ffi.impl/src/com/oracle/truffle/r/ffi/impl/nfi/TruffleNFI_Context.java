@@ -41,6 +41,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
@@ -54,7 +56,6 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
@@ -223,11 +224,12 @@ public class TruffleNFI_Context extends RFFIContext {
     }
 
     @TruffleBoundary
-    private static long initCallbacksAddress() {
+    private long initCallbacksAddress() {
         // get the address of the native thread local
         try {
             InteropLibrary interop = InteropLibrary.getFactory().getUncached();
-            TruffleObject getCallbacksAddressFunction = (TruffleObject) interop.invokeMember(DLL.findSymbol("Rinternals_getCallbacksAddress", null).asTruffleObject(), "bind", "(): sint64");
+            Object getCallbacksAddress = interop.readMember(getLibRHandle(), "Rinternals_getCallbacksAddress");
+            TruffleObject getCallbacksAddressFunction = (TruffleObject) interop.invokeMember(getCallbacksAddress, "bind", "(): sint64");
             return (long) interop.execute(getCallbacksAddressFunction);
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
@@ -238,13 +240,18 @@ public class TruffleNFI_Context extends RFFIContext {
         if (context.getKind() == ContextKind.SHARE_NOTHING) {
             // create and fill a new callbacks table
             callbacks = UnsafeAdapter.UNSAFE.allocateMemory(Callbacks.values().length * Unsafe.ARRAY_LONG_INDEX_SCALE);
-            SymbolHandle symbolHandle = DLL.findSymbol("Rinternals_addCallback", null);
+            InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+            Object addCallback;
+            try {
+                addCallback = interop.readMember(getLibRHandle(), "Rinternals_addCallback");
+            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
             try {
                 Callbacks.createCalls(new TruffleNFI_UpCallsRFFIImpl());
                 for (Callbacks callback : Callbacks.values()) {
                     String addCallbackSignature = String.format("(env, sint64, sint32, %s): void", callback.nfiSignature);
-                    InteropLibrary interop = InteropLibrary.getFactory().getUncached();
-                    TruffleObject addCallbackFunction = (TruffleObject) interop.invokeMember(symbolHandle.asTruffleObject(), "bind", addCallbackSignature);
+                    TruffleObject addCallbackFunction = (TruffleObject) interop.invokeMember(addCallback, "bind", addCallbackSignature);
                     interop.execute(addCallbackFunction, callbacks, callback.ordinal(), callback.call);
                 }
             } catch (InteropException ex) {
@@ -307,7 +314,15 @@ public class TruffleNFI_Context extends RFFIContext {
         UnsafeAdapter.UNSAFE.putLong(callbacksAddress, beforeValue);
     }
 
+    protected void addLibRToDLLContextState(RContext context, DLLInfo libR) {
+        context.stateDLL.addLibR(libR);
+    }
+
     private DLLInfo rlibDLLInfo;
+
+    private Object getLibRHandle() {
+        return ((NFIHandle) rlibDLLInfo.handle).libHandle;
+    }
 
     @Override
     public ContextState initialize(RContext context) {
@@ -326,17 +341,19 @@ public class TruffleNFI_Context extends RFFIContext {
         try {
             String librffiPath = LibPaths.getBuiltinLibPath("R");
             if (context.isInitial()) {
-                loadLibR(context, librffiPath);
+                TruffleNFI_DLL.dlOpen(context, LibPaths.getBuiltinLibPath("f2c"), false, false);
+                rlibDLLInfo = DLL.loadLibR(context, librffiPath, path -> TruffleNFI_DLL.dlOpen(context, path, false, false));
+                addLibRToDLLContextState(context, rlibDLLInfo);
             } else {
                 // force initialization of NFI
+                // TODO: still necessary? Maybe even buggy, what if it is mixed context?
                 DLLRFFI.DLOpenRootNode.create(context).call(librffiPath, false, false);
             }
             switch (context.getKind()) {
                 case SHARE_NOTHING:
                 case SHARE_ALL:
                     // new thread, initialize properly
-                    assert defaultLibrary == null && rlibDLLInfo == null;
-                    rlibDLLInfo = DLL.findLibraryContainingSymbol(context, "dot_call0");
+                    assert defaultLibrary == null;
                     defaultLibrary = (TruffleObject) RContext.getInstance().getEnv().parse(Source.newBuilder("nfi", "default", "(load default)").build()).call();
                     initCallbacks(context);
                     break;
