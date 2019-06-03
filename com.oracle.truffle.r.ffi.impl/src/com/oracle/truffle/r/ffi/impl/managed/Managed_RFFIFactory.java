@@ -120,6 +120,11 @@ public final class Managed_RFFIFactory extends RFFIFactory {
             return (C) this;
         }
 
+        @Override
+        public Type getDefaultRFFIType() {
+            return Type.MANAGED;
+        }
+
     }
 
     @Override

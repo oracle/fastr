@@ -464,6 +464,21 @@ public class DLL {
             throw RInternalError.shouldNotReachHere();
         }
 
+        public boolean isAddress() {
+            if (value instanceof Long) {
+                return true;
+            } else if (value instanceof TruffleObject) {
+                return isAddressTO((TruffleObject) value);
+            } else {
+                return false;
+            }
+        }
+
+        @TruffleBoundary
+        private static boolean isAddressTO(TruffleObject val) {
+            return InteropLibrary.getFactory().getUncached().isPointer(val);
+        }
+
         public boolean isLong() {
             return value instanceof Long;
         }

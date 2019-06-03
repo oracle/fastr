@@ -466,7 +466,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     }
 
     private static boolean isLibTraced(String libName) {
-        String tracedLibs = System.getenv(FastROptions.DEBUG_LLVM_LIBS);
+        String tracedLibs = RContext.getInstance().getOption(FastROptions.DebugLLVMLibs);
         if (tracedLibs == null || tracedLibs.isEmpty()) {
             return false;
         }

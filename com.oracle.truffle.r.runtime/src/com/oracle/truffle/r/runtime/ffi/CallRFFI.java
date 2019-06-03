@@ -41,7 +41,7 @@ public interface CallRFFI {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
             DLLInfo dllInfo = nativeCallInfo.dllInfo;
             LibHandle handle = dllInfo == null ? null : dllInfo.handle;
-            Type rffiType = handle == null ? null : handle.getRFFIType();
+            Type rffiType = handle == null ? stateRFFI.getDefaultRFFIType() : handle.getRFFIType();
             Object before = stateRFFI.beforeDowncall(frame, rffiType);
             try {
                 return execute(nativeCallInfo, args);

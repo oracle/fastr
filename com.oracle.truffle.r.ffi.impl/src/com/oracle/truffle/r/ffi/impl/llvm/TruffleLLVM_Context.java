@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
@@ -173,6 +174,11 @@ public final class TruffleLLVM_Context extends RFFIContext {
             lookupObjects[i] = (TruffleObject) parsedIRs[i].lookupObject;
         }
         return lookupObjects;
+    }
+
+    @Override
+    public Type getDefaultRFFIType() {
+        return Type.LLVM;
     }
 
 }

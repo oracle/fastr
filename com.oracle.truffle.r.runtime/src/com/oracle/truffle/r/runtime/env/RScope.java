@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.env.frame.REnvEmptyFrameAccess;
 import com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess;
 import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -64,13 +65,14 @@ public final class RScope {
      * Intended to be used when creating a parent scope where we do not know any associated node.
      */
     private RScope(REnvironment env) {
-        this.env = env;
+        // the environment may not have been initialized yet when debugging the LLVM version of libR
+        this.env = env == null ? REnvironment.emptyEnv() : env;
         this.current = null;
     }
 
     private RScope(Node current, REnvironment env) {
         this.current = current;
-        this.env = env;
+        this.env = env == null ? REnvironment.emptyEnv() : env;
     }
 
     protected String getName() {
@@ -315,7 +317,7 @@ public final class RScope {
         private final REnvironment env;
 
         private EnvVariablesObject(REnvironment env, boolean argumentsOnly) {
-            super(new REnvTruffleFrameAccess(env.getFrame()), argumentsOnly);
+            super(env.getFrame() == null ? new REnvEmptyFrameAccess() : new REnvTruffleFrameAccess(env.getFrame()), argumentsOnly);
             this.env = env;
         }
 
@@ -364,7 +366,7 @@ public final class RScope {
     static final class GenericVariablesObject extends VariablesObject {
 
         private GenericVariablesObject(MaterializedFrame frame, boolean argumentsOnly) {
-            super(new REnvTruffleFrameAccess(frame), argumentsOnly);
+            super(frame == null ? new REnvEmptyFrameAccess() : new REnvTruffleFrameAccess(frame), argumentsOnly);
         }
 
         @Override

@@ -192,4 +192,9 @@ public final class TruffleMixed_Context extends RFFIContext {
         }
     }
 
+    @Override
+    public Type getDefaultRFFIType() {
+        return Type.LLVM;
+    }
+
 }

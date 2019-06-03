@@ -58,11 +58,11 @@ public class TruffleMixed_Call implements CallRFFI {
     abstract static class TruffleMixed_InvokeCallNodeBase extends Node {
 
         protected static boolean isLLVMInvocation(NativeCallInfo nativeCallInfo) {
-            return nativeCallInfo.dllInfo.handle.getRFFIType() == RFFIFactory.Type.LLVM;
+            return nativeCallInfo.dllInfo == null || nativeCallInfo.dllInfo.handle.getRFFIType() == RFFIFactory.Type.LLVM;
         }
 
         protected static boolean isNFIInvocation(NativeCallInfo nativeCallInfo) {
-            return nativeCallInfo.dllInfo.handle.getRFFIType() == RFFIFactory.Type.NFI;
+            return nativeCallInfo.dllInfo != null && nativeCallInfo.dllInfo.handle.getRFFIType() == RFFIFactory.Type.NFI;
         }
 
     }

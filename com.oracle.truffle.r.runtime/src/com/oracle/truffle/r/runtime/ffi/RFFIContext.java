@@ -200,6 +200,8 @@ public abstract class RFFIContext extends RFFI {
         return child;
     }
 
+    public abstract RFFIFactory.Type getDefaultRFFIType();
+
     private RFFI instance;
 
     public final RFFI getRFFI() {

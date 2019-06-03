@@ -63,6 +63,7 @@ import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
@@ -134,6 +135,11 @@ public class TruffleNFI_Context extends RFFIContext {
     public <C extends RFFIContext> C as(Class<C> rffiCtxClass) {
         assert rffiCtxClass == TruffleNFI_Context.class;
         return (C) this;
+    }
+
+    @Override
+    public Type getDefaultRFFIType() {
+        return Type.NFI;
     }
 
     /**

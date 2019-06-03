@@ -60,6 +60,8 @@ public class FastROptions {
     public static final OptionKey<Boolean> PrintErrorStacktraces = new OptionKey<>(false);
     @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Dumps Java and R stack traces to 'fastr_errors-{context ID}_{PID}.log' for all internal errors") //
     public static final OptionKey<Boolean> PrintErrorStacktracesToFile = new OptionKey<>(false);
+    @Option(category = OptionCategory.EXPERT, stability = OptionStability.EXPERIMENTAL, help = "Activates LLVM debugging of shared libraries. The value contains a comma-separated list of libraries that are to be debugged on the LLVM bitcode level. All other LLVM libraries will be debugged using their (C/C++) debug information") //
+    public static final OptionKey<String> DebugLLVMLibs = new OptionKey<>("");
 
     @Option(category = OptionCategory.INTERNAL, help = "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.")//
     public static final OptionKey<String> Debug = new OptionKey<>("");
@@ -132,19 +134,11 @@ public class FastROptions {
     public static final OptionKey<Boolean> TraceNativeCalls = new OptionKey<>(false);
 
     /**
-     * Setting this environment variable activates the LLVM debugging of shared libraries. The value
-     * contains a comma-separated list of libraries that are to be debugged on the LLVM bitcode
-     * level. All other LLVM libraries will be debugged using their (C/C++) debug information.
-     * Example: <code>DEBUG_LLVM_LIBS=dplyr,Rcpp</code>
-     * <p>
-     * Moreover, the presence of the <code>DEBUG_LLVM_LIBS</code> variable in the environment
-     * activates the native data inspector JMX bean {@link NativeDataInspector} that can be used
-     * (e.g. via VisualVM) to inspect native data mirrors.
-     * <p>
-     * NB: To debug a library using its debug information, it must be installed from its unpacked
-     * sources tarball, i.e. using <code>bin/R INSTALL [path-to-pkg-dir]</code>
+     * The presence of the <code>NATIVE_DATA_INSPECTOR</code> variable in the environment activates
+     * the native data inspector JMX bean {@link NativeDataInspector} that can be used (e.g. via
+     * VisualVM) to inspect native data mirrors.
      */
-    public static final String DEBUG_LLVM_LIBS = "DEBUG_LLVM_LIBS";
+    public static final String NATIVE_DATA_INSPECTOR = "NATIVE_DATA_INSPECTOR";
 
     /**
      * For now we enforce that this option is set JVM wide, so that we can avoid reading it via
