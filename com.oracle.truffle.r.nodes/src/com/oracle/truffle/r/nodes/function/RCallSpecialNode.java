@@ -33,6 +33,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -46,6 +47,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -85,7 +87,29 @@ abstract class ClassCheckNode extends RNode {
         return value;
     }
 
-    @Specialization
+    @Specialization(guards = "!hasAttributes(storage)")
+    protected static RAttributeStorage doEmptyAttrStorage(RAttributeStorage storage) {
+        return storage;
+    }
+
+    @Specialization(guards = "hasAttributes(storage)")
+    protected static RAttributeStorage doEmptyAttrStorage(RAttributeStorage storage,
+                    @Cached("createClass()") GetFixedAttributeNode getClassAttrNode) {
+        if (getClassAttrNode.execute(storage) != null) {
+            throw RSpecialFactory.throwFullCallNeeded();
+        }
+        return storage;
+    }
+
+    protected static boolean hasAttributes(RAttributeStorage storage) {
+        return storage.getAttributes() != null;
+    }
+
+    protected static boolean isAttributableStorage(Object obj) {
+        return obj instanceof RAttributeStorage;
+    }
+
+    @Specialization(guards = "!isAttributableStorage(value)")
     public Object doGeneric(Object value,
                     @Cached("create()") ClassHierarchyNode classHierarchy) {
         if (classHierarchy.execute(value) != null) {

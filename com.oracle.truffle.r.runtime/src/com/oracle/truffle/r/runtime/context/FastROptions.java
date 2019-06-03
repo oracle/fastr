@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Option;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -149,7 +150,7 @@ public class FastROptions {
      * For now we enforce that this option is set JVM wide, so that we can avoid reading it via
      * {@link RContext} on the fastr path.
      */
-    public static boolean sharedContextsOptionValue;
+    @CompilationFinal public static boolean sharedContextsOptionValue;
 
     private final RContext context;
 

@@ -36,7 +36,6 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -138,7 +137,7 @@ final class LookupNode extends RSourceSectionNode implements RSyntaxNode, RSynta
  * a particular layout of frame descriptors and enclosing environments, and re-specializes in case
  * the layout changes.
  */
-public final class ReadVariableNode extends RBaseNode {
+public final class ReadVariableNode extends ReadVariableNodeBase {
 
     private static final int MAX_INVALIDATION_COUNT = 8;
 
@@ -210,8 +209,8 @@ public final class ReadVariableNode extends RBaseNode {
     private final ConditionProfile isPromiseProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isActiveBindingProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile copyProfile;
-    private final BranchProfile unexpectedMissingProfile = BranchProfile.create();
-    private final ValueProfile superEnclosingFrameProfile = ValueProfile.createClassProfile();
+    private final BranchProfile unexpectedMissingProfile;
+    private final ValueProfile superEnclosingFrameProfile;
 
     private final Object identifier;
     private final String identifierAsString;
@@ -221,8 +220,6 @@ public final class ReadVariableNode extends RBaseNode {
     // whether reads of RMissing should not throw error and just proceed, this is the case for
     // inlined varargs, which should not show missing value error
     private final boolean silentMissing;
-
-    @CompilationFinal(dimensions = 1) private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
     ReadVariableNode(ReadVariableNode node, boolean silentMissing) {
         this(node.identifier, node.mode, node.kind, silentMissing);
@@ -238,6 +235,8 @@ public final class ReadVariableNode extends RBaseNode {
         this.mode = mode;
         this.kind = kind;
         this.silentMissing = silentMissing;
+        unexpectedMissingProfile = silentMissing ? null : BranchProfile.create();
+        superEnclosingFrameProfile = kind == ReadKind.Super ? ValueProfile.createClassProfile() : null;
 
         this.copyProfile = kind != ReadKind.Copying ? null : ConditionProfile.createBinaryProfile();
     }
@@ -359,7 +358,7 @@ public final class ReadVariableNode extends RBaseNode {
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
             Frame profiledVariableFrame = frameProfile.profile(variableFrame);
-            Object value = profiledGetValue(seenValueKinds, profiledVariableFrame, slot);
+            Object value = profiledGetValue(profiledVariableFrame, slot);
             if (checkType(frame, value, isNullProfile)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw new LayoutChangedException();
@@ -408,7 +407,7 @@ public final class ReadVariableNode extends RBaseNode {
 
         @Override
         public Object execute(VirtualFrame frame, Frame variableFrame) throws LayoutChangedException, FrameSlotTypeException {
-            Object value = valueProfile.profile(profiledGetValue(seenValueKinds, frameProfile.profile(variableFrame), slot));
+            Object value = valueProfile.profile(profiledGetValue(frameProfile.profile(variableFrame), slot));
             if (!checkType(frame, value, isNullProfile)) {
                 throw new LayoutChangedException();
             }
@@ -613,7 +612,7 @@ public final class ReadVariableNode extends RBaseNode {
 
         @Override
         public Object execute(VirtualFrame frame) throws InvalidAssumptionException, LayoutChangedException, FrameSlotTypeException {
-            Object value = profiledGetValue(seenValueKinds, frameProfile.profile(lookup.getFrame()), lookup.getSlot());
+            Object value = profiledGetValue(frameProfile.profile(lookup.getFrame()), lookup.getSlot());
             if (!checkType(frame, value, isNullProfile)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw new LayoutChangedException();
@@ -648,7 +647,7 @@ public final class ReadVariableNode extends RBaseNode {
         FrameSlot localSlot = variableFrame.getFrameDescriptor().findFrameSlot(identifier);
         // non-local reads can only be handled in a simple way if they are successful
         if (localSlot != null) {
-            Object val = getValue(seenValueKinds, variableFrame, localSlot);
+            Object val = getValue(variableFrame, localSlot);
             if (checkTypeSlowPath(frame, val)) {
                 if (val instanceof MultiSlotData) {
                     RError.performanceWarning("polymorphic (slow path) lookup of symbol \"" + identifier + "\" from a multi slot");
@@ -721,7 +720,7 @@ public final class ReadVariableNode extends RBaseNode {
         FrameDescriptor currentDescriptor = variableFrame.getFrameDescriptor();
         FrameSlot frameSlot = currentDescriptor.findFrameSlot(identifier);
         if (frameSlot != null) {
-            Object value = getValue(seenValueKinds, variableFrame, frameSlot);
+            Object value = getValue(variableFrame, frameSlot);
             if (checkTypeSlowPath(frame, value)) {
                 StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, value);
                 if (valueAssumption != null) {
@@ -768,7 +767,7 @@ public final class ReadVariableNode extends RBaseNode {
         if (frameSlot == null) {
             assumptions.add(currentDescriptor.getNotInFrameAssumption(identifier));
         } else {
-            StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, getValue(seenValueKinds, variableFrame, frameSlot));
+            StableValue<Object> valueAssumption = FrameSlotChangeMonitor.getStableValueAssumption(currentDescriptor, frameSlot, getValue(variableFrame, frameSlot));
             if (valueAssumption != null && lastLevel instanceof DescriptorLevel) {
                 assumptions.add(valueAssumption.getAssumption());
             } else {
@@ -871,44 +870,6 @@ public final class ReadVariableNode extends RBaseNode {
             current = RArguments.getEnclosingFrame(current);
         } while (current != null);
         return null;
-    }
-
-    private static Object getValue(boolean[] seenValueKinds, Frame variableFrame, FrameSlot frameSlot) {
-        assert variableFrame.getFrameDescriptor().getSlots().contains(frameSlot) : frameSlot.getIdentifier();
-        Object value = variableFrame.getValue(frameSlot);
-        if (variableFrame.isObject(frameSlot)) {
-            value = FrameSlotChangeMonitor.getValue(frameSlot, variableFrame);
-            seenValueKinds[FrameSlotKind.Object.ordinal()] = true;
-        } else if (variableFrame.isByte(frameSlot)) {
-            seenValueKinds[FrameSlotKind.Byte.ordinal()] = true;
-        } else if (variableFrame.isInt(frameSlot)) {
-            seenValueKinds[FrameSlotKind.Int.ordinal()] = true;
-        } else if (variableFrame.isDouble(frameSlot)) {
-            seenValueKinds[FrameSlotKind.Double.ordinal()] = true;
-        }
-        return value;
-    }
-
-    static Object profiledGetValue(boolean[] seenValueKinds, Frame variableFrame, FrameSlot frameSlot) {
-        assert variableFrame.getFrameDescriptor().getSlots().contains(frameSlot) : frameSlot.getIdentifier();
-        try {
-            if (seenValueKinds[FrameSlotKind.Object.ordinal()] && variableFrame.isObject(frameSlot)) {
-                return FrameSlotChangeMonitor.getObject(frameSlot, variableFrame);
-            } else if (seenValueKinds[FrameSlotKind.Byte.ordinal()] && variableFrame.isByte(frameSlot)) {
-                return variableFrame.getByte(frameSlot);
-            } else if (seenValueKinds[FrameSlotKind.Int.ordinal()] && variableFrame.isInt(frameSlot)) {
-                return variableFrame.getInt(frameSlot);
-            } else if (seenValueKinds[FrameSlotKind.Double.ordinal()] && variableFrame.isDouble(frameSlot)) {
-                return variableFrame.getDouble(frameSlot);
-            } else {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                // re-profile to widen the set of expected types
-                return getValue(seenValueKinds, variableFrame, frameSlot);
-            }
-        } catch (FrameSlotTypeException e) {
-            CompilerDirectives.transferToInterpreter();
-            throw new RInternalError(e, "unexpected frame slot type mismatch");
-        }
     }
 
     /**

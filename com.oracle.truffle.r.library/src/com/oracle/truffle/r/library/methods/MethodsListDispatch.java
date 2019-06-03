@@ -35,6 +35,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.GetGenericInternalNodeGen;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
@@ -68,6 +69,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -343,17 +345,27 @@ public class MethodsListDispatch {
         }
 
         @Specialization
-        protected Object identC(RAbstractStringVector e1, RAbstractStringVector e2) {
-            if (e1.getLength() == 1 && e2.getLength() == 1 && e1.getDataAt(0).equals(e2.getDataAt(0))) {
-                return RRuntime.LOGICAL_TRUE;
-            } else {
-                return RRuntime.LOGICAL_FALSE;
-            }
+        protected byte identC(String e1, String e2) {
+            return RRuntime.asLogical(e1.equals(e2));
+        }
+
+        @Specialization
+        protected byte identC(RStringVector e1, RStringVector e2) {
+            return RRuntime.asLogical(e1.getLength() == 1 && e2.getLength() == 1 && e1.getDataAt(0).equals(e2.getDataAt(0)));
+        }
+
+        @Specialization
+        protected byte identC(RAbstractStringVector e1In, RAbstractStringVector e2In,
+                        @Cached("createClassProfile()") ValueProfile e1Profile,
+                        @Cached("createClassProfile()") ValueProfile e2Profile) {
+            RAbstractStringVector e1 = e1Profile.profile(e1In);
+            RAbstractStringVector e2 = e2Profile.profile(e2In);
+            return RRuntime.asLogical(e1.getLength() == 1 && e2.getLength() == 1 && e1.getDataAt(0).equals(e2.getDataAt(0)));
         }
 
         @SuppressWarnings("unused")
         @Fallback
-        protected Object identC(Object e1, Object e2) {
+        protected byte identC(Object e1, Object e2) {
             return RRuntime.LOGICAL_FALSE;
         }
     }

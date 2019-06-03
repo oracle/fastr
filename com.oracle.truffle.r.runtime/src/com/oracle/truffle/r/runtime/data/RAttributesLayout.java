@@ -137,7 +137,7 @@ public final class RAttributesLayout {
     }
 
     public static RAttributeIterable asIterable(DynamicObject attrs) {
-        return new RAttributeIterable(attrs, attrs.getShape().getPropertyList());
+        return new RAttributeIterable(attrs, attrs.getShape().getProperties());
     }
 
     public static RAttributeIterable asIterable(DynamicObject attrs, AttrsLayout attrsLayout) {
@@ -225,9 +225,9 @@ public final class RAttributesLayout {
         public static final RAttributeIterable EMPTY = new RAttributeIterable(null, null);
 
         private final DynamicObject attrs;
-        private final List<Property> properties;
+        private final Iterable<Property> properties;
 
-        RAttributeIterable(DynamicObject attrs, List<Property> properties) {
+        RAttributeIterable(DynamicObject attrs, Iterable<Property> properties) {
             this.attrs = attrs;
             this.properties = properties;
         }

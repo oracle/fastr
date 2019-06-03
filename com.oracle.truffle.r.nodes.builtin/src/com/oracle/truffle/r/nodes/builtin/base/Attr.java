@@ -28,22 +28,30 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.ForEachAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.ForEachAttributeNode.AttributeAction;
+import com.oracle.truffle.r.nodes.attributes.ForEachAttributeNode.Context;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.AttrNodeGen.PartialSearchCacheNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.InternStringNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -57,7 +65,7 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
     @Child private InternStringNode intern = InternStringNode.create();
 
     @Child private GetAttributeNode attrAccess = GetAttributeNode.create();
-    @Child private IterableAttributeNode iterAttrAccess = IterableAttributeNode.create();
+    @Child private PartialSearchCache partialSearchCache;
 
     @Override
     public Object[] getDefaultParameterValues() {
@@ -73,19 +81,11 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
     }
 
     private Object searchKeyPartial(DynamicObject attributes, String name) {
-        Object val = RNull.instance;
-
-        for (RAttributesLayout.RAttribute e : iterAttrAccess.execute(attributes)) {
-            if (e.getName().startsWith(name)) {
-                if (val == RNull.instance) {
-                    val = e.getValue();
-                } else {
-                    // non-unique match
-                    return RNull.instance;
-                }
-            }
+        if (partialSearchCache == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            partialSearchCache = insert(PartialSearchCacheNodeGen.create());
         }
-        return val;
+        return partialSearchCache.execute(attributes, name);
     }
 
     private Object attrRA(RAttributable attributable, String name, boolean exact) {
@@ -123,6 +123,47 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
             throw RError.error(this, Message.OBJ_CANNOT_BE_ATTRIBUTED);
         } else {
             throw RError.nyi(this, "object cannot be attributed");
+        }
+    }
+
+    @ImportStatic(DSLConfig.class)
+    protected abstract static class PartialSearchCache extends Node {
+        @Child protected ForEachAttributeNode iterAttrAccess = ForEachAttributeNode.create(new PartialAttrSearchAction());
+
+        public abstract Object execute(DynamicObject attributes, String name);
+
+        @Specialization(guards = {"attrs.getShape() == cachedShape", "name.equals(cachedName)"}, limit = "getCacheSize(8)")
+        protected Object doCached(@SuppressWarnings("unused") DynamicObject attrs, @SuppressWarnings("unused") String name,
+                        @SuppressWarnings("unused") @Cached("attrs.getShape()") Shape cachedShape,
+                        @SuppressWarnings("unused") @Cached("name") String cachedName,
+                        @Cached("iterAttrAccess.execute(attrs,name)") Object result) {
+            return result;
+        }
+
+        @Specialization(replaces = "doCached")
+        protected Object doUncached(DynamicObject attrs, String name) {
+            return iterAttrAccess.execute(attrs, name);
+        }
+    }
+
+    private static final class PartialAttrSearchAction extends AttributeAction {
+        @Override
+        public void init(Context context) {
+            context.result = RNull.instance;
+        }
+
+        @Override
+        public boolean action(String name, Object value, Context ctx) {
+            if (name.startsWith((String) ctx.param)) {
+                if (ctx.result == RNull.instance) {
+                    ctx.result = value;
+                } else {
+                    // non-unique match
+                    ctx.result = RNull.instance;
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

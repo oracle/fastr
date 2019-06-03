@@ -28,10 +28,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -45,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.RTypesGen;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
-public final class LocalReadVariableNode extends Node {
+public final class LocalReadVariableNode extends ReadVariableNodeBase {
 
     @Child private PromiseHelperNode promiseHelper;
     @Child private RExplicitCallNode readActiveBinding;
@@ -53,7 +51,6 @@ public final class LocalReadVariableNode extends Node {
     private final Object identifier;
     private final boolean forceResult;
 
-    @CompilationFinal(dimensions = 1) private boolean[] seenValueKinds;
     @CompilationFinal private ValueProfile valueProfile;
     @CompilationFinal private ConditionProfile isNullProfile;
     @CompilationFinal private ConditionProfile isMissingProfile;
@@ -110,12 +107,11 @@ public final class LocalReadVariableNode extends Node {
         Object result = null;
         if (isMissingProfile == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            seenValueKinds = new boolean[FrameSlotKind.values().length];
             valueProfile = ValueProfile.createClassProfile();
             isNullProfile = ConditionProfile.createBinaryProfile();
             isMissingProfile = ConditionProfile.createBinaryProfile();
         }
-        result = valueProfile.profile(ReadVariableNode.profiledGetValue(seenValueKinds, profiledVariableFrame, frameSlot));
+        result = valueProfile.profile(profiledGetValue(profiledVariableFrame, frameSlot));
         if (isNullProfile.profile(result == null) || isMissingProfile.profile(result == RMissing.instance)) {
             return null;
         }
