@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function.opt;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.function.ArgumentStatePush;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -137,12 +136,9 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
     @Override
     public Object execute(final VirtualFrame frame) {
         Object value = null;
-        try {
-            allArgPromisesCanOptimize.check();
-        } catch (InvalidAssumptionException e) {
-            return getFallback().execute(frame);
+        if (!allArgPromisesCanOptimize.isValid()) {
+            return rewriteToFallback().execute(frame);
         }
-
         RCaller currentCaller = RArguments.getCall(frame);
         boolean previousEvalEagerOnly = currentCaller.evaluateOnlyEagerPromises();
         try {
@@ -167,8 +163,10 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
             }
         } catch (CannotOptimizePromise ex) {
             allArgPromisesCanOptimize.invalidate();
-
             if (previousEvalEagerOnly) {
+                // no point in continuing executing this node, which checks this assumption as the
+                // first thing in this method
+                rewriteToFallback();
                 throw ex;
             }
             value = null;
@@ -193,6 +191,10 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
     @Override
     public RSyntaxNode getPromiseExpr() {
         return expr.asRSyntaxNode();
+    }
+
+    private PromiseNode rewriteToFallback() {
+        return replace(getFallback());
     }
 
     private PromiseNode getFallback() {
