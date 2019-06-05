@@ -37,6 +37,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 public class FastRThrowCompilerError extends RBuiltinNode.Arg0 {
     private Random random = new Random();
 
+    static {
+        Casts.noCasts(FastRThrowCompilerError.class);
+    }
+
     @Override
     public Object execute(@SuppressWarnings("unused") VirtualFrame frame) {
         int value = getRandomValue();
