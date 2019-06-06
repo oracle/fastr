@@ -80,13 +80,29 @@ ifeq ($(FASTR_RFFI),managed)
 else
 ifeq ($(OS_NAME),Darwin)
 	# TODO: fix Darwin build
-	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz -lf2c -liconv $(VERSION_FLAGS)
 ifeq ($(FASTR_RFFI),llvm)
-	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
-	FASTR_RFFI="llvm-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.bc) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+	install_name_tool -id @rpath/libf2c.so $(FASTR_LIB_DIR)/libf2c.so
+
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lRblas -lRlapack -lpcre -lz -lf2c -liconv $(VERSION_FLAGS)
+
+	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRblas.dylib
+	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRlapack.dylib
+	
+	# The following commands will be changed to use @loader_path (or @rpath) instead of the absolute paths $(LLVM_LIBS_DIR) and $(FASTR_LIB_DIR)
+	# when Sulong supports @loader_path (resp. @rpath) substitution.
+	install_name_tool -change bin/libpolyglot-mock.dylib $(LLVM_LIBS_DIR)/libpolyglot-mock.dylib $(LLVM_LIB)
+	install_name_tool -change @rpath/libRblas.dylib $(FASTR_LIB_DIR)/libRblas.dylib $(LLVM_LIB)
+	install_name_tool -change @rpath/libRlapack.dylib $(FASTR_LIB_DIR)/libRlapack.dylib $(LLVM_LIB)
+	install_name_tool -change @rpath/libpcre.dylib $(FASTR_LIB_DIR)/libpcre.dylib $(LLVM_LIB)
+	install_name_tool -change @rpath/libz.dylib $(FASTR_LIB_DIR)/libz.dylib $(LLVM_LIB)
+	install_name_tool -change @rpath/libf2c.so $(FASTR_LIB_DIR)/libf2c.so $(LLVM_LIB)
+	
 endif
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
 	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
+	install_name_tool -change libf2c.so @rpath/libf2c.so $(R_LIB)
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
 # check if we captured libpcre/libz, rpath those in libR
 	mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_LIB_DIR)

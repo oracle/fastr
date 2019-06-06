@@ -34,9 +34,9 @@ import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLLFactory.TruffleMixed_
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLLFactory.TruffleMixed_DLSymNodeGen;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 
 public class TruffleMixed_DLL implements DLLRFFI {
@@ -72,7 +72,7 @@ public class TruffleMixed_DLL implements DLLRFFI {
         @Override
         public LibHandle execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError {
             if (!Files.exists(Paths.get(path))) {
-                throw new UnsatisfiedLinkError(String.format("Neither NFI nor LLVM version of shared library %s found", path));
+                throw new UnsatisfiedLinkError(String.format("Shared library %s not found", path));
             }
             LibHandle nfiLibHandle = nfiDllOpenNode.execute(path, local, now);
             LLVM_Handle llvmLibHandle = (LLVM_Handle) llvmDllOpenNode.execute(path, local, now);

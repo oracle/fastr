@@ -60,6 +60,7 @@ all: checkversion
 ifeq ($(FASTR_RFFI),llvm)
 	$(MAKE) -C ../f2c/f2c CC=$(LABS_LLVM_CC)
 	$(MAKE) -C ../f2c/libf2c CC=$(LABS_LLVM_CC)
+	mkdir -p ../lib
 	cp ../f2c/libf2c/libf2c.so ../lib
 	# TODO: fix rpath on MacOS?
 endif

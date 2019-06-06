@@ -28,3 +28,7 @@ char *R_HomeDir(void) {
 	return ((call_R_HomeDir) callbacks[R_HomeDir_x])();
 }
 
+int R_ReadConsole(const char *prompt, unsigned char *buf, int len, int addtohistory) {
+    unimplemented("R_ReadConsole");	
+	return 0;
+}

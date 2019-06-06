@@ -48,7 +48,7 @@ INCLUDE_DIR := $(NATIVE_PROJECT)/include
 all: $(C_LIB)
 
 $(C_LIB): $(OBJ) $(C_OBJECTS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS)  -o $(C_LIB) $(C_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -L$(FASTR_LIB_DIR) -lR -o $(C_LIB) $(C_OBJECTS)
 
 $(OBJ):
 	mkdir -p $(OBJ)

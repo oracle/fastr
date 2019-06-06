@@ -103,7 +103,14 @@ ifeq ($(FASTR_RFFI),llvm)
 	# TODO: ar tool
 	ed Makeconf.etc < edMakeconf.etc.llvm
 	# LABS_LLVM_CC is used by f2c-wrapper
-	sed -i "s!DYLIB_LINK!LABS_LLVM_CC = $(LABS_LLVM_CC)\nDYLIB_LINK!" Makeconf.etc
+	sed -i -e 's~LIBR0 =~LIBR0 = -L$(FASTR_R_HOME)/lib -lR~' Makeconf.etc
+	sed -i -e 's~DYLIB_LINK~LABS_LLVM_CC = $(LABS_LLVM_CC)\
+DYLIB_LINK~g' Makeconf.etc
+	# A workaround for a Sulong issue: TODO: the issue ID
+	sed -i -e 's/-O2//' Makeconf.etc
+	# the undefined option is not compatible with LLVM bundling
+	sed -i -e 's/-undefined dynamic_lookup//' Makeconf.etc
+
 	cp $(LLVM_TOOLS) $(FASTR_BIN_DIR) 
 	ln -sf $(LABS_LLVM_CC) $(FASTR_BIN_DIR)/llvm-cc
 	ln -sf $(LABS_LLVM_CXX) $(FASTR_BIN_DIR)/llvm-c++

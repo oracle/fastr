@@ -272,6 +272,7 @@ suite = {
       "buildEnv" : {
         "NFI_INCLUDES" : "-I<path:truffle:TRUFFLE_NFI_NATIVE>/include",
         "LLVM_INCLUDES" : "-I<path:sulong:SULONG_LEGACY>/include -I<path:sulong:SULONG_LIBS>/include",
+        "LLVM_LIBS_DIR" : "<path:sulong:SULONG_LIBS>",        
         # If FASTR_RFFI=='llvm', then this is set as CC/CXX in c.o.t.r.native/Makefile
         "LABS_LLVM_CC": "<toolchainGetToolPath:native,CC>",
         "LABS_LLVM_CXX": "<toolchainGetToolPath:native,CXX>",

@@ -132,12 +132,16 @@ public class TruffleMixed_Call implements CallRFFI {
         protected void handleLLVMNFIInitLib(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args,
                         @Cached("createLLVMInvocationNode()") InvokeVoidCallNode llvmDelegNode,
                         @Cached("createNFIInvocationNode()") InvokeVoidCallNode nfiDelegNode) {
-            RList symbols = (RList) nativeCallInfo.address.value;
-            llvmDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, (SymbolHandle) symbols.getDataAt(0), nativeCallInfo.dllInfo), args);
-            LibHandle nfiLibHandle = ((MixedLLVM_Handle) nativeCallInfo.dllInfo.handle).nfiLibHandle;
-            if (nfiLibHandle != null) {
-                DLLInfo nfiDllInfo = nativeCallInfo.dllInfo.replaceHandle(nfiLibHandle);
-                nfiDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, (SymbolHandle) symbols.getDataAt(1), nfiDllInfo), new Object[]{nfiDllInfo});
+            if (nativeCallInfo.address.value instanceof RList) {
+                RList symbols = (RList) nativeCallInfo.address.value;
+                llvmDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, (SymbolHandle) symbols.getDataAt(0), nativeCallInfo.dllInfo), args);
+                LibHandle nfiLibHandle = ((MixedLLVM_Handle) nativeCallInfo.dllInfo.handle).nfiLibHandle;
+                if (nfiLibHandle != null) {
+                    DLLInfo nfiDllInfo = nativeCallInfo.dllInfo.replaceHandle(nfiLibHandle);
+                    nfiDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, (SymbolHandle) symbols.getDataAt(1), nfiDllInfo), new Object[]{nfiDllInfo});
+                }
+            } else {
+                llvmDelegNode.dispatch(frame, new NativeCallInfo(nativeCallInfo.name, nativeCallInfo.address, nativeCallInfo.dllInfo), args);
             }
         }
     }
