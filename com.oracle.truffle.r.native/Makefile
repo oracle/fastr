@@ -56,13 +56,20 @@ endif
 # dependencies accurately.
 
 
+OS_NAME := $(shell uname -s)
+
 all: checkversion
 ifeq ($(FASTR_RFFI),llvm)
 	$(MAKE) -C ../f2c/f2c CC=$(LABS_LLVM_CC)
 	$(MAKE) -C ../f2c/libf2c CC=$(LABS_LLVM_CC)
 	mkdir -p ../lib
-	cp ../f2c/libf2c/libf2c.so ../lib
-	# TODO: fix rpath on MacOS?
+ifeq ($(OS_NAME),Darwin)
+	cp ../f2c/libf2c/libf2c.so ../lib/libf2c.dylib
+	install_name_tool -id @rpath/libf2c.dylib ../lib/libf2c.dylib
+else
+	cp ../f2c/libf2c/libf2c.so ../lib/
+endif
+
 endif
 	$(MAKE) -C gnur
 	$(MAKE) -C include

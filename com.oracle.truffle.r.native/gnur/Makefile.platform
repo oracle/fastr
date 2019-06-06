@@ -37,6 +37,8 @@ $(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
 	sed -f sedMakeconf $(GNUR_HOME)/Makeconf > /dev/null 2>&1
 	ed platform.mk.temp < edAddFASTR
 ifeq ($(FASTR_RFFI),llvm)
+	# A workaround to a missing omp library error occurring on Linux
+	sed -i -e 's/-fopenmp//' platform.mk.temp
 	# A workaround for a Sulong issue: TODO: the issue ID
 	sed -i -e 's/-O2//' platform.mk.temp
 	# the undefined option is not compatible with LLVM bundling

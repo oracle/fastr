@@ -82,8 +82,6 @@ ifeq ($(OS_NAME),Darwin)
 	# TODO: fix Darwin build
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz -lf2c -liconv $(VERSION_FLAGS)
 ifeq ($(FASTR_RFFI),llvm)
-	install_name_tool -id @rpath/libf2c.so $(FASTR_LIB_DIR)/libf2c.so
-
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(VERSION_FLAGS)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lRblas -lRlapack -lpcre -lz -lf2c -liconv $(VERSION_FLAGS)
 
@@ -97,12 +95,12 @@ ifeq ($(FASTR_RFFI),llvm)
 	install_name_tool -change @rpath/libRlapack.dylib $(FASTR_LIB_DIR)/libRlapack.dylib $(LLVM_LIB)
 	install_name_tool -change @rpath/libpcre.dylib $(FASTR_LIB_DIR)/libpcre.dylib $(LLVM_LIB)
 	install_name_tool -change @rpath/libz.dylib $(FASTR_LIB_DIR)/libz.dylib $(LLVM_LIB)
-	install_name_tool -change @rpath/libf2c.so $(FASTR_LIB_DIR)/libf2c.so $(LLVM_LIB)
+	install_name_tool -change @rpath/libf2c.so $(FASTR_LIB_DIR)/libf2c$(DYLIB_EXT) $(LLVM_LIB)
 	
 endif
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
 	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
-	install_name_tool -change libf2c.so @rpath/libf2c.so $(R_LIB)
+	install_name_tool -change libf2c.so @rpath/libf2c$(DYLIB_EXT) $(R_LIB)
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
 # check if we captured libpcre/libz, rpath those in libR
 	mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_LIB_DIR)
