@@ -24,77 +24,86 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.UnClassNodeGen.RemoveClassAttrNodeGen;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "unclass", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class UnClass extends RBuiltinNode.Arg1 {
-    private final BranchProfile objectProfile = BranchProfile.create();
-    private final BranchProfile shareableProfile = BranchProfile.create();
-
     static {
         Casts casts = new Casts(UnClass.class);
         casts.arg("x").mustNotBeMissing().asAttributable(true, true, true);
     }
+
+    @Child private RemoveClassAttrNode removeClassAttrNode;
 
     @Specialization
     protected RNull unClass(RNull rnull) {
         return rnull;
     }
 
-    @TruffleBoundary
-    private static Object unClassVector(RAbstractVector arg) {
-        RVector<?> resultVector = arg.materialize();
-        if (!resultVector.isTemporary()) {
-            resultVector = resultVector.copy();
-            resultVector.incRefCount();
-        }
-        return RVector.setVectorClassAttr(resultVector, null);
-    }
-
-    // TODO: this specialization could go away if connections were simple vectors (we wouldn't need
-    // special method for setting class attributes then)
     @Specialization
-    protected Object unClass(RAbstractVector arg,
+    protected Object unClass(RAttributable arg,
                     @Cached("create()") GetClassAttributeNode getClassNode) {
         if (getClassNode.isObject(arg)) {
-            objectProfile.enter();
-            return unClassVector(arg);
+            if (removeClassAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                removeClassAttrNode = insert(RemoveClassAttrNodeGen.create());
+            }
+            return removeClassAttrNode.execute(arg);
         }
         return arg;
     }
 
-    @Specialization(guards = "notAbstractVector(arg)")
-    protected Object unClass(RAttributable arg,
-                    @Cached("createClass()") RemoveFixedAttributeNode removeClassNode,
-                    @Cached("create()") GetClassAttributeNode getClassNode) {
-        if (getClassNode.getClassAttr(arg) != null) {
-            objectProfile.enter();
-            if (arg instanceof RShareable) {
+    protected abstract static class RemoveClassAttrNode extends RBaseNode {
+        public abstract Object execute(RAttributable attributable);
+
+        @Specialization(guards = "reuse.supports(x)")
+        protected Object doVector(RAbstractVector x,
+                        @Cached("createClass()") RemoveFixedAttributeNode removeClassNode,
+                        @Cached("createTemporary(x)") VectorReuse reuse) {
+            RAbstractVector result = reuse.getMaterializedResult(x);
+            removeClassNode.execute(result);
+            return result;
+        }
+
+        @Specialization(replaces = "doVector")
+        protected Object doVectorGeneric(RAbstractVector x,
+                        @Cached("createClass()") RemoveFixedAttributeNode removeClassNode,
+                        @Cached("createTemporaryGeneric()") VectorReuse reuse) {
+            return doVector(x, removeClassNode, reuse);
+        }
+
+        @Specialization(guards = "notAbstractVector(x)")
+        protected Object unClass(RAttributable x,
+                        @Cached BranchProfile shareableProfile,
+                        @Cached("createClass()") RemoveFixedAttributeNode removeClassNode) {
+            RAttributable result = x;
+            if (x instanceof RShareable) {
                 shareableProfile.enter();
-                RShareable shareable = (RShareable) arg;
+                RShareable shareable = (RShareable) x;
                 if (!shareable.isTemporary()) {
-                    shareable = shareable.copy();
-                    shareable.incRefCount();
+                    result = (RAttributable) shareable.copy();
                 }
             }
-            removeClassNode.execute(arg);
+            removeClassNode.execute(result);
+            return result;
         }
-        return arg;
-    }
 
-    protected boolean notAbstractVector(Object arg) {
-        return !(arg instanceof RAbstractVector);
+        protected static boolean notAbstractVector(Object arg) {
+            return !(arg instanceof RAbstractVector);
+        }
     }
 }
