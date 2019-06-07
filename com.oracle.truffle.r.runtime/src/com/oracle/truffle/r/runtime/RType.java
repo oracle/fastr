@@ -68,6 +68,7 @@ public enum RType {
 
     public static final int NO_PRECEDENCE = -1;
     public static final int NUMBER_OF_PRECEDENCES = 9;
+    public static final RType[] VALUES = values();
 
     private final String name;
     private final String clazz;
