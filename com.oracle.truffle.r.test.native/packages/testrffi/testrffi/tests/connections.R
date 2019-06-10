@@ -30,9 +30,10 @@ rffi.readConnection(zz);
 unlink("testbinconn")
 
 # custom connections implemented in native code
-nativeConn <- rffi.createNativeConnection()
-nativeConn
-writeChar("Hello to custom native connections!\n", nativeConn)
+# Sulong issue XYZ (TODO: the issue number)
+#nativeConn <- rffi.createNativeConnection()
+#nativeConn
+#writeChar("Hello to custom native connections!\n", nativeConn)
 
 # TODO: close ignored -- FastR does not call destroy
 # close(nativeConn)

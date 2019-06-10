@@ -7,7 +7,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "445077de669592367c0519ed38e5e1e5cbd7267d",
+               "version" : "b2e8be12e13c162e07175329d943a4d9d1583d58",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -17,7 +17,7 @@ suite = {
                "name" : "sulong",
                "subdir" : True,
                # The version must be the same as the version of Truffle
-               "version" : "445077de669592367c0519ed38e5e1e5cbd7267d",
+               "version" : "b2e8be12e13c162e07175329d943a4d9d1583d58",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -265,6 +265,9 @@ suite = {
       "dependencies" : [
         "GNUR",
         "truffle:TRUFFLE_NFI_NATIVE",
+        "sulong:SULONG_BOOTSTRAP_TOOLCHAIN",
+        "sulong:SULONG_LIBS",
+        "sulong:SULONG_LEGACY",
       ],
       "native" : True,
       "single_job" : True,
@@ -272,7 +275,7 @@ suite = {
       "buildEnv" : {
         "NFI_INCLUDES" : "-I<path:truffle:TRUFFLE_NFI_NATIVE>/include",
         "LLVM_INCLUDES" : "-I<path:sulong:SULONG_LEGACY>/include -I<path:sulong:SULONG_LIBS>/include",
-        "LLVM_LIBS_DIR" : "<path:sulong:SULONG_LIBS>",        
+        "LLVM_LIBS_DIR" : "<path:sulong:SULONG_LIBS>",
         # If FASTR_RFFI=='llvm', then this is set as CC/CXX in c.o.t.r.native/Makefile
         "LABS_LLVM_CC": "<toolchainGetToolPath:native,CC>",
         "LABS_LLVM_CXX": "<toolchainGetToolPath:native,CXX>",

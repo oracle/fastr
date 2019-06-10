@@ -24,15 +24,8 @@
 OBJ = lib
 SRC = src
 
-ifeq ($(FASTR_RFFI),nfi)
-XTRA_C_SOURCES += $(SRC)/truffle_nfi/gramRd_nfi.c
-XTRA_C_OBJECTS += $(OBJ)/gramRd_nfi.o
-else
-ifeq ($(FASTR_RFFI),llvm)
 XTRA_C_SOURCES += $(SRC)/truffle_llvm/gramRd_llvm.c
 XTRA_C_OBJECTS += $(OBJ)/gramRd_llvm.o
-endif
-endif
 
 include ../lib.mk
 

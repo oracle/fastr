@@ -55,7 +55,6 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
  */
 public class TruffleLLVM_Context extends RFFIContext {
 
-    private final TruffleLLVM_DLL.ContextStateImpl dllState = new TruffleLLVM_DLL.ContextStateImpl();
     final TruffleLLVM_Call.ContextStateImpl callState = new TruffleLLVM_Call.ContextStateImpl();
 
     public TruffleLLVM_Context() {
@@ -105,7 +104,6 @@ public class TruffleLLVM_Context extends RFFIContext {
             DLLInfo libR = DLL.loadLibR(context, librffiPath, path -> TruffleLLVM_DLL.dlOpen(context, path));
             addLibRToDLLContextState(context, libR);
         }
-        dllState.initialize(context);
         callState.initialize(context);
         return this;
     }
@@ -118,7 +116,6 @@ public class TruffleLLVM_Context extends RFFIContext {
 
     @Override
     public void beforeDispose(RContext context) {
-        dllState.beforeDispose(context);
         callState.beforeDispose(context);
     }
 

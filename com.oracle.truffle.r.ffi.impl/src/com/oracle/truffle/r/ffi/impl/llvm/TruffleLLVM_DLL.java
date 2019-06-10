@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
@@ -57,28 +56,6 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     static {
         ignoredNativeLibs.add("Rblas");
         ignoredNativeLibs.add("Rlapack");
-    }
-
-    static class ContextStateImpl implements RContext.ContextState {
-        /**
-         * When a new {@link RContext} is created we have to re-parse the libR modules,
-         * unfortunately, as there is no way to propagate the LLVM state created in the initial
-         * context. TODO when do we really need to do this? This is certainly too early for contexts
-         * that will not invoke LLVM code (e.g. most unit tests)
-         */
-        @Override
-        public ContextState initialize(RContext context) {
-            // TODO: Is it really needed when using the new lookup mechanism?
-            if (!context.isInitial()) {
-                // for (LLVM_IR ir : truffleDLL.libRModules) {
-                // parseLLVM(context.getEnv(), "libR", ir);
-                // }
-            }
-            if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
-                // TODO: must propagate all LLVM library exports??
-            }
-            return this;
-        }
     }
 
     private static final class TruffleLLVM_DLOpenNode extends Node implements DLOpenNode {

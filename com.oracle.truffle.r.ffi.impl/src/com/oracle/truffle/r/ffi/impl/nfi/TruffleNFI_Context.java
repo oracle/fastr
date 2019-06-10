@@ -341,10 +341,10 @@ public class TruffleNFI_Context extends RFFIContext {
         try {
             String librffiPath = LibPaths.getBuiltinLibPath("R");
             if (context.isInitial()) {
-                TruffleNFI_DLL.dlOpen(context, LibPaths.getBuiltinLibPath("f2c"), false, false);
                 rlibDLLInfo = DLL.loadLibR(context, librffiPath, path -> TruffleNFI_DLL.dlOpen(context, path, false, false));
                 addLibRToDLLContextState(context, rlibDLLInfo);
             } else {
+                rlibDLLInfo = DLL.ContextStateImpl.getLibR();
                 // force initialization of NFI
                 // TODO: still necessary? Maybe even buggy, what if it is mixed context?
                 DLLRFFI.DLOpenRootNode.create(context).call(librffiPath, false, false);

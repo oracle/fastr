@@ -45,11 +45,11 @@ import com.oracle.truffle.r.runtime.Utils;
  * N.B. Use limited to RFFI implementations.
  */
 public final class CharSXPWrapper extends RObject implements RTruffleObject, RTypedValue {
+    private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
     private int typedValueInfo = ASCII_MASK_SHIFTED;
     private String contents;
     private byte[] bytes;
-    private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
 
     private CharSXPWrapper(String contents) {
         this.contents = contents;

@@ -95,7 +95,6 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 
 	echo $(DEFAULT_CRAN_MIRROR) > $(FASTR_ETC_DIR)/DEFAULT_CRAN_MIRROR
 
-ifeq ($(FASTR_RFFI),llvm)
 	# Alter the configuration which is used for building R packages
 	# Create symlinks to the Labs LLVM tools inside FASTR_HOME/bin
 	# Copy our f2c-wrapper tool to FASTR_HOME/bin
@@ -103,7 +102,10 @@ ifeq ($(FASTR_RFFI),llvm)
 	# TODO: ar tool
 	ed Makeconf.etc < edMakeconf.etc.llvm
 	# LABS_LLVM_CC is used by f2c-wrapper
-	sed -i -e 's~LIBR0 =~LIBR0 = -L$(FASTR_R_HOME)/lib -lR~' Makeconf.etc
+	sed -i -e 's/-fopenmp//' Makeconf.etc
+	sed -i -e 's~LIBR0 =~LIBR0 = -lR~' Makeconf.etc
+	sed -i -e 's~LDFLAGS =~LDFLAGS = -Wl,-rpath,$(FASTR_R_HOME)/lib/ -L$(FASTR_R_HOME)/lib -lf2c~' Makeconf.etc
+	sed -i -e 's~^CXXFLAGS =\(.*\)~CXXFLAGS = \1 $(FASTR_CXXFLAGS)~g' Makeconf.etc
 	sed -i -e 's~DYLIB_LINK~LABS_LLVM_CC = $(LABS_LLVM_CC)\
 DYLIB_LINK~g' Makeconf.etc
 	# A workaround for a Sulong issue: TODO: the issue ID
@@ -114,7 +116,7 @@ DYLIB_LINK~g' Makeconf.etc
 	cp $(LLVM_TOOLS) $(FASTR_BIN_DIR) 
 	ln -sf $(LABS_LLVM_CC) $(FASTR_BIN_DIR)/llvm-cc
 	ln -sf $(LABS_LLVM_CXX) $(FASTR_BIN_DIR)/llvm-c++
-endif
+
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
 
 	## deploy helper script that can build native-image of FastR and update the launchers in GraalVM

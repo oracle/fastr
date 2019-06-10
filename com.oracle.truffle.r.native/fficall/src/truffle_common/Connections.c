@@ -27,6 +27,7 @@
 // but does not include it -> the order is important
 
 #include "rffi_upcalls.h"
+#include "rffiutils.h"
 #include <Rinternals.h>
 
 /*

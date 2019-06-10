@@ -74,6 +74,8 @@ INCLUDES := $(JNI_INCLUDES) $(FFI_INCLUDES) $(PKG_INCLUDES)
 
 PKGDIR := $(FASTR_LIBRARY_DIR)/$(PKG)
 
+F2C := -lf2c
+
 ifeq ($(OS_NAME), SunOS)
     SUPPRESS_WARNINGS :=
 else
@@ -102,7 +104,7 @@ $(OBJ):
 
 $(LIB_PKG): $(C_OBJECTS) $(F_OBJECTS) $(PKGDIR) $(XTRA_C_OBJECTS)
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -L$(FASTR_LIB_DIR) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(XTRA_C_OBJECTS) $(PKG_LIBS) -lR -lz -lf2c -lRlapack
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -L$(FASTR_LIB_DIR) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(XTRA_C_OBJECTS) $(PKG_LIBS) -lR -lz $(F2C) -lRlapack
 	mkdir -p $(FASTR_LIBRARY_DIR)/$(PKG)/libs
 	cp "$(LIB_PKG)" $(FASTR_LIBRARY_DIR)/$(PKG)/libs
 ifeq ($(OS_NAME),Darwin)

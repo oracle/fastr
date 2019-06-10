@@ -74,16 +74,17 @@ all: $(R_LIB)
 # N.B. if things change in the subdirs, a clean must be invoked
 # to remove the sentinels
 
+F2C := -lf2c
+
 $(R_LIB): fficall.done
 ifeq ($(FASTR_RFFI),managed)
 	# nop
 else
 ifeq ($(OS_NAME),Darwin)
-	# TODO: fix Darwin build
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz -lf2c -liconv $(VERSION_FLAGS)
-ifeq ($(FASTR_RFFI),llvm)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
+
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(VERSION_FLAGS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lRblas -lRlapack -lpcre -lz -lf2c -liconv $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
 
 	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRblas.dylib
 	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRlapack.dylib
@@ -97,7 +98,6 @@ ifeq ($(FASTR_RFFI),llvm)
 	install_name_tool -change @rpath/libz.dylib $(FASTR_LIB_DIR)/libz.dylib $(LLVM_LIB)
 	install_name_tool -change @rpath/libf2c.so $(FASTR_LIB_DIR)/libf2c$(DYLIB_EXT) $(LLVM_LIB)
 	
-endif
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
 	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
 	install_name_tool -change libf2c.so @rpath/libf2c$(DYLIB_EXT) $(R_LIB)
@@ -106,14 +106,12 @@ endif
 	mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_LIB_DIR)
 else
 	# not Darwin:
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
-ifeq ($(FASTR_RFFI),llvm)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz $(F2C)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
 	# We do not link with Rlapack and Rblas so that we can load those libraries manually later after loading libR
 	# Otherwise Sulong would attempt to load Rlapack and Rblas and fail, because there is a dependency cycle:
 	#     libR provides xerbla_, but Rlapack/Rblas depend on it, it seems that Sulong is not able to resolve this unlike the native loader
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -ldl -lpcre -lz
-endif # llvm
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -ldl -lpcre -lz $(F2C)
 endif # Darwin
 endif # managed
 
@@ -124,15 +122,11 @@ else
 fficall.done: common.done fficallllvm.done
 	$(MAKE) -C src/truffle_nfi all
 	touch fficall.done
-ifeq ($(FASTR_RFFI),llvm)
+
 export R_PACKAGE_DIR="lib"
 fficallllvm.done: common.done
-	$(MAKE) FASTR_RFFI="llvm-only" -C src/truffle_llvm all
+	$(MAKE) -C src/truffle_llvm all
 	touch fficallllvm.done
-else
-fficallllvm.done: common.done
-	touch fficallllvm.done
-endif #llvm
 endif #managed
 
 common.done:

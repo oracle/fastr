@@ -23,11 +23,9 @@
 
 .PHONY: all clean
 
-ifeq ($(FASTR_RFFI),llvm)
 $(info Building FastR with LLVM... CC is $(LABS_LLVM_CC))
 $(info LLVM_RUNTMIE_LIBS is $(LLVM_RUNTMIE_LIBS))
 $(info LLVM_INCLUDES is $(LLVM_INCLUDES))
-endif
 $(info NFI_INCLUDES is $(NFI_INCLUDES))
 
 export TOPDIR = $(CURDIR)
@@ -59,18 +57,19 @@ endif
 OS_NAME := $(shell uname -s)
 
 all: checkversion
-ifeq ($(FASTR_RFFI),llvm)
 	$(MAKE) -C ../f2c/f2c CC=$(LABS_LLVM_CC)
-	$(MAKE) -C ../f2c/libf2c CC=$(LABS_LLVM_CC)
 	mkdir -p ../lib
 ifeq ($(OS_NAME),Darwin)
+	$(MAKE) -C ../f2c/libf2c CC=$(LABS_LLVM_CC)
 	cp ../f2c/libf2c/libf2c.so ../lib/libf2c.dylib
 	install_name_tool -id @rpath/libf2c.dylib ../lib/libf2c.dylib
 else
+	# TODO: Patch the libf2c makefile so that the flags can be specified using the make's CFLAGS parameter
+	sed -i -e 's/CFLAGS = -O/CFLAGS = -O -fPIC/' ../f2c/libf2c/makefile
+	$(MAKE) -C ../f2c/libf2c CC=$(LABS_LLVM_CC)
 	cp ../f2c/libf2c/libf2c.so ../lib/
 endif
 
-endif
 	$(MAKE) -C gnur
 	$(MAKE) -C include
 	$(MAKE) -C fficall
@@ -79,10 +78,8 @@ endif
 	cp version.source version.built
 
 clean:
-ifeq ($(FASTR_RFFI),llvm)
 	$(MAKE) -C ../f2c/libf2c clean
 	$(MAKE) -C ../f2c/f2c clean
-endif
 	$(MAKE) -C include clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C run clean

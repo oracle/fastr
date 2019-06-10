@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public enum RFFIVariables {
     R_Home("dummy string"),
     R_TempDir("dummy string"), // Set later
+    Sys_TempDir("dummy string"), // Set later
     R_GlobalEnv(null), // Set later
     R_BaseEnv(null), // Set later
     R_BaseNamespace(null), // Set later
@@ -121,6 +122,7 @@ public enum RFFIVariables {
     public static RFFIVariables[] initialize(RContext context) {
         R_Home.value = REnvVars.rHome();
         R_TempDir.value = TempPathName.tempDirPath(context);
+        Sys_TempDir.value = TempPathName.tempDirPath(context);
         R_GlobalEnv.value = RContext.getInstance().stateREnvironment.getGlobalEnv();
         R_BaseEnv.value = RContext.getInstance().stateREnvironment.getBaseEnv();
         R_BaseNamespace.value = RContext.getInstance().stateREnvironment.getBaseNamespace();

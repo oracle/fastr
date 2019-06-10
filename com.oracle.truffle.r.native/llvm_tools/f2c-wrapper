@@ -24,19 +24,23 @@
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+ORIG_FORTRAN=$1
+shift
+
 log () {
   if [[ "$LOG_F2CWRAPPER" != "" ]]; then
     echo $*
   fi
 }
 
-# Find F2C installation
+# Find F2C and LABS_LLVM_CC installation
 F2C=""
 F2C_H_INCLUDE="${DIR}/../include/"
 if [ -f "${DIR}/f2c" ]
 then
 	# For a package build
 	F2C="${DIR}/f2c"
+	LABS_LLVM_CC="${DIR}/llvm-cc"
 else
 	# For the FastR build
 	F2C="${DIR}/../../bin/f2c"
@@ -54,6 +58,9 @@ while [[ $# -gt 0 ]]; do
     ;;
     -fPIC)
       other_args="$other_args $1"
+    ;;
+    -fpic)
+      other_args="$other_args -fPIC"
     ;;
     -c)
       other_args="$other_args $1"
@@ -93,6 +100,10 @@ else
   $F2C "${source_file}" "-d${target_dir}"  
   ecode=$?
   if [[ $ecode -ne 0 ]]; then
+  	echo "F2C transformation failed. Resorting to $ORIG_FORTRAN (no LLVM)."
+  	log Running: $ORIG_FORTRAN "$other_args" -I${F2C_H_INCLUDE} -o "$output_file" "$source_file"
+	$ORIG_FORTRAN $other_args -I${F2C_H_INCLUDE} -o "$output_file" "$source_file"
+	ecode=$?
     exit $ecode
   fi
 fi
@@ -100,3 +111,6 @@ fi
 # Compile the C source code
 log Running: $LABS_LLVM_CC "$other_args" -I${F2C_H_INCLUDE} -o "$output_file" "$target_file"
 $LABS_LLVM_CC $other_args -I${F2C_H_INCLUDE} -o "$output_file" "$target_file"
+
+# Remove the generated C file to prevent duplicate object files in the linking command
+rm $target_file

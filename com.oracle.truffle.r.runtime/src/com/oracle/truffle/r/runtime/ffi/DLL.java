@@ -141,6 +141,10 @@ public class DLL {
             return kind == ContextKind.SHARE_PARENT_RW || kind == ContextKind.SHARE_ALL;
         }
 
+        public static DLLInfo getLibR() {
+            return libRdllInfo;
+        }
+
         public void addLibR(DLLInfo dllInfo) {
             assert list.isEmpty();
             list.add(dllInfo);
@@ -523,8 +527,7 @@ public class DLL {
 
     /**
      * Loads a the {@code libR} library. This is an implementation specific library.
-     * 
-     * @return
+     *
      */
     public static DLLInfo loadLibR(RContext context, String path, Function<String, LibHandle> load) {
         LibHandle handle = null;

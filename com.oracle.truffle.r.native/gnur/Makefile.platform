@@ -36,7 +36,7 @@ all: $(TOPDIR)/platform.mk
 $(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
 	sed -f sedMakeconf $(GNUR_HOME)/Makeconf > /dev/null 2>&1
 	ed platform.mk.temp < edAddFASTR
-ifeq ($(FASTR_RFFI),llvm)
+
 	# A workaround to a missing omp library error occurring on Linux
 	sed -i -e 's/-fopenmp//' platform.mk.temp
 	# A workaround for a Sulong issue: TODO: the issue ID
@@ -45,7 +45,7 @@ ifeq ($(FASTR_RFFI),llvm)
 	sed -i -e 's/-undefined dynamic_lookup//' platform.mk.temp
 	# This overrides the Fortran compiler with our f2c tool and CC with LABS_LLVM_CC
 	ed platform.mk.temp <edLLVM
-endif
+
 	echo OS_NAME = $(OS_NAME) >> platform.mk.temp
 ifeq ($(OS_NAME),SunOS)
 	echo JDK_OS_DIR = solaris >> platform.mk.temp
