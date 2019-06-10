@@ -91,7 +91,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         return false;
     }
 
-    private static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("polyglot.value");
+    private static final RStringVector truffleObjectClassHeader = RDataFactory.getPermanent().createStringVectorFromScalar("polyglot.value");
 
     @Child private GetFixedPropertyNode access;
     @Child private S4Class s4Class;

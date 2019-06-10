@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
@@ -122,6 +123,19 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
                     @Cached("createBinaryProfile()") ConditionProfile isMatrix,
                     @Cached("create()") GetDimAttributeNode getDim) {
         return getCachedType(value, value.getRType(), isArray, isMatrix, getDim);
+    }
+
+    @ExplodeLoop
+    public static boolean isImplicitClass(String className) {
+        if (className.equals("array") || className.equals("matrix") || className.equals("numeric")) {
+            return true;
+        }
+        for (RType type : RType.VALUES) {
+            if (className.equals(type.getClazz())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static RStringVector getImplicitClass(Object value, boolean forDispatch) {

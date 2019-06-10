@@ -75,7 +75,7 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
                             while ((line = r.readLine()) != null) {
                                 if (line.endsWith(".r") || line.endsWith(".R")) {
                                     final String rResource = pkgName + "/R/" + line.trim();
-                                    result.put(sourcePath.toString(), Utils.getResourceAsString(accessor, rResource, true));
+                                    result.put(rResource, Utils.getResourceAsString(accessor, rResource, true));
                                 }
                             }
                         }
