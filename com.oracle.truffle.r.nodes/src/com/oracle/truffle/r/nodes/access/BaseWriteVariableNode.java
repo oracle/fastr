@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -96,14 +96,14 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         // or
         // x<-c(1); f<-function() { x[[1]]<<-x[[1]] + 1; x }; a<-f(); b<-f(); c(a,b)
         if ((mode != Mode.INVISIBLE || isSuper)) {
-            if (isShareableProfile.profile(value instanceof RShareable)) {
+            if (isShareableProfile.profile(RSharingAttributeStorage.isShareable(value))) {
 
                 // this comparison does not work consistently for boxing objects, so it's important
                 // to do the RShareable check first.
                 if (isCurrentValue(frame, frameSlot, value)) {
                     return value;
                 }
-                RShareable rShareable = (RShareable) shareableProfile.profile(value);
+                RSharingAttributeStorage rShareable = (RSharingAttributeStorage) shareableProfile.profile(value);
                 if (mode == Mode.COPY) {
                     return rShareable.copy();
                 } else {

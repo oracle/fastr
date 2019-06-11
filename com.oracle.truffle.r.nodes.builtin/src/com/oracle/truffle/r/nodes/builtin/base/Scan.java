@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996, Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +60,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -302,12 +301,12 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
 
     private void fillEmpty(int from, int to, int records, RList list, LocalData data) {
         for (int i = from; i < to; i++) {
-            RVector<?> vec = (RVector<?>) list.getDataAt(i);
+            RAbstractVector vec = (RAbstractVector) list.getDataAt(i);
             vec.updateDataAtAsObject(records, extractItem(vec, "", data), naCheck);
         }
     }
 
-    private RVector<?> scanFrame(RList what, int maxRecords, int maxLines, boolean flush, boolean fill, @SuppressWarnings("unused") boolean stripWhite, boolean blSkip, boolean multiLine,
+    private RAbstractVector scanFrame(RList what, int maxRecords, int maxLines, boolean flush, boolean fill, @SuppressWarnings("unused") boolean stripWhite, boolean blSkip, boolean multiLine,
                     LocalData data) throws IOException {
 
         int nc = what.getLength();
@@ -333,7 +332,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
     }
 
     @TruffleBoundary
-    private RVector<?> scanFrameInternal(int maxRecords, int maxLines, boolean flush, boolean fill, boolean blSkip, boolean multiLine, LocalData data, int nc, int initialBlockSize, RList list)
+    private RAbstractVector scanFrameInternal(int maxRecords, int maxLines, boolean flush, boolean fill, boolean blSkip, boolean multiLine, LocalData data, int nc, int initialBlockSize, RList list)
                     throws IOException {
         int blockSize = initialBlockSize;
         int n = 0;
@@ -374,13 +373,13 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
                     // enlarge the vector
                     blockSize = blockSize * 2;
                     for (int j = 0; j < nc; j++) {
-                        RVector<?> vec = (RVector<?>) list.getDataAt(j);
+                        RAbstractVector vec = (RAbstractVector) list.getDataAt(j);
                         vec = vec.copyResized(blockSize, false);
                         list.updateDataAt(j, vec, null);
                     }
                 }
 
-                RVector<?> vec = (RVector<?>) list.getDataAt(n);
+                RAbstractVector vec = (RAbstractVector) list.getDataAt(n);
                 vec.updateDataAtAsObject(records, item, naCheck);
                 n++;
                 if (n == nc) {
@@ -418,7 +417,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
         }
         // trim vectors if necessary
         for (int i = 0; i < nc; i++) {
-            RVector<?> vec = (RVector<?>) list.getDataAt(i);
+            RAbstractVector vec = (RAbstractVector) list.getDataAt(i);
             if (vec.getLength() > records) {
                 list.updateDataAt(i, vec.copyResized(records, false), null);
             }
@@ -428,10 +427,10 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
     }
 
     @TruffleBoundary
-    private RVector<?> scanVector(RAbstractVector what, int maxItems, int maxLines, @SuppressWarnings("unused") boolean flush, @SuppressWarnings("unused") boolean stripWhite, boolean blSkip,
+    private RAbstractVector scanVector(RAbstractVector what, int maxItems, int maxLines, @SuppressWarnings("unused") boolean flush, @SuppressWarnings("unused") boolean stripWhite, boolean blSkip,
                     LocalData data) throws IOException {
         int blockSize = maxItems > 0 ? maxItems : SCAN_BLOCKSIZE;
-        RVector<?> vec = what.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR);
+        RAbstractVector vec = what.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR);
         naCheck.enable(true);
 
         int n = 0;

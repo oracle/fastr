@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -99,12 +98,12 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         }
         try (RConnection con = RConnection.fromIndex(file).forceOpen("wt")) {
             if (xx instanceof RAttributable && ClassHierarchyNode.hasClass((RAttributable) xx, RRuntime.CLASS_DATA_FRAME)) {
-                executeDataFrame(con, (RVector<?>) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
+                executeDataFrame(con, (RAbstractVector) xx, nr, nc, rnames, csep, ceol, cna, cdec, qmethod, quoteCol, quoteRn);
             } else { /* A matrix */
 
                 // if (!isVectorAtomic(x))
                 // UNIMPLEMENTED_TYPE("write.table, matrix method", x);
-                RVector<?> x = (RVector<?>) xx;
+                RAbstractVector x = (RAbstractVector) xx;
                 /* quick integrity check */
                 if (x.getLength() != nr * nc) {
                     throw new IllegalArgumentException("corrupt matrix -- dims not not match length");
@@ -138,7 +137,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         return RNull.instance;
     }
 
-    private static void executeDataFrame(RConnection con, RVector<?> x, int nr, int nc, Object rnames, String csep, String ceol, String cna, char cdec, boolean qmethod, boolean[] quoteCol,
+    private static void executeDataFrame(RConnection con, RAbstractVector x, int nr, int nc, Object rnames, String csep, String ceol, String cna, char cdec, boolean qmethod, boolean[] quoteCol,
                     boolean quoteRn)
                     throws IOException {
 

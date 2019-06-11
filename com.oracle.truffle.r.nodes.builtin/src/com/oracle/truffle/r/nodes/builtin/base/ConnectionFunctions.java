@@ -113,7 +113,6 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -493,7 +492,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RAbstractIntVector rawConnection(String description, RAbstractRawVector text, String open) {
             try {
-                return new RawRConnection(description, text.materialize().getDataTemp(), open).asVector();
+                return new RawRConnection(description, text.getDataTemp(), open).asVector();
             } catch (IOException ex) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -904,7 +903,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected Object readBin(int con, String what, int n, int sizeInput, boolean signed, boolean swap) {
-            RVector<?> result;
+            RAbstractVector result;
             BaseRConnection connection = RConnection.fromIndex(con);
             try (RConnection openConn = connection.forceOpen("rb")) {
                 if (getBaseConnection(openConn).isTextMode()) {

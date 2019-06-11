@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -49,9 +49,9 @@ public final class DuplicateNodes {
 
     public abstract static class DuplicateNode extends FFIUpCallNode.Arg2 {
 
-        @Specialization
+        @Specialization(guards = "!isSequence(x)")
         @TruffleBoundary
-        public Object duplicateShareable(RShareable x, int deep) {
+        public Object duplicateShareable(RSharingAttributeStorage x, int deep) {
             assert !isReusableForDuplicate(x);
             return deep == 1 ? x.deepCopy() : x.copy();
         }
@@ -82,6 +82,10 @@ public final class DuplicateNodes {
 
         public static DuplicateNode create() {
             return DuplicateNodeGen.create();
+        }
+
+        protected boolean isSequence(Object o) {
+            return o instanceof RSequence;
         }
     }
 

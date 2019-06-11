@@ -32,14 +32,40 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromLogicalAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromLogicalAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.interop.ForeignArrayToVectorNode;
 
-public final class RForeignBooleanWrapper extends RForeignVectorWrapper implements RAbstractLogicalVector {
+public final class RForeignBooleanWrapper extends RAbstractLogicalVector implements RForeignVectorWrapper {
+
+    protected final TruffleObject delegate;
 
     public RForeignBooleanWrapper(TruffleObject delegate) {
-        super(delegate);
+        super(RDataFactory.INCOMPLETE_VECTOR);
+        this.delegate = delegate;
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return false;
+    }
+
+    @Override
+    public int getLength() {
+        return RRuntime.getForeignArraySize(delegate, getInterop());
+    }
+
+    @Override
+    public Object getInternalStore() {
+        return delegate;
+    }
+
+    @Override
+    @TruffleBoundary
+    public RAbstractVector internalCopy() {
+        return ForeignArrayToVectorNode.getUncached().toVector(delegate, getRType());
     }
 
     @Override
@@ -82,9 +108,8 @@ public final class RForeignBooleanWrapper extends RForeignVectorWrapper implemen
         }
     }
 
-    @Override
-    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createLogicalVector(new byte[newLength], newIsComplete);
+    private static InteropLibrary getInterop() {
+        return InteropLibrary.getFactory().getUncached();
     }
 
     private static final class FastPathAccess extends FastPathFromLogicalAccess {
@@ -94,12 +119,12 @@ public final class RForeignBooleanWrapper extends RForeignVectorWrapper implemen
 
         FastPathAccess(RAbstractContainer value) {
             super(value);
-            delegateInterop = InteropLibrary.getFactory().create(((RForeignVectorWrapper) value).delegate);
+            delegateInterop = InteropLibrary.getFactory().create(((RForeignBooleanWrapper) value).delegate);
         }
 
         @Override
         public boolean supports(Object value) {
-            return super.supports(value) && delegateInterop.accepts(((RForeignVectorWrapper) value).delegate);
+            return super.supports(value) && delegateInterop.accepts(((RForeignBooleanWrapper) value).delegate);
         }
 
         @Override
@@ -135,7 +160,7 @@ public final class RForeignBooleanWrapper extends RForeignVectorWrapper implemen
         @Override
         @TruffleBoundary
         protected int getLength(RAbstractContainer vector) {
-            return RRuntime.getForeignArraySize(((RForeignVectorWrapper) vector).delegate, getInterop());
+            return RRuntime.getForeignArraySize(((RForeignBooleanWrapper) vector).delegate, getInterop());
         }
 
         @Override

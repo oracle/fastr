@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,14 +28,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * A {@link WrapDefaultArgumentNode} is used to wrap default function arguments as they are
  * essentially local variable writes and should be treated as such with respect to state transitions
- * of {@link RShareable}s.
+ * of {@link RSharingAttributeStorage}s.
  *
  */
 public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
@@ -49,6 +48,7 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
 
     @Override
     protected Object handleShareable(VirtualFrame frame, RSharingAttributeStorage shareable) {
+        assert RSharingAttributeStorage.isShareable(shareable);
         if (isShared == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             isShared = ConditionProfile.createBinaryProfile();

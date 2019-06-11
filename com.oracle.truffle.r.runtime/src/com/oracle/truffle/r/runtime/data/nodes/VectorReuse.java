@@ -27,8 +27,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -58,7 +58,7 @@ public final class VectorReuse extends Node {
     @CompilationFinal private ValueProfile copiedValueProfile;
 
     public VectorReuse(RAbstractContainer vector, boolean needsTemporary, boolean isGeneric) {
-        this.isShareableClass = isGeneric ? false : vector instanceof RSharingAttributeStorage;
+        this.isShareableClass = isGeneric ? false : RSharingAttributeStorage.isShareable(vector);
         this.clazz = isGeneric ? null : vector.getClass();
         this.needsTemporary = needsTemporary;
         this.isGeneric = isGeneric;
@@ -77,7 +77,6 @@ public final class VectorReuse extends Node {
 
     public boolean supports(RAbstractContainer value) {
         assert !isGeneric : "cannot call 'supports' on generic vector reuse";
-        RSharingAttributeStorage.verify(value);
         if (value.getClass() != clazz) {
             return false;
         }
@@ -91,7 +90,7 @@ public final class VectorReuse extends Node {
         if (isTempOrNonShared && !access.supports(value)) {
             return false;
         }
-        RSharingAttributeStorage vector = (RSharingAttributeStorage) cast(value);
+        RSharingAttributeStorage vector = cast(value);
         return needsTemporary ? vector.isTemporary() == isTempOrNonShared : !vector.isShared() == isTempOrNonShared;
     }
 
@@ -108,8 +107,7 @@ public final class VectorReuse extends Node {
     public <T extends RAbstractContainer> T getResult(T vector) {
         RAbstractContainer result;
         if (isGeneric) {
-            RSharingAttributeStorage.verify(vector);
-            if (vector instanceof RSharingAttributeStorage && isTempOrNonShared(vector)) {
+            if (RSharingAttributeStorage.isShareable(vector) && isTempOrNonShared(vector)) {
                 result = vector;
             } else {
                 result = copyVector(vector);
@@ -128,19 +126,18 @@ public final class VectorReuse extends Node {
     public <T extends RAbstractContainer> T getMaterializedResult(T vector) {
         RAbstractContainer result;
         if (isGeneric) {
-            RSharingAttributeStorage.verify(vector);
-            if (vector instanceof RSharingAttributeStorage && isTempOrNonShared(vector)) {
+            if (RSharingAttributeStorage.isShareable(vector) && isTempOrNonShared(vector)) {
                 result = vector.materialize();
             } else {
                 result = copyVector(vector).materialize();
             }
         } else {
             if (!isShareableClass || !isTempOrNonShared) {
-                if (!RVector.class.isAssignableFrom(clazz) && RAbstractVector.class.isAssignableFrom(clazz)) {
-                    // materialization of non RVector subclasses of RAbstractVector create a copy
-                    // in materialize already
+                if (!RMaterializedVector.class.isAssignableFrom(clazz) && RAbstractVector.class.isAssignableFrom(clazz)) {
+                    // materialization of non RMaterializedVector subclasses
+                    // create a copy in materialize already
                     result = cast(vector).materialize();
-                    assert result != vector;
+                    assert result != vector : result.getClass().getSimpleName() + " " + vector.getClass().getSimpleName();
                 } else {
                     result = profileCopiedValue(cast(vector).copy()).materialize();
                 }

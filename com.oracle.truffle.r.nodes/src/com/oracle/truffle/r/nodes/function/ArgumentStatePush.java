@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -64,7 +63,7 @@ public abstract class ArgumentStatePush extends Node {
         this.index = index;
     }
 
-    protected int createWriteArgMask(VirtualFrame frame, RShareable shareable) {
+    protected int createWriteArgMask(VirtualFrame frame, RSharingAttributeStorage shareable) {
         if (RContext.getInstance().getOption(RefCountIncrementOnly)) {
             return -1;
         }
@@ -97,7 +96,7 @@ public abstract class ArgumentStatePush extends Node {
         return 1 << index;
     }
 
-    @Specialization
+    @Specialization(guards = "isShareable(shareable)")
     public void transitionState(VirtualFrame frame, RSharingAttributeStorage shareable,
                     @Cached("createWriteArgMask(frame, shareable)") int writeArgMask) {
         if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
@@ -120,7 +119,6 @@ public abstract class ArgumentStatePush extends Node {
     }
 
     protected boolean isShareable(Object o) {
-        RSharingAttributeStorage.verify(o);
-        return o instanceof RSharingAttributeStorage;
+        return RSharingAttributeStorage.isShareable(o);
     }
 }

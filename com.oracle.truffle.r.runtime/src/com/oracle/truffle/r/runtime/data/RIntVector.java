@@ -36,20 +36,26 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
-public final class RIntVector extends RVector<int[]> implements RAbstractIntVector {
+public final class RIntVector extends RAbstractIntVector implements RMaterializedVector, Shareable {
 
     private int[] data;
 
     RIntVector(int[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RIntVector(int[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
         this(data, complete);
         initDimsNamesDimNames(dims, names, dimNames);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return true;
     }
 
     private RIntVector() {
@@ -173,11 +179,6 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
         }
     }
 
-    @Override
-    public RIntVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createIntVector(getReadonlyData(), isComplete(), newDimensions);
-    }
-
     private RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
         assert !this.isShared();
 
@@ -225,11 +226,6 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     @Override
     public RIntVector materialize() {
         return this;
-    }
-
-    @Override
-    public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createIntVector(new int[newLength], newIsComplete);
     }
 
     @Override

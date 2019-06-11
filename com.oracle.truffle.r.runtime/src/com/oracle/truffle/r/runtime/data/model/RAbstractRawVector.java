@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,28 +23,58 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 
-public interface RAbstractRawVector extends RAbstractAtomicVector {
+public abstract class RAbstractRawVector extends RAbstractAtomicVector {
+
+    public RAbstractRawVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default Object getDataAtAsObject(int index) {
+    public Object getDataAtAsObject(int index) {
         return RRaw.valueOf(getRawDataAt(index));
     }
 
     @SuppressWarnings("unused")
-    default void setRawDataAt(Object store, int index, byte value) {
+    public void setRawDataAt(Object store, int index, byte value) {
         throw new UnsupportedOperationException();
     }
 
-    byte getRawDataAt(int index);
+    public abstract byte getRawDataAt(int index);
 
     @Override
-    RRawVector materialize();
+    public abstract RRawVector materialize();
 
     @Override
-    default RType getRType() {
+    public RType getRType() {
         return RType.Raw;
     }
+
+    @Override
+    public byte[] getDataTemp() {
+        return (byte[]) super.getDataTemp();
+    }
+
+    @Override
+    public Object getReadonlyData() {
+        return getDataCopy();
+    }
+
+    @Override
+    public abstract byte[] getDataCopy();
+
+    @Override
+    public Object getInternalManagedData() {
+        return null;
+    }
+
+    @Override
+    public final RRawVector createEmptySameType(int newLength, boolean newIsComplete) {
+        assert newIsComplete;
+        return RDataFactory.createRawVector(new byte[newLength]);
+    }
+
 }

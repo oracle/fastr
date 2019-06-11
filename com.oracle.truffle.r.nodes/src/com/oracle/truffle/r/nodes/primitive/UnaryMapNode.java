@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,9 +38,9 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -116,7 +116,7 @@ final class UnaryMapVectorNode extends UnaryMapNode {
         super(scalarNode, operand, argumentType, resultType);
         this.fastOperandAccess = isGeneric ? null : operand.access();
         this.vectorNode = MapUnaryVectorInternalNode.create(resultType, argumentType);
-        boolean operandVector = operand instanceof RVector;
+        boolean operandVector = operand instanceof RMaterializedVector;
         this.mayContainMetadata = operandVector;
         this.mayFoldConstantTime = argumentType == operand.getRType() && scalarNode.mayFoldConstantTime(operandClass);
         this.mayShareOperand = operandVector;
@@ -147,7 +147,7 @@ final class UnaryMapVectorNode extends UnaryMapNode {
         if (target == null) {
             VectorAccess operandAccess = isGeneric ? operand.slowPathAccess() : fastOperandAccess;
             try (SequentialIterator operandIter = operandAccess.access(operand)) {
-                if (mayShareOperand && operand.getRType() == resultType && shareOperand.profile(((RShareable) operand).isTemporary())) {
+                if (mayShareOperand && operand.getRType() == resultType && shareOperand.profile(((RSharingAttributeStorage) operand).isTemporary())) {
                     target = operand;
                     vectorNode.execute(function, operandLength, operandAccess, operandIter, operandAccess, operandIter);
                 } else {
@@ -190,7 +190,7 @@ final class UnaryMapVectorNode extends UnaryMapNode {
 
             setDimNode.setDimensions(result, getDimNode.getDimensions(operand));
 
-            copyAttributesInternal((RVector<?>) result, operand);
+            copyAttributesInternal(result, operand);
         }
         return result;
     }
@@ -202,13 +202,12 @@ final class UnaryMapVectorNode extends UnaryMapNode {
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
     private boolean containsMetadata(RAbstractVector vector) {
-        return vector instanceof RVector &&
-                        (hasDimensionsProfile.profile(hasDimNode.execute(vector)) || vector.getAttributes() != null || hasNamesProfile.profile(getNamesNode.getNames(vector) != null) ||
-                                        getDimNamesNode.getDimNames(vector) != null);
+        return (hasDimensionsProfile.profile(hasDimNode.execute(vector)) || vector.getAttributes() != null || hasNamesProfile.profile(getNamesNode.getNames(vector) != null) ||
+                        getDimNamesNode.getDimNames(vector) != null);
     }
 
     @TruffleBoundary
-    private static void copyAttributesInternal(RVector<?> result, RAbstractVector attributeSource) {
+    private static void copyAttributesInternal(RAbstractVector result, RAbstractVector attributeSource) {
         result.copyRegAttributesFrom(attributeSource);
         result.copyNamesFrom(attributeSource);
     }

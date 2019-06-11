@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,13 +28,17 @@ import com.oracle.truffle.r.runtime.data.RList;
 /**
  * Note: lists must not contain {@code null} values.
  */
-public interface RAbstractListVector extends RAbstractListBaseVector {
+public abstract class RAbstractListVector extends RAbstractListBaseVector {
+
+    public RAbstractListVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default RType getRType() {
+    public RType getRType() {
         return RType.List;
     }
 
     @Override
-    RList materialize();
+    public abstract RList materialize();
 }

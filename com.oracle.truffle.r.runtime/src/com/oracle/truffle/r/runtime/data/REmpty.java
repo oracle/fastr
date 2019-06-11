@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.RType;
  * {@link RPromise}.
  */
 @ExportLibrary(InteropLibrary.class)
-public final class REmpty extends RScalar {
+public final class REmpty extends RBaseObject implements RScalar {
 
     public static final REmpty instance = new REmpty();
 

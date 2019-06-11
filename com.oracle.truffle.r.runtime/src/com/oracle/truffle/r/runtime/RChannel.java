@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -424,8 +424,8 @@ public class RChannel {
     private static class Output extends TransmitterCommon {
 
         private static Object makeShared(Object o) {
-            if (o instanceof RShareable) {
-                RShareable shareable = (RShareable) o;
+            if (RSharingAttributeStorage.isShareable(o)) {
+                RSharingAttributeStorage shareable = (RSharingAttributeStorage) o;
                 shareable.makeSharedPermanent();
             }
             return o;
@@ -462,8 +462,8 @@ public class RChannel {
             RAttributable attributable = (RAttributable) msg;
             DynamicObject attr = attributable.getAttributes();
             DynamicObject newAttr = createShareableSlow(attr, false);
-            if (newAttr != attr && attributable instanceof RShareable) {
-                attributable = (RAttributable) ((RShareable) msg).copy();
+            if (newAttr != attr && RSharingAttributeStorage.isShareable(attributable)) {
+                attributable = ((RSharingAttributeStorage) msg).copy();
             }
             // see convertListAttributesToPrivate() why it is OK to use initAttributes() here
             attributable.initAttributes(newAttr);

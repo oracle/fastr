@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 
 @ValueType
-public abstract class RInteropScalar extends RScalar {
+public abstract class RInteropScalar extends RBaseObject implements RScalar {
 
     public abstract Object getRValue();
 

@@ -60,7 +60,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic;
@@ -91,7 +91,7 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
     @DataPoints public static final BooleanOperationFactory[] COMPARE = BinaryCompare.ALL;
 
     @Theory
-    public void testScalarUnboxing(BooleanOperationFactory factory, RScalarVector aOrig, RAbstractVector bOrig) {
+    public void testScalarUnboxing(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
         execInContext(() -> {
             RAbstractVector a = copy(aOrig);
             RAbstractVector b = copy(bOrig);
@@ -99,7 +99,7 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
             assumeThat(b.getLength(), is(1));
 
             // if the right side is shareable these should be prioritized
-            assumeThat(b, is(not(instanceOf(RShareable.class))));
+            assumeThat(b, is(not(instanceOf(RSharingAttributeStorage.class))));
 
             assumeArithmeticCompatible(factory, a, b);
             Object result = executeArithmetic(factory, a, b);
@@ -170,8 +170,8 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
             return false;
         }
 
-        if (a instanceof RShareable) {
-            return ((RShareable) a).isTemporary();
+        if (RSharingAttributeStorage.isShareable(a)) {
+            return ((RSharingAttributeStorage) a).isTemporary();
         }
         return false;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -96,7 +95,7 @@ public abstract class Matrix extends RBuiltinNode.Arg7 {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         transpose = insert(TransposeNodeGen.create());
                     }
-                    res = (RVector<?>) transpose.execute(res);
+                    res = (RAbstractVector) transpose.execute(res);
                 }
                 if (isListProfile.profile(dimnames instanceof RAbstractListVector)) {
                     res = updateDimNames(res, dimnames);
@@ -112,7 +111,7 @@ public abstract class Matrix extends RBuiltinNode.Arg7 {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     transpose = insert(TransposeNodeGen.create());
                 }
-                res = (RVector<?>) transpose.execute(res);
+                res = (RAbstractVector) transpose.execute(res);
             }
             if (isListProfile.profile(dimnames instanceof RAbstractListVector)) {
                 res = updateDimNames(res, dimnames);
@@ -122,7 +121,7 @@ public abstract class Matrix extends RBuiltinNode.Arg7 {
     }
 
     @TruffleBoundary
-    private static RVector<?> copyResizedWithDimensions(RAbstractVector data, int[] dim) {
+    private static RAbstractVector copyResizedWithDimensions(RAbstractVector data, int[] dim) {
         return data.copyResizedWithDimensions(dim, true);
     }
 

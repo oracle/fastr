@@ -57,7 +57,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -331,8 +331,8 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
     }
 
     private static RAttributable getNonShared(RAttributable obj) {
-        if (obj instanceof RShareable) {
-            return (RAttributable) ((RShareable) obj).getNonShared();
+        if (RSharingAttributeStorage.isShareable(obj)) {
+            return (RAttributable) ((RSharingAttributeStorage) obj).getNonShared();
         }
         return obj;
     }

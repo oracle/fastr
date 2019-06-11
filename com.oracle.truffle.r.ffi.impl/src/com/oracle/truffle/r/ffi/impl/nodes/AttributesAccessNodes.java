@@ -282,7 +282,7 @@ public final class AttributesAccessNodes {
             return SetAttribNodeGen.create();
         }
 
-        @Specialization
+        @Specialization(guards = "isShareable(target)")
         protected Object doIt(RSharingAttributeStorage target, RPairList attributes,
                         @Cached SetPropertyNode setPropertyNode,
                         @Cached ShareObjectNode shareObjectNode,
@@ -305,7 +305,7 @@ public final class AttributesAccessNodes {
             return RNull.instance;
         }
 
-        @Specialization
+        @Specialization(guards = "isShareable(target)")
         protected Object doIt(RSharingAttributeStorage target, @SuppressWarnings("unused") RNull attributes) {
             clearAttrs(target);
             return RNull.instance;
@@ -319,6 +319,10 @@ public final class AttributesAccessNodes {
         @TruffleBoundary
         private static void clearAttrs(RSharingAttributeStorage target) {
             target.initAttributes(RAttributesLayout.createRAttributes());
+        }
+
+        protected static boolean isShareable(Object o) {
+            return RSharingAttributeStorage.isShareable(o);
         }
     }
 }

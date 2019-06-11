@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -96,7 +95,7 @@ public class RowsumFunctions {
             int offsetg = 0;
 
             boolean isInt = xv instanceof RIntVector;
-            RVector<?> result;
+            RAbstractVector result;
             na.enable(xv);
             boolean complete = xv.isComplete();
 

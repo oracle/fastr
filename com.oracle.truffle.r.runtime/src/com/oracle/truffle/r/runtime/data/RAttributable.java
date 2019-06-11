@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
- * Denotes an R type that can have associated attributes, e.g. {@link RVector}, {@link REnvironment}
+ * Denotes an R type that can have associated attributes, e.g. {@link REnvironment}
  *
  * An attribute is a {@code String, Object} pair. The set of attributes associated with an
  * {@link RAttributable} is implemented by the {@link DynamicObject} class.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,10 +37,10 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -182,8 +182,8 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         this.fastLeftAccess = isGeneric ? null : left.access();
         this.fastRightAccess = isGeneric ? null : right.access();
         this.vectorNode = VectorMapBinaryInternalNode.create(resultType, argumentType);
-        boolean leftVectorImpl = RVector.class.isAssignableFrom(leftClass);
-        boolean rightVectorImpl = RVector.class.isAssignableFrom(rightClass);
+        boolean leftVectorImpl = RMaterializedVector.class.isAssignableFrom(leftClass);
+        boolean rightVectorImpl = RMaterializedVector.class.isAssignableFrom(rightClass);
         this.mayContainMetadata = leftVectorImpl || rightVectorImpl;
         this.mayFoldConstantTime = function.mayFoldConstantTime(leftClass, rightClass);
         this.leftIsNAProfile = mayFoldConstantTime ? ConditionProfile.createBinaryProfile() : null;
@@ -241,10 +241,10 @@ final class BinaryMapVectorNode extends BinaryMapNode {
 
                 assert left.getLength() == leftLength;
                 assert right.getLength() == rightLength;
-                if (mayShareLeft && left.getRType() == resultType && shareLeft.profile(leftLength == maxLength && ((RShareable) left).isTemporary())) {
+                if (mayShareLeft && left.getRType() == resultType && shareLeft.profile(leftLength == maxLength && ((RSharingAttributeStorage) left).isTemporary())) {
                     target = left;
                     vectorNode.execute(function, leftLength, rightLength, left, leftAccess, leftIter, left, leftAccess, leftIter, right, rightAccess, rightIter);
-                } else if (mayShareRight && right.getRType() == resultType && shareRight.profile(rightLength == maxLength && ((RShareable) right).isTemporary())) {
+                } else if (mayShareRight && right.getRType() == resultType && shareRight.profile(rightLength == maxLength && ((RSharingAttributeStorage) right).isTemporary())) {
                     target = right;
                     vectorNode.execute(function, leftLength, rightLength, right, rightAccess, rightIter, left, leftAccess, leftIter, right, rightAccess, rightIter);
                 } else {
@@ -578,7 +578,8 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
  * maximum size of both vectors. Vectors with smaller length are repeated. The actual implementation
  * is provided using a {@link BinaryMapFunctionNode}.
  *
- * The implementation tries to share input vectors if they are implementing {@link RShareable}.
+ * The implementation tries to share input vectors if they are implementing
+ * {@link RSharingAttributeStorage}.
  */
 public abstract class BinaryMapNode extends RBaseNode {
 

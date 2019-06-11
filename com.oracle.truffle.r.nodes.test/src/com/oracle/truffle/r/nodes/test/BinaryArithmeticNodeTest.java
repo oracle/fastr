@@ -73,8 +73,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
@@ -93,7 +92,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
     @DataPoints public static final BinaryArithmeticFactory[] BINARY = BinaryArithmetic.ALL;
 
     @Theory
-    public void testScalarUnboxing(BinaryArithmeticFactory factory, RScalarVector aOrig, RAbstractVector bOrig) {
+    public void testScalarUnboxing(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
         execInContext(() -> {
             RAbstractVector a = withinTestContext(() -> aOrig.copy());
             RAbstractVector b = copy(bOrig);
@@ -101,7 +100,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
             assumeThat(b.getLength(), is(1));
 
             // if the right side is shareable these should be prioritized
-            assumeThat(b, is(not(instanceOf(RShareable.class))));
+            assumeThat(b, is(not(instanceOf(RSharingAttributeStorage.class))));
 
             assumeArithmeticCompatible(factory, a, b);
             Object result = executeArithmetic(factory, a, b);
@@ -172,8 +171,8 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
             return false;
         }
 
-        if (a instanceof RShareable) {
-            return ((RShareable) a).isTemporary();
+        if (RSharingAttributeStorage.isShareable(a)) {
+            return ((RSharingAttributeStorage) a).isTemporary();
         }
         return false;
     }
@@ -279,17 +278,17 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
             // we have to e careful not to change mutable vectors
             RAbstractVector a = copy(aOrig);
             RAbstractVector b = copy(bOrig);
-            if (a instanceof RShareable) {
-                assert ((RShareable) a).isTemporary();
-                ((RShareable) a).incRefCount();
+            if (RSharingAttributeStorage.isShareable(a)) {
+                assert ((RSharingAttributeStorage) a).isTemporary();
+                ((RSharingAttributeStorage) a).incRefCount();
             }
-            if (b instanceof RShareable) {
-                assert ((RShareable) b).isTemporary();
-                ((RShareable) b).incRefCount();
+            if (RSharingAttributeStorage.isShareable(b)) {
+                assert ((RSharingAttributeStorage) b).isTemporary();
+                ((RSharingAttributeStorage) b).incRefCount();
             }
 
-            RVector<?> aMaterialized = withinTestContext(() -> a.copy().materialize());
-            RVector<?> bMaterialized = withinTestContext(() -> b.copy().materialize());
+            RAbstractVector aMaterialized = withinTestContext(() -> a.copy().materialize());
+            RAbstractVector bMaterialized = withinTestContext(() -> b.copy().materialize());
 
             aMaterialized.setAttr("a", "a");
             bMaterialized.setAttr("b", "b");

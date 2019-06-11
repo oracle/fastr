@@ -1010,13 +1010,11 @@ public abstract class REnvironment extends RAttributeStorage {
                 throw new PutException(RError.Message.ENV_ADD_BINDINGS);
             }
         }
-        if (value instanceof RSharingAttributeStorage) {
+        if (RSharingAttributeStorage.isShareable(value)) {
             RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
             if (!shareable.isShared()) {
                 shareable.incRefCount();
             }
-        } else {
-            RSharingAttributeStorage.verify(value);
         }
         frameAccess.put(key, value);
     }

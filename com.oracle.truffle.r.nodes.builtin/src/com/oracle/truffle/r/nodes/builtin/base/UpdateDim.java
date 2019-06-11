@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
@@ -57,7 +56,7 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
     @Specialization(guards = "reuseNonSharedNode.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected RAbstractVector updateDimNull(RAbstractVector vector, @SuppressWarnings("unused") RNull dimensions,
                     @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
-        RVector<?> result = (RVector<?>) reuseNonSharedNode.getMaterializedResult(vector);
+        RAbstractVector result = reuseNonSharedNode.getMaterializedResult(vector);
         // Note: resetDimensions already removes names and dimnames
         result.resetDimensions(null);
         return result;
@@ -78,8 +77,8 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
                     @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
         RIntVector dimensionsMaterialized = dimensions.materialize();
         int[] dimsData = dimensionsMaterialized.getDataCopy();
-        RVector.verifyDimensions(vector.getLength(), dimsData, this);
-        RVector<?> result = (RVector<?>) reuseNonSharedNode.getMaterializedResult(vector);
+        RAbstractVector.verifyDimensions(vector.getLength(), dimsData, this);
+        RAbstractVector result = reuseNonSharedNode.getMaterializedResult(vector);
         removeNames.execute(result);
         removeDimNames.execute(result);
 

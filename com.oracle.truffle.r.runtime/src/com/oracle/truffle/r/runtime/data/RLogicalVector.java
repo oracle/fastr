@@ -36,15 +36,16 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromLogicalAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
-public final class RLogicalVector extends RVector<byte[]> implements RAbstractLogicalVector {
+public final class RLogicalVector extends RAbstractLogicalVector implements RMaterializedVector, Shareable {
 
     private byte[] data;
 
     RLogicalVector(byte[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RLogicalVector(byte[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -54,6 +55,11 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     private RLogicalVector() {
         super(false);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return true;
     }
 
     static RLogicalVector fromNative(long address, int length) {
@@ -198,11 +204,6 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     }
 
     @Override
-    public RLogicalVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createLogicalVector(new byte[newLength], newIsComplete);
-    }
-
-    @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         NativeDataAccess.setData(this, data, toIndex, ((RAbstractLogicalVector) fromVector).getDataAt(fromIndex));
     }
@@ -223,11 +224,6 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
         } else {
             return getNativeDataCopy();
         }
-    }
-
-    @Override
-    public RLogicalVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createLogicalVector(getReadonlyData(), isComplete(), newDimensions);
     }
 
     @Override

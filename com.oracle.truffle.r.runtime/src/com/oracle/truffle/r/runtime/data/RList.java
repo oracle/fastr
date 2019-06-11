@@ -43,13 +43,14 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
 /**
  * A note on the RList complete flag {@link RAbstractVector#isComplete() } - it is always
  * initialized with {@code false} and never expected to change.
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RList extends RVector<Object[]> implements RAbstractListVector {
+public final class RList extends RAbstractListVector implements RMaterializedVector, Shareable {
 
     /**
      * After nativized, the data array degenerates to a reference holder.
@@ -60,7 +61,7 @@ public final class RList extends RVector<Object[]> implements RAbstractListVecto
         super(false);
         assert data.getClass().isAssignableFrom(Object[].class) : data;
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RList(Object[] data, int[] dims, RStringVector names, RList dimNames) {
@@ -158,6 +159,11 @@ public final class RList extends RVector<Object[]> implements RAbstractListVecto
     @ExportMessage
     void toNative() {
         NativeDataAccess.asPointer(this);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return true;
     }
 
     boolean isNativized() {
@@ -360,22 +366,12 @@ public final class RList extends RVector<Object[]> implements RAbstractListVecto
         RList listCopy = new RList(Arrays.copyOf(localData, localData.length), getDimensionsInternal(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
-            if (el instanceof RVector) {
-                Object elCopy = ((RVector<?>) el).deepCopy();
+            if (el instanceof RMaterializedVector) {
+                Object elCopy = ((RAbstractVector) el).deepCopy();
                 listCopy.updateDataAt(i, elCopy, null);
             }
         }
         return listCopy;
-    }
-
-    @Override
-    public RList createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createList(newLength);
-    }
-
-    @Override
-    public RList copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createList(getDataWithoutCopying(), newDimensions);
     }
 
     @Override

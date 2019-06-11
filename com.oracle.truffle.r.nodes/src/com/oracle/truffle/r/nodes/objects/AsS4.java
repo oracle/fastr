@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
@@ -51,9 +51,9 @@ public abstract class AsS4 extends Node {
         if (flag == obj.isS4()) {
             return obj;
         }
-        if (obj instanceof RShareable) {
+        if (RSharingAttributeStorage.isShareable(obj)) {
             shareable.enter();
-            RShareable shareableObj = (RShareable) obj;
+            RSharingAttributeStorage shareableObj = (RSharingAttributeStorage) obj;
             obj = (RAttributable) shareableObj.getNonShared();
         }
         if (flag) {

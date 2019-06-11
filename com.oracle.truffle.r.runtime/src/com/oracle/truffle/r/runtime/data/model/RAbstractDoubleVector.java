@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,31 +23,67 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
-public interface RAbstractDoubleVector extends RAbstractAtomicVector {
+public abstract class RAbstractDoubleVector extends RAbstractAtomicVector {
+
+    public RAbstractDoubleVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default Object getDataAtAsObject(int index) {
+    public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
 
-    default double getDataAt(@SuppressWarnings("unused") Object store, int index) {
+    public double getDataAt(@SuppressWarnings("unused") Object store, int index) {
         return getDataAt(index);
     }
 
-    double getDataAt(int index);
+    public abstract double getDataAt(int index);
 
     @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, double value) {
+    public void setDataAt(Object store, int index, double value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    RDoubleVector materialize();
+    public abstract RDoubleVector materialize();
 
     @Override
-    default RType getRType() {
+    public RType getRType() {
         return RType.Double;
     }
+
+    @Override
+    public double[] getDataTemp() {
+        return (double[]) super.getDataTemp();
+    }
+
+    @Override
+    public double[] getReadonlyData() {
+        return getDataCopy();
+    }
+
+    @Override
+    public double[] getDataCopy() {
+        int length = getLength();
+        double[] result = new double[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = getDataAt(i);
+        }
+        return result;
+    }
+
+    @Override
+    public Object getInternalManagedData() {
+        return null;
+    }
+
+    @Override
+    public final RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
+    }
+
 }

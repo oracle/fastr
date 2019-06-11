@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+
 /**
  * The base class for list-like objects: {@link com.oracle.truffle.r.runtime.data.RExpression} and
  * {@link com.oracle.truffle.r.runtime.data.RList}. It can be useful in situations where the same
@@ -41,17 +44,56 @@ package com.oracle.truffle.r.runtime.data.model;
  * {@code ExtractListElement}, which is a node that can extract an element of a list or abstract
  * vector and put it in the consistent sharing state.
  */
-public interface RAbstractListBaseVector extends RAbstractVector {
+public abstract class RAbstractListBaseVector extends RAbstractVector {
+
+    public RAbstractListBaseVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default Object getDataAtAsObject(Object store, int i) {
+    public Object getDataAtAsObject(Object store, int i) {
         return getDataAt(i);
     }
 
-    Object getDataAt(int index);
+    public abstract Object getDataAt(int index);
 
     @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, Object value) {
+    public void setDataAt(Object store, int index, Object value) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RAbstractVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createList(newLength);
+    }
+
+    @Override
+    public Object getInternalManagedData() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public Object getDataCopy() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public Object getReadonlyData() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setLength(int l) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public int getTrueLength() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        throw RInternalError.shouldNotReachHere();
     }
 }

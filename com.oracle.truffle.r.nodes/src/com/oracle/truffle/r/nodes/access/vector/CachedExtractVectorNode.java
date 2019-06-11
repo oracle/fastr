@@ -55,7 +55,6 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -156,7 +155,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         int extractedVectorLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
-        RVector<?> extractedVector;
+        RAbstractVector extractedVector;
         switch (vectorType) {
             case Language:
             case PairList:
@@ -253,7 +252,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private final ConditionProfile foundNamesProfile = ConditionProfile.createBinaryProfile();
 
     @ExplodeLoop
-    private void applyDimensions(RAbstractContainer originalTarget, RVector<?> extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
+    private void applyDimensions(RAbstractContainer originalTarget, RAbstractVector extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
         // TODO speculate on the number of counted dimensions
         int dimCount = countDimensions(positionProfile);
 
@@ -439,7 +438,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
     }
 
-    private void setNames(RVector<?> vector, Object newNames) {
+    private void setNames(RAbstractVector vector, Object newNames) {
         if (setNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             setNamesNode = insert(SetNamesNodeGen.create());
@@ -451,10 +450,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         @Child private GetFixedAttributeNode namesAttrGetter = GetFixedAttributeNode.createNames();
 
-        public abstract void execute(RVector<?> container, Object newNames);
+        public abstract void execute(RAbstractVector container, Object newNames);
 
         @Specialization
-        protected void setNames(RVector<?> container, RAbstractStringVector newNames) {
+        protected void setNames(RAbstractVector container, RAbstractStringVector newNames) {
             RStringVector newNames1 = newNames.materialize();
             assert newNames1.getLength() <= container.getLength();
             assert container.getAttr(RRuntime.DIM_ATTR_KEY) == null;
@@ -471,13 +470,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         @Specialization
-        protected void setNames(RVector<?> container, String newNames) {
+        protected void setNames(RAbstractVector container, String newNames) {
             // TODO: why materialize()?
             setNames(container, RString.valueOf(newNames).materialize());
         }
 
         @Specialization
-        protected void setNames(RVector<?> container, @SuppressWarnings("unused") RNull newNames) {
+        protected void setNames(RAbstractVector container, @SuppressWarnings("unused") RNull newNames) {
             assert container.getAttributes() == null;
         }
     }

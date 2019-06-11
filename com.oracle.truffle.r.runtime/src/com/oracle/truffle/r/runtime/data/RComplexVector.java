@@ -36,8 +36,9 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromComplexAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
-public final class RComplexVector extends RVector<double[]> implements RAbstractComplexVector {
+public final class RComplexVector extends RAbstractComplexVector implements RMaterializedVector, Shareable {
 
     private double[] data;
 
@@ -45,7 +46,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         super(complete);
         assert data.length % 2 == 0;
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RComplexVector(double[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -55,6 +56,11 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     private RComplexVector() {
         super(false);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return true;
     }
 
     static RComplexVector fromNative(long address, int length) {
@@ -162,11 +168,6 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         }
     }
 
-    @Override
-    public RComplexVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createComplexVector(getReadonlyData(), isComplete(), newDimensions);
-    }
-
     private RComplexVector updateDataAt(int index, RComplex value, NACheck rightNACheck) {
         assert !this.isShared();
         NativeDataAccess.setData(this, data, index, value.getRealPart(), value.getImaginaryPart());
@@ -211,11 +212,6 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     @Override
     public RComplexVector materialize() {
         return this;
-    }
-
-    @Override
-    public RComplexVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createComplexVector(new double[newLength << 1], newIsComplete);
     }
 
     @Override

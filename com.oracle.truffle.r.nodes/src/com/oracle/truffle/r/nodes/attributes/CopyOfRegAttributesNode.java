@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -104,7 +104,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
-    protected void copyClassOnly(RAttributeStorage source, RVector<?> target,
+    protected void copyClassOnly(RAttributeStorage source, RAbstractVector target,
                     @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
         Object classAttr = classAttrGetter.execute(source);

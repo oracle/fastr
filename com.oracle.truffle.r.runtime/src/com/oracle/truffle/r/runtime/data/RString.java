@@ -41,11 +41,12 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RString extends RScalarVector implements RAbstractStringVector {
+public final class RString extends RAbstractStringVector implements RScalarVector {
 
     private final String value;
 
     private RString(String value) {
+        super(!RRuntime.isNA(value));
         this.value = value;
     }
 
@@ -68,6 +69,21 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
             throw UnsupportedMessageException.create();
         }
         return value;
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return false;
+    }
+
+    @Override
+    public int getLength() {
+        return 1;
+    }
+
+    @Override
+    public RAbstractVector copy() {
+        return this;
     }
 
     @Override

@@ -156,18 +156,21 @@ public abstract class R2Foreign extends RBaseNode {
         return obj.getValue();
     }
 
-    @Specialization
+    @Specialization(guards = "isShareable(shareable)")
     public static Object doShareable(RSharingAttributeStorage shareable, @SuppressWarnings("unused") boolean boxPrimitives) {
         return shareable.makeSharedPermanent();
     }
 
     @Fallback
     public static Object doOther(Object obj, @SuppressWarnings("unused") boolean boxPrimitives) {
-        RSharingAttributeStorage.verify(obj);
         return obj;
     }
 
     public static R2Foreign create() {
         return R2ForeignNodeGen.create();
+    }
+
+    protected static boolean isShareable(Object o) {
+        return RSharingAttributeStorage.isShareable(o);
     }
 }

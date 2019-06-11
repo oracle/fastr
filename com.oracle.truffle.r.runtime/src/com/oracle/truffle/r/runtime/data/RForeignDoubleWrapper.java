@@ -35,14 +35,40 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.interop.ForeignArrayToVectorNode;
 
-public final class RForeignDoubleWrapper extends RForeignVectorWrapper implements RAbstractDoubleVector {
+public final class RForeignDoubleWrapper extends RAbstractDoubleVector implements RForeignVectorWrapper {
+
+    protected final TruffleObject delegate;
 
     public RForeignDoubleWrapper(TruffleObject delegate) {
-        super(delegate);
+        super(RDataFactory.INCOMPLETE_VECTOR);
+        this.delegate = delegate;
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return false;
+    }
+
+    @Override
+    public int getLength() {
+        return RRuntime.getForeignArraySize(delegate, getInterop());
+    }
+
+    @Override
+    public Object getInternalStore() {
+        return delegate;
+    }
+
+    @Override
+    @TruffleBoundary
+    public RAbstractVector internalCopy() {
+        return ForeignArrayToVectorNode.getUncached().toVector(delegate, getRType());
     }
 
     @Override
@@ -85,9 +111,8 @@ public final class RForeignDoubleWrapper extends RForeignVectorWrapper implement
         }
     }
 
-    @Override
-    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
+    private static InteropLibrary getInterop() {
+        return InteropLibrary.getFactory().getUncached();
     }
 
     private static final class FastPathAccess extends FastPathFromDoubleAccess {
@@ -98,17 +123,17 @@ public final class RForeignDoubleWrapper extends RForeignVectorWrapper implement
 
         FastPathAccess(RAbstractContainer value) {
             super(value);
-            delegateInterop = InteropLibrary.getFactory().create(((RForeignVectorWrapper) value).delegate);
+            delegateInterop = InteropLibrary.getFactory().create(((RForeignDoubleWrapper) value).delegate);
         }
 
         @Override
         public boolean supports(Object value) {
-            return super.supports(value) && delegateInterop.accepts(((RForeignVectorWrapper) value).delegate);
+            return super.supports(value) && delegateInterop.accepts(((RForeignDoubleWrapper) value).delegate);
         }
 
         @Override
         protected int getLength(RAbstractContainer vector) {
-            return RRuntime.getForeignArraySize(((RForeignVectorWrapper) vector).delegate, delegateInterop);
+            return RRuntime.getForeignArraySize(((RForeignDoubleWrapper) vector).delegate, delegateInterop);
         }
 
         @Override
@@ -145,7 +170,7 @@ public final class RForeignDoubleWrapper extends RForeignVectorWrapper implement
         @Override
         @TruffleBoundary
         public int getLength(RAbstractContainer vector) {
-            return RRuntime.getForeignArraySize(((RForeignVectorWrapper) vector).delegate, getInterop());
+            return RRuntime.getForeignArraySize(((RForeignDoubleWrapper) vector).delegate, getInterop());
         }
 
         @Override

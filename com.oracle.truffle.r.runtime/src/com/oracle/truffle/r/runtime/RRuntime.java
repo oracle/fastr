@@ -789,7 +789,11 @@ public class RRuntime {
     }
 
     public static boolean isNA(RComplex value) {
-        return isNA(value.getRealPart()) || isNA(value.getImaginaryPart());
+        return isComplexNA(value.getRealPart(), value.getImaginaryPart());
+    }
+
+    public static boolean isComplexNA(double realPart, double imagPart) {
+        return isNA(realPart) || isNA(imagPart);
     }
 
     public static boolean isNA(double real, double imag) {

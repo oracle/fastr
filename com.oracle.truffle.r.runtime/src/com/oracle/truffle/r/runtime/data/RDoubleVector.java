@@ -36,15 +36,16 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
-public final class RDoubleVector extends RVector<double[]> implements RAbstractDoubleVector {
+public final class RDoubleVector extends RAbstractDoubleVector implements RMaterializedVector, Shareable {
 
     private double[] data;
 
     RDoubleVector(double[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RDoubleVector(double[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -54,6 +55,11 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
 
     private RDoubleVector() {
         super(false);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return true;
     }
 
     static RDoubleVector fromNative(long address, int length) {
@@ -170,11 +176,6 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
         }
     }
 
-    @Override
-    public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createDoubleVector(getReadonlyData(), isComplete(), newDimensions);
-    }
-
     private RDoubleVector updateDataAt(int index, double value, NACheck valueNACheck) {
         assert !this.isShared();
         NativeDataAccess.setData(this, data, index, value);
@@ -222,11 +223,6 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     @Override
     public RDoubleVector materialize() {
         return this;
-    }
-
-    @Override
-    public RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
     }
 
     @Override

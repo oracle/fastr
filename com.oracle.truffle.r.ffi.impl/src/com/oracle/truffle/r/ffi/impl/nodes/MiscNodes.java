@@ -521,7 +521,7 @@ public final class MiscNodes {
             // internal dispatch builtins like 'as.character' will not dispatch to the S3 method
             // even thought the object has S3 class and FastR would dispatch.
             // See simpleTests.R in testrffi package for example.
-            if (flag == 0 && target instanceof RSharingAttributeStorage) {
+            if (flag == 0 && RSharingAttributeStorage.isShareable(target)) {
                 RStringVector clazz = getClass((RSharingAttributeStorage) target);
                 if (clazz != null && clazz.getLength() != 0) {
                     CompilerDirectives.transferToInterpreter();

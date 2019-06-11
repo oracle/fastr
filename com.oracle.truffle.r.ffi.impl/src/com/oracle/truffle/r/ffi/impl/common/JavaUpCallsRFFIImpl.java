@@ -82,6 +82,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
@@ -90,13 +91,11 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -630,11 +629,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int NAMED(Object x) {
-        if (x instanceof RSharingAttributeStorage) {
+        if (RSharingAttributeStorage.isShareable(x)) {
             return ((RSharingAttributeStorage) x).isTemporary() ? 0 : ((RSharingAttributeStorage) x).isShared() ? 2 : 1;
         } else {
             // Note: it may be that we need to remember this for all types, GNUR does
-            RSharingAttributeStorage.verify(x);
             return 2;
         }
     }
@@ -652,8 +650,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         // which as it seems GNUR would just let proceede
         // Note 2: there is a hack in data.table that uses SET_NAMED(x,0) to make something mutable
         // so we allow and "support" this one specific use-case.
-        if (x instanceof RShareable) {
-            RShareable r = (RShareable) x;
+        if (RSharingAttributeStorage.isShareable(x)) {
+            RSharingAttributeStorage r = (RSharingAttributeStorage) x;
             if (v >= 2) {
                 // we play it safe: if the caller wants this instance to be shared, they may expect
                 // it to never become non-shared again, which could happen in FastR
@@ -2443,7 +2441,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object INTEGER(Object x) {
         // Note: there is no validation in GNU-R and so packages call this with all types of vectors
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RVector.class));
+        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RMaterializedVector.class));
     }
 
     @Override

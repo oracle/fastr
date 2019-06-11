@@ -25,36 +25,74 @@ package com.oracle.truffle.r.runtime.data.model;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 
-public interface RAbstractComplexVector extends RAbstractAtomicVector {
+public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
+
+    public RAbstractComplexVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default Object getDataAtAsObject(int index) {
+    public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
 
-    RComplex getDataAt(int index);
+    public abstract RComplex getDataAt(int index);
 
     @Override
-    RComplexVector materialize();
+    public abstract RComplexVector materialize();
 
     @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, RComplex value) {
+    public void setDataAt(Object store, int index, RComplex value) {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, double value) {
+    public void setDataAt(Object store, int index, double value) {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
-    default double getComplexPartAt(int index) {
+    public double getComplexPartAt(int index) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    default RType getRType() {
+    public RType getRType() {
         return RType.Complex;
     }
+
+    @Override
+    public double[] getDataTemp() {
+        return (double[]) super.getDataTemp();
+    }
+
+    @Override
+    public Object getReadonlyData() {
+        return getDataCopy();
+    }
+
+    @Override
+    public double[] getDataCopy() {
+        int length = getLength();
+        double[] result = new double[length << 1];
+        for (int i = 0; i < length; i++) {
+            RComplex c = getDataAt(i);
+            result[i * 2] = c.getRealPart();
+            result[i * 2 + 1] = c.getImaginaryPart();
+        }
+        return result;
+    }
+
+    @Override
+    public Object getInternalManagedData() {
+        return null;
+    }
+
+    @Override
+    public final RComplexVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createComplexVector(new double[newLength << 1], newIsComplete);
+    }
+
 }

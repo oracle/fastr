@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ final class DoSetViewPort {
         pushedViewPort.setDataAt(ViewPort.PVP_DEVWIDTHCM, scalar(Unit.inchesToCm(currentDevice.getWidth())));
         pushedViewPort.setDataAt(ViewPort.PVP_DEVHEIGHTCM, scalar(Unit.inchesToCm(currentDevice.getHeight())));
 
-        assert RAbstractVector.verify(pushedViewPort);
+        assert RAbstractVector.verifyVector(pushedViewPort);
         return pushedViewPort;
     }
 

@@ -41,8 +41,9 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
-public final class RStringVector extends RVector<Object[]> implements RAbstractStringVector {
+public final class RStringVector extends RAbstractStringVector implements RMaterializedVector, Shareable {
 
     static final Assumption noWrappedStrings = Truffle.getRuntime().createAssumption();
 
@@ -62,12 +63,17 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
             noWrappedStrings.invalidate();
         }
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RStringVector(Object[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
         this(data, complete);
         initDimsNamesDimNames(dims, names, dimNames);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return true;
     }
 
     boolean isNativized() {
@@ -265,11 +271,6 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
     }
 
     @Override
-    public RStringVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createStringVector(new String[newLength], newIsComplete);
-    }
-
-    @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         Object[] localData = getReadonlyData();
         RAbstractStringVector other = (RAbstractStringVector) fromVector;
@@ -277,15 +278,6 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
             localData[toIndex] = other.getDataAt(fromIndex);
         } else {
             setDataAt(localData, toIndex, other.getDataAt(fromIndex));
-        }
-    }
-
-    @Override
-    public RStringVector copyWithNewDimensions(int[] newDimensions) {
-        if (!isNativized()) {
-            return createStringVector(data, isComplete(), newDimensions);
-        } else {
-            return createStringVector(getDataCopy(), isComplete(), newDimensions);
         }
     }
 

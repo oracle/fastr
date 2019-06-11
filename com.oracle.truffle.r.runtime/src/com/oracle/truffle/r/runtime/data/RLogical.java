@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RLogical extends RScalarVector implements RAbstractLogicalVector {
+public final class RLogical extends RAbstractLogicalVector implements RScalarVector {
 
     public static final RLogical NA = new RLogical(RRuntime.LOGICAL_NA);
     public static final RLogical TRUE = new RLogical(RRuntime.LOGICAL_TRUE);
@@ -48,6 +48,7 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
     private final byte value;
 
     private RLogical(byte value) {
+        super(!RRuntime.isNA(value));
         this.value = value;
     }
 
@@ -64,6 +65,11 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
         return RRuntime.fromLogical(value);
     }
 
+    @Override
+    public boolean isMaterialized() {
+        return false;
+    }
+
     public static RLogical valueOf(byte value) {
         return new RLogical(value);
     }
@@ -74,6 +80,16 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
 
     public byte getValue() {
         return value;
+    }
+
+    @Override
+    public int getLength() {
+        return 1;
+    }
+
+    @Override
+    public RAbstractVector copy() {
+        return this;
     }
 
     @Override
@@ -94,11 +110,6 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
             default:
                 return null;
         }
-    }
-
-    @Override
-    public RType getRType() {
-        return RType.Logical;
     }
 
     @Override

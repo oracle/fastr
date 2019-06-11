@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
  * 
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RForeignObjectWrapper extends RObject implements RTruffleObject {
+public final class RForeignObjectWrapper extends RObject implements RTruffleObject, RForeignVectorWrapper {
 
     protected final TruffleObject delegate;
 

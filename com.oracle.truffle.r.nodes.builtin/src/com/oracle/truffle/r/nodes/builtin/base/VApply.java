@@ -61,7 +61,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -167,7 +166,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         return !(obj instanceof RAbstractVector);
     }
 
-    private RVector<?> delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValueVec, boolean useNames) {
+    private RAbstractVector delegateToLapply(VirtualFrame frame, RAbstractVector vec, RFunction fun, RAbstractVector funValueVec, boolean useNames) {
         /*
          * The implementation is complicated by the existence of scalar length 1 vectors (e.g.
          * Integer) and concrete length 1 vectors (e.g. RIntVector), as either form can occur in
@@ -176,10 +175,10 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
          */
         int funValueVecLen = funValueVec.getLength();
 
-        RVector<?> vecMat = vec.materialize();
+        RAbstractVector vecMat = vec.materialize();
         Object[] applyResult = doApply.execute(frame, vecMat, fun);
 
-        RVector<?> result;
+        RAbstractVector result;
         boolean applyResultZeroLength = zeroLengthProfile.profile(applyResult.length == 0);
 
         naCheck.enable(true);

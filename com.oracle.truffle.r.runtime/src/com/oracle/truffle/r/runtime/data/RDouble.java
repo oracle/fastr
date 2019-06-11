@@ -44,11 +44,12 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RDouble extends RScalarVector implements RAbstractDoubleVector {
+public final class RDouble extends RAbstractDoubleVector implements RScalarVector {
 
     protected final double value;
 
     private RDouble(double value) {
+        super(!RRuntime.isNA(value));
         this.value = value;
     }
 
@@ -141,6 +142,11 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
         return interop.asDouble(value);
     }
 
+    @Override
+    public boolean isMaterialized() {
+        return false;
+    }
+
     public static RDouble createNA() {
         return new RDouble(RRuntime.DOUBLE_NA);
     }
@@ -151,6 +157,16 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
 
     public double getValue() {
         return value;
+    }
+
+    @Override
+    public int getLength() {
+        return 1;
+    }
+
+    @Override
+    public RAbstractVector copy() {
+        return this;
     }
 
     @Override

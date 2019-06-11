@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
 /**
@@ -61,8 +61,8 @@ public abstract class Quote extends RBuiltinNode.Arg1 {
      */
     protected final Object cachedCreateLanguage(Closure closure) {
         Object result = createLanguage(closure);
-        if (shareableProfile.profile(result instanceof RShareable)) {
-            ((RShareable) result).makeSharedPermanent();
+        if (shareableProfile.profile(RSharingAttributeStorage.isShareable(result))) {
+            ((RSharingAttributeStorage) result).makeSharedPermanent();
         }
         return result;
     }

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.RType;
  * @see REmpty
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RMissing extends RScalar {
+public final class RMissing extends RBaseObject implements RScalar {
 
     public static final RMissing instance = new RMissing();
 

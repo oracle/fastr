@@ -29,7 +29,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -39,15 +38,10 @@ import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -144,7 +138,7 @@ public final class TruffleObjectConverter {
         return names;
     }
 
-    private static final class CompoundNamedListWrapper implements RAbstractListVector {
+    private static final class CompoundNamedListWrapper extends RAbstractListVector {
 
         private TruffleObject classDelegate;
 
@@ -155,10 +149,16 @@ public final class TruffleObjectConverter {
         private RStringVector names;
 
         CompoundNamedListWrapper(TruffleObject classDelegate, TruffleObject delegate, int staticNamesLen, RStringVector names) {
+            super(RDataFactory.INCOMPLETE_VECTOR);
             this.classDelegate = classDelegate;
             this.delegate = delegate;
             this.staticNamesLen = staticNamesLen;
             this.names = names;
+        }
+
+        @Override
+        public boolean isMaterialized() {
+            return false;
         }
 
         @Override
@@ -177,34 +177,6 @@ public final class TruffleObjectConverter {
         }
 
         @Override
-        public void setNames(RStringVector newNames) {
-            // should only be used on materialized sequence
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public RList getDimNames() {
-            return null;
-        }
-
-        @Override
-        public void setDimNames(RList newDimNames) {
-            // should only be used on materialized sequence
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public Object getRowNames() {
-            return RNull.instance;
-        }
-
-        @Override
-        public void setRowNames(RAbstractVector rowNames) {
-            // should only be used on materialized sequence
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
         public RList materialize() {
             throw RInternalError.shouldNotReachHere();
         }
@@ -220,139 +192,11 @@ public final class TruffleObjectConverter {
         public Object getDataAt(int index) {
             try {
                 return (index < staticNamesLen)
-                                ? RForeignVectorWrapper.unbox(getInterop().readMember(classDelegate, names.getDataAt(index)))
-                                : RForeignVectorWrapper.unbox(getInterop().readMember(delegate, names.getDataAt(index)));
+                                ? Foreign2R.getUncached().convert(getInterop().readMember(classDelegate, names.getDataAt(index)))
+                                : Foreign2R.getUncached().convert(getInterop().readMember(delegate, names.getDataAt(index)));
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
-        }
-
-        @Override
-        public RAbstractContainer resize(int size) {
-            return materialize().resize(size);
-        }
-
-        @Override
-        public boolean isComplete() {
-            return false;
-        }
-
-        @Override
-        public void setComplete(boolean complete) {
-        }
-
-        @Override
-        public boolean hasDimensions() {
-            return false;
-        }
-
-        @Override
-        public int[] getDimensions() {
-            return null;
-        }
-
-        @Override
-        public void setDimensions(int[] newDimensions) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public RAbstractVector copy() {
-            return new CompoundNamedListWrapper(classDelegate, delegate, staticNamesLen, names);
-        }
-
-        @Override
-        public RAbstractVector copyDropAttributes() {
-            return copy();
-        }
-
-        @Override
-        public RAbstractVector copyWithNewDimensions(int[] newDimensions) {
-            RAbstractVector res = copy();
-            res.setDimensions(newDimensions);
-            return res;
-        }
-
-        @Override
-        public DynamicObject initAttributes() {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public void initAttributes(DynamicObject newAttributes) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public DynamicObject getAttributes() {
-            return null;
-        }
-
-        @Override
-        public boolean isMatrix() {
-            return false;
-        }
-
-        @Override
-        public boolean isArray() {
-            return false;
-        }
-
-        @Override
-        public boolean isObject() {
-            return false;
-        }
-
-        @Override
-        public RTypedValue getNonShared() {
-            return materialize().getNonShared();
-        }
-
-        @Override
-        public int getTypedValueInfo() {
-            return 0;
-        }
-
-        @Override
-        public void setTypedValueInfo(int value) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public boolean isS4() {
-            return false;
-        }
-
-        @Override
-        public RVector<?> copyResized(int size, boolean fillNA) {
-            RAbstractVector v = copy();
-            return v.copyResized(size, fillNA);
-        }
-
-        @Override
-        public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-            RAbstractVector v = copy();
-            return v.copyResizedWithDimensions(newDimensions, fillNA);
-        }
-
-        @Override
-        public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public void setLength(int l) {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public int getTrueLength() {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
-        public void setTrueLength(int l) {
-            throw RInternalError.shouldNotReachHere();
         }
 
         private static final class FastPathAccess extends FastPathFromListAccess {
@@ -429,8 +273,8 @@ public final class TruffleObjectConverter {
                 CompoundNamedListWrapper vector = (CompoundNamedListWrapper) accessIter.getStore();
                 try {
                     return (index < vector.staticNamesLen)
-                                    ? RForeignVectorWrapper.unbox(getInterop().readMember(vector.classDelegate, vector.names.getDataAt(index)))
-                                    : RForeignVectorWrapper.unbox(getInterop().readMember(vector.delegate, vector.names.getDataAt(index)));
+                                    ? Foreign2R.getUncached().convert(getInterop().readMember(vector.classDelegate, vector.names.getDataAt(index)))
+                                    : Foreign2R.getUncached().convert(getInterop().readMember(vector.delegate, vector.names.getDataAt(index)));
                 } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RVector;
+import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -39,15 +39,58 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-abstract class RToListVectorClosure extends RToVectorClosure implements RAbstractListVector {
+abstract class RToListVectorClosure extends RAbstractListVector {
+
+    protected final boolean keepAttributes;
+    protected final RAbstractVector vector;
 
     protected RToListVectorClosure(RAbstractVector vector, boolean keepAttributes) {
-        super(vector, keepAttributes);
+        super(vector.isComplete());
+        this.keepAttributes = keepAttributes;
+        this.vector = vector;
+
+        if (isMaterialized()) {
+            if (keepAttributes) {
+                initAttributes(vector.getAttributes());
+            } else {
+                initRegAttributes(this, vector);
+            }
+        }
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return vector.isMaterialized();
     }
 
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
+    }
+
+    @Override
+    public Object getInternalStore() {
+        return vector.getInternalStore();
+    }
+
+    @Override
+    public int getLength() {
+        return vector.getLength();
+    }
+
+    @Override
+    public void setLength(int l) {
+        vector.setLength(l);
+    }
+
+    @Override
+    public int getTrueLength() {
+        return vector.getTrueLength();
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        vector.setTrueLength(l);
     }
 
     @Override
@@ -66,13 +109,8 @@ abstract class RToListVectorClosure extends RToVectorClosure implements RAbstrac
     @TruffleBoundary
     private void copyAttributes(RList materialized) {
         if (keepAttributes) {
-            materialized.copyAttributesFrom(getVector());
+            materialized.copyAttributesFrom(this);
         }
-    }
-
-    @Override
-    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createList(new Object[newLength]);
     }
 
     @Override
@@ -93,7 +131,7 @@ final class RLogicalToListVectorClosure extends RToListVectorClosure {
 
     @Override
     public Byte getDataAt(int index) {
-        return ((RAbstractLogicalVector) getVector()).getDataAt(index);
+        return ((RAbstractLogicalVector) vector).getDataAt(index);
     }
 }
 
@@ -104,7 +142,7 @@ final class RIntToListVectorClosure extends RToListVectorClosure {
 
     @Override
     public Integer getDataAt(int index) {
-        return ((RAbstractIntVector) getVector()).getDataAt(index);
+        return ((RAbstractIntVector) vector).getDataAt(index);
     }
 }
 
@@ -116,7 +154,7 @@ final class RDoubleToListVectorClosure extends RToListVectorClosure {
 
     @Override
     public Double getDataAt(int index) {
-        return ((RAbstractDoubleVector) getVector()).getDataAt(index);
+        return ((RAbstractDoubleVector) vector).getDataAt(index);
     }
 }
 
@@ -127,7 +165,7 @@ final class RComplexToListVectorClosure extends RToListVectorClosure {
 
     @Override
     public RComplex getDataAt(int index) {
-        return ((RAbstractComplexVector) getVector()).getDataAt(index);
+        return ((RAbstractComplexVector) vector).getDataAt(index);
     }
 }
 
@@ -138,7 +176,7 @@ final class RStringToListVectorClosure extends RToListVectorClosure {
 
     @Override
     public String getDataAt(int index) {
-        return ((RAbstractStringVector) getVector()).getDataAt(index);
+        return ((RAbstractStringVector) vector).getDataAt(index);
     }
 }
 
@@ -149,6 +187,6 @@ final class RRawToListVectorClosure extends RToListVectorClosure {
 
     @Override
     public Object getDataAt(int index) {
-        return RRaw.valueOf(((RAbstractRawVector) getVector()).getRawDataAt(index));
+        return RRaw.valueOf(((RAbstractRawVector) vector).getRawDataAt(index));
     }
 }

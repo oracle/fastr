@@ -57,7 +57,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -323,8 +323,8 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
                 // temporary values are considered available to be reused and altered (e.g. as a
                 // result of arithmetic operation), which is what we do not want to happen to a
                 // value that we are saving as the promise result.
-                if (obj instanceof RShareable) {
-                    RShareable shareable = (RShareable) obj;
+                if (RSharingAttributeStorage.isShareable(obj)) {
+                    RSharingAttributeStorage shareable = (RSharingAttributeStorage) obj;
                     if (shareable.isTemporary()) {
                         shareable.incRefCount();
                     }

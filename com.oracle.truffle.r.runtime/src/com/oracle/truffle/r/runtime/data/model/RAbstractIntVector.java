@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,31 +23,67 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 
-public interface RAbstractIntVector extends RAbstractAtomicVector {
+public abstract class RAbstractIntVector extends RAbstractAtomicVector {
+
+    public RAbstractIntVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default Object getDataAtAsObject(int index) {
+    public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
 
-    default int getDataAt(@SuppressWarnings("unused") Object store, int index) {
+    public int getDataAt(@SuppressWarnings("unused") Object store, int index) {
         return getDataAt(index);
     }
 
-    int getDataAt(int index);
+    public abstract int getDataAt(int index);
 
     @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, int value) {
+    public void setDataAt(Object store, int index, int value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    RIntVector materialize();
+    public abstract RIntVector materialize();
 
     @Override
-    default RType getRType() {
+    public RType getRType() {
         return RType.Integer;
     }
+
+    @Override
+    public int[] getDataTemp() {
+        return (int[]) super.getDataTemp();
+    }
+
+    @Override
+    public int[] getReadonlyData() {
+        return getDataCopy();
+    }
+
+    @Override
+    public int[] getDataCopy() {
+        int length = getLength();
+        int[] result = new int[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = getDataAt(i);
+        }
+        return result;
+    }
+
+    @Override
+    public Object getInternalManagedData() {
+        return null;
+    }
+
+    @Override
+    public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createIntVector(new int[newLength], newIsComplete);
+    }
+
 }

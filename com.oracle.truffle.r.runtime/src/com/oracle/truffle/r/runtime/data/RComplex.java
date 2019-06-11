@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,14 +37,20 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
-public final class RComplex extends RScalarVector implements RAbstractComplexVector {
+public final class RComplex extends RAbstractComplexVector implements RScalarVector {
 
     private final double realPart;
     private final double imaginaryPart;
 
     private RComplex(double realPart, double imaginaryPart) {
+        super(!RRuntime.isComplexNA(realPart, imaginaryPart));
         this.realPart = realPart;
         this.imaginaryPart = imaginaryPart;
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return false;
     }
 
     public static RComplex createNA() {
@@ -53,6 +59,16 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
 
     public static RComplex valueOf(double real, double imaginary) {
         return new RComplex(real, imaginary);
+    }
+
+    @Override
+    public int getLength() {
+        return 1;
+    }
+
+    @Override
+    public RAbstractVector copy() {
+        return this;
     }
 
     @Override

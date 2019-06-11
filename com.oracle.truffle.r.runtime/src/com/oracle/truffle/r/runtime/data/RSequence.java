@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -33,177 +30,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * to indicate an ascending sequence and negative for a descending sequence. I.e., the "end" is
  * computed and not stored.
  */
-public abstract class RSequence implements RAbstractVector {
+public interface RSequence {
 
-    private final int length;
+    Object getStartObject();
 
-    protected RSequence(int length) {
-        this.length = length;
-    }
+    Object getStrideObject();
 
-    @Override
-    public Object getInternalStore() {
-        return this;
-    }
+    RAbstractVector materialize();
 
-    @Override
-    public final int getLength() {
-        return length;
-    }
-
-    @Override
-    public void setLength(int l) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public int getTrueLength() {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public void setTrueLength(int l) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public RAbstractContainer resize(int size) {
-        return materialize().resize(size);
-    }
-
-    public abstract Object getStartObject();
-
-    public abstract Object getStrideObject();
-
-    @Override
-    public final boolean isComplete() {
-        return true;
-    }
-
-    @Override
-    public void setComplete(boolean complete) {
-        // sequences are always complete
-    }
-
-    @Override
-    public final boolean hasDimensions() {
-        return false;
-    }
-
-    @Override
-    public final int[] getDimensions() {
-        return null;
-    }
-
-    @Override
-    public void setDimensions(int[] newDimensions) {
-        // should only be used on materialized sequence
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    public final RVector<?> createVector() {
-        RVector<?> result = internalCreateVector();
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
-    }
-
-    protected abstract RVector<?> internalCreateVector();
-
-    @Override
-    public final RAbstractVector copy() {
-        return createVector();
-    }
-
-    @Override
-    public final RAbstractVector copyDropAttributes() {
-        return createVector();
-    }
-
-    @Override
-    public final RAbstractVector copyWithNewDimensions(int[] newDimensions) {
-        return createVector().copyWithNewDimensions(newDimensions);
-    }
-
-    @Override
-    public final RStringVector getNames() {
-        return null;
-    }
-
-    @Override
-    public void setNames(RStringVector newNames) {
-        // should only be used on materialized sequence
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public final RList getDimNames() {
-        return null;
-    }
-
-    @Override
-    public void setDimNames(RList newDimNames) {
-        // should only be used on materialized sequence
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public final Object getRowNames() {
-        return RNull.instance;
-    }
-
-    @Override
-    public void setRowNames(RAbstractVector rowNames) {
-        // should only be used on materialized sequence
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public final DynamicObject initAttributes() {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public final void initAttributes(DynamicObject newAttributes) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public final DynamicObject getAttributes() {
-        return null;
-    }
-
-    @Override
-    public final boolean isMatrix() {
-        return false;
-    }
-
-    @Override
-    public final boolean isArray() {
-        return false;
-    }
-
-    @Override
-    public final boolean isObject() {
-        return false;
-    }
-
-    @Override
-    public final RTypedValue getNonShared() {
-        return materialize().getNonShared();
-    }
-
-    @Override
-    public int getTypedValueInfo() {
-        return 0;
-    }
-
-    @Override
-    public void setTypedValueInfo(int value) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public boolean isS4() {
-        return false;
-    }
 }

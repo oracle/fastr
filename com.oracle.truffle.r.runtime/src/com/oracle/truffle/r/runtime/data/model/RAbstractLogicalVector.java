@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,31 +23,62 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 
-public interface RAbstractLogicalVector extends RAbstractAtomicVector {
+public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
+
+    public RAbstractLogicalVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default Object getDataAtAsObject(int index) {
+    public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
 
-    default byte getDataAt(@SuppressWarnings("unused") Object store, int index) {
+    public byte getDataAt(@SuppressWarnings("unused") Object store, int index) {
         return getDataAt(index);
     }
 
-    byte getDataAt(int index);
+    public abstract byte getDataAt(int index);
 
     @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, byte value) {
+    public void setDataAt(Object store, int index, byte value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    RLogicalVector materialize();
+    public abstract RLogicalVector materialize();
 
     @Override
-    default RType getRType() {
+    public RType getRType() {
         return RType.Logical;
     }
+
+    @Override
+    public byte[] getReadonlyData() {
+        return getDataCopy();
+    }
+
+    @Override
+    public byte[] getDataCopy() {
+        int length = getLength();
+        byte[] result = new byte[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = getDataAt(i);
+        }
+        return result;
+    }
+
+    @Override
+    public Object getInternalManagedData() {
+        return null;
+    }
+
+    @Override
+    public final RLogicalVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createLogicalVector(new byte[newLength], newIsComplete);
+    }
+
 }

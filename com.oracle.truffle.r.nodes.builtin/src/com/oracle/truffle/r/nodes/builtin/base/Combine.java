@@ -76,11 +76,11 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -179,7 +179,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
                         : null;
 
         // get the actual contents of the result
-        RVector<?> result = foldContents(cachedPrecedence, elements, size, namesVector);
+        RAbstractVector result = foldContents(cachedPrecedence, elements, size, namesVector);
 
         RBaseNode.reportWork(this, size);
 
@@ -345,8 +345,8 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     }
 
     @ExplodeLoop
-    private RVector<?> foldContents(int cachedPrecedence, Object[] elements, int size, RStringVector namesVector) {
-        RVector<?> result = createResultVector(cachedPrecedence, size, namesVector);
+    private RAbstractVector foldContents(int cachedPrecedence, Object[] elements, int size, RStringVector namesVector) {
+        RAbstractVector result = createResultVector(cachedPrecedence, size, namesVector);
         int pos = 0;
         for (int i = 0; i < elements.length; i++) {
             Object element = getCast(i).valueProfile.profile(elements[i]);
@@ -355,7 +355,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         return result;
     }
 
-    private int processContentElement(RVector<?> result, int pos, Object element) {
+    private int processContentElement(RAbstractVector result, int pos, Object element) {
         if (isAbstractVectorProfile.profile(element instanceof RAbstractVector)) {
             RAbstractVector v = (RAbstractVector) element;
             for (int i = 0; i < v.getLength(); i++) {
@@ -409,7 +409,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         return value instanceof RArgsValuesAndNames;
     }
 
-    private static RVector<?> createResultVector(int precedence, int size, RStringVector names) {
+    private static RAbstractVector createResultVector(int precedence, int size, RStringVector names) {
         switch (precedence) {
             case COMPLEX_PRECEDENCE:
                 return RDataFactory.createComplexVector(new double[size * 2], true, names);
@@ -532,8 +532,8 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
 
         public Object cast(Object operand) {
             Object profiled = inputValueProfile.profile(operand);
-            if (profiled instanceof RVector<?>) {
-                RVector<?> vector = (RVector<?>) profiled;
+            if (profiled instanceof RMaterializedVector) {
+                RAbstractVector vector = (RAbstractVector) profiled;
                 if (vector.getAttributes() != null) {
                     if (extractNamesNode == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -545,7 +545,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
                     }
                     RStringVector vecNames = extractNamesNode.execute(vector);
                     if (hasNamesProfile.profile(vecNames != null)) {
-                        RVector<?> result = vector.copyDropAttributes();
+                        RAbstractVector result = vector.copyDropAttributes();
                         result.initAttributes(RAttributesLayout.createNames(vecNames));
                         return result;
                     } else {
@@ -559,7 +559,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
                         }
                         RList dimNames = extractDimNamesNode.execute(vector);
                         if (hasDimNamesProfile.profile(dimNames != null)) {
-                            RVector<?> result = vector.copyDropAttributes();
+                            RAbstractVector result = vector.copyDropAttributes();
                             result.initAttributes(RAttributesLayout.createDimNames(dimNames));
                             return result;
                         }

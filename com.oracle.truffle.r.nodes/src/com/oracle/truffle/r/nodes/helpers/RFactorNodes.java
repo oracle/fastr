@@ -32,8 +32,8 @@ import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -90,8 +90,8 @@ public final class RFactorNodes {
 
             // Convert scalars to vector if necessary
             RAbstractVector vec;
-            if (nonScalarLevels.profile(attr instanceof RVector)) {
-                vec = (RVector<?>) attr;
+            if (nonScalarLevels.profile(attr instanceof RMaterializedVector)) {
+                vec = (RAbstractVector) attr;
             } else if (attr != null) {
                 vec = (RAbstractVector) RRuntime.asAbstractVector(attr);   // scalar to vector
             } else {

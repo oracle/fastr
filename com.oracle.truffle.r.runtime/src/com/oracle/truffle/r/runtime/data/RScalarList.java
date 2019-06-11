@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,12 +33,18 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
-public final class RScalarList extends RScalarVector implements RAbstractListVector {
+public final class RScalarList extends RAbstractListVector implements RScalarVector {
 
     private final Object value;
 
     private RScalarList(Object value) {
+        super(RDataFactory.INCOMPLETE_VECTOR);
         this.value = value;
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return false;
     }
 
     public static RScalarList valueOf(Object value) {
@@ -58,6 +64,16 @@ public final class RScalarList extends RScalarVector implements RAbstractListVec
     @Override
     public RType getRType() {
         return RType.List;
+    }
+
+    @Override
+    public int getLength() {
+        return 1;
+    }
+
+    @Override
+    public RAbstractVector copy() {
+        return this;
     }
 
     @Override

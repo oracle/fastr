@@ -41,11 +41,12 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RInteger extends RScalarVector implements RAbstractIntVector {
+public final class RInteger extends RAbstractIntVector implements RScalarVector {
 
     protected final int value;
 
     private RInteger(int value) {
+        super(!RRuntime.isNA(value));
         this.value = value;
     }
 
@@ -136,6 +137,21 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
             throw UnsupportedMessageException.create();
         }
         return interop.asDouble(value);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return false;
+    }
+
+    @Override
+    public int getLength() {
+        return 1;
+    }
+
+    @Override
+    public RAbstractVector copy() {
+        return this;
     }
 
     public static RInteger createNA() {

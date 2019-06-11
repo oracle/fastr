@@ -48,8 +48,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
@@ -228,7 +228,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
             }
             RIntVector res = RDataFactory.createIntVector(data, complete);
             setLevelsAttrNode.setAttr(res, RDataFactory.createStringVector(levels.keySet().toArray(new String[0]), RDataFactory.COMPLETE_VECTOR));
-            return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"));
+            return RAbstractVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"));
         }
     }
 }

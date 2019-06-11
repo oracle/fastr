@@ -45,9 +45,10 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
 @ExportLibrary(InteropLibrary.class)
-public final class RExpression extends RVector<Object[]> implements RAbstractListBaseVector {
+public final class RExpression extends RAbstractListBaseVector implements RMaterializedVector, Shareable {
 
     private Object[] data;
 
@@ -55,7 +56,7 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
         super(false);
         this.data = data;
         initDimsNamesDimNames(dims, names, dimNames);
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     @SuppressWarnings("static-method")
@@ -148,6 +149,11 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
     @ExportMessage
     void toNative() {
         NativeDataAccess.asPointer(this);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return true;
     }
 
     @Override
@@ -279,7 +285,7 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
     }
 
     @Override
-    public RVector<?> materialize() {
+    public RExpression materialize() {
         return this;
     }
 
@@ -297,8 +303,8 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
         RExpression listCopy = new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
-            if (el instanceof RVector) {
-                Object elCopy = ((RVector<?>) el).deepCopy();
+            if (el instanceof RMaterializedVector) {
+                Object elCopy = ((RAbstractVector) el).deepCopy();
                 listCopy.updateDataAtAsObject(i, elCopy, null);
             }
         }
@@ -308,11 +314,6 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
     @Override
     public RExpression createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createExpression(newLength);
-    }
-
-    @Override
-    public RExpression copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createExpression(data, newDimensions);
     }
 
     @Override

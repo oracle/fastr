@@ -63,7 +63,7 @@ public abstract class IsNotObject extends RBaseNode {
         return true;
     }
 
-    @Specialization
+    @Specialization(guards = "isShareable(value)")
     public static boolean doOthers(RSharingAttributeStorage value,
                     @Cached("createClass()") HasFixedAttributeNode hasClassAttributeNode) {
         boolean result = !value.isS4() && !hasClassAttributeNode.execute(value);
@@ -75,5 +75,9 @@ public abstract class IsNotObject extends RBaseNode {
     @Fallback
     public static boolean doFallback(@SuppressWarnings("unused") Object value) {
         return false;
+    }
+
+    protected static boolean isShareable(Object o) {
+        return RSharingAttributeStorage.isShareable(o);
     }
 }

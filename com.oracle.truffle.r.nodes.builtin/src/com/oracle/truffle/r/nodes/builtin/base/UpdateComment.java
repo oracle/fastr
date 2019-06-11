@@ -39,9 +39,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
@@ -61,7 +59,7 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
                     @Cached("createNonShared(container)") VectorReuse vectorReuse,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
         updateRefCountNode.execute(value);
-        RVector<?> res = (RVector<?>) vectorReuse.getMaterializedResult(container);
+        RAbstractVector res = vectorReuse.getMaterializedResult(container);
         setCommentAttrNode.setAttr(res, value);
         return res;
     }
@@ -79,10 +77,8 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
                     @Cached("createClassProfile()") ValueProfile classProfile,
                     @Cached("create()") SetCommentAttributeNode setCommentAttrNode) {
         Object result = classProfile.profile(container);
-        if (result instanceof RShareable) {
-            result = ((RShareable) result).copy();
-        } else {
-            RSharingAttributeStorage.verify(result);
+        if (RSharingAttributeStorage.isShareable(result)) {
+            result = ((RSharingAttributeStorage) result).copy();
         }
         setCommentAttrNode.setAttr((RAttributable) result, value);
         return result;
@@ -109,10 +105,8 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
                     @Cached("createClassProfile()") ValueProfile classProfile,
                     @Cached("createComment()") RemoveFixedAttributeNode removeCommentNode) {
         Object result = classProfile.profile(container);
-        if (result instanceof RShareable) {
-            result = ((RShareable) result).copy();
-        } else {
-            RSharingAttributeStorage.verify(result);
+        if (RSharingAttributeStorage.isShareable(result)) {
+            result = ((RSharingAttributeStorage) result).copy();
         }
         removeCommentNode.execute((RAttributable) result);
         return result;
@@ -122,7 +116,6 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
     protected Object updateCommentFallback(Object vector, Object value) {
         // cast pipeline should ensure this:
         assert value == RNull.instance || value instanceof RAbstractStringVector;
-        RSharingAttributeStorage.verify(vector);
         return vector;
     }
 }

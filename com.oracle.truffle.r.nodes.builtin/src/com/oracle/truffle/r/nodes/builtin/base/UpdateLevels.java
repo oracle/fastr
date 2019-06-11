@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "levels<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
@@ -52,7 +51,7 @@ public abstract class UpdateLevels extends RBuiltinNode.Arg2 {
     @Specialization
     protected RAbstractVector updateLevels(RAbstractVector vector, @SuppressWarnings("unused") RNull levels,
                     @Cached("createRemoveAttrNode()") RemoveFixedAttributeNode removeAttrNode) {
-        RVector<?> v = (RVector<?>) vector.getNonShared();
+        RAbstractVector v = (RAbstractVector) vector.getNonShared();
         removeAttrNode.execute(v);
         return v;
     }
@@ -64,7 +63,7 @@ public abstract class UpdateLevels extends RBuiltinNode.Arg2 {
     @Specialization(guards = "!isRNull(levels)")
     protected RAbstractVector updateLevels(RAbstractVector vector, Object levels,
                     @Cached("createSetLevelsAttrNode()") SetFixedAttributeNode setLevelsAttrNode) {
-        RVector<?> v = (RVector<?>) vector.getNonShared();
+        RAbstractVector v = (RAbstractVector) vector.getNonShared();
         setLevelsAttrNode.setAttr(v, levels);
         return v;
     }

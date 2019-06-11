@@ -40,11 +40,12 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RRaw extends RScalarVector implements RAbstractRawVector {
+public final class RRaw extends RAbstractRawVector implements RScalarVector {
 
     protected final byte value;
 
     RRaw(byte value) {
+        super(RDataFactory.COMPLETE_VECTOR);
         this.value = value;
     }
 
@@ -120,8 +121,28 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
     }
 
     @Override
+    public boolean isMaterialized() {
+        return false;
+    }
+
+    @Override
     public boolean isNA() {
         return false;
+    }
+
+    @Override
+    public byte[] getDataCopy() {
+        return new byte[]{value};
+    }
+
+    @Override
+    public int getLength() {
+        return 1;
+    }
+
+    @Override
+    public RAbstractVector copy() {
+        return this;
     }
 
     @Override

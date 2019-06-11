@@ -33,8 +33,8 @@ import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -66,7 +66,9 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left);
 
     protected boolean containsMetadata(RAbstractVector vector) {
-        return vector instanceof RVector && hasDimNode.execute(vector) || (copyAllAttributes && vector.getAttributes() != null) || getNamesNode.getNames(vector) != null ||
+        return vector instanceof RMaterializedVector && hasDimNode.execute(vector) ||
+                        (copyAllAttributes && vector.getAttributes() != null) ||
+                        getNamesNode.getNames(vector) != null ||
                         getDimNamesNode.getDimNames(vector) != null;
     }
 
@@ -97,7 +99,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
-        RVector<?> result = target.materialize();
+        RAbstractVector result = target.materialize();
 
         if (copyAllAttributes) {
             copyOfReg.execute(source, result);

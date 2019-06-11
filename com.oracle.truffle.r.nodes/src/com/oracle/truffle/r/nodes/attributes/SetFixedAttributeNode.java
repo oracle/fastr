@@ -85,10 +85,8 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
             // TODO: in theory we should inspect the whole object (attributes and elements for
             // lists/envs/...) to see if there is potential cycle
             fixupRHS.enter();
-            if (value instanceof RSharingAttributeStorage) {
+            if (RSharingAttributeStorage.isShareable(value)) {
                 value = ((RSharingAttributeStorage) value).deepCopy();
-            } else {
-                RSharingAttributeStorage.verify(value);
             }
         }
         execute(attr, castValue(value));

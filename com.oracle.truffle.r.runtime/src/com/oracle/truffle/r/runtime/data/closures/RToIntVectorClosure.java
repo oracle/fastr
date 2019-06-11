@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RVector;
+import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -34,17 +34,31 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-class RToIntVectorClosure extends RToVectorClosure implements RAbstractIntVector {
+class RToIntVectorClosure extends RAbstractIntVector {
+
+    protected final boolean keepAttributes;
+    private final RAbstractVector vector;
 
     protected RToIntVectorClosure(RAbstractVector vector, boolean keepAttributes) {
-        super(vector, keepAttributes);
+        super(vector.isComplete());
+        this.keepAttributes = keepAttributes;
+        this.vector = vector;
+
+        if (isMaterialized()) {
+            if (keepAttributes) {
+                initAttributes(vector.getAttributes());
+            } else {
+                initRegAttributes(this, vector);
+            }
+        }
     }
 
     @Override
-    public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createIntVector(new int[newLength], newIsComplete);
+    public boolean isMaterialized() {
+        return vector.isMaterialized();
     }
 
+    @TruffleBoundary
     @Override
     public final RIntVector materialize() {
         int length = getLength();
@@ -53,7 +67,7 @@ class RToIntVectorClosure extends RToVectorClosure implements RAbstractIntVector
             int data = getDataAt(i);
             result[i] = data;
         }
-        RIntVector materialized = RDataFactory.createIntVector(result, getVector().isComplete());
+        RIntVector materialized = RDataFactory.createIntVector(result, vector.isComplete());
         copyAttributes(materialized);
         return materialized;
     }
@@ -61,20 +75,45 @@ class RToIntVectorClosure extends RToVectorClosure implements RAbstractIntVector
     @TruffleBoundary
     private void copyAttributes(RIntVector materialized) {
         if (keepAttributes) {
-            materialized.copyAttributesFrom(getVector());
+            materialized.copyAttributesFrom(this);
         }
     }
 
     @Override
+    public Object getInternalStore() {
+        return vector.getInternalStore();
+    }
+
+    @Override
+    public int getLength() {
+        return vector.getLength();
+    }
+
+    @Override
+    public void setLength(int l) {
+        vector.setLength(l);
+    }
+
+    @Override
+    public int getTrueLength() {
+        return vector.getTrueLength();
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        vector.setTrueLength(l);
+    }
+
+    @Override
     public int getDataAt(int index) {
-        RAbstractVector v = getVector();
+        RAbstractVector v = vector;
         VectorAccess spa = v.slowPathAccess();
         return spa.getInt(spa.randomAccess(v), index);
     }
 
     @Override
     public VectorAccess access() {
-        return new FastPathAccess(this, getVector().access());
+        return new FastPathAccess(this, vector.access());
     }
 
     @Override
@@ -112,7 +151,7 @@ class RToIntVectorClosure extends RToVectorClosure implements RAbstractIntVector
 
         @Override
         protected Object getStore(RAbstractContainer vector) {
-            return super.getStore(((RToIntVectorClosure) vector).getVector());
+            return super.getStore(((RToIntVectorClosure) vector).vector);
         }
 
         @Override

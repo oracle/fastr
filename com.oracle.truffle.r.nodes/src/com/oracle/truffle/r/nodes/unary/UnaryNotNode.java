@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -159,7 +158,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
                             rawResultAccess.setRaw(resultIter, notRaw(vectorAccess.getRaw(vectorIter)));
                         }
                     }
-                    ((RVector<?>) result).copyAttributesFrom(vector);
+                    (result).copyAttributesFrom(vector);
                     break;
                 default:
                     result = factory.createLogicalVector(length, false);
@@ -170,9 +169,9 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
                         }
                     }
                     if (vectorAccess.getType() == RType.Logical) {
-                        ((RVector<?>) result).copyAttributesFrom(vector);
+                        (result).copyAttributesFrom(vector);
                     } else {
-                        factory.reinitializeAttributes((RVector<?>) result, getDims.getDimensions(vector), extractNames.execute(vector), extractDimNames.execute(vector));
+                        factory.reinitializeAttributes(result, getDims.getDimensions(vector), extractNames.execute(vector), extractDimNames.execute(vector));
                     }
                     break;
             }

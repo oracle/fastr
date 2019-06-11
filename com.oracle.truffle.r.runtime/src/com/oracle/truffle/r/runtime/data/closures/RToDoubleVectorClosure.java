@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RVector;
+import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -34,15 +34,28 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
+class RToDoubleVectorClosure extends RAbstractDoubleVector {
+
+    protected final boolean keepAttributes;
+    private final RAbstractVector vector;
 
     protected RToDoubleVectorClosure(RAbstractVector vector, boolean keepAttributes) {
-        super(vector, keepAttributes);
+        super(vector.isComplete());
+        this.keepAttributes = keepAttributes;
+        this.vector = vector;
+
+        if (isMaterialized()) {
+            if (keepAttributes) {
+                initAttributes(vector.getAttributes());
+            } else {
+                initRegAttributes(this, vector);
+            }
+        }
     }
 
     @Override
-    public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
+    public boolean isMaterialized() {
+        return vector.isMaterialized();
     }
 
     @Override
@@ -53,7 +66,7 @@ class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDouble
             double data = getDataAt(i);
             result[i] = data;
         }
-        RDoubleVector materialized = RDataFactory.createDoubleVector(result, getVector().isComplete());
+        RDoubleVector materialized = RDataFactory.createDoubleVector(result, vector.isComplete());
         copyAttributes(materialized);
         return materialized;
     }
@@ -61,20 +74,44 @@ class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDouble
     @TruffleBoundary
     private void copyAttributes(RDoubleVector materialized) {
         if (keepAttributes) {
-            materialized.initAttributes(getVector().getAttributes());
+            materialized.copyAttributesFrom(this);
         }
     }
 
     @Override
+    public Object getInternalStore() {
+        return vector.getInternalStore();
+    }
+
+    @Override
+    public int getLength() {
+        return vector.getLength();
+    }
+
+    @Override
+    public void setLength(int l) {
+        vector.setLength(l);
+    }
+
+    @Override
+    public int getTrueLength() {
+        return vector.getTrueLength();
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        vector.setTrueLength(l);
+    }
+
+    @Override
     public double getDataAt(int index) {
-        RAbstractVector v = getVector();
-        VectorAccess spa = v.slowPathAccess();
-        return spa.getDouble(spa.randomAccess(v), index);
+        VectorAccess spa = vector.slowPathAccess();
+        return spa.getDouble(spa.randomAccess(vector), index);
     }
 
     @Override
     public VectorAccess access() {
-        return new FastPathAccess(this, getVector().access());
+        return new FastPathAccess(this, vector.access());
     }
 
     @Override
@@ -112,7 +149,7 @@ class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDouble
 
         @Override
         protected Object getStore(RAbstractContainer vector) {
-            return super.getStore(((RToDoubleVectorClosure) vector).getVector());
+            return super.getStore(((RToDoubleVectorClosure) vector).vector);
         }
 
         @Override

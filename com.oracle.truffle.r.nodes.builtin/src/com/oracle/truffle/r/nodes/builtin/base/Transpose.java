@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -228,15 +227,15 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = {"!isMatrix(x)", "!isRExpression(x)", "reuseNonSharedNode.supports(x)"}, limit = "getVectorAccessCacheSize()")
-    protected RVector<?> transposeNonMatrix(RAbstractVector x,
+    protected RAbstractVector transposeNonMatrix(RAbstractVector x,
                     @Cached("createTemporary(x)") VectorReuse reuseNonSharedNode) {
-        RVector<?> reused = (RVector<?>) reuseNonSharedNode.getMaterializedResult(x);
+        RAbstractVector reused = reuseNonSharedNode.getMaterializedResult(x);
         putNewDimsFromNames(reused, reused, new int[]{1, x.getLength()});
         return reused;
     }
 
     @Specialization(replaces = "transposeNonMatrix", guards = {"!isMatrix(x)", "!isRExpression(x)"})
-    protected RVector<?> transposeNonMatrixGeneric(RAbstractVector x,
+    protected RAbstractVector transposeNonMatrixGeneric(RAbstractVector x,
                     @Cached("createTemporaryGeneric()") VectorReuse reuseNonSharedNode) {
         return transposeNonMatrix(x, reuseNonSharedNode);
     }
@@ -297,7 +296,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     }
 
     @Fallback
-    protected RVector<?> transposeOthers(@SuppressWarnings("unused") Object x) {
+    protected RAbstractVector transposeOthers(@SuppressWarnings("unused") Object x) {
         throw error(Message.ARGUMENT_NOT_MATRIX);
     }
 }

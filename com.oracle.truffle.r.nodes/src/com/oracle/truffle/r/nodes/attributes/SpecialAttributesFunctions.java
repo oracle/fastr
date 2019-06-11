@@ -56,7 +56,6 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -403,18 +402,8 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getScalarVectorNames(@SuppressWarnings("unused") RScalarVector x) {
-            return null;
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
         protected Object getPairListNames(RPairList x) {
             return x.getNames();
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getSequenceVectorNames(@SuppressWarnings("unused") RSequence x) {
-            return null;
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
@@ -512,7 +501,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setOneDimInVector(RVector<?> x, int dim,
+        protected void setOneDimInVector(RAbstractVector x, int dim,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createDim()") SetFixedPropertyNode setFixedPropertyNode,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
@@ -669,17 +658,12 @@ public final class SpecialAttributesFunctions {
             return dims.getDataAt(0) == dims.getDataAt(1);
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getScalarVectorDims(@SuppressWarnings("unused") RScalarVector x) {
+        @Specialization(insertBefore = "getAttrFromAttributable", guards = "isScalarOrSequence(x)")
+        protected Object getScalarVectorDims(@SuppressWarnings("unused") RAbstractContainer x) {
             return null;
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getScalarVectorDims(@SuppressWarnings("unused") RSequence x) {
-            return null;
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
+        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isScalarOrSequence(x)")
         protected Object getVectorDims(RAbstractVector x,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createDim()") GetFixedPropertyNode getFixedPropertyNode,
@@ -726,6 +710,10 @@ public final class SpecialAttributesFunctions {
             } else {
                 throw error(RError.Message.OBJECT_NOT_MATRIX);
             }
+        }
+
+        protected static boolean isScalarOrSequence(RAbstractContainer x) {
+            return x instanceof RScalarVector || x instanceof RSequence;
         }
     }
 
@@ -993,7 +981,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void resetRowNames(RVector<?> x, @SuppressWarnings("unused") RNull rnull,
+        protected void resetRowNames(RAbstractVector x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("createRowNames()") RemoveFixedAttributeNode removeRowNamesAttrNode) {
             removeRowNamesAttrNode.execute(x);
         }
@@ -1029,17 +1017,12 @@ public final class SpecialAttributesFunctions {
             return execute(x);
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getScalarVectorRowNames(@SuppressWarnings("unused") RScalarVector x) {
+        @Specialization(insertBefore = "getAttrFromAttributable", guards = "isScalarOrSequence(x)")
+        protected Object getScalarVectorRowNames(@SuppressWarnings("unused") RAbstractContainer x) {
             return null;
         }
 
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getSequenceRowNames(@SuppressWarnings("unused") RSequence x) {
-            return null;
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
+        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isScalarOrSequence(x)")
         protected Object getVectorRowNames(RAbstractContainer x,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createRowNames()") GetFixedPropertyNode getFixedPropertyNode,
@@ -1083,6 +1066,10 @@ public final class SpecialAttributesFunctions {
                 }
                 return rowNames;
             }
+        }
+
+        protected static boolean isScalarOrSequence(RAbstractContainer x) {
+            return x instanceof RScalarVector || x instanceof RSequence;
         }
 
     }
@@ -1242,7 +1229,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void resetTsp(RVector<?> x, @SuppressWarnings("unused") RNull rnull,
+        protected void resetTsp(RAbstractVector x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("createTsp()") RemoveFixedAttributeNode removeTspAttrNode) {
             removeTspAttrNode.execute(x);
         }
@@ -1337,7 +1324,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void resetComment(RVector<?> x, @SuppressWarnings("unused") RNull rnull,
+        protected void resetComment(RAbstractVector x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("createComment()") RemoveFixedAttributeNode removeCommentAttrNode) {
             removeCommentAttrNode.execute(x);
         }

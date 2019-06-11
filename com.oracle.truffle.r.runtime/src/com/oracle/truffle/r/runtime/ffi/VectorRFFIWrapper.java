@@ -69,7 +69,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
     private final TruffleObject vector;
 
-    public VectorRFFIWrapper(TruffleObject vector) {
+    private VectorRFFIWrapper(TruffleObject vector) {
         assert vector instanceof RObject;
         this.vector = vector;
         NativeDataAccess.setNativeWrapper((RObject) vector, this);

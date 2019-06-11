@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 import sun.misc.Unsafe;
@@ -302,7 +303,7 @@ public final class NativeDataAccess {
                 for (int i = 0; i < elements.length; i++) {
                     Object element = elements[i];
                     if (element instanceof RSequence) {
-                        element = ((RSequence) element).createVector();
+                        element = ((RSequence) element).materialize();
                         elements[i] = element;
                     }
                     UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, asPointer(element));
@@ -407,7 +408,7 @@ public final class NativeDataAccess {
     @TruffleBoundary
     private static void registerAllocationSite(Object arg, NativeMirror mirror) {
         String argInfo;
-        if (arg instanceof RVector<?> && ((RVector<?>) arg).hasNativeMemoryData()) {
+        if (arg instanceof RMaterializedVector && ((RAbstractVector) arg).hasNativeMemoryData()) {
             // this must be vector created by fromNative factory method, it has data == null, but
             // does not have its address assigned yet
             argInfo = "[empty]";

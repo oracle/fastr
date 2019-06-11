@@ -35,15 +35,16 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromRawAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
-public final class RRawVector extends RVector<byte[]> implements RAbstractRawVector {
+public final class RRawVector extends RAbstractRawVector implements RMaterializedVector, Shareable {
 
     private byte[] data;
 
     RRawVector(byte[] data) {
         super(true);
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RRawVector(byte[] data, int[] dims, RStringVector names, RList dimNames) {
@@ -53,6 +54,11 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     private RRawVector() {
         super(true);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return true;
     }
 
     static RRawVector fromNative(long address, int length) {
@@ -154,11 +160,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    public RRawVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createRawVector(getReadonlyData(), newDimensions);
-    }
-
-    @Override
     public RRawVector materialize() {
         return this;
     }
@@ -190,12 +191,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     @Override
     protected RRawVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
         return RDataFactory.createRawVector(copyResizedData(size, fillNA), dimensions);
-    }
-
-    @Override
-    public RRawVector createEmptySameType(int newLength, boolean newIsComplete) {
-        assert newIsComplete;
-        return RDataFactory.createRawVector(new byte[newLength]);
     }
 
     @Override
