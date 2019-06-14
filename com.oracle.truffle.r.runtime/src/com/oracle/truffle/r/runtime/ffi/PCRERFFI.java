@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import java.lang.ref.SoftReference;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -163,6 +165,18 @@ public final class PCRERFFI {
     }
 
     public static final class ExecNode extends NativeCallNode {
+        private static final class BytesCache {
+            private final String input;
+            private final byte[] bytes;
+
+            BytesCache(String input, byte[] bytes) {
+                this.input = input;
+                this.bytes = bytes;
+            }
+        }
+
+        private AtomicReference<SoftReference<BytesCache>> cachedBytes = new AtomicReference<>();
+
         private ExecNode(DownCallNodeFactory factory) {
             super(factory.createDownCallNode(NativeFunction.exec));
         }
@@ -174,8 +188,18 @@ public final class PCRERFFI {
         }
 
         @TruffleBoundary
-        private static byte[] getBytes(String subject) {
-            return subject.getBytes(StandardCharsets.UTF_8);
+        private byte[] getBytes(String subject) {
+            if (subject.length() <= 32) {
+                return subject.getBytes(StandardCharsets.UTF_8);
+            }
+            SoftReference<BytesCache> cacheRef = cachedBytes.get();
+            BytesCache cache = cacheRef == null ? null : cacheRef.get();
+            if (cache != null && cache.input == subject) {
+                return cache.bytes;
+            }
+            byte[] result = subject.getBytes(StandardCharsets.UTF_8);
+            cachedBytes.set(new SoftReference<>(new BytesCache(subject, result)));
+            return result;
         }
 
         public static ExecNode create() {
