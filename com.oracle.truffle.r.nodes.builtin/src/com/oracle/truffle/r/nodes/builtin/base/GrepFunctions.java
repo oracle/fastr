@@ -35,6 +35,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -42,6 +43,8 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -177,6 +180,7 @@ public class GrepFunctions {
 
         protected void checkNotImplemented(boolean condition, String arg, boolean b) {
             if (condition) {
+                CompilerDirectives.transferToInterpreter();
                 throw RError.nyi(this, arg + " == " + b);
             }
         }
@@ -1063,10 +1067,16 @@ public class GrepFunctions {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean fixed, boolean useBytesL,
+        protected Object regexp(RAbstractStringVector patternArgIn, RAbstractStringVector vector, boolean ignoreCaseIn, boolean fixedIn, boolean useBytesL,
+                        @Cached("createClassProfile()") ValueProfile patternProfile,
+                        @Cached("createIdentityProfile()") ValueProfile fixedProfile,
+                        @Cached("createIdentityProfile()") ValueProfile ignoreCaseProfile,
+                        @Cached("createCountingProfile()") LoopConditionProfile loopConditionProfile,
                         @Cached("createCommon()") CommonCodeNode common) {
             try {
+                RAbstractStringVector patternArg = patternProfile.profile(patternArgIn);
+                boolean fixed = fixedProfile.profile(fixedIn);
+                boolean ignoreCase = ignoreCaseProfile.profile(ignoreCaseIn);
                 common.checkExtraArgs(false, false, false, useBytesL, false);
                 if (patternArg.getLength() > 1) {
                     throw RInternalError.unimplemented("multi-element patterns in regexpr not implemented yet");
@@ -1079,7 +1089,8 @@ public class GrepFunctions {
                 boolean useBytes = true;
                 String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" :
                                             // "chars";
-                for (int i = 0; i < vector.getLength(); i++) {
+                loopConditionProfile.profileCounted(vector.getLength());
+                for (int i = 0; loopConditionProfile.inject(i < vector.getLength()); i++) {
                     int[] matchPos;
                     int[] matchLength;
                     if (pattern.length() == 0) {
@@ -1087,12 +1098,12 @@ public class GrepFunctions {
                         matchPos = new int[]{1};
                         matchLength = new int[]{0};
                     } else {
-                        List<Info> res = getInfo(pattern, vector.getDataAt(i), ignoreCase, fixed);
-                        matchPos = new int[res.size()];
-                        matchLength = new int[res.size()];
-                        for (int j = 0; j < res.size(); j++) {
-                            matchPos[j] = res.get(j).index;
-                            matchLength[j] = res.get(j).size;
+                        Info[] res = getInfo(pattern, vector.getDataAt(i), ignoreCase, fixed);
+                        matchPos = new int[res.length];
+                        matchLength = new int[res.length];
+                        for (int j = 0; j < res.length; j++) {
+                            matchPos[j] = res[j].index;
+                            matchLength[j] = res[j].size;
                         }
                     }
                     RIntVector matches = RDataFactory.createIntVector(matchPos, RDataFactory.COMPLETE_VECTOR);
@@ -1105,12 +1116,12 @@ public class GrepFunctions {
                 }
                 return ret;
             } catch (PatternSyntaxException e) {
-                throw error(Message.INVALID_REGEXP_REASON, patternArg, e.getMessage());
+                throw error(Message.INVALID_REGEXP_REASON, patternArgIn, e.getMessage());
             }
         }
 
-        protected List<Info> getInfo(String pattern, String text, boolean ignoreCase, boolean fixed) {
-            List<Info> list = new ArrayList<>();
+        protected Info[] getInfo(String pattern, String text, boolean ignoreCase, boolean fixed) {
+            Info[] result = null;
             if (fixed) {
                 int index;
                 if (ignoreCase) {
@@ -1119,21 +1130,26 @@ public class GrepFunctions {
                     index = text.indexOf(pattern);
                 }
                 if (index != -1) {
-                    list.add(new Info(index + 1, pattern.length(), null, null, null));
+                    result = new Info[]{new Info(index + 1, pattern.length(), null, null, null)};
                 }
             } else {
                 Matcher m = getPatternMatcher(pattern, text, ignoreCase);
-                if (m.find()) {
+                if (find(m)) {
+                    result = new Info[m.groupCount() + 1];
                     for (int i = 0; i <= m.groupCount(); i++) {
-                        list.add(new Info(m.start(i) + 1, m.end(i) - m.start(i), null, null, null));
+                        result[i] = new Info(m.start(i) + 1, m.end(i) - m.start(i), null, null, null);
                     }
                 }
             }
-            if (list.size() > 0) {
-                return list;
+            if (result != null) {
+                return result;
             }
-            list.add(new Info(-1, -1, null, null, null));
-            return list;
+            return new Info[]{new Info(-1, -1, null, null, null)};
+        }
+
+        @TruffleBoundary
+        private static boolean find(Matcher m) {
+            return m.find();
         }
 
         @TruffleBoundary
