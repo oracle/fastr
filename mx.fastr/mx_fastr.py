@@ -97,7 +97,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
     vmArgs += _sulong_options()
     args = _sulong_args() + args
 
-    if extraVmArgs is None or not '-da' in extraVmArgs:
+    if not "FASTR_NO_ASSERTS" in os.environ and (extraVmArgs is None or not '-da' in extraVmArgs):
         # unless explicitly disabled we enable assertion checking
         vmArgs += ['-ea', '-esa']
 
