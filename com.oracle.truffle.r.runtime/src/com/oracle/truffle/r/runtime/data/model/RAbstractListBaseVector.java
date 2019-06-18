@@ -22,10 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
 /**
  * The base class for list-like objects: {@link com.oracle.truffle.r.runtime.data.RExpression} and
@@ -46,10 +56,66 @@ import com.oracle.truffle.r.runtime.data.RNull;
  * {@code ExtractListElement}, which is a node that can extract an element of a list or abstract
  * vector and put it in the consistent sharing state.
  */
+@ExportLibrary(InteropLibrary.class)
 public abstract class RAbstractListBaseVector extends RAbstractVector {
 
     public RAbstractListBaseVector(boolean complete) {
         super(complete);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasMembers() {
+        return true;
+    }
+
+    @ExportMessage
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+        RStringVector names = getNames();
+        return names != null ? names : RDataFactory.createEmptyStringVector();
+    }
+
+    @ExportMessage
+    boolean isMemberReadable(String member) {
+        int idx = getElementIndexByName(member);
+        return isArrayElementReadable(idx);
+    }
+
+    @ExportMessage
+    boolean isMemberInvocable(String member) {
+        int idx = getElementIndexByName(member);
+        return isArrayElementReadable(idx) && getDataAt(idx) instanceof RFunction;
+    }
+
+    @ExportMessage
+    Object readMember(String member,
+                    @Cached() R2Foreign r2Foreign,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException {
+        int idx = getElementIndexByName(member);
+        if (unknownIdentifier.profile(!isArrayElementReadable(idx))) {
+            throw UnknownIdentifierException.create(member);
+        }
+        return r2Foreign.convert(getDataAt(idx));
+    }
+
+    @ExportMessage
+    Object invokeMember(String member, Object[] arguments,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
+                    @Cached() RFunction.ExplicitCall c) throws UnknownIdentifierException, UnsupportedMessageException {
+        int idx = getElementIndexByName(member);
+        if (unknownIdentifier.profile(!isArrayElementReadable(idx))) {
+            throw UnknownIdentifierException.create(member);
+        }
+        Object f = getDataAt(idx);
+        if (f instanceof RFunction) {
+            return c.execute((RFunction) f, arguments);
+        }
+        throw UnsupportedMessageException.create();
+    }
+
+    @Override
+    protected boolean boxReadElements() {
+        return true;
     }
 
     @Override

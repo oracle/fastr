@@ -36,8 +36,18 @@ public class RLogicalMRTest extends AbstractMRTest {
     }
 
     @Override
+    protected int getSize(TruffleObject arg0) {
+        return 1;
+    }
+
+    @Override
+    protected boolean canRead(TruffleObject arg0) {
+        return true;
+    }
+
+    @Override
     protected boolean shouldTestToNative(TruffleObject obj) {
-        return false;
+        return true;
     }
 
     @Override

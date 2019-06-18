@@ -29,6 +29,16 @@ import org.junit.Test;
 
 public class RStringMRTest extends AbstractMRTest {
 
+    @Override
+    protected int getSize(TruffleObject arg0) {
+        return 1;
+    }
+
+    @Override
+    protected boolean canRead(TruffleObject arg0) {
+        return true;
+    }
+
     @Test
     @Override
     public void testIsNull() throws Exception {
@@ -53,6 +63,6 @@ public class RStringMRTest extends AbstractMRTest {
 
     @Override
     protected boolean shouldTestToNative(TruffleObject obj) {
-        return false;
+        return true;
     }
 }

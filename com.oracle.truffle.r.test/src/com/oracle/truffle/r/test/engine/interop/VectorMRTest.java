@@ -132,6 +132,7 @@ public class VectorMRTest extends AbstractMRTest {
         return new TruffleObject[]{
                         // int array
                         RDataFactory.createIntVector(new int[]{1}, true),
+                        RDataFactory.createIntVector(new int[]{Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE}, true),
                         RDataFactory.createIntVector(new int[]{1, 2, 3}, true),
                         RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR),
                         RDataFactory.createIntVector(new int[]{1, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR),
@@ -141,6 +142,8 @@ public class VectorMRTest extends AbstractMRTest {
                         RDataFactory.createIntSequence(1, 1, 1),
                         // to int closure
                         RClosures.createToIntVector(RDataFactory.createDoubleVector(new double[]{1}, true), true),
+                        RClosures.createToIntVector(RDataFactory.createDoubleVector(new double[]{Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE, Float.MAX_VALUE}, true), true),
+                        RClosures.createToIntVector(RDataFactory.createDoubleVector(new double[]{1}, true), true),
                         RClosures.createToIntVector(RDataFactory.createDoubleVector(new double[]{1, 2, 3}, true), true),
                         RClosures.createToIntVector(RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR), true),
                         RClosures.createToIntVector(RDataFactory.createDoubleVector(new double[]{1, RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR), true),
@@ -149,12 +152,14 @@ public class VectorMRTest extends AbstractMRTest {
                         // XXX foreign NAs vs null
                         new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{1})),
                         new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{1, 2, 3})),
+                        new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE})),
                         new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{RRuntime.INT_NA})),
                         new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{1, RRuntime.INT_NA})),
                         new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{})),
 
                         // double array
                         RDataFactory.createDoubleVector(new double[]{1}, true),
+                        RDataFactory.createDoubleVector(new double[]{Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, Long.MAX_VALUE}, true),
                         RDataFactory.createDoubleVector(new double[]{1, 2, 3}, true),
                         RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR),
                         RDataFactory.createDoubleVector(new double[]{1, RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR),
@@ -165,12 +170,15 @@ public class VectorMRTest extends AbstractMRTest {
                         // to double closure
                         RClosures.createToDoubleVector(RDataFactory.createIntVector(new int[]{1}, true), true),
                         RClosures.createToDoubleVector(RDataFactory.createIntVector(new int[]{1, 2, 3}, true), true),
+                        RClosures.createToDoubleVector(RDataFactory.createIntVector(new int[]{Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE}, true), true),
                         RClosures.createToDoubleVector(RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true),
                         RClosures.createToDoubleVector(RDataFactory.createIntVector(new int[]{1, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true),
                         RClosures.createToDoubleVector(RDataFactory.createEmptyIntVector(), true),
                         // double foreign wrapper
                         new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{1})),
                         new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{1, 2, 3})),
+                        new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(
+                                        new double[]{Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, Long.MAX_VALUE})),
                         new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{RRuntime.DOUBLE_NA})),
                         new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{1, RRuntime.DOUBLE_NA})),
                         new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{})),
@@ -249,6 +257,9 @@ public class VectorMRTest extends AbstractMRTest {
         }
         if (vec instanceof RAbstractLogicalVector) {
             return RRuntime.fromLogical(((RAbstractLogicalVector) vec).getDataAt(0));
+        }
+        if (vec instanceof RAbstractRawVector) {
+            return ((RAbstractRawVector) vec).getRawDataAt(0);
         }
         return vec.getDataAtAsObject(0);
     }

@@ -120,7 +120,7 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
         } else if (obj instanceof RInteropNA) {
             return null;
         } else if (obj instanceof RAbstractAtomicVector) {
-            return RAbstractVectorAccessFactory.ACCESS;
+            return null;
         } else if (obj instanceof RForeignObjectWrapper) {
             return null;
         } else {

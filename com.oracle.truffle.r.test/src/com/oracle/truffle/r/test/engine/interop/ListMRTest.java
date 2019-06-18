@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import static org.junit.Assert.assertTrue;
@@ -44,7 +45,7 @@ import static org.junit.Assert.fail;
 
 public class ListMRTest extends AbstractMRTest {
 
-    private static final String testValues = "i=1L, d=2.1, b=TRUE, fn=function(s) {s}, n=NULL, 4";
+    private static final String testValues = "i=1L, r=as.raw(1), d=2.1, b=TRUE, fn=function(s) {s}, n=NULL, 4";
 
     @Override
     protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
@@ -67,10 +68,11 @@ public class ListMRTest extends AbstractMRTest {
 
         assertSingletonVector(1, ForeignAccess.sendRead(Message.READ.createNode(), l, 0));
         assertSingletonVector(1, ForeignAccess.sendRead(Message.READ.createNode(), l, 0f));
-        assertSingletonVector(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, 1));
-        assertSingletonVector(4d, ForeignAccess.sendRead(Message.READ.createNode(), l, 5d));
-        assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), l, 2));
-        assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, 4) instanceof RNull);
+        assertSingletonVector(RRaw.valueOf((byte) 1), ForeignAccess.sendRead(Message.READ.createNode(), l, 1));
+        assertSingletonVector(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, 2));
+        assertSingletonVector(4d, ForeignAccess.sendRead(Message.READ.createNode(), l, 6d));
+        assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), l, 3));
+        assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, 5) instanceof RNull);
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, -1), UnknownIdentifierException.class);
 
@@ -148,7 +150,7 @@ public class ListMRTest extends AbstractMRTest {
     @Override
     protected String[] getKeys(TruffleObject obj) {
         if (((RAbstractContainer) obj).getLength() > 0) {
-            return new String[]{"i", "d", "b", "fn", "n", ""};
+            return new String[]{"i", "r", "d", "b", "fn", "n", ""};
         }
         return new String[]{};
     }

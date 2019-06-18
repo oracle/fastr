@@ -24,7 +24,13 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -49,12 +55,14 @@ import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * When implementing, make sure to invoke related {@link MemoryCopyTracer} methods.
  */
+@ExportLibrary(InteropLibrary.class)
 public abstract class RAbstractVector extends RAbstractContainer implements RFFIAccess {
 
     /**
@@ -67,6 +75,35 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     protected RAbstractVector(boolean complete) {
         this.complete = complete;
     }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    public long getArraySize() throws UnsupportedMessageException {
+        return getLength();
+    }
+
+    @ExportMessage
+    public boolean isArrayElementReadable(long index) {
+        return index >= 0 && index < getLength();
+    }
+
+    @ExportMessage
+    public Object readArrayElement(long index,
+                    @Cached.Exclusive @Cached() R2Foreign r2Foreign,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile invalidIndex) throws InvalidArrayIndexException {
+        if (!invalidIndex.profile(isArrayElementReadable(index))) {
+            throw InvalidArrayIndexException.create(index);
+        }
+        Object value = getDataAtAsObject((int) index);
+        return boxReadElements() ? r2Foreign.convert(value) : r2Foreign.convertNoBox(value);
+    }
+
+    protected abstract boolean boxReadElements();
 
     private int[] getDimensionsFromAttrs() {
         if (attributes == null) {

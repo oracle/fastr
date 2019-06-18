@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import org.junit.Test;
@@ -36,13 +38,28 @@ public class RIntegerMRTest extends AbstractMRTest {
     }
 
     @Override
+    protected int getSize(TruffleObject arg0) {
+        return 1;
+    }
+
+    @Override
+    protected boolean canRead(TruffleObject arg0) {
+        return true;
+    }
+
+    @Override
+    protected Class<? extends InteropException> readException(TruffleObject obj, int index) {
+        return UnknownIdentifierException.class;
+    }
+
+    @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
         return new TruffleObject[]{RInteger.valueOf(123), RInteger.createNA()};
     }
 
     @Override
     protected boolean shouldTestToNative(TruffleObject obj) {
-        return false;
+        return true;
     }
 
     @Override
