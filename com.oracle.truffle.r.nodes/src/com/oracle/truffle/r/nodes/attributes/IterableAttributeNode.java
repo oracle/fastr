@@ -44,7 +44,7 @@ public abstract class IterableAttributeNode extends AttributeIterativeAccessNode
 
     @Specialization(limit = "getCacheLimit()", guards = {"attrsLayout != null", "shapeCheck(attrsLayout.shape, attrs)"})
     protected RAttributesLayout.RAttributeIterable getArrayFromConstantLayouts(DynamicObject attrs,
-                    @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
+                    @Cached("findLayout(attrs, createLoopProfiles())") AttrsLayout attrsLayout) {
         return RAttributesLayout.asIterable(attrs, attrsLayout);
     }
 

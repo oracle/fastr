@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeAccessNode.GenericFixedAttributeAccessNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -44,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
  * There is some additional functionality handled in the builtins, e.g. {@code do_namesgets} in
  * GNU-R, which we should also implement only in the builtins.
  */
-public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
+public abstract class SetFixedAttributeNode extends GenericFixedAttributeAccessNode {
 
     private final BranchProfile fixupRHS = BranchProfile.create();
 
@@ -105,7 +106,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
     @Specialization(guards = "defaultImplGuard(x, value)")
     protected void setAttrInAttributable(RAttributable x, Object value,
                     @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("create(name)") SetFixedPropertyNode setFixedPropertyNode,
+                    @Cached("create(getAttributeName())") SetFixedPropertyNode setFixedPropertyNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
         DynamicObject attributes = x.getAttributes();
 

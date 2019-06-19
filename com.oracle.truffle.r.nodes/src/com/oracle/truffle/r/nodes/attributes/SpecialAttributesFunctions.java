@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.RError.Message.LENGTH_ZERO_DIM_INVALI
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -37,6 +38,7 @@ import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.IsSpecialAttributeNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
@@ -75,24 +77,27 @@ public final class SpecialAttributesFunctions {
     /**
      * A node used in guards, for example, to determine whether an attribute is a special one.
      */
-    public static final class IsSpecialAttributeNode extends RBaseNode {
-
-        private final BranchProfile namesProfile = BranchProfile.create();
-        private final BranchProfile dimProfile = BranchProfile.create();
-        private final BranchProfile dimNamesProfile = BranchProfile.create();
-        private final BranchProfile rowNamesProfile = BranchProfile.create();
-        private final BranchProfile tspProfile = BranchProfile.create();
-        private final BranchProfile commentProfile = BranchProfile.create();
-        private final BranchProfile classProfile = BranchProfile.create();
+    @GenerateUncached
+    public static abstract class IsSpecialAttributeNode extends RBaseNode {
 
         public static IsSpecialAttributeNode create() {
-            return new IsSpecialAttributeNode();
+            return IsSpecialAttributeNodeGen.create();
         }
 
         /**
          * The fast-path method.
          */
-        public boolean execute(String name) {
+        public abstract boolean execute(String name);
+
+        @Specialization
+        public boolean exec(String name,
+                        @Cached() BranchProfile namesProfile,
+                        @Cached() BranchProfile dimProfile,
+                        @Cached() BranchProfile dimNamesProfile,
+                        @Cached() BranchProfile rowNamesProfile,
+                        @Cached() BranchProfile tspProfile,
+                        @Cached() BranchProfile commentProfile,
+                        @Cached() BranchProfile classProfile) {
             assert Utils.isInterned(name);
             if (Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY)) {
                 namesProfile.enter();
@@ -386,15 +391,19 @@ public final class SpecialAttributesFunctions {
         }
     }
 
+    @GenerateUncached
     public abstract static class GetNamesAttributeNode extends GetFixedAttributeNode {
 
-        protected GetNamesAttributeNode() {
-            super(RRuntime.NAMES_ATTR_KEY);
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.NAMES_ATTR_KEY;
         }
 
         public static GetNamesAttributeNode create() {
             return SpecialAttributesFunctionsFactory.GetNamesAttributeNodeGen.create();
         }
+
+        public abstract Object execute(RAttributable attr);
 
         public final RStringVector getNames(RAttributable x) {
             return (RStringVector) execute(x);
@@ -588,12 +597,13 @@ public final class SpecialAttributesFunctions {
         private final ConditionProfile twoDimsOrMoreProfile = ConditionProfile.createBinaryProfile();
         @Child private GetReadonlyData.Int getReadonlyData;
 
-        protected GetDimAttributeNode() {
-            super(RRuntime.DIM_ATTR_KEY);
-        }
-
         public static GetDimAttributeNode create() {
             return GetDimAttributeNodeGen.create();
+        }
+
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.DIM_ATTR_KEY;
         }
 
         // TODO: getDimensions returns a naked array, which is in many places used to create a fresh
@@ -794,14 +804,16 @@ public final class SpecialAttributesFunctions {
         }
     }
 
+    @GenerateUncached
     public abstract static class GetDimNamesAttributeNode extends GetFixedAttributeNode {
-
-        protected GetDimNamesAttributeNode() {
-            super(RRuntime.DIMNAMES_ATTR_KEY);
-        }
 
         public static GetDimNamesAttributeNode create() {
             return SpecialAttributesFunctionsFactory.GetDimNamesAttributeNodeGen.create();
+        }
+
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.DIMNAMES_ATTR_KEY;
         }
 
         public final RList getDimNames(RAttributable x) {
@@ -988,14 +1000,16 @@ public final class SpecialAttributesFunctions {
         }
     }
 
+    @GenerateUncached
     public abstract static class GetRowNamesAttributeNode extends GetFixedAttributeNode {
-
-        protected GetRowNamesAttributeNode() {
-            super(RRuntime.ROWNAMES_ATTR_KEY);
-        }
 
         public static GetRowNamesAttributeNode create() {
             return SpecialAttributesFunctionsFactory.GetRowNamesAttributeNodeGen.create();
+        }
+
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.ROWNAMES_ATTR_KEY;
         }
 
         public Object getRowNames(RAbstractContainer x) {
@@ -1129,12 +1143,13 @@ public final class SpecialAttributesFunctions {
 
     public abstract static class GetClassAttributeNode extends GetFixedAttributeNode {
 
-        protected GetClassAttributeNode() {
-            super(RRuntime.CLASS_ATTR_KEY);
-        }
-
         public static GetClassAttributeNode create() {
             return SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen.create();
+        }
+
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.CLASS_ATTR_KEY;
         }
 
         public final RStringVector getClassAttr(RAttributable x) {
@@ -1229,12 +1244,13 @@ public final class SpecialAttributesFunctions {
 
     public abstract static class GetTspAttributeNode extends GetFixedAttributeNode {
 
-        protected GetTspAttributeNode() {
-            super(RRuntime.TSP_ATTR_KEY);
-        }
-
         public static GetTspAttributeNode create() {
             return SpecialAttributesFunctionsFactory.GetTspAttributeNodeGen.create();
+        }
+
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.TSP_ATTR_KEY;
         }
 
         public RAbstractDoubleVector getTsp(RAttributable x) {
@@ -1320,12 +1336,13 @@ public final class SpecialAttributesFunctions {
 
     public abstract static class GetCommentAttributeNode extends GetFixedAttributeNode {
 
-        protected GetCommentAttributeNode() {
-            super(RRuntime.COMMENT_ATTR_KEY);
-        }
-
         public static GetCommentAttributeNode create() {
             return SpecialAttributesFunctionsFactory.GetCommentAttributeNodeGen.create();
+        }
+
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.COMMENT_ATTR_KEY;
         }
 
         public RAbstractStringVector getComment(RAttributable x) {

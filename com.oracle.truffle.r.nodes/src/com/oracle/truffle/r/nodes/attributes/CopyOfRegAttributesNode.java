@@ -130,8 +130,4 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
             }
         }
     }
-
-    protected static boolean isAttributeStorage(Object o) {
-        return o instanceof RAttributable;
-    }
 }

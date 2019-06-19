@@ -26,10 +26,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeAccessNode.GenericFixedAttributeAccessNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 
-public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
+public abstract class RemoveFixedAttributeNode extends GenericFixedAttributeAccessNode {
 
     protected RemoveFixedAttributeNode(String name) {
         super(name);
@@ -72,7 +73,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     @Specialization
     protected static void removeAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("create(name)") RemoveFixedPropertyNode removeFixedPropertyNode,
+                    @Cached("create(getAttributeName())") RemoveFixedPropertyNode removeFixedPropertyNode,
                     @Cached("create()") BranchProfile emptyAttrProfile) {
         DynamicObject attributes = x.getAttributes();
 

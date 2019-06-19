@@ -46,17 +46,19 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @ReportPolymorphism
 public abstract class AttributeIterativeAccessNode extends RBaseNode {
 
-    private final ConditionProfile[] loopProfiles;
-
     protected int getCacheLimit() {
         return DSLConfig.getCacheSize(RAttributesLayout.LAYOUTS.length);
     }
 
     protected AttributeIterativeAccessNode() {
-        this.loopProfiles = new ConditionProfile[RAttributesLayout.LAYOUTS.length];
+    }
+
+    protected ConditionProfile[] createLoopProfiles() {
+        ConditionProfile[] loopProfiles = new ConditionProfile[RAttributesLayout.LAYOUTS.length];
         for (int i = 0; i < RAttributesLayout.LAYOUTS.length; i++) {
             loopProfiles[i] = ConditionProfile.createBinaryProfile();
         }
+        return loopProfiles;
     }
 
     protected static Shape lookupShape(DynamicObject attrs) {
@@ -65,7 +67,7 @@ public abstract class AttributeIterativeAccessNode extends RBaseNode {
     }
 
     @ExplodeLoop
-    protected final AttrsLayout findLayout(DynamicObject attrs) {
+    protected final AttrsLayout findLayout(DynamicObject attrs, ConditionProfile[] loopProfiles) {
         Shape attrsShape = attrs.getShape();
         for (int i = 0; i < RAttributesLayout.LAYOUTS.length; i++) {
             AttrsLayout attrsLayout = RAttributesLayout.LAYOUTS[i];

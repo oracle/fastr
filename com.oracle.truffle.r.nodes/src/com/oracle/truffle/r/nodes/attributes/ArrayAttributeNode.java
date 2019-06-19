@@ -24,8 +24,8 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import java.util.List;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -37,11 +37,10 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 
+@GenerateUncached
 public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
 
     private static final RAttribute[] EMPTY = new RAttribute[0];
-
-    @Child private ArrayAttributeNode recursive;
 
     public static ArrayAttributeNode create() {
         return ArrayAttributeNodeGen.create();
@@ -52,7 +51,7 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
     @Specialization(limit = "getCacheLimit()", guards = {"attrsLayout != null", "attrsLayout.shape.check(attrs)"})
     @ExplodeLoop
     protected RAttribute[] getArrayFromConstantLayouts(DynamicObject attrs,
-                    @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
+                    @Cached("findLayout(attrs, createLoopProfiles())") AttrsLayout attrsLayout) {
         final Property[] props = attrsLayout.properties;
         RAttribute[] result = new RAttribute[props.length];
         for (int i = 0; i < props.length; i++) {
@@ -77,19 +76,19 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
         return result;
     }
 
-    @Specialization
+    @Specialization(guards = "hasAttributes(x)")
     protected RAttribute[] getArrayFallback(RAttributable x,
+                    @Cached() ArrayAttributeNode recursive,
                     @Cached("create()") BranchProfile attrNullProfile) {
-        DynamicObject attributes = x.getAttributes();
-        if (attributes == null) {
-            attrNullProfile.enter();
-            return EMPTY;
-        }
-        if (recursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursive = insert(create());
-        }
+        return recursive.execute(x.getAttributes());
+    }
 
-        return recursive.execute(attributes);
+    @Specialization(guards = "!hasAttributes(x)")
+    protected RAttribute[] getArrayFallback(RAttributable x) {
+        return EMPTY;
+    }
+
+    protected static boolean hasAttributes(RAttributable x) {
+        return x.getAttributes() != null;
     }
 }
