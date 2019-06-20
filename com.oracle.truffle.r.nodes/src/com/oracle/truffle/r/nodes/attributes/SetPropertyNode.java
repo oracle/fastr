@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -35,6 +36,7 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 @ImportStatic(DSLConfig.class)
+@GenerateUncached
 public abstract class SetPropertyNode extends PropertyAccessNode {
 
     public abstract void execute(DynamicObject attrs, String name, Object value);

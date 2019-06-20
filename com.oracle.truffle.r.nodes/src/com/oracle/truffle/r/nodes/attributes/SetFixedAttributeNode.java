@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.FixedAttributeAccessNode.GenericFixedAttributeAccessNode;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNodeFactory.SetGenericFixedAttributeNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -57,7 +58,7 @@ public abstract class SetFixedAttributeNode extends GenericFixedAttributeAccessN
         if (SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name)) {
             return SpecialAttributesFunctions.createSetSpecialAttributeNode(name);
         } else {
-            return SetFixedAttributeNodeGen.create(name);
+            return SetGenericFixedAttributeNodeGen.create(name);
         }
     }
 
@@ -99,15 +100,7 @@ public abstract class SetFixedAttributeNode extends GenericFixedAttributeAccessN
         return value;
     }
 
-    protected boolean defaultImplGuard(@SuppressWarnings("unused") Object target, @SuppressWarnings("unused") Object value) {
-        return true;
-    }
-
-    @Specialization(guards = "defaultImplGuard(x, value)")
-    protected void setAttrInAttributable(RAttributable x, Object value,
-                    @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("create(getAttributeName())") SetFixedPropertyNode setFixedPropertyNode,
-                    @Cached("create()") ShareObjectNode updateRefCountNode) {
+    protected void setAttrInAttributableInternal(RAttributable x, Object value, BranchProfile attrNullProfile, SetFixedPropertyNode setFixedPropertyNode, ShareObjectNode updateRefCountNode) {
         DynamicObject attributes = x.getAttributes();
 
         if (attributes == null) {
@@ -116,5 +109,20 @@ public abstract class SetFixedAttributeNode extends GenericFixedAttributeAccessN
         }
         setFixedPropertyNode.execute(attributes, value);
         updateRefCountNode.execute(value);
+    }
+
+    abstract static class SetGenericFixedAttributeNode extends SetFixedAttributeNode {
+
+        public SetGenericFixedAttributeNode(String name) {
+            super(name);
+        }
+
+        @Specialization()
+        protected void setAttrInAttributable(RAttributable x, Object value,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("create(getAttributeName())") SetFixedPropertyNode setFixedPropertyNode,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
+            setAttrInAttributableInternal(x, value, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
+        }
     }
 }

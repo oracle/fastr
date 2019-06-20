@@ -278,9 +278,16 @@ public final class SpecialAttributesFunctions {
             super(name);
         }
 
-        @Override
-        protected boolean defaultImplGuard(Object target, Object value) {
+        protected static boolean defaultImplGuard(Object value) {
             return value != RNull.instance;
+        }
+
+        @Specialization(guards = "defaultImplGuard(value)")
+        protected void setAttrInAttributable(RAttributable x, Object value,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("create(getAttributeName())") SetFixedPropertyNode setFixedPropertyNode,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
+            setAttrInAttributableInternal(x, value, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
     }
 
