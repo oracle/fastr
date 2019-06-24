@@ -34,7 +34,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -44,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
 /**
  * A note on the RList complete flag {@link RAbstractVector#isComplete() } - it is always
@@ -159,11 +159,6 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
     @ExportMessage
     void toNative() {
         NativeDataAccess.asPointer(this);
-    }
-
-    @Override
-    public boolean isMaterialized() {
-        return true;
     }
 
     boolean isNativized() {
@@ -306,28 +301,6 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
         return this.getDataAt(index);
     }
 
-    private Object[] copyResizedData(int size, boolean fillNA) {
-        Object[] localData = getReadonlyData();
-        Object[] newData = Arrays.copyOf(localData, size);
-        return resizeData(newData, localData, this.getLength(), fillNA);
-    }
-
-    private static Object[] resizeData(Object[] newData, Object[] oldData, int oldDataLength, boolean fillNA) {
-        if (newData.length > oldDataLength) {
-            if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; i++) {
-                    newData[i] = RNull.instance;
-                }
-            } else {
-                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
-                    newData[i] = oldData[j];
-                }
-            }
-        }
-        return newData;
-    }
-
     @Override
     public void setElement(int i, Object value) {
         setDataAt(i, value);
@@ -372,11 +345,6 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
             }
         }
         return listCopy;
-    }
-
-    @Override
-    protected RList internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        return RDataFactory.createList(copyResizedData(size, fillNA), dimensions);
     }
 
     private static final class FastPathAccess extends FastPathFromListAccess {

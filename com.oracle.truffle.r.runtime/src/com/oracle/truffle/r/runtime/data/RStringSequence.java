@@ -25,9 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -54,60 +52,10 @@ public final class RStringSequence extends RAbstractStringVector implements RSeq
     }
 
     @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
-    private static void resizeData(String[] newData, String[] data, int oldDataLength, String fill) {
-        if (newData.length > oldDataLength) {
-            if (fill != null) {
-                for (int i = data.length; i < oldDataLength; i++) {
-                    newData[i] = fill;
-                }
-            } else {
-                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
-                    newData[i] = data[j];
-                }
-            }
-        }
-    }
-
-    @Override
-    public RStringVector copyResized(int size, boolean fillNA) {
-        String[] data = new String[size];
-        populateVectorData(data);
-        resizeData(data, data, getLength(), fillNA ? RRuntime.STRING_NA : null);
-        return RDataFactory.createStringVector(data, !(fillNA && size > getLength()));
-    }
-
-    @Override
-    public RAbstractVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        int size = newDimensions[0] * newDimensions[1];
-        String[] data = new String[size];
-        populateVectorData(data);
-        resizeData(data, data, getLength(), fillNA ? RRuntime.STRING_NA : null);
-        return RDataFactory.createStringVector(data, !(fillNA && size > getLength()), newDimensions);
-    }
-
-    @Override
     @TruffleBoundary
     public String getDataAt(int index) {
         assert index >= 0 && index < getLength();
         return prefix + (start + stride * index) + suffix;
-    }
-
-    @TruffleBoundary
-    private void populateVectorData(String[] result) {
-        int current = start;
-        for (int i = 0; i < result.length && i < getLength(); i++) {
-            result[i] = prefix + current + suffix;
-            current += stride;
-        }
-    }
-
-    @Override
-    public RStringVector materialize() {
-        return internalCreateVector();
     }
 
     public int getStart() {
@@ -157,10 +105,6 @@ public final class RStringSequence extends RAbstractStringVector implements RSeq
     @TruffleBoundary
     public Object getStrideObject() {
         return Integer.toString(stride);
-    }
-
-    private RStringVector internalCreateVector() {
-        return copyResized(getLength(), false);
     }
 
     @Override

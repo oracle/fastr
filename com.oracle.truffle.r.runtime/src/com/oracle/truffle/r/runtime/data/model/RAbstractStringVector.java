@@ -22,9 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import java.util.Arrays;
 
 public abstract class RAbstractStringVector extends RAbstractAtomicVector {
 
@@ -49,15 +55,59 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     public abstract String getDataAt(int index);
 
     @Override
-    public abstract RStringVector materialize();
-
-    @Override
     public RType getRType() {
         return RType.Character;
     }
 
     @Override
-    public Object getReadonlyData() {
+    public RStringVector materialize() {
+        RStringVector result = RDataFactory.createStringVector(getDataCopy(), isComplete());
+        copyAttributes(result);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    private void copyAttributes(RStringVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RStringVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        boolean isComplete = isResizedComplete(size, fillNA);
+        return createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete, dimensions);
+    }
+
+    protected RStringVector createStringVector(Object[] data, boolean isComplete, int[] dims) {
+        return RDataFactory.createStringVector((String[]) data, isComplete, dims);
+    }
+
+    protected Object[] copyResizedData(int size, String fill) {
+        Object[] localData = getReadonlyData();
+        Object[] newData = Arrays.copyOf(localData, size);
+        if (size > localData.length) {
+            if (fill != null) {
+                Object fillObj = newData instanceof String[] ? fill : CharSXPWrapper.create(fill);
+                for (int i = localData.length; i < size; i++) {
+                    newData[i] = fillObj;
+                }
+            } else {
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
+                    newData[i] = localData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    protected RStringVector internalCopy() {
+        return RDataFactory.createStringVector(getDataCopy(), isComplete());
+    }
+
+    @Override
+    public Object[] getReadonlyData() {
         return getDataCopy();
     }
 

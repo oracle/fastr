@@ -140,11 +140,6 @@ public final class RInteger extends RAbstractIntVector implements RScalarVector 
     }
 
     @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
-    @Override
     public int getLength() {
         return 1;
     }
@@ -152,6 +147,18 @@ public final class RInteger extends RAbstractIntVector implements RScalarVector 
     @Override
     public RAbstractVector copy() {
         return this;
+    }
+
+    @Override
+    public RIntVector materialize() {
+        RIntVector result = RDataFactory.createIntVector(new int[]{getValue()}, isComplete());
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public int[] getDataCopy() {
+        return new int[]{getValue()};
     }
 
     public static RInteger createNA() {
@@ -198,13 +205,6 @@ public final class RInteger extends RAbstractIntVector implements RScalarVector 
     @Override
     public String toString() {
         return RRuntime.intToString(value);
-    }
-
-    @Override
-    public RIntVector materialize() {
-        RIntVector result = RDataFactory.createIntVectorFromScalar(value);
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
     }
 
     @Override

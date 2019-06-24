@@ -95,7 +95,7 @@ public abstract class UnClass extends RBuiltinNode.Arg1 {
                 shareableProfile.enter();
                 RSharingAttributeStorage shareable = (RSharingAttributeStorage) x;
                 if (!shareable.isTemporary()) {
-                    result = (RAttributable) shareable.copy();
+                    result = shareable.copy();
                 }
             }
             removeClassNode.execute(result);

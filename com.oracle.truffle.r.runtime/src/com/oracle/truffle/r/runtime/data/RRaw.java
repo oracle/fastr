@@ -121,18 +121,8 @@ public final class RRaw extends RAbstractRawVector implements RScalarVector {
     }
 
     @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
-    @Override
     public boolean isNA() {
         return false;
-    }
-
-    @Override
-    public byte[] getDataCopy() {
-        return new byte[]{value};
     }
 
     @Override
@@ -143,6 +133,18 @@ public final class RRaw extends RAbstractRawVector implements RScalarVector {
     @Override
     public RAbstractVector copy() {
         return this;
+    }
+
+    @Override
+    public RRawVector materialize() {
+        RRawVector result = RDataFactory.createRawVector(new byte[]{getValue()});
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public byte[] getDataCopy() {
+        return new byte[]{value};
     }
 
     @Override
@@ -161,13 +163,6 @@ public final class RRaw extends RAbstractRawVector implements RScalarVector {
             default:
                 return null;
         }
-    }
-
-    @Override
-    public RRawVector materialize() {
-        RRawVector result = RDataFactory.createRawVector(new byte[]{value});
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
     }
 
     @Override

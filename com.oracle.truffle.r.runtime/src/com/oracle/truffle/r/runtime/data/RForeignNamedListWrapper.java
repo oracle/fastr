@@ -32,12 +32,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArrayToVectorNode;
 
 public final class RForeignNamedListWrapper extends RAbstractListVector implements RForeignVectorWrapper {
 
@@ -49,11 +47,6 @@ public final class RForeignNamedListWrapper extends RAbstractListVector implemen
         super(RDataFactory.INCOMPLETE_VECTOR);
         this.delegate = delegate;
         this.names = names;
-    }
-
-    @Override
-    public boolean isMaterialized() {
-        return false;
     }
 
     @Override
@@ -69,12 +62,6 @@ public final class RForeignNamedListWrapper extends RAbstractListVector implemen
     @Override
     public RStringVector getNames() {
         return names;
-    }
-
-    @Override
-    @TruffleBoundary
-    public RAbstractVector internalCopy() {
-        return ForeignArrayToVectorNode.getUncached().toVector(delegate, getRType());
     }
 
     @Override

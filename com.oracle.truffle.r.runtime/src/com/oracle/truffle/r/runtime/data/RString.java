@@ -72,11 +72,6 @@ public final class RString extends RAbstractStringVector implements RScalarVecto
     }
 
     @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
-    @Override
     public int getLength() {
         return 1;
     }
@@ -84,6 +79,18 @@ public final class RString extends RAbstractStringVector implements RScalarVecto
     @Override
     public RAbstractVector copy() {
         return this;
+    }
+
+    @Override
+    public RStringVector materialize() {
+        RStringVector result = RDataFactory.createStringVector(new String[]{getValue()}, isComplete());
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public String[] getDataCopy() {
+        return new String[]{getValue()};
     }
 
     @Override
@@ -107,13 +114,6 @@ public final class RString extends RAbstractStringVector implements RScalarVecto
     public String getDataAt(int index) {
         assert index == 0;
         return value;
-    }
-
-    @Override
-    public RStringVector materialize() {
-        RStringVector result = RDataFactory.createStringVector(new String[]{getValue()}, isComplete());
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
     }
 
     @Override

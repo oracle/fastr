@@ -65,11 +65,6 @@ public final class RLogical extends RAbstractLogicalVector implements RScalarVec
         return RRuntime.fromLogical(value);
     }
 
-    @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
     public static RLogical valueOf(byte value) {
         return new RLogical(value);
     }
@@ -90,6 +85,18 @@ public final class RLogical extends RAbstractLogicalVector implements RScalarVec
     @Override
     public RAbstractVector copy() {
         return this;
+    }
+
+    @Override
+    public RLogicalVector materialize() {
+        RLogicalVector result = RDataFactory.createLogicalVector(new byte[]{getValue()}, isComplete());
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public byte[] getDataCopy() {
+        return new byte[]{getValue()};
     }
 
     @Override
@@ -121,13 +128,6 @@ public final class RLogical extends RAbstractLogicalVector implements RScalarVec
     public byte getDataAt(int index) {
         assert index == 0;
         return getValue();
-    }
-
-    @Override
-    public RLogicalVector materialize() {
-        RLogicalVector result = RDataFactory.createLogicalVectorFromScalar(value);
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
     }
 
     @Override

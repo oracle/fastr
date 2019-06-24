@@ -48,11 +48,6 @@ public final class RComplex extends RAbstractComplexVector implements RScalarVec
         this.imaginaryPart = imaginaryPart;
     }
 
-    @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
     public static RComplex createNA() {
         return RComplex.valueOf(RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART);
     }
@@ -72,6 +67,18 @@ public final class RComplex extends RAbstractComplexVector implements RScalarVec
     }
 
     @Override
+    public RComplexVector materialize() {
+        RComplexVector result = RDataFactory.createComplexVector(new double[]{realPart, imaginaryPart}, isComplete());
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public double[] getDataCopy() {
+        return new double[]{realPart, imaginaryPart};
+    }
+
+    @Override
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Complex:
@@ -83,13 +90,6 @@ public final class RComplex extends RAbstractComplexVector implements RScalarVec
             default:
                 return null;
         }
-    }
-
-    @Override
-    public RComplexVector materialize() {
-        RComplexVector result = RDataFactory.createComplexVectorFromScalar(this);
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
     }
 
     @Override

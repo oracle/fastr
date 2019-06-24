@@ -28,7 +28,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -55,19 +54,6 @@ class RToStringVectorClosure extends RAbstractStringVector {
                 initRegAttributes(this, vector);
             }
         }
-    }
-
-    @Override
-    public final RStringVector materialize() {
-        int length = getLength();
-        String[] result = new String[length];
-        for (int i = 0; i < length; i++) {
-            String data = getDataAt(i);
-            result[i] = data;
-        }
-        RStringVector materialized = RDataFactory.createStringVector(result, vector.isComplete());
-        copyAttributes(materialized);
-        return materialized;
     }
 
     @TruffleBoundary

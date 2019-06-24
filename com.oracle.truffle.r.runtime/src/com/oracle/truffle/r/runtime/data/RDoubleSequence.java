@@ -48,11 +48,6 @@ public final class RDoubleSequence extends RAbstractDoubleVector implements RSeq
     }
 
     @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
-    @Override
     public double getDataAt(int index) {
         assert index >= 0 && index < getLength();
         return start + stride * index;
@@ -103,41 +98,6 @@ public final class RDoubleSequence extends RAbstractDoubleVector implements RSeq
             default:
                 return null;
         }
-    }
-
-    private RDoubleVector populateVectorData(double[] result) {
-        double current = start;
-        for (int i = 0; i < result.length && i < getLength(); i++) {
-            result[i] = current;
-            current += stride;
-        }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    private RDoubleVector internalCreateVector() {
-        return populateVectorData(new double[getLength()]);
-    }
-
-    @Override
-    public RDoubleVector materialize() {
-        return this.internalCreateVector();
-    }
-
-    @Override
-    public RDoubleVector copyResized(int size, boolean fillNA) {
-        double[] data = new double[size];
-        populateVectorData(data);
-        RDoubleVector.resizeData(data, data, getLength(), fillNA);
-        return RDataFactory.createDoubleVector(data, !(fillNA && size > getLength()));
-    }
-
-    @Override
-    public RAbstractVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        int size = newDimensions[0] * newDimensions[1];
-        double[] data = new double[size];
-        populateVectorData(data);
-        RDoubleVector.resizeData(data, data, getLength(), fillNA);
-        return RDataFactory.createDoubleVector(data, !(fillNA && size > getLength()), newDimensions);
     }
 
     @Override

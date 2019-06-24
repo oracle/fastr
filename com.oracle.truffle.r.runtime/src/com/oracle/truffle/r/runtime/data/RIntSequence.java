@@ -48,11 +48,6 @@ public final class RIntSequence extends RAbstractIntVector implements RSequence 
     }
 
     @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
-    @Override
     public int getDataAt(int index) {
         assert index >= 0 && index < getLength();
         return start + stride * index;
@@ -111,21 +106,6 @@ public final class RIntSequence extends RAbstractIntVector implements RSequence 
         return -1;
     }
 
-    private RIntVector populateVectorData(int[] data) {
-        int current = start;
-        for (int i = 0; i < data.length && i < getLength(); i++) {
-            data[i] = current;
-            current += stride;
-        }
-        RIntVector result = RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
-    }
-
-    private RIntVector internalCreateVector() {
-        return populateVectorData(new int[getLength()]);
-    }
-
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
@@ -135,28 +115,6 @@ public final class RIntSequence extends RAbstractIntVector implements RSequence 
     // NOTE: it does not hold that getStart() <= getEnd()!
     public int getEnd() {
         return start + (getLength() - 1) * stride;
-    }
-
-    @Override
-    public RIntVector materialize() {
-        return this.internalCreateVector();
-    }
-
-    @Override
-    public RIntVector copyResized(int size, boolean fillNA) {
-        int[] data = new int[size];
-        populateVectorData(data);
-        RIntVector.resizeData(data, data, getLength(), fillNA);
-        return RDataFactory.createIntVector(data, !(fillNA && size > getLength()));
-    }
-
-    @Override
-    public RAbstractVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        int size = newDimensions[0] * newDimensions[1];
-        int[] data = new int[size];
-        populateVectorData(data);
-        RIntVector.resizeData(data, data, getLength(), fillNA);
-        return RDataFactory.createIntVector(data, !(fillNA && size > getLength()), newDimensions);
     }
 
     private static final class FastPathAccess extends FastPathFromIntAccess {

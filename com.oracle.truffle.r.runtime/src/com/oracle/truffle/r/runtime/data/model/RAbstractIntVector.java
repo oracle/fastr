@@ -22,9 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import java.util.Arrays;
 
 public abstract class RAbstractIntVector extends RAbstractAtomicVector {
 
@@ -49,7 +54,46 @@ public abstract class RAbstractIntVector extends RAbstractAtomicVector {
     }
 
     @Override
-    public abstract RIntVector materialize();
+    public RIntVector materialize() {
+        RIntVector result = RDataFactory.createIntVector(getDataCopy(), isComplete());
+        copyAttributes(result);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @TruffleBoundary
+    protected void copyAttributes(RIntVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RIntVector internalCopy() {
+        return RDataFactory.createIntVector(getDataCopy(), isComplete());
+    }
+
+    @Override
+    protected RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        int[] localData = getReadonlyData();
+        int[] newData = Arrays.copyOf(localData, size);
+        newData = resizeData(newData, localData, localData.length, fillNA);
+        return RDataFactory.createIntVector(newData, isResizedComplete(size, fillNA), dimensions);
+    }
+
+    protected static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
+            if (fillNA) {
+                for (int i = oldDataLength; i < newData.length; i++) {
+                    newData[i] = RRuntime.INT_NA;
+                }
+            } else {
+                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
+                    newData[i] = oldData[j];
+                }
+            }
+        }
+        return newData;
+    }
 
     @Override
     public RType getRType() {

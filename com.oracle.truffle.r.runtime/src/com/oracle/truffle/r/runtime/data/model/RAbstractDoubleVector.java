@@ -22,9 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import java.util.Arrays;
 
 public abstract class RAbstractDoubleVector extends RAbstractAtomicVector {
 
@@ -49,7 +54,46 @@ public abstract class RAbstractDoubleVector extends RAbstractAtomicVector {
     }
 
     @Override
-    public abstract RDoubleVector materialize();
+    public RDoubleVector materialize() {
+        RDoubleVector result = RDataFactory.createDoubleVector(getDataCopy(), isComplete());
+        copyAttributes(result);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @TruffleBoundary
+    protected void copyAttributes(RDoubleVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RDoubleVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        double[] localData = getReadonlyData();
+        double[] newData = Arrays.copyOf(localData, size);
+        newData = resizeData(newData, localData, localData.length, fillNA);
+        return RDataFactory.createDoubleVector(newData, isResizedComplete(size, fillNA), dimensions);
+    }
+
+    protected static double[] resizeData(double[] newData, double[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
+            if (fillNA) {
+                for (int i = oldDataLength; i < newData.length; i++) {
+                    newData[i] = RRuntime.DOUBLE_NA;
+                }
+            } else {
+                assert oldData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
+                    newData[i] = oldData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    protected RDoubleVector internalCopy() {
+        return RDataFactory.createDoubleVector(getDataCopy(), isComplete());
+    }
 
     @Override
     public RType getRType() {

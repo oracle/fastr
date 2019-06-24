@@ -142,11 +142,6 @@ public final class RDouble extends RAbstractDoubleVector implements RScalarVecto
         return interop.asDouble(value);
     }
 
-    @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
     public static RDouble createNA() {
         return new RDouble(RRuntime.DOUBLE_NA);
     }
@@ -167,6 +162,18 @@ public final class RDouble extends RAbstractDoubleVector implements RScalarVecto
     @Override
     public RAbstractVector copy() {
         return this;
+    }
+
+    @Override
+    public RDoubleVector materialize() {
+        RDoubleVector result = RDataFactory.createDoubleVector(new double[]{getValue()}, isComplete());
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public double[] getDataCopy() {
+        return new double[]{getValue()};
     }
 
     @Override
@@ -203,13 +210,6 @@ public final class RDouble extends RAbstractDoubleVector implements RScalarVecto
     public double getDataAt(int index) {
         assert index == 0;
         return getValue();
-    }
-
-    @Override
-    public RDoubleVector materialize() {
-        RDoubleVector result = RDataFactory.createDoubleVectorFromScalar(getValue());
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
     }
 
     @Override

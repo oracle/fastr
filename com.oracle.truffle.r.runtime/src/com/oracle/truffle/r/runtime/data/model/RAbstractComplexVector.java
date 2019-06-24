@@ -22,10 +22,16 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import java.util.Arrays;
 
 public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
 
@@ -41,7 +47,53 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
     public abstract RComplex getDataAt(int index);
 
     @Override
-    public abstract RComplexVector materialize();
+    public RComplexVector materialize() {
+        RComplexVector result = RDataFactory.createComplexVector(getDataCopy(), isComplete());
+        copyAttributes(result);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @TruffleBoundary
+    protected void copyAttributes(RDoubleVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RComplexVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        boolean isComplete = isResizedComplete(size, fillNA);
+        return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete, dimensions);
+    }
+
+    private double[] copyResizedData(int size, boolean fillNA) {
+        int csize = size << 1;
+        double[] localData = getReadonlyData();
+        double[] newData = Arrays.copyOf(localData, csize);
+        if (csize > localData.length) {
+            if (fillNA) {
+                for (int i = localData.length; i < csize; i++) {
+                    newData[i] = RRuntime.DOUBLE_NA;
+                }
+            } else {
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i <= csize - 2; i += 2, j = Utils.incMod(j + 1, localData.length)) {
+                    newData[i] = localData[j];
+                    newData[i + 1] = localData[j + 1];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @TruffleBoundary
+    protected void copyAttributes(RComplexVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RComplexVector internalCopy() {
+        return RDataFactory.createComplexVector(getDataCopy(), isComplete());
+    }
 
     @SuppressWarnings("unused")
     public void setDataAt(Object store, int index, RComplex value) {
@@ -69,7 +121,7 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
     }
 
     @Override
-    public Object getReadonlyData() {
+    public double[] getReadonlyData() {
         return getDataCopy();
     }
 

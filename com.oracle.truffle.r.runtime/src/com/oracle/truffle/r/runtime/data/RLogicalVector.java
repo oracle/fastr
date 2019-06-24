@@ -27,7 +27,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -37,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
 public final class RLogicalVector extends RAbstractLogicalVector implements RMaterializedVector, Shareable {
 
@@ -55,11 +55,6 @@ public final class RLogicalVector extends RAbstractLogicalVector implements RMat
 
     private RLogicalVector() {
         super(false);
-    }
-
-    @Override
-    public boolean isMaterialized() {
-        return true;
     }
 
     static RLogicalVector fromNative(long address, int length) {
@@ -109,15 +104,6 @@ public final class RLogicalVector extends RAbstractLogicalVector implements RMat
     public byte getDataAt(Object store, int index) {
         assert data == store;
         return NativeDataAccess.getData(this, (byte[]) store, index);
-    }
-
-    @Override
-    protected RLogicalVector internalCopy() {
-        if (data != null) {
-            return new RLogicalVector(Arrays.copyOf(data, data.length), isComplete());
-        } else {
-            return new RLogicalVector(getNativeDataCopy(), isComplete());
-        }
     }
 
     public RLogicalVector copyResetData(byte[] newData) {
@@ -177,30 +163,6 @@ public final class RLogicalVector extends RAbstractLogicalVector implements RMat
     public RLogicalVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
         return updateDataAt(i, (Byte) o, naCheck);
 
-    }
-
-    private byte[] copyResizedData(int size, boolean fillNA) {
-        byte[] localData = getReadonlyData();
-        byte[] newData = Arrays.copyOf(localData, size);
-        if (size > localData.length) {
-            if (fillNA) {
-                for (int i = localData.length; i < size; i++) {
-                    newData[i] = RRuntime.LOGICAL_NA;
-                }
-            } else {
-                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
-                    newData[i] = localData[j];
-                }
-            }
-        }
-        return newData;
-    }
-
-    @Override
-    protected RLogicalVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        boolean isComplete = isComplete() && ((getLength() >= size) || !fillNA);
-        return RDataFactory.createLogicalVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
 
     @Override

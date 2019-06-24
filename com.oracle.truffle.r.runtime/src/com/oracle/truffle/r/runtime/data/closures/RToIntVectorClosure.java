@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -60,20 +59,7 @@ class RToIntVectorClosure extends RAbstractIntVector {
 
     @TruffleBoundary
     @Override
-    public final RIntVector materialize() {
-        int length = getLength();
-        int[] result = new int[length];
-        for (int i = 0; i < length; i++) {
-            int data = getDataAt(i);
-            result[i] = data;
-        }
-        RIntVector materialized = RDataFactory.createIntVector(result, vector.isComplete());
-        copyAttributes(materialized);
-        return materialized;
-    }
-
-    @TruffleBoundary
-    private void copyAttributes(RIntVector materialized) {
+    protected void copyAttributes(RIntVector materialized) {
         if (keepAttributes) {
             materialized.copyAttributesFrom(this);
         }

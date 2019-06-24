@@ -32,11 +32,9 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromLogicalAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromLogicalAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.interop.ForeignArrayToVectorNode;
 
 public final class RForeignBooleanWrapper extends RAbstractLogicalVector implements RForeignVectorWrapper {
 
@@ -48,11 +46,6 @@ public final class RForeignBooleanWrapper extends RAbstractLogicalVector impleme
     }
 
     @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
-    @Override
     public int getLength() {
         return RRuntime.getForeignArraySize(delegate, getInterop());
     }
@@ -60,17 +53,6 @@ public final class RForeignBooleanWrapper extends RAbstractLogicalVector impleme
     @Override
     public Object getInternalStore() {
         return delegate;
-    }
-
-    @Override
-    @TruffleBoundary
-    public RAbstractVector internalCopy() {
-        return ForeignArrayToVectorNode.getUncached().toVector(delegate, getRType());
-    }
-
-    @Override
-    public RLogicalVector materialize() {
-        return (RLogicalVector) copy();
     }
 
     @Override

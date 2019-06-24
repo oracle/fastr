@@ -36,10 +36,10 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNa
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;

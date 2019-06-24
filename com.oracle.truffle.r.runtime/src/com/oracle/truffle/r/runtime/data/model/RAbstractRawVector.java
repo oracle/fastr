@@ -23,9 +23,12 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import java.util.Arrays;
 
 public abstract class RAbstractRawVector extends RAbstractAtomicVector {
 
@@ -46,7 +49,34 @@ public abstract class RAbstractRawVector extends RAbstractAtomicVector {
     public abstract byte getRawDataAt(int index);
 
     @Override
-    public abstract RRawVector materialize();
+    public RRawVector materialize() {
+        RRawVector result = RDataFactory.createRawVector(getDataCopy());
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    private byte[] copyResizedData(int size, boolean fillNA) {
+        byte[] localData = getReadonlyData();
+        byte[] newData = Arrays.copyOf(localData, size);
+        if (!fillNA) {
+            assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+            // NA is 00 for raw
+            for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
+                newData[i] = localData[j];
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    protected RRawVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        return RDataFactory.createRawVector(copyResizedData(size, fillNA), dimensions);
+    }
+
+    @Override
+    protected RRawVector internalCopy() {
+        return RDataFactory.createRawVector(getDataCopy());
+    }
 
     @Override
     public RType getRType() {
@@ -59,12 +89,19 @@ public abstract class RAbstractRawVector extends RAbstractAtomicVector {
     }
 
     @Override
-    public Object getReadonlyData() {
+    public byte[] getReadonlyData() {
         return getDataCopy();
     }
 
     @Override
-    public abstract byte[] getDataCopy();
+    public byte[] getDataCopy() {
+        int length = getLength();
+        byte[] result = new byte[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = getRawDataAt(i);
+        }
+        return result;
+    }
 
     @Override
     public Object getInternalManagedData() {

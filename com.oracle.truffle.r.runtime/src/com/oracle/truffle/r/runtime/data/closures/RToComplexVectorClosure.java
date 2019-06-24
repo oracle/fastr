@@ -27,7 +27,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -60,23 +59,9 @@ class RToComplexVectorClosure extends RAbstractComplexVector {
         return vector.isMaterialized();
     }
 
-    @Override
-    public final RComplexVector materialize() {
-        int length = getLength();
-        double[] result = new double[length << 1];
-        for (int i = 0; i < length; i++) {
-            RComplex data = getDataAt(i);
-            int index = i << 1;
-            result[index] = data.getRealPart();
-            result[index + 1] = data.getImaginaryPart();
-        }
-        RComplexVector materialized = RDataFactory.createComplexVector(result, vector.isComplete());
-        copyAttributes(materialized);
-        return materialized;
-    }
-
     @TruffleBoundary
-    private void copyAttributes(RComplexVector materialized) {
+    @Override
+    protected void copyAttributes(RComplexVector materialized) {
         if (keepAttributes) {
             materialized.copyAttributesFrom(this);
         }

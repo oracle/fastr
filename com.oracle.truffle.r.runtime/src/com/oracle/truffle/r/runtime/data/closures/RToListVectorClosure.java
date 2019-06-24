@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.data.closures;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
@@ -93,21 +92,8 @@ abstract class RToListVectorClosure extends RAbstractListVector {
         vector.setTrueLength(l);
     }
 
-    @Override
-    public RList materialize() {
-        int length = getLength();
-        Object[] result = new Object[length];
-        for (int i = 0; i < length; i++) {
-            Object data = getDataAt(i);
-            result[i] = data;
-        }
-        RList materialized = RDataFactory.createList(result);
-        copyAttributes(materialized);
-        return materialized;
-    }
-
     @TruffleBoundary
-    private void copyAttributes(RList materialized) {
+    protected void copyAttributes(RList materialized) {
         if (keepAttributes) {
             materialized.copyAttributesFrom(this);
         }

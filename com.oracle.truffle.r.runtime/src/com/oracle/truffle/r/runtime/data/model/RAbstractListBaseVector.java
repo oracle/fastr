@@ -23,7 +23,9 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * The base class for list-like objects: {@link com.oracle.truffle.r.runtime.data.RExpression} and
@@ -78,7 +80,7 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
     }
 
     @Override
-    public Object getReadonlyData() {
+    public Object[] getReadonlyData() {
         throw RInternalError.shouldNotReachHere();
     }
 
@@ -95,5 +97,21 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
     @Override
     public void setTrueLength(int l) {
         throw RInternalError.shouldNotReachHere();
+    }
+
+    protected static final Object[] resizeData(Object[] newData, Object[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
+            if (fillNA) {
+                for (int i = oldDataLength; i < newData.length; i++) {
+                    newData[i] = RNull.instance;
+                }
+            } else {
+                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
+                    newData[i] = oldData[j];
+                }
+            }
+        }
+        return newData;
     }
 }

@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 import sun.misc.Unsafe;

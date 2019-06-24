@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
@@ -40,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFFIAccess;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -402,12 +402,20 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return complete;
     }
 
+    // Tagging interface for vectors with array based data. Make sure that an implementation also is
+    // a RAbstractVector. <br/>
     // TODO for the time being:
     // RScalarVector, RSequence and RForeienWrapper types are now instances of RAttributeStorage,
     // so attribute handling could be managed w/o materialization, but first need to check and
     // refactor places with attr related RSequence/RScalar/RScalarVector/RForeignVectorXXX based
     // assuptions
-    public abstract boolean isMaterialized();
+    public interface RMaterializedVector extends TruffleObject {
+
+    }
+
+    public boolean isMaterialized() {
+        return this instanceof RMaterializedVector;
+    }
 
     @Override
     public final DynamicObject initAttributes() {
@@ -593,13 +601,9 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     public RAbstractVector copyDropAttributes() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
-            RAbstractVector materialized = materialize();
-            assert materialized.isMaterialized();
-            return materialized.copyDropAttributes();
-        }
-        return internalCopyAndReport();
+        RAbstractVector materialized = materialize();
+        assert materialized.isMaterialized();
+        return materialized.internalCopyAndReport();
     }
 
     @Override
@@ -610,29 +614,25 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     public RAbstractVector copyResized(int size, boolean fillNA) {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
-            RAbstractVector materialized = materialize();
-            assert materialized.isMaterialized();
-            return materialized.copyResized(size, fillNA);
-        }
-        RAbstractVector result = internalCopyResized(size, fillNA, null);
+        RAbstractVector materialized = materialize();
+        assert materialized.isMaterialized();
+        RAbstractVector result = materialized.internalCopyResized(size, fillNA, null);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
     public RAbstractVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
-            RAbstractVector materialized = materialize();
-            assert materialized.isMaterialized();
-            return materialized.copyResizedWithDimensions(newDimensions, fillNA);
-        }
+        RAbstractVector materialized = materialize();
+        assert materialized.isMaterialized();
         // TODO support for higher dimensions
         assert newDimensions.length == 2;
-        RAbstractVector result = internalCopyResized(newDimensions[0] * newDimensions[1], fillNA, newDimensions);
+        RAbstractVector result = materialized.internalCopyResized(newDimensions[0] * newDimensions[1], fillNA, newDimensions);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
+    }
+
+    protected boolean isResizedComplete(int newSize, boolean filledNAs) {
+        return complete && ((getLength() >= newSize) || !filledNAs);
     }
 
     // *internalCopyAndReport* methods do just the copy and report it to MemoryTracer. These should
@@ -654,7 +654,9 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     // *internalCopyAndReport*
 
     protected RAbstractVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        return materialize().internalCopyResized(size, fillNA, dimensions);
+        RAbstractVector materialized = materialize();
+        assert materialized.isMaterialized();
+        return materialized.internalCopyResized(size, fillNA, dimensions);
     }
 
     // to be overridden by recursive structures
@@ -831,24 +833,20 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @Override
     public final RTypedValue getNonShared() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
-            RAbstractVector materialized = materialize();
-            assert materialized.isMaterialized();
-            return materialized.getNonShared();
-        }
+        RAbstractVector materialized = materialize();
+        assert materialized.isMaterialized();
+        return materialized.getNonSharedSuper();
+    }
+
+    private RTypedValue getNonSharedSuper() {
         return super.getNonShared();
     }
 
     @Override
     public RAbstractVector resize(int size) {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
-            RAbstractVector materialized = materialize();
-            assert materialized.isMaterialized();
-            return materialized.resize(size);
-        }
-        return resize(size, true);
+        RAbstractVector materialized = materialize();
+        assert materialized.isMaterialized();
+        return materialized.resize(size, true);
     }
 
     private RAbstractVector resize(int size, boolean resetAll) {
@@ -979,12 +977,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      * @see RType#getPrecedence()
      */
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
-            RAbstractVector materialized = materialize();
-            assert materialized.isMaterialized();
-            return materialized.castSafe(type, isNAProfile, keepAttributes);
-        }
         if (type == getRType()) {
             return this;
         } else {

@@ -27,7 +27,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -37,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
 public final class RIntVector extends RAbstractIntVector implements RMaterializedVector, Shareable {
 
@@ -51,11 +51,6 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
     RIntVector(int[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
         this(data, complete);
         initDimsNamesDimNames(dims, names, dimNames);
-    }
-
-    @Override
-    public boolean isMaterialized() {
-        return true;
     }
 
     private RIntVector() {
@@ -107,15 +102,6 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
     public void setDataAt(Object store, int index, int value) {
         assert data == store;
         NativeDataAccess.setData(this, (int[]) store, index, value);
-    }
-
-    @Override
-    protected RIntVector internalCopy() {
-        if (data != null) {
-            return new RIntVector(Arrays.copyOf(data, data.length), isComplete());
-        } else {
-            return new RIntVector(getDataCopy(), isComplete());
-        }
     }
 
     public RIntVector copyResetData(int[] newData) {
@@ -193,34 +179,6 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
     @Override
     public RIntVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
         return updateDataAt(i, (Integer) o, naCheck);
-    }
-
-    static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
-        if (newData.length > oldDataLength) {
-            if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; i++) {
-                    newData[i] = RRuntime.INT_NA;
-                }
-            } else {
-                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
-                    newData[i] = oldData[j];
-                }
-            }
-        }
-        return newData;
-    }
-
-    private int[] copyResizedData(int size, boolean fillNA) {
-        int[] localData = getReadonlyData();
-        int[] newData = Arrays.copyOf(localData, size);
-        return resizeData(newData, localData, localData.length, fillNA);
-    }
-
-    @Override
-    protected RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        boolean isComplete = isComplete() && ((getLength() >= size) || !fillNA);
-        return RDataFactory.createIntVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
 
     @Override

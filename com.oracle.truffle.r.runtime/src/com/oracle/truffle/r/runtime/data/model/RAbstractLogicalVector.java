@@ -22,9 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import java.util.Arrays;
 
 public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
 
@@ -49,11 +54,50 @@ public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
     }
 
     @Override
-    public abstract RLogicalVector materialize();
-
-    @Override
     public RType getRType() {
         return RType.Logical;
+    }
+
+    @Override
+    public RLogicalVector materialize() {
+        RLogicalVector result = RDataFactory.createLogicalVector(getDataCopy(), isComplete());
+        copyAttributes(result);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    private void copyAttributes(RLogicalVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    private byte[] copyResizedData(int size, boolean fillNA) {
+        byte[] localData = getReadonlyData();
+        byte[] newData = Arrays.copyOf(localData, size);
+        if (size > localData.length) {
+            if (fillNA) {
+                for (int i = localData.length; i < size; i++) {
+                    newData[i] = RRuntime.LOGICAL_NA;
+                }
+            } else {
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
+                    newData[i] = localData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    protected RLogicalVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        boolean isComplete = isResizedComplete(size, fillNA);
+        return RDataFactory.createLogicalVector(copyResizedData(size, fillNA), isComplete, dimensions);
+    }
+
+    @Override
+    protected RLogicalVector internalCopy() {
+        return RDataFactory.createLogicalVector(getDataCopy(), isComplete());
     }
 
     @Override

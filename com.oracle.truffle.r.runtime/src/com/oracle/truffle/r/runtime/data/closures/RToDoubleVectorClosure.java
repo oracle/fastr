@@ -22,10 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data.closures;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -59,26 +58,6 @@ class RToDoubleVectorClosure extends RAbstractDoubleVector {
     }
 
     @Override
-    public final RDoubleVector materialize() {
-        int length = getLength();
-        double[] result = new double[length];
-        for (int i = 0; i < result.length; i++) {
-            double data = getDataAt(i);
-            result[i] = data;
-        }
-        RDoubleVector materialized = RDataFactory.createDoubleVector(result, vector.isComplete());
-        copyAttributes(materialized);
-        return materialized;
-    }
-
-    @TruffleBoundary
-    private void copyAttributes(RDoubleVector materialized) {
-        if (keepAttributes) {
-            materialized.copyAttributesFrom(this);
-        }
-    }
-
-    @Override
     public Object getInternalStore() {
         return vector.getInternalStore();
     }
@@ -107,6 +86,13 @@ class RToDoubleVectorClosure extends RAbstractDoubleVector {
     public double getDataAt(int index) {
         VectorAccess spa = vector.slowPathAccess();
         return spa.getDouble(spa.randomAccess(vector), index);
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    protected void copyAttributes(RIntVector materialized) {
+        if (keepAttributes) {
+            materialized.copyAttributesFrom(this);
+        }
     }
 
     @Override

@@ -42,11 +42,6 @@ public final class RScalarList extends RAbstractListVector implements RScalarVec
         this.value = value;
     }
 
-    @Override
-    public boolean isMaterialized() {
-        return false;
-    }
-
     public static RScalarList valueOf(Object value) {
         return new RScalarList(value);
     }
@@ -77,6 +72,18 @@ public final class RScalarList extends RAbstractListVector implements RScalarVec
     }
 
     @Override
+    public RList materialize() {
+        RList result = RDataFactory.createList(new Object[]{getValue()});
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public Object[] getDataCopy() {
+        return new Object[]{getValue()};
+    }
+
+    @Override
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case List:
@@ -89,13 +96,6 @@ public final class RScalarList extends RAbstractListVector implements RScalarVec
     @Override
     public String toString() {
         return value.toString();
-    }
-
-    @Override
-    public RList materialize() {
-        RList result = RDataFactory.createList(new Object[]{value});
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
     }
 
     @Override

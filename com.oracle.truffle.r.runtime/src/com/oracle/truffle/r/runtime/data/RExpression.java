@@ -35,7 +35,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -46,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
 @ExportLibrary(InteropLibrary.class)
 public final class RExpression extends RAbstractListBaseVector implements RMaterializedVector, Shareable {
@@ -152,11 +152,6 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
     }
 
     @Override
-    public boolean isMaterialized() {
-        return true;
-    }
-
-    @Override
     public int getLength() {
         return data.length;
     }
@@ -256,22 +251,6 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
         Object[] localData = getReadonlyData();
         Object[] newData = Arrays.copyOf(localData, size);
         return resizeData(newData, localData, this.getLength(), fillNA);
-    }
-
-    private static Object[] resizeData(Object[] newData, Object[] oldData, int oldDataLength, boolean fillNA) {
-        if (newData.length > oldDataLength) {
-            if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; i++) {
-                    newData[i] = RNull.instance;
-                }
-            } else {
-                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
-                    newData[i] = oldData[j];
-                }
-            }
-        }
-        return newData;
     }
 
     @Override

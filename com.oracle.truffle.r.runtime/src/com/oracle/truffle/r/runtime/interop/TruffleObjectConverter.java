@@ -157,11 +157,6 @@ public final class TruffleObjectConverter {
         }
 
         @Override
-        public boolean isMaterialized() {
-            return false;
-        }
-
-        @Override
         public Object getInternalStore() {
             return this;
         }
