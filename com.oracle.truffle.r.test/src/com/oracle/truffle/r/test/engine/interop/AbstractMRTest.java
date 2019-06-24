@@ -390,7 +390,23 @@ public abstract class AbstractMRTest {
 
             int size = (int) ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), keysObj);
             String[] keys = getKeys(obj);
-            assertEquals(toString(obj), keys.length, size);
+            if (keys.length != size) {
+                StringBuilder sbExpected = new StringBuilder();
+                for (int i = 0; i < keys.length; i++) {
+                    sbExpected.append(keys[i]);
+                    if (i < keys.length - 1) {
+                        sbExpected.append(", ");
+                    }
+                }
+                StringBuilder sbActual = new StringBuilder();
+                for (int i = 0; i < size; i++) {
+                    sbActual.append(ForeignAccess.sendRead(Message.READ.createNode(), keysObj, i));
+                    if (i < keys.length - 1) {
+                        sbActual.append(", ");
+                    }
+                }
+                fail("wrong keys lenght : expected:" + sbExpected + " <" + keys.length + "> but was:" + sbActual + " <" + size + "> " + toString(obj));
+            }
 
             Set<Object> set = new HashSet<>();
             for (int i = 0; i < size; i++) {
