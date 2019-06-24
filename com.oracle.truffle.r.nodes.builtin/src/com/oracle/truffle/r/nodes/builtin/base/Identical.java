@@ -78,7 +78,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @RBuiltin(name = "identical", kind = INTERNAL, parameterNames = {"x", "y", "num.eq", "single.NA", "attrib.as.set", "ignore.bytecode", "ignore.environment", "ignore.srcref"}, behavior = PURE)
 public abstract class Identical extends RBuiltinNode.Arg8 {
 
-    protected abstract byte executeByte(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref);
+    public abstract byte executeByte(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref);
 
     @Child private Identical identicalRecursive;
     @Child private Identical identicalRecursiveAttr;

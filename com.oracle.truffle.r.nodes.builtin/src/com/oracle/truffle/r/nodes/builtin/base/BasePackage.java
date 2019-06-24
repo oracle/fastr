@@ -46,6 +46,8 @@ import com.oracle.truffle.r.nodes.builtin.base.fastpaths.ExistsFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.GetFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.IntersectFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.IsElementFastPathNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.MatchArgFastPath;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.MatchArgFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.MatrixFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SetDiffFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.StopifnotFastPath;
