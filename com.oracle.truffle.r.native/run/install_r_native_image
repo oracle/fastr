@@ -40,9 +40,12 @@ fastr_home="$(dirname "$source")/.."
 
 silent=0
 uninstall=0
+verbose=0
 for arg in "$@"; do
     if [[ $arg == "--silent" ]]; then
         silent=1
+    elif [[ $arg == "--verbose" ]]; then
+        verbose=1
     elif [[ $arg == "uninstall" ]]; then
         uninstall=1
     elif [[ $arg == "--help" ]]; then
@@ -50,8 +53,15 @@ for arg in "$@"; do
         echo "When 'uninstall' argument is not present: builds and installs native image of the R runtime."
         echo "When 'uninstall' argument is present: uninstalls previously installed native image of the R runtime."
         echo "Use the --silent option to turn off the confirmation when installing."
+        echo "Use the --verbose option to turn on detailed logging."
     fi
 done
+
+function log {
+    if [[ $verbose -eq 1 ]]; then
+        echo $@
+    fi
+}
 
 if [[ $uninstall -eq 1 ]]; then
     echo "Uninstalling native image of R runtime..."
@@ -73,6 +83,7 @@ if [[ $silent -eq 0 ]]; then
     fi
 fi
 
+log "Changing directory to: $fastr_home/bin"
 cd "$fastr_home/bin"
 
 fastr_launcher_ni_args=(
@@ -89,10 +100,18 @@ fastr_launcher_ni_args=(
     -Dorg.graalvm.launcher.classpath=jre/lib/graalvm/launcher-common.jar:jre/languages/R/fastr-launcher.jar
     -H:Class=com.oracle.truffle.r.launcher.RMain
 )
+if [[ $verbose -eq 1 ]]; then
+  fastr_launcher_ni_args+=('--verbose')
+fi
 
+log "Running: ../../../../bin/native-image" "${fastr_launcher_ni_args[@]}" -H:Name=RMain
 ../../../../bin/native-image "${fastr_launcher_ni_args[@]}" -H:Name=RMain
+
+log "Creating backup of the R and Rscript launchers"
 cp "exec/R" "exec_R.backup"
 cp "Rscript" "Rscript.backup"
+
+log "Patching the R and Rscript launchers to dispatch to the generated native image"
 sed -e '/^## REMOVE FOR NATIVE IMAGE: BEGIN/,/^## REMOVE FOR NATIVE IMAGE: END/d;' "exec_R.backup" | \
     sed -e 's|^exec "$JAVA_HOME/bin/java" .*|exec "$R_HOME/bin/RMain" R ${FASTR_INTERNAL_ARGS[@]} "$@"|' > "exec/R"
 sed -e '/^## REMOVE FOR NATIVE IMAGE: BEGIN/,/^## REMOVE FOR NATIVE IMAGE: END/d;' "Rscript.backup" | \
