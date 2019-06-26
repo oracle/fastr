@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.ATTRIBNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.CopyMostAttribNodeGen;
@@ -43,7 +44,9 @@ import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetPropertyNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.InternStringNode;
@@ -269,7 +272,9 @@ public final class AttributesAccessNodes {
 
     /**
      * Overrides the attributes pairlist of given object with a new pairlist. In FastR, we have to
-     * convert the pairlist to our representation.
+     * convert the pairlist to our representation. This doesn't do any validation in GNU-R and
+     * simply sets the attributes pairlist to given value and some packages assume that they can,
+     * e.g., fixup any inconsistencies in special attributes like dims afterwards.
      */
     public abstract static class SetAttribNode extends FFIUpCallNode.Arg2 {
 
@@ -279,9 +284,11 @@ public final class AttributesAccessNodes {
 
         @Specialization
         protected Object doIt(RSharingAttributeStorage target, RPairList attributes,
-                        @Cached("create()") SetAttributeNode setAttribNode,
+                        @Cached SetPropertyNode setPropertyNode,
+                        @Cached ShareObjectNode shareObjectNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             clearAttrs(target);
+            DynamicObject attrs = target.getAttributes();
             for (RPairList attr : attributes) {
                 Object tag = plLib.getTag(attr);
                 if (!(tag instanceof RSymbol)) {
@@ -291,7 +298,9 @@ public final class AttributesAccessNodes {
                     RError.warning(NO_CALLER, Message.NO_TAG_IN_SET_ATTRIB, Utils.getTypeName(tag));
                     continue;
                 }
-                setAttribNode.execute(target, ((RSymbol) tag).getName(), plLib.car(attr));
+                Object value = plLib.car(attr);
+                shareObjectNode.execute(value);
+                setPropertyNode.execute(attrs, ((RSymbol) tag).getName(), value);
             }
             return RNull.instance;
         }

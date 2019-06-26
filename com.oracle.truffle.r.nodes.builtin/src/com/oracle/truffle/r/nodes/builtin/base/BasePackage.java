@@ -46,8 +46,11 @@ import com.oracle.truffle.r.nodes.builtin.base.fastpaths.ExistsFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.GetFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.IntersectFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.IsElementFastPathNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.MatchArgFastPath;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.MatchArgFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.MatrixFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SetDiffFastPathNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.StopifnotFastPath;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SubscriptDataFrameFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SubsetDataFrameFastPath;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SubsetDataFrameFastPathNodeGen;
@@ -917,6 +920,7 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "seq.default", SeqFunctionsFactory.SeqDefaultFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "seq", SeqFunctionsFactory.SeqFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "match.arg", MatchArgFastPathNodeGen::create, MatchArgFastPath.class);
+        addFastPath(baseFrame, "stopifnot", StopifnotFastPath::new, StopifnotFastPath.class);
 
         setContainsDispatch(baseFrame, "eval", "[.data.frame", "[[.data.frame", "[<-.data.frame", "[[<-.data.frame");
     }

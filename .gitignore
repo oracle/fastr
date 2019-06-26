@@ -157,3 +157,5 @@ lib.install.packages.fastr
 lib.install.packages.gnur
 /com.oracle.truffle.r.release/doc/
 .Rproj.user
+com.oracle.truffle.r.test.native/packages/*/*/src/*.so
+com.oracle.truffle.r.test.native/packages/*/*/src/*.o

@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base;
+package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
@@ -44,7 +44,12 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVect
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.base.MatchArgFastPathNodeGen.MatchArgInternalNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.AsCharacter;
+import com.oracle.truffle.r.nodes.builtin.base.AsCharacterNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.Identical;
+import com.oracle.truffle.r.nodes.builtin.base.IdenticalNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.PMatch;
+import com.oracle.truffle.r.nodes.builtin.base.PMatchNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -288,7 +293,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
     }
 
     protected static MatchArgInternal createInternal() {
-        return MatchArgInternalNodeGen.create();
+        return MatchArgFastPathNodeGen.MatchArgInternalNodeGen.create();
     }
 
     @Specialization(limit = "1", guards = "cache.choicesValue.isSupported(frame, arg)")
@@ -304,7 +309,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
 
         public MatchArgNode(VirtualFrame frame, RPromise arg) {
             this.choicesValue = new MatchArgChoices(frame, arg);
-            this.internal = MatchArgInternalNodeGen.create();
+            this.internal = MatchArgFastPathNodeGen.MatchArgInternalNodeGen.create();
             this.promiseHelper = new PromiseHelperNode();
         }
     }
