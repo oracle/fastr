@@ -1,0 +1,271 @@
+#
+# Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 3 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 3 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+#' Run your R code faster with FastR!
+#'
+#' @description
+#' FastR is an alternative implementation of the R programming language,
+#' which provides superb performance for computation intensive longer
+#' running jobs, but takes bit more time to warm-up. The performance
+#' of FastR is especially good with pure R code with loops, but it can
+#' also deal with C/C++/Fortran code in R packages.
+#'
+#' Package \emph{fastRCluster} lets you run FastR inside GNU-R via PSOCK cluster. 
+#' With this package, you can move your performance critical R algorithms to FastR,
+#' but keep the rest of your code-base on GNU-R. You can also use this package
+#' to gradually move all your code to FastR.
+#'
+#' We recommend using fastRCluster as a back-end for the \emph{future} package.
+#' Keep your configuration of the \emph{future} package isolated from the rest
+#' of the system to be able to simply switch between FastR and other back-ends.
+#'
+#' @details
+#' This package does not come with pre-installed FastR. However, FastR can be
+#' installed using the \code{installFastR} function. Once FastR is installed,
+#' you can create cluster nodes that delegate to FastR using \code{makeFastRCluster}.
+#' Note: like with PSOCK cluster, you have to install required packages on the FastR engine.
+#' You can use \code{fastRClusterInstallPackages} to install the necessary packages.
+#' 
+#' FastR leverages dynamic just-in-time compilation. R functions are first interpreted
+#' and then compiled. The first few executions are much slower. In order to re-use
+#' the compiled code as much as possible, it is good idea to first transfer all the
+#' necessary R functions to the cluster nodes using \code{clusterExport}.
+#' If you send large and computation heavy R function via, e.g., \code{clusterApply},
+#' it will be always deserialized to a different function on the other end in FastR and hence
+#' no compiled code will be reused.
+#'
+#' @examples
+#' library(fastRCluster)
+#'
+#' # downloads and installs FastR, note: this may take a while
+#' installFastR()
+#'
+#' # use the cluster package with FastR
+#' cl <- makeFastRCluster()
+#' print(cl)
+#' # prints: FastR socket cluster with 1 nodes on host ‘localhost’
+#'
+#' # install required packages on FastR
+#' fastRClusterInstallPackages('rlang')
+#'
+#' # use the cluster package with FastR
+#' # R.version will show that we are running that code on FastR
+#' parallel::clusterApply(cl, 'dummy', function(...) R.version)
+#'
+#' # transfer data and a helper function to the global environmnet of the cluster nodes
+#' largeDataSet <- matrix(runif(1000000), 1000, 1000)
+#' myComputation <- function(x) {
+#'   x <- x/sum(x)
+#'   res <- 0
+#'   colsums <- colSums(x)
+#'   rowsums <- rowSums(x)
+#'   for(i in seq_along(1:nrow(x))){
+#'     for(j in seq_along(1:ncol(x))){
+#'       temp <- log((x[i,j]/(colsums[j]*rowsums[i])))
+#'       res <- res + x[i,j] * if(is.finite(temp)) temp else 0
+#'     }
+#'   }
+#'   res
+#' }
+#' parallel::clusterExport(cl, c('largeDataSet', 'myComputation'))
+#' # now you can refer to 'largeDataSet' and 'myComputation'
+#' parallel::clusterApply(cl, 'dummy', function(...) myComputation(largeDataSet))
+#'
+#' # use the future package with FastR
+#' if (require(future)) {
+#'   future::plan(future::cluster, workers = makeFastRCluster())
+#'   val %<-% R.version
+#'   print(val)
+#' }
+#'
+#' @keywords internal
+"_PACKAGE"
+
+#' Default GraalVM installation path
+#'
+#' Gives the path to the default location of GraalVM installation that includes FastR.
+#' The default location is inside the directory where the fastRCluster was installed.
+#' 
+#' \code{\link{getGraalVMHome()}} uses this value as the default,
+#' if no other value is explicitly configured via R options or an environment variable.
+#'
+#' @return The default GraalVM installation path
+#' @seealso \code{\link{getGraalVMHome}}
+#' @export
+defaultGraalVMHome <- function() {
+    fastrPkgHome <- find.package('fastRCluster')
+    file.path(fastrPkgHome, 'graalvm')
+}
+
+#' Currently configured GraalVM path
+#'
+#' Gives the path that is used as a default value of the \code{graalVMHome} parameter
+#' for most of the functions in the fastRCluster package.
+#'
+#' The value is taken from (in this order)
+#' \enumerate{
+#'     \item R option "graalvm.home"
+#'     \item environment variable \code{GRAALVM_HOME}
+#'     \item \code{\link{defaultGraalVMHome}()}
+#' }
+#' 
+#' @return The currently configured path to GraalVM installation.
+#' @seealso \code{\link{defaultGraalVMHome}}
+#' @export
+getGraalVMHome <- function() getOption("graalvm.home", Sys.getenv('GRAALVM_HOME', defaultGraalVMHome()));
+
+#' Installs FastR
+#'
+#' Downloads GraalVM Community Edition and installs the R ("FastR") component for GraalVM.
+#'
+#' Note: the download is around 300MB. The installation usually takes few seconds.
+#' If the given directory already contains GraalVM, this function installs the R ("FastR") component.
+#'
+#' @param path Path to a directory where GraalVM should be installed. Defaults to \code{\link{defaultGraalVMHome}()}.
+#' @return the path where GraalVM was installed if successful (invisible), otherwise this function raises an error.
+#' @seealso \code{\link{defaultGraalVMHome}}
+#' @export
+installFastR <- function(path = defaultGraalVMHome()) {
+    toRemove <- character(0)
+    on.exit(unlink(toRemove, recursive=T, force=T)) # note: unlink seems to be OK with non-existing files
+    if (file.exists(file.path(path, 'bin', 'Rscript'))) {
+        message(sprintf("The directory '%s' appears to already contain GraalVM installation with FastR. Doing nothing.", path))
+        return(invisible(path))
+    } else if (file.exists(file.path(path, 'bin', 'gu'))) {
+        message(sprintf("The directory '%s' appears to already contain GraalVM installation. FastR will be installed in it.", path))
+    } else {
+        if (!file.exists(path)) {
+            message(sprintf("The path '%s' does not exist. Creating it.", path))
+            dir.create(path)
+        } else if (length(list.files(path)) > 0L) {
+            message(sprintf("The directory '%s' is not empty. Choose different directory or remove its contents.", path))
+        }
+        tarFile <- paste0(tempfile(), '.tar.gz')
+        url <- if (Sys.info()[["sysname"]] == "Darwin")
+            'https://github.com/oracle/graal/releases/download/vm-19.0.2/graalvm-ce-darwin-amd64-19.0.2.tar.gz' else
+            'https://github.com/oracle/graal/releases/download/vm-19.0.2/graalvm-ce-linux-amd64-19.0.2.tar.gz';
+        toRemove <- tarFile
+        download.file(url, tarFile)
+        workDir <- dirname(path)
+        origFiles <- list.files(workDir)
+        untarRes <- untar(tarFile, exdir = workDir)
+        if (untarRes != 0L) {
+            stop(sprintf("An error occurred when extracting GraalVM files to '%s'. Is this directory writeable? Error code: %d.", path, untarRes))
+        }
+        graalVMOrigDir <- setdiff(list.files(workDir), origFiles)
+        renRes <- file.rename(file.path(workDir, graalVMOrigDir), file.path(workDir, basename(path)))
+        if (!all(renRes)) {
+            stop(sprintf("An error occurred when moving GraalVM files to '%s'. Is this directory writeable? Error code: %d.", path, renRes))
+        }
+    }
+    guRes <- system2(file.path(path, 'bin', 'gu'), args=c('install', 'R'))
+    if (guRes != 0) {
+        stop("An error occurred during installation of FastR. Please report at https://github.com/oracle/fastr.")
+    }
+    invisible(path)
+}
+
+#' Installs packages on the FastR engine
+#'
+#' @param ... Parameters passed to the R function \code{install.packages} that is run on the FastR engine.
+#' @return Invisible \code{NULL}
+#' @export
+fastRClusterInstallPackages <- function(...) {
+    cl <- makeFastRCluster(1, metehods=F)
+    on.exit(stopCluster(cl))
+    parallel::clusterApply(cl, list(list(...)), function(args) do.call(install.packages, args))
+    invisible(NULL)
+}
+
+#' Creates cluster nodes that delegate to FastR
+#'
+#' FastR is an alternative implementation of the R programming language,
+#' which provides superb performance for computation intensive and longer
+#' running jobs, but takes bit more time to warm-up.
+#'
+#' @param nnodes Number of nodes to be created.
+#' @param graalVMHome Path to the installation directory of GraalVM and FastR. Default value is obtained from \code{getGraalVMHome()}.
+#' @param mode Mode in which to run FastR. See the FastR documentation on the details on the difference between jvm and native modes.
+#' @param polyglot Run FastR in a polyglot mode: other installed GraalVM languages will be available via \code{eval.polyglot}. See \code{installGraalVMLanguage}. Allowed only for mode 'jvm' (the default).
+#' @param fastROptions Additional options for the FastR engine.
+#' @param ... Additional options forwarded to \code{makePSOCKcluster}
+#' @return The cluster object that can be passed to functions like \code{parallel::clusterApply}.
+#' @seealso \code{\link{getGraalVMHome}}
+#' @export
+#' @examples
+#' cl <- makeFastRCluster()
+#' parallel::clusterApply(cl, 'dummy', function(...) R.version)
+makeFastRCluster <- function (nnodes = 1L, graalVMHome = getGraalVMHome(), mode = c('jvm', 'native'), polyglot = FALSE, fastROptions = NULL, ...) {
+    nnodes <- as.integer(nnodes)
+    if(is.na(nnodes) || nnodes < 1L) {
+        stop("'nnodes' must be >= 1")
+    }
+    parallel:::.check_ncores(nnodes)
+
+    if (!dir.exists(graalVMHome)) {
+        if (graalVMHome == defaultGraalVMHome()) {
+            stop(sprintf(paste0("It seems that FastR was not installed yet.\n",
+                "Use installFastR() to install GraalVM and FastR to the default location '%s', ",
+                "or set argument 'path' to a directory that contains GraalVM and FastR installation.", defaultGraalVMHome())))
+        } else {
+            stop(sprintf(paste0("The GraalVM directory '%s' does not exist.\n",
+                "Use installFastR('%s') to install GraalVM and FastR to that directory."),
+                graalVMHome, graalVMHome))
+        }
+    }
+    if (!file.exists(file.path(graalVMHome, 'bin', 'gu'))) {
+        stop(sprintf("The GraalVM directory '%s' appears to be corrupt.\nYou can remove it and use installFastR('%s') to re-install GraalVM and FastR.", graalVMHome, graalVMHome))
+    }
+    if (!file.exists(file.path(graalVMHome, 'bin', 'Rscript'))) {
+        stop(sprintf("The GraalVM installation '%s' does not contain FastR.\nUse installFastR('%s') to install FastR.", graalVMHome, graalVMHome))
+    }
+    if (any(c('--jvm', '--native') %in% fastROptions)) {
+       warning("Ignoring --jvm/--native in 'fastROptions' argument. Use the 'mode' argument instead.")
+    }
+    if (any(c('--polyglot') %in% fastROptions)) {
+       warning("Ignoring --polyglot in 'fastROptions' argument. Use the 'polyglot' argument instead.")
+    }
+
+    mode <- match.arg(mode)
+    options <- fastROptions[grep('--jvm', fastROptions)]
+    options <- options[grep('--native', fastROptions)]
+    options <- options[grep('--polyglot', fastROptions)]
+    if (polyglot) {
+        if (mode != 'jvm') {
+            stop("polyglot is only available when mode = 'jvm'")
+        }
+        options <- c('--polyglot', options)
+    }
+    options <- switch(mode,
+        jvm = c('--jvm', options),
+        native = c('--native', options))
+    
+    result <- parallel::makePSOCKcluster(nnodes, rscript=file.path(graalVMHome, 'bin', 'Rscript'), rscript_args = options, ...)
+    class(result) <- c("fastRCluster", class(result))
+    result
+}
+
+#' @export
+print.fastRCluster <- function(x, ...) {
+   cat("FastR "); NextMethod(x, ...)
+}
