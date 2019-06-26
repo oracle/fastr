@@ -34,7 +34,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 /**
  * Remove all regular attributes. This node is in particular useful if we reuse containers with
@@ -60,47 +59,47 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
     public abstract void execute(RAttributable attrs);
 
     @Specialization(guards = "source.getAttributes() == null")
-    protected void copyNoAttributes(@SuppressWarnings("unused") RAttributeStorage source) {
+    protected void copyNoAttributes(@SuppressWarnings("unused") RAttributable source) {
         // nothing to do
     }
 
-    protected static boolean emptyAttributes(RAttributeStorage source) {
+    protected static boolean emptyAttributes(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
         return attributes == null || attributes.isEmpty();
     }
 
     @Specialization(guards = "emptyAttributes(source)", replaces = "copyNoAttributes")
-    protected void copyEmptyAttributes(@SuppressWarnings("unused") RAttributeStorage source) {
+    protected void copyEmptyAttributes(@SuppressWarnings("unused") RAttributable source) {
         // nothing to do
     }
 
-    protected final boolean onlyDimAttribute(RAttributeStorage source) {
+    protected final boolean onlyDimAttribute(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyDimAttribute(source)")
-    protected void copyDimOnly(@SuppressWarnings("unused") RAttributeStorage source) {
+    protected void copyDimOnly(@SuppressWarnings("unused") RAttributable source) {
         // nothing to do
     }
 
-    protected final boolean onlyNamesAttribute(RAttributeStorage source) {
+    protected final boolean onlyNamesAttribute(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyNamesAttribute(source)")
-    protected void copyNamesOnly(@SuppressWarnings("unused") RAttributeStorage source) {
+    protected void copyNamesOnly(@SuppressWarnings("unused") RAttributable source) {
         // nothing to do
     }
 
-    protected final boolean onlyClassAttribute(RAttributeStorage source) {
+    protected final boolean onlyClassAttribute(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
-    protected void copyClassOnly(RAttributeStorage source) {
+    protected void copyClassOnly(RAttributable source) {
         if (removeClassAttributeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             removeClassAttributeNode = insert(RemoveFixedAttributeNode.createClass());
@@ -109,7 +108,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
     }
 
     @Specialization
-    protected void removeGeneric(RAttributeStorage source) {
+    protected void removeGeneric(RAttributable source) {
         DynamicObject orgAttributes = source.getAttributes();
         assert orgAttributes != null;
         Shape shape = orgAttributes.getShape();
@@ -126,15 +125,5 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
     @TruffleBoundary
     protected void removeAttrFallback(DynamicObject attrs, String name) {
         attrs.delete(name);
-    }
-
-    @Specialization(guards = "!isAttributeStorage(source)")
-    @SuppressWarnings("unused")
-    protected void copyNothing(RAttributable source) {
-        // do nothing, just pass
-    }
-
-    protected static boolean isAttributeStorage(RAttributable o) {
-        return o instanceof RAttributeStorage;
     }
 }

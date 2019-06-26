@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -111,7 +111,7 @@ public abstract class GetAttributesNode extends RBaseNode {
 
     /**
      * Unusual cases that it is not worth specializing on as they are not performance-centric,
-     * basically any type that is not an {@link RAbstractContainer} but is {@link RAttributable},
+     * basically any type that is not an {@link RAbstractContainer} but is {@link RAttributable} ,
      * e.g. {@link REnvironment}.
      */
     @Fallback

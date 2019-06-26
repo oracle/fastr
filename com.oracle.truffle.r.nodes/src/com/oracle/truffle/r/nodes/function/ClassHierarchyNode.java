@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -191,20 +190,10 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHrAttributable(RAttributable arg,
-                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                     @Cached("createClassProfile()") ValueProfile valueClassProfile,
                     @Cached("createClassProfile()") ValueProfile argProfile) {
 
-        DynamicObject attributes;
-        if (attrStorageProfile.profile(arg instanceof RAttributeStorage)) {
-            // Note: the seemingly unnecessary cast is here to ensure the method can be inlined
-            // Note2: the attrStorageProfile and cast is better at helping compiler to inline
-            // 'getAttributes' than just the ValueProfile in else branch, which degrades when it
-            // sees two different classes
-            attributes = ((RAttributeStorage) arg).getAttributes();
-        } else {
-            attributes = argProfile.profile(arg).getAttributes();
-        }
+        DynamicObject attributes = arg.getAttributes();
         if (noAttributesProfile.profile(attributes != null)) {
             if (access == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

@@ -36,7 +36,7 @@ package com.oracle.truffle.r.runtime.data;
  * - non-shared => shared
  * </pre>
  */
-public abstract class RSharingAttributeStorage extends RAttributeStorage {
+public abstract class RSharingAttributeStorage extends RAttributable {
 
     // SHARED_PERMANENT_VAL describes both overflow value and a value that can be set to prevent
     // further updates to ref count (for sharing between different threads) - can potentially be

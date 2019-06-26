@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -241,6 +241,11 @@ rffi.RfRMultinom()
 rffi.RfFunctions()
 
 setAttrTarget <- c(1,2,3)
+attr(setAttrTarget, 'myattr2') <- 'some value';
+api.SET_ATTRIB(setAttrTarget, as.pairlist(list(myattr=42)))
+setAttrTarget
+
+setAttrTarget <- new.env()
 attr(setAttrTarget, 'myattr2') <- 'some value';
 api.SET_ATTRIB(setAttrTarget, as.pairlist(list(myattr=42)))
 setAttrTarget

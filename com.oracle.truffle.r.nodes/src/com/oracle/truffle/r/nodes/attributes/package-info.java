@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,7 +63,7 @@
  * <h3>Special attributes handling</h3> The nodes handling the special attributes are derived from
  * the fixed attribute nodes described in the previous section. The logic in these special attribute
  * nodes implements side-effects that take place when a given special attribute is retrieved from,
- * set to or removed from an instance of {@link com.oracle.truffle.r.runtime.data.RAttributable}.
+ * set to or removed from an instance of {@link com.oracle.truffle.r.runtime.data.RAttributable} .
  * <p>
  * N.B. The nodes define additional specializations reflecting the fact that those side-effects are
  * polymorphic (i.e. they may depend on the particular class). These specializations implement in a

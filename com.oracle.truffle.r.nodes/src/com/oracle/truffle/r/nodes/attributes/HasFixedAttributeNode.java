@@ -26,11 +26,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 /**
  * This node is responsible for determining the existence of the predefined (fixed) attribute. It
@@ -61,16 +58,9 @@ public abstract class HasFixedAttributeNode extends FixedAttributeAccessNode {
     @Specialization
     protected boolean hasAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("create(name)") HasFixedPropertyNode hasFixedPropertyNode,
-                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                    @Cached("create(name)") HasFixedPropertyNode hasFixedPropertyNode) {
 
-        DynamicObject attributes;
-        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
-            attributes = ((RAttributeStorage) x).getAttributes();
-        } else {
-            attributes = xTypeProfile.profile(x).getAttributes();
-        }
+        DynamicObject attributes = x.getAttributes();
 
         if (attributes == null) {
             attrNullProfile.enter();

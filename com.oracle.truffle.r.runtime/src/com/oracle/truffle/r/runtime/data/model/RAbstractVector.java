@@ -147,15 +147,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         assert RAbstractVector.verifyVector(this);
     }
 
-    private void removeAttributeMapping(String key) {
-        if (this.attributes != null) {
-            this.attributes.delete(key);
-            if (this.attributes.size() == 0) {
-                this.attributes = null;
-            }
-        }
-    }
-
     /*
      * Version without profiles is used by RDeparse and for internal attribute copying (both are not
      * performance-critical)
@@ -191,13 +182,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
             }
         }
         return -1;
-    }
-
-    /**
-     * Guarded method that checks whether {@code attributes} is initialized.
-     */
-    private void putAttribute(String attribute, Object value) {
-        initAttributes().define(attribute, value);
     }
 
     @Override
@@ -405,7 +389,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     // Tagging interface for vectors with array based data. Make sure that an implementation also is
     // a RAbstractVector. <br/>
     // TODO for the time being:
-    // RScalarVector, RSequence and RForeienWrapper types are now instances of RAttributeStorage,
+    // RScalarVector, RSequence and RForeienWrapper types are now instances of RAttributable,
     // so attribute handling could be managed w/o materialization, but first need to check and
     // refactor places with attr related RSequence/RScalar/RScalarVector/RForeignVectorXXX based
     // assuptions
@@ -415,35 +399,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     public boolean isMaterialized() {
         return this instanceof RMaterializedVector;
-    }
-
-    @Override
-    public final DynamicObject initAttributes() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
-            // should only be used on materialized vector
-            throw RInternalError.shouldNotReachHere();
-        }
-        return super.initAttributes();
-    }
-
-    @Override
-    public final void initAttributes(DynamicObject newAttributes) {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
-            // should only be used on materialized vector
-            throw RInternalError.shouldNotReachHere();
-        }
-        super.initAttributes(newAttributes);
-    }
-
-    @Override
-    public final DynamicObject getAttributes() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
-            return null;
-        }
-        return super.getAttributes();
     }
 
     @Override
@@ -498,15 +453,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
-    public final boolean isObject() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
-            return false;
-        }
-        return super.isObject();
-    }
-
-    @Override
     public final int[] getDimensions() {
         if (!isMaterialized()) {
             assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
@@ -548,35 +494,8 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         }
     }
 
-    @Override
-    public RAbstractContainer setClassAttr(RStringVector classAttr) {
-        CompilerAsserts.neverPartOfCompilation();
-        return setClassAttrInternal(this, classAttr);
-    }
-
     public static RAbstractContainer setVectorClassAttr(RAbstractVector vector, RStringVector classAttr) {
-        return setClassAttrInternal(vector, classAttr);
-    }
-
-    private static RAbstractContainer setClassAttrInternal(RAbstractVector vector, RStringVector classAttr) {
-        if (vector.attributes == null && classAttr != null && classAttr.getLength() != 0) {
-            vector.initAttributes();
-        }
-        if (vector.attributes != null && (classAttr == null || classAttr.getLength() == 0)) {
-            vector.removeAttributeMapping(RRuntime.CLASS_ATTR_KEY);
-        } else if (classAttr != null && classAttr.getLength() != 0) {
-            for (int i = 0; i < classAttr.getLength(); i++) {
-                String attr = classAttr.getDataAt(i);
-                if (RRuntime.CLASS_FACTOR.equals(attr)) {
-                    if (!(vector instanceof RAbstractIntVector)) {
-                        throw RError.error(RError.SHOW_CALLER2, RError.Message.ADDING_INVALID_CLASS, "factor");
-                    }
-                }
-            }
-            vector.putAttribute(RRuntime.CLASS_ATTR_KEY, classAttr);
-        }
-
-        return vector;
+        return (RAbstractContainer) setClassAttrInternal(vector, classAttr);
     }
 
     public final void setAttributes(RAbstractVector result) {
@@ -705,7 +624,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @CompilerDirectives.TruffleBoundary
     private RAbstractContainer copyClassAttr(DynamicObject vecAttributes) {
-        return setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY));
+        return (RAbstractContainer) setClassAttr((RStringVector) vecAttributes.get(RRuntime.CLASS_ATTR_KEY));
     }
 
     /*
@@ -884,17 +803,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
                 removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
                 removeAttributeMapping(RRuntime.DIMNAMES_ATTR_KEY);
                 removeAttributeMapping(RRuntime.NAMES_ATTR_KEY);
-            }
-        }
-    }
-
-    @Override
-    public final void resetAllAttributes(boolean nullify) {
-        if (nullify) {
-            this.attributes = null;
-        } else {
-            if (this.attributes != null) {
-                RAttributesLayout.clear(this.attributes);
             }
         }
     }

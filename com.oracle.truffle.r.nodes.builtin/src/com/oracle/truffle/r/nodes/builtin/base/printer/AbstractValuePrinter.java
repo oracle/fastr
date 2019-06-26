@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 
 import java.io.IOException;
 
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 
 abstract class AbstractValuePrinter<T> implements ValuePrinter<T> {
 
@@ -39,10 +39,10 @@ abstract class AbstractValuePrinter<T> implements ValuePrinter<T> {
     }
 
     private void printAttributes(T value, PrintContext printCtx) throws IOException {
-        if (value instanceof RAttributeStorage) {
-            printCtx.output().beginAttributes((RAttributeStorage) value);
-            AttributesPrinter.INSTANCE.print((RAttributeStorage) value, printCtx);
-            printCtx.output().endAttributes((RAttributeStorage) value);
+        if (value instanceof RAttributable) {
+            printCtx.output().beginAttributes((RAttributable) value);
+            AttributesPrinter.INSTANCE.print((RAttributable) value, printCtx);
+            printCtx.output().endAttributes((RAttributable) value);
         }
     }
 

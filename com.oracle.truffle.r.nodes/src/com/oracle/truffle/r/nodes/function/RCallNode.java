@@ -98,7 +98,7 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -333,7 +333,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 createInternDispatchCall(isFieldAccess, slot);
             }
 
-            if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
+            if (isAttributableProfile.profile(dispatchObject instanceof RAttributable) && isS4Profile.profile(((RAttributable) dispatchObject).isS4())) {
                 if (getBasicFunction == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     getBasicFunction = insert(new GetBasicFunction());
@@ -406,7 +406,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         RStringVector type = null;
         if (!argAndNames.isEmpty()) {
             Object dispatchObject = argAndNames.getArgument(0);
-            if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
+            if (isAttributableProfile.profile(dispatchObject instanceof RAttributable) && isS4Profile.profile(((RAttributable) dispatchObject).isS4())) {
                 if (getBasicFunction == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     getBasicFunction = insert(new GetBasicFunction());
@@ -514,13 +514,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         // CHECK FOR S4 DISPATCH
         // First, check S4 dispatch for 'dispatchObject' (= first suitable argument)
-        if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
+        if (isAttributableProfile.profile(dispatchObject instanceof RAttributable) && isS4Profile.profile(((RAttributable) dispatchObject).isS4())) {
             isS4Dispatch = true;
         } else if (args.length > typeXIdx + 1 && dispatch == RDispatch.OPS_GROUP_GENERIC) {
             s4ArgsProfile.profileCounted(args.length - typeXIdx);
             for (int i = typeXIdx + 1; s4ArgsProfile.inject(i < args.length); i++) {
                 Object argi = promiseHelperNode.checkEvaluate(frame, args[i]);
-                if (isAttributableProfile.profile(argi instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) argi).isS4())) {
+                if (isAttributableProfile.profile(argi instanceof RAttributable) && isS4Profile.profile(((RAttributable) argi).isS4())) {
                     isS4Dispatch = true;
                     break;
                 }

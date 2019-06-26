@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -521,7 +520,6 @@ public class RChannel {
             RAttributable attributable = (RAttributable) msg;
             DynamicObject attributes = attributable.getAttributes();
             if (attributes != null) {
-                assert attributable instanceof RAttributeStorage;
                 // TODO: we assume that the following call will reset attributes without clearing
                 // them - should we define a new method to be used here?
                 attributable.initAttributes(null);

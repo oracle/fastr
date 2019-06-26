@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.PrintWriter;
 import java.io.Writer;
 
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 
 public class PrettyPrintWriter extends PrintWriter implements PrettyWriter {
 
@@ -48,14 +48,14 @@ public class PrettyPrintWriter extends PrintWriter implements PrettyWriter {
     }
 
     @Override
-    public void beginAttributes(RAttributeStorage value) {
+    public void beginAttributes(RAttributable value) {
         if (out instanceof PrettyWriter) {
             ((PrettyWriter) out).beginAttributes(value);
         }
     }
 
     @Override
-    public void endAttributes(RAttributeStorage value) {
+    public void endAttributes(RAttributable value) {
         if (out instanceof PrettyWriter) {
             ((PrettyWriter) out).endAttributes(value);
         }
