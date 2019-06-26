@@ -60,7 +60,7 @@ public class FastROptions {
     public static final OptionKey<Boolean> PrintErrorStacktraces = new OptionKey<>(false);
     @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Dumps Java and R stack traces to 'fastr_errors-{context ID}_{PID}.log' for all internal errors") //
     public static final OptionKey<Boolean> PrintErrorStacktracesToFile = new OptionKey<>(false);
-    @Option(category = OptionCategory.EXPERT, stability = OptionStability.EXPERIMENTAL, help = "Activates LLVM debugging of shared libraries. The value contains a comma-separated list of libraries that are to be debugged on the LLVM bitcode level. All other LLVM libraries will be debugged using their (C/C++) debug information") //
+    @Option(category = OptionCategory.EXPERT, stability = OptionStability.STABLE, help = "Activates LLVM debugging of shared libraries.") //
     public static final OptionKey<String> DebugLLVMLibs = new OptionKey<>("");
 
     @Option(category = OptionCategory.INTERNAL, help = "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.")//

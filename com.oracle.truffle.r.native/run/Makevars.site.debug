@@ -1,0 +1,4 @@
+CFLAGS := -fno-inline-functions $(CFLAGS)
+CXXFLAGS := -fno-inline-functions  $(CXXFLAGS)
+FFLAGS := -fno-inline-functions  $(FFLAGS)
+FCFLAGS := -fno-inline-functions  $(FCFLAGS)

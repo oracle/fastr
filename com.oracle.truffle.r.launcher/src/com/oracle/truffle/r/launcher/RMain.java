@@ -194,8 +194,10 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
         Context context;
         if (debugLLVMLibs) {
-            context = preparedContext = contextBuilder.option("inspect", "true").option("llvm.enableLVI", "true").arguments("R", rArguments).in(
-                            consoleHandler.createInputStream()).out(outStream).err(errStream).build();
+            context = preparedContext = contextBuilder.option("inspect.Internal", "true").option(
+                            "llvm.enableLVI", "true").arguments("R",
+                                            rArguments).in(
+                                                            consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         } else {
             context = preparedContext = contextBuilder.arguments("R", rArguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         }
@@ -261,10 +263,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
     @Override
     protected String[] getDefaultLanguages() {
-        if ("llvm".equals(System.getenv("FASTR_RFFI"))) {
-            return new String[]{getLanguageId(), "llvm"};
-        }
-        return super.getDefaultLanguages();
+        return new String[]{getLanguageId(), "llvm"};
     }
 
     @Override

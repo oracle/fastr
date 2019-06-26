@@ -151,4 +151,9 @@ public class TruffleLLVM_Context extends RFFIContext {
         }
         return nativeFunctions.get(function);
     }
+
+    @Override
+    public Type getDefaultRFFIType() {
+        return Type.LLVM;
+    }
 }

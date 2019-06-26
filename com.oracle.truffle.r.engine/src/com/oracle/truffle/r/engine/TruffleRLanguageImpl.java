@@ -33,7 +33,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
-import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
@@ -142,10 +141,6 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
 
     @Override
     protected String toString(RContext context, Object value) {
-        if (InteropLibrary.getFactory().getUncached().isNull(value)) {
-            return "NULL";
-        }
-
         // primitive values are never produced by FastR so we don't print them as R vectors
         if (value instanceof Boolean) {
             // boolean constants are capitalized like in R
