@@ -1,0 +1,11 @@
+Package: fastRCluster
+Title: Run FastR, the fastest R engine, in GNU-R
+Version: 0.0.0.1
+Description: Provides a simple way to run FastR cluster via the parallel package from GNU-R.
+License: GPL-3
+Encoding: UTF-8
+Imports: parallel
+LazyData: true
+Author: Stepan Sindelar <stepan.sindelar@oracle.com>
+Maintainer: Stepan Sindelar <stepan.sindelar@oracle.com>
+RoxygenNote: 6.1.1
