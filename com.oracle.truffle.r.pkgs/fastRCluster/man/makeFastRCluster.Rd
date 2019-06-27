@@ -30,8 +30,9 @@ which provides superb performance for computation intensive and longer
 running jobs, but takes bit more time to warm-up.
 }
 \examples{
-cl <- makeFastRCluster()
-parallel::clusterApply(cl, 'dummy', function(...) R.version)
+fastrNode <- makeFastRCluster()
+parallel::clusterApply(fastrNode, 'dummy', function(...) R.version)
+fastr(fastrNode, R.version)
 }
 \seealso{
 \code{\link{getGraalVMHome}}

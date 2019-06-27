@@ -3,6 +3,7 @@
 S3method(print,fastRCluster)
 export(defaultGraalVMHome)
 export(fastRClusterInstallPackages)
+export(fastr)
 export(getGraalVMHome)
 export(installFastR)
 export(makeFastRCluster)
