@@ -62,6 +62,8 @@ public class FastROptions {
     public static final OptionKey<Boolean> PrintErrorStacktracesToFile = new OptionKey<>(false);
     @Option(category = OptionCategory.EXPERT, stability = OptionStability.STABLE, help = "Activates LLVM debugging of shared libraries.") //
     public static final OptionKey<String> DebugLLVMLibs = new OptionKey<>("");
+    @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "BackEndLLVM=([-]pkg(,pkg)*)?; Specifies for which packages LLVM version will be used or will not, if the dash is present. Empty list stands for all packages.") //
+    public static final OptionKey<String> BackEndLLVM = new OptionKey<>("");
 
     @Option(category = OptionCategory.INTERNAL, help = "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.")//
     public static final OptionKey<String> Debug = new OptionKey<>("");

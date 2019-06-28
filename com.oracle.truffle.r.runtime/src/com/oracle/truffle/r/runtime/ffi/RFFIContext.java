@@ -197,13 +197,4 @@ public abstract class RFFIContext extends RFFI {
     }
 
     public abstract RFFIFactory.Type getDefaultRFFIType();
-
-    private RFFI instance;
-
-    public final RFFI getRFFI() {
-        if (instance == null) {
-            instance = RFFIFactory.create();
-        }
-        return instance;
-    }
 }

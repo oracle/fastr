@@ -184,12 +184,19 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             contextBuilder.allowHostClassLookup(null);
         }
 
+        boolean isLLVMBackEnd = false;
         boolean debugLLVMLibs = false;
         for (String rArg : this.rArguments) {
+            if (rArg.startsWith("--R.BackEndLLVM")) {
+                isLLVMBackEnd = true;
+                continue;
+            }
             if (rArg.startsWith("--R.DebugLLVMLibs")) {
                 debugLLVMLibs = true;
-                break;
             }
+        }
+        if (isLLVMBackEnd) {
+            System.setProperty("fastr.rffi.factory.type", "llvm");
         }
 
         Context context;
