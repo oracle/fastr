@@ -1,4 +1,13 @@
-CFLAGS := -fno-inline-functions $(CFLAGS)
-CXXFLAGS := -fno-inline-functions  $(CXXFLAGS)
-FFLAGS := -fno-inline-functions  $(FFLAGS)
-FCFLAGS := -fno-inline-functions  $(FCFLAGS)
+# To re-map debug source paths in packages installed by install.packages, uncomment 
+# the following line and set the path to the folder containing unpacked package tarballs.
+#PKG_INSTALL_DIR = 
+
+ifneq ($(PKG_INSTALL_DIR),)
+	CURRENT_INSTALL_DIR := $(abspath $(PWD)/../../)
+	DEBUG_PREFIX_MAP := -fdebug-prefix-map=$(CURRENT_INSTALL_DIR)=$(PKG_INSTALL_DIR)
+endif
+
+CFLAGS := $(DEBUG_PREFIX_MAP) -fno-inline-functions $(CFLAGS)
+CXXFLAGS := $(DEBUG_PREFIX_MAP) -fno-inline-functions  $(CXXFLAGS)
+FFLAGS := -fno-inline-functions $(FFLAGS)
+FCFLAGS := -fno-inline-functions $(FCFLAGS)
