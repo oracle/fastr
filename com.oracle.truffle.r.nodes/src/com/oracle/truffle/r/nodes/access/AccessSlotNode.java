@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess.AccessSlotAccess;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -45,13 +46,13 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 /**
  * Perform a slot access. This node represents the {@code @} operator in R.
  */
-public abstract class AccessSlotNode extends BaseAccessSlotNode {
+public abstract class AccessSlotNode extends BaseAccessSlotNode implements AccessSlotAccess {
 
     public AccessSlotNode(boolean asOperator) {
         super(asOperator);
     }
 
-    public abstract Object executeAccess(Object o, String name);
+    public abstract Object executeAccess(Object o, Object name);
 
     @Specialization
     protected Object getSlotS4(@SuppressWarnings("unused") RNull object, String name) {
@@ -93,7 +94,7 @@ public abstract class AccessSlotNode extends BaseAccessSlotNode {
 
     @Fallback
     @TruffleBoundary
-    protected Object getSlot(Object object, String name) {
+    protected Object getSlot(Object object, Object name) {
         throw error(RError.Message.SLOT_CANNOT_GET, name, RRuntime.getRTypeName(object));
     }
 

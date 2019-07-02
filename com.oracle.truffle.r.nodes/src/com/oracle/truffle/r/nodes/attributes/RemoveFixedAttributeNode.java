@@ -23,57 +23,67 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.attributes.FixedAttributeAccessNode.GenericFixedAttributeAccessNode;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNodeGen.RemoveClassAttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNodeGen.RemoveCommentAttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNodeGen.RemoveDimAttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNodeGen.RemoveDimNamesAttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNodeGen.RemoveGenericAttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNodeGen.RemoveNamesAttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNodeGen.RemoveRowNamesAttributeAccessNodeGen;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNodeGen.RemoveTspAttributeAccessNodeGen;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 
-public abstract class RemoveFixedAttributeNode extends GenericFixedAttributeAccessNode {
-
-    protected RemoveFixedAttributeNode(String name) {
-        super(name);
-    }
+@GenerateUncached
+public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
 
     public static RemoveFixedAttributeNode create(String name) {
-        return RemoveFixedAttributeNodeGen.create(name);
+        return RemoveGenericAttributeAccessNodeGen.create(name);
     }
 
-    public static RemoveFixedAttributeNode createNames() {
-        return create(RRuntime.NAMES_ATTR_KEY);
+    public static RemoveNamesAttributeAccessNode createNames() {
+        return RemoveNamesAttributeAccessNodeGen.create();
     }
 
-    public static RemoveFixedAttributeNode createRowNames() {
-        return create(RRuntime.ROWNAMES_ATTR_KEY);
+    public static RemoveRowNamesAttributeAccessNode createRowNames() {
+        return RemoveRowNamesAttributeAccessNodeGen.create();
     }
 
-    public static RemoveFixedAttributeNode createDim() {
-        return create(RRuntime.DIM_ATTR_KEY);
+    public static RemoveDimAttributeAccessNode createDim() {
+        return RemoveDimAttributeAccessNodeGen.create();
     }
 
-    public static RemoveFixedAttributeNode createDimNames() {
-        return create(RRuntime.DIMNAMES_ATTR_KEY);
+    public static RemoveDimNamesAttributeAccessNode createDimNames() {
+        return RemoveDimNamesAttributeAccessNodeGen.create();
     }
 
-    public static RemoveFixedAttributeNode createClass() {
-        return create(RRuntime.CLASS_ATTR_KEY);
+    public static RemoveClassAttributeAccessNode createClass() {
+        return RemoveClassAttributeAccessNodeGen.create();
     }
 
-    public static RemoveFixedAttributeNode createTsp() {
-        return create(RRuntime.TSP_ATTR_KEY);
+    public static RemoveTspAttributeAccessNode createTsp() {
+        return RemoveTspAttributeAccessNodeGen.create();
     }
 
-    public static RemoveFixedAttributeNode createComment() {
-        return create(RRuntime.COMMENT_ATTR_KEY);
+    public static RemoveCommentAttributeAccessNode createComment() {
+        return RemoveCommentAttributeAccessNodeGen.create();
     }
 
     public abstract void execute(RAttributable attrs);
 
+    protected RemoveFixedPropertyNode createRemoveFixedPropertyNode() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
     @Specialization
     protected static void removeAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("create(getAttributeName())") RemoveFixedPropertyNode removeFixedPropertyNode,
+                    @Cached("createRemoveFixedPropertyNode()") RemoveFixedPropertyNode removeFixedPropertyNode,
                     @Cached("create()") BranchProfile emptyAttrProfile) {
         DynamicObject attributes = x.getAttributes();
 
@@ -86,6 +96,116 @@ public abstract class RemoveFixedAttributeNode extends GenericFixedAttributeAcce
         if (attributes.isEmpty()) {
             emptyAttrProfile.enter();
             x.initAttributes(null);
+        }
+    }
+
+    public static abstract class RemoveGenericAttributeAccessNode extends RemoveFixedAttributeNode {
+        private final String name;
+
+        public RemoveGenericAttributeAccessNode(String name) {
+            this.name = name;
+        }
+
+        @Override
+        protected String getAttributeName() {
+            return name;
+        }
+
+        @Override
+        protected RemoveFixedPropertyNode createRemoveFixedPropertyNode() {
+            return RemoveFixedPropertyNode.create(name);
+        }
+    }
+
+    @GenerateUncached
+    public static abstract class RemoveNamesAttributeAccessNode extends RemoveFixedAttributeNode {
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.NAMES_ATTR_KEY;
+        }
+
+        @Override
+        protected RemoveFixedPropertyNode createRemoveFixedPropertyNode() {
+            return RemoveFixedPropertyNode.createNames();
+        }
+
+    }
+
+    @GenerateUncached
+    public static abstract class RemoveRowNamesAttributeAccessNode extends RemoveFixedAttributeNode {
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.ROWNAMES_ATTR_KEY;
+        }
+
+        @Override
+        protected RemoveFixedPropertyNode createRemoveFixedPropertyNode() {
+            return RemoveFixedPropertyNode.createRowNames();
+        }
+    }
+
+    @GenerateUncached
+    public static abstract class RemoveDimAttributeAccessNode extends RemoveFixedAttributeNode {
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.DIM_ATTR_KEY;
+        }
+
+        @Override
+        protected RemoveFixedPropertyNode createRemoveFixedPropertyNode() {
+            return RemoveFixedPropertyNode.createDim();
+        }
+    }
+
+    @GenerateUncached
+    public static abstract class RemoveDimNamesAttributeAccessNode extends RemoveFixedAttributeNode {
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.DIMNAMES_ATTR_KEY;
+        }
+
+        @Override
+        protected RemoveFixedPropertyNode createRemoveFixedPropertyNode() {
+            return RemoveFixedPropertyNode.createDimNames();
+        }
+    }
+
+    @GenerateUncached
+    public static abstract class RemoveClassAttributeAccessNode extends RemoveFixedAttributeNode {
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.CLASS_ATTR_KEY;
+        }
+
+        @Override
+        protected RemoveFixedPropertyNode createRemoveFixedPropertyNode() {
+            return RemoveFixedPropertyNode.createClass();
+        }
+    }
+
+    @GenerateUncached
+    public static abstract class RemoveTspAttributeAccessNode extends RemoveFixedAttributeNode {
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.TSP_ATTR_KEY;
+        }
+
+        @Override
+        protected RemoveFixedPropertyNode createRemoveFixedPropertyNode() {
+            return RemoveFixedPropertyNode.createTsp();
+        }
+    }
+
+    @GenerateUncached
+    public static abstract class RemoveCommentAttributeAccessNode extends RemoveFixedAttributeNode {
+        @Override
+        protected String getAttributeName() {
+            return RRuntime.COMMENT_ATTR_KEY;
+        }
+
+        @Override
+        protected RemoveFixedPropertyNode createRemoveFixedPropertyNode() {
+            return RemoveFixedPropertyNode.createComment();
         }
     }
 }

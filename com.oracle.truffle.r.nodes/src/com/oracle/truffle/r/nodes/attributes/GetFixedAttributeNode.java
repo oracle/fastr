@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -36,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 /**
  * This node is responsible for retrieving a value from the predefined (fixed) attribute.
  */
+@GenerateUncached
 public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
 
     public static GetFixedAttributeNode create(String name) {

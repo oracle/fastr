@@ -41,9 +41,13 @@ import com.oracle.truffle.r.launcher.RMain;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.builtin.base.Rm;
+import com.oracle.truffle.r.nodes.builtin.base.SlotNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.UpdateSlotNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
@@ -520,4 +524,20 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         CompilerAsserts.neverPartOfCompilation();
         return RContext.getInstance().languageClosureCache.getOrCreateLanguageClosure(expr);
     }
+
+    @Override
+    public ArrayAttributeAccess createArrayAttributeAccess(boolean cached) {
+        return cached ? ArrayAttributeNode.create() : ArrayAttributeNodeGen.getUncached();
+    }
+
+    @Override
+    public UpdateSlotAccess createUpdateSlotAccess() {
+        return UpdateSlotNodeGen.create();
+    }
+
+    @Override
+    public AccessSlotAccess createAccessSlotAccess() {
+        return SlotNodeGen.create();
+    }
+
 }

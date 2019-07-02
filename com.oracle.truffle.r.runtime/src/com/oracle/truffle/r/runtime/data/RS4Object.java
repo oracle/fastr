@@ -22,17 +22,148 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess.AccessSlotAccess;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess.ArrayAttributeAccess;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess.UpdateSlotAccess;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
 /**
  * This is a placeholder class for an S4 object (GnuR S4SXP). It has no functionality at present but
  * is needed as such objects are generated when unserializing the "methods" package.
  */
+@ExportLibrary(InteropLibrary.class)
 public final class RS4Object extends RSharingAttributeStorage implements Shareable {
 
     public RS4Object() {
         setS4();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasMembers() {
+        return true;
+    }
+
+    @ExportMessage
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal,
+                    @Cached.Shared("arrayAttribute") @Cached(value = "createCachedArrayAttrAccess()", uncached = "getUncachedArrayAttrAccess()") ArrayAttributeAccess arrayAttrAccess) {
+        RAttributesLayout.RAttribute[] attrs = arrayAttrAccess.execute(getAttributes());
+        String[] data = new String[attrs.length];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = attrs[i].getName();
+        }
+        return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @ExportMessage
+    boolean isMemberReadable(String member,
+                    @Cached.Shared("arrayAttribute") @Cached(value = "createCachedArrayAttrAccess()", uncached = "getUncachedArrayAttrAccess()") ArrayAttributeAccess arrayAttrAccess) {
+        return hasAttr(member, arrayAttrAccess);
+    }
+
+    @ExportMessage
+    boolean isMemberModifiable(String member,
+                    @Cached.Shared("arrayAttribute") @Cached(value = "createCachedArrayAttrAccess()", uncached = "getUncachedArrayAttrAccess()") ArrayAttributeAccess arrayAttrAccess) {
+        return isModifiable(member, hasAttr(member, arrayAttrAccess));
+    }
+
+    private boolean isModifiable(String member, boolean hasAttr) {
+        return !member.equals("class") && hasAttr;
+    }
+
+    @ExportMessage
+    boolean isMemberInsertable(String member) {
+        return false;
+    }
+
+    @ExportMessage
+    boolean isMemberInvocable(String member,
+                    @Cached.Shared("accessCallTarget") @Cached(value = "createAccessCallTarget()", uncached = "createAccessCallTarget()") CallTarget ct,
+                    @Cached.Shared("indirectCallNode") @Cached IndirectCallNode callNode,
+                    @Cached.Shared("arrayAttribute") @Cached(value = "createCachedArrayAttrAccess()", uncached = "getUncachedArrayAttrAccess()") ArrayAttributeAccess arrayAttrAccess,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) {
+        if (unknownIdentifier.profile(!hasAttr(member, arrayAttrAccess))) {
+            return false;
+        }
+        Object result = callNode.call(ct, this, member);
+        return result instanceof RFunction;
+    }
+
+    private boolean hasAttr(String member, ArrayAttributeAccess arrayAttr) {
+        RAttribute[] attrs = arrayAttr.execute(getAttributes());
+        for (RAttribute attr : attrs) {
+            if (attr.getName().equals(member)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @ExportMessage
+    Object readMember(String member,
+                    @Cached() R2Foreign r2Foreign,
+                    @Cached.Shared("accessCallTarget") @Cached(value = "createAccessCallTarget()", uncached = "createAccessCallTarget()") CallTarget ct,
+                    @Cached.Shared("indirectCallNode") @Cached() IndirectCallNode callNode,
+                    @Cached.Shared("arrayAttribute") @Cached(value = "createCachedArrayAttrAccess()", uncached = "getUncachedArrayAttrAccess()") ArrayAttributeAccess arrayAttrAccess,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException {
+        if (unknownIdentifier.profile(!hasAttr(member, arrayAttrAccess))) {
+            throw UnknownIdentifierException.create(member);
+        }
+        Object result = callNode.call(ct, this, member);
+        return r2Foreign.convert(result);
+    }
+
+    @ExportMessage
+    void writeMember(String member, Object value,
+                    @Cached() Foreign2R foreign2R,
+                    @Cached.Shared("arrayAttribute") @Cached(value = "createCachedArrayAttrAccess()", uncached = "getUncachedArrayAttrAccess()") ArrayAttributeAccess arrayAttrAccess,
+                    @Cached(value = "createUpdateCallTarget()", uncached = "createUpdateCallTarget()") CallTarget ct,
+                    @Cached.Shared("indirectCallNode") @Cached() IndirectCallNode callNode,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isModifiable) throws UnknownIdentifierException, UnsupportedMessageException {
+        boolean hasAttr = hasAttr(member, arrayAttrAccess);
+        if (unknownIdentifier.profile(!hasAttr)) {
+            throw UnsupportedMessageException.create();
+        }
+        if (isModifiable.profile(!isModifiable(member, hasAttr))) {
+            throw UnsupportedMessageException.create();
+        }
+        callNode.call(ct, this, member, foreign2R.convert(value));
+    }
+
+    @ExportMessage
+    Object invokeMember(String member, Object[] arguments,
+                    @Cached.Shared("accessCallTarget") @Cached(value = "createAccessCallTarget()", uncached = "createAccessCallTarget()") CallTarget ct,
+                    @Cached.Shared("indirectCallNode") @Cached IndirectCallNode callNode,
+                    @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isFunction,
+                    @Cached() RFunction.ExplicitCall c) throws UnknownIdentifierException, UnsupportedMessageException {
+        Object result = callNode.call(ct, this, member, arguments);
+        if (unknownIdentifier.profile(result == null)) {
+            throw UnknownIdentifierException.create(member);
+        }
+        if (isFunction.profile(!(result instanceof RFunction))) {
+            throw UnsupportedMessageException.create();
+        }
+        return c.execute((RFunction) result, arguments);
     }
 
     @Override
@@ -49,4 +180,49 @@ public final class RS4Object extends RSharingAttributeStorage implements Shareab
         resultS4.setTypedValueInfo(getTypedValueInfo());
         return resultS4;
     }
+
+    protected static ArrayAttributeAccess createCachedArrayAttrAccess() {
+        return DSLConfig.getInteropLibraryCacheSize() > 0 ? RContext.getRRuntimeASTAccess().createArrayAttributeAccess(true) : getUncachedArrayAttrAccess();
+    }
+
+    protected static ArrayAttributeAccess getUncachedArrayAttrAccess() {
+        return RContext.getRRuntimeASTAccess().createArrayAttributeAccess(false);
+    }
+
+    protected static CallTarget createUpdateCallTarget() {
+        return RContext.getInstance().getOrCreateCachedCallTarget(UpdateSlotRootNode.class, () -> Truffle.getRuntime().createCallTarget(new UpdateSlotRootNode()));
+    }
+
+    private static class UpdateSlotRootNode extends RootNode {
+        @Child UpdateSlotAccess delegate = RContext.getRRuntimeASTAccess().createUpdateSlotAccess();
+
+        public UpdateSlotRootNode() {
+            super(null);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            Object[] args = frame.getArguments();
+            return delegate.execute(RContext.getInstance().stateREnvironment.getGlobalFrame(), args[0], (String) args[1], args[2]);
+        }
+    }
+
+    protected static CallTarget createAccessCallTarget() {
+        return RContext.getInstance().getOrCreateCachedCallTarget(AccessSlotRootNode.class, () -> Truffle.getRuntime().createCallTarget(new AccessSlotRootNode()));
+    }
+
+    private static class AccessSlotRootNode extends RootNode {
+        @Child AccessSlotAccess delegate = RContext.getRRuntimeASTAccess().createAccessSlotAccess();
+
+        public AccessSlotRootNode() {
+            super(null);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            Object[] args = frame.getArguments();
+            return delegate.execute(args[0], (String) args[1]);
+        }
+    }
+
 }

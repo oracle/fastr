@@ -37,6 +37,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.IsSpecialAttributeNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
@@ -291,6 +292,7 @@ public final class SpecialAttributesFunctions {
         }
     }
 
+    // @GenerateUncached
     public abstract static class SetNamesAttributeNode extends SetSpecialAttributeNode {
 
         private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
@@ -1148,10 +1150,11 @@ public final class SpecialAttributesFunctions {
         }
     }
 
+    @GenerateUncached
     public abstract static class GetClassAttributeNode extends GetFixedAttributeNode {
 
         public static GetClassAttributeNode create() {
-            return SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen.create();
+            return GetClassAttributeNodeGen.create();
         }
 
         @Override

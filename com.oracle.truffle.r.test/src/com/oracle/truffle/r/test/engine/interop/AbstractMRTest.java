@@ -422,7 +422,8 @@ public abstract class AbstractMRTest {
         }
     }
 
-    protected void assertInteropException(Callable<Object> c, Class<? extends InteropException> expectedClazz) {
+    protected void assertInteropException(Callable<Object> c, Class<? extends Exception> expectedClazz) {
+        assert expectedClazz != null;
         try {
             c.call();
         } catch (InteropException ex) {
@@ -432,19 +433,13 @@ public abstract class AbstractMRTest {
             }
             return;
         } catch (Exception ex) {
-            if (expectedClazz != null && ex.getClass() != expectedClazz) {
+            if (ex.getClass() != expectedClazz) {
                 ex.printStackTrace();
                 fail(this.getClass().getName() + " : " + expectedClazz + " was expected but got instead: " + ex);
-            } else {
-                ex.printStackTrace();
-                fail(this.getClass().getName() + " : " + "InteropException was expected but got instead: " + ex);
             }
+            return;
         }
-        if (expectedClazz != null) {
-            fail(expectedClazz + " was expected");
-        } else {
-            fail(this.getClass().getName() + " : " + "InteropException was expected");
-        }
+        fail(expectedClazz + " was expected");
     }
 
     protected void assertSingletonVector(Object expected, Object vector) throws UnsupportedMessageException, UnknownIdentifierException {

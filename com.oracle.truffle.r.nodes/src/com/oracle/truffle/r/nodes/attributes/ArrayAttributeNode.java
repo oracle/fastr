@@ -32,13 +32,14 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess.ArrayAttributeAccess;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 
 @GenerateUncached
-public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
+public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode implements ArrayAttributeAccess {
 
     private static final RAttribute[] EMPTY = new RAttribute[0];
 
@@ -46,6 +47,7 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode {
         return ArrayAttributeNodeGen.create();
     }
 
+    @Override
     public abstract RAttribute[] execute(Object attrs);
 
     @Specialization(limit = "getCacheLimit()", guards = {"attrsLayout != null", "attrsLayout.shape.check(attrs)"})
