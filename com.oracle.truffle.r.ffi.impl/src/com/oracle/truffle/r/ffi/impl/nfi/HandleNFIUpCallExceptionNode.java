@@ -23,6 +23,9 @@
 package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
@@ -30,17 +33,21 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
-public class HandleNFIUpCallExceptionNode extends Node implements UpCallsRFFI.HandleUpCallExceptionNode {
-    @Child private DownCallNode setFlagNode = TruffleNFI_DownCallNodeFactory.INSTANCE.createDownCallNode(NativeFunction.set_exception_flag);
-    private final ConditionProfile isEmbeddedTopLevel = ConditionProfile.createBinaryProfile();
+@GenerateUncached
+public abstract class HandleNFIUpCallExceptionNode extends Node implements UpCallsRFFI.HandleUpCallExceptionNode {
 
     @Override
+    public abstract void execute(Throwable originalEx);
+
     @TruffleBoundary
-    public void execute(Throwable originalEx) {
+    @Specialization
+    public void handle(Throwable originalEx,
+                    @Cached(value = "createDownCallNode()", allowUncached = true) DownCallNode setFlagNode,
+                    @Cached("createBinaryProfile()") ConditionProfile isEmbeddedTopLevel) {
         if (isEmbeddedTopLevel.profile(RContext.isEmbedded() && isTopLevel())) {
             return;
         }
-        setFlagNode.call();
+        setFlagNode.call(NativeFunction.set_exception_flag);
         RuntimeException ex;
         if (originalEx instanceof RuntimeException) {
             ex = (RuntimeException) originalEx;
@@ -52,5 +59,9 @@ public class HandleNFIUpCallExceptionNode extends Node implements UpCallsRFFI.Ha
 
     private static boolean isTopLevel() {
         return RContext.getInstance().getRFFI(TruffleNFI_Context.class).getCallDepth() == 0;
+    }
+
+    protected DownCallNode createDownCallNode() {
+        return TruffleNFI_DownCallNodeFactory.INSTANCE.createDownCallNode();
     }
 }

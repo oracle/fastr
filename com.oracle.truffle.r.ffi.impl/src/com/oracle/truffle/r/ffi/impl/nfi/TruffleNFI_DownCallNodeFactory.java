@@ -23,8 +23,14 @@
 package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DownCallNodeFactoryFactory.NFIDownCallNodeGen;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -39,68 +45,79 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
     }
 
     @Override
-    public DownCallNode createDownCallNode(NativeFunction f) {
-        return new DownCallNode(f) {
-            @Override
-            protected TruffleObject getTarget(NativeFunction fn) {
-                // TODO: this lookupNativeFunction function can exist in all FFI Contexts
-                return TruffleNFI_Context.getInstance().lookupNativeFunction(fn);
-            }
+    public DownCallNode createDownCallNode() {
+        return NFIDownCallNodeGen.create();
+    }
 
-            @Override
-            @ExplodeLoop
-            protected Object beforeCall(NativeFunction fn, TruffleObject target, Object[] args) {
-                for (int i = 0; i < args.length; i++) {
-                    RContext context = RContext.getInstance();
-                    Object obj = args[i];
-                    if (obj instanceof double[]) {
-                        args[i] = context.getEnv().asGuestValue(obj);
-                    } else if (obj instanceof int[] || obj == null) {
-                        args[i] = context.getEnv().asGuestValue(obj);
-                    } else if (obj instanceof NativeUInt8Array) {
-                        // accounts for NativeCharArray and NativeRawArray
-                        // the assumption is that getValue() gives us the actual backing array and
-                        // NFI will transfer any changes back to this array
-                        NativeUInt8Array nativeArr = (NativeUInt8Array) obj;
-                        byte[] data;
-                        if (nativeArr.fakesNullTermination()) {
-                            data = getNullTerminatedBytes(nativeArr.getValue());
-                            nativeArr.setValue(data, false);
-                        } else {
-                            data = nativeArr.getValue();
-                        }
-                        args[i] = context.getEnv().asGuestValue(data);
+    @GenerateUncached
+    protected abstract static class NFIDownCallNode extends DownCallNode {
+
+        @Specialization
+        protected Object call(NativeFunction f, Object[] args,
+                        @Cached(value = "createTarget(f)", allowUncached = true) TruffleObject target,
+                        @CachedLibrary("target") InteropLibrary interop) {
+            return callInternal(f, args, target, interop);
+        }
+
+        @Override
+        protected TruffleObject createTarget(NativeFunction fn) {
+            // TODO: this lookupNativeFunction function can exist in all FFI Contexts
+            return TruffleNFI_Context.getInstance().lookupNativeFunction(fn);
+        }
+
+        @Override
+        @ExplodeLoop
+        protected Object beforeCall(NativeFunction fn, TruffleObject target, Object[] args) {
+            for (int i = 0; i < args.length; i++) {
+                RContext context = RContext.getInstance();
+                Object obj = args[i];
+                if (obj instanceof double[]) {
+                    args[i] = context.getEnv().asGuestValue(obj);
+                } else if (obj instanceof int[] || obj == null) {
+                    args[i] = context.getEnv().asGuestValue(obj);
+                } else if (obj instanceof NativeUInt8Array) {
+                    // accounts for NativeCharArray and NativeRawArray
+                    // the assumption is that getValue() gives us the actual backing array and
+                    // NFI will transfer any changes back to this array
+                    NativeUInt8Array nativeArr = (NativeUInt8Array) obj;
+                    byte[] data;
+                    if (nativeArr.fakesNullTermination()) {
+                        data = getNullTerminatedBytes(nativeArr.getValue());
+                        nativeArr.setValue(data, false);
+                    } else {
+                        data = nativeArr.getValue();
                     }
-                }
-
-                if (fn.hasComplexInteraction()) {
-                    return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(null, RFFIFactory.Type.NFI);
-                }
-                return 0;
-            }
-
-            @TruffleBoundary
-            private byte[] getNullTerminatedBytes(byte[] data) {
-                byte[] newData = new byte[data.length + 1];
-                System.arraycopy(data, 0, newData, 0, data.length);
-                newData[data.length] = 0;
-                return newData;
-            }
-
-            @Override
-            @ExplodeLoop
-            protected void afterCall(Object before, NativeFunction fn, TruffleObject target, Object[] args) {
-                if (fn.hasComplexInteraction()) {
-                    (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI);
-                }
-
-                for (Object obj : args) {
-                    // TODO: can this ever happen in NFI?
-                    if (obj instanceof NativeArray<?>) {
-                        ((NativeArray<?>) obj).refresh();
-                    }
+                    args[i] = context.getEnv().asGuestValue(data);
                 }
             }
-        };
+
+            if (fn.hasComplexInteraction()) {
+                return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(null, RFFIFactory.Type.NFI);
+            }
+            return 0;
+        }
+
+        @TruffleBoundary
+        private static byte[] getNullTerminatedBytes(byte[] data) {
+            byte[] newData = new byte[data.length + 1];
+            System.arraycopy(data, 0, newData, 0, data.length);
+            newData[data.length] = 0;
+            return newData;
+        }
+
+        @Override
+        @ExplodeLoop
+        protected void afterCall(Object before, NativeFunction fn, TruffleObject target, Object[] args) {
+            if (fn.hasComplexInteraction()) {
+                (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI);
+            }
+
+            for (Object obj : args) {
+                // TODO: can this ever happen in NFI?
+                if (obj instanceof NativeArray<?>) {
+                    ((NativeArray<?>) obj).refresh();
+                }
+            }
+        }
     }
 }

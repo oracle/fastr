@@ -53,11 +53,11 @@ public final class BaseRFFI {
     public static final class InitEventLoopNode extends NativeCallNode {
 
         private InitEventLoopNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.initEventLoop));
+            super(parent.createDownCallNode());
         }
 
         public int execute(String fifoInPath, String fifoOutPath) {
-            return (int) call(fifoInPath, fifoOutPath);
+            return (int) call(NativeFunction.initEventLoop, fifoInPath, fifoOutPath);
         }
 
         public static InitEventLoopNode create() {
@@ -68,11 +68,11 @@ public final class BaseRFFI {
     public static final class DispatchHandlersNode extends NativeCallNode {
 
         private DispatchHandlersNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.dispatchHandlers));
+            super(parent.createDownCallNode());
         }
 
         public int execute() {
-            return (int) call();
+            return (int) call(NativeFunction.dispatchHandlers);
         }
 
         public static DispatchHandlersNode create() {
@@ -83,11 +83,11 @@ public final class BaseRFFI {
     public static final class GetpidNode extends NativeCallNode {
 
         private GetpidNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.getpid));
+            super(parent.createDownCallNode());
         }
 
         public int execute() {
-            return (int) call();
+            return (int) call(NativeFunction.getpid);
         }
 
         public static GetpidNode create() {
@@ -99,7 +99,7 @@ public final class BaseRFFI {
         private static final int BUFFER_LEN = 4096;
 
         private GetwdNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.getcwd));
+            super(parent.createDownCallNode());
         }
 
         /**
@@ -107,7 +107,7 @@ public final class BaseRFFI {
          */
         public String execute() {
             NativeCharArray nativeBuf = NativeCharArray.crateOutputBuffer(BUFFER_LEN);
-            int result = (int) call(nativeBuf, BUFFER_LEN);
+            int result = (int) call(NativeFunction.getcwd, nativeBuf, BUFFER_LEN);
             if (result == 0) {
                 return null;
             } else {
@@ -123,7 +123,7 @@ public final class BaseRFFI {
     public static final class SetwdNode extends NativeCallNode {
 
         private SetwdNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.chdir));
+            super(parent.createDownCallNode());
         }
 
         /**
@@ -132,7 +132,7 @@ public final class BaseRFFI {
          * @return 0 if successful.
          */
         public int execute(String dir) {
-            return (int) call(dir);
+            return (int) call(NativeFunction.chdir, dir);
         }
 
         public static SetwdNode create() {
@@ -144,7 +144,7 @@ public final class BaseRFFI {
         private static final int EINVAL = 22;
 
         private ReadlinkNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.readlink));
+            super(parent.createDownCallNode());
         }
 
         /**
@@ -156,7 +156,7 @@ public final class BaseRFFI {
          */
         public String execute(String path) throws IOException {
             ReadlinkResult data = new ReadlinkResult();
-            call(data, path);
+            call(NativeFunction.readlink, data, path);
             if (data.getLink() == null) {
                 if (data.getErrno() == EINVAL) {
                     return path;
@@ -176,7 +176,7 @@ public final class BaseRFFI {
     public static final class MkdtempNode extends NativeCallNode {
 
         private MkdtempNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.mkdtemp));
+            super(parent.createDownCallNode());
         }
 
         /**
@@ -190,7 +190,7 @@ public final class BaseRFFI {
              * is modified by mkdtemp we must make a copy.
              */
             NativeCharArray nativeZtbytes = new NativeCharArray(template);
-            int result = (int) call(nativeZtbytes);
+            int result = (int) call(NativeFunction.mkdtemp, nativeZtbytes);
             if (result == 0) {
                 return null;
             } else {
@@ -206,7 +206,7 @@ public final class BaseRFFI {
     public static final class StrtolNode extends NativeCallNode {
 
         private StrtolNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.strtol));
+            super(parent.createDownCallNode());
         }
 
         /**
@@ -214,7 +214,7 @@ public final class BaseRFFI {
          */
         public long execute(String s, int base) throws IllegalArgumentException {
             StrtolResult data = new StrtolResult();
-            call(data, s, base);
+            call(NativeFunction.strtol, data, s, base);
             if (data.getErrno() != 0) {
                 throw new IllegalArgumentException("strtol failure");
             } else {
@@ -242,7 +242,7 @@ public final class BaseRFFI {
     public static final class UnameNode extends NativeCallNode {
 
         private UnameNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.uname));
+            super(parent.createDownCallNode());
         }
 
         /**
@@ -250,7 +250,7 @@ public final class BaseRFFI {
          */
         public UtsName execute() {
             UnameResult data = new UnameResult();
-            call(data);
+            call(NativeFunction.uname, data);
             return data;
         }
 
@@ -262,7 +262,7 @@ public final class BaseRFFI {
     public static final class GlobNode extends NativeCallNode {
 
         private GlobNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.glob));
+            super(parent.createDownCallNode());
         }
 
         /**
@@ -272,7 +272,7 @@ public final class BaseRFFI {
          */
         public ArrayList<String> glob(String pattern) {
             GlobResult data = new GlobResult();
-            call(data, pattern);
+            call(NativeFunction.glob, data, pattern);
             return data.getPaths();
         }
 
@@ -284,12 +284,12 @@ public final class BaseRFFI {
     public static final class ESoftVersionNode extends NativeCallNode {
 
         private ESoftVersionNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.eSoftVersion));
+            super(parent.createDownCallNode());
         }
 
         public Map<String, String> eSoftVersion() {
             ESoftVersionResult result = new ESoftVersionResult();
-            call(result);
+            call(NativeFunction.eSoftVersion, result);
             return result.getVersions();
         }
 
@@ -301,11 +301,11 @@ public final class BaseRFFI {
     public static final class UmaskNode extends NativeCallNode {
 
         private UmaskNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.umask));
+            super(parent.createDownCallNode());
         }
 
         public int umask(int mode) {
-            return (int) call(mode);
+            return (int) call(NativeFunction.umask, mode);
         }
 
         public static UmaskNode create() {
@@ -316,11 +316,11 @@ public final class BaseRFFI {
     public static final class CPolyrootNode extends NativeCallNode {
 
         private CPolyrootNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.cpolyroot));
+            super(parent.createDownCallNode());
         }
 
         public int cpolyroot(double[] zr, double[] zi, int degree, double[] rr, double[] ri) {
-            return (int) call(zr, zi, degree, rr, ri);
+            return (int) call(NativeFunction.cpolyroot, zr, zi, degree, rr, ri);
         }
 
         public static CPolyrootNode create() {

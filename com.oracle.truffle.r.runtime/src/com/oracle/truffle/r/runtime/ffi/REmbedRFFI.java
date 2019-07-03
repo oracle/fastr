@@ -45,11 +45,11 @@ public final class REmbedRFFI {
         @Child private InteropLibrary interop;
 
         private ReadConsoleNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.rembedded_read_console));
+            super(factory.createDownCallNode());
         }
 
         public String execute(String prompt) {
-            Object result = call(prompt);
+            Object result = call(NativeFunction.rembedded_read_console, prompt);
             if (result instanceof String) {
                 return (String) result;
             }
@@ -78,9 +78,7 @@ public final class REmbedRFFI {
             super(downCallNode);
         }
 
-        public final void execute(String x) {
-            call(x, x.length());
-        }
+        public abstract void execute(String x);
     }
 
     public static final class WriteConsoleNode extends WriteConsoleBaseNode {
@@ -89,7 +87,12 @@ public final class REmbedRFFI {
         }
 
         public WriteConsoleNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.rembedded_write_console));
+            super(factory.createDownCallNode());
+        }
+
+        @Override
+        public void execute(String x) {
+            call(NativeFunction.rembedded_write_console, x, x.length());
         }
     }
 
@@ -99,27 +102,32 @@ public final class REmbedRFFI {
         }
 
         public WriteErrConsoleNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.rembedded_write_err_console));
+            super(factory.createDownCallNode());
+        }
+
+        @Override
+        public void execute(String x) {
+            call(NativeFunction.rembedded_write_err_console, x, x.length());
         }
     }
 
     public static final class EmbeddedSuicideNode extends NativeCallNode {
         private EmbeddedSuicideNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.rembedded_suicide));
+            super(factory.createDownCallNode());
         }
 
         public void execute(String message) {
-            call(message);
+            call(NativeFunction.rembedded_suicide, message);
         }
     }
 
     public static final class EmbeddedCleanUpNode extends NativeCallNode {
         private EmbeddedCleanUpNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.rembedded_cleanup));
+            super(factory.createDownCallNode());
         }
 
         public void execute(int x, int y, int z) {
-            call(x, y, z);
+            call(NativeFunction.rembedded_cleanup, x, y, z);
         }
     }
 

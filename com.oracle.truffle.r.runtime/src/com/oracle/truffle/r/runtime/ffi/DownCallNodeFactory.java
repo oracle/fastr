@@ -22,8 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -35,23 +34,16 @@ import com.oracle.truffle.r.runtime.RInternalError;
  * implementing the invocation of functions from {@link NativeFunction}.
  */
 public abstract class DownCallNodeFactory {
-    public abstract DownCallNode createDownCallNode(NativeFunction function);
+    public abstract DownCallNode createDownCallNode();
 
     /**
      * This node has RFFI backend (LLVM/NFI) specific implementation and its purpose is to provide
      * functionality to invoke functions from {@link NativeFunction}.
      */
+    @GenerateUncached
     public abstract static class DownCallNode extends Node {
 
-        private final NativeFunction function;
-        @Child private InteropLibrary interop;
-        // TODO: can this be really shared across contexts?
-        @CompilationFinal private TruffleObject target;
-
-        protected DownCallNode(NativeFunction function) {
-            assert function != null;
-            this.function = function;
-        }
+        protected abstract Object execute(NativeFunction f, Object[] args);
 
         /**
          * The arguments may contain primitive java types, Strings, arrays of any primitive Java
@@ -63,23 +55,20 @@ public abstract class DownCallNodeFactory {
          * {@link com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray} have special handling in
          * NFI where the array should be passed as Java array, not as Truffle Object.
          */
-        public final Object call(Object... args) {
+        public final Object call(NativeFunction f, Object... args) {
+            assert f != null;
+            return execute(f, args);
+        }
+
+        protected final Object callInternal(NativeFunction f, Object[] args, TruffleObject target, InteropLibrary interop) {
             Object before = -1;
             try {
-                if (target == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    target = getTarget(function);
-                }
-                before = beforeCall(function, target, args);
-                if (interop == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    interop = insert(InteropLibrary.getFactory().create(target));
-                }
+                before = beforeCall(f, target, args);
                 return interop.execute(target, args);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             } finally {
-                afterCall(before, function, target, args);
+                afterCall(before, f, target, args);
             }
         }
 
@@ -87,18 +76,18 @@ public abstract class DownCallNodeFactory {
          * Should return a {@link TruffleObject} that will invoke the given function upon the
          * {@code EXECUTE} message.
          */
-        protected abstract TruffleObject getTarget(NativeFunction f);
+        protected abstract TruffleObject createTarget(NativeFunction f);
 
         /**
          * Allows to transform the arguments before the execute message is sent to the result of
-         * {@link #getTarget(NativeFunction)}.
+         * {@link #createTarget(NativeFunction)}.
          */
         protected abstract Object beforeCall(NativeFunction nativeFunction, TruffleObject f, Object[] args);
 
         /**
          * Allows to post-process the arguments after the execute message was sent to the result of
-         * {@link #getTarget(NativeFunction)}. If the call to
-         * {@link #beforeCall(NativeFunction, TruffleObject, Object[])} was not successfull, the
+         * {@link #createTarget(NativeFunction)}. If the call to
+         * {@link #beforeCall(NativeFunction, TruffleObject, Object[])} was not successful, the
          * {@code before} parameter will have value {@code -1}.
          */
         protected abstract void afterCall(Object before, NativeFunction f, TruffleObject t, Object[] args);

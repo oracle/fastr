@@ -123,7 +123,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public HandleUpCallExceptionNode createHandleUpCallExceptionNode() {
-        return new HandleNFIUpCallExceptionNode();
+        return HandleNFIUpCallExceptionNodeGen.create();
     }
 
     private static TruffleNFI_Context getContext() {

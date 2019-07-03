@@ -33,14 +33,15 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
 import java.util.Set;
 
-import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.ForeignAccess.StandardFactory;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.r.ffi.impl.managed.Managed_DownCallNodeFactoryFactory.Managed_DownCallNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
@@ -55,36 +56,51 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
     }
 
     @Override
-    public DownCallNode createDownCallNode(NativeFunction f) {
-        return new DownCallNode(f) {
-            @Override
-            protected TruffleObject getTarget(NativeFunction function) {
-                if (function == NativeFunction.getpid) {
-                    return new GetPID();
-                } else if (function == NativeFunction.mkdtemp) {
-                    return new Mkdtemp();
-                } else if (function == NativeFunction.getcwd) {
-                    return new Getwd();
-                } else if (function == NativeFunction.initEventLoop) {
-                    return new InitEventLoop();
-                }
-                return new DummyFunctionObject(function);
-            }
+    public DownCallNode createDownCallNode() {
+        return Managed_DownCallNodeGen.create();
+    }
 
-            @Override
-            protected Object beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args) {
-                // Report unsupported functions at invocation time
-                if (function instanceof DummyFunctionObject) {
-                    throw Managed_RFFIFactory.unsupported(((DummyFunctionObject) function).function.getCallName());
-                }
-                return 0;
-            }
+    @GenerateUncached
+    protected abstract static class Managed_DownCallNode extends DownCallNode {
 
-            @Override
-            protected void afterCall(Object before, NativeFunction function, TruffleObject target, Object[] args) {
-                // nop
+        public Managed_DownCallNode() {
+            super();
+        }
+
+        @Specialization
+        protected Object call(NativeFunction f, Object[] args,
+                        @Cached(value = "createTarget(f)", allowUncached = true) TruffleObject target,
+                        @CachedLibrary("target") InteropLibrary interop) {
+            return callInternal(f, args, target, interop);
+        }
+
+        @Override
+        protected TruffleObject createTarget(NativeFunction function) {
+            if (function == NativeFunction.getpid) {
+                return new GetPID();
+            } else if (function == NativeFunction.mkdtemp) {
+                return new Mkdtemp();
+            } else if (function == NativeFunction.getcwd) {
+                return new Getwd();
+            } else if (function == NativeFunction.initEventLoop) {
+                return new InitEventLoop();
             }
-        };
+            return new DummyFunctionObject(function);
+        }
+
+        @Override
+        protected Object beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args) {
+            // Report unsupported functions at invocation time
+            if (function instanceof DummyFunctionObject) {
+                throw Managed_RFFIFactory.unsupported(((DummyFunctionObject) function).function.getCallName());
+            }
+            return 0;
+        }
+
+        @Override
+        protected void afterCall(Object before, NativeFunction function, TruffleObject target, Object[] args) {
+            // nop
+        }
     }
 
     private static final class DummyFunctionObject implements TruffleObject {
@@ -93,50 +109,41 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         private DummyFunctionObject(NativeFunction function) {
             this.function = function;
         }
-
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return null;
-        }
     }
 
-    private static final class InitEventLoop implements TruffleObject {
+    @ExportLibrary(InteropLibrary.class)
+    protected static final class InitEventLoop implements TruffleObject {
 
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return ForeignAccess.create(InitEventLoop.class, new StandardFactory() {
-                @Override
-                public CallTarget accessIsExecutable() {
-                    return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(true));
-                }
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public boolean isExecutable() {
+            return true;
+        }
 
-                @Override
-                public CallTarget accessExecute(int argumentsLength) {
-                    // by returning -1 we indicate that the native handlers loop is not available
-                    return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(-1));
-                }
-            });
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public Object execute(@SuppressWarnings("unused") Object... args) {
+            // by returning -1 we indicate that the native handlers loop is not available
+            return -1;
         }
     }
 
     // PID is used as a seed for random numbers generation. We still want to support random numbers
     // in managed mode so we make up some (random) value
-    private static final class GetPID implements TruffleObject {
+    @ExportLibrary(InteropLibrary.class)
+    protected static final class GetPID implements TruffleObject {
         private static final int fakePid = (int) System.currentTimeMillis();
 
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return ForeignAccess.create(GetPID.class, new StandardFactory() {
-                @Override
-                public CallTarget accessIsExecutable() {
-                    return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(true));
-                }
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public boolean isExecutable() {
+            return true;
+        }
 
-                @Override
-                public CallTarget accessExecute(int argumentsLength) {
-                    return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(fakePid));
-                }
-            });
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public Object execute(@SuppressWarnings("unused") Object... args) {
+            return fakePid;
         }
     }
 
@@ -145,54 +152,46 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
      * do not use only Java version is that the real {@code mkdtemp} seems to be more reliable and
      * secure.
      */
-    private static final class Mkdtemp implements TruffleObject {
+    @ExportLibrary(InteropLibrary.class)
+    protected static final class Mkdtemp implements TruffleObject {
         private static final FileAttribute<Set<PosixFilePermission>> irwxuPermissions = PosixFilePermissions.asFileAttribute(
                         EnumSet.of(PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
 
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return ForeignAccess.create(GetPID.class, new StandardFactory() {
-                @Override
-                public CallTarget accessIsExecutable() {
-                    return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(true));
-                }
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public boolean isExecutable() {
+            return true;
+        }
 
-                @Override
-                public CallTarget accessExecute(int argumentsLength) {
-                    return Truffle.getRuntime().createCallTarget(new RootNode(null) {
-                        @Override
-                        @TruffleBoundary
-                        public Object execute(VirtualFrame frame) {
-                            NativeCharArray templateBytes = (NativeCharArray) ForeignAccess.getArguments(frame).get(0);
-                            String template = templateBytes.getString();
-                            if (!template.endsWith("XXXXXX")) {
-                                throw new IllegalArgumentException("template must end with XXXXXX");
-                            }
-                            String templatePrefix = template.substring(0, template.length() - 6);
-                            Path path = null;
-                            int counter = 0;
-                            boolean done = false;
-                            while (!done) {
-                                try {
-                                    path = Paths.get(templatePrefix + String.format("%06d", counter++));
-                                    if (Files.exists(path)) {
-                                        continue;
-                                    }
-                                    Files.createDirectories(path, irwxuPermissions);
-                                    done = true;
-                                } catch (FileAlreadyExistsException e) {
-                                    // nop
-                                } catch (IOException e) {
-                                    throw RError.error(RError.NO_CALLER, Message.GENERIC, "Cannot create temp directories.");
-                                }
-                            }
-                            byte[] resultBytes = path.toString().getBytes();
-                            System.arraycopy(resultBytes, 0, templateBytes.getValue(), 0, Math.min(resultBytes.length, templateBytes.getValue().length));
-                            return 1;
-                        }
-                    });
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public Object execute(Object... args) {
+            NativeCharArray templateBytes = (NativeCharArray) args[0];
+            String template = templateBytes.getString();
+            if (!template.endsWith("XXXXXX")) {
+                throw new IllegalArgumentException("template must end with XXXXXX");
+            }
+            String templatePrefix = template.substring(0, template.length() - 6);
+            Path path = null;
+            int counter = 0;
+            boolean done = false;
+            while (!done) {
+                try {
+                    path = Paths.get(templatePrefix + String.format("%06d", counter++));
+                    if (Files.exists(path)) {
+                        continue;
+                    }
+                    Files.createDirectories(path, irwxuPermissions);
+                    done = true;
+                } catch (FileAlreadyExistsException e) {
+                    // nop
+                } catch (IOException e) {
+                    throw RError.error(RError.NO_CALLER, Message.GENERIC, "Cannot create temp directories.");
                 }
-            });
+            }
+            byte[] resultBytes = path.toString().getBytes();
+            System.arraycopy(resultBytes, 0, templateBytes.getValue(), 0, Math.min(resultBytes.length, templateBytes.getValue().length));
+            return 1;
         }
     }
 
@@ -200,29 +199,22 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
      * Gives the current working directory. For some reasons, this is not exactly equivalent to
      * calling the C function, which manifests itself during codetools package installation.
      */
-    private static final class Getwd implements TruffleObject {
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return ForeignAccess.create(GetPID.class, new StandardFactory() {
-                @Override
-                public CallTarget accessIsExecutable() {
-                    return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(true));
-                }
+    @ExportLibrary(InteropLibrary.class)
+    protected static final class Getwd implements TruffleObject {
 
-                @Override
-                public CallTarget accessExecute(int argumentsLength) {
-                    return Truffle.getRuntime().createCallTarget(new RootNode(null) {
-                        @Override
-                        @TruffleBoundary
-                        public Object execute(VirtualFrame frame) {
-                            NativeCharArray buffer = (NativeCharArray) ForeignAccess.getArguments(frame).get(0);
-                            byte[] bytes = Paths.get(".").toAbsolutePath().normalize().toString().getBytes();
-                            System.arraycopy(bytes, 0, buffer.getValue(), 0, Math.min(bytes.length, buffer.getValue().length));
-                            return 1;
-                        }
-                    });
-                }
-            });
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public boolean isExecutable() {
+            return true;
+        }
+
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public Object execute(Object... args) {
+            NativeCharArray buffer = (NativeCharArray) args[0];
+            byte[] bytes = Paths.get(".").toAbsolutePath().normalize().toString().getBytes();
+            System.arraycopy(bytes, 0, buffer.getValue(), 0, Math.min(bytes.length, buffer.getValue().length));
+            return 1;
         }
     }
 }

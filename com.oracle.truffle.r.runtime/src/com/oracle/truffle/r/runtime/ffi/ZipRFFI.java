@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ public final class ZipRFFI {
 
     public static final class CompressNode extends NativeCallNode {
         private CompressNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.compress));
+            super(factory.createDownCallNode());
         }
 
         /**
@@ -52,7 +52,7 @@ public final class ZipRFFI {
             NativeRawArray nativeDest = new NativeRawArray(dest);
             NativeRawArray nativeSource = new NativeRawArray(source);
             try {
-                return (int) call(nativeDest, dest.length, nativeSource, source.length);
+                return (int) call(NativeFunction.compress, nativeDest, dest.length, nativeSource, source.length);
             } finally {
                 nativeDest.getValue();
             }
@@ -65,7 +65,7 @@ public final class ZipRFFI {
 
     public static final class UncompressNode extends NativeCallNode {
         private UncompressNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.uncompress));
+            super(factory.createDownCallNode());
         }
 
         /**
@@ -77,7 +77,7 @@ public final class ZipRFFI {
             NativeRawArray nativeDest = new NativeRawArray(dest);
             NativeRawArray nativeSource = new NativeRawArray(source);
             try {
-                return (int) call(nativeDest, dest.length, nativeSource, source.length);
+                return (int) call(NativeFunction.uncompress, nativeDest, dest.length, nativeSource, source.length);
             } finally {
                 nativeDest.getValue();
             }
