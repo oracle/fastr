@@ -25,6 +25,7 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 import static com.oracle.truffle.r.runtime.data.NativeDataAccess.readNativeString;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -36,10 +37,15 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 @ImportStatic(DSLConfig.class)
+@GenerateUncached
 public abstract class NativeStringCastNode extends Node {
 
     public static NativeStringCastNode create() {
         return NativeStringCastNodeGen.create();
+    }
+
+    public static NativeStringCastNode getUncached() {
+        return NativeStringCastNodeGen.getUncached();
     }
 
     public abstract String executeObject(Object s);

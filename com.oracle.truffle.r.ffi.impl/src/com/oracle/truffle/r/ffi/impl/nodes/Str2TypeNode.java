@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,11 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 import java.util.HashMap;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
+@GenerateUncached
 public abstract class Str2TypeNode extends FFIUpCallNode.Arg1 {
 
     private static HashMap<String, Integer> name2typeTable;
@@ -66,6 +68,10 @@ public abstract class Str2TypeNode extends FFIUpCallNode.Arg1 {
 
     public static Str2TypeNode create() {
         return Str2TypeNodeGen.create();
+    }
+
+    public static Str2TypeNode getUncached() {
+        return Str2TypeNodeGen.getUncached();
     }
 
     @Specialization

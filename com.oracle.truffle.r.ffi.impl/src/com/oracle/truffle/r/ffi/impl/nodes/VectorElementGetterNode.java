@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
-import com.oracle.truffle.r.nodes.access.vector.ExtractListElementNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -36,6 +37,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@GenerateUncached
 public abstract class VectorElementGetterNode extends RBaseNode {
 
     public abstract Object executeObject(Object x, long i);

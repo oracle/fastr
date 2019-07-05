@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -193,6 +194,7 @@ public final class AttributesAccessNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class TAG extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -275,6 +277,7 @@ public final class AttributesAccessNodes {
      * simply sets the attributes pairlist to given value and some packages assume that they can,
      * e.g., fixup any inconsistencies in special attributes like dims afterwards.
      */
+    @GenerateUncached
     public abstract static class SetAttribNode extends FFIUpCallNode.Arg2 {
 
         public static SetAttribNode create() {
