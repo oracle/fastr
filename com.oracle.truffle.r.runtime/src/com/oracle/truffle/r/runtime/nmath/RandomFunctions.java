@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.nmath;
 
 import com.oracle.truffle.r.runtime.nmath.distr.SExp;
 import com.oracle.truffle.r.runtime.nmath.distr.SNorm;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 import com.oracle.truffle.r.runtime.rng.RRNG.NormKind;
@@ -34,8 +35,16 @@ import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
  * implement common code for the vectorized versions.
  */
 public class RandomFunctions {
-    public abstract static class RandFunction3_Double extends RBaseNodeWithWarnings {
+    public interface RandFunction3_DoubleBase {
         public abstract double execute(double a, double b, double c, RandomNumberProvider rand);
+    }
+
+    public abstract static class RandFunction3_DoubleWithWarnings extends RBaseNodeWithWarnings implements RandFunction3_DoubleBase {
+
+    }
+
+    public abstract static class RandFunction3_Double extends RBaseNode implements RandFunction3_DoubleBase {
+
     }
 
     public abstract static class RandFunction2_Double extends RandFunction3_Double {

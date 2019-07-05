@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_2;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
-import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_Double;
+import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_DoubleBase;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.RMultinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Rbinom;
@@ -92,9 +92,9 @@ public final class RandFunctionsNodes {
     }
 
     public abstract static class RandFunction3Node extends FFIUpCallNode.Arg3 {
-        @Child private RandFunction3_Double inner;
+        @Child private RandFunction3_DoubleBase inner;
 
-        protected RandFunction3Node(RandFunction3_Double inner) {
+        protected RandFunction3Node(RandFunction3_DoubleBase inner) {
             this.inner = inner;
         }
 
@@ -103,7 +103,7 @@ public final class RandFunctionsNodes {
             return inner.execute(a, b, c, RandomNumberProvider.fromCurrentRNG());
         }
 
-        public static RandFunction3Node create(RandFunction3_Double inner) {
+        public static RandFunction3Node create(RandFunction3_DoubleBase inner) {
             return RandFunctionsNodesFactory.RandFunction3NodeGen.create(inner);
         }
     }

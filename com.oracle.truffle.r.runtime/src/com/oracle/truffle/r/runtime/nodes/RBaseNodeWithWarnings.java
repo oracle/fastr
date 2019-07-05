@@ -34,11 +34,11 @@ public class RBaseNodeWithWarnings extends RBaseNode {
      * This function is profiled so that it will only use a real call if a warning was issued from
      * this node before.
      */
-    public final void warning(Message msg) {
+    protected final void warning(Message msg) {
         warning((RBaseNode) null, msg);
     }
 
-    public final void warning(RBaseNode ctx, RError.Message msg) {
+    protected final void warning(RBaseNode ctx, RError.Message msg) {
         if (!hasSeenWarning) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             hasSeenWarning = true;
@@ -49,7 +49,7 @@ public class RBaseNodeWithWarnings extends RBaseNode {
     /**
      * @see #warning(Message)
      */
-    public final void warning(RError.Message msg, Object arg1) {
+    protected final void warning(RError.Message msg, Object arg1) {
         if (!hasSeenWarning) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             hasSeenWarning = true;
@@ -60,7 +60,7 @@ public class RBaseNodeWithWarnings extends RBaseNode {
     /**
      * @see #warning(Message)
      */
-    public final void warning(RError.Message msg, Object arg1, Object arg2) {
+    protected final void warning(RError.Message msg, Object arg1, Object arg2) {
         if (!hasSeenWarning) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             hasSeenWarning = true;
@@ -71,7 +71,7 @@ public class RBaseNodeWithWarnings extends RBaseNode {
     /**
      * @see #warning(Message)
      */
-    public final void warning(RError.Message msg, Object arg1, Object arg2, Object arg3) {
+    protected final void warning(RError.Message msg, Object arg1, Object arg2, Object arg3) {
         if (!hasSeenWarning) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             hasSeenWarning = true;
