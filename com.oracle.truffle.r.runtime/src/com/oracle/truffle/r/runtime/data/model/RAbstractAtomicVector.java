@@ -40,7 +40,7 @@ public abstract class RAbstractAtomicVector extends RAbstractVector {
         super(complete);
     }
 
-    protected boolean isScalar() {
+    public boolean isScalar() {
         return getLength() == 1;
     }
 

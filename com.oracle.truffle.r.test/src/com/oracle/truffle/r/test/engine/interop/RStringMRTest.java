@@ -29,6 +29,18 @@ import org.junit.Test;
 
 public class RStringMRTest extends AbstractMRTest {
 
+    @Test
+    @Override
+    public void testIsNull() throws Exception {
+        super.testIsNull(); // force inherited tests from AbstractMRTest
+    }
+
+    @Override
+    protected boolean isNull(TruffleObject obj) {
+        assert obj instanceof RString;
+        return ((RString) obj).isNA();
+    }
+
     @Override
     protected int getSize(TruffleObject arg0) {
         return 1;
@@ -37,12 +49,6 @@ public class RStringMRTest extends AbstractMRTest {
     @Override
     protected boolean canRead(TruffleObject arg0) {
         return true;
-    }
-
-    @Test
-    @Override
-    public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
     }
 
     @Override

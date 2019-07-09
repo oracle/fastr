@@ -36,6 +36,12 @@ public class RLogicalMRTest extends AbstractMRTest {
     }
 
     @Override
+    protected boolean isNull(TruffleObject obj) {
+        assert obj instanceof RLogical;
+        return ((RLogical) obj).isNA();
+    }
+
+    @Override
     protected int getSize(TruffleObject arg0) {
         return 1;
     }

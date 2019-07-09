@@ -292,7 +292,6 @@ public final class SpecialAttributesFunctions {
         }
     }
 
-    // @GenerateUncached
     public abstract static class SetNamesAttributeNode extends SetSpecialAttributeNode {
 
         private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();

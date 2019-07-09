@@ -46,6 +46,14 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
+    final boolean isNull() {
+        if (!isScalar()) {
+            return false;
+        }
+        return RRuntime.isNA(getDataAt(0));
+    }
+
+    @ExportMessage
     final boolean isString() {
         if (!isScalar()) {
             return false;

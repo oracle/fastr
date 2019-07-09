@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropNA;
+import com.oracle.truffle.r.runtime.data.RInteropNA;
 import org.junit.Test;
 
 public class RInteropNAMRTest extends AbstractMRTest {

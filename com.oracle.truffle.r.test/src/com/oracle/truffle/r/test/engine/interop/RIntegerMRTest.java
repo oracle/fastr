@@ -38,6 +38,12 @@ public class RIntegerMRTest extends AbstractMRTest {
     }
 
     @Override
+    protected boolean isNull(TruffleObject obj) {
+        assert obj instanceof RInteger;
+        return ((RInteger) obj).isNA();
+    }
+
+    @Override
     protected int getSize(TruffleObject arg0) {
         return 1;
     }

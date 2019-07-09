@@ -53,6 +53,14 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
+    final boolean isNull() {
+        if (!isScalar()) {
+            return false;
+        }
+        return isScalarNA();
+    }
+
+    @ExportMessage
     final boolean isNumber() {
         if (!isScalar()) {
             return false;

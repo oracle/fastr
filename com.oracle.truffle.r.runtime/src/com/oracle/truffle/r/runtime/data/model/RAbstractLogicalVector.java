@@ -45,6 +45,14 @@ public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
+    final boolean isNull() {
+        if (!isScalar()) {
+            return false;
+        }
+        return RRuntime.isNA(getDataAt(0));
+    }
+
+    @ExportMessage
     final boolean isBoolean() {
         if (!isScalar()) {
             return false;

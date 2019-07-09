@@ -119,7 +119,7 @@ public class RS4ObjectMRTest extends AbstractMRTest {
                         "cantchangeclass"), UnsupportedMessageException.class);
 
         assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), s4,
-                        "nnnoooonnne", "newvalue"), UnknownIdentifierException.class);
+                        "nnnoooonnne", "newvalue"), UnsupportedMessageException.class);
 
         // TODO this should fail !!!
         assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "i",
