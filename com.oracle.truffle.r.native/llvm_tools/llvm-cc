@@ -23,62 +23,18 @@
 #
 
 ORIG_CMD=$1
-shift
 
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-. $DIR/llvm-helper
-
-SULONG_DIR=""
-if [ -f "${DIR}/../../sulong" ]
+if [ -d "${DIR}/../../llvm/native/bin/" ]
 then
-	# For a package build
-	SULONG_DIR="${DIR}/../../graal/sulong"
+	# For GraalVM
+	TOOLCHAIN_CC="${DIR}/../../llvm/native/bin/cc"
 else
-	# For the FastR build
-	SULONG_DIR="${DIR}/../../../graal/sulong"
+	# For dev
+	TOOLCHAIN_CC="${DIR}/../../graal/sulong/mxbuild/SULONG_BOOTSTRAP_TOOLCHAIN/bin/cc"
 fi
 
-#errorOccurred || {
-#try
-#(
 
-fortran=0
-
-if [ $is_link -eq 1 ]
-then
-  extraObj=""
-  if [ -f "$R_PACKAGE_DIR/libobjects" ]; then
-     extraObj=`cat "$R_PACKAGE_DIR/libobjects"`
-  fi
-  create_bc_lib $@ $extraObj
-else
-  llvm_tool=clang
-  get_llvm_tool
-  runit $llvm_tool_bin -DSULONG "-I${SULONG_DIR}/include" "-I${SULONG_DIR}/mxbuild/sulong-libs" "-I${SULONG_DIR}/projects/com.oracle.truffle.llvm.libraries.bitcode/include" "${llvm_args[@]}"
-  ecode=$?
-  if [[ $ecode -ne 0 ]]; then
-    exit $ecode
-  fi
-
-  # the llvm_ir_file is empty if the result is sent to stdout
-  if [ -n "$llvm_ir_file" ]; then
-    mem2reg_opt
-    ecode=$?
-    if [[ $ecode -ne 0 ]]; then
-      exit $ecode
-    fi
-    #fake_obj
-    #ecode=$?
-    #if [[ $ecode -ne 0 ]]; then
-    #  exit $ecode
-    #fi
-  fi
-fi
-
-#) || catch || {
-#	recordError
-#    exit $ex_code
-#}
-#}
+${TOOLCHAIN_CC} "$@"

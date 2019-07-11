@@ -98,10 +98,6 @@ public abstract class RFFIContext extends RFFI {
 
     public abstract TruffleObject lookupNativeFunction(NativeFunction function);
 
-    protected void loadLibR(RContext context, String librffiPath) {
-        DLL.loadLibR(context, librffiPath);
-    }
-
     public abstract <C extends RFFIContext> C as(Class<C> rffiCtxClass);
 
     /**
@@ -200,12 +196,5 @@ public abstract class RFFIContext extends RFFI {
         return child;
     }
 
-    private RFFI instance;
-
-    public final RFFI getRFFI() {
-        if (instance == null) {
-            instance = RFFIFactory.create();
-        }
-        return instance;
-    }
+    public abstract RFFIFactory.Type getDefaultRFFIType();
 }

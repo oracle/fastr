@@ -28,6 +28,8 @@ export TOPDIR = $(CURDIR)
 export MX_OUTPUT_DIR = $(abspath $(TOPDIR)/../mxbuild/com.oracle.truffle.r.test/bin/com/oracle/truffle/r/test)
 export REPO_DIR := $(TOPDIR)/packages/repo/src/contrib
 export FASTR_NATIVE_DIR = $(subst test.native,native,$(TOPDIR))
+export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
+export FASTR_LIB_DIR=$(FASTR_R_HOME)/lib
 
 OSNAME := $(shell uname)
 

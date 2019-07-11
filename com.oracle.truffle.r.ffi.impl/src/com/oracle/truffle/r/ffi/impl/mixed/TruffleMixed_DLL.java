@@ -23,7 +23,10 @@
 package com.oracle.truffle.r.ffi.impl.mixed;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -34,15 +37,61 @@ import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLLFactory.TruffleMixed_
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLLFactory.TruffleMixed_DLSymNodeGen;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
+import com.oracle.truffle.r.runtime.context.FastROptions;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 
 public class TruffleMixed_DLL implements DLLRFFI {
 
     private final TruffleLLVM_DLL llvmDllRFFI = new TruffleLLVM_DLL();
     private final TruffleNFI_DLL nfiDllRFFI = new TruffleNFI_DLL();
+
+    private final Set<String> llvmPackages;
+    private final boolean includePackages;
+
+    TruffleMixed_DLL() {
+        if ("llvm".equals(System.getenv().get("FASTR_RFFI"))) {
+            llvmPackages = java.util.Collections.emptySet();
+            includePackages = true;
+        } else {
+            String llvmPkgsOpt = RContext.getInstance().getOption(FastROptions.BackEndLLVM);
+            if (llvmPkgsOpt != null && llvmPkgsOpt.startsWith("-")) {
+                includePackages = false;
+                llvmPkgsOpt = llvmPkgsOpt.substring(1);
+            } else {
+                includePackages = true;
+            }
+            String[] llvmPkgs = llvmPkgsOpt == null ? null : llvmPkgsOpt.split(",");
+            if (llvmPkgs == null) {
+                llvmPackages = null;
+            } else if ("".equals(llvmPkgsOpt) || llvmPkgs.length == 1 && "true".equals(llvmPkgs[0])) {
+                llvmPackages = java.util.Collections.emptySet();
+            } else {
+                llvmPackages = new HashSet<>();
+                for (String llvmPkg : llvmPkgs) {
+                    llvmPackages.add(llvmPkg);
+                }
+            }
+        }
+    }
+
+    boolean isLLVMPackage(Path libPath) {
+        if (llvmPackages == null) {
+            return !includePackages;
+        }
+        if (llvmPackages.isEmpty()) {
+            return includePackages;
+        } else {
+            Path libFileName = libPath.getFileName();
+            assert libFileName != null;
+            String libName = libFileName.toString();
+            libName = libName.substring(0, libName.lastIndexOf('.'));
+            return !(llvmPackages.contains(libName) ^ includePackages);
+        }
+    }
 
     @Override
     public DLOpenNode createDLOpenNode() {
@@ -63,25 +112,29 @@ public class TruffleMixed_DLL implements DLLRFFI {
 
         private final DLOpenNode llvmDllOpenNode;
         private final DLOpenNode nfiDllOpenNode;
+        private final TruffleMixed_DLL dllRffi;
 
         TruffleMixed_DLOpenNode(TruffleMixed_DLL dllRffi) {
+            this.dllRffi = dllRffi;
             this.llvmDllOpenNode = dllRffi.llvmDllRFFI.createDLOpenNode();
             this.nfiDllOpenNode = dllRffi.nfiDllRFFI.createDLOpenNode();
         }
 
         @Override
         public LibHandle execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError {
-            LibHandle nfiLibHandle = null;
-            if (Files.exists(Paths.get(path))) {
-                nfiLibHandle = nfiDllOpenNode.execute(path, local, now);
+            Path libPath = Paths.get(path);
+            if (!Files.exists(libPath)) {
+                throw new UnsatisfiedLinkError(String.format("Shared library %s not found", path));
             }
-            if (Files.exists(Paths.get(path + "l"))) {
+
+            boolean useLLVM = dllRffi.isLLVMPackage(libPath);
+
+            LibHandle nfiLibHandle = nfiDllOpenNode.execute(path, local, now);
+            if (useLLVM) {
                 LLVM_Handle llvmLibHandle = (LLVM_Handle) llvmDllOpenNode.execute(path, local, now);
                 return new MixedLLVM_Handle(llvmLibHandle, nfiLibHandle);
-            } else if (nfiLibHandle != null) {
-                return nfiLibHandle;
             } else {
-                throw new UnsatisfiedLinkError(String.format("Neither NFI nor LLVM version of shared library %s found", path));
+                return nfiLibHandle;
             }
         }
     }
@@ -189,7 +242,6 @@ public class TruffleMixed_DLL implements DLLRFFI {
             super(llvmLibHandle);
             this.nfiLibHandle = nfiLibHandle;
         }
-
     }
 
 }

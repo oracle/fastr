@@ -36,17 +36,6 @@ OSNAME := $(shell uname)
 PATCH := patch
 PATCH_BUILD := patch-build
 
-ifneq ($(FASTR_RFFI),llvm)
-# LLVM text parser and -g don't get on
-# TODO check still true
-OPT_FLAGS := -g -O2
-OPT_FLAGS := -O2
-
-CFLAGS := $(OPT_FLAGS)
-CPPFLAGS := $(OPT_FLAGS)
-CXXFLAGS := $(OPT_FLAGS)
-endif
-
 ifeq ($(OSNAME), Linux)
   FORCE_PIC := true
 else ifeq ($(OSNAME), SunOS)

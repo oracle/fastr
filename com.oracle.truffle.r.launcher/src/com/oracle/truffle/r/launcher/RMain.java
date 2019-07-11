@@ -184,11 +184,27 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             contextBuilder.allowHostClassLookup(null);
         }
 
+        boolean isLLVMBackEnd = false;
+        boolean debugLLVMLibs = false;
+        for (String rArg : this.rArguments) {
+            if (rArg.startsWith("--R.BackEndLLVM")) {
+                isLLVMBackEnd = true;
+                continue;
+            }
+            if (rArg.startsWith("--R.DebugLLVMLibs")) {
+                debugLLVMLibs = true;
+            }
+        }
+        if (isLLVMBackEnd) {
+            System.setProperty("fastr.rffi.factory.type", "llvm");
+        }
+
         Context context;
-        String tracedLibs = System.getenv("DEBUG_LLVM_LIBS");
-        if (tracedLibs != null) {
-            context = preparedContext = contextBuilder.option("inspect", "true").option("llvm.enableLVI", "true").option("llvm.llDebug", "true").arguments("R", rArguments).in(
-                            consoleHandler.createInputStream()).out(outStream).err(errStream).build();
+        if (debugLLVMLibs) {
+            context = preparedContext = contextBuilder.allowExperimentalOptions(true).option("inspect.HideErrors", "true").option("inspect.Internal", "true").option(
+                            "llvm.enableLVI", "true").arguments("R",
+                                            rArguments).in(
+                                                            consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         } else {
             context = preparedContext = contextBuilder.arguments("R", rArguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         }
@@ -254,10 +270,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
     @Override
     protected String[] getDefaultLanguages() {
-        if ("llvm".equals(System.getenv("FASTR_RFFI"))) {
-            return new String[]{getLanguageId(), "llvm"};
-        }
-        return super.getDefaultLanguages();
+        return new String[]{getLanguageId(), "llvm"};
     }
 
     @Override

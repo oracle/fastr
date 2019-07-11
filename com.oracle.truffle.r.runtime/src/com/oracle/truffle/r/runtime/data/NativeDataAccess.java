@@ -346,7 +346,7 @@ public final class NativeDataAccess {
     // address value
     private static final AtomicLong counter = new AtomicLong(0xdef000000000001L);
     private static final ConcurrentHashMap<Long, NativeMirror> nativeMirrors = new ConcurrentHashMap<>(512);
-    private static final ConcurrentHashMap<Long, NativeMirror> dataAddressToNativeMirrors = System.getenv(FastROptions.DEBUG_LLVM_LIBS) != null ? new ConcurrentHashMap<>(512) : null;
+    private static final ConcurrentHashMap<Long, NativeMirror> dataAddressToNativeMirrors = System.getenv(FastROptions.NATIVE_DATA_INSPECTOR) != null ? new ConcurrentHashMap<>(512) : null;
     private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = TRACE_MIRROR_ALLOCATION_SITES ? new ConcurrentHashMap<>() : null;
 
     public static CallTarget createIsPointer() {
@@ -1385,7 +1385,7 @@ public final class NativeDataAccess {
     }
 
     static void initMBean() {
-        if (System.getenv(FastROptions.DEBUG_LLVM_LIBS) != null) {
+        if (System.getenv(FastROptions.NATIVE_DATA_INSPECTOR) != null) {
             try {
                 MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
                 ObjectName name = new ObjectName("FastR:type=JMX,name=NativeDataInspector");

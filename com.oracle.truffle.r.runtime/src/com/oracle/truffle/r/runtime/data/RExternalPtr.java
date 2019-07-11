@@ -115,6 +115,6 @@ public final class RExternalPtr extends RAttributeStorage implements RTypedValue
 
     @Override
     public String toString() {
-        return getAddr() == null ? "<pointer: 0x?>" : String.format("<pointer: 0x%s>", Long.toHexString(getAddr().asAddress()));
+        return getAddr() == null ? "<pointer: 0x?>" : String.format("<pointer: 0x%s>", getAddr().isAddress() ? Long.toHexString(getAddr().asAddress()) : getAddr().value);
     }
 }

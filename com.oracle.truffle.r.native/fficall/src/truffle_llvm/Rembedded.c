@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,3 +28,7 @@ char *R_HomeDir(void) {
 	return ((call_R_HomeDir) callbacks[R_HomeDir_x])();
 }
 
+int R_ReadConsole(const char *prompt, unsigned char *buf, int len, int addtohistory) {
+    unimplemented("R_ReadConsole");	
+	return 0;
+}

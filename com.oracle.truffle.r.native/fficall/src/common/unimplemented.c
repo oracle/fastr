@@ -20,9 +20,12 @@
 
 #include <Rinternals.h>
 #include <stdlib.h>
+#include <rlocale.h>
 
 #include <R_ext/eventloop.h>
+#include <R_ext/GraphicsEngine.h>
 #include <Defn.h>
+
 
 Rboolean known_to_be_latin1 = FALSE;
 Rboolean known_to_be_utf8 = FALSE;
@@ -165,4 +168,54 @@ int Scollate(SEXP a, SEXP b) {
 // used in main/format.c
 void z_prec_r(Rcomplex *r, Rcomplex *x, double digits) {
     unimplemented("z_prec_r");
+}
+
+int Rf_AdobeSymbol2ucs2(int n) {
+    unimplemented("Rf_AdobeSymbol2ucs2");
+    return 0;
+}
+
+size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, mbstate_t *ps) {
+    unimplemented("Mbrtowc");
+    return 0;
+}
+
+double R_GE_VStrHeight(const char *s, cetype_t enc, const pGEcontext gc, pGEDevDesc dd) {
+    unimplemented("R_GE_VStrHeight");
+    return 0;
+}
+
+void setulb(int n, int m, double *x, double *l, double *u, int *nbd,
+	    double *f, double *g, double factr, double *pgtol,
+	    double *wa, int * iwa, char *task, int iprint, int *isave) {
+    unimplemented("setulb");	    
+}
+
+void R_GE_VText(double x, double y, const char * const s, cetype_t enc,
+		double x_justify, double y_justify, double rotation,
+		const pGEcontext gc, pGEDevDesc dd) {
+    unimplemented("R_GE_VText");	    		
+}
+
+double R_GE_VStrWidth(const char *s, cetype_t enc, const pGEcontext gc, pGEDevDesc dd) {
+    unimplemented("R_GE_VStrWidth");	    		
+}
+
+void genptry(int n, double *p, double *ptry, double scale, void *ex) {
+    unimplemented("genptry");	    		
+}
+
+double EXP(double x) {
+    unimplemented("EXP");
+    return 0;
+}
+
+double LOG(double x) {
+    unimplemented("LOG");
+    return 0;
+}
+
+Rwchar_t Rf_utf8toucs32(wchar_t high, const char *s) {
+    unimplemented("Rf_utf8toucs32");	
+	return 0;
 }

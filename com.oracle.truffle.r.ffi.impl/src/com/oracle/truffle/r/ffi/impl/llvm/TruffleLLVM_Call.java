@@ -31,6 +31,7 @@ import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -68,7 +69,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
     }
 
     static final class ContextStateImpl implements RContext.ContextState {
-        private final TruffleLLVM_UpCallsRFFIImpl upCallsRFFIImpl = new TruffleLLVM_UpCallsRFFIImpl();
+        final TruffleLLVM_UpCallsRFFIImpl upCallsRFFIImpl = new TruffleLLVM_UpCallsRFFIImpl();
         private RContext context;
         private boolean initVarsDone;
         private TruffleObject setCallbacksAddress;
@@ -78,7 +79,6 @@ public final class TruffleLLVM_Call implements CallRFFI {
         public ContextState initialize(RContext contextA) {
             this.context = contextA;
             RFFIFactory.getCallRFFI();
-            upCallsRFFIImpl.initialize();
             initCallbacks();
             return this;
         }
@@ -103,11 +103,13 @@ public final class TruffleLLVM_Call implements CallRFFI {
 
                 callbacks = (TruffleObject) context.getEnv().asGuestValue(callbacksArray);
 
+                InteropLibrary interop = InteropLibrary.getFactory().getUncached();
                 LLVM_Handle rdllInfo = (LLVM_Handle) DLL.getRdllInfo().handle;
-                SymbolHandle setClbkAddrSymbolHandle = new SymbolHandle(rdllInfo.parsedIRs[0].lookup("Rinternals_setCallbacksAddress"));
+                Object setClbkAddr = interop.readMember(rdllInfo.handle, "Rinternals_setCallbacksAddress");
+                SymbolHandle setClbkAddrSymbolHandle = new SymbolHandle(setClbkAddr);
                 setCallbacksAddress = setClbkAddrSymbolHandle.asTruffleObject();
                 // Initialize the callbacks global variable
-                InteropLibrary.getFactory().getUncached().execute(setCallbacksAddress, context.getEnv().asGuestValue(new TruffleObject[0]));
+                interop.execute(setCallbacksAddress, context.getEnv().asGuestValue(new TruffleObject[0]));
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             }
@@ -131,11 +133,12 @@ public final class TruffleLLVM_Call implements CallRFFI {
 
     public static void initVariables(RContext context) {
         // must have parsed the variables module in libR
+        InteropLibrary interop = InteropLibrary.getFactory().getUncached();
         LLVM_Handle rdllInfo = (LLVM_Handle) DLL.getRdllInfo().handle;
         for (INIT_VAR_FUN initVarFun : INIT_VAR_FUN.values()) {
             try {
-                initVarFun.symbolHandle = new SymbolHandle(rdllInfo.parsedIRs[0].lookup(initVarFun.funName));
-            } catch (UnknownIdentifierException e) {
+                initVarFun.symbolHandle = new SymbolHandle(interop.readMember(rdllInfo.handle, initVarFun.funName));
+            } catch (UnknownIdentifierException | UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
         }
@@ -150,11 +153,11 @@ public final class TruffleLLVM_Call implements CallRFFI {
                 }
                 try {
                     if (value instanceof Double) {
-                        InteropLibrary.getFactory().getUncached().execute(INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
+                        interop.execute(INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
                     } else if (value instanceof Integer) {
-                        InteropLibrary.getFactory().getUncached().execute(INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
+                        interop.execute(INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
                     } else if (value instanceof TruffleObject) {
-                        InteropLibrary.getFactory().getUncached().execute(INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, value);
+                        interop.execute(INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, value);
                     }
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);

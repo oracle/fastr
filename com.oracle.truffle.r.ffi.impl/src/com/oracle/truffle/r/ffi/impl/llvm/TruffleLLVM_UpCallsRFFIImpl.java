@@ -28,7 +28,6 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
-import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNodeGen;
@@ -54,16 +52,7 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
  */
 public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
-    private TruffleObject setSymbolHandle;
-
-    void initialize() {
-        LLVM_Handle rdllInfo = (LLVM_Handle) DLL.getRdllInfo().handle;
-        try {
-            setSymbolHandle = (TruffleObject) rdllInfo.parsedIRs[0].lookup("Rdynload_setSymbol");
-        } catch (Exception e) {
-            RInternalError.shouldNotReachHere(e);
-        }
-    }
+    public TruffleObject setSymbolHandle;
 
     @Override
     public RFFIFactory.Type getRFFIType() {

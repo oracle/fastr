@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import java.nio.file.FileSystems;
 import java.util.EnumMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -32,8 +31,6 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
-import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.ParsedLLVM_IR;
-import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -41,13 +38,13 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
@@ -56,9 +53,8 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
  * A facade for the context state for the Truffle LLVM factory. Delegates to the various
  * module-specific pieces of state.
  */
-public final class TruffleLLVM_Context extends RFFIContext {
+public class TruffleLLVM_Context extends RFFIContext {
 
-    private final TruffleLLVM_DLL.ContextStateImpl dllState = new TruffleLLVM_DLL.ContextStateImpl();
     final TruffleLLVM_Call.ContextStateImpl callState = new TruffleLLVM_Call.ContextStateImpl();
 
     public TruffleLLVM_Context() {
@@ -88,19 +84,26 @@ public final class TruffleLLVM_Context extends RFFIContext {
         return context.getStateRFFI(TruffleLLVM_Context.class);
     }
 
+    protected void addLibRToDLLContextState(RContext context, DLLInfo libR) {
+        context.stateDLL.addLibR(libR);
+    }
+
     @Override
     public ContextState initialize(RContext context) {
-
-        // Load the f2c runtime library
-        String libf2cPath = FileSystems.getDefault().getPath(REnvVars.rHome(), "lib", "libf2c.so").toString();
-        DLLRFFI.DLOpenRootNode.create(context).call(libf2cPath, false, false);
-
+        // For now, the LLVM context is only used in the mixed mode, where we first load NFI
+        // NFI loads libR, which links with libRlapack and libRblas, therefore these native
+        // libraries are also loaded for us.
+        // Note that tricky thing w.r.t. libRlapack/blas is that they depend on "xerbla_", which is
+        // defined in libR itself. The native loader can probably deal with this dependency cycle,
+        // while Sulong cannot at the moment.
+        // We build the libR.sol on purpose without liking it to libRblas and libRlapack, so that
+        // Sulong is not trying to load these here.
         if (context.isInitial()) {
+            TruffleLLVM_DLL.dlOpen(context, LibPaths.getBuiltinLibPath("f2c"));
             String librffiPath = LibPaths.getBuiltinLibPath("R");
-            loadLibR(context, librffiPath);
+            DLLInfo libR = DLL.loadLibR(context, librffiPath, path -> TruffleLLVM_DLL.dlOpen(context, path));
+            addLibRToDLLContextState(context, libR);
         }
-
-        dllState.initialize(context);
         callState.initialize(context);
         return this;
     }
@@ -109,20 +112,10 @@ public final class TruffleLLVM_Context extends RFFIContext {
     public void initializeVariables(RContext context) {
         super.initializeVariables(context);
         callState.initializeVariables();
-
-        // Load dependencies that don't automatically get loaded:
-        TruffleLLVM_Lapack.load();
-
-        String pcrePath = LibPaths.getBuiltinLibPath("pcre");
-        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath, false, true);
-
-        String libzPath = LibPaths.getBuiltinLibPath("z");
-        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(libzPath, false, true);
     }
 
     @Override
     public void beforeDispose(RContext context) {
-        dllState.beforeDispose(context);
         callState.beforeDispose(context);
     }
 
@@ -132,47 +125,35 @@ public final class TruffleLLVM_Context extends RFFIContext {
     public TruffleObject lookupNativeFunction(NativeFunction function) {
         CompilerAsserts.neverPartOfCompilation();
         if (!nativeFunctions.containsKey(function)) {
-            TruffleObject[] lookupObjects = new TruffleObject[0];
+            Object lookupObject;
             if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
-                TruffleObject lookupObject = (TruffleObject) ((LLVM_Handle) DLL.getRdllInfo().handle).parsedIRs[0].lookupObject;
-                lookupObjects = new TruffleObject[]{lookupObject};
+                lookupObject = ((LLVM_Handle) DLL.getRdllInfo().handle).handle;
             } else if (Utils.identityEquals(function.getLibrary(), NativeFunction.anyLibrary())) {
                 DLLInfo dllInfo = DLL.findLibraryContainingSymbol(RContext.getInstance(), function.getCallName());
                 if (dllInfo == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());
                 }
-                lookupObjects = getLookupObjects(dllInfo);
+                lookupObject = ((LLVM_Handle) dllInfo.handle).handle;
             } else {
                 DLLInfo dllInfo = DLL.findLibrary(function.getLibrary());
                 if (dllInfo == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library  " + function.getLibrary());
                 }
-                lookupObjects = getLookupObjects(dllInfo);
+                lookupObject = ((LLVM_Handle) dllInfo.handle).handle;
             }
             TruffleObject target = null;
-            for (int i = 0; i < lookupObjects.length; i++) {
-                try {
-                    target = (TruffleObject) InteropLibrary.getFactory().getUncached().readMember(lookupObjects[i], function.getCallName());
-                    break;
-                } catch (UnknownIdentifierException e) {
-                    continue;
-                } catch (UnsupportedMessageException e) {
-                    RInternalError.shouldNotReachHere();
-                }
+            try {
+                target = (TruffleObject) InteropLibrary.getFactory().getUncached().readMember(lookupObject, function.getCallName());
+            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                RInternalError.shouldNotReachHere();
             }
             nativeFunctions.put(function, target);
         }
         return nativeFunctions.get(function);
     }
 
-    private static TruffleObject[] getLookupObjects(DLLInfo dllInfo) {
-        TruffleObject[] lookupObjects;
-        final ParsedLLVM_IR[] parsedIRs = ((LLVM_Handle) dllInfo.handle).parsedIRs;
-        lookupObjects = new TruffleObject[parsedIRs.length];
-        for (int i = 0; i < parsedIRs.length; i++) {
-            lookupObjects[i] = (TruffleObject) parsedIRs[i].lookupObject;
-        }
-        return lookupObjects;
+    @Override
+    public Type getDefaultRFFIType() {
+        return Type.LLVM;
     }
-
 }

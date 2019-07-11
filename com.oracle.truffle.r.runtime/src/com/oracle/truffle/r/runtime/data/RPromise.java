@@ -41,6 +41,9 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Denotes an R {@code promise}.
@@ -174,7 +177,15 @@ public class RPromise extends RObject implements RTypedValue {
     @ExportMessage
     Object readMember(String member) throws UnknownIdentifierException {
         if (MEMBER_EXPR.equals(member)) {
-            return RDataFactory.createLanguage(getClosure());
+            Closure cl = getClosure();
+            RSyntaxNode sn = cl.getExpr().asRSyntaxNode();
+            if (sn instanceof RSyntaxLookup) {
+                return RDataFactory.createSymbol(((RSyntaxLookup) sn).getIdentifier());
+            } else if (sn instanceof RSyntaxConstant) {
+                return ((RSyntaxConstant) sn).getValue();
+            } else {
+                return RDataFactory.createLanguage(cl);
+            }
         }
         if (MEMBER_IS_EVALUATED.equals(member)) {
             return RRuntime.asLogical(isEvaluated());

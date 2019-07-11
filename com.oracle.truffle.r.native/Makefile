@@ -23,6 +23,11 @@
 
 .PHONY: all clean
 
+$(info Building FastR with LLVM... CC is $(LABS_LLVM_CC))
+$(info LLVM_RUNTMIE_LIBS is $(LLVM_RUNTMIE_LIBS))
+$(info LLVM_INCLUDES is $(LLVM_INCLUDES))
+$(info NFI_INCLUDES is $(NFI_INCLUDES))
+
 export TOPDIR = $(CURDIR)
 export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
 export FASTR_LIB_DIR=$(FASTR_R_HOME)/lib
@@ -34,6 +39,7 @@ export GNUR_HOME = $(TOPDIR)/gnur/patch-build
 $(info R_VERSION: $(R_VERSION))
 $(info GNUR_HOME: $(GNUR_HOME))
 
+# TODO: can be removed?
 ifndef FASTR_RFFI
 export FASTR_RFFI = nfi
 endif
@@ -47,26 +53,23 @@ endif
 # to force a clean build, and elsewhere use sentinels to avoid rebuilding when we can't compute the
 # dependencies accurately.
 
-ifeq ($(FASTR_RFFI),llvm)
-all: checkversion
-	$(MAKE) -C gnur
-	$(MAKE) -C ../f2c/f2c
-	FASTR_RFFI=llvm-only $(MAKE) -C ../f2c/libf2c
-	$(MAKE) -C include
-	$(MAKE) -C fficall
-	$(MAKE) -C $(GNUR_HOME)/src/library
-	$(MAKE) -C run
-	cp version.source version.built
 
-clean:
-	$(MAKE) -C include clean
-	$(MAKE) -C fficall clean
-	$(MAKE) -C run clean
-	$(MAKE) -C ../f2c/libf2c clean
-	$(MAKE) -C ../f2c/f2c clean		
-	$(MAKE) -C gnur clean
+OS_NAME := $(shell uname -s)
+
+all: checkversion
+	$(MAKE) -C ../f2c/f2c CC=$(LABS_LLVM_CC)
+	mkdir -p ../lib
+ifeq ($(OS_NAME),Darwin)
+	$(MAKE) -C ../f2c/libf2c CC=$(LABS_LLVM_CC)
+	cp ../f2c/libf2c/libf2c.so ../lib/libf2c.dylib
+	install_name_tool -id @rpath/libf2c.dylib ../lib/libf2c.dylib
 else
-all: checkversion
+	# TODO: Patch the libf2c makefile so that the flags can be specified using the make's CFLAGS parameter
+	sed -i -e 's/CFLAGS = -O/CFLAGS = -O -fPIC/' ../f2c/libf2c/makefile
+	$(MAKE) -C ../f2c/libf2c CC=$(LABS_LLVM_CC)
+	cp ../f2c/libf2c/libf2c.so ../lib/
+endif
+
 	$(MAKE) -C gnur
 	$(MAKE) -C include
 	$(MAKE) -C fficall
@@ -75,11 +78,13 @@ all: checkversion
 	cp version.source version.built
 
 clean:
+	$(MAKE) -C ../f2c/libf2c clean
+	$(MAKE) -C ../f2c/f2c clean
 	$(MAKE) -C include clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C run clean
 	$(MAKE) -C gnur clean
-endif
+
 
 version.source := $(shell cat version.source)
 

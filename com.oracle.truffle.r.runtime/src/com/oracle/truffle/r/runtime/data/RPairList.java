@@ -250,7 +250,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     private static boolean assertClosure(Closure closure) {
-        RBaseNode node = closure.getExpr();
+        RSyntaxNode node = closure.getExpr().asRSyntaxNode();
         if (node instanceof RSyntaxCall) {
             RSyntaxCall call = (RSyntaxCall) node;
             if (call.getSyntaxLHS() instanceof RSyntaxLookup && ((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier().equals("function")) {

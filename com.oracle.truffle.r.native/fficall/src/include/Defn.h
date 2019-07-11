@@ -78,6 +78,7 @@ extern Rboolean R_Visible;
 int	R_ReadConsole(const char *, unsigned char *, int, int);
 extern const char *R_Home;
 extern const char *R_TempDir;
+extern const char *Sys_TempDir;
 
 extern Rboolean R_interrupts_suspended;
 extern int R_interrupts_pending;

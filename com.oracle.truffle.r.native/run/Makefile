@@ -50,7 +50,7 @@ DOC_FILES := $(wildcard $(GNUR_HOME_BINARY)/doc/*)
 
 SHARE_FILES := $(addprefix $(GNUR_HOME_BINARY)/share/,R Rd make java encodings)
 
-LLVM_TOOLS := $(wildcard $(FASTR_NATIVE_DIR)/llvm_tools/llvm-*)
+LLVM_TOOLS := $(wildcard $(FASTR_NATIVE_DIR)/llvm_tools/*)
 
 all: rundirs rcmds includedir
 
@@ -95,11 +95,25 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 
 	echo $(DEFAULT_CRAN_MIRROR) > $(FASTR_ETC_DIR)/DEFAULT_CRAN_MIRROR
 
-ifeq ($(FASTR_RFFI),llvm)
+	# Alter the configuration which is used for building R packages
+	# Create symlinks to the Labs LLVM tools inside FASTR_HOME/bin
+	# Copy our f2c-wrapper tool to FASTR_HOME/bin
+	# Change the variables like CC in FASTR_HOME/etc/Makevars to point to these tools
+	# TODO: ar tool
 	ed Makeconf.etc < edMakeconf.etc.llvm
+	sed -i -e 's/-fopenmp//' Makeconf.etc
+	sed -i -e 's~LIBR0 =~LIBR0 = -lR~' Makeconf.etc
+	sed -i -e 's~LDFLAGS =~LDFLAGS = -Wl,-rpath,$$\(R_HOME\)/lib/ -L$$\(R_HOME\)/lib -lf2c~' Makeconf.etc
+	sed -i -e 's~^CXXFLAGS =\(.*\)~CXXFLAGS = \1 $(FASTR_CXXFLAGS)~g' Makeconf.etc
+	# A workaround for a Sulong issue: TODO: the issue ID
+	sed -i -e 's/-O2//' Makeconf.etc
+	# the undefined option is not compatible with LLVM bundling
+	sed -i -e 's/-undefined dynamic_lookup//' Makeconf.etc
+
 	cp $(LLVM_TOOLS) $(FASTR_BIN_DIR)
-endif
+
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
+	cp Makevars.site.debug $(FASTR_ETC_DIR)
 
 	## deploy helper script that can build native-image of FastR and update the launchers in GraalVM
 	cp install_r_native_image $(FASTR_BIN_DIR)

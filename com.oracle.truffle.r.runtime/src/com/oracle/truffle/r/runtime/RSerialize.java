@@ -2253,7 +2253,7 @@ public class RSerialize {
             output.serialize(obj);
             return out.toByteArray();
         } catch (IOException ex) {
-            throw RInternalError.shouldNotReachHere();
+            throw RInternalError.shouldNotReachHere(ex);
         }
     }
 

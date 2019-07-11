@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -45,23 +45,10 @@ C_LIB := $(OBJ)/$(C_LIBNAME)
 
 INCLUDE_DIR := $(NATIVE_PROJECT)/include
 
-ifeq ($(FASTR_RFFI),llvm)
-
 all: $(C_LIB)
 
-else
-# suite.py requires that there always be liburand.so and liburand.sol. In LLVM mode, the 
-# build script builds both, but in NFI mode, we have to create a dummy liburand.sol.
-C_LIB_LLVM_DUMMY := $(C_LIB)l
-all: $(C_LIB) $(C_LIB_LLVM_DUMMY)
-
-$(C_LIB_LLVM_DUMMY): $(C_LIB)
-	touch $(C_LIB_LLVM_DUMMY)
-	
-endif
-
 $(C_LIB): $(OBJ) $(C_OBJECTS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS)  -o $(C_LIB) $(C_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -L$(FASTR_LIB_DIR) -lR -o $(C_LIB) $(C_OBJECTS)
 
 $(OBJ):
 	mkdir -p $(OBJ)
