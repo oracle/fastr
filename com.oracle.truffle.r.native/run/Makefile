@@ -103,7 +103,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	ed Makeconf.etc < edMakeconf.etc.llvm
 	sed -i -e 's/-fopenmp//' Makeconf.etc
 	sed -i -e 's~LIBR0 =~LIBR0 = -lR~' Makeconf.etc
-	sed -i -e 's~LDFLAGS =~LDFLAGS = -Wl,-rpath,$(FASTR_R_HOME)/lib/ -L$(FASTR_R_HOME)/lib -lf2c~' Makeconf.etc
+	sed -i -e 's~LDFLAGS =~LDFLAGS = -Wl,-rpath,$$\(R_HOME\)/lib/ -L$$\(R_HOME\)/lib -lf2c~' Makeconf.etc
 	sed -i -e 's~^CXXFLAGS =\(.*\)~CXXFLAGS = \1 $(FASTR_CXXFLAGS)~g' Makeconf.etc
 	# A workaround for a Sulong issue: TODO: the issue ID
 	sed -i -e 's/-O2//' Makeconf.etc

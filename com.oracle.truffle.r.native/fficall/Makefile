@@ -92,16 +92,17 @@ ifeq ($(OS_NAME),Darwin)
 	# The following commands will be changed to use @loader_path (or @rpath) instead of the absolute paths $(LLVM_LIBS_DIR) and $(FASTR_LIB_DIR)
 	# when Sulong supports @loader_path (resp. @rpath) substitution.
 	install_name_tool -change bin/libpolyglot-mock.dylib $(LLVM_LIBS_DIR)/libpolyglot-mock.dylib $(LLVM_LIB)
-	install_name_tool -change @rpath/libRblas.dylib $(FASTR_LIB_DIR)/libRblas.dylib $(LLVM_LIB)
-	install_name_tool -change @rpath/libRlapack.dylib $(FASTR_LIB_DIR)/libRlapack.dylib $(LLVM_LIB)
-	install_name_tool -change @rpath/libpcre.dylib $(FASTR_LIB_DIR)/libpcre.dylib $(LLVM_LIB)
-	install_name_tool -change @rpath/libz.dylib $(FASTR_LIB_DIR)/libz.dylib $(LLVM_LIB)
-	install_name_tool -change @rpath/libf2c.so $(FASTR_LIB_DIR)/libf2c$(DYLIB_EXT) $(LLVM_LIB)
+	#install_name_tool -change @rpath/libRblas.dylib $(FASTR_LIB_DIR)/libRblas.dylib $(LLVM_LIB)
+	#install_name_tool -change @rpath/libRlapack.dylib $(FASTR_LIB_DIR)/libRlapack.dylib $(LLVM_LIB)
+	#install_name_tool -change @rpath/libpcre.dylib $(FASTR_LIB_DIR)/libpcre.dylib $(LLVM_LIB)
+	#install_name_tool -change @rpath/libz.dylib $(FASTR_LIB_DIR)/libz.dylib $(LLVM_LIB)
+	#install_name_tool -change @rpath/libf2c.so $(FASTR_LIB_DIR)/libf2c$(DYLIB_EXT) $(LLVM_LIB)
 	
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
 	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
 	install_name_tool -change libf2c.so @rpath/libf2c$(DYLIB_EXT) $(R_LIB)
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
+	install_name_tool -id @rpath/libR.dylibl $(LLVM_LIB)
 # check if we captured libpcre/libz, rpath those in libR
 	mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_LIB_DIR)
 else

@@ -8,7 +8,7 @@ include "ci_common/common.hocon"
 # The standard set of gate builds. N.B. the style/builtin checks are only run on Linux as they are not OS-dependent.
 
 # in case you do not want to enforce a specific overlay commit, comment:
-overlay = "ab7e2accc90bcf30ebd4a2c27862a90be9fbb0c7"
+overlay = "9903f7dd32772b39dcd241c3bc3f9bd8e3742db7"
 builds = [
   ${gateTestLinux}            {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64"}
   ${gateTestNoDSLCacheLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-no-dsl-cache"}
