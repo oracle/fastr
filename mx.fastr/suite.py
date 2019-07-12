@@ -51,6 +51,20 @@ suite = {
         "resource" : "true"
     },
 
+    "F2C" : {
+        "path" : "libdownloads/f2c/src.tgz",
+        "urls" : ["https://www.netlib.org/f2c/src.tgz"],
+        "sha1" : "9a12bd6038c2bb60409b29beafd2db10a06bad8e",
+        "resource" : "true"
+    },
+
+    "LIBF2C" : {
+        "path" : "libdownloads/f2c/libf2c.zip",
+        "urls" : ["https://www.netlib.org/f2c/libf2c.zip"],
+        "sha1" : "e39a00f425f8fc41dde434686080a94e94884f30",
+        "resource" : "true"
+    },
+
     "XZ-1.8" : {
       "sha1" : "c4f7d054303948eb6a4066194253886c8af07128",
       "maven" : {
@@ -263,6 +277,8 @@ suite = {
       "sourceDirs" : [],
       "dependencies" : [
         "GNUR",
+        "F2C",
+        "LIBF2C",
         "truffle:TRUFFLE_NFI_NATIVE",
         "sulong:SULONG_BOOTSTRAP_TOOLCHAIN",
         "sulong:SULONG_LIBS",
