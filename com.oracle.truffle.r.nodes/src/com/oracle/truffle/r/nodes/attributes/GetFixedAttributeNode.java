@@ -26,13 +26,10 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 /**
  * This node is responsible for retrieving a value from the predefined (fixed) attribute.
@@ -71,16 +68,9 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
     @Specialization
     protected Object getAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("create(name)") GetFixedPropertyNode getFixedPropertyNode,
-                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                    @Cached("create(name)") GetFixedPropertyNode getFixedPropertyNode) {
 
-        DynamicObject attributes;
-        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
-            attributes = ((RAttributeStorage) x).getAttributes();
-        } else {
-            attributes = xTypeProfile.profile(x).getAttributes();
-        }
+        DynamicObject attributes = x.getAttributes();
 
         if (attributes == null) {
             attrNullProfile.enter();

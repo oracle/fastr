@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -84,12 +84,27 @@ public class RClosures {
         return new RRawToListVectorClosure(vector, keepAttributes);
     }
 
-    public static RAbstractListVector createToListVector(RComplexVector vector, boolean keepAttributes) {
+    public static RAbstractListVector createToListVector(RAbstractComplexVector vector, boolean keepAttributes) {
         return new RComplexToListVectorClosure(vector, keepAttributes);
     }
 
     public static RAbstractListVector createToListVector(RAbstractStringVector vector, boolean keepAttributes) {
         return new RStringToListVectorClosure(vector, keepAttributes);
+    }
+
+    /**
+     * (Shallow) copies the names, dimnames, rownames and dimensions attributes. The original
+     * contract of closures is that there attributes are preserved even when
+     * {@code keepAttributes == true}.
+     */
+    static void initRegAttributes(RAbstractVector closure, RAbstractVector delegate) {
+        closure.setNames(delegate.getNames());
+        closure.setDimensions(delegate.getDimensions());
+        closure.setDimNames(delegate.getDimNames());
+        Object rowNames = delegate.getRowNames();
+        if (rowNames != RNull.instance) {
+            closure.setRowNames((RAbstractVector) rowNames);
+        }
     }
 
 }

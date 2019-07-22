@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,7 +61,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -210,7 +209,7 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
                 }
                 input = handleEach(input, each);
             }
-            RVector<?> r;
+            RAbstractVector r;
             if (lengthOutOrTimes.profile(RRuntime.isNA(lengthOut))) {
                 r = handleTimes(input, times);
             } else {
@@ -230,8 +229,8 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
         /**
          * Prepare the input vector by replicating its elements.
          */
-        private static RVector<?> handleEach(RAbstractVector x, int each) {
-            RVector<?> r = x.createEmptySameType(x.getLength() * each, x.isComplete());
+        private static RAbstractVector handleEach(RAbstractVector x, int each) {
+            RAbstractVector r = x.createEmptySameType(x.getLength() * each, x.isComplete());
             for (int i = 0; i < x.getLength(); i++) {
                 for (int j = i * each; j < (i + 1) * each; j++) {
                     r.transferElementSameType(j, x, i);
@@ -243,14 +242,14 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
         /**
          * Extend or truncate the vector to a specified length.
          */
-        private static RVector<?> handleLengthOut(RAbstractVector x, int lengthOut) {
+        private static RAbstractVector handleLengthOut(RAbstractVector x, int lengthOut) {
             return x.copyResized(lengthOut, x.getLength() == 0);
         }
 
         /**
          * Replicate the vector a given number of times.
          */
-        private RVector<?> handleTimes(RAbstractVector x, RAbstractIntVector times) {
+        private RAbstractVector handleTimes(RAbstractVector x, RAbstractIntVector times) {
             if (oneTimeGiven.profile(times.getLength() == 1)) {
                 // only one times value is given
                 int howManyTimes = times.getDataAt(0);
@@ -273,7 +272,7 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
                     resultLength += t;
                 }
                 // create and populate result vector
-                RVector<?> r = x.createEmptySameType(resultLength, x.isComplete());
+                RAbstractVector r = x.createEmptySameType(resultLength, x.isComplete());
                 int wp = 0; // write pointer
                 for (int i = 0; i < x.getLength(); i++) {
                     for (int j = 0; j < times.getDataAt(i); ++j, ++wp) {

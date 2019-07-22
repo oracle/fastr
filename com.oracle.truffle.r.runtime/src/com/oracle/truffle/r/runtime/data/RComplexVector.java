@@ -27,7 +27,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -36,8 +35,10 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromComplexAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
-public final class RComplexVector extends RVector<double[]> implements RAbstractComplexVector {
+public final class RComplexVector extends RAbstractComplexVector implements RMaterializedVector, Shareable {
 
     private double[] data;
 
@@ -45,7 +46,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         super(complete);
         assert data.length % 2 == 0;
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RComplexVector(double[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -62,15 +63,6 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         NativeDataAccess.asPointer(result);
         NativeDataAccess.setNativeContents(result, address, length);
         return result;
-    }
-
-    @Override
-    protected RComplexVector internalCopy() {
-        if (data != null) {
-            return new RComplexVector(Arrays.copyOf(data, data.length), this.isComplete());
-        } else {
-            return new RComplexVector(NativeDataAccess.copyComplexNativeData(getNativeMirror()), this.isComplete());
-        }
     }
 
     @Override
@@ -149,7 +141,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         if (data != null) {
             return Arrays.copyOf(data, data.length);
         } else {
-            return NativeDataAccess.copyDoubleNativeData(getNativeMirror());
+            return NativeDataAccess.copyComplexNativeData(getNativeMirror());
         }
     }
 
@@ -158,13 +150,8 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         if (data != null) {
             return data;
         } else {
-            return NativeDataAccess.copyDoubleNativeData(getNativeMirror());
+            return NativeDataAccess.copyComplexNativeData(getNativeMirror());
         }
-    }
-
-    @Override
-    public RComplexVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createComplexVector(getReadonlyData(), isComplete(), newDimensions);
     }
 
     private RComplexVector updateDataAt(int index, RComplex value, NACheck rightNACheck) {
@@ -182,40 +169,9 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         return updateDataAt(i, (RComplex) o, naCheck);
     }
 
-    private double[] copyResizedData(int size, boolean fillNA) {
-        int csize = size << 1;
-        double[] localData = getReadonlyData();
-        double[] newData = Arrays.copyOf(localData, csize);
-        if (csize > localData.length) {
-            if (fillNA) {
-                for (int i = localData.length; i < csize; i++) {
-                    newData[i] = RRuntime.DOUBLE_NA;
-                }
-            } else {
-                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = localData.length, j = 0; i <= csize - 2; i += 2, j = Utils.incMod(j + 1, localData.length)) {
-                    newData[i] = localData[j];
-                    newData[i + 1] = localData[j + 1];
-                }
-            }
-        }
-        return newData;
-    }
-
-    @Override
-    protected RComplexVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        boolean isComplete = isComplete() && ((getLength() >= size) || !fillNA);
-        return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete, dimensions);
-    }
-
     @Override
     public RComplexVector materialize() {
         return this;
-    }
-
-    @Override
-    public RComplexVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createComplexVector(new double[newLength << 1], newIsComplete);
     }
 
     @Override

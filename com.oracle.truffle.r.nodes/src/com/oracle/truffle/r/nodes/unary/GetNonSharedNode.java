@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,20 +60,23 @@ public abstract class GetNonSharedNode extends Node {
         return GetNonSharedNodeGen.create();
     }
 
-    @Specialization(guards = "shareable.getClass() == shareableClass")
+    @Specialization(guards = {"shareable.getClass() == shareableClass", "isShareable(shareable)"})
     protected RTypedValue getNonSharedCached(RSharingAttributeStorage shareable,
                     @Cached("shareable.getClass()") Class<? extends RSharingAttributeStorage> shareableClass) {
         return shareableClass.cast(shareable).getNonShared();
     }
 
-    @Specialization(replaces = "getNonSharedCached")
+    @Specialization(replaces = "getNonSharedCached", guards = "isShareable(shareable)")
     protected RTypedValue getNonShared(RSharingAttributeStorage shareable) {
         return shareable.getNonShared();
     }
 
     @Fallback
     protected Object getNonShared(Object o) {
-        RSharingAttributeStorage.verify(o);
         return o;
+    }
+
+    protected static boolean isShareable(Object o) {
+        return RSharingAttributeStorage.isShareable(o);
     }
 }

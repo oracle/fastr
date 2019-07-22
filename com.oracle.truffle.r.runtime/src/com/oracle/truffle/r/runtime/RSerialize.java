@@ -73,17 +73,17 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RScalar;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -922,12 +922,12 @@ public class RSerialize {
                 String tag = Utils.intern(tagSym.getName());
                 // this may convert a plain vector to a data.frame or factor
                 Object attrValue = pl.car();
-                if (attrValue instanceof RShareable && ((RShareable) attrValue).isTemporary()) {
-                    ((RShareable) attrValue).incRefCount();
+                if (RSharingAttributeStorage.isShareable(attrValue) && ((RSharingAttributeStorage) attrValue).isTemporary()) {
+                    ((RSharingAttributeStorage) attrValue).incRefCount();
                 }
-                if (result instanceof RVector<?> && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
+                if (result instanceof RMaterializedVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
                     RStringVector classes = (RStringVector) attrValue;
-                    result = ((RVector<?>) result).setClassAttr(classes);
+                    result = ((RAbstractVector) result).setClassAttr(classes);
                 } else {
                     rAttributable.setAttr(tag, attrValue);
                 }

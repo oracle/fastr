@@ -50,7 +50,6 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -89,7 +88,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         checkErrorConditions(dim);
         final int diml = dim.length;
 
-        RVector<?> result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
+        RAbstractVector result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
 
         if (mustResize.profile(resize == RRuntime.LOGICAL_TRUE)) {
             int[] pDim = new int[diml];
@@ -130,7 +129,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);
 
-        RVector<?> reused = (RVector<?>) reuseNonSharedNode.getMaterializedResult(vector);
+        RAbstractVector reused = reuseNonSharedNode.getMaterializedResult(vector);
 
         // we have to remove some attributes
         // remove all regular attributes (including the class attribute)
@@ -162,7 +161,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         int[] posV = new int[dim.length];
         int[] pDim = applyPermute(dim, perm, false);
 
-        RVector<?> result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
+        RAbstractVector result = vector.createEmptySameType(vector.getLength(), vector.isComplete());
 
         setDimsNode.setDimensions(result, resize == RRuntime.LOGICAL_TRUE ? pDim : dim);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,8 +38,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 @RBuiltin(name = "range", kind = PRIMITIVE, parameterNames = {"...", "na.rm", "finite"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE)
@@ -71,7 +71,7 @@ public abstract class Range extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = {"args.getLength() == 1", "isAtomicVector(args.getArgument(0))"})
-    protected RVector<?> rangeLengthOne(RArgsValuesAndNames args, boolean naRm, boolean finite,
+    protected RAbstractVector rangeLengthOne(RArgsValuesAndNames args, boolean naRm, boolean finite,
                     @Cached("createMinReduce()") UnaryArithmeticReduceNode minReduce,
                     @Cached("createMaxReduce()") UnaryArithmeticReduceNode maxReduce) {
         Object min = minReduce.executeReduce(args.getArgument(0), naRm || finite, finite);
@@ -80,7 +80,7 @@ public abstract class Range extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(replaces = "rangeLengthOne")
-    protected RVector<?> range(RArgsValuesAndNames args, boolean naRm, boolean finite,
+    protected RAbstractVector range(RArgsValuesAndNames args, boolean naRm, boolean finite,
                     @Cached("createMinReduce()") UnaryArithmeticReduceNode minReduce,
                     @Cached("createMaxReduce()") UnaryArithmeticReduceNode maxReduce,
                     @Cached("create()") Combine combine) {
@@ -90,7 +90,7 @@ public abstract class Range extends RBuiltinNode.Arg3 {
         return createResult(min, max);
     }
 
-    private static RVector<?> createResult(Object min, Object max) {
+    private static RAbstractVector createResult(Object min, Object max) {
         if (min instanceof Integer) {
             return RDataFactory.createIntVector(new int[]{(Integer) min, (Integer) max}, false);
         } else if (min instanceof Double) {

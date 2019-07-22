@@ -26,7 +26,6 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -35,15 +34,17 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromRawAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
-public final class RRawVector extends RVector<byte[]> implements RAbstractRawVector {
+public final class RRawVector extends RAbstractRawVector implements RMaterializedVector, Shareable {
 
     private byte[] data;
 
     RRawVector(byte[] data) {
         super(true);
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RRawVector(byte[] data, int[] dims, RStringVector names, RList dimNames) {
@@ -102,15 +103,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    protected RRawVector internalCopy() {
-        if (data != null) {
-            return new RRawVector(Arrays.copyOf(data, data.length));
-        } else {
-            return new RRawVector(NativeDataAccess.copyByteNativeData(getNativeMirror()));
-        }
-    }
-
-    @Override
     public int getLength() {
         return NativeDataAccess.getDataLength(this, data);
     }
@@ -154,11 +146,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    public RRawVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createRawVector(getReadonlyData(), newDimensions);
-    }
-
-    @Override
     public RRawVector materialize() {
         return this;
     }
@@ -172,30 +159,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     @Override
     public RRawVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
         return updateDataAt(i, (RRaw) o);
-    }
-
-    private byte[] copyResizedData(int size, boolean fillNA) {
-        byte[] localData = getReadonlyData();
-        byte[] newData = Arrays.copyOf(localData, size);
-        if (!fillNA) {
-            assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
-            // NA is 00 for raw
-            for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
-                newData[i] = data[j];
-            }
-        }
-        return newData;
-    }
-
-    @Override
-    protected RRawVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        return RDataFactory.createRawVector(copyResizedData(size, fillNA), dimensions);
-    }
-
-    @Override
-    public RRawVector createEmptySameType(int newLength, boolean newIsComplete) {
-        assert newIsComplete;
-        return RDataFactory.createRawVector(new byte[newLength]);
     }
 
     @Override

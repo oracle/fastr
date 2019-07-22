@@ -78,7 +78,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -207,7 +206,7 @@ public abstract class Bind extends RBaseNodeWithWarnings {
         int[] bindDims = new int[vectors.length];
         int[] resultDimensions = new int[2];
         boolean rowsAndColumnsNotEqual = getResultDimensions(vectors, resultDimensions, bindDims);
-        RVector<?> resultVec;
+        RAbstractVector resultVec;
         if (fromNotNullArgVector != null) {
             resultVec = resultProfile.profile(vectorProfile.profile(fromNotNullArgVector).createEmptySameType(resultDimensions[0] * resultDimensions[1], complete));
         } else {
@@ -477,7 +476,8 @@ public abstract class Bind extends RBaseNodeWithWarnings {
 
     @Specialization(guards = {"precedence != NO_PRECEDENCE", "args.length == 1"})
     protected Object allOneElem(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+                    @Cached() ExtractNamesAttributeNode extractNamesNode,
+                    @Cached() SetDimAttributeNode setDims) {
 
         RAbstractVector vec = vectorProfile.profile(castVector(args[0]));
         int[] rawDimensions = null;
@@ -512,14 +512,15 @@ public abstract class Bind extends RBaseNodeWithWarnings {
         }
 
         int[] dims = getDimensions(vec, rawDimensions);
-        RVector<?> res = (RVector<?>) vec.copyWithNewDimensions(dims);
+        RAbstractVector res = vec.copyDropAttributes();
+        setDims.setDimensions(res, dims);
         if (needsDimNames.profile(vec.getLength() == 0 || dimNamesA != RNull.instance || dimNamesB != RNull.instance)) {
             setDimNames(res, RDataFactory.createList(type == BindType.cbind ? new Object[]{dimNamesA, dimNamesB} : new Object[]{dimNamesB, dimNamesA}));
         }
         return res;
     }
 
-    public RVector<?> genericCBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, RVector<?> result, int[] resultDimensions, int[] secondDims, boolean rowsAndColumnsNotEqual,
+    public RAbstractVector genericCBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, RAbstractVector result, int[] resultDimensions, int[] secondDims, boolean rowsAndColumnsNotEqual,
                     boolean allEmpty, String[] vecNames, int deparseLevel, SetDimAttributeNode setDimNode,
                     GetDimNamesAttributeNode getDimNamesNode, ExtractNamesAttributeNode extractNamesNode) {
 
@@ -704,7 +705,7 @@ public abstract class Bind extends RBaseNodeWithWarnings {
         }
     }
 
-    public RVector<?> genericRBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, RVector<?> result, int[] resultDimensions, int[] firstDims, boolean rowsAndColumnsNotEqual,
+    public RAbstractVector genericRBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, RAbstractVector result, int[] resultDimensions, int[] firstDims, boolean rowsAndColumnsNotEqual,
                     boolean allEmpty, String[] vecNames, int deparseLevel, SetDimAttributeNode setDimNode,
                     GetDimNamesAttributeNode getDimNamesNode, ExtractNamesAttributeNode extractNamesNode) {
 
@@ -775,7 +776,7 @@ public abstract class Bind extends RBaseNodeWithWarnings {
         return RDataFactory.COMPLETE_VECTOR;
     }
 
-    private void setDimNames(RVector<?> result, RList dimNames) {
+    private void setDimNames(RAbstractVector result, RList dimNames) {
         if (setDimNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             setDimNamesNode = insert(SetDimNamesAttributeNode.create());

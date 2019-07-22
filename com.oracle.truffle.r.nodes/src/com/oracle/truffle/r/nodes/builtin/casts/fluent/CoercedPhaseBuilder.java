@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,12 +85,14 @@ public final class CoercedPhaseBuilder<T extends RAbstractVector, S> extends Arg
         return new HeadPhaseBuilder<>(pipelineBuilder());
     }
 
-    public CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter, RError.Message message, Object... messageArgs) {
+    @SuppressWarnings("unchecked")
+    public CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ?> argFilter, RError.Message message, Object... messageArgs) {
         pipelineBuilder().appendMustBeStep(argFilter, message, messageArgs);
         return this;
     }
 
-    public CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ? extends T> argFilter) {
+    @SuppressWarnings("unchecked")
+    public CoercedPhaseBuilder<T, S> mustBe(Filter<? super T, ?> argFilter) {
         return mustBe(argFilter, null, null, (Object[]) null);
     }
 

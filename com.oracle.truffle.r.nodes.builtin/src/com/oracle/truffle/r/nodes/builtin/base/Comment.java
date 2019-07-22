@@ -44,7 +44,7 @@ public abstract class Comment extends RBuiltinNode.Arg1 {
         casts.arg("x").mustNotBeMissing();
     }
 
-    @Specialization
+    @Specialization(guards = "isShareable(x)")
     protected Object comment(RSharingAttributeStorage x,
                     @Cached("createBinaryProfile()") ConditionProfile hasCommentProfile,
                     @Cached("create()") GetCommentAttributeNode getComment) {
@@ -58,7 +58,10 @@ public abstract class Comment extends RBuiltinNode.Arg1 {
 
     @Fallback
     protected RNull comment(@SuppressWarnings("unused") Object vector) {
-        RSharingAttributeStorage.verify(vector);
         return RNull.instance;
+    }
+
+    protected static boolean isShareable(Object o) {
+        return RSharingAttributeStorage.isShareable(o);
     }
 }

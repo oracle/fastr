@@ -60,7 +60,7 @@ import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -127,7 +127,7 @@ import com.oracle.truffle.r.runtime.interop.R2Foreign;
  * {@link #setupContext} method.
  */
 @ExportLibrary(InteropLibrary.class)
-public abstract class REnvironment extends RAttributeStorage {
+public abstract class REnvironment extends RAttributable {
 
     public static final class ContextStateImpl implements RContext.ContextState {
         private static Map<RStringVector, WeakReference<FrameDescriptor>> frameDescriptorCache = Collections.synchronizedMap(new WeakHashMap<>(0));
@@ -1010,13 +1010,11 @@ public abstract class REnvironment extends RAttributeStorage {
                 throw new PutException(RError.Message.ENV_ADD_BINDINGS);
             }
         }
-        if (value instanceof RSharingAttributeStorage) {
+        if (RSharingAttributeStorage.isShareable(value)) {
             RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
             if (!shareable.isShared()) {
                 shareable.incRefCount();
             }
-        } else {
-            RSharingAttributeStorage.verify(value);
         }
         frameAccess.put(key, value);
     }

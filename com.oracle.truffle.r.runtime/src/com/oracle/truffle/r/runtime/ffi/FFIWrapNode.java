@@ -102,11 +102,11 @@ public abstract class FFIWrapNode extends Node {
         return wrap(RDataFactory.createComplexVectorFromScalar(value));
     }
 
-    protected static boolean isRScalarVector(RObject value) {
-        return value instanceof RScalarVector;
+    protected static boolean isRScalarVectorOrSequence(RObject value) {
+        return value instanceof RScalarVector || value instanceof RSequence;
     }
 
-    @Specialization(guards = "!isRScalarVector(value)")
+    @Specialization(guards = "!isRScalarVectorOrSequence(value)")
     protected static Object wrap(RObject value) {
         return value;
     }
@@ -118,7 +118,7 @@ public abstract class FFIWrapNode extends Node {
 
     @Specialization
     protected static Object wrap(RSequence seq) {
-        return seq.createVector();
+        return seq.materialize();
     }
 
     @Specialization

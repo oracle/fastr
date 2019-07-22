@@ -27,7 +27,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -36,15 +35,17 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
-public final class RIntVector extends RVector<int[]> implements RAbstractIntVector {
+public final class RIntVector extends RAbstractIntVector implements RMaterializedVector, Shareable {
 
     private int[] data;
 
     RIntVector(int[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RIntVector(int[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -101,15 +102,6 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     public void setDataAt(Object store, int index, int value) {
         assert data == store;
         NativeDataAccess.setData(this, (int[]) store, index, value);
-    }
-
-    @Override
-    protected RIntVector internalCopy() {
-        if (data != null) {
-            return new RIntVector(Arrays.copyOf(data, data.length), isComplete());
-        } else {
-            return new RIntVector(getDataCopy(), isComplete());
-        }
     }
 
     public RIntVector copyResetData(int[] newData) {
@@ -173,11 +165,6 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
         }
     }
 
-    @Override
-    public RIntVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createIntVector(getReadonlyData(), isComplete(), newDimensions);
-    }
-
     private RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
         assert !this.isShared();
 
@@ -194,42 +181,9 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
         return updateDataAt(i, (Integer) o, naCheck);
     }
 
-    static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
-        if (newData.length > oldDataLength) {
-            if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; i++) {
-                    newData[i] = RRuntime.INT_NA;
-                }
-            } else {
-                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
-                    newData[i] = oldData[j];
-                }
-            }
-        }
-        return newData;
-    }
-
-    private int[] copyResizedData(int size, boolean fillNA) {
-        int[] localData = getReadonlyData();
-        int[] newData = Arrays.copyOf(localData, size);
-        return resizeData(newData, localData, localData.length, fillNA);
-    }
-
-    @Override
-    protected RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        boolean isComplete = isComplete() && ((getLength() >= size) || !fillNA);
-        return RDataFactory.createIntVector(copyResizedData(size, fillNA), isComplete, dimensions);
-    }
-
     @Override
     public RIntVector materialize() {
         return this;
-    }
-
-    @Override
-    public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createIntVector(new int[newLength], newIsComplete);
     }
 
     @Override

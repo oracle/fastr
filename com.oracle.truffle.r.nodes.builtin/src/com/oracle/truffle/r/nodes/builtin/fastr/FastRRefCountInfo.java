@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 /**
  * Created as primitive function to avoid incrementing reference count for the argument.
@@ -45,12 +45,12 @@ public abstract class FastRRefCountInfo extends RBuiltinNode.Arg1 {
 
     @Specialization
     protected int refcount(Object x) {
-        if (x instanceof RShareable) {
-            RShareable s = (RShareable) x;
+        if (RSharingAttributeStorage.isShareable(x)) {
+            RSharingAttributeStorage s = (RSharingAttributeStorage) x;
             if (s.isTemporary()) {
                 return 0;
             } else if (s.isSharedPermanent()) {
-                return RShareable.SHARED_PERMANENT_VAL;
+                return RSharingAttributeStorage.SHARED_PERMANENT_VAL;
             } else if (s.isShared()) {
                 return 2;
             } else {

@@ -26,11 +26,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
 
@@ -76,15 +73,8 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     protected static void removeAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
                     @Cached("create(name)") RemoveFixedPropertyNode removeFixedPropertyNode,
-                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                    @Cached("createClassProfile()") ValueProfile xTypeProfile,
                     @Cached("create()") BranchProfile emptyAttrProfile) {
-        DynamicObject attributes;
-        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
-            attributes = ((RAttributeStorage) x).getAttributes();
-        } else {
-            attributes = xTypeProfile.profile(x).getAttributes();
-        }
+        DynamicObject attributes = x.getAttributes();
 
         if (attributes == null) {
             attrNullProfile.enter();

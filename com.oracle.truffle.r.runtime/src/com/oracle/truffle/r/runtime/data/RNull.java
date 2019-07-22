@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.interop.RNullMRContextState;
 
 @ExportLibrary(InteropLibrary.class)
-public final class RNull extends RScalar {
+public final class RNull extends RBaseObject implements RScalar {
 
     public static final RNull instance = new RNull();
 

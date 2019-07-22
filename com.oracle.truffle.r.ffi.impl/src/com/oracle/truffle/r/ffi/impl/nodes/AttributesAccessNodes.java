@@ -58,7 +58,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -247,7 +246,7 @@ public final class AttributesAccessNodes {
         @Child protected CopyOfRegAttributesNode copyRegAttributes;
 
         @Specialization
-        public Void doRAttributeStorage(RAttributeStorage x, RAttributeStorage y) {
+        public Void doRAttributable(RAttributable x, RAttributable y) {
             if (copyRegAttributes == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 copyRegAttributes = insert(CopyOfRegAttributesNode.create());
@@ -283,7 +282,7 @@ public final class AttributesAccessNodes {
         }
 
         @Specialization
-        protected Object doIt(RSharingAttributeStorage target, RPairList attributes,
+        protected Object doIt(RAttributable target, RPairList attributes,
                         @Cached SetPropertyNode setPropertyNode,
                         @Cached ShareObjectNode shareObjectNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib) {
@@ -306,7 +305,7 @@ public final class AttributesAccessNodes {
         }
 
         @Specialization
-        protected Object doIt(RSharingAttributeStorage target, @SuppressWarnings("unused") RNull attributes) {
+        protected Object doIt(RAttributable target, @SuppressWarnings("unused") RNull attributes) {
             clearAttrs(target);
             return RNull.instance;
         }
@@ -317,8 +316,12 @@ public final class AttributesAccessNodes {
         }
 
         @TruffleBoundary
-        private static void clearAttrs(RSharingAttributeStorage target) {
+        private static void clearAttrs(RAttributable target) {
             target.initAttributes(RAttributesLayout.createRAttributes());
+        }
+
+        protected static boolean isShareable(Object o) {
+            return RSharingAttributeStorage.isShareable(o);
         }
     }
 }

@@ -28,10 +28,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 
@@ -59,15 +56,8 @@ public abstract class IterableAttributeNode extends AttributeIterativeAccessNode
 
     @Specialization
     protected RAttributesLayout.RAttributeIterable getArrayFallback(RAttributable x,
-                    @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
-        DynamicObject attributes;
-        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
-            attributes = ((RAttributeStorage) x).getAttributes();
-        } else {
-            attributes = xTypeProfile.profile(x).getAttributes();
-        }
+                    @Cached("create()") BranchProfile attrNullProfile) {
+        DynamicObject attributes = x.getAttributes();
 
         if (attributes == null) {
             attrNullProfile.enter();

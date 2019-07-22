@@ -35,7 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.base.UnClassNodeGen.RemoveClassAttrNod
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -91,11 +91,11 @@ public abstract class UnClass extends RBuiltinNode.Arg1 {
                         @Cached BranchProfile shareableProfile,
                         @Cached("createClass()") RemoveFixedAttributeNode removeClassNode) {
             RAttributable result = x;
-            if (x instanceof RShareable) {
+            if (RSharingAttributeStorage.isShareable(x)) {
                 shareableProfile.enter();
-                RShareable shareable = (RShareable) x;
+                RSharingAttributeStorage shareable = (RSharingAttributeStorage) x;
                 if (!shareable.isTemporary()) {
-                    result = (RAttributable) shareable.copy();
+                    result = shareable.copy();
                 }
             }
             removeClassNode.execute(result);

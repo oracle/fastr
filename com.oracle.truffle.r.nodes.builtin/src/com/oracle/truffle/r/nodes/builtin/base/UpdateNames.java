@@ -51,9 +51,9 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -218,12 +218,12 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
         // remove attributes from other types
 
         @Specialization(guards = {"hasAttributes.execute(names)", "!isStringVector(names)"})
-        protected Object doVectorsWithAttrs(RVector<?> names,
+        protected Object doVectorsWithAttrs(RAbstractVector names,
                         @Exclusive @Cached("createClassProfile()") ValueProfile namesProfile) {
             return namesProfile.profile(names).copyDropAttributes();
         }
 
-        @Specialization(guards = {"hasAttributes.execute(names)", "!isVector(names)"})
+        @Specialization(guards = {"hasAttributes.execute(names)", "!isMaterializedVector(names)"})
         protected Object doOtherAttributableWithAttrs(RSharingAttributeStorage names,
                         @Exclusive @Cached("createClassProfile()") ValueProfile namesProfile) {
             RAttributable namesArg = namesProfile.profile(names).copy();
@@ -238,8 +238,12 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
             return names;
         }
 
-        protected static boolean isVector(Object names) {
-            return names instanceof RVector<?>;
+        protected static boolean isMaterializedVector(Object names) {
+            return names instanceof RMaterializedVector;
+        }
+
+        protected static boolean isShareable(Object o) {
+            return RSharingAttributeStorage.isShareable(o);
         }
 
         protected static boolean isStringVector(Object names) {

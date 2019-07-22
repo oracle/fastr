@@ -62,6 +62,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
 /**
  * RPairList objects can represent both "normal" pairlists (which are rarely used from R directly)
@@ -79,7 +80,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 @ExportLibrary(RPairListLibrary.class)
 @ExportLibrary(InteropLibrary.class)
-public final class RPairList extends RSharingAttributeStorage implements RAbstractContainer, Iterable<RPairList> {
+public final class RPairList extends RAbstractContainer implements Iterable<RPairList>, Shareable {
 
     private static final RSymbol FUNCTION_SYMBOL = RDataFactory.createSymbolInterned("function");
 
@@ -517,7 +518,6 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     public void setType(SEXPTYPE type) {
         if (type != this.type) {
             ensurePairList();
-            assert type == null || type.equals(type);
             this.type = type;
         }
     }
@@ -651,7 +651,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
 
     @Override
     @TruffleBoundary
-    public RShareable deepCopy() {
+    public RSharingAttributeStorage deepCopy() {
         if (closure != null) {
             return copy();
         } else {
@@ -659,8 +659,8 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
             RPairList current = result;
             while (true) {
                 Object c = current.car();
-                if (c instanceof RShareable) {
-                    current.setCar(((RShareable) c).deepCopy());
+                if (RSharingAttributeStorage.isShareable(c)) {
+                    current.setCar(((RSharingAttributeStorage) c).deepCopy());
                 }
                 Object next = current.cdr();
                 if (next == RNull.instance) {

@@ -68,7 +68,7 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
@@ -362,8 +362,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         if (value instanceof String && !RRuntime.isNA((String) value)) {
             return ConstantNode.create(source, Utils.intern((String) value));
         }
-        if (value instanceof RShareable) {
-            RShareable shareable = (RShareable) value;
+        if (RSharingAttributeStorage.isShareable(value)) {
+            RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
             if (!shareable.isSharedPermanent()) {
                 return ConstantNode.create(source, shareable.makeSharedPermanent());
             }

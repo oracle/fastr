@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 
 @ExportLibrary(InteropLibrary.class)
-public final class RUnboundValue extends RScalar {
+public final class RUnboundValue extends RBaseObject implements RScalar {
     public static final RUnboundValue instance = new RUnboundValue();
 
     private RUnboundValue() {

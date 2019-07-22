@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -274,8 +274,8 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
     protected Object updateAttrOthers(Object obj, Object name, Object value) {
         assert name instanceof String : "casts should not pass anything but String";
         Object object = obj;
-        if (object instanceof RShareable) {
-            object = ((RShareable) object).getNonShared();
+        if (RSharingAttributeStorage.isShareable(object)) {
+            object = ((RSharingAttributeStorage) object).getNonShared();
         }
         String internedName = intern.execute((String) name);
         if (object instanceof RAttributable) {

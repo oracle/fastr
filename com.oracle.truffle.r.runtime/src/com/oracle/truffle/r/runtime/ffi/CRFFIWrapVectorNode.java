@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,9 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -49,7 +49,7 @@ public abstract class CRFFIWrapVectorNode extends Node {
     protected boolean isTemporary(Object vector) {
         // if the vector is temporary, we can re-use it. We turn it into native memory backed
         // vector, keep it so and reuse it as the result.
-        return vector instanceof RVector<?> && ((RVector<?>) vector).isTemporary();
+        return vector instanceof RMaterializedVector && ((RAbstractVector) vector).isTemporary();
     }
 
     protected static boolean isStringVector(Object vector) {

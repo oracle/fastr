@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -131,10 +131,11 @@ public final class CoerceNodes {
         }
 
         private static void adjustSharing(RAbstractVector origin, Object element) {
-            if (origin instanceof RShareable) {
-                int v = getSharingLevel((RShareable) origin);
-                if (element instanceof RShareable) {
-                    RShareable r = (RShareable) element;
+            if (RSharingAttributeStorage.isShareable(origin)) {
+
+                int v = getSharingLevel(origin);
+                if (RSharingAttributeStorage.isShareable(element)) {
+                    RSharingAttributeStorage r = (RSharingAttributeStorage) element;
                     if (v >= 2) {
                         // we play it safe: if the caller wants this instance to be shared, they may
                         // expect it to never become non-shared again, which could happen in FastR
@@ -151,7 +152,7 @@ public final class CoerceNodes {
             return CoerceNodesFactory.CastPairListNodeGen.create(type);
         }
 
-        private static int getSharingLevel(RShareable r) {
+        private static int getSharingLevel(RSharingAttributeStorage r) {
             return r.isTemporary() ? 0 : r.isShared() ? 2 : 1;
         }
     }

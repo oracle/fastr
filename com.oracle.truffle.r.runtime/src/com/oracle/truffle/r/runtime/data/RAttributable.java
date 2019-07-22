@@ -22,40 +22,53 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.Iterator;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import java.util.Iterator;
 
 /**
- * Denotes an R type that can have associated attributes, e.g. {@link RVector}, {@link REnvironment}
+ * Denotes an R type that can have associated attributes, e.g. {@link REnvironment}
  *
  * An attribute is a {@code String, Object} pair. The set of attributes associated with an
  * {@link RAttributable} is implemented by the {@link DynamicObject} class.
  */
-public interface RAttributable extends RTypedValue {
+public abstract class RAttributable extends RBaseObject {
+
+    protected DynamicObject attributes;
+
+    /**
+     * Access all the attributes. Use {@code for (RAttribute a : getAttributes) ... }. Returns
+     * {@code null} if not initialized.
+     */
+    public final DynamicObject getAttributes() {
+        return attributes;
+    }
 
     /**
      * If the attribute set is not initialized, then initialize it.
      *
      * @return the pre-existing or new value
      */
-    DynamicObject initAttributes();
+    public final DynamicObject initAttributes() {
+        if (attributes == null) {
+            attributes = RAttributesLayout.createRAttributes();
+        }
+        return attributes;
+    }
 
-    void initAttributes(DynamicObject newAttributes);
-
-    /**
-     * Access all the attributes. Use {@code for (RAttribute a : getAttributes) ... }. Returns
-     * {@code null} if not initialized.
-     */
-    DynamicObject getAttributes();
+    public final void initAttributes(DynamicObject newAttributes) {
+        this.attributes = newAttributes;
+    }
 
     /**
      * Get the value of an attribute. Returns {@code null} if not set.
      */
-    default Object getAttr(String name) {
+    public final Object getAttr(String name) {
         CompilerAsserts.neverPartOfCompilation();
         DynamicObject attr = getAttributes();
         return attr == null ? null : attr.get(name);
@@ -65,31 +78,35 @@ public interface RAttributable extends RTypedValue {
      * Set the attribute {@code name} to {@code value}, overwriting any existing value. This is
      * generic; a class may need to override this to handle certain attributes specially.
      */
-    default void setAttr(String name, Object value) {
+    public void setAttr(String name, Object value) {
         CompilerAsserts.neverPartOfCompilation();
-        DynamicObject attributes = getAttributes();
-        if (attributes == null) {
-            attributes = initAttributes();
-        }
-        attributes.define(name, value);
+        putAttribute(name, value);
     }
 
-    default void removeAttr(String name) {
+    /**
+     * Guarded method that checks whether {@code attributes} is initialized. Simply sets the
+     * attribute, can't be overridden.
+     */
+    protected final void putAttribute(String name, Object value) {
+        initAttributes().define(name, value);
+    }
+
+    public void removeAttr(String name) {
         CompilerAsserts.neverPartOfCompilation();
-        DynamicObject attributes = getAttributes();
-        if (attributes != null) {
-            attributes.delete(name);
-            if (attributes.isEmpty()) {
+        DynamicObject attrs = getAttributes();
+        if (attrs != null) {
+            attrs.delete(name);
+            if (attrs.isEmpty()) {
                 initAttributes(null);
             }
         }
     }
 
-    default void removeAllAttributes() {
+    public final void removeAllAttributes() {
         CompilerAsserts.neverPartOfCompilation();
-        DynamicObject attributes = getAttributes();
-        if (attributes != null) {
-            RAttributesLayout.clear(attributes);
+        DynamicObject attrs = getAttributes();
+        if (attrs != null) {
+            RAttributesLayout.clear(attrs);
         }
     }
 
@@ -101,42 +118,69 @@ public interface RAttributable extends RTypedValue {
      * @param nullify Some implementations can force nullifying attributes instance if this flag is
      *            set to {@code true}. Nullifying is not guaranteed for all implementations.
      */
-    default void resetAllAttributes(boolean nullify) {
-        DynamicObject attributes = getAttributes();
-        if (attributes != null) {
-            RAttributesLayout.clear(attributes);
-        }
-    }
-
-    default RAttributable setClassAttr(RStringVector classAttr) {
-        CompilerAsserts.neverPartOfCompilation();
-        if (classAttr == null && getAttributes() != null) {
-            getAttributes().delete(RRuntime.CLASS_ATTR_KEY);
+    public final void resetAllAttributes(boolean nullify) {
+        if (nullify) {
+            this.attributes = null;
         } else {
-            setAttr(RRuntime.CLASS_ATTR_KEY, classAttr);
+            if (this.attributes != null) {
+                RAttributesLayout.clear(this.attributes);
+            }
         }
-        return this;
     }
 
-    default RStringVector getClassAttr() {
+    public RAttributable setClassAttr(RStringVector classAttr) {
+        CompilerAsserts.neverPartOfCompilation();
+        return setClassAttrInternal(this, classAttr);
+    }
+
+    protected static final RAttributable setClassAttrInternal(RAttributable attributable, RStringVector classAttr) {
+        if (attributable.attributes == null && classAttr != null && classAttr.getLength() != 0) {
+            attributable.initAttributes();
+        }
+        if (attributable.attributes != null && (classAttr == null || classAttr.getLength() == 0)) {
+            attributable.removeAttributeMapping(RRuntime.CLASS_ATTR_KEY);
+        } else if (classAttr != null && classAttr.getLength() != 0) {
+            if (attributable instanceof RAbstractVector && !(attributable instanceof RAbstractIntVector)) {
+                for (int i = 0; i < classAttr.getLength(); i++) {
+                    String attr = classAttr.getDataAt(i);
+                    if (RRuntime.CLASS_FACTOR.equals(attr)) {
+                        throw RError.error(RError.SHOW_CALLER2, RError.Message.ADDING_INVALID_CLASS, "factor");
+                    }
+                }
+            }
+            attributable.initAttributes().define(RRuntime.CLASS_ATTR_KEY, classAttr);
+        }
+        return attributable;
+    }
+
+    protected final void removeAttributeMapping(String key) {
+        if (this.attributes != null) {
+            this.attributes.delete(key);
+            if (this.attributes.size() == 0) {
+                this.attributes = null;
+            }
+        }
+    }
+
+    public final RStringVector getClassAttr() {
         return (RStringVector) getAttr(RRuntime.CLASS_ATTR_KEY);
     }
 
     /**
      * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
      */
-    default boolean isObject() {
+    public final boolean isObject() {
         return getClassAttr() != null;
     }
 
-    static void copyAttributes(RAttributable obj, DynamicObject attrs) {
+    public static void copyAttributes(RAttributable obj, DynamicObject attrs) {
         if (attrs == null) {
             return;
         }
         Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attrs).iterator();
         while (iter.hasNext()) {
             RAttributesLayout.RAttribute attr = iter.next();
-            obj.setAttr(attr.getName(), attr.getValue());
+            obj.putAttribute(attr.getName(), attr.getValue());
         }
     }
 }

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 // transcribed from src/main/attrib.c
@@ -76,9 +76,9 @@ public final class GetS4DataSlot extends Node {
             if (s3Class == null && type == RType.S4Object) {
                 return RNull.instance;
             }
-            if (obj instanceof RShareable && ((RShareable) obj).isShared()) {
+            if (RSharingAttributeStorage.isShareable(obj) && ((RSharingAttributeStorage) obj).isShared()) {
                 shareable.enter();
-                obj = (RAttributable) ((RShareable) obj).copy();
+                obj = ((RSharingAttributeStorage) obj).copy();
             }
 
             if (setClassAttrNode == null) {

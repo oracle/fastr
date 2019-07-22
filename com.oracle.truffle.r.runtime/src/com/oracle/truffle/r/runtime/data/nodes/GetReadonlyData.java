@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,8 +30,8 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * Nodes contained in this class return an array that is either directly backing the vector data, or
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
  * not be modified, as it may result in different behaviour depending on the concrete vector
  * implementation.
  *
- * @see RVector#getDataCopy()
+ * @see RAbstractVector#getDataCopy()
  */
 public class GetReadonlyData {
 

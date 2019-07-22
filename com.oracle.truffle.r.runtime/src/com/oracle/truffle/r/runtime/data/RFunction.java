@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RFunctionFactory.CachedExplicitCallNode
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
 /**
  * An instance of {@link RFunction} represents a function defined in R. The properties of a function
@@ -59,7 +60,7 @@ import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
  * </ul>
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RFunction extends RSharingAttributeStorage implements RTypedValue {
+public final class RFunction extends RSharingAttributeStorage implements RTypedValue, Shareable {
 
     public static final String NO_NAME = new String("");
 

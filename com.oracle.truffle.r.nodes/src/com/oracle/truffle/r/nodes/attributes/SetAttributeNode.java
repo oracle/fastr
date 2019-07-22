@@ -32,7 +32,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 /**
  * This node is responsible for setting a value to an arbitrary attribute.
@@ -86,12 +85,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
                     @Cached("createClassProfile()") ValueProfile xTypeProfile,
                     @Cached("create()") SpecialAttributesFunctions.IsSpecialAttributeNode isSpecialAttributeNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
-        DynamicObject attributes;
-        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
-            attributes = ((RAttributeStorage) x).getAttributes();
-        } else {
-            attributes = xTypeProfile.profile(x).getAttributes();
-        }
+        DynamicObject attributes = x.getAttributes();
 
         if (attributes == null) {
             attrNullProfile.enter();

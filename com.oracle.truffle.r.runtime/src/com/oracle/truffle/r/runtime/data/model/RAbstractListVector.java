@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,57 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import java.util.Arrays;
 
 /**
  * Note: lists must not contain {@code null} values.
  */
-public interface RAbstractListVector extends RAbstractListBaseVector {
+public abstract class RAbstractListVector extends RAbstractListBaseVector {
+
+    public RAbstractListVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default RType getRType() {
+    public RType getRType() {
         return RType.List;
     }
 
     @Override
-    RList materialize();
+    public RList materialize() {
+        RList materialized = RDataFactory.createList(getDataCopy());
+        copyAttributes(materialized);
+        return materialized;
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    private void copyAttributes(RList materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RList internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        return RDataFactory.createList(copyResizedData(size, fillNA), dimensions);
+    }
+
+    private Object[] copyResizedData(int size, boolean fillNA) {
+        Object[] localData = getReadonlyData();
+        Object[] newData = Arrays.copyOf(localData, size);
+        return resizeData(newData, localData, this.getLength(), fillNA);
+    }
+
+    @Override
+    public Object[] getDataCopy() {
+        int length = getLength();
+        Object[] result = new Object[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = getDataAt(i);
+        }
+        return result;
+    }
+
 }

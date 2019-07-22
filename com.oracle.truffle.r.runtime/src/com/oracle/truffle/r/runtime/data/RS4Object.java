@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,13 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
 /**
  * This is a placeholder class for an S4 object (GnuR S4SXP). It has no functionality at present but
  * is needed as such objects are generated when unserializing the "methods" package.
  */
-public final class RS4Object extends RSharingAttributeStorage {
+public final class RS4Object extends RSharingAttributeStorage implements Shareable {
 
     public RS4Object() {
         setS4();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
  * Whenever you add a type {@code T} to the list below, make sure a corresponding {@code executeT()}
- * method is added to {@link RNode}, a {@code typeof} method is added to {@code TypeoNode} and a
+ * method is added to {@link RNode}, a {@code typeof} method is added to {@code TypeofNode} and a
  * {@code print} method added to {code PrettyPrinterNode}.
  *
  * @see RNode

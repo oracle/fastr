@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RFactor;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -46,7 +45,7 @@ final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
         // TODO: this should be handled by an S3 function. Should it? For example, in C code for
         // split, there is direct call to getAttrib. This should be refactored to use
         // AttributeAccess node or even Factor.GetLevels node. The same holds for the access
-        RVector<?> levels = RFactor.getLevels(operand);
+        RAbstractVector levels = RFactor.getLevels(operand);
         String[] strings;
         if (levels == null) {
             strings = new String[0];

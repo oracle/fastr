@@ -52,6 +52,7 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
 
     @Override
     protected Object handleShareable(VirtualFrame frame, RSharingAttributeStorage shareable) {
+        assert RSharingAttributeStorage.isShareable(shareable);
         if (argPushStateNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             argPushStateNode = insert(ArgumentStatePushNodeGen.create(index));

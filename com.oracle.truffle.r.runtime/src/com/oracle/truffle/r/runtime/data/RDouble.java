@@ -44,11 +44,12 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RDouble extends RScalarVector implements RAbstractDoubleVector {
+public final class RDouble extends RAbstractDoubleVector implements RScalarVector {
 
     protected final double value;
 
     private RDouble(double value) {
+        super(!RRuntime.isNA(value));
         this.value = value;
     }
 
@@ -154,6 +155,28 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
     }
 
     @Override
+    public int getLength() {
+        return 1;
+    }
+
+    @Override
+    public RAbstractVector copy() {
+        return this;
+    }
+
+    @Override
+    public RDoubleVector materialize() {
+        RDoubleVector result = RDataFactory.createDoubleVector(new double[]{getValue()}, isComplete());
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public double[] getDataCopy() {
+        return new double[]{getValue()};
+    }
+
+    @Override
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Integer:
@@ -187,13 +210,6 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
     public double getDataAt(int index) {
         assert index == 0;
         return getValue();
-    }
-
-    @Override
-    public RDoubleVector materialize() {
-        RDoubleVector result = RDataFactory.createDoubleVectorFromScalar(getValue());
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
     }
 
     @Override

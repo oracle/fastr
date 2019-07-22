@@ -38,8 +38,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -70,7 +70,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
 
     protected boolean containsMetadata(RAbstractVector vector) {
-        return vector instanceof RVector && hasDimNode.execute(vector) || (copyAllAttributes && vector.getAttributes() != null) || getDimNamesNode.getDimNames(vector) != null ||
+        return vector instanceof RMaterializedVector && hasDimNode.execute(vector) ||
+                        (copyAllAttributes && vector.getAttributes() != null) ||
+                        getDimNamesNode.getDimNames(vector) != null ||
                         getNamesNode.getNames(vector) != null;
     }
 
@@ -142,7 +144,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             log("copyAttributes: ==");
             countEquals++;
         }
-        RVector<?> result = target.materialize();
+        RAbstractVector result = target.materialize();
         if (copyAllAttributes) {
             if (result != right) {
                 copyOfRegRight.execute(right, result);
@@ -182,8 +184,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
 
-        RSharingAttributeStorage.verify(left);
-        if (result != left || (left instanceof RSharingAttributeStorage && ((RSharingAttributeStorage) left).isTemporary())) {
+        if (result != left || (RSharingAttributeStorage.isShareable(left) && ((RSharingAttributeStorage) left).isTemporary())) {
             RList newDimNames = extractDimNamesNode.execute(left);
             if (hasDimNames.profile(newDimNames != null)) {
                 putDimNames.execute(result.getAttributes(), newDimNames);
@@ -220,7 +221,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             countSmaller++;
         }
         boolean rightNotResult = rightNotResultProfile.profile(right != target);
-        RVector<?> result = target.materialize();
+        RAbstractVector result = target.materialize();
         if (copyAllAttributes && rightNotResult) {
             copyOfReg.execute(right, result);
         }
@@ -246,7 +247,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             leftHasDimensions.enter();
         }
 
-        RVector.verifyDimensions(result.getLength(), newDimensions, this);
+        RAbstractVector.verifyDimensions(result.getLength(), newDimensions, this);
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
         if (rightNotResult) {
             RList newDimNames = extractDimNamesNode.execute(right);
@@ -275,7 +276,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             log("copyAttributes: >");
             countLarger++;
         }
-        RVector<?> result = target.materialize();
+        RAbstractVector result = target.materialize();
         if (copyAllAttributes && result != left) {
             copyOfReg.execute(left, result);
         }

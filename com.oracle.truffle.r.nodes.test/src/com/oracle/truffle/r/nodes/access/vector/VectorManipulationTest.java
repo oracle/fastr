@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorDataReuse;
 import org.junit.Test;
 import org.junit.experimental.theories.Theories;
@@ -141,7 +141,7 @@ public class VectorManipulationTest extends TestBase {
         });
     }
 
-    private static <ArrayT> void assertDataContents(RVector<ArrayT> vec, ArrayT arr) {
+    private static <ArrayT> void assertDataContents(RAbstractVector vec, ArrayT arr) {
         int len = vec.getLength();
         RType type = vec.getRType();
         for (int i = 0; i < len; i++) {

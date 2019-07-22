@@ -33,16 +33,18 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public final class RIntSequence extends RSequence implements RAbstractIntVector {
+public final class RIntSequence extends RAbstractIntVector implements RSequence {
 
     private final int start;
     private final int stride;
+    private final int length;
 
     RIntSequence(int start, int stride, int length) {
-        super(length);
+        super(RDataFactory.COMPLETE_VECTOR);
         assert length >= 0;
         this.start = start;
         this.stride = stride;
+        this.length = length;
     }
 
     @Override
@@ -87,6 +89,11 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return stride;
     }
 
+    @Override
+    public int getLength() {
+        return length;
+    }
+
     public int getIndexFor(int element) {
         int first = Math.min(getStart(), getEnd());
         int last = Math.max(getStart(), getEnd());
@@ -99,20 +106,6 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         return -1;
     }
 
-    private RIntVector populateVectorData(int[] result) {
-        int current = start;
-        for (int i = 0; i < result.length && i < getLength(); i++) {
-            result[i] = current;
-            current += stride;
-        }
-        return RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Override
-    protected RIntVector internalCreateVector() {
-        return populateVectorData(new int[getLength()]);
-    }
-
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
@@ -122,33 +115,6 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     // NOTE: it does not hold that getStart() <= getEnd()!
     public int getEnd() {
         return start + (getLength() - 1) * stride;
-    }
-
-    @Override
-    public RIntVector materialize() {
-        return this.internalCreateVector();
-    }
-
-    @Override
-    public RIntVector copyResized(int size, boolean fillNA) {
-        int[] data = new int[size];
-        populateVectorData(data);
-        RIntVector.resizeData(data, data, getLength(), fillNA);
-        return RDataFactory.createIntVector(data, !(fillNA && size > getLength()));
-    }
-
-    @Override
-    public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        int size = newDimensions[0] * newDimensions[1];
-        int[] data = new int[size];
-        populateVectorData(data);
-        RIntVector.resizeData(data, data, getLength(), fillNA);
-        return RDataFactory.createIntVector(data, !(fillNA && size > getLength()), newDimensions);
-    }
-
-    @Override
-    public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createIntVector(new int[newLength], newIsComplete);
     }
 
     private static final class FastPathAccess extends FastPathFromIntAccess {

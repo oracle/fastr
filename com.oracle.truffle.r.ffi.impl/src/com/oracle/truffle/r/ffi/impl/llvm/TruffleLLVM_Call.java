@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RScalar;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
@@ -183,7 +183,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
         }
 
         @Specialization
-        protected static Object convert(RVector<?> value) {
+        protected static Object convert(RAbstractVector value) {
             return value;
         }
 

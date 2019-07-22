@@ -39,15 +39,23 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public final class RForeignIntWrapper extends RForeignVectorWrapper implements RAbstractIntVector {
+public final class RForeignIntWrapper extends RAbstractIntVector implements RForeignVectorWrapper {
+
+    protected final TruffleObject delegate;
 
     public RForeignIntWrapper(TruffleObject delegate) {
-        super(delegate);
+        super(RDataFactory.INCOMPLETE_VECTOR);
+        this.delegate = delegate;
     }
 
     @Override
-    public RIntVector materialize() {
-        return (RIntVector) copy();
+    public int getLength() {
+        return RRuntime.getForeignArraySize(delegate, getInterop());
+    }
+
+    @Override
+    public Object getInternalStore() {
+        return delegate;
     }
 
     @Override
@@ -92,9 +100,8 @@ public final class RForeignIntWrapper extends RForeignVectorWrapper implements R
         }
     }
 
-    @Override
-    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createIntVector(new int[newLength], newIsComplete);
+    private static InteropLibrary getInterop() {
+        return InteropLibrary.getFactory().getUncached();
     }
 
     private static final class FastPathAccess extends FastPathFromIntAccess {
@@ -108,17 +115,17 @@ public final class RForeignIntWrapper extends RForeignVectorWrapper implements R
 
         FastPathAccess(RAbstractContainer value) {
             super(value);
-            delegateInterop = InteropLibrary.getFactory().create(((RForeignVectorWrapper) value).delegate);
+            delegateInterop = InteropLibrary.getFactory().create(((RForeignIntWrapper) value).delegate);
         }
 
         @Override
         public boolean supports(Object value) {
-            return super.supports(value) && delegateInterop.accepts(((RForeignVectorWrapper) value).delegate);
+            return super.supports(value) && delegateInterop.accepts(((RForeignIntWrapper) value).delegate);
         }
 
         @Override
         protected int getLength(RAbstractContainer vector) {
-            return RRuntime.getForeignArraySize(((RForeignVectorWrapper) vector).delegate, delegateInterop);
+            return RRuntime.getForeignArraySize(((RForeignIntWrapper) vector).delegate, delegateInterop);
         }
 
         @Override
@@ -164,7 +171,7 @@ public final class RForeignIntWrapper extends RForeignVectorWrapper implements R
         @Override
         @TruffleBoundary
         protected int getLength(RAbstractContainer vector) {
-            return RRuntime.getForeignArraySize(((RForeignVectorWrapper) vector).delegate, getInterop());
+            return RRuntime.getForeignArraySize(((RForeignIntWrapper) vector).delegate, getInterop());
         }
 
         @Override

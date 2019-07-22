@@ -54,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -208,7 +207,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
 
     @TruffleBoundary
     private static Object castListToAtomic(RAbstractListBaseVector source, CastTypeNode cast, RType type, CopyAttributesNode copyAttributes) {
-        RVector<?> result = type.create(source.getLength(), false);
+        RAbstractVector result = type.create(source.getLength(), false);
         Object store = result.getInternalStore();
         for (int i = 0; i < source.getLength(); i++) {
             Object value = source.getDataAt(i);

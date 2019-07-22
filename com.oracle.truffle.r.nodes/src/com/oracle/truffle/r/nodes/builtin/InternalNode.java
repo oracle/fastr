@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -384,7 +384,7 @@ public abstract class InternalNode extends OperatorNode {
             RStringVector clazz = classHierarchy.execute(x);
             if (hasClassProfile.profile(clazz != null)) {
                 // S4 dispatch:
-                if (isAttributableProfile.profile(x instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) x).isS4())) {
+                if (isAttributableProfile.profile(x instanceof RAttributable) && isS4Profile.profile(((RAttributable) x).isS4())) {
                     if (getBasicFunction == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         getBasicFunction = insert(new GetBasicFunction());

@@ -24,46 +24,45 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public interface RAbstractContainer extends RAttributable, RTypedValue {
+public abstract class RAbstractContainer extends RSharingAttributeStorage implements RTypedValue {
 
-    boolean isComplete();
+    public abstract boolean isComplete();
 
-    int getLength();
+    public abstract int getLength();
 
-    void setLength(int l);
+    public abstract void setLength(int l);
 
-    int getTrueLength();
+    public abstract int getTrueLength();
 
-    void setTrueLength(int l);
+    public abstract void setTrueLength(int l);
 
-    RAbstractContainer resize(int size);
+    public abstract RAbstractContainer resize(int size);
 
-    boolean hasDimensions();
+    public abstract boolean hasDimensions();
 
-    int[] getDimensions();
+    public abstract int[] getDimensions();
 
-    void setDimensions(int[] newDimensions);
+    public abstract void setDimensions(int[] newDimensions);
 
-    RTypedValue getNonShared();
+    public abstract RAbstractContainer materialize();
 
-    RAbstractContainer materialize();
+    public abstract Object getDataAtAsObject(int index);
 
-    RAbstractContainer copy();
-
-    Object getDataAtAsObject(int index);
+    @Override
+    public abstract RAbstractContainer copy();
 
     /**
      * Note: elements inside lists may be in inconsistent state reference counting wise. You may
      * need to put them into consistent state depending on what you use them for, consult the
      * documentation of {@code ExtractListElement}.
      */
-    default Object getDataAtAsObject(@SuppressWarnings("unused") Object store, int index) {
+    public Object getDataAtAsObject(@SuppressWarnings("unused") Object store, int index) {
         return getDataAtAsObject(index);
     }
 
@@ -76,39 +75,39 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
      * vector's fields, but instead read the necessary data from a local variable, which could be
      * beneficial when in loop.
      */
-    Object getInternalStore();
+    public abstract Object getInternalStore();
 
-    default RStringVector getNames() {
+    public RStringVector getNames() {
         CompilerAsserts.neverPartOfCompilation();
         return (RStringVector) getAttr(RRuntime.NAMES_ATTR_KEY);
     }
 
-    default void setNames(RStringVector newNames) {
+    public void setNames(RStringVector newNames) {
         CompilerAsserts.neverPartOfCompilation();
         setAttr(RRuntime.NAMES_ATTR_KEY, newNames);
     }
 
-    default RList getDimNames() {
+    public RList getDimNames() {
         CompilerAsserts.neverPartOfCompilation();
         return (RList) getAttr(RRuntime.DIMNAMES_ATTR_KEY);
     }
 
-    default void setDimNames(RList newDimNames) {
+    public void setDimNames(RList newDimNames) {
         CompilerAsserts.neverPartOfCompilation();
         setAttr(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
     }
 
-    default Object getRowNames() {
+    public Object getRowNames() {
         CompilerAsserts.neverPartOfCompilation();
         return getAttr(RRuntime.ROWNAMES_ATTR_KEY);
     }
 
-    default void setRowNames(RAbstractVector rowNames) {
+    public void setRowNames(RAbstractVector rowNames) {
         CompilerAsserts.neverPartOfCompilation();
         setAttr(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
     }
 
-    VectorAccess access();
+    public abstract VectorAccess access();
 
-    VectorAccess slowPathAccess();
+    public abstract VectorAccess slowPathAccess();
 }

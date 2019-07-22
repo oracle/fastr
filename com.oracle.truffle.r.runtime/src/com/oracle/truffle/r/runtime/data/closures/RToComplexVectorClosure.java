@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RVector;
+import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -36,49 +35,73 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromComplexAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-class RToComplexVectorClosure extends RToVectorClosure implements RAbstractComplexVector {
+class RToComplexVectorClosure extends RAbstractComplexVector {
+
+    protected final boolean keepAttributes;
+    private final RAbstractVector vector;
 
     protected RToComplexVectorClosure(RAbstractVector vector, boolean keepAttributes) {
-        super(vector, keepAttributes);
-    }
+        super(vector.isComplete());
+        this.keepAttributes = keepAttributes;
+        this.vector = vector;
 
-    @Override
-    public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createComplexVector(new double[newLength << 1], newIsComplete);
-    }
-
-    @Override
-    public final RComplexVector materialize() {
-        int length = getLength();
-        double[] result = new double[length << 1];
-        for (int i = 0; i < length; i++) {
-            RComplex data = getDataAt(i);
-            int index = i << 1;
-            result[index] = data.getRealPart();
-            result[index + 1] = data.getImaginaryPart();
+        if (isMaterialized()) {
+            if (keepAttributes) {
+                initAttributes(vector.getAttributes());
+            } else {
+                initRegAttributes(this, vector);
+            }
         }
-        RComplexVector materialized = RDataFactory.createComplexVector(result, getVector().isComplete());
-        copyAttributes(materialized);
-        return materialized;
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return vector.isMaterialized();
     }
 
     @TruffleBoundary
-    private void copyAttributes(RComplexVector materialized) {
+    @Override
+    protected void copyAttributes(RComplexVector materialized) {
         if (keepAttributes) {
-            materialized.initAttributes(getVector().getAttributes());
+            materialized.copyAttributesFrom(this);
         }
+    }
+
+    @Override
+    public Object getInternalStore() {
+        return vector.getInternalStore();
+    }
+
+    @Override
+    public int getLength() {
+        return vector.getLength();
+    }
+
+    @Override
+    public void setLength(int l) {
+        vector.setLength(l);
+    }
+
+    @Override
+    public int getTrueLength() {
+        return vector.getTrueLength();
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        vector.setTrueLength(l);
     }
 
     @Override
     public RComplex getDataAt(int index) {
-        RAbstractVector v = getVector();
+        RAbstractVector v = vector;
         VectorAccess spa = v.slowPathAccess();
         return spa.getComplex(spa.randomAccess(v), index);
     }
 
     @Override
     public VectorAccess access() {
-        return new FastPathAccess(this, getVector().access());
+        return new FastPathAccess(this, vector.access());
     }
 
     @Override
@@ -129,7 +152,7 @@ class RToComplexVectorClosure extends RToVectorClosure implements RAbstractCompl
 
         @Override
         protected Object getStore(RAbstractContainer vector) {
-            return super.getStore(((RToComplexVectorClosure) vector).getVector());
+            return super.getStore(((RToComplexVectorClosure) vector).vector);
         }
 
         @Override

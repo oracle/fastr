@@ -27,7 +27,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -36,15 +35,17 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromLogicalAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
-public final class RLogicalVector extends RVector<byte[]> implements RAbstractLogicalVector {
+public final class RLogicalVector extends RAbstractLogicalVector implements RMaterializedVector, Shareable {
 
     private byte[] data;
 
     RLogicalVector(byte[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RLogicalVector(byte[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -103,15 +104,6 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     public byte getDataAt(Object store, int index) {
         assert data == store;
         return NativeDataAccess.getData(this, (byte[]) store, index);
-    }
-
-    @Override
-    protected RLogicalVector internalCopy() {
-        if (data != null) {
-            return new RLogicalVector(Arrays.copyOf(data, data.length), isComplete());
-        } else {
-            return new RLogicalVector(getNativeDataCopy(), isComplete());
-        }
     }
 
     public RLogicalVector copyResetData(byte[] newData) {
@@ -173,35 +165,6 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     }
 
-    private byte[] copyResizedData(int size, boolean fillNA) {
-        byte[] localData = getReadonlyData();
-        byte[] newData = Arrays.copyOf(localData, size);
-        if (size > localData.length) {
-            if (fillNA) {
-                for (int i = localData.length; i < size; i++) {
-                    newData[i] = RRuntime.LOGICAL_NA;
-                }
-            } else {
-                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
-                    newData[i] = localData[j];
-                }
-            }
-        }
-        return newData;
-    }
-
-    @Override
-    protected RLogicalVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        boolean isComplete = isComplete() && ((getLength() >= size) || !fillNA);
-        return RDataFactory.createLogicalVector(copyResizedData(size, fillNA), isComplete, dimensions);
-    }
-
-    @Override
-    public RLogicalVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createLogicalVector(new byte[newLength], newIsComplete);
-    }
-
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         NativeDataAccess.setData(this, data, toIndex, ((RAbstractLogicalVector) fromVector).getDataAt(fromIndex));
@@ -223,11 +186,6 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
         } else {
             return getNativeDataCopy();
         }
-    }
-
-    @Override
-    public RLogicalVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createLogicalVector(getReadonlyData(), isComplete(), newDimensions);
     }
 
     @Override

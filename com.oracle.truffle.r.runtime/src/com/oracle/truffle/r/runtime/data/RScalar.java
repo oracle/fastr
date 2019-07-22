@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,42 +23,8 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.r.runtime.RInternalError;
 
 @ValueType
-public abstract class RScalar extends RObject implements RTypedValue {
+public interface RScalar {
 
-    @Override
-    public final int getTypedValueInfo() {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public final void setTypedValueInfo(int value) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public final int getGPBits() {
-        return 0;
-    }
-
-    @Override
-    public final void setGPBits(int gpbits) {
-    }
-
-    @Override
-    public final boolean isS4() {
-        return false;
-    }
-
-    @Override
-    public final void setS4() {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public final void unsetS4() {
-        throw RInternalError.shouldNotReachHere();
-    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * Base classes for {@link VectorAccess} implementations that are used on the fast path. For
@@ -51,7 +51,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     @Override
     protected Object getStore(RAbstractContainer vector) {
-        return hasStore ? vector.getInternalStore() : ((RVector<?>) vector).getNativeMirror();
+        return hasStore ? vector.getInternalStore() : ((RAbstractVector) vector).getNativeMirror();
     }
 
     public abstract static class FastPathFromIntAccess extends FastPathVectorAccess {

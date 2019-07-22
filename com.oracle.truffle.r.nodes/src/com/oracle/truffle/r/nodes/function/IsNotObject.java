@@ -27,7 +27,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.HasFixedAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -64,7 +64,7 @@ public abstract class IsNotObject extends RBaseNode {
     }
 
     @Specialization
-    public static boolean doOthers(RSharingAttributeStorage value,
+    public static boolean doOthers(RAttributable value,
                     @Cached("createClass()") HasFixedAttributeNode hasClassAttributeNode) {
         boolean result = !value.isS4() && !hasClassAttributeNode.execute(value);
         // result => !ClassHierarchyNode.hasClass

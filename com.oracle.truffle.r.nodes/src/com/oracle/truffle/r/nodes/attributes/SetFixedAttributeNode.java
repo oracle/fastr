@@ -26,11 +26,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 /**
@@ -85,10 +82,8 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
             // TODO: in theory we should inspect the whole object (attributes and elements for
             // lists/envs/...) to see if there is potential cycle
             fixupRHS.enter();
-            if (value instanceof RSharingAttributeStorage) {
+            if (RSharingAttributeStorage.isShareable(value)) {
                 value = ((RSharingAttributeStorage) value).deepCopy();
-            } else {
-                RSharingAttributeStorage.verify(value);
             }
         }
         execute(attr, castValue(value));
@@ -111,15 +106,8 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
     protected void setAttrInAttributable(RAttributable x, Object value,
                     @Cached("create()") BranchProfile attrNullProfile,
                     @Cached("create(name)") SetFixedPropertyNode setFixedPropertyNode,
-                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                    @Cached("createClassProfile()") ValueProfile xTypeProfile,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
-        DynamicObject attributes;
-        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
-            attributes = ((RAttributeStorage) x).getAttributes();
-        } else {
-            attributes = xTypeProfile.profile(x).getAttributes();
-        }
+        DynamicObject attributes = x.getAttributes();
 
         if (attributes == null) {
             attrNullProfile.enter();

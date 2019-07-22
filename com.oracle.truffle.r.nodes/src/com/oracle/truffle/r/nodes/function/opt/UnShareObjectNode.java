@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,15 +28,14 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 import static com.oracle.truffle.api.nodes.NodeCost.NONE;
 
 /**
  * Internal node that should be used whenever you need to decrement reference count of some object.
- * If the object is not instance of {@link RShareable} or if it is shared permanent, then does
- * nothing.
+ * If the object is not instance of {@link RSharingAttributeStorage} or if it is shared permanent,
+ * then does nothing.
  *
  * This class relies (and asserts) that all RShareable objects are subclasses of
  * RSharingAttributeStorage.
@@ -50,7 +49,7 @@ public abstract class UnShareObjectNode extends Node {
         return UnShareObjectNodeGen.create();
     }
 
-    @Specialization
+    @Specialization(guards = "obj.isShareable()")
     protected Object doUnshareable(RSharingAttributeStorage obj,
                     @Cached("createBinaryProfile()") ConditionProfile shareTemporary) {
         if (shareTemporary.profile(!(obj.isTemporary()) && !(obj.isSharedPermanent()))) {
@@ -61,17 +60,16 @@ public abstract class UnShareObjectNode extends Node {
 
     @Fallback
     protected Object doNonUnshareable(Object obj) {
-        RSharingAttributeStorage.verify(obj);
         return obj;
     }
 
     public static void unshare(Object value) {
-        RSharingAttributeStorage.verify(value);
-        if (value instanceof RSharingAttributeStorage) {
+        if (RSharingAttributeStorage.isShareable(value)) {
             RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
             if (!shareable.isTemporary() && !shareable.isSharedPermanent()) {
                 shareable.decRefCount();
             }
         }
     }
+
 }

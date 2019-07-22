@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.Utils;
  */
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RSymbol extends RAttributeStorage {
+public final class RSymbol extends RAttributable {
 
     /**
      * Note: GnuR caches all symbols and some packages rely on their identity. Moreover, the cached

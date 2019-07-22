@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.InspectForeignArrayNode.ArrayInfo;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -312,7 +311,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         void apply(A array, int resultIdx, int sourceIdx, boolean[] complete);
     }
 
-    private static <A> RAbstractVector createFlatVector(int length, A resultArray, WriteArray<A> writeResultArray, Function<Boolean, RVector<?>> createResult) {
+    private static <A> RAbstractVector createFlatVector(int length, A resultArray, WriteArray<A> writeResultArray, Function<Boolean, RAbstractVector> createResult) {
         boolean[] complete = new boolean[]{true};
         for (int i = 0; i < length; i++) {
             writeResultArray.apply(resultArray, i, i, complete);
@@ -324,7 +323,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
      * Creates a vector where the elements are positioned 'by collumn' according to the provided
      * dimensions, no matter if dim attribute is set or not.
      */
-    private static <A> RAbstractVector createByColVector(int[] dims, A resultArray, WriteArray<A> writeResultArray, Function<Boolean, RVector<?>> createResult) {
+    private static <A> RAbstractVector createByColVector(int[] dims, A resultArray, WriteArray<A> writeResultArray, Function<Boolean, RAbstractVector> createResult) {
         boolean[] complete = new boolean[]{true};
         assert dims.length > 1;
         populateResultArray(dims, new int[dims.length], 0, new int[]{0}, resultArray, writeResultArray, complete);

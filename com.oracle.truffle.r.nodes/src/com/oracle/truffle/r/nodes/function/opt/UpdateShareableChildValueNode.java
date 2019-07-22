@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ public abstract class UpdateShareableChildValueNode extends RBaseNode {
         return UpdateShareableChildValueNodeGen.create();
     }
 
-    @Specialization
+    @Specialization(guards = {"isShareable(owner)", "isShareable(value)"})
     protected void doShareableValues(RSharingAttributeStorage owner, RSharingAttributeStorage value,
                     @Cached("createBinaryProfile()") ConditionProfile sharedValue,
                     @Cached("createBinaryProfile()") ConditionProfile temporaryOwner) {
@@ -72,8 +72,10 @@ public abstract class UpdateShareableChildValueNode extends RBaseNode {
     }
 
     @Fallback
-    protected void doFallback(Object owner, Object value) {
-        RSharingAttributeStorage.verify(owner);
-        RSharingAttributeStorage.verify(value);
+    protected void doFallback(@SuppressWarnings("unused") Object owner, @SuppressWarnings("unused") Object value) {
+    }
+
+    protected static boolean isShareable(Object o) {
+        return RSharingAttributeStorage.isShareable(o);
     }
 }

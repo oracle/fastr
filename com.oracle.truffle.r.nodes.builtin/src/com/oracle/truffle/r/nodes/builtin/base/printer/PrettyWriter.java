@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.printer;
 
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 
 public interface PrettyWriter {
 
@@ -34,9 +34,9 @@ public interface PrettyWriter {
 
     void endValue(Object value);
 
-    void beginAttributes(RAttributeStorage value);
+    void beginAttributes(RAttributable value);
 
-    void endAttributes(RAttributeStorage value);
+    void endAttributes(RAttributable value);
 
     void beginElement(int index, FormatMetrics fm);
 

@@ -35,7 +35,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -45,9 +44,11 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
 @ExportLibrary(InteropLibrary.class)
-public final class RExpression extends RVector<Object[]> implements RAbstractListBaseVector {
+public final class RExpression extends RAbstractListBaseVector implements RMaterializedVector, Shareable {
 
     private Object[] data;
 
@@ -55,7 +56,7 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
         super(false);
         this.data = data;
         initDimsNamesDimNames(dims, names, dimNames);
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     @SuppressWarnings("static-method")
@@ -252,22 +253,6 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
         return resizeData(newData, localData, this.getLength(), fillNA);
     }
 
-    private static Object[] resizeData(Object[] newData, Object[] oldData, int oldDataLength, boolean fillNA) {
-        if (newData.length > oldDataLength) {
-            if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; i++) {
-                    newData[i] = RNull.instance;
-                }
-            } else {
-                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
-                    newData[i] = oldData[j];
-                }
-            }
-        }
-        return newData;
-    }
-
     @Override
     public void setElement(int i, Object value) {
         setDataAt(i, value);
@@ -279,7 +264,7 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
     }
 
     @Override
-    public RVector<?> materialize() {
+    public RExpression materialize() {
         return this;
     }
 
@@ -297,8 +282,8 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
         RExpression listCopy = new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
-            if (el instanceof RVector) {
-                Object elCopy = ((RVector<?>) el).deepCopy();
+            if (el instanceof RMaterializedVector) {
+                Object elCopy = ((RAbstractVector) el).deepCopy();
                 listCopy.updateDataAtAsObject(i, elCopy, null);
             }
         }
@@ -308,11 +293,6 @@ public final class RExpression extends RVector<Object[]> implements RAbstractLis
     @Override
     public RExpression createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createExpression(newLength);
-    }
-
-    @Override
-    public RExpression copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createExpression(data, newDimensions);
     }
 
     @Override

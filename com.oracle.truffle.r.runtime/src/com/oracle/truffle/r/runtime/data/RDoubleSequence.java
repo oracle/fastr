@@ -33,16 +33,18 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public final class RDoubleSequence extends RSequence implements RAbstractDoubleVector {
+public final class RDoubleSequence extends RAbstractDoubleVector implements RSequence {
 
     private final double start;
     private final double stride;
+    private final int length;
 
     RDoubleSequence(double start, double stride, int length) {
-        super(length);
+        super(RDataFactory.COMPLETE_VECTOR);
         assert length >= 0;
         this.start = start;
         this.stride = stride;
+        this.length = length;
     }
 
     @Override
@@ -57,6 +59,11 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
 
     public double getStride() {
         return stride;
+    }
+
+    @Override
+    public int getLength() {
+        return length;
     }
 
     @Override
@@ -91,47 +98,6 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
             default:
                 return null;
         }
-    }
-
-    private RDoubleVector populateVectorData(double[] result) {
-        double current = start;
-        for (int i = 0; i < result.length && i < getLength(); i++) {
-            result[i] = current;
-            current += stride;
-        }
-        return RDataFactory.createDoubleVector(result, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @Override
-    protected RDoubleVector internalCreateVector() {
-        return populateVectorData(new double[getLength()]);
-    }
-
-    @Override
-    public RDoubleVector materialize() {
-        return this.internalCreateVector();
-    }
-
-    @Override
-    public RDoubleVector copyResized(int size, boolean fillNA) {
-        double[] data = new double[size];
-        populateVectorData(data);
-        RDoubleVector.resizeData(data, data, getLength(), fillNA);
-        return RDataFactory.createDoubleVector(data, !(fillNA && size > getLength()));
-    }
-
-    @Override
-    public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        int size = newDimensions[0] * newDimensions[1];
-        double[] data = new double[size];
-        populateVectorData(data);
-        RDoubleVector.resizeData(data, data, getLength(), fillNA);
-        return RDataFactory.createDoubleVector(data, !(fillNA && size > getLength()), newDimensions);
-    }
-
-    @Override
-    public RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
     }
 
     @Override

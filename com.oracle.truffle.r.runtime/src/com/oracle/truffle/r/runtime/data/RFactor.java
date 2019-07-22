@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
 public final class RFactor {
 
@@ -35,9 +37,9 @@ public final class RFactor {
      * Helper method to get 'levels' of a factor. However, all the invocations of this method should
      * be replaced with FactorNodes.GetLevel in the future.
      */
-    public static RVector<?> getLevels(RAbstractIntVector factor) {
+    public static RAbstractVector getLevels(RAbstractIntVector factor) {
         Object attr = factor.getAttr(RRuntime.LEVELS_ATTR_KEY);
-        // convert scalar to RVector<?>if necessary
-        return attr instanceof RVector ? (RVector<?>) attr : (RVector<?>) RRuntime.asAbstractVector(attr);
+        // convert scalar to RAbstractVector if necessary
+        return attr instanceof RMaterializedVector ? (RAbstractVector) attr : (RAbstractVector) RRuntime.asAbstractVector(attr);
     }
 }

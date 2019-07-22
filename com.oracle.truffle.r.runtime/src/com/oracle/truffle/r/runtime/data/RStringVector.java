@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -32,7 +30,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -41,8 +38,10 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
-public final class RStringVector extends RVector<Object[]> implements RAbstractStringVector {
+public final class RStringVector extends RAbstractStringVector implements RMaterializedVector, Shareable {
 
     static final Assumption noWrappedStrings = Truffle.getRuntime().createAssumption();
 
@@ -62,12 +61,17 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
             noWrappedStrings.invalidate();
         }
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RStringVector(Object[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
         this(data, complete);
         initDimsNamesDimNames(dims, names, dimNames);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return true;
     }
 
     boolean isNativized() {
@@ -106,16 +110,6 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
     public String getDataAt(Object store, int index) {
         assert canBeValidStore(store, getInternalStore());
         return NativeDataAccess.getData(this, store, index);
-    }
-
-    @Override
-    protected RStringVector internalCopy() {
-        if (!isNativized()) {
-            Object[] localData = data;
-            return new RStringVector(Arrays.copyOf(localData, localData.length), isComplete());
-        } else {
-            return new RStringVector(getDataCopy(), isComplete());
-        }
     }
 
     @Override
@@ -231,42 +225,13 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
         return updateDataAt(i, (String) o, naCheck);
     }
 
-    private Object[] copyResizedData(int size, String fill) {
-        Object[] localData = getReadonlyData();
-        Object[] newData = Arrays.copyOf(localData, size);
-        if (size > localData.length) {
-            if (fill != null) {
-                Object fillObj = newData instanceof String[] ? fill : CharSXPWrapper.create(fill);
-                for (int i = localData.length; i < size; i++) {
-                    newData[i] = fillObj;
-                }
-            } else {
-                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
-                    newData[i] = localData[j];
-                }
-            }
-        }
-        return newData;
-    }
-
-    private Object[] createResizedData(int size, String fill) {
-        return copyResizedData(size, fill);
-    }
-
     @Override
-    protected RStringVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        boolean isComplete = !isNativized() && isComplete() && ((data.length >= size) || !fillNA);
-        return createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete, dimensions);
+    protected boolean isResizedComplete(int newSize, boolean filledNAs) {
+        return !isNativized() && isComplete() && ((data.length >= newSize) || !filledNAs);
     }
 
     public RStringVector resizeWithEmpty(int size) {
-        return createStringVector(createResizedData(size, RRuntime.NAMES_ATTR_EMPTY_VALUE), isComplete(), null);
-    }
-
-    @Override
-    public RStringVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createStringVector(new String[newLength], newIsComplete);
+        return createStringVector(copyResizedData(size, RRuntime.NAMES_ATTR_EMPTY_VALUE), isComplete(), null);
     }
 
     @Override
@@ -277,15 +242,6 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
             localData[toIndex] = other.getDataAt(fromIndex);
         } else {
             setDataAt(localData, toIndex, other.getDataAt(fromIndex));
-        }
-    }
-
-    @Override
-    public RStringVector copyWithNewDimensions(int[] newDimensions) {
-        if (!isNativized()) {
-            return createStringVector(data, isComplete(), newDimensions);
-        } else {
-            return createStringVector(getDataCopy(), isComplete(), newDimensions);
         }
     }
 
@@ -370,11 +326,12 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
         }
     }
 
-    private static RStringVector createStringVector(Object[] data, boolean complete, int[] dims) {
-        if (noWrappedStrings.isValid() || data instanceof String[]) {
-            return RDataFactory.createStringVector((String[]) data, complete, dims);
+    @Override
+    protected RStringVector createStringVector(Object[] vecData, boolean isComplete, int[] dims) {
+        if (noWrappedStrings.isValid() || vecData instanceof String[]) {
+            return RDataFactory.createStringVector((String[]) vecData, isComplete, dims);
         } else {
-            return RDataFactory.createStringVector((CharSXPWrapper[]) data, complete, dims);
+            return RDataFactory.createStringVector((CharSXPWrapper[]) vecData, isComplete, dims);
         }
     }
 

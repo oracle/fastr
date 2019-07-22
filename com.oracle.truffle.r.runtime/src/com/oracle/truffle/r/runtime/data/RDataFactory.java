@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -57,12 +58,12 @@ public final class RDataFactory {
     private abstract static class StaticVectorFactory extends BaseVectorFactory {
 
         @Override
-        public void reinitializeAttributes(RVector<?> vector, int[] dims, RStringVector names, RList dimNames) {
-            vector.initAttributes(dims != null || names != null || dimNames != null ? RVector.createAttributes(dims, names, dimNames) : null);
+        public void reinitializeAttributes(RAbstractVector vector, int[] dims, RStringVector names, RList dimNames) {
+            vector.initAttributes(dims != null || names != null || dimNames != null ? RAbstractVector.createAttributes(dims, names, dimNames) : null);
         }
 
         @Override
-        protected <T extends RVector<?>> T initializeAttributes(T result, int[] dims, RStringVector names, RList dimNames) {
+        protected <T extends RAbstractVector> T initializeAttributes(T result, int[] dims, RStringVector names, RList dimNames) {
             if (dims != null || names != null || dimNames != null) {
                 result.initDimsNamesDimNames(dims, names, dimNames);
             }
@@ -70,7 +71,7 @@ public final class RDataFactory {
         }
 
         @Override
-        protected <T extends RVector<?>> T initializeAttributes(T result, int[] dims) {
+        protected <T extends RAbstractVector> T initializeAttributes(T result, int[] dims) {
             if (dims != null) {
                 result.initDimsNamesDimNames(dims, null, null);
             }
@@ -78,7 +79,7 @@ public final class RDataFactory {
         }
 
         @Override
-        protected <T extends RVector<?>> T initializeAttributes(T result, RStringVector names) {
+        protected <T extends RAbstractVector> T initializeAttributes(T result, RStringVector names) {
             if (names != null) {
                 result.initDimsNamesDimNames(null, names, null);
             }
@@ -94,8 +95,8 @@ public final class RDataFactory {
 
         @Override
         protected <T> T traceDataCreated(T data) {
-            if (data instanceof RShareable) {
-                ((RShareable) data).makeSharedPermanent();
+            if (RSharingAttributeStorage.isShareable(data)) {
+                ((RSharingAttributeStorage) data).makeSharedPermanent();
             } else {
                 assert data instanceof Integer || data instanceof Double || data instanceof Byte || data instanceof String || data instanceof RRaw ||
                                 data instanceof RComplex : "cannot make permanent instance of non-shareable object";
@@ -134,12 +135,12 @@ public final class RDataFactory {
         private final ConditionProfile hasAttributes = ConditionProfile.createBinaryProfile();
 
         @Override
-        public void reinitializeAttributes(RVector<?> vector, int[] dims, RStringVector names, RList dimNames) {
-            vector.initAttributes(hasAttributes.profile(dims != null || names != null || dimNames != null) ? RVector.createAttributes(dims, names, dimNames) : null);
+        public void reinitializeAttributes(RAbstractVector vector, int[] dims, RStringVector names, RList dimNames) {
+            vector.initAttributes(hasAttributes.profile(dims != null || names != null || dimNames != null) ? RAbstractVector.createAttributes(dims, names, dimNames) : null);
         }
 
         @Override
-        protected <T extends RVector<?>> T initializeAttributes(T result, int[] dims, RStringVector names, RList dimNames) {
+        protected <T extends RAbstractVector> T initializeAttributes(T result, int[] dims, RStringVector names, RList dimNames) {
             if (hasAttributes.profile(dims != null || names != null || dimNames != null)) {
                 result.initDimsNamesDimNames(dims, names, dimNames);
             }
@@ -147,7 +148,7 @@ public final class RDataFactory {
         }
 
         @Override
-        protected <T extends RVector<?>> T initializeAttributes(T result, int[] dims) {
+        protected <T extends RAbstractVector> T initializeAttributes(T result, int[] dims) {
             if (hasAttributes.profile(dims != null)) {
                 result.initDimsNamesDimNames(dims, null, null);
             }
@@ -155,7 +156,7 @@ public final class RDataFactory {
         }
 
         @Override
-        protected <T extends RVector<?>> T initializeAttributes(T result, RStringVector names) {
+        protected <T extends RAbstractVector> T initializeAttributes(T result, RStringVector names) {
             if (hasAttributes.profile(names != null)) {
                 result.initDimsNamesDimNames(null, names, null);
             }
@@ -175,13 +176,13 @@ public final class RDataFactory {
             return NodeCost.NONE;
         }
 
-        public abstract void reinitializeAttributes(RVector<?> vector, int[] dims, RStringVector names, RList dimNames);
+        public abstract void reinitializeAttributes(RAbstractVector vector, int[] dims, RStringVector names, RList dimNames);
 
-        protected abstract <T extends RVector<?>> T initializeAttributes(T result, int[] dims, RStringVector names, RList dimNames);
+        protected abstract <T extends RAbstractVector> T initializeAttributes(T result, int[] dims, RStringVector names, RList dimNames);
 
-        protected abstract <T extends RVector<?>> T initializeAttributes(T result, int[] dims);
+        protected abstract <T extends RAbstractVector> T initializeAttributes(T result, int[] dims);
 
-        protected abstract <T extends RVector<?>> T initializeAttributes(T result, RStringVector names);
+        protected abstract <T extends RAbstractVector> T initializeAttributes(T result, RStringVector names);
 
         protected <T> T traceDataCreated(T data) {
             if (stateAssumption.isEnabled()) {
@@ -330,7 +331,7 @@ public final class RDataFactory {
             return traceDataCreated(new RExpression(data, null, null, null));
         }
 
-        public final RVector<?> createEmptyVector(RType type) {
+        public final RAbstractVector createEmptyVector(RType type) {
             switch (type) {
                 case Double:
                     return createEmptyDoubleVector();
@@ -351,7 +352,7 @@ public final class RDataFactory {
             }
         }
 
-        public final RVector<?> createUninitializedVector(RType type, int length, int[] dims, RStringVector names, RList dimNames) {
+        public final RAbstractVector createUninitializedVector(RType type, int length, int[] dims, RStringVector names, RList dimNames) {
             switch (type) {
                 case Logical:
                     return createLogicalVector(new byte[length], false, dims, names, dimNames);
@@ -381,7 +382,7 @@ public final class RDataFactory {
 
         }
 
-        public final RVector<?> createVector(RType type, int length, boolean fillNA) {
+        public final RAbstractVector createVector(RType type, int length, boolean fillNA) {
             switch (type) {
                 case Logical: {
                     byte[] data = new byte[length];

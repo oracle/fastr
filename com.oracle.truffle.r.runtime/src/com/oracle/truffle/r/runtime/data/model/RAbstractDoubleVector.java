@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,32 +22,112 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import java.util.Arrays;
 
-public interface RAbstractDoubleVector extends RAbstractAtomicVector {
+public abstract class RAbstractDoubleVector extends RAbstractAtomicVector {
+
+    public RAbstractDoubleVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default Object getDataAtAsObject(int index) {
+    public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
 
-    default double getDataAt(@SuppressWarnings("unused") Object store, int index) {
+    public double getDataAt(@SuppressWarnings("unused") Object store, int index) {
         return getDataAt(index);
     }
 
-    double getDataAt(int index);
+    public abstract double getDataAt(int index);
 
     @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, double value) {
+    public void setDataAt(Object store, int index, double value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    RDoubleVector materialize();
+    public RDoubleVector materialize() {
+        RDoubleVector result = RDataFactory.createDoubleVector(getDataCopy(), isComplete());
+        copyAttributes(result);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @TruffleBoundary
+    protected void copyAttributes(RDoubleVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
 
     @Override
-    default RType getRType() {
+    protected RDoubleVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        double[] localData = getReadonlyData();
+        double[] newData = Arrays.copyOf(localData, size);
+        newData = resizeData(newData, localData, localData.length, fillNA);
+        return RDataFactory.createDoubleVector(newData, isResizedComplete(size, fillNA), dimensions);
+    }
+
+    protected static double[] resizeData(double[] newData, double[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
+            if (fillNA) {
+                for (int i = oldDataLength; i < newData.length; i++) {
+                    newData[i] = RRuntime.DOUBLE_NA;
+                }
+            } else {
+                assert oldData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
+                    newData[i] = oldData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    protected RDoubleVector internalCopy() {
+        return RDataFactory.createDoubleVector(getDataCopy(), isComplete());
+    }
+
+    @Override
+    public RType getRType() {
         return RType.Double;
     }
+
+    @Override
+    public double[] getDataTemp() {
+        return (double[]) super.getDataTemp();
+    }
+
+    @Override
+    public double[] getReadonlyData() {
+        return getDataCopy();
+    }
+
+    @Override
+    public double[] getDataCopy() {
+        int length = getLength();
+        double[] result = new double[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = getDataAt(i);
+        }
+        return result;
+    }
+
+    @Override
+    public Object getInternalManagedData() {
+        return null;
+    }
+
+    @Override
+    public final RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
+    }
+
 }

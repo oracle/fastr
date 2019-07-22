@@ -27,7 +27,6 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -36,15 +35,17 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
-public final class RDoubleVector extends RVector<double[]> implements RAbstractDoubleVector {
+public final class RDoubleVector extends RAbstractDoubleVector implements RMaterializedVector, Shareable {
 
     private double[] data;
 
     RDoubleVector(double[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RDoubleVector(double[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -83,11 +84,6 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     }
 
     @Override
-    protected RDoubleVector internalCopy() {
-        return new RDoubleVector(getDataCopy(), this.isComplete());
-    }
-
-    @Override
     public double[] getInternalManagedData() {
         return data;
     }
@@ -107,19 +103,6 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     public double getDataAt(Object store, int index) {
         assert data == store;
         return NativeDataAccess.getData(this, (double[]) store, index);
-    }
-
-    public RDoubleVector copyResetData(double[] newData) {
-        boolean isComplete = true;
-        for (int i = 0; i < newData.length; i++) {
-            if (RRuntime.isNA(newData[i])) {
-                isComplete = false;
-                break;
-            }
-        }
-        RDoubleVector result = new RDoubleVector(newData, isComplete);
-        setAttributes(result);
-        return result;
     }
 
     @Override
@@ -170,11 +153,6 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
         }
     }
 
-    @Override
-    public RDoubleVector copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createDoubleVector(getReadonlyData(), isComplete(), newDimensions);
-    }
-
     private RDoubleVector updateDataAt(int index, double value, NACheck valueNACheck) {
         assert !this.isShared();
         NativeDataAccess.setData(this, data, index, value);
@@ -188,45 +166,11 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     @Override
     public RDoubleVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
         return updateDataAt(i, (Double) o, naCheck);
-
-    }
-
-    static double[] resizeData(double[] newData, double[] oldData, int oldDataLength, boolean fillNA) {
-        if (newData.length > oldDataLength) {
-            if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; i++) {
-                    newData[i] = RRuntime.DOUBLE_NA;
-                }
-            } else {
-                assert oldData.length > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
-                    newData[i] = oldData[j];
-                }
-            }
-        }
-        return newData;
-    }
-
-    private double[] copyResizedData(int size, boolean fillNA) {
-        double[] localData = getReadonlyData();
-        double[] newData = Arrays.copyOf(localData, size);
-        return resizeData(newData, localData, localData.length, fillNA);
-    }
-
-    @Override
-    protected RDoubleVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        boolean isComplete = isComplete() && ((getLength() >= size) || !fillNA);
-        return RDataFactory.createDoubleVector(copyResizedData(size, fillNA), isComplete, dimensions);
     }
 
     @Override
     public RDoubleVector materialize() {
         return this;
-    }
-
-    @Override
-    public RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
     }
 
     @Override

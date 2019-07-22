@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -65,6 +64,7 @@ import static com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.G
 import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 @RBuiltin(name = "%*%", kind = PRIMITIVE, parameterNames = {"", ""}, behavior = PURE, dispatch = OPS_GROUP_GENERIC)
 public abstract class MatMult extends RBuiltinNode.Arg2 {
@@ -118,17 +118,23 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "hasZeroDim(a, getADimsNode)")
-    protected RAbstractVector left0Dim(RAbstractVector a, RAbstractVector b) {
+    protected RAbstractVector left0Dim(RAbstractVector a, RAbstractVector b,
+                    @Cached() SetDimAttributeNode setDims) {
         int[] aDim = getADimsNode.getDimensions(a);
         int[] dim = aDim[0] == 0 ? new int[]{0, getBDimsNode.getDimensions(b)[1]} : new int[]{getBDimsNode.getDimensions(b)[0], 0};
-        return a.copyWithNewDimensions(dim);
+        RAbstractVector result = a.copyDropAttributes();
+        setDims.setDimensions(result, dim);
+        return result;
     }
 
     @Specialization(guards = "hasZeroDim(b, getBDimsNode)")
-    protected RAbstractVector right0Dim(RAbstractVector a, RAbstractVector b) {
+    protected RAbstractVector right0Dim(RAbstractVector a, RAbstractVector b,
+                    @Cached() SetDimAttributeNode setDims) {
         int[] bDim = getBDimsNode.getDimensions(b);
         int[] dim = bDim[0] == 0 ? new int[]{0, getADimsNode.getDimensions(a)[1]} : new int[]{getADimsNode.getDimensions(a)[0], 0};
-        return b.copyWithNewDimensions(dim);
+        RAbstractVector result = b.copyDropAttributes();
+        setDims.setDimensions(result, dim);
+        return result;
     }
 
     // double-double
@@ -240,15 +246,15 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
         Object dimName1 = RNull.instance;
         if (aDimNames != null && aDimNames.getLength() > 0) {
             dimName1 = aDimNames.getDataAt(0);
-            if (dimName1 instanceof RShareable && !((RShareable) dimName1).isShared()) {
-                ((RShareable) dimName1).incRefCount();
+            if (RSharingAttributeStorage.isShareable(dimName1) && !((RSharingAttributeStorage) dimName1).isShared()) {
+                ((RSharingAttributeStorage) dimName1).incRefCount();
             }
         }
         Object dimName2 = RNull.instance;
         if (bDimNames != null && bDimNames.getLength() > 1) {
             dimName2 = bDimNames.getDataAt(1);
-            if (dimName2 instanceof RShareable && !((RShareable) dimName2).isShared()) {
-                ((RShareable) dimName2).incRefCount();
+            if (RSharingAttributeStorage.isShareable(dimName2) && !((RSharingAttributeStorage) dimName2).isShared()) {
+                ((RSharingAttributeStorage) dimName2).incRefCount();
             }
         }
         setDimNamesNode.setDimNames(resultVec, RDataFactory.createList(new Object[]{dimName1, dimName2}));

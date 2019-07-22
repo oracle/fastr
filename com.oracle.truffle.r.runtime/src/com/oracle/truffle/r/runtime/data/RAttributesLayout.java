@@ -154,7 +154,7 @@ public final class RAttributesLayout {
         Property prop = shape.getLastProperty();
         while (prop != null) {
             Object value = result.get(prop.getKey());
-            if (value instanceof RSharingAttributeStorage) {
+            if (RSharingAttributeStorage.isShareable(value)) {
                 // There is no simple way to determine the correct reference count here and since
                 // the value will end up in two attributes collections, it will end up being shared
                 // most likely anyway.

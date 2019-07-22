@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,32 +22,113 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import java.util.Arrays;
 
-public interface RAbstractStringVector extends RAbstractAtomicVector {
+public abstract class RAbstractStringVector extends RAbstractAtomicVector {
+
+    public RAbstractStringVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default Object getDataAtAsObject(int index) {
+    public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
 
-    default String getDataAt(@SuppressWarnings("unused") Object store, int index) {
+    public String getDataAt(@SuppressWarnings("unused") Object store, int index) {
         return getDataAt(index);
     }
 
     @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, String value) {
+    public void setDataAt(Object store, int index, String value) {
         throw new UnsupportedOperationException();
     }
 
-    String getDataAt(int index);
+    public abstract String getDataAt(int index);
 
     @Override
-    RStringVector materialize();
-
-    @Override
-    default RType getRType() {
+    public RType getRType() {
         return RType.Character;
     }
+
+    @Override
+    public RStringVector materialize() {
+        RStringVector result = RDataFactory.createStringVector(getDataCopy(), isComplete());
+        copyAttributes(result);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    private void copyAttributes(RStringVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RStringVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        boolean isComplete = isResizedComplete(size, fillNA);
+        return createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete, dimensions);
+    }
+
+    protected RStringVector createStringVector(Object[] data, boolean isComplete, int[] dims) {
+        return RDataFactory.createStringVector((String[]) data, isComplete, dims);
+    }
+
+    protected Object[] copyResizedData(int size, String fill) {
+        Object[] localData = getReadonlyData();
+        Object[] newData = Arrays.copyOf(localData, size);
+        if (size > localData.length) {
+            if (fill != null) {
+                Object fillObj = newData instanceof String[] ? fill : CharSXPWrapper.create(fill);
+                for (int i = localData.length; i < size; i++) {
+                    newData[i] = fillObj;
+                }
+            } else {
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
+                    newData[i] = localData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    protected RStringVector internalCopy() {
+        return RDataFactory.createStringVector(getDataCopy(), isComplete());
+    }
+
+    @Override
+    public Object[] getReadonlyData() {
+        return getDataCopy();
+    }
+
+    @Override
+    public String[] getDataCopy() {
+        int length = getLength();
+        String[] result = new String[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = getDataAt(i);
+        }
+        return result;
+    }
+
+    @Override
+    public Object getInternalManagedData() {
+        return null;
+    }
+
+    @Override
+    public final RStringVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createStringVector(new String[newLength], newIsComplete);
+    }
+
 }

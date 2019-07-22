@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,13 +30,12 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 /**
  * Internal node that should be used whenever you need to increment reference count of some object.
- * If the object is not instance of {@link RShareable} or if it is shared permanent, then does
- * nothing.
+ * If the object is not instance of {@link RSharingAttributeStorage} or if it is shared permanent,
+ * then does nothing.
  *
  * This class relies (and asserts) that all RShareable objects are subclasses of
  * RSharingAttributeStorage.
@@ -50,7 +49,7 @@ public abstract class ShareObjectNode extends Node {
         return ShareObjectNodeGen.create();
     }
 
-    @Specialization
+    @Specialization(guards = "obj.isShareable()")
     protected Object doShareable(RSharingAttributeStorage obj,
                     @Cached("createBinaryProfile()") ConditionProfile sharedPermanent) {
         if (sharedPermanent.profile(!obj.isSharedPermanent())) {
@@ -61,13 +60,11 @@ public abstract class ShareObjectNode extends Node {
 
     @Fallback
     protected Object doNonShareable(Object obj) {
-        RSharingAttributeStorage.verify(obj);
         return obj;
     }
 
     public static <T> T share(T value) {
-        RSharingAttributeStorage.verify(value);
-        if (value instanceof RSharingAttributeStorage) {
+        if (RSharingAttributeStorage.isShareable(value)) {
             RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
             if (!shareable.isSharedPermanent()) {
                 shareable.incRefCount();
@@ -77,10 +74,10 @@ public abstract class ShareObjectNode extends Node {
     }
 
     public static <T> T sharePermanent(T value) {
-        RSharingAttributeStorage.verify(value);
-        if (value instanceof RSharingAttributeStorage) {
+        if (RSharingAttributeStorage.isShareable(value)) {
             ((RSharingAttributeStorage) value).makeSharedPermanent();
         }
         return value;
     }
+
 }

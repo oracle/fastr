@@ -34,7 +34,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -43,13 +42,15 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
 /**
  * A note on the RList complete flag {@link RAbstractVector#isComplete() } - it is always
  * initialized with {@code false} and never expected to change.
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RList extends RVector<Object[]> implements RAbstractListVector {
+public final class RList extends RAbstractListVector implements RMaterializedVector, Shareable {
 
     /**
      * After nativized, the data array degenerates to a reference holder.
@@ -60,7 +61,7 @@ public final class RList extends RVector<Object[]> implements RAbstractListVecto
         super(false);
         assert data.getClass().isAssignableFrom(Object[].class) : data;
         this.data = data;
-        assert RAbstractVector.verify(this);
+        assert RAbstractVector.verifyVector(this);
     }
 
     RList(Object[] data, int[] dims, RStringVector names, RList dimNames) {
@@ -300,28 +301,6 @@ public final class RList extends RVector<Object[]> implements RAbstractListVecto
         return this.getDataAt(index);
     }
 
-    private Object[] copyResizedData(int size, boolean fillNA) {
-        Object[] localData = getReadonlyData();
-        Object[] newData = Arrays.copyOf(localData, size);
-        return resizeData(newData, localData, this.getLength(), fillNA);
-    }
-
-    private static Object[] resizeData(Object[] newData, Object[] oldData, int oldDataLength, boolean fillNA) {
-        if (newData.length > oldDataLength) {
-            if (fillNA) {
-                for (int i = oldDataLength; i < newData.length; i++) {
-                    newData[i] = RNull.instance;
-                }
-            } else {
-                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
-                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
-                    newData[i] = oldData[j];
-                }
-            }
-        }
-        return newData;
-    }
-
     @Override
     public void setElement(int i, Object value) {
         setDataAt(i, value);
@@ -360,27 +339,12 @@ public final class RList extends RVector<Object[]> implements RAbstractListVecto
         RList listCopy = new RList(Arrays.copyOf(localData, localData.length), getDimensionsInternal(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
-            if (el instanceof RVector) {
-                Object elCopy = ((RVector<?>) el).deepCopy();
+            if (el instanceof RMaterializedVector) {
+                Object elCopy = ((RAbstractVector) el).deepCopy();
                 listCopy.updateDataAt(i, elCopy, null);
             }
         }
         return listCopy;
-    }
-
-    @Override
-    public RList createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createList(newLength);
-    }
-
-    @Override
-    public RList copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createList(getDataWithoutCopying(), newDimensions);
-    }
-
-    @Override
-    protected RList internalCopyResized(int size, boolean fillNA, int[] dimensions) {
-        return RDataFactory.createList(copyResizedData(size, fillNA), dimensions);
     }
 
     private static final class FastPathAccess extends FastPathFromListAccess {

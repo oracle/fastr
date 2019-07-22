@@ -73,7 +73,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -164,7 +163,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
                 throw RError.error(this, Message.MORE_THAN_ONE_MATCH, "match.arg");
             }
 
-            RVector<?> resultVector = choices.createEmptySameType(count, true);
+            RAbstractVector resultVector = choices.createEmptySameType(count, true);
             int matchedIdx = matched.getDataAt(0) - 1;
             resultVector.transferElementSameType(0, choices, matchedIdx);
             RStringVector names = getNamesNode.getNames(choices);
@@ -188,7 +187,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
             RIntVector matched = pmatch.execute(arg, choicesStringVector, -1, true);
             int count = count(matched);
             checkEmpty(choicesStringVector, count);
-            RVector<?> resultVector = choices.createEmptySameType(count, true);
+            RAbstractVector resultVector = choices.createEmptySameType(count, true);
             if (count == 1) {
                 for (int i = 0; i < matched.getLength(); i++) {
                     int matchedIdx = matched.getDataAt(i) - 1;

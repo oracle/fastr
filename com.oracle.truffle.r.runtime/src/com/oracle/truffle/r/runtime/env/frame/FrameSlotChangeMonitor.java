@@ -55,7 +55,7 @@ import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 /**
  * This class maintains information about the current hierarchy of environments in the system. This
@@ -487,7 +487,7 @@ public final class FrameSlotChangeMonitor {
             Arrays.fill(data, val);
         }
 
-        public void setAllDeepCopy(RShareable val) {
+        public void setAllDeepCopy(RSharingAttributeStorage val) {
             for (int i = 0; i < data.length; i++) {
                 data[i] = val.deepCopy();
             }
@@ -665,7 +665,7 @@ public final class FrameSlotChangeMonitor {
                             if (isMutableRShareable(prevValue)) {
                                 // Mutable data structures that are not synchronized need to be
                                 // copied
-                                data.setAllDeepCopy((RShareable) prevValue);
+                                data.setAllDeepCopy((RSharingAttributeStorage) prevValue);
                             } else {
                                 data.setAll(prevValue);
                             }

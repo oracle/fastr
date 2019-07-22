@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,32 +22,107 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import java.util.Arrays;
 
-public interface RAbstractLogicalVector extends RAbstractAtomicVector {
+public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
+
+    public RAbstractLogicalVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default Object getDataAtAsObject(int index) {
+    public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
 
-    default byte getDataAt(@SuppressWarnings("unused") Object store, int index) {
+    public byte getDataAt(@SuppressWarnings("unused") Object store, int index) {
         return getDataAt(index);
     }
 
-    byte getDataAt(int index);
+    public abstract byte getDataAt(int index);
 
     @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, byte value) {
+    public void setDataAt(Object store, int index, byte value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    RLogicalVector materialize();
-
-    @Override
-    default RType getRType() {
+    public RType getRType() {
         return RType.Logical;
     }
+
+    @Override
+    public RLogicalVector materialize() {
+        RLogicalVector result = RDataFactory.createLogicalVector(getDataCopy(), isComplete());
+        copyAttributes(result);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    private void copyAttributes(RLogicalVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    private byte[] copyResizedData(int size, boolean fillNA) {
+        byte[] localData = getReadonlyData();
+        byte[] newData = Arrays.copyOf(localData, size);
+        if (size > localData.length) {
+            if (fillNA) {
+                for (int i = localData.length; i < size; i++) {
+                    newData[i] = RRuntime.LOGICAL_NA;
+                }
+            } else {
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
+                    newData[i] = localData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    protected RLogicalVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        boolean isComplete = isResizedComplete(size, fillNA);
+        return RDataFactory.createLogicalVector(copyResizedData(size, fillNA), isComplete, dimensions);
+    }
+
+    @Override
+    protected RLogicalVector internalCopy() {
+        return RDataFactory.createLogicalVector(getDataCopy(), isComplete());
+    }
+
+    @Override
+    public byte[] getReadonlyData() {
+        return getDataCopy();
+    }
+
+    @Override
+    public byte[] getDataCopy() {
+        int length = getLength();
+        byte[] result = new byte[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = getDataAt(i);
+        }
+        return result;
+    }
+
+    @Override
+    public Object getInternalManagedData() {
+        return null;
+    }
+
+    @Override
+    public final RLogicalVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createLogicalVector(new byte[newLength], newIsComplete);
+    }
+
 }

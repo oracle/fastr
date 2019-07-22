@@ -57,13 +57,13 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalarList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 final class CachedReplaceVectorNode extends CachedVectorNode {
@@ -233,13 +233,11 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (valueLengthOneProfile.profile(valueLength != 1)) {
             verifyValueLength(positionProfiles, valueLength);
         }
-        if (vector instanceof RShareable && !ignoreRefCount) {
-            RShareable shareable = (RShareable) vector;
+        if (RSharingAttributeStorage.isShareable(vector) && !ignoreRefCount) {
             // TODO find out if we need to copy always in the recursive case
-            if (recursive || sharedConditionProfile.execute(shareable.isShared()) || valueEqualsVectorProfile.profile(vector == value)) {
-                shareable = (RShareable) vector.copy();
-                vector = (RAbstractVector) shareable;
-                assert shareable.isTemporary();
+            if (recursive || sharedConditionProfile.execute(vector.isShared()) || valueEqualsVectorProfile.profile(vector == value)) {
+                vector = vector.copy();
+                assert vector.isTemporary();
             }
         }
         vector = sharedClassProfile.profile(vector);
@@ -393,10 +391,10 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     // TODO (chumer) this is way to complicated at the moment
     // its not yet worth compiling it we need a better attribute system
     @TruffleBoundary
-    private static RVector<?> resizeVector(RAbstractVector vector, int size) {
+    private static RAbstractVector resizeVector(RAbstractVector vector, int size) {
         RStringVector oldNames = vector.getNames();
-        RVector<?> res = vector.copyResized(size, true).materialize();
-        if (vector instanceof RVector) {
+        RAbstractVector res = vector.copyResized(size, true).materialize();
+        if (vector instanceof RMaterializedVector) {
             res.copyAttributesFrom(vector);
         }
         res.setDimensionsNoCheck(null);

@@ -22,39 +22,129 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import java.util.Arrays;
 
-public interface RAbstractComplexVector extends RAbstractAtomicVector {
+public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
+
+    public RAbstractComplexVector(boolean complete) {
+        super(complete);
+    }
 
     @Override
-    default Object getDataAtAsObject(int index) {
+    public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
 
-    RComplex getDataAt(int index);
+    public abstract RComplex getDataAt(int index);
 
     @Override
-    RComplexVector materialize();
-
-    @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, RComplex value) {
-        throw new UnsupportedOperationException();
+    public RComplexVector materialize() {
+        RComplexVector result = RDataFactory.createComplexVector(getDataCopy(), isComplete());
+        copyAttributes(result);
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
     }
 
-    @SuppressWarnings("unused")
-    default void setDataAt(Object store, int index, double value) {
-        throw new UnsupportedOperationException();
-    }
-
-    @SuppressWarnings("unused")
-    default double getComplexPartAt(int index) {
-        throw new UnsupportedOperationException();
+    @TruffleBoundary
+    protected void copyAttributes(RDoubleVector materialized) {
+        materialized.copyAttributesFrom(this);
     }
 
     @Override
-    default RType getRType() {
+    protected RComplexVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        boolean isComplete = isResizedComplete(size, fillNA);
+        return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete, dimensions);
+    }
+
+    private double[] copyResizedData(int size, boolean fillNA) {
+        int csize = size << 1;
+        double[] localData = getReadonlyData();
+        double[] newData = Arrays.copyOf(localData, csize);
+        if (csize > localData.length) {
+            if (fillNA) {
+                for (int i = localData.length; i < csize; i++) {
+                    newData[i] = RRuntime.DOUBLE_NA;
+                }
+            } else {
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i <= csize - 2; i += 2, j = Utils.incMod(j + 1, localData.length)) {
+                    newData[i] = localData[j];
+                    newData[i + 1] = localData[j + 1];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @TruffleBoundary
+    protected void copyAttributes(RComplexVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RComplexVector internalCopy() {
+        return RDataFactory.createComplexVector(getDataCopy(), isComplete());
+    }
+
+    @SuppressWarnings("unused")
+    public void setDataAt(Object store, int index, RComplex value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public void setDataAt(Object store, int index, double value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unused")
+    public double getComplexPartAt(int index) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public RType getRType() {
         return RType.Complex;
     }
+
+    @Override
+    public double[] getDataTemp() {
+        return (double[]) super.getDataTemp();
+    }
+
+    @Override
+    public double[] getReadonlyData() {
+        return getDataCopy();
+    }
+
+    @Override
+    public double[] getDataCopy() {
+        int length = getLength();
+        double[] result = new double[length << 1];
+        for (int i = 0; i < length; i++) {
+            RComplex c = getDataAt(i);
+            result[i * 2] = c.getRealPart();
+            result[i * 2 + 1] = c.getImaginaryPart();
+        }
+        return result;
+    }
+
+    @Override
+    public Object getInternalManagedData() {
+        return null;
+    }
+
+    @Override
+    public final RComplexVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createComplexVector(new double[newLength << 1], newIsComplete);
+    }
+
 }

@@ -77,7 +77,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -167,7 +166,7 @@ public class LaFunctions {
                     break;
                 }
             }
-            RVector<?> values = null;
+            RAbstractVector values = null;
             Object vectorValues = RNull.instance;
             if (hasComplexValues.profile(complexValues)) {
                 double[] data = new double[n * 2];
@@ -522,7 +521,7 @@ public class LaFunctions {
             RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);
             setLogAttrNode.setAttr(modulusVec, RRuntime.asLogical(useLog));
             RList result = RDataFactory.createList(new Object[]{modulusVec, sign}, NAMES_VECTOR);
-            RVector.setVectorClassAttr(result, DET_CLASS);
+            RAbstractVector.setVectorClassAttr(result, DET_CLASS);
             return result;
         }
     }
@@ -735,7 +734,7 @@ public class LaFunctions {
                     throw error(Message.MUST_BE_SQUARE_COMPATIBLE, "b", p2, p, "a", n, n);
                 }
                 if (bin.getLength() == n * p) {
-                    bData = bin.materialize().getDataNonShared();
+                    bData = (double[]) bin.materialize().getDataNonShared();
                 } else {
                     bData = new double[n];
                     // TODO: length for arraycopy is n*p, but bData is new double[n] ?? Should be
@@ -762,7 +761,7 @@ public class LaFunctions {
                     throw error(Message.MUST_BE_SQUARE_COMPATIBLE, "b", bin.getLength(), p, "a", n, n);
                 }
                 if (bin.getLength() == n) {
-                    bData = bin.materialize().getDataNonShared();
+                    bData = (double[]) bin.materialize().getDataNonShared();
                 } else {
                     bData = new double[n];
                     System.arraycopy(bin.materialize().getReadonlyData(), 0, bData, 0, n * p);

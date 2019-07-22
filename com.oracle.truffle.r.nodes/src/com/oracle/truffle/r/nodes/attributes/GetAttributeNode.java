@@ -26,13 +26,10 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
 /**
  * This node is responsible for retrieving a value from an arbitrary attribute. Use
@@ -68,16 +65,9 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     @Specialization(guards = "!isSpecialAttribute(name)")
     protected static Object getAttrFromAttributable(RAttributable x, String name,
                     @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("create()") GetPropertyNode getPropertyNode,
-                    @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                    @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+                    @Cached("create()") GetPropertyNode getPropertyNode) {
 
-        DynamicObject attributes;
-        if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {
-            attributes = ((RAttributeStorage) x).getAttributes();
-        } else {
-            attributes = xTypeProfile.profile(x).getAttributes();
-        }
+        DynamicObject attributes = x.getAttributes();
 
         if (attributes == null) {
             attrNullProfile.enter();

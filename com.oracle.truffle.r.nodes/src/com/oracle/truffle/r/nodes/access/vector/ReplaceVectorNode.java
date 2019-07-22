@@ -133,7 +133,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         String name = positions.length == 1 ? extractName.execute(positions[0]) : null;
         if (name != null) {
             try {
-                env.put(name, value instanceof RScalarVector ? ((RScalarVector) value).getDataAtAsObject(0) : value);
+                env.put(name, value instanceof RScalarVector ? ((RAbstractVector) value).getDataAtAsObject(0) : value);
             } catch (PutException ex) {
                 throw error(ex);
             }

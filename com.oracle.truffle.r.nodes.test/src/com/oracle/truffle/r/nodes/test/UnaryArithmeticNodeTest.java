@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,8 +61,7 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
@@ -127,8 +126,8 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
             return false;
         }
 
-        if (a instanceof RShareable) {
-            if (((RShareable) a).isTemporary()) {
+        if (RSharingAttributeStorage.isShareable(a)) {
+            if (((RSharingAttributeStorage) a).isTemporary()) {
                 return true;
             }
         }
@@ -159,11 +158,12 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
             RAbstractVector operand = copy(originalOperand);
             // we have to e careful not to change mutable vectors
             RAbstractVector a = copy(operand);
-            if (a instanceof RShareable) {
-                ((RShareable) a).incRefCount();
+            a.incRefCount();
+            if (RSharingAttributeStorage.isShareable(a)) {
+                ((RSharingAttributeStorage) a).incRefCount();
             }
 
-            RVector<?> aMaterialized = withinTestContext(() -> a.copy().materialize());
+            RAbstractVector aMaterialized = withinTestContext(() -> a.copy().materialize());
             aMaterialized.setAttr("a", "a");
             assertAttributes(executeArithmetic(factory, copy(aMaterialized)), "a");
             return null;

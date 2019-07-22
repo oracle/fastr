@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -88,12 +87,12 @@ abstract class ClassCheckNode extends RNode {
     }
 
     @Specialization(guards = "!hasAttributes(storage)")
-    protected static RAttributeStorage doEmptyAttrStorage(RAttributeStorage storage) {
+    protected static RAttributable doEmptyAttrStorage(RAttributable storage) {
         return storage;
     }
 
     @Specialization(guards = "hasAttributes(storage)")
-    protected static RAttributeStorage doEmptyAttrStorage(RAttributeStorage storage,
+    protected static RAttributable doEmptyAttrStorage(RAttributable storage,
                     @Cached("createClass()") GetFixedAttributeNode getClassAttrNode) {
         if (getClassAttrNode.execute(storage) != null) {
             throw RSpecialFactory.throwFullCallNeeded();
@@ -101,12 +100,12 @@ abstract class ClassCheckNode extends RNode {
         return storage;
     }
 
-    protected static boolean hasAttributes(RAttributeStorage storage) {
+    protected static boolean hasAttributes(RAttributable storage) {
         return storage.getAttributes() != null;
     }
 
     protected static boolean isAttributableStorage(Object obj) {
-        return obj instanceof RAttributeStorage;
+        return obj instanceof RAttributable;
     }
 
     @Specialization(guards = "!isAttributableStorage(value)")

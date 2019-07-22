@@ -41,11 +41,12 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RString extends RScalarVector implements RAbstractStringVector {
+public final class RString extends RAbstractStringVector implements RScalarVector {
 
     private final String value;
 
     private RString(String value) {
+        super(!RRuntime.isNA(value));
         this.value = value;
     }
 
@@ -71,6 +72,28 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
     }
 
     @Override
+    public int getLength() {
+        return 1;
+    }
+
+    @Override
+    public RAbstractVector copy() {
+        return this;
+    }
+
+    @Override
+    public RStringVector materialize() {
+        RStringVector result = RDataFactory.createStringVector(new String[]{getValue()}, isComplete());
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public String[] getDataCopy() {
+        return new String[]{getValue()};
+    }
+
+    @Override
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Character:
@@ -91,13 +114,6 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
     public String getDataAt(int index) {
         assert index == 0;
         return value;
-    }
-
-    @Override
-    public RStringVector materialize() {
-        RStringVector result = RDataFactory.createStringVector(new String[]{getValue()}, isComplete());
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
     }
 
     @Override

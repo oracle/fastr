@@ -37,10 +37,23 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 
-public final class RForeignListWrapper extends RForeignVectorWrapper implements RAbstractListVector {
+public final class RForeignListWrapper extends RAbstractListVector implements RForeignVectorWrapper {
+
+    protected final TruffleObject delegate;
 
     public RForeignListWrapper(TruffleObject delegate) {
-        super(delegate);
+        super(RDataFactory.INCOMPLETE_VECTOR);
+        this.delegate = delegate;
+    }
+
+    @Override
+    public int getLength() {
+        return RRuntime.getForeignArraySize(delegate, getInterop());
+    }
+
+    @Override
+    public Object getInternalStore() {
+        return delegate;
     }
 
     @Override
@@ -58,10 +71,14 @@ public final class RForeignListWrapper extends RForeignVectorWrapper implements 
     @TruffleBoundary
     public Object getDataAt(int index) {
         try {
-            return unbox(getInterop().readArrayElement(delegate, index));
+            return Foreign2R.getUncached().convert((getInterop().readArrayElement(delegate, index)));
         } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
+    }
+
+    private static InteropLibrary getInterop() {
+        return InteropLibrary.getFactory().getUncached();
     }
 
     private static final class FastPathAccess extends FastPathFromListAccess {
@@ -71,7 +88,7 @@ public final class RForeignListWrapper extends RForeignVectorWrapper implements 
 
         FastPathAccess(RAbstractContainer value) {
             super(value);
-            delegateInterop = InteropLibrary.getFactory().create(((RForeignVectorWrapper) value).delegate);
+            delegateInterop = InteropLibrary.getFactory().create(((RForeignListWrapper) value).delegate);
         }
 
         @Override
@@ -86,7 +103,7 @@ public final class RForeignListWrapper extends RForeignVectorWrapper implements 
 
         @Override
         protected int getLength(RAbstractContainer vector) {
-            return RRuntime.getForeignArraySize(((RForeignVectorWrapper) vector).delegate, delegateInterop);
+            return RRuntime.getForeignArraySize(((RForeignListWrapper) vector).delegate, delegateInterop);
         }
 
         @Override
@@ -114,7 +131,7 @@ public final class RForeignListWrapper extends RForeignVectorWrapper implements 
         @Override
         @TruffleBoundary
         protected int getLength(RAbstractContainer vector) {
-            return RRuntime.getForeignArraySize(((RForeignVectorWrapper) vector).delegate, getInterop());
+            return RRuntime.getForeignArraySize(((RForeignListWrapper) vector).delegate, getInterop());
         }
 
         @Override

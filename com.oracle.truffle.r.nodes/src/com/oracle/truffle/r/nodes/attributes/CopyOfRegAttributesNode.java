@@ -35,9 +35,8 @@ import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -64,47 +63,47 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     }
 
     @Specialization(guards = "source.getAttributes() == null")
-    protected void copyNoAttributes(@SuppressWarnings("unused") RAttributeStorage source, @SuppressWarnings("unused") RAttributeStorage target) {
+    protected void copyNoAttributes(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target) {
         // nothing to do
     }
 
-    protected static boolean emptyAttributes(RAttributeStorage source) {
+    protected static boolean emptyAttributes(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
         return attributes == null || attributes.isEmpty();
     }
 
     @Specialization(guards = "emptyAttributes(source)", replaces = "copyNoAttributes")
-    protected void copyEmptyAttributes(@SuppressWarnings("unused") RAttributeStorage source, @SuppressWarnings("unused") RAttributeStorage target) {
+    protected void copyEmptyAttributes(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target) {
         // nothing to do
     }
 
-    protected final boolean onlyDimAttribute(RAttributeStorage source) {
+    protected final boolean onlyDimAttribute(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyDimAttribute(source)")
-    protected void copyDimOnly(@SuppressWarnings("unused") RAttributeStorage source, @SuppressWarnings("unused") RAttributeStorage target) {
+    protected void copyDimOnly(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target) {
         // nothing to do
     }
 
-    protected final boolean onlyNamesAttribute(RAttributeStorage source) {
+    protected final boolean onlyNamesAttribute(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyNamesAttribute(source)")
-    protected void copyNamesOnly(@SuppressWarnings("unused") RAttributeStorage source, @SuppressWarnings("unused") RAttributeStorage target) {
+    protected void copyNamesOnly(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target) {
         // nothing to do
     }
 
-    protected final boolean onlyClassAttribute(RAttributeStorage source) {
+    protected final boolean onlyClassAttribute(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
-    protected void copyClassOnly(RAttributeStorage source, RVector<?> target,
+    protected void copyClassOnly(RAttributable source, RAbstractVector target,
                     @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
         Object classAttr = classAttrGetter.execute(source);
@@ -113,7 +112,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     }
 
     @Specialization
-    protected void copyGeneric(RAttributeStorage source, RAttributeStorage target,
+    protected void copyGeneric(RAttributable source, RAttributable target,
                     @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
         DynamicObject orgAttributes = source.getAttributes();
@@ -132,13 +131,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         }
     }
 
-    @Specialization(guards = "!isAttributeStorage(source)")
-    @SuppressWarnings("unused")
-    protected void copyNothing(RAttributable source, RAttributable target) {
-        // do nothing, just pass
-    }
-
     protected static boolean isAttributeStorage(Object o) {
-        return o instanceof RAttributeStorage;
+        return o instanceof RAttributable;
     }
 }

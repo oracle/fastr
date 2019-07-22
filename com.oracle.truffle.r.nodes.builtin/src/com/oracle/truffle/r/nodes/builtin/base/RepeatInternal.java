@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -65,7 +64,7 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
             if (timesLength == 0) {
                 throw error(RError.Message.INVALID_VALUE, "times");
             }
-            RVector<?> result;
+            RAbstractVector result;
             if (timesOneProfile.profile(timesLength == 1)) {
                 timesAccess.next(timesIter);
                 int timesValue = timesAccess.getInt(timesIter);

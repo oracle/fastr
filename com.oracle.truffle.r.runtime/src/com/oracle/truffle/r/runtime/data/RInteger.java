@@ -41,11 +41,12 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RInteger extends RScalarVector implements RAbstractIntVector {
+public final class RInteger extends RAbstractIntVector implements RScalarVector {
 
     protected final int value;
 
     private RInteger(int value) {
+        super(!RRuntime.isNA(value));
         this.value = value;
     }
 
@@ -138,6 +139,28 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
         return interop.asDouble(value);
     }
 
+    @Override
+    public int getLength() {
+        return 1;
+    }
+
+    @Override
+    public RAbstractVector copy() {
+        return this;
+    }
+
+    @Override
+    public RIntVector materialize() {
+        RIntVector result = RDataFactory.createIntVector(new int[]{getValue()}, isComplete());
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    public int[] getDataCopy() {
+        return new int[]{getValue()};
+    }
+
     public static RInteger createNA() {
         return new RInteger(RRuntime.INT_NA);
     }
@@ -182,13 +205,6 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
     @Override
     public String toString() {
         return RRuntime.intToString(value);
-    }
-
-    @Override
-    public RIntVector materialize() {
-        RIntVector result = RDataFactory.createIntVectorFromScalar(value);
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
     }
 
     @Override

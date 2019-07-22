@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,24 +43,22 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class BinaryVectorTest extends TestBase {
 
-    @DataPoint public static final RScalarVector PRIMITIVE_LOGICAL = RLogical.valueOf((byte) 1);
-    @DataPoint public static final RScalarVector PRIMITIVE_INTEGER = RInteger.valueOf(42);
-    @DataPoint public static final RScalarVector PRIMITIVE_DOUBLE = RDouble.valueOf(42d);
-    @DataPoint public static final RScalarVector PRIMITIVE_COMPLEX = RComplex.valueOf(1.0, 1.0);
+    @DataPoint public static final RAbstractVector PRIMITIVE_LOGICAL = RLogical.valueOf((byte) 1);
+    @DataPoint public static final RAbstractVector PRIMITIVE_INTEGER = RInteger.valueOf(42);
+    @DataPoint public static final RAbstractVector PRIMITIVE_DOUBLE = RDouble.valueOf(42d);
+    @DataPoint public static final RAbstractVector PRIMITIVE_COMPLEX = RComplex.valueOf(1.0, 1.0);
 
     @DataPoint public static final RAbstractVector EMPTY_LOGICAL = createEmptyLogicalVector();
     @DataPoint public static final RAbstractVector EMPTY_INTEGER = createEmptyIntVector();
     @DataPoint public static final RAbstractVector EMPTY_DOUBLE = createEmptyDoubleVector();
     @DataPoint public static final RAbstractVector EMPTY_COMPLEX = createEmptyComplexVector();
 
-    @DataPoint public static final RSequence SEQUENCE_INT = createIntSequence(1, 2, 10);
-    @DataPoint public static final RSequence SEQUENCE_DOUBLE = createDoubleSequence(1, 2, 10);
+    @DataPoint public static final RAbstractVector SEQUENCE_INT = createIntSequence(1, 2, 10);
+    @DataPoint public static final RAbstractVector SEQUENCE_DOUBLE = createDoubleSequence(1, 2, 10);
 
     @DataPoint public static final RAbstractVector FOUR_LOGICAL = createLogicalVector(new byte[]{1, 0, 1, 0}, true);
     @DataPoint public static final RAbstractVector FOUR_INT = createIntVector(new int[]{1, 2, 3, 4}, true);
