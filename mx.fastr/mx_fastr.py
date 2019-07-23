@@ -57,7 +57,7 @@ def r_path():
 
 def r_version():
     # Could figure this out dynamically?
-    return 'R-3.5.1'
+    return 'R-3.6.1'
 
 def get_default_jdk():
     if mx.suite("compiler", fatalIfMissing=False):
