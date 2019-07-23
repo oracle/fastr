@@ -107,7 +107,7 @@ public abstract class GetFixedPropertyNode extends PropertyAccessNode {
     }
 
     @GenerateUncached
-    public static abstract class GetClassPropertyNode extends GetFixedPropertyNode {
+    public abstract static class GetClassPropertyNode extends GetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.CLASS_ATTR_KEY;
@@ -115,7 +115,7 @@ public abstract class GetFixedPropertyNode extends PropertyAccessNode {
     }
 
     @GenerateUncached
-    public static abstract class GetNamesPropertyNode extends GetFixedPropertyNode {
+    public abstract static class GetNamesPropertyNode extends GetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.NAMES_ATTR_KEY;
@@ -123,7 +123,7 @@ public abstract class GetFixedPropertyNode extends PropertyAccessNode {
     }
 
     @GenerateUncached
-    public static abstract class GetDimPropertyNode extends GetFixedPropertyNode {
+    public abstract static class GetDimPropertyNode extends GetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.DIM_ATTR_KEY;
@@ -131,7 +131,7 @@ public abstract class GetFixedPropertyNode extends PropertyAccessNode {
     }
 
     @GenerateUncached
-    public static abstract class GetDimNamesPropertyNode extends GetFixedPropertyNode {
+    public abstract static class GetDimNamesPropertyNode extends GetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.DIMNAMES_ATTR_KEY;
@@ -139,7 +139,7 @@ public abstract class GetFixedPropertyNode extends PropertyAccessNode {
     }
 
     @GenerateUncached
-    public static abstract class GetRowNamesPropertyNode extends GetFixedPropertyNode {
+    public abstract static class GetRowNamesPropertyNode extends GetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.ROWNAMES_ATTR_KEY;
@@ -147,7 +147,7 @@ public abstract class GetFixedPropertyNode extends PropertyAccessNode {
     }
 
     @GenerateUncached
-    public static abstract class GetTspPropertyNode extends GetFixedPropertyNode {
+    public abstract static class GetTspPropertyNode extends GetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.TSP_ATTR_KEY;
@@ -155,14 +155,14 @@ public abstract class GetFixedPropertyNode extends PropertyAccessNode {
     }
 
     @GenerateUncached
-    public static abstract class GetCommentPropertyNode extends GetFixedPropertyNode {
+    public abstract static class GetCommentPropertyNode extends GetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.COMMENT_ATTR_KEY;
         }
     }
 
-    public static abstract class GetGenericPropertyNode extends GetFixedPropertyNode {
+    public abstract static class GetGenericPropertyNode extends GetFixedPropertyNode {
         private final String propertyName;
 
         public GetGenericPropertyNode(String propertyName) {

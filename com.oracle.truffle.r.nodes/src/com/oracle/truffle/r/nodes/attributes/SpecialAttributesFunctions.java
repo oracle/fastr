@@ -79,7 +79,7 @@ public final class SpecialAttributesFunctions {
      * A node used in guards, for example, to determine whether an attribute is a special one.
      */
     @GenerateUncached
-    public static abstract class IsSpecialAttributeNode extends RBaseNode {
+    public abstract static class IsSpecialAttributeNode extends RBaseNode {
 
         public static IsSpecialAttributeNode create() {
             return IsSpecialAttributeNodeGen.create();
@@ -411,6 +411,7 @@ public final class SpecialAttributesFunctions {
             return SpecialAttributesFunctionsFactory.GetNamesAttributeNodeGen.create();
         }
 
+        @Override
         public abstract Object execute(RAttributable attr);
 
         public final RStringVector getNames(RAttributable x) {

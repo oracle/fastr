@@ -40,12 +40,12 @@ public abstract class RAbstractAtomicVector extends RAbstractVector {
         super(complete);
     }
 
-    public boolean isScalar() {
+    public final boolean isScalar() {
         return getLength() == 1;
     }
 
     @Override
-    protected boolean boxReadElements() {
+    protected final boolean boxReadElements() {
         return false;
     }
 

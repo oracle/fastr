@@ -99,7 +99,7 @@ public abstract class RemoveFixedPropertyNode extends PropertyAccessNode {
         attrs.delete(getPropertyName());
     }
 
-    public static abstract class RemoveGenericPropertyAccessNode extends RemoveFixedPropertyNode {
+    public abstract static class RemoveGenericPropertyAccessNode extends RemoveFixedPropertyNode {
         private final String name;
 
         public RemoveGenericPropertyAccessNode(String name) {
@@ -112,49 +112,49 @@ public abstract class RemoveFixedPropertyNode extends PropertyAccessNode {
         }
     }
 
-    public static abstract class RemoveNamesPropertyAccessNode extends RemoveFixedPropertyNode {
+    public abstract static class RemoveNamesPropertyAccessNode extends RemoveFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.NAMES_ATTR_KEY;
         }
     }
 
-    public static abstract class RemoveRowNamesPropertyAccessNode extends RemoveFixedPropertyNode {
+    public abstract static class RemoveRowNamesPropertyAccessNode extends RemoveFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.ROWNAMES_ATTR_KEY;
         }
     }
 
-    public static abstract class RemoveDimPropertyAccessNode extends RemoveFixedPropertyNode {
+    public abstract static class RemoveDimPropertyAccessNode extends RemoveFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.DIM_ATTR_KEY;
         }
     }
 
-    public static abstract class RemoveDimNamesPropertyAccessNode extends RemoveFixedPropertyNode {
+    public abstract static class RemoveDimNamesPropertyAccessNode extends RemoveFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.DIMNAMES_ATTR_KEY;
         }
     }
 
-    public static abstract class RemoveClassPropertyAccessNode extends RemoveFixedPropertyNode {
+    public abstract static class RemoveClassPropertyAccessNode extends RemoveFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.CLASS_ATTR_KEY;
         }
     }
 
-    public static abstract class RemoveTspPropertyAccessNode extends RemoveFixedPropertyNode {
+    public abstract static class RemoveTspPropertyAccessNode extends RemoveFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.TSP_ATTR_KEY;
         }
     }
 
-    public static abstract class RemoveCommentPropertyAccessNode extends RemoveFixedPropertyNode {
+    public abstract static class RemoveCommentPropertyAccessNode extends RemoveFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.COMMENT_ATTR_KEY;

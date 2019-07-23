@@ -31,7 +31,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess.ArrayAttributeAccess;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -80,13 +79,12 @@ public abstract class ArrayAttributeNode extends AttributeIterativeAccessNode im
 
     @Specialization(guards = "hasAttributes(x)")
     protected RAttribute[] getArrayFallback(RAttributable x,
-                    @Cached() ArrayAttributeNode recursive,
-                    @Cached("create()") BranchProfile attrNullProfile) {
+                    @Cached() ArrayAttributeNode recursive) {
         return recursive.execute(x.getAttributes());
     }
 
     @Specialization(guards = "!hasAttributes(x)")
-    protected RAttribute[] getArrayFallback(RAttributable x) {
+    protected RAttribute[] getArrayFallback(@SuppressWarnings("unused") RAttributable x) {
         return EMPTY;
     }
 

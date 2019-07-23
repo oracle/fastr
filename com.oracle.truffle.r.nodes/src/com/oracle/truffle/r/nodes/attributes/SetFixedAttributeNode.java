@@ -113,7 +113,7 @@ public abstract class SetFixedAttributeNode extends GenericFixedAttributeAccessN
 
     abstract static class SetGenericFixedAttributeNode extends SetFixedAttributeNode {
 
-        public SetGenericFixedAttributeNode(String name) {
+        SetGenericFixedAttributeNode(String name) {
             super(name);
         }
 

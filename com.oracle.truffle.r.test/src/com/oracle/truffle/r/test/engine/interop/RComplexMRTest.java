@@ -29,7 +29,6 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import static com.oracle.truffle.r.test.engine.interop.AbstractMRTest.context;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;

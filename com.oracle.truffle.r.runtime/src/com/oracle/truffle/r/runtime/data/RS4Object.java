@@ -85,12 +85,14 @@ public final class RS4Object extends RSharingAttributeStorage implements Shareab
         return isModifiable(member, hasAttr(member, arrayAttrAccess));
     }
 
+    @SuppressWarnings("static-method")
     private boolean isModifiable(String member, boolean hasAttr) {
         return !member.equals("class") && hasAttr;
     }
 
+    @SuppressWarnings("static-method")
     @ExportMessage
-    boolean isMemberInsertable(String member) {
+    boolean isMemberInsertable(@SuppressWarnings("unused") String member) {
         return false;
     }
 
@@ -138,7 +140,7 @@ public final class RS4Object extends RSharingAttributeStorage implements Shareab
                     @Cached(value = "createUpdateCallTarget()", uncached = "createUpdateCallTarget()") CallTarget ct,
                     @Cached.Shared("indirectCallNode") @Cached() IndirectCallNode callNode,
                     @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
-                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isModifiable) throws UnknownIdentifierException, UnsupportedMessageException {
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isModifiable) throws UnsupportedMessageException {
         boolean hasAttr = hasAttr(member, arrayAttrAccess);
         if (unknownIdentifier.profile(!hasAttr)) {
             throw UnsupportedMessageException.create();
@@ -196,14 +198,14 @@ public final class RS4Object extends RSharingAttributeStorage implements Shareab
     private static class UpdateSlotRootNode extends RootNode {
         @Child UpdateSlotAccess delegate = RContext.getRRuntimeASTAccess().createUpdateSlotAccess();
 
-        public UpdateSlotRootNode() {
+        UpdateSlotRootNode() {
             super(null);
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = frame.getArguments();
-            return delegate.execute(RContext.getInstance().stateREnvironment.getGlobalFrame(), args[0], (String) args[1], args[2]);
+            return delegate.execute(RContext.getInstance().stateREnvironment.getGlobalFrame(), args[0], args[1], args[2]);
         }
     }
 
@@ -214,14 +216,14 @@ public final class RS4Object extends RSharingAttributeStorage implements Shareab
     private static class AccessSlotRootNode extends RootNode {
         @Child AccessSlotAccess delegate = RContext.getRRuntimeASTAccess().createAccessSlotAccess();
 
-        public AccessSlotRootNode() {
+        AccessSlotRootNode() {
             super(null);
         }
 
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = frame.getArguments();
-            return delegate.execute(args[0], (String) args[1]);
+            return delegate.execute(args[0], args[1]);
         }
     }
 

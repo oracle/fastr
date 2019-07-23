@@ -41,7 +41,7 @@ public class RInteropNA implements RTruffleObject {
 
     private final Object value;
 
-    private RInteropNA(Object value) {
+    protected RInteropNA(Object value) {
         this.value = value;
     }
 

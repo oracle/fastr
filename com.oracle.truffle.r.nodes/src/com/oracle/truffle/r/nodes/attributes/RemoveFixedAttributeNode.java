@@ -99,7 +99,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
         }
     }
 
-    public static abstract class RemoveGenericAttributeAccessNode extends RemoveFixedAttributeNode {
+    public abstract static class RemoveGenericAttributeAccessNode extends RemoveFixedAttributeNode {
         private final String name;
 
         public RemoveGenericAttributeAccessNode(String name) {
@@ -118,7 +118,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     @GenerateUncached
-    public static abstract class RemoveNamesAttributeAccessNode extends RemoveFixedAttributeNode {
+    public abstract static class RemoveNamesAttributeAccessNode extends RemoveFixedAttributeNode {
         @Override
         protected String getAttributeName() {
             return RRuntime.NAMES_ATTR_KEY;
@@ -132,7 +132,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     @GenerateUncached
-    public static abstract class RemoveRowNamesAttributeAccessNode extends RemoveFixedAttributeNode {
+    public abstract static class RemoveRowNamesAttributeAccessNode extends RemoveFixedAttributeNode {
         @Override
         protected String getAttributeName() {
             return RRuntime.ROWNAMES_ATTR_KEY;
@@ -145,7 +145,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     @GenerateUncached
-    public static abstract class RemoveDimAttributeAccessNode extends RemoveFixedAttributeNode {
+    public abstract static class RemoveDimAttributeAccessNode extends RemoveFixedAttributeNode {
         @Override
         protected String getAttributeName() {
             return RRuntime.DIM_ATTR_KEY;
@@ -158,7 +158,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     @GenerateUncached
-    public static abstract class RemoveDimNamesAttributeAccessNode extends RemoveFixedAttributeNode {
+    public abstract static class RemoveDimNamesAttributeAccessNode extends RemoveFixedAttributeNode {
         @Override
         protected String getAttributeName() {
             return RRuntime.DIMNAMES_ATTR_KEY;
@@ -171,7 +171,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     @GenerateUncached
-    public static abstract class RemoveClassAttributeAccessNode extends RemoveFixedAttributeNode {
+    public abstract static class RemoveClassAttributeAccessNode extends RemoveFixedAttributeNode {
         @Override
         protected String getAttributeName() {
             return RRuntime.CLASS_ATTR_KEY;
@@ -184,7 +184,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     @GenerateUncached
-    public static abstract class RemoveTspAttributeAccessNode extends RemoveFixedAttributeNode {
+    public abstract static class RemoveTspAttributeAccessNode extends RemoveFixedAttributeNode {
         @Override
         protected String getAttributeName() {
             return RRuntime.TSP_ATTR_KEY;
@@ -197,7 +197,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
     }
 
     @GenerateUncached
-    public static abstract class RemoveCommentAttributeAccessNode extends RemoveFixedAttributeNode {
+    public abstract static class RemoveCommentAttributeAccessNode extends RemoveFixedAttributeNode {
         @Override
         protected String getAttributeName() {
             return RRuntime.COMMENT_ATTR_KEY;

@@ -34,7 +34,7 @@ public abstract class FixedAttributeAccessNode extends AttributeAccessNode {
         throw RInternalError.shouldNotReachHere();
     }
 
-    public static abstract class GenericFixedAttributeAccessNode extends FixedAttributeAccessNode {
+    public abstract static class GenericFixedAttributeAccessNode extends FixedAttributeAccessNode {
         private final String name;
 
         protected GenericFixedAttributeAccessNode(String name) {

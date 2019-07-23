@@ -104,7 +104,7 @@ public class VectorMRTest extends AbstractMRTest {
         assertEquals(4.0, ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) ForeignAccess.sendRead(Message.READ.createNode(), complexVector, 1), "im"));
     }
 
-    private void testReadComplexScalar(RAbstractComplexVector complexScalar) throws UnsupportedMessageException, UnknownIdentifierException {
+    private static void testReadComplexScalar(RAbstractComplexVector complexScalar) throws UnsupportedMessageException, UnknownIdentifierException {
         assertTrue(ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), complexScalar));
         testReadComplexScalarMembers(complexScalar);
 
@@ -113,7 +113,7 @@ public class VectorMRTest extends AbstractMRTest {
         testReadComplexScalarMembers(scalarElement);
     }
 
-    private void testReadComplexScalarMembers(TruffleObject scalar) throws UnknownIdentifierException, UnsupportedMessageException {
+    private static void testReadComplexScalarMembers(TruffleObject scalar) throws UnknownIdentifierException, UnsupportedMessageException {
         assertTrue(ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), scalar));
         TruffleObject members = ForeignAccess.sendKeys(Message.KEYS.createNode(), scalar);
         assertEquals(ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), members), 2);
@@ -160,7 +160,7 @@ public class VectorMRTest extends AbstractMRTest {
         ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), RDataFactory.createComplexVector(new double[]{1, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR));
     }
 
-    public void testRNARTOTIN(TruffleObject vec, Object expectedFirst) throws Exception {
+    public static void testRNARTOTIN(TruffleObject vec, Object expectedFirst) throws Exception {
         assertEquals(expectedFirst, ForeignAccess.sendRead(Message.READ.createNode(), vec, 0));
         Object expectedNA = ForeignAccess.sendRead(Message.READ.createNode(), vec, 1);
         assertEquals(true, ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) expectedNA));

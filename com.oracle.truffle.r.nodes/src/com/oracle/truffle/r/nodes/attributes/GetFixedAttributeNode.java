@@ -78,7 +78,7 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
         return getFixedPropertyNode.execute(attributes);
     }
 
-    public static abstract class GenericGetFixedAttributeAccessNode extends GetFixedAttributeNode {
+    public abstract static class GenericGetFixedAttributeAccessNode extends GetFixedAttributeNode {
         private final String name;
 
         protected GenericGetFixedAttributeAccessNode(String name) {

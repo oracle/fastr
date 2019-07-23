@@ -30,7 +30,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 /**
- * Provides interop messages for numeric vectors: <br>
+ * Provides interop messages for numeric vectors. <br>
  * <ul>
  * <li>{@link RAbstractIntVector}</li>
  * <li>{@link RAbstractDoubleVector}</li>
@@ -176,7 +176,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
         return getInterop(value).asDouble(value);
     }
 
-    private InteropLibrary getInterop(Object value) {
+    private static InteropLibrary getInterop(Object value) {
         return InteropLibrary.getFactory().create(value);
     }
 

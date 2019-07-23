@@ -124,7 +124,7 @@ public abstract class SetFixedPropertyNode extends PropertyAccessNode {
         attrs.define(getPropertyName(), value);
     }
 
-    public static abstract class SetGenericPropertyNode extends SetFixedPropertyNode {
+    public abstract static class SetGenericPropertyNode extends SetFixedPropertyNode {
         protected final String name;
 
         SetGenericPropertyNode(String name) {
@@ -137,49 +137,49 @@ public abstract class SetFixedPropertyNode extends PropertyAccessNode {
         }
     }
 
-    public static abstract class SetNamesPropertyNode extends SetFixedPropertyNode {
+    public abstract static class SetNamesPropertyNode extends SetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.NAMES_ATTR_KEY;
         }
     }
 
-    public static abstract class SetDimPropertyNode extends SetFixedPropertyNode {
+    public abstract static class SetDimPropertyNode extends SetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.DIM_ATTR_KEY;
         }
     }
 
-    public static abstract class SetDimNamesPropertyNode extends SetFixedPropertyNode {
+    public abstract static class SetDimNamesPropertyNode extends SetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.DIMNAMES_ATTR_KEY;
         }
     }
 
-    public static abstract class SetRowNamesPropertyNode extends SetFixedPropertyNode {
+    public abstract static class SetRowNamesPropertyNode extends SetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.ROWNAMES_ATTR_KEY;
         }
     }
 
-    public static abstract class SetClassPropertyNode extends SetFixedPropertyNode {
+    public abstract static class SetClassPropertyNode extends SetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.CLASS_ATTR_KEY;
         }
     }
 
-    public static abstract class SetTspPropertyNode extends SetFixedPropertyNode {
+    public abstract static class SetTspPropertyNode extends SetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.TSP_ATTR_KEY;
         }
     }
 
-    public static abstract class SetCommentPropertyNode extends SetFixedPropertyNode {
+    public abstract static class SetCommentPropertyNode extends SetFixedPropertyNode {
         @Override
         protected String getPropertyName() {
             return RRuntime.COMMENT_ATTR_KEY;

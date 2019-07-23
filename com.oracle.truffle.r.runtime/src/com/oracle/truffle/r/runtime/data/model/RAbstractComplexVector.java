@@ -44,8 +44,8 @@ import java.util.Arrays;
 @ExportLibrary(InteropLibrary.class)
 public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
 
-    private final static String MEMBER_RE = "re";
-    private final static String MEMBER_IM = "im";
+    public static final String MEMBER_RE = "re";
+    public static final String MEMBER_IM = "im";
 
     public RAbstractComplexVector(boolean complete) {
         super(complete);

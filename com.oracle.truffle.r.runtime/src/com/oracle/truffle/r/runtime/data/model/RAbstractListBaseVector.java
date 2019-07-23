@@ -89,7 +89,7 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
 
     @ExportMessage
     Object readMember(String member,
-                    @Cached() R2Foreign r2Foreign,
+                    @Cached.Exclusive @Cached() R2Foreign r2Foreign,
                     @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException {
         int idx = getElementIndexByName(member);
         if (unknownIdentifier.profile(!isArrayElementReadable(idx))) {
@@ -114,7 +114,7 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
     }
 
     @Override
-    protected boolean boxReadElements() {
+    protected final boolean boxReadElements() {
         return true;
     }
 

@@ -189,14 +189,14 @@ public interface RRuntimeASTAccess {
 
     Object createLanguageElement(RSyntaxElement element);
 
-    public interface ArrayAttributeAccess extends NodeInterface {
+    interface ArrayAttributeAccess extends NodeInterface {
         RAttribute[] execute(Object attrs);
     }
 
     ArrayAttributeAccess createArrayAttributeAccess(boolean cached);
 
-    public interface UpdateSlotAccess extends NodeInterface {
-        public abstract Object execute(VirtualFrame frame, Object object, Object name, Object value);
+    interface UpdateSlotAccess extends NodeInterface {
+        Object execute(VirtualFrame frame, Object object, Object name, Object value);
     }
 
     UpdateSlotAccess createUpdateSlotAccess();

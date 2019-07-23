@@ -67,7 +67,7 @@ public abstract class AttributeIterativeAccessNode extends RBaseNode {
     }
 
     @ExplodeLoop
-    protected final AttrsLayout findLayout(DynamicObject attrs, ConditionProfile[] loopProfiles) {
+    protected static final AttrsLayout findLayout(DynamicObject attrs, ConditionProfile[] loopProfiles) {
         Shape attrsShape = attrs.getShape();
         for (int i = 0; i < RAttributesLayout.LAYOUTS.length; i++) {
             AttrsLayout attrsLayout = RAttributesLayout.LAYOUTS[i];
