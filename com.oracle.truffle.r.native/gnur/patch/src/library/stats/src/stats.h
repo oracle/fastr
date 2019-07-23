@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2005-2017  The R Core Team
+ *  Copyright (C) 2005-2019  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 void
 F77_NAME(hclust)(int *n, int *len, int *iopt, int *ia, int *ib,
 		 double *crit, double *membr, int *nn,
-		 double *disnn, int *flag, double *diss);
+		 double *disnn, double *diss);
 
 void
 F77_NAME(hcass2)(int *n, int *ia, int *ib, int *iorder, int *iia, int *iib);
@@ -44,6 +44,9 @@ F77_NAME(kmns)(double *a, int *m, int *n, double *c, int *k,
 	       int *ncp, double *d, int *itran,
 	       int *live, int *iter, double *wss, int *ifault);
 
+void F77_NAME(lminfl)(double *x, int *ldx, int *n, int *k, int *q, int *docoef,
+		      double *qraux, double *resid, double *hat,
+		      double *coef, double *sigma, double *tol);
 
 void rcont2(int *nrow, int *ncol, int *nrowt, int *ncolt, int *ntotal,
 	    double *fact, int *jwork, int *matrix);
