@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1997--2017  The R Core Team
+ *  Copyright (C) 1997--2019  The R Core Team
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,7 @@ SEXP do_addTryHandlers(SEXP, SEXP, SEXP, SEXP);
 SEXP do_adist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_agrep(SEXP, SEXP, SEXP, SEXP);
 SEXP do_allnames(SEXP, SEXP, SEXP, SEXP);
+SEXP do_altrep_class(SEXP, SEXP, SEXP, SEXP);
 SEXP do_anyNA(SEXP, SEXP, SEXP, SEXP);
 SEXP do_aperm(SEXP, SEXP, SEXP, SEXP);
 SEXP do_aregexec(SEXP, SEXP, SEXP, SEXP);
@@ -89,6 +90,7 @@ SEXP do_builtins(SEXP, SEXP, SEXP, SEXP);
 SEXP do_c(SEXP, SEXP, SEXP, SEXP);
 SEXP do_c_dflt(SEXP, SEXP, SEXP, SEXP);
 SEXP do_call(SEXP, SEXP, SEXP, SEXP);
+SEXP do_str2lang(SEXP, SEXP, SEXP, SEXP);
 SEXP do_capabilities(SEXP, SEXP, SEXP, SEXP);
 SEXP do_capabilitiesX11(SEXP, SEXP, SEXP, SEXP);
 SEXP do_cat(SEXP, SEXP, SEXP, SEXP);
@@ -263,6 +265,8 @@ SEXP do_matprod(SEXP, SEXP, SEXP, SEXP);
 SEXP do_Math2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_matrix(SEXP, SEXP, SEXP, SEXP);
 SEXP do_maxcol(SEXP, SEXP, SEXP, SEXP);
+SEXP do_maxVSize(SEXP, SEXP, SEXP, SEXP);
+SEXP do_maxNSize(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memlimits(SEXP, SEXP, SEXP, SEXP);
 SEXP do_memoryprofile(SEXP, SEXP, SEXP, SEXP);
 SEXP do_merge(SEXP, SEXP, SEXP, SEXP);
@@ -424,6 +428,7 @@ SEXP do_traceback(SEXP, SEXP, SEXP, SEXP);
 SEXP do_transpose(SEXP, SEXP, SEXP, SEXP);
 SEXP do_trunc(SEXP, SEXP, SEXP, SEXP);
 SEXP do_tryCatchHelper(SEXP, SEXP, SEXP, SEXP);
+SEXP do_tryWrap(SEXP, SEXP, SEXP, SEXP);
 SEXP do_typeof(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unclass(SEXP, SEXP, SEXP, SEXP);
 SEXP do_unlink(SEXP, SEXP, SEXP, SEXP);

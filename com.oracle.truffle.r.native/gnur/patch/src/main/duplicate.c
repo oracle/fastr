@@ -435,6 +435,11 @@ void copyListMatrix(SEXP s, SEXP t, Rboolean byrow)
     }
 }
 
+static R_INLINE SEXP VECTOR_ELT_LD(SEXP x, R_xlen_t i)
+{
+    return lazy_duplicate(VECTOR_ELT(x, i));
+}
+
 void copyMatrix(SEXP s, SEXP t, Rboolean byrow)
 {
     int nr = nrows(s), nc = ncols(s);
@@ -465,7 +470,7 @@ void copyMatrix(SEXP s, SEXP t, Rboolean byrow)
 	case EXPRSXP:
 	case VECSXP:
 	    FILL_MATRIX_BYROW_ITERATE(0, nr, nc, nt)
-		SET_VECTOR_ELT(s, didx, VECTOR_ELT(t, sidx));
+		SET_VECTOR_ELT(s, didx, VECTOR_ELT_LD(t, sidx));
 	    break;
 	case RAWSXP:
 	    FILL_MATRIX_BYROW_ITERATE(0, nr, nc, nt)
@@ -534,7 +539,7 @@ xcopy##TNAME##WithRecycle(SEXP dst, SEXP src, R_xlen_t dstart, R_xlen_t n, R_xle
 }
 
 COPY_ELT_WITH_RECYCLE(String, STRING_ELT, SET_STRING_ELT) /* xcopyStringWithRecycle */
-COPY_ELT_WITH_RECYCLE(Vector, VECTOR_ELT, SET_VECTOR_ELT) /* xcopyVectorWithRecycle */
+COPY_ELT_WITH_RECYCLE(Vector, VECTOR_ELT_LD, SET_VECTOR_ELT) /* xcopyVectorWithRecycle */
 
 #define FILL_WITH_RECYCLE(VALTYPE, TNAME) \
 void attribute_hidden xfill##TNAME##MatrixWithRecycle(VALTYPE *dst, VALTYPE *src,	\
@@ -562,3 +567,29 @@ void attribute_hidden xfill##TNAME##MatrixWithRecycle(SEXP dst, SEXP src,	\
 
 FILL_ELT_WITH_RECYCLE(String, STRING_ELT, SET_STRING_ELT) /* xfillStringMatrixWithRecycle */
 FILL_ELT_WITH_RECYCLE(Vector, VECTOR_ELT, SET_VECTOR_ELT) /* xfillVectorMatrixWithRecycle */
+
+/* For duplicating before modifying attributes duplicate_attr tries to
+   wrap a larger vector object with an ALTREP wrapper, and falls back
+   to duplicate or shallow_duplicate if the object can't be
+   wrapped. The size threshold used seems to be reaonable but could be
+   tested more extensively. */
+#define WRAP_THRESHOLD 64
+static SEXP duplicate_attr(SEXP x, Rboolean deep)
+{
+    if (isVector(x) && XLENGTH(x) >= WRAP_THRESHOLD) {
+	SEXP val = R_tryWrap(x);
+	if (val != x) {
+	    if (deep) {
+		PROTECT(val);
+		/* the spine has been duplicated; we could just do the values */
+		SET_ATTRIB(val, duplicate(ATTRIB(val)));
+		UNPROTECT(1); /* val */
+	    }
+	    return val;
+	}
+    }
+    return deep ? duplicate(x) : shallow_duplicate(x);
+}
+
+SEXP R_shallow_duplicate_attr(SEXP x) { return duplicate_attr(x, FALSE); }
+SEXP R_duplicate_attr(SEXP x) { return duplicate_attr(x, TRUE); }
