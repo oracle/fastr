@@ -117,4 +117,10 @@ cp="$JAVA_HOME/jre/languages/R/fastr-launcher.jar:$cp"
 
 # we can invoke FastR directly, but we do have to set R_HOME
 export R_HOME="$JRE/languages/R"
+
+LIB="$EXEC"
+LIB="$( dirname "$LIB" )"
+LIB="$( dirname "$LIB" )/lib"
+export LD_LIBRARY_PATH="$LIB:$LD_LIBRARY_PATH"
+
 exec "$JAVA_HOME/bin/java" -cp "$cp" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx8g "${jvm_args[@]}" com.oracle.truffle.r.launcher.RMain R ${FASTR_INTERNAL_ARGS[@]} "${launcher_args[@]}"
