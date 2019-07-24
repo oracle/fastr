@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -40,7 +39,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
 
     @CompilationFinal private ConditionProfile isShared;
-    @CompilationFinal private ValueProfile copyProfile;
 
     private WrapDefaultArgumentNode(RNode operand) {
         super(operand);
@@ -53,16 +51,10 @@ public final class WrapDefaultArgumentNode extends WrapArgumentBaseNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             isShared = ConditionProfile.createBinaryProfile();
         }
-        if (isShared.profile(shareable.isShared())) {
-            if (copyProfile == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                copyProfile = ValueProfile.createClassProfile();
-            }
-            return copyProfile.profile(shareable).copy();
-        } else {
+        if (!isShared.profile(shareable.isSharedPermanent())) {
             shareable.incRefCount();
-            return shareable;
         }
+        return shareable;
     }
 
     public static RNode create(RNode operand) {
