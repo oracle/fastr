@@ -35,6 +35,7 @@ export FASTR_NATIVE_DIR = $(TOPDIR)
 export R_VERSION = 3.5.1
 export DEFAULT_CRAN_MIRROR = "https://mran.microsoft.com/snapshot/2019-02-13"
 export GNUR_HOME = $(TOPDIR)/gnur/patch-build
+export F2C_HOME= $(FASTR_R_HOME)/f2c
 
 $(info R_VERSION: $(R_VERSION))
 $(info GNUR_HOME: $(GNUR_HOME))
@@ -56,19 +57,23 @@ endif
 
 OS_NAME := $(shell uname -s)
 
-all: checkversion
-	$(MAKE) -C ../f2c/f2c CC=$(LABS_LLVM_CC)
+all: checkversion ../f2c
+	# Following block builds f2c, TODO: move to f2c/Makefile
+	# TODO: use -fPIC only on linux in libf2c.makefile
+	mkdir -p ../bin
+	$(MAKE) -f makefile.u -C ../f2c/f2c CC=$(LABS_LLVM_CC)
+	cp ../f2c/f2c/f2c ../bin
+
 	mkdir -p ../lib
-ifeq ($(OS_NAME),Darwin)
+	cp f2c/libf2c-patch/* ../f2c/libf2c
 	$(MAKE) -C ../f2c/libf2c CC=$(LABS_LLVM_CC)
+ifeq ($(OS_NAME),Darwin)	
 	cp ../f2c/libf2c/libf2c.so ../lib/libf2c.dylib
 	install_name_tool -id @rpath/libf2c.dylib ../lib/libf2c.dylib
-else
-	# TODO: Patch the libf2c makefile so that the flags can be specified using the make's CFLAGS parameter
-	sed -i -e 's/CFLAGS = -O/CFLAGS = -O -fPIC/' ../f2c/libf2c/makefile
-	$(MAKE) -C ../f2c/libf2c CC=$(LABS_LLVM_CC)
+else	
 	cp ../f2c/libf2c/libf2c.so ../lib/
 endif
+	cp ../f2c/libf2c/f2c.h include
 
 	$(MAKE) -C gnur
 	$(MAKE) -C include
@@ -77,9 +82,15 @@ endif
 	$(MAKE) -C run
 	cp version.source version.built
 
+# Shuffles f2c from libdownloads to the right location...
+# TODO: build directly in libdownloads
+../f2c: ../libdownloads/f2c/libf2c.zip
+	(cd ..; mkdir -p f2c/libf2c; cd f2c/libf2c; unzip ../../libdownloads/f2c/libf2c.zip)
+	(cd ../f2c; tar xfz ../libdownloads/f2c/src.tgz; mv src f2c)
+
 clean:
-	$(MAKE) -C ../f2c/libf2c clean
-	$(MAKE) -C ../f2c/f2c clean
+	if [ -d ../f2c/libf2c ]; then $(MAKE) -C ../f2c/libf2c clean; fi
+	if [ -d ../f2c/f2c ]; then $(MAKE) -f makefile.u -C ../f2c/f2c clean; fi
 	$(MAKE) -C include clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C run clean
