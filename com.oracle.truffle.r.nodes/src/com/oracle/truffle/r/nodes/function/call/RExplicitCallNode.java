@@ -56,7 +56,7 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
 
     public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame);
 
-    private final RFrameSlot argsIdentifier = RFrameSlot.createTemp(true);
+    private final RFrameSlot argsIdentifier = RFrameSlot.createTemp("RExplicitCall-argsIdentifier", true);
     @CompilationFinal private FrameSlot argsFrameSlot;
 
     @Specialization

@@ -53,8 +53,8 @@ public final class RFrameSlot {
         return multiSlot;
     }
 
-    public static RFrameSlot createTemp(boolean multiSlot) {
-        return new RFrameSlot(null, multiSlot);
+    public static RFrameSlot createTemp(String name, boolean multiSlot) {
+        return new RFrameSlot(name, multiSlot);
     }
 
     /**

@@ -703,7 +703,9 @@ public final class FrameSlotChangeMonitor {
             MultiSlotData data;
             if (stableValue == null) {
                 // already a multi slot - should be visible to all threads
+                assert slotExists(slot, frame) : slot;
                 data = (MultiSlotData) frame.getValue(slot);
+                assert data != null : slot;
                 int ind = RContext.getInstance().getMultiSlotInd();
                 data.set(ind, newValue);
             } else {
@@ -995,7 +997,9 @@ public final class FrameSlotChangeMonitor {
             if (!(o instanceof MultiSlotData)) {
                 CompilerDirectives.transferToInterpreter();
                 synchronized (info) {
+                    assert slotExists(slot, frame) : slot;
                     o = frame.getObject(slot);
+                    assert o != null : slot;
                 }
             }
             return ((MultiSlotData) o).get(RContext.getInstance().getMultiSlotInd());
@@ -1014,13 +1018,20 @@ public final class FrameSlotChangeMonitor {
             if (!(o instanceof MultiSlotData)) {
                 CompilerDirectives.transferToInterpreter();
                 synchronized (info) {
+                    assert slotExists(slot, frame) : slot;
                     o = frame.getValue(slot);
+                    assert o != null : slot;
                 }
             }
             return ((MultiSlotData) o).get(RContext.getInstance().getMultiSlotInd());
         } else {
             return frame.getValue(slot);
         }
+    }
+
+    @TruffleBoundary
+    private static boolean slotExists(FrameSlot slot, Frame frame) {
+        return frame.getFrameDescriptor().findFrameSlot(slot.getIdentifier()) != null;
     }
 
     private static boolean isMultislot(FrameSlotInfoImpl info) {
