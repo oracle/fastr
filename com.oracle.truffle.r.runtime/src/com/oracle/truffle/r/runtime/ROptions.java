@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -58,6 +59,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public class ROptions {
 
     public static final class ContextStateImpl implements RContext.ContextState {
+
         /**
          * The current values for a given context.
          */
@@ -101,7 +103,7 @@ public class ROptions {
             if (coercedValue == RNull.instance) {
                 map.remove(name);
             } else {
-                map.put(name, coercedValue);
+                putOption(map, name, coercedValue);
             }
             updateDotOptions();
             return previous;
@@ -145,6 +147,7 @@ public class ROptions {
 
     @SuppressWarnings("serial")
     public static final class OptionsException extends RError.RErrorException {
+
         private OptionsException(RError.Message msg, Object... args) {
             super(null, msg, args);
         }
@@ -165,34 +168,34 @@ public class ROptions {
                     "browserNLdisabled", "CBoundsCheck"));
 
     private static void applyDefaults(HashMap<String, Object> map, RStartParams startParams, REnvVars envVars) {
-        map.put("add.smooth", RDataFactory.createSharedLogicalVectorFromScalar(true));
-        map.put("check.bounds", RDataFactory.createSharedLogicalVectorFromScalar(false));
-        map.put("continue", RDataFactory.createSharedStringVectorFromScalar("+ "));
-        map.put("deparse.cutoff", RDataFactory.createSharedIntVectorFromScalar(60));
-        map.put("digits", RDataFactory.createSharedIntVectorFromScalar(7));
-        map.put("echo", RDataFactory.createSharedLogicalVectorFromScalar(!startParams.isSlave()));
-        map.put("encoding", RDataFactory.createSharedStringVectorFromScalar("native.enc"));
-        map.put("expressions", RDataFactory.createSharedIntVectorFromScalar(5000));
+        putOption(map, "add.smooth", RDataFactory.createSharedLogicalVectorFromScalar(true));
+        putOption(map, "check.bounds", RDataFactory.createSharedLogicalVectorFromScalar(false));
+        putOption(map, "continue", RDataFactory.createSharedStringVectorFromScalar("+ "));
+        putOption(map, "deparse.cutoff", RDataFactory.createSharedIntVectorFromScalar(60));
+        putOption(map, "digits", RDataFactory.createSharedIntVectorFromScalar(7));
+        putOption(map, "echo", RDataFactory.createSharedLogicalVectorFromScalar(!startParams.isSlave()));
+        putOption(map, "encoding", RDataFactory.createSharedStringVectorFromScalar("native.enc"));
+        putOption(map, "expressions", RDataFactory.createSharedIntVectorFromScalar(5000));
         boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars);
-        map.put("keep.source", RDataFactory.createSharedLogicalVectorFromScalar(keepPkgSource));
-        map.put("keep.source.pkgs", RDataFactory.createSharedLogicalVectorFromScalar(keepPkgSource));
-        map.put("OutDec", RDataFactory.createSharedStringVectorFromScalar("."));
-        map.put("prompt", RDataFactory.createSharedStringVectorFromScalar("> "));
-        map.put("verbose", RDataFactory.createSharedLogicalVectorFromScalar(false));
-        map.put("nwarnings", RDataFactory.createSharedIntVectorFromScalar(50));
-        map.put("warning.length", RDataFactory.createSharedIntVectorFromScalar(1000));
-        map.put("width", RDataFactory.createSharedIntVectorFromScalar(80));
-        map.put("browserNLdisabled", RDataFactory.createSharedLogicalVectorFromScalar(false));
+        putOption(map, "keep.source", RDataFactory.createSharedLogicalVectorFromScalar(keepPkgSource));
+        putOption(map, "keep.source.pkgs", RDataFactory.createSharedLogicalVectorFromScalar(keepPkgSource));
+        putOption(map, "OutDec", RDataFactory.createSharedStringVectorFromScalar("."));
+        putOption(map, "prompt", RDataFactory.createSharedStringVectorFromScalar("> "));
+        putOption(map, "verbose", RDataFactory.createSharedLogicalVectorFromScalar(false));
+        putOption(map, "nwarnings", RDataFactory.createSharedIntVectorFromScalar(50));
+        putOption(map, "warning.length", RDataFactory.createSharedIntVectorFromScalar(1000));
+        putOption(map, "width", RDataFactory.createSharedIntVectorFromScalar(80));
+        putOption(map, "browserNLdisabled", RDataFactory.createSharedLogicalVectorFromScalar(false));
         boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK", envVars);
-        map.put("CBoundsCheck", RDataFactory.createSharedLogicalVectorFromScalar(cBoundsCheck));
+        putOption(map, "CBoundsCheck", RDataFactory.createSharedLogicalVectorFromScalar(cBoundsCheck));
 
         String cranMirror = REnvVars.getCRANMirror();
         if (cranMirror != null) {
-            map.put("repos", cranMirror);
+            putOption(map, "repos", cranMirror);
         }
 
         if (FastRConfig.DefaultDownloadMethod != null && !FastRConfig.DefaultDownloadMethod.isEmpty()) {
-            map.put("download.file.method", FastRConfig.DefaultDownloadMethod);
+            putOption(map, "download.file.method", FastRConfig.DefaultDownloadMethod);
         }
 
         String additional = RContext.getInstance().getOption(AdditionalOptions);
@@ -213,8 +216,15 @@ public class ROptions {
             } else if (items[1].equals("F")) {
                 value = RRuntime.LOGICAL_FALSE;
             }
-            map.put(items[0], value);
+            putOption(map, items[0], value);
         }
+    }
+
+    private static Object putOption(HashMap<String, Object> map, String name, Object value) {
+        if (value instanceof RSharingAttributeStorage) {
+            ((RSharingAttributeStorage) value).makeSharedPermanent();
+        }
+        return map.put(name, value);
     }
 
     private static boolean optionFromEnvVar(String envVar, REnvVars envVars) {
