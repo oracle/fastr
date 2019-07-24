@@ -121,7 +121,7 @@ common : ${java8Downloads} {
 
 commonLinux: ${common} ${packagesLinux} ${environmentLinux} {
   setup: [
-    [set-export, LD_LIBRARY_PATH, [echo, "${PWD}/lib:${LD_LIBRARY_PATH}"]]
+	[set-export, LD_LIBRARY_PATH, [echo, "${PWD}/lib:${LD_LIBRARY_PATH}"]]
     ["mx", "sforceimports"]
   ]
 }
