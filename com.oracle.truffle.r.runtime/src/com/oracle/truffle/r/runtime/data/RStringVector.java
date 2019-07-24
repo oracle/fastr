@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVect
 
 public final class RStringVector extends RAbstractStringVector implements RMaterializedVector, Shareable {
 
-    static final Assumption noWrappedStrings = Truffle.getRuntime().createAssumption();
+    static final Assumption noWrappedStrings = Truffle.getRuntime().createAssumption("noWrappedStrings");
 
     /**
      * After nativized, the data array degenerates to a reference holder.

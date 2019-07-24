@@ -652,14 +652,14 @@ public final class NativeDataAccess {
 
     // methods operating on vectors that may have a native mirror assigned:
 
-    private static final Assumption noIntNative = Truffle.getRuntime().createAssumption();
-    private static final Assumption noLogicalNative = Truffle.getRuntime().createAssumption();
-    private static final Assumption noDoubleNative = Truffle.getRuntime().createAssumption();
-    private static final Assumption noComplexNative = Truffle.getRuntime().createAssumption();
-    private static final Assumption noRawNative = Truffle.getRuntime().createAssumption();
-    private static final Assumption noCharSXPNative = Truffle.getRuntime().createAssumption();
-    private static final Assumption noStringNative = Truffle.getRuntime().createAssumption();
-    private static final Assumption noListNative = Truffle.getRuntime().createAssumption();
+    private static final Assumption noIntNative = Truffle.getRuntime().createAssumption("noIntNative");
+    private static final Assumption noLogicalNative = Truffle.getRuntime().createAssumption("noLogicalNative");
+    private static final Assumption noDoubleNative = Truffle.getRuntime().createAssumption("noDoubleNative");
+    private static final Assumption noComplexNative = Truffle.getRuntime().createAssumption("noComplexNative");
+    private static final Assumption noRawNative = Truffle.getRuntime().createAssumption("noRawNative");
+    private static final Assumption noCharSXPNative = Truffle.getRuntime().createAssumption("noCharSXPNative");
+    private static final Assumption noStringNative = Truffle.getRuntime().createAssumption("noStringNative");
+    private static final Assumption noListNative = Truffle.getRuntime().createAssumption("noListNative");
 
     static int getData(RIntVector vector, int[] data, int index) {
         if (noIntNative.isValid() || data != null) {

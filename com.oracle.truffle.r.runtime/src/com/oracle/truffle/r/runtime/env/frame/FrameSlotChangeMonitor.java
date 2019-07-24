@@ -505,14 +505,16 @@ public final class FrameSlotChangeMonitor {
          * more costly check on "<<-" but invalidates the assumption as soon as "eval" and the like
          * comes into play.<br/>
          */
-        private final Assumption nonLocalModifiedAssumption = Truffle.getRuntime().createAssumption();
-        private final Assumption noMultiSlot = Truffle.getRuntime().createAssumption();
+        private final Assumption nonLocalModifiedAssumption;
+        private final Assumption noMultiSlot;
 
         @CompilationFinal private volatile StableValue<Object> stableValue;
         private int invalidationCount;
         private final boolean possibleMultiSlot;
 
         FrameSlotInfoImpl(boolean isSingletonFrame, boolean isGlobalEnv, Object identifier, boolean isNewEnv) {
+            nonLocalModifiedAssumption = Truffle.getRuntime().createAssumption(identifier + ":NonLocalModified");
+            noMultiSlot = Truffle.getRuntime().createAssumption(identifier + ":NoMultiSlot");
             this.possibleMultiSlot = isSingletonFrame && !isNewEnv;
             if (isSingletonFrame) {
                 stableValue = new StableValue<>(null, identifier.toString());
