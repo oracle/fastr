@@ -1025,3 +1025,6 @@ com.oracle.truffle.r.pkgs/data.table/src/wrappers.c,no.copyright
 com.oracle.truffle.r.pkgs/data.table/vignettes/Makefile,no.copyright
 com.oracle.truffle.r.native/fficall/src/truffle_common/Riconv.c,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/localecharset.c,gnu_r.language.oracle
+com.oracle.truffle.r.native/f2c/libf2c-patch/f2c.h,no.copyright
+com.oracle.truffle.r.native/f2c/libf2c-patch/main.c,no.copyright
+com.oracle.truffle.r.native/f2c/libf2c-patch/makefile,no.copyright

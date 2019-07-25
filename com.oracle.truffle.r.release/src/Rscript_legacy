@@ -54,7 +54,7 @@ launcher_args=()
 # Maybe some of those arguments where not really intended for the launcher but where application arguments
 
 for o in "$@"; do
-    if [[ "$o" == "--jvm.help" ]]; then    
+    if [[ "$o" == "--jvm.help" ]]; then
       # TODO This condition should be removed when the Launcher handles --jvm.help correctly.
       launcher_args+=("$o")
     elif [[ "$o" == --jvm.* ]]; then
@@ -117,4 +117,5 @@ cp="$JAVA_HOME/jre/languages/R/fastr-launcher.jar:$cp"
 
 # we can invoke FastR directly, but we do have to set R_HOME
 export R_HOME="$JRE/languages/R"
+
 exec "$JAVA_HOME/bin/java" -cp "$cp" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${jvm_args[@]}" com.oracle.truffle.r.launcher.RMain Rscript ${FASTR_INTERNAL_ARGS[@]} "${launcher_args[@]}"

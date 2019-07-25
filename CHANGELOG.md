@@ -1,3 +1,15 @@
+# 19.2.0
+
+New features:
+
+* `fastRCluster` package that allows to run FastR inside GNU-R
+  * install in GNU-R or RStudio with: `devtools::install_github('oracle/fastr/com.oracle.truffle.r.pkgs/fastRCluster')`
+  * use `?fastRCluster` to learn more
+
+Bug fixes:
+
+* `SET_ATTRIB` does not validate the attributes (as expected by some packages)
+
 # 19.1.0
 
 New features:

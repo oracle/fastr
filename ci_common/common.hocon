@@ -2,27 +2,27 @@
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
 java8 : {name : oraclejdk, version : "8u212-jvmci-19.2-b01", platformspecific: true}
-java9 : {name : oraclejdk, version : "9.0.4+11", platformspecific: true}
+#java9 : {name : oraclejdk, version : "9.0.4+11", platformspecific: true}
 
 java8Downloads : {
   downloads : {
     EXTRA_JAVA_HOMES : { pathlist :[
       ${java7}
-      ${java9}
+#      ${java9}
     ]}
     JAVA_HOME : ${java8}
   }
 }
 
-java9Downloads : {
-  downloads : {
-    EXTRA_JAVA_HOMES : { pathlist :[
-      ${java7}
-      ${java8}
-    ]}
-    JAVA_HOME : ${java9}
-  }
-}
+#java9Downloads : {
+#  downloads : {
+#    EXTRA_JAVA_HOMES : { pathlist :[
+#      ${java7}
+#      ${java8}
+#    ]}
+#    JAVA_HOME : ${java9}
+#  }
+#}
 
 logfiles : [
     "fastr_errors*.log"
@@ -56,7 +56,7 @@ logfiles : [
 environmentLinux: {
   environment : {
     PKG_INCLUDE_FLAGS_OVERRIDE : "-I/cm/shared/apps/zlib/1.2.11/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.42/include -I/cm/shared/apps/curl/7.50.1/include"
-    PKG_LDFLAGS_OVERRIDE : "-L/cm/shared/apps/zlib/1.2.11/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.42/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/5.4.0/lib64"
+    PKG_LDFLAGS_OVERRIDE : "-L/cm/shared/apps/zlib/1.2.11/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.42/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.2/lib64"
     TZDIR: "/usr/share/zoneinfo"
   }
 }
@@ -70,17 +70,7 @@ environmentDarwin : {
   }
 }
 
-f2c : {
-  downloads: {
-    F2C: {name: "f2c", version: "2", platformspecific:false}
-  }
-
-  setup: [
-    ["cp", "-r", "$F2C", "."]
-  ]
-}
-
-packagesLinux : ${f2c} {
+packagesLinux : {
   packages : {
     git : ">=1.8.3"
     mercurial : ">=2.2"
@@ -88,7 +78,7 @@ packagesLinux : ${f2c} {
     "pip:pylint" : "==1.1.0"
     "pip:ninja_syntax" : "==1.7.2"
     make : ">=3.83"
-    gcc : "==5.4.0"
+    gcc : "==4.9.2"
     binutils: ">=2.30"
     pcre : "==8.42"
     zlib : "==1.2.11"
@@ -99,7 +89,7 @@ packagesLinux : ${f2c} {
   }
 }
 
-packagesDarwin : ${f2c} {
+packagesDarwin : {
   packages : {
     "pip:astroid" : "==1.1.0"
     "pip:pylint" : "==1.1.0"
@@ -130,8 +120,9 @@ common : ${java8Downloads} {
 }
 
 commonLinux: ${common} ${packagesLinux} ${environmentLinux} {
-  setup : ${packagesLinux.setup} [
-  	[set-export, LD_LIBRARY_PATH, [echo, "${PWD}/lib:${LD_LIBRARY_PATH}"]]
+  setup: [
+	[set-export, LD_LIBRARY_PATH, [echo, "${PWD}/lib:${LD_LIBRARY_PATH}"]]
+    ["mx", "sforceimports"]
   ]
 }
 
@@ -158,7 +149,7 @@ gateTestCommon : {
 gateTestLinux : ${gateTestCommon} ${commonLinux}
 
 gateTestDarwin : ${gateTestCommon} ${commonDarwin} {
-  setup : ${f2c.setup} [
+  setup : [
     [set-export, PKG_INCLUDE_FLAGS_OVERRIDE, "-I/cm/shared/apps/pcre/8.42/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/curl/7.50.1/include"]
     [set-export, MOD_LIB_PATH, [echo, "${LD_LIBRARY_PATH}", |, tr, "\:", "\\n", |, grep, lib/gcc, |, tail, "-1"]]
     [set-export, PKG_LDFLAGS_OVERRIDE, "-L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.42/lib -L/cm/shared/apps/curl/7.50.1/lib -L${MOD_LIB_PATH} -L/usr/lib"]
@@ -178,6 +169,7 @@ gateTestNoDSLCacheLinux : ${commonLinux} {
 }
 
 gateTestNoSpecialsLinux : ${commonLinux}  {
+  timelimit : "2:00:00"
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials"]
   ]
@@ -202,12 +194,12 @@ gateTestLinuxNFI : ${gateTestLinux} {
   }
 }
 
-gateTestJava9Linux : ${java9Downloads} ${gateTestLinux} {
-  downloads : {
-    JAVA_HOME : ${java9Downloads.downloads.JAVA_HOME}
-    EXTRA_JAVA_HOMES : ${java9Downloads.downloads.EXTRA_JAVA_HOMES}
-  }
-}
+#gateTestJava9Linux : ${java9Downloads} ${gateTestLinux} {
+#  downloads : {
+#    JAVA_HOME : ${java9Downloads.downloads.JAVA_HOME}
+#    EXTRA_JAVA_HOMES : ${java9Downloads.downloads.EXTRA_JAVA_HOMES}
+#  }
+#}
 
 # This performs a number of "style" checks on the code to ensure it confirms to the project standards.
 
