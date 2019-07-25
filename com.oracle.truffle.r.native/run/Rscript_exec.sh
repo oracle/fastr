@@ -42,7 +42,4 @@ else
     mx=`which mx`
 fi
 
-LIB="$PRIMARY_PATH/lib"
-export LD_LIBRARY_PATH="$LIB:$LD_LIBRARY_PATH"
-
 exec $mx --no-warning --primary-suite-path $PRIMARY_PATH $MX_R_GLOBAL_ARGS Rscript $FASTR_INTERNAL_ARGS $MX_R_CMD_ARGS "$@"

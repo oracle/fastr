@@ -2,27 +2,27 @@
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
 java8 : {name : oraclejdk, version : "8u212-jvmci-19.2-b01", platformspecific: true}
-java9 : {name : oraclejdk, version : "9.0.4+11", platformspecific: true}
+#java9 : {name : oraclejdk, version : "9.0.4+11", platformspecific: true}
 
 java8Downloads : {
   downloads : {
     EXTRA_JAVA_HOMES : { pathlist :[
       ${java7}
-      ${java9}
+#      ${java9}
     ]}
     JAVA_HOME : ${java8}
   }
 }
 
-java9Downloads : {
-  downloads : {
-    EXTRA_JAVA_HOMES : { pathlist :[
-      ${java7}
-      ${java8}
-    ]}
-    JAVA_HOME : ${java9}
-  }
-}
+#java9Downloads : {
+#  downloads : {
+#    EXTRA_JAVA_HOMES : { pathlist :[
+#      ${java7}
+#      ${java8}
+#    ]}
+#    JAVA_HOME : ${java9}
+#  }
+#}
 
 logfiles : [
     "fastr_errors*.log"
@@ -169,6 +169,7 @@ gateTestNoDSLCacheLinux : ${commonLinux} {
 }
 
 gateTestNoSpecialsLinux : ${commonLinux}  {
+  timelimit : "2:00:00"
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials"]
   ]
@@ -193,12 +194,12 @@ gateTestLinuxNFI : ${gateTestLinux} {
   }
 }
 
-gateTestJava9Linux : ${java9Downloads} ${gateTestLinux} {
-  downloads : {
-    JAVA_HOME : ${java9Downloads.downloads.JAVA_HOME}
-    EXTRA_JAVA_HOMES : ${java9Downloads.downloads.EXTRA_JAVA_HOMES}
-  }
-}
+#gateTestJava9Linux : ${java9Downloads} ${gateTestLinux} {
+#  downloads : {
+#    JAVA_HOME : ${java9Downloads.downloads.JAVA_HOME}
+#    EXTRA_JAVA_HOMES : ${java9Downloads.downloads.EXTRA_JAVA_HOMES}
+#  }
+#}
 
 # This performs a number of "style" checks on the code to ensure it confirms to the project standards.
 
