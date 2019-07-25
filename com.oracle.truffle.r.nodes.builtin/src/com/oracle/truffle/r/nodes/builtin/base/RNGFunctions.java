@@ -53,8 +53,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 public class RNGFunctions {
-    @RBuiltin(name = "set.seed", visibility = OFF, kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind"}, behavior = MODIFIES_STATE)
-    public abstract static class SetSeed extends RBuiltinNode.Arg3 {
+    @RBuiltin(name = "set.seed", visibility = OFF, kind = INTERNAL, parameterNames = {"seed", "kind", "normal.kind", "sample.kind"}, behavior = MODIFIES_STATE)
+    public abstract static class SetSeed extends RBuiltinNode.Arg4 {
 
         static {
             Casts casts = new Casts(SetSeed.class);
@@ -62,12 +62,13 @@ public class RNGFunctions {
             CastsHelper.kindInteger(casts, "kind", INVALID_ARGUMENT, "kind");
             // TODO: implement normal.kind specializations with String
             casts.arg("normal.kind").allowNull().mustBe(anyValue().not(), UNIMPLEMENTED_TYPE_IN_FUNCTION, "String", "set.seed").mustBe(stringValue(), INVALID_NORMAL_TYPE_IN_RGNKIND);
+            casts.arg("sample.kind").allowNull().mustBe(anyValue().not(), UNIMPLEMENTED_TYPE_IN_FUNCTION, "sample.kind", "set.seed");
         }
 
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected RNull setSeed(int seed, int kind, RNull normKind) {
+        protected RNull setSeed(int seed, int kind, RNull normKind, @SuppressWarnings("unused") Object sampleKind) {
             doSetSeed(seed, kind, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
@@ -75,7 +76,7 @@ public class RNGFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected RNull setSeed(RNull seed, int kind, RNull normKind) {
+        protected RNull setSeed(RNull seed, int kind, RNull normKind, Object sampleKind) {
             doSetSeed(RRNG.timeToSeed(), kind, RRNG.NO_KIND_CHANGE);
             return RNull.instance;
         }
@@ -85,18 +86,19 @@ public class RNGFunctions {
         }
     }
 
-    @RBuiltin(name = "RNGkind", kind = INTERNAL, parameterNames = {"kind", "normkind"}, behavior = MODIFIES_STATE)
-    public abstract static class RNGkind extends RBuiltinNode.Arg2 {
+    @RBuiltin(name = "RNGkind", kind = INTERNAL, parameterNames = {"kind", "normkind", "sample.kind"}, behavior = MODIFIES_STATE)
+    public abstract static class RNGkind extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(RNGkind.class);
             CastsHelper.kindInteger(casts, "kind", INVALID_ARGUMENT, "kind");
             CastsHelper.kindInteger(casts, "normkind", INVALID_NORMAL_TYPE_IN_RGNKIND);
+            casts.arg("sample.kind").allowNull().mustBe(anyValue().not(), UNIMPLEMENTED_TYPE_IN_FUNCTION, "sample.kind", "set.seed");
         }
 
         @Specialization
         @TruffleBoundary
-        protected RIntVector doRNGkind(int kind, int normKind) {
+        protected RIntVector doRNGkind(int kind, int normKind, @SuppressWarnings("unused") Object sampleKind) {
             RRNG.getRNGState();
             RIntVector result = getCurrent();
             RRNG.doRNGKind(kind, normKind);

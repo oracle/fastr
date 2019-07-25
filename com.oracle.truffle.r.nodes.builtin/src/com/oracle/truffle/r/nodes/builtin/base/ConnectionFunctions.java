@@ -450,8 +450,8 @@ public abstract class ConnectionFunctions {
         }
     }
 
-    @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method"}, behavior = IO)
-    public abstract static class URLConnection extends RBuiltinNode.Arg5 {
+    @RBuiltin(name = "url", kind = INTERNAL, parameterNames = {"description", "open", "blocking", "encoding", "method", "headers"}, behavior = IO)
+    public abstract static class URLConnection extends RBuiltinNode.Arg6 {
 
         static {
             Casts casts = new Casts(URLConnection.class);
@@ -465,7 +465,7 @@ public abstract class ConnectionFunctions {
         @Specialization
         @TruffleBoundary
         protected RAbstractIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, String encoding,
-                        @SuppressWarnings("unused") String method) {
+                        @SuppressWarnings("unused") String method, @SuppressWarnings("unused") Object headers) {
             try {
                 return new URLRConnection(url, open, encoding).asVector();
             } catch (MalformedURLException ex) {
