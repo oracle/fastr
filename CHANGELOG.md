@@ -1,3 +1,9 @@
+# 19.3.0
+
+ Bug fixes:
+
+ * Tibble does not print properly when using knitr #68
+
 # 19.2.0
 
 New features:
