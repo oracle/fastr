@@ -34,7 +34,7 @@
 # object files. PKG_LIBS can specify additional libraries required by the package.
 # XTRA_C_OPTS and XTRA_F_OPTS can be used to specify additional C/Fortran compiler options.
 
-# A package uses C_SOURCES_EXCLUDED and F_SOURCES_EXCLUDED to specify excluded C/Fortran 
+# A package uses C_SOURCES_EXCLUDED and F_SOURCES_EXCLUDED to specify excluded C/Fortran
 # sources.
 
 # If no library file is produced, a package sets NO_LIBRARY to 1.
@@ -43,7 +43,7 @@ ifneq ($(MAKECMDGOALS),clean)
 include $(TOPDIR)/platform.mk
 endif
 
-.PHONY: all clean cleanlib cleanobj force libr libcommon 
+.PHONY: all clean cleanlib cleanobj force libr libcommon
 
 PKG = $(PACKAGE)
 
@@ -102,9 +102,16 @@ $(F_OBJECTS): | $(OBJ)
 $(OBJ):
 	mkdir -p $(OBJ)
 
+ifeq ($(OS_NAME),Darwin)
+  RPATH_OPT =
+else
+  RPATH = $$ORIGIN/../../../lib/
+  RPATH_OPT = -Wl,-rpath='$(RPATH)'
+endif
+
 $(LIB_PKG): $(C_OBJECTS) $(F_OBJECTS) $(PKGDIR) $(XTRA_C_OBJECTS)
 	mkdir -p $(LIBDIR)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -L$(FASTR_LIB_DIR) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(XTRA_C_OBJECTS) $(PKG_LIBS) -lR -lz $(F2C) -lRlapack
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -L$(FASTR_LIB_DIR) $(RPATH_OPT) -o $(LIB_PKG) $(C_OBJECTS) $(F_OBJECTS) $(XTRA_C_OBJECTS) $(PKG_LIBS) -lR -lz $(F2C) -lRlapack
 	mkdir -p $(FASTR_LIBRARY_DIR)/$(PKG)/libs
 	cp "$(LIB_PKG)" $(FASTR_LIBRARY_DIR)/$(PKG)/libs
 ifeq ($(OS_NAME),Darwin)
@@ -120,4 +127,3 @@ $(OBJ)/%.o: $(SRC)/%.f
 clean: $(CLEAN_PKG)
 	rm -rf $(LIBDIR)/*
 	rm -rf $(FASTR_LIBRARY_DIR)/$(PKG)
-
