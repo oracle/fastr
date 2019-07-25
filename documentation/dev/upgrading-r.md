@@ -27,6 +27,9 @@ There are native functions ported from GNU-R source to Java.
 With each upgrade we should review the ported code and port any
 relevant fixes and improvements.
 
+* nmaths library (dunif, punif, ...), which is rewritten to Java in FastR
+* changes in GNU-R's own tests, which are used in "gnurtests" package
+
 File `share/R/examples-footer.R` may occasionally change.
 FastR copy is in `com.oracle.truffle.r.native/run/examples-footer.R`.
 
@@ -42,3 +45,4 @@ Tips:
 * enable `NativeMirror#TRACE_MIRROR_ALLOCATION_SITES` to debug issues in `gramRd.c`
 * run unit tests with `AddIgnoreForFailedTests=true` to make the newly failing tests
 ignored with `Ignored.NewRVersionMigration`, e.g. `mx --J @'-DAddIgnoreForFailedTests=true' rutgen`.
+

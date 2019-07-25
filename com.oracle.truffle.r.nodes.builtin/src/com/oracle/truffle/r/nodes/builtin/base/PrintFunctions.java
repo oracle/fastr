@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
@@ -35,50 +37,54 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.printer.PrintParameters;
 import com.oracle.truffle.r.nodes.builtin.base.printer.ValuePrinterNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class PrintFunctions {
 
-    @RBuiltin(name = "print.default", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "digits", "quote", "na.print", "print.gap", "right", "max", "useSource", "noOpt"}, behavior = IO)
-    public abstract static class PrintDefault extends RBuiltinNode.Arg9 {
+    /**
+     * {@code print.default} pre R 3.6.0 took all the arguments as actual arguments and not in a
+     * pairlist. The current implementation of {@code print.default} unrolls the pairlist and passes
+     * it to this node, which allows us to keep the cast pipeline and specializations.
+     */
+    public abstract static class OldPrintDefault extends RBuiltinNode.Arg8 {
 
         @Child private GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
         @Child private ValuePrinterNode valuePrinter = new ValuePrinterNode();
 
         static {
-            Casts casts = new Casts(PrintDefault.class);
-            casts.arg("digits").allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(Format.R_MIN_DIGITS_OPT).and(lte(Format.R_MAX_DIGITS_OPT)));
-
-            casts.arg("quote").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
-
-            casts.arg("na.print").defaultError(RError.Message.INVALID_NA_PRINT_SPEC).allowNull().mustBe(stringValue()).asStringVector().findFirst();
-
-            casts.arg("print.gap").defaultError(RError.Message.GAP_MUST_BE_NON_NEGATIVE).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
-
-            casts.arg("right").defaultError(RError.Message.INVALID_ARGUMENT, "right").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
-
-            casts.arg("max").allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
-
-            casts.arg("useSource").defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
-
-            casts.arg("noOpt").defaultError(RError.Message.GENERIC, "invalid 'tryS4' internal argument").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            Casts casts = new Casts(OldPrintDefault.class);
+            casts.arg(1).mapMissing(nullConstant()).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(Format.R_MIN_DIGITS_OPT).and(lte(Format.R_MAX_DIGITS_OPT)));
+            casts.arg(2).mapMissing(constant(RRuntime.LOGICAL_TRUE)).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg(3).mapMissing(nullConstant()).defaultError(RError.Message.INVALID_NA_PRINT_SPEC).allowNull().mustBe(stringValue()).asStringVector().findFirst();
+            casts.arg(4).mapMissing(nullConstant()).defaultError(RError.Message.GAP_MUST_BE_NON_NEGATIVE).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
+            casts.arg(5).mapMissing(constant(RRuntime.LOGICAL_FALSE)).defaultError(RError.Message.INVALID_ARGUMENT, "right").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
+            casts.arg(6).mapMissing(nullConstant()).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
+            casts.arg(7).mapMissing(constant(RRuntime.LOGICAL_TRUE)).defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
         @Specialization(guards = "!isS4(o)")
-        protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+        protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource) {
+            // TODO: we may need to preserve missing values to figure out "noOpt" (GR-17328)
+            // but: check what GNU-R does now w.r.t. to noOpt, maybe we can just get rid of it
+            // In 3.5.1 it was: noOpt <- missing(digits) && missing(quote) && missing(na.print) &&
+            // missing(print.gap) && missing(right) && missing(max) &&
+            // missing(useSource) && missing(...)
+            boolean noOpt = true;
             valuePrinter.execute(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
             return o;
         }
@@ -89,13 +95,15 @@ public class PrintFunctions {
 
         @Specialization(guards = "isS4(o)")
         protected Object printDefaultS4(@SuppressWarnings("unused") VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max,
-                        boolean useSource, boolean noOpt,
+                        boolean useSource,
                         @Cached("createShowFunction(frame)") RFunction showFunction) {
+            // TODO: the same as above
+            boolean noOpt = true;
             if (noOpt) {
                 // S4 should only be called in case noOpt is true
                 RContext.getEngine().evalFunction(showFunction, null, null, true, null, o);
             } else {
-                printDefault(showFunction, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+                printDefault(showFunction, digits, quote, naPrint, printGap, right, max, useSource);
             }
             return o;
         }
@@ -105,22 +113,41 @@ public class PrintFunctions {
         }
     }
 
-    @RBuiltin(name = "print.function", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "useSource", "..."}, behavior = IO)
-    public abstract static class PrintFunction extends RBuiltinNode.Arg3 {
-
-        @Child private ValuePrinterNode valuePrinter = new ValuePrinterNode();
+    @RBuiltin(name = "print.default", visibility = OFF, kind = INTERNAL, parameterNames = {"x", "args", "missing"}, behavior = IO)
+    public abstract static class PrintDefault extends RBuiltinNode.Arg3 {
+        private static final int OLD_PRINT_ARGS_SIZE = 7;
 
         static {
-            Casts casts = new Casts(PrintFunction.class);
-            casts.arg("x").mustBe(instanceOf(RFunction.class));
-
-            casts.arg("useSource").defaultError(RError.Message.INVALID_ARGUMENT, "useSource").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+            Casts casts = new Casts(PrintDefault.class);
+            casts.arg("args").mustBe(RPairList.class);
+            casts.arg("missing").mustBe(logicalValue()).asLogicalVector();
         }
 
         @Specialization
-        protected RFunction printFunction(RFunction x, boolean useSource, @SuppressWarnings("unused") RArgsValuesAndNames extra) {
-            valuePrinter.execute(x, PrintParameters.getDefaultDigits(), true, RRuntime.STRING_NA, 1, false, PrintParameters.getDefaultMaxPrint(), useSource, false);
-            return x;
+        @ExplodeLoop
+        protected Object print(VirtualFrame frame, Object x, RPairList argsIn, RLogicalVector missing,
+                        @Cached OldPrintDefault oldPrintDefault) {
+            // convert the pairlist to array, check missing too
+            Object[] argsArr = new Object[OLD_PRINT_ARGS_SIZE];
+            Object args = argsIn;
+            int i = 0;
+            while (!RRuntime.isNull(args)) {
+                RPairList nextNode = (RPairList) args;
+                argsArr[i] = RRuntime.fromLogical(missing.getDataAt(i)) ? RMissing.instance : nextNode.car();
+                args = nextNode.cdr();
+                i++;
+                if (i > OLD_PRINT_ARGS_SIZE) {
+                    // From the documentation: further arguments in "..." are ignored
+                    break;
+                }
+            }
+
+            // Pad with missing (noOpt seems to be now optional passed in ...)
+            for (; i < OLD_PRINT_ARGS_SIZE; i++) {
+                argsArr[i] = RMissing.instance;
+            }
+
+            return oldPrintDefault.call(frame, x, argsArr[0], argsArr[1], argsArr[2], argsArr[3], argsArr[4], argsArr[5], argsArr[6]);
         }
     }
 }
