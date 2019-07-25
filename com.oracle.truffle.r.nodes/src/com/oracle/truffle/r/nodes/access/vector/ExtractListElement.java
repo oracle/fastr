@@ -71,7 +71,7 @@ public abstract class ExtractListElement extends Node {
 
     @Specialization(replaces = "doList")
     protected Object doListUncached(RAbstractListBaseVector list, int index,
-                            @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
+                    @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
         return doList(list, index, list.slowPathAccess(), updateStateNode);
     }
 

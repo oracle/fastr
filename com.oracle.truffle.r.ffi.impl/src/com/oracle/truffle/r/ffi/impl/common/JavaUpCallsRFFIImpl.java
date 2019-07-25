@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +47,7 @@ import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
@@ -1555,17 +1555,15 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object Rf_protect(Object x) {
         getContext().rffiContextState.protectStack.add(guaranteeInstanceOf(x, RObject.class));
         return x;
     }
 
     @Override
-    @TruffleBoundary
     public void Rf_unprotect(int x) {
         RFFIContext context = getContext();
-        ArrayList<RObject> stack = context.rffiContextState.protectStack;
+        Collections.ArrayListObj<RObject> stack = context.rffiContextState.protectStack;
         try {
             for (int i = 0; i < x; i++) {
                 context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
@@ -1576,30 +1574,28 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     private static boolean debugWarning(String message) {
+        CompilerDirectives.transferToInterpreter();
         RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
         return true;
     }
 
     @Override
-    @TruffleBoundary
     public int R_ProtectWithIndex(Object x) {
-        ArrayList<RObject> stack = getContext().rffiContextState.protectStack;
+        Collections.ArrayListObj<RObject> stack = getContext().rffiContextState.protectStack;
         stack.add(guaranteeInstanceOf(x, RObject.class));
         return stack.size() - 1;
     }
 
     @Override
-    @TruffleBoundary
     public void R_Reprotect(Object x, int y) {
-        ArrayList<RObject> stack = getContext().rffiContextState.protectStack;
+        Collections.ArrayListObj<RObject> stack = getContext().rffiContextState.protectStack;
         stack.set(y, guaranteeInstanceOf(x, RObject.class));
     }
 
     @Override
-    @TruffleBoundary
     public void Rf_unprotect_ptr(Object x) {
         RFFIContext context = getContext();
-        ArrayList<RObject> stack = context.rffiContextState.protectStack;
+        Collections.ArrayListObj<RObject> stack = context.rffiContextState.protectStack;
         for (int i = stack.size() - 1; i >= 0; i--) {
             if (stack.get(i) == x) {
                 context.registerReferenceUsedInNative(stack.remove(i));
