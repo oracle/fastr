@@ -419,7 +419,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         @Override
         public void accept(SnippetRun snippetRun) throws PolyglotException {
             for (Value p : snippetRun.getParameters()) {
-                if (p.isNull()) {
+                if (p.isNull() || (p.isString() && p.hasMembers())) {
                     return;
                 }
             }
