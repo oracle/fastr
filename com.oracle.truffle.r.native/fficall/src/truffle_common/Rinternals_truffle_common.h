@@ -123,6 +123,38 @@ Rboolean FASTR_R_Interactive() {
     return result;
 }
 
+// New up-calls added in R-3.6.1
+// TODO: implement -- check usages in base package and the implementation and comments in GNU-R
+// and try to understand its intended semantics (check if there are any mentions in writing R extensions manual). 
+// Add tests to testrffi package.
+// Also: update the dummy argument names where possible (taken from Rinternals.h, where the args do not have names)
+
+void MARK_NOT_MUTABLE(SEXP x) {
+    // TODO: probably new upcall that does makeSharedPermanent(),    
+    SET_NAMED(x, 2);
+}
+
+SEXP R_NewPreciousMSet(int x) {
+    // TODO -- it's a question whether to use some efficient implementation
+    // on Java side with a some sort of HashMap (and make it external pointer so that we can send it out as SEXP).
+    // Or whether to use pairlist like GNU-R. Does any use of these functions rely on the result being pair-list?
+    return R_NilValue;
+}
+
+void R_PreserveInMSet(SEXP x, SEXP mset) {    
+    // TODO
+    R_PreserveObject(x);
+}
+
+void R_ReleaseFromMSet(SEXP x, SEXP mset) {
+    // TODO
+    R_ReleaseObject(x);
+}
+
+void R_ReleaseMSet(SEXP mset, int keepSize) {
+    // TODO
+}
+
 SEXP CAR(SEXP e) {
     TRACE1(e);
     SEXP result = ((call_CAR) callbacks[CAR_x])(e);
@@ -1843,7 +1875,7 @@ void ALTSTRING_SET_ELT(SEXP x, R_xlen_t len, SEXP elt) ALTREP_UNIMPLEMENTED
 Rcomplex ALTCOMPLEX_ELT(SEXP x, R_xlen_t i) ALTREP_UNIMPLEMENTED
 void ALTCOMPLEX_SET_ELT(SEXP x, R_xlen_t i, Rcomplex v) ALTREP_UNIMPLEMENTED
 Rbyte ALTRAW_ELT(SEXP x, R_xlen_t i) ALTREP_UNIMPLEMENTED
-void ALTRAW_SET_ELT(SEXP x, R_xlen_t i, int v) ALTREP_UNIMPLEMENTED
+void ALTRAW_SET_ELT(SEXP x, R_xlen_t i, Rbyte v) ALTREP_UNIMPLEMENTED
 R_xlen_t INTEGER_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, int *buf) ALTREP_UNIMPLEMENTED
 int INTEGER_IS_SORTED(SEXP x) ALTREP_UNIMPLEMENTED
 int INTEGER_NO_NA(SEXP x) ALTREP_UNIMPLEMENTED

@@ -3643,16 +3643,13 @@ static SEXP ParseRd(ParseStatus *status, SEXP srcfile, Rboolean fragment, SEXP m
     return parseState.Value;
 }
 
-// FastR patch: do not include Rconnections and provide dummy Rconn_fgetc and cleanup
+// FastR patch: do not include Rconnections and provide dummy implementation of symbols defined there:
+//   typedef for Rconnection
+//   Rconn_fgetc
 //#include "Rconnections.h"
 typedef SEXP Rconnection;
 static int Rconn_fgetc(Rconnection con) {
     return -1;
-}
-
-static void con_cleanup(void *data) {
-    Rconnection con = data;
-    if(con->isopen) con->close(con);
 }
 
 static Rconnection con_parse;
@@ -4401,11 +4398,7 @@ static int yylex(void)
     return tok;
 }
 
-static void con_cleanup(void *data)
-{
-    Rconnection con = data;
-    if(con->isopen) con->close(con);
-}
+// FastR patch: remove unused con_cleanup
 
 static void PutState(ParseState *state) {
     state->xxinRString = parseState.xxinRString;

@@ -72,8 +72,8 @@ $(GNUR_C_OBJECTS): | $(OBJ)
 
 $(GNUR_F_OBJECTS): | $(OBJ)
 
-#CFLAGS := $(CFLAGS) -H
-
+# Remove the comment to debug which header files are used where
+# CFLAGS := $(CFLAGS) -H
 
 $(OBJ):
 	mkdir -p $(OBJ)
@@ -91,10 +91,10 @@ $(OBJ)/%.o: %.c $(FASTR_NATIVE_DIR)/include/Rinternals.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
 $(OBJ)/%.o: %.f
-	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
+	$(FC) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(GNUR_APPL_SRC)/%.f
-	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
+	$(FC) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJ)

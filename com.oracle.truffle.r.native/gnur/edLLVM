@@ -1,4 +1,4 @@
 ,s/CC[[:space:]]=\(.*\)/CC = $(LABS_LLVM_CC)/g
-,s/F77[[:space:]]=\(.*\)/F77 = $(FASTR_NATIVE_DIR)\/llvm_tools\/f2c-wrapper\1/g
+,s/FC[[:space:]]=\(.*\)/FC = $(FASTR_NATIVE_DIR)\/llvm_tools\/f2c-wrapper\1/g
 w
 q

@@ -22,4 +22,24 @@
 // This is a version of src/include/Print.h that is a safe replacement for use with FastR
 // Currently simply redirects to the GnuR version
 
+// pulled from Defn.h
+/* ../../main/print.c : */
+typedef struct {
+    int width;
+    int na_width;
+    int na_width_noquote;
+    int digits;
+    int scipen;
+    int gap;
+    int quote;
+    int right;
+    int max;
+    SEXP na_string;
+    SEXP na_string_noquote;
+    int useSource;
+    int cutoff; // for deparsed language objects
+    SEXP env;
+    SEXP callArgs;
+} R_PrintData;
+
 #include GNUR_PRINT_H
