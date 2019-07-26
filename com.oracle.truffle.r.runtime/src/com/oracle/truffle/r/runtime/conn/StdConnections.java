@@ -232,7 +232,7 @@ public class StdConnections {
 
         @Override
         public int getc() throws IOException {
-            throw RInternalError.unimplemented("stdin getc");
+            return console.getStdin().read();
         }
     }
 
