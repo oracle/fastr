@@ -141,7 +141,7 @@ public class CompileFunctions {
 
         @Specialization
         protected int bcVersion() {
-            return 10; // R_bcVersion in eval.c
+            return 11; // R_bcVersion in eval.c
         }
     }
 
