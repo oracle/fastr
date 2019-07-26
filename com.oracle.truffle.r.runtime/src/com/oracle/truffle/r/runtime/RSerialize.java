@@ -419,7 +419,9 @@ public class RSerialize {
             int writerVersion = stream.readInt();
             @SuppressWarnings("unused")
             int releaseVersion = stream.readInt();
-            assert version == DEFAULT_VERSION; // TODO proper error message
+            if (version != DEFAULT_VERSION) {
+                throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unsupported serialization version " + version);
+            }
             Object result = readItem();
             return result;
         }
