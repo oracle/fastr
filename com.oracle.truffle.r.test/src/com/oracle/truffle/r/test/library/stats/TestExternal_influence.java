@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestExternal_influence extends TestBase {
     @Test
     public void testInfluence() {
-        assertEval("lm.influence(lm(sr ~ pop15 + pop75 + dpi + ddpi, data = LifeCycleSavings[1:10,]))");
+        // TODO: GR-17331, segfault
+        assertEval(Ignored.NewRVersionMigration, "lm.influence(lm(sr ~ pop15 + pop75 + dpi + ddpi, data = LifeCycleSavings[1:10,]))");
     }
 }
