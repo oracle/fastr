@@ -28,8 +28,11 @@ import java.lang.ProcessBuilder.Redirect;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.LanguageInfo;
+import com.oracle.truffle.llvm.api.Toolchain;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -120,5 +123,21 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
                 pEnv.put(name, value);
             }
         }
+
+        putToolChainVars(pEnv);
+    }
+
+    /**
+     * The variables being set in this method are required by {@code llvm-cc} and {@code llvm-c++}
+     * scripts.
+     */
+    private static void putToolChainVars(Map<String, String> pEnv) {
+        LanguageInfo llvmInfo = RContext.getInstance().getEnv().getInternalLanguages().get("llvm");
+        Toolchain toolchain = RContext.getInstance().getEnv().lookup(llvmInfo, Toolchain.class);
+        TruffleFile cc = toolchain.getToolPath("CC");
+        TruffleFile cxx = toolchain.getToolPath("CXX");
+
+        pEnv.put("TOOLCHAIN_CPP", cxx.toString());
+        pEnv.put("TOOLCHAIN_CC", cc.toString());
     }
 }
