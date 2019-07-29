@@ -23,52 +23,24 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import org.junit.Test;
 
-public class RStringMRTest extends AbstractMRTest {
+public class RMissingInteropTest extends AbstractInteropTest {
 
     @Test
     @Override
     public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
-    }
-
-    @Override
-    protected boolean isNull(TruffleObject obj) {
-        assert obj instanceof RString;
-        return ((RString) obj).isNA();
-    }
-
-    @Override
-    protected int getSize(TruffleObject arg0) {
-        return 1;
-    }
-
-    @Override
-    protected boolean canRead(TruffleObject arg0) {
-        return true;
+        super.testIsNull(); // force inherited tests from AbstractInteropTest
     }
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RString.valueOf("abc"), RString.valueOf(RRuntime.STRING_NA)};
-    }
-
-    @Override
-    protected Object getUnboxed(TruffleObject obj) {
-        String unboxed = ((RString) obj).getValue();
-        return RRuntime.isNA(unboxed) ? null : unboxed;
+        return new TruffleObject[]{RMissing.instance};
     }
 
     @Override
     protected TruffleObject createEmptyTruffleObject() throws Exception {
         return null;
-    }
-
-    @Override
-    protected boolean shouldTestToNative(TruffleObject obj) {
-        return true;
     }
 }

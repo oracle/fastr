@@ -22,10 +22,7 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.Message;
 import org.graalvm.polyglot.Value;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -43,7 +40,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.Test;
 
-public class RPromiseMRTest extends AbstractMRTest {
+public class RPromiseInteropTest extends AbstractInteropTest {
 
     // c&p from RPromise
     private static final String MEMBER_VALUE = "value";
@@ -70,56 +67,53 @@ public class RPromiseMRTest extends AbstractMRTest {
 
         TruffleObject p = createRPromise("i<-1L");
 
-        Object obj = ForeignAccess.sendRead(Message.READ.createNode(), p, MEMBER_EXPR);
+        Object obj = getInterop().readMember(p, MEMBER_EXPR);
         assertTrue(((RPairList) obj).isLanguage());
 
-        assertFalse(RRuntime.fromLogical((byte) ForeignAccess.sendRead(Message.READ.createNode(), p, MEMBER_IS_EVALUATED)));
-        assertEquals(RNull.instance, ForeignAccess.sendRead(Message.READ.createNode(), p, MEMBER_VALUE));
+        assertFalse(RRuntime.fromLogical((byte) getInterop().readMember(p, MEMBER_IS_EVALUATED)));
+        assertEquals(RNull.instance, getInterop().readMember(p, MEMBER_VALUE));
 
-        ForeignAccess.sendWrite(Message.WRITE.createNode(), p, MEMBER_IS_EVALUATED, true);
-        assertTrue(RRuntime.fromLogical((byte) ForeignAccess.sendRead(Message.READ.createNode(), p, MEMBER_IS_EVALUATED)));
-        assertEquals(1, ForeignAccess.sendRead(Message.READ.createNode(), p, MEMBER_VALUE));
+        getInterop().writeMember(p, MEMBER_IS_EVALUATED, true);
+        assertTrue(RRuntime.fromLogical((byte) getInterop().readMember(p, MEMBER_IS_EVALUATED)));
+        assertEquals(1, getInterop().readMember(p, MEMBER_VALUE));
     }
 
     @Test
     public void testKeyInfo() throws Exception {
         TruffleObject p = createRPromise("i<-1L");
 
-        int info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), p, MEMBER_VALUE);
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info));
-        assertFalse(KeyInfo.isWritable(info));
-        assertFalse(KeyInfo.isModifiable(info));
-        assertFalse(KeyInfo.isInsertable(info));
-        assertFalse(KeyInfo.isRemovable(info));
-        assertFalse(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
-        assertFalse(KeyInfo.hasReadSideEffects(info));
-        assertFalse(KeyInfo.hasWriteSideEffects(info));
+        assertTrue(getInterop().isMemberExisting(p, MEMBER_VALUE));
+        assertTrue(getInterop().isMemberReadable(p, MEMBER_VALUE));
+        assertFalse(getInterop().isMemberWritable(p, MEMBER_VALUE));
+        assertFalse(getInterop().isMemberModifiable(p, MEMBER_VALUE));
+        assertFalse(getInterop().isMemberInsertable(p, MEMBER_VALUE));
+        assertFalse(getInterop().isMemberRemovable(p, MEMBER_VALUE));
+        assertFalse(getInterop().isMemberInvocable(p, MEMBER_VALUE));
+        assertFalse(getInterop().isMemberInternal(p, MEMBER_VALUE));
+        assertFalse(getInterop().hasMemberReadSideEffects(p, MEMBER_VALUE));
+        assertFalse(getInterop().hasMemberWriteSideEffects(p, MEMBER_VALUE));
 
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), p, MEMBER_EXPR);
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info));
-        assertFalse(KeyInfo.isWritable(info));
-        assertFalse(KeyInfo.isModifiable(info));
-        assertFalse(KeyInfo.isInsertable(info));
-        assertFalse(KeyInfo.isRemovable(info));
-        assertFalse(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
-        assertFalse(KeyInfo.hasReadSideEffects(info));
-        assertFalse(KeyInfo.hasWriteSideEffects(info));
+        assertTrue(getInterop().isMemberExisting(p, MEMBER_EXPR));
+        assertTrue(getInterop().isMemberReadable(p, MEMBER_EXPR));
+        assertFalse(getInterop().isMemberWritable(p, MEMBER_EXPR));
+        assertFalse(getInterop().isMemberModifiable(p, MEMBER_EXPR));
+        assertFalse(getInterop().isMemberInsertable(p, MEMBER_EXPR));
+        assertFalse(getInterop().isMemberRemovable(p, MEMBER_EXPR));
+        assertFalse(getInterop().isMemberInvocable(p, MEMBER_EXPR));
+        assertFalse(getInterop().isMemberInternal(p, MEMBER_EXPR));
+        assertFalse(getInterop().hasMemberReadSideEffects(p, MEMBER_EXPR));
+        assertFalse(getInterop().hasMemberWriteSideEffects(p, MEMBER_EXPR));
 
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), p, MEMBER_IS_EVALUATED);
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
-        assertTrue(KeyInfo.isModifiable(info));
-        assertFalse(KeyInfo.isInsertable(info));
-        assertFalse(KeyInfo.isRemovable(info));
-        assertFalse(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
-        assertFalse(KeyInfo.hasReadSideEffects(info));
-        assertFalse(KeyInfo.hasWriteSideEffects(info));
+        assertTrue(getInterop().isMemberExisting(p, MEMBER_IS_EVALUATED));
+        assertTrue(getInterop().isMemberReadable(p, MEMBER_IS_EVALUATED));
+        assertTrue(getInterop().isMemberWritable(p, MEMBER_IS_EVALUATED));
+        assertTrue(getInterop().isMemberModifiable(p, MEMBER_IS_EVALUATED));
+        assertFalse(getInterop().isMemberInsertable(p, MEMBER_IS_EVALUATED));
+        assertFalse(getInterop().isMemberRemovable(p, MEMBER_IS_EVALUATED));
+        assertFalse(getInterop().isMemberInvocable(p, MEMBER_IS_EVALUATED));
+        assertFalse(getInterop().isMemberInternal(p, MEMBER_IS_EVALUATED));
+        assertFalse(getInterop().hasMemberReadSideEffects(p, MEMBER_IS_EVALUATED));
+        assertFalse(getInterop().hasMemberWriteSideEffects(p, MEMBER_IS_EVALUATED));
     }
 
     @Override
@@ -146,7 +140,7 @@ public class RPromiseMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject createEmptyTruffleObject() throws Exception {
-        return null; // XXX createExpression("");
+        return null;
     }
 
     @Override

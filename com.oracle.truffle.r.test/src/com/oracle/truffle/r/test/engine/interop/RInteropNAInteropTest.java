@@ -24,47 +24,35 @@ package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RInteropNA;
+import com.oracle.truffle.r.runtime.data.RInteropNA.RInteropComplexNA;
 import org.junit.Test;
 
-public class RDoubleMRTest extends AbstractMRTest {
+public class RInteropNAInteropTest extends AbstractInteropTest {
+
+    @Override
+    protected boolean shouldTestToNative(TruffleObject obj) {
+        return false;
+    }
 
     @Test
     @Override
     public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
-    }
-
-    @Override
-    protected boolean isNull(TruffleObject obj) {
-        assert obj instanceof RDouble;
-        return ((RDouble) obj).isNA();
-    }
-
-    @Override
-    protected int getSize(TruffleObject arg0) {
-        return 1;
-    }
-
-    @Override
-    protected boolean canRead(TruffleObject arg0) {
-        return true;
-    }
-
-    @Override
-    protected boolean shouldTestToNative(TruffleObject obj) {
-        return true;
+        super.testIsNull(); // force inherited tests from AbstractInteropTest
     }
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RDouble.valueOf(1.1), RDouble.createNA()};
+        return new TruffleObject[]{RInteropNA.DOUBLE, RInteropNA.INT, RInteropNA.LOGICAL, RInteropNA.STRING,
+                        new RInteropComplexNA(RComplex.createNA()),
+                        new RInteropComplexNA(RComplex.valueOf(1, RRuntime.COMPLEX_NA_IMAGINARY_PART)),
+                        new RInteropComplexNA(RComplex.valueOf(RRuntime.COMPLEX_NA_REAL_PART, 1))};
     }
 
     @Override
-    protected Object getUnboxed(TruffleObject obj) {
-        double unboxed = ((RDouble) obj).getValue();
-        return RRuntime.isNA(unboxed) ? null : unboxed;
+    protected boolean isNull(TruffleObject obj) {
+        return true;
     }
 
     @Override

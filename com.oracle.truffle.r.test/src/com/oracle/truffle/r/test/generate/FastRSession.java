@@ -75,7 +75,7 @@ import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStackt
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
-import com.oracle.truffle.r.test.engine.interop.VectorMRTest;
+import com.oracle.truffle.r.test.engine.interop.VectorInteropTest;
 
 public final class FastRSession implements RSession {
 
@@ -432,7 +432,7 @@ public final class FastRSession implements RSession {
                         }
                     }
                 }
-                RLogger.getLogger(VectorMRTest.class.getName()).log(Level.SEVERE, null, ex);
+                RLogger.getLogger(VectorInteropTest.class.getName()).log(Level.SEVERE, null, ex);
                 fail();
             }
             return null;

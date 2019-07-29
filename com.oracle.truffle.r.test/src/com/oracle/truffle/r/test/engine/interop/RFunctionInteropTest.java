@@ -28,48 +28,46 @@ import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.junit.Test;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.test.generate.FastRSession;
 
-public class RFunctionMRTest extends AbstractMRTest {
+public class RFunctionInteropTest extends AbstractInteropTest {
 
     @Test
     public void testExecute() throws Exception {
         RFunction f = create("function() {}");
-        assertTrue(ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), f));
+        assertTrue(getInterop().isExecutable(f));
 
-        TruffleObject result = (TruffleObject) ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f);
-        assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), result));
+        TruffleObject result = (TruffleObject) getInterop().execute(f);
+        assertTrue(getInterop().isNull(result));
 
         f = create("function() {1L}");
-        assertSingletonVector(1, ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f));
+        assertSingletonVector(1, getInterop().execute(f));
 
         f = create("function() {1}");
-        assertSingletonVector(1.0, ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f));
+        assertSingletonVector(1.0, getInterop().execute(f));
 
         f = create("function() {TRUE}");
-        assertSingletonVector(true, ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f));
+        assertSingletonVector(true, getInterop().execute(f));
 
         f = create("function(a) {a}");
-        assertSingletonVector("abc", ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, "abc"));
+        assertSingletonVector("abc", getInterop().execute(f, "abc"));
 
         f = create("function(a) { is.logical(a) }");
-        assertSingletonVector(true, ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, true));
+        assertSingletonVector(true, getInterop().execute(f, true));
 
         f = create("function(a) { .fastr.interop.asShort(a) }");
-        assertTrue(ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, 123) instanceof Short);
+        assertTrue(getInterop().execute(f, 123) instanceof Short);
 
         f = create("function() { NA }");
-        Object naVectorResult = ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f);
-        Object naValue = ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) naVectorResult, 0);
-        assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) naValue));
+        Object naVectorResult = getInterop().execute(f);
+        Object naValue = getInterop().readArrayElement(naVectorResult, 0);
+        assertTrue(getInterop().isNull(naValue));
 
         f = create("function() { NULL }");
-        Object nullResult = ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f);
-        assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) nullResult));
+        Object nullResult = getInterop().execute(f);
+        assertTrue(getInterop().isNull(nullResult));
     }
 
     @Override

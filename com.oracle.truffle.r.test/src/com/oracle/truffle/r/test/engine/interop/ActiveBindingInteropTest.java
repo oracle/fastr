@@ -31,7 +31,7 @@ import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.junit.Test;
 
-public class ActiveBindingMRTest extends AbstractMRTest {
+public class ActiveBindingInteropTest extends AbstractInteropTest {
 
     @Override
     protected boolean shouldTestToNative(TruffleObject obj) {
@@ -41,7 +41,7 @@ public class ActiveBindingMRTest extends AbstractMRTest {
     @Test
     @Override
     public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
+        super.testIsNull(); // force inherited tests from AbstractInteropTest
     }
 
     @Override
