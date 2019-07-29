@@ -24,7 +24,7 @@
 .PHONY: all clean
 
 $(info Building FastR with LLVM... CC is $(LABS_LLVM_CC))
-$(info LLVM_RUNTMIE_LIBS is $(LLVM_RUNTMIE_LIBS))
+$(info LLVM_RUNTIME_LIBS is $(LLVM_RUNTIME_LIBS))
 $(info LLVM_INCLUDES is $(LLVM_INCLUDES))
 $(info NFI_INCLUDES is $(NFI_INCLUDES))
 
