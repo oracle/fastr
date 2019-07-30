@@ -36,6 +36,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 
 public class Pnt implements Function3_2 {
+
+    public static Pnt create() {
+        return new Pnt();
+    }
+
+    public static Pnt getUncached() {
+        return new Pnt();
+    }
+
     private static final int itrmax = 1000;
     private static final double errmax = 1.e-12;
 

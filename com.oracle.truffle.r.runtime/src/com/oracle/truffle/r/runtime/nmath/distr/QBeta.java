@@ -47,6 +47,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 
 public final class QBeta implements Function3_2 {
+
+    public static QBeta create() {
+        return new QBeta();
+    }
+
+    public static QBeta getUncached() {
+        return new QBeta();
+    }
+
     private static final double USE_LOG_X_CUTOFF = -5.;
     private static final int N_NEWTON_FREE = 4;
     // TODO: find out why this??? Is swap_01 R logical??

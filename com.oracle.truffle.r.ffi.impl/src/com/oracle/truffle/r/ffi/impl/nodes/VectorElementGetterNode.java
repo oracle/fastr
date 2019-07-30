@@ -22,12 +22,11 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -46,20 +45,29 @@ public abstract class VectorElementGetterNode extends RBaseNode {
         return VectorElementGetterNodeGen.create();
     }
 
-    @Child private ExtractListElement extractNode = ExtractListElementNodeGen.create();
-    private final BranchProfile outOfBounds = BranchProfile.create();
-
     @Specialization
     public Object doExpression(RExpression expr, long i) {
         return expr.getDataAt((int) i);
     }
 
     @Specialization
-    public Object doList(RList list, long i) {
-        return doListImpl(list, i);
+    public Object doList(RList list, long i,
+                    @Cached() ExtractListElement extractNode,
+                    @Cached() BranchProfile outOfBounds) {
+        return doListImpl(list, i, extractNode, outOfBounds);
     }
 
-    private Object doListImpl(RAbstractListVector list, long i) {
+    @Specialization(guards = "!isRList(x)")
+    public Object doListGeneric(Object x, long i,
+                    @Cached() ExtractListElement extractNode,
+                    @Cached() BranchProfile outOfBounds) {
+        RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RAbstractListVector.class);
+        return doListImpl(list, i, extractNode, outOfBounds);
+    }
+
+    private Object doListImpl(RAbstractListVector list, long i,
+                    ExtractListElement extractNode,
+                    BranchProfile outOfBounds) {
         if (list.getLength() == i) {
             // Some packages abuse that there seems to be no bounds checking and the
             // one-after-the-last element returns NULL, which they use to find out if they reached
@@ -70,9 +78,4 @@ public abstract class VectorElementGetterNode extends RBaseNode {
         return extractNode.execute(list, (int) i);
     }
 
-    @Fallback
-    public Object doListGeneric(Object x, long i) {
-        RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RAbstractListVector.class);
-        return doListImpl(list, i);
-    }
 }

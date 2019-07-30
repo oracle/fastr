@@ -30,6 +30,14 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 // transcribed from nmath/pf.c
 public final class Pf implements Function3_2 {
 
+    public static Pf create() {
+        return new Pf();
+    }
+
+    public static Pf getUncached() {
+        return new Pf();
+    }
+
     private final BranchProfile nanProfile = BranchProfile.create();
 
     @Override

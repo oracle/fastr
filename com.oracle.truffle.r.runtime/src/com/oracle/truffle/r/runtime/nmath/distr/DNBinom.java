@@ -43,6 +43,15 @@ public final class DNBinom {
     }
 
     public static final class DNBinomFunc implements Function3_1 {
+
+        public static DNBinomFunc create() {
+            return new DNBinomFunc();
+        }
+
+        public static DNBinomFunc getUncached() {
+            return new DNBinomFunc();
+        }
+
         private final BranchProfile nanProfile = BranchProfile.create();
 
         @Override
@@ -78,6 +87,15 @@ public final class DNBinom {
     }
 
     public static final class DNBinomMu implements Function3_1 {
+
+        public static DNBinomMu create() {
+            return new DNBinomMu();
+        }
+
+        public static DNBinomMu getUncached() {
+            return new DNBinomMu();
+        }
+
         @Override
         public double evaluate(double x, double size, double mu, boolean giveLog) {
             /*

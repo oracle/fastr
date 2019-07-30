@@ -73,6 +73,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RStartParams;
+import com.oracle.truffle.r.runtime.ContextReferenceAccess;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -240,15 +241,19 @@ public final class RContext {
     private final RStartParams startParameters;
     private final RCmdOptions cmdOptions;
     private final RContext.ContextKind contextKind;
-    public final Map<Class<?>, RootCallTarget> cachedCallTagets = new HashMap<>();
+    private final Map<Class<?>, RootCallTarget> cachedCallTargets = new HashMap<>();
 
     public RootCallTarget getOrCreateCachedCallTarget(Class<?> clazz, Supplier<RootCallTarget> createFunction) {
-        RootCallTarget result = cachedCallTagets.get(clazz);
+        RootCallTarget result = cachedCallTargets.get(clazz);
         if (result == null) {
             result = createFunction.get();
-            cachedCallTagets.put(clazz, result);
+            cachedCallTargets.put(clazz, result);
         }
         return result;
+    }
+
+    public RFFIUpCallTargets getRFFIUpCallTargets() {
+        return rffiUpCallTargets;
     }
 
     /**
@@ -303,6 +308,7 @@ public final class RContext {
      */
     @CompilationFinal private static RCodeBuilder<RSyntaxNode> astBuilder;
     @CompilationFinal private static RRuntimeASTAccess runtimeASTAccess;
+    @CompilationFinal private static ContextReferenceAccess contextReferenceAccess;
     @CompilationFinal private static RBuiltinLookup builtinLookup;
     @CompilationFinal private static RForeignAccessFactory foreignAccessFactory;
     @CompilationFinal private static boolean initialContextInitialized;
@@ -315,9 +321,11 @@ public final class RContext {
     /**
      * Initialize VM-wide static values.
      */
-    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, RBuiltinLookup rBuiltinLookup, RForeignAccessFactory rForeignAccessFactory) {
+    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, ContextReferenceAccess contextReferenceAccess, RBuiltinLookup rBuiltinLookup,
+                    RForeignAccessFactory rForeignAccessFactory) {
         RContext.astBuilder = rAstBuilder;
         RContext.runtimeASTAccess = rRuntimeASTAccess;
+        RContext.contextReferenceAccess = contextReferenceAccess;
         RContext.builtinLookup = rBuiltinLookup;
         RContext.foreignAccessFactory = rForeignAccessFactory;
     }
@@ -356,6 +364,8 @@ public final class RContext {
     public final DLL.ContextStateImpl stateDLL;
     public final RNullMRContextState stateRNullMR;
     public final GCTortureState gcTorture;
+
+    public final RFFIUpCallTargets rffiUpCallTargets;
 
     @CompilationFinal private RFFIContext stateRFFI;
 
@@ -467,6 +477,9 @@ public final class RContext {
         this.stateInstrumentation = InstrumentationState.newContextState(instrumenter);
         this.stateInternalCode = ContextStateImpl.newContextState();
         this.stateDLL = DLL.ContextStateImpl.newContextState();
+
+        this.rffiUpCallTargets = new RFFIUpCallTargets();
+
         this.stateRNullMR = RNullMRContextState.newContextState();
         this.gcTorture = GCTortureState.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
@@ -846,6 +859,10 @@ public final class RContext {
      */
     public static RRuntimeASTAccess getRRuntimeASTAccess() {
         return runtimeASTAccess;
+    }
+
+    public static ContextReferenceAccess getContextReferenceAccess() {
+        return contextReferenceAccess;
     }
 
     /**

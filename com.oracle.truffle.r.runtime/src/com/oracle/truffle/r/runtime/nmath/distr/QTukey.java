@@ -56,6 +56,15 @@ import com.oracle.truffle.r.runtime.nmath.TOMS708;
  */
 
 public final class QTukey implements Function4_2 {
+
+    public static QTukey create() {
+        return new QTukey();
+    }
+
+    public static QTukey getUncached() {
+        return new QTukey();
+    }
+
     private static final double eps = 0.0001;
     private static final int maxiter = 50;
 

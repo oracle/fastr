@@ -24,16 +24,22 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+@GenerateUncached
 public abstract class DoMakeClassNode extends FFIUpCallNode.Arg1 {
 
     public static DoMakeClassNode create() {
         return DoMakeClassNodeGen.create();
+    }
+
+    public static DoMakeClassNode getUncached() {
+        return DoMakeClassNodeGen.getUncached();
     }
 
     @Specialization

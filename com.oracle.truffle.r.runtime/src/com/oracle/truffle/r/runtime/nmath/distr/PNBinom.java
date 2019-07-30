@@ -32,6 +32,15 @@ public final class PNBinom {
     }
 
     public static final class PNBinomFunc implements Function3_2 {
+
+        public static PNBinomFunc create() {
+            return new PNBinomFunc();
+        }
+
+        public static PNBinomFunc getUncached() {
+            return new PNBinomFunc();
+        }
+
         private final Pbeta pbeta = new Pbeta();
 
         @Override
@@ -60,6 +69,15 @@ public final class PNBinom {
     }
 
     public static final class PNBinomMu implements Function3_2 {
+
+        public static PNBinomMu create() {
+            return new PNBinomMu();
+        }
+
+        public static PNBinomMu getUncached() {
+            return new PNBinomMu();
+        }
+
         private final PPois ppois = new PPois();
 
         @Override

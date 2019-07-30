@@ -23,6 +23,8 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.nmath.DPQ;
 import com.oracle.truffle.r.runtime.nmath.DPQ.EarlyReturn;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
@@ -32,6 +34,7 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
+import com.oracle.truffle.r.runtime.nmath.distr.LogisFactory.RLogisNodeGen;
 
 public final class Logis {
     private Logis() {
@@ -39,6 +42,15 @@ public final class Logis {
     }
 
     public static final class DLogis implements Function3_1 {
+
+        public static DLogis create() {
+            return new DLogis();
+        }
+
+        public static DLogis getUncached() {
+            return new DLogis();
+        }
+
         @Override
         public double evaluate(double xIn, double location, double scale, boolean giveLog) {
             if (Double.isNaN(xIn) || Double.isNaN(location) || Double.isNaN(scale)) {
@@ -56,6 +68,15 @@ public final class Logis {
     }
 
     public static final class QLogis implements Function3_2 {
+
+        public static QLogis create() {
+            return new QLogis();
+        }
+
+        public static QLogis getUncached() {
+            return new QLogis();
+        }
+
         @Override
         public double evaluate(double p, double location, double scale, boolean lowerTail, boolean logP) {
             if (Double.isNaN(p) || Double.isNaN(location) || Double.isNaN(scale)) {
@@ -92,6 +113,15 @@ public final class Logis {
     }
 
     public static final class PLogis implements Function3_2 {
+
+        public static PLogis create() {
+            return new PLogis();
+        }
+
+        public static PLogis getUncached() {
+            return new PLogis();
+        }
+
         @Override
         public double evaluate(double xIn, double location, double scale, boolean lowerTail, boolean logP) {
             if (Double.isNaN(xIn) || Double.isNaN(location) || Double.isNaN(scale)) {
@@ -132,9 +162,10 @@ public final class Logis {
         }
     }
 
-    public static final class RLogis extends RandFunction2_Double {
-        @Override
-        public double execute(double location, double scale, RandomNumberProvider rand) {
+    @GenerateUncached
+    public abstract static class RLogis extends RandFunction2_Double {
+        @Specialization
+        public double exec(double location, double scale, RandomNumberProvider rand) {
             if (Double.isNaN(location) || !Double.isFinite(scale)) {
                 return RMathError.defaultError();
             }
@@ -145,6 +176,14 @@ public final class Logis {
                 double u = rand.unifRand();
                 return location + scale * Math.log(u / (1. - u));
             }
+        }
+
+        public static RLogis create() {
+            return RLogisNodeGen.create();
+        }
+
+        public static RLogis getUncached() {
+            return RLogisNodeGen.getUncached();
         }
     }
 }

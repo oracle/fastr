@@ -47,6 +47,14 @@ public final class Pnorm implements Function3_2 {
         return new Pnorm(null);
     }
 
+    public static Pnorm create() {
+        return new Pnorm();
+    }
+
+    public static Pnorm getUncached() {
+        return new Pnorm(null);
+    }
+
     @Override
     public double evaluate(double x, double mu, double sigma, boolean lowerTail, boolean logP) {
         /*

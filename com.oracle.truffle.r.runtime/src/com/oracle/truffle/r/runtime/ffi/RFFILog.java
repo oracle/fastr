@@ -81,6 +81,10 @@ public class RFFILog {
         logCall(CallMode.UP, name, getContext().getCallDepth(), args.toArray());
     }
 
+    public static void logUpCall(String name, Object... args) {
+        logCall(CallMode.UP, name, getContext().getCallDepth(), args);
+    }
+
     public static void logUpCallReturn(String name, Object result) {
         logCall(CallMode.UP_RETURN, name, getContext().getCallDepth(), result);
     }

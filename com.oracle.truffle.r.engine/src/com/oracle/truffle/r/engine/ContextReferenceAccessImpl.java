@@ -20,28 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.nodes;
+package com.oracle.truffle.r.engine;
 
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
-import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.engine.ContextReferenceAccessImplFactory.ContextReferenceNodeImplNodeGen;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ContextReferenceAccess;
 
-@GenerateUncached
-public abstract class IsObjectNode extends RBaseNode {
+public class ContextReferenceAccessImpl implements ContextReferenceAccess {
 
-    public static IsObjectNode create() {
-        return IsObjectNodeGen.create();
+    @Override
+    public ContextReferenceNode createContextReferenceNode() {
+        return ContextReferenceNodeImplNodeGen.create();
     }
 
-    public abstract int executeObject(Object x);
+    protected abstract static class ContextReferenceNodeImpl extends Node implements ContextReferenceNode {
+        @Override
+        public abstract ContextReference<RContext> execute();
 
-    @Specialization
-    int isObject(RAttributable x,
-                    @Cached() GetClassAttributeNode getClassAttrNode) {
-        return getClassAttrNode.isObject(x) ? 1 : 0;
+        @Specialization
+        ContextReference<RContext> get(@CachedContext(TruffleRLanguageImpl.class) ContextReference<RContext> ref) {
+            return ref;
+        }
     }
 
 }

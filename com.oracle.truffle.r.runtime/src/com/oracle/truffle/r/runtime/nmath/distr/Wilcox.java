@@ -27,6 +27,8 @@ import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_EPSILON;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -39,6 +41,7 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
+import com.oracle.truffle.r.runtime.nmath.distr.WilcoxFactory.RWilcoxNodeGen;
 
 public final class Wilcox {
     /**
@@ -158,6 +161,15 @@ public final class Wilcox {
     }
 
     public static final class QWilcox implements Function3_2 {
+
+        public static QWilcox create() {
+            return new QWilcox();
+        }
+
+        public static QWilcox getUncached() {
+            return new QWilcox();
+        }
+
         @Override
         public double evaluate(double xIn, double mIn, double nIn, boolean lowerTail, boolean logP) {
             if (Double.isNaN(xIn) || Double.isNaN(mIn) || Double.isNaN(nIn)) {
@@ -225,6 +237,14 @@ public final class Wilcox {
 
     public static final class PWilcox implements Function3_2 {
 
+        public static PWilcox create() {
+            return new PWilcox();
+        }
+
+        public static PWilcox getUncached() {
+            return new PWilcox();
+        }
+
         @Override
         public double evaluate(double qIn, double mIn, double nIn, boolean lowerTail, boolean logP) {
             if (Double.isNaN(qIn) || Double.isNaN(mIn) || Double.isNaN(nIn)) {
@@ -278,6 +298,15 @@ public final class Wilcox {
     }
 
     public static final class DWilcox implements Function3_1 {
+
+        public static DWilcox create() {
+            return new DWilcox();
+        }
+
+        public static DWilcox getUncached() {
+            return new DWilcox();
+        }
+
         @Override
         public double evaluate(double x, double mIn, double nIn, boolean giveLog) {
             /* NaNs propagated correctly */
@@ -320,9 +349,10 @@ public final class Wilcox {
         }
     }
 
-    public static final class RWilcox extends RandFunction2_Double {
-        @Override
-        public double execute(double mIn, double nIn, RandomNumberProvider rand) {
+    @GenerateUncached
+    public abstract static class RWilcox extends RandFunction2_Double {
+        @Specialization
+        public double exec(double mIn, double nIn, RandomNumberProvider rand) {
             /* NaNs propagated correctly */
             if (Double.isNaN(mIn) || Double.isNaN(nIn)) {
                 return mIn + nIn;
@@ -366,6 +396,14 @@ public final class Wilcox {
                 x[j] = x[--k];
             }
             return (r - n * (n - 1) / 2);
+        }
+
+        public static RWilcox create() {
+            return RWilcoxNodeGen.create();
+        }
+
+        public static RWilcox getUncached() {
+            return RWilcoxNodeGen.getUncached();
         }
     }
 }

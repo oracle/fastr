@@ -31,6 +31,11 @@ import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_DoubleWi
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 
 public final class RHyper extends RandFunction3_DoubleWithWarnings {
+
+    public static RHyper create() {
+        return new RHyper();
+    }
+
     private static final double[] al = {
                     0.0, /* ln(0!)=ln(1) */
                     0.0, /* ln(1!)=ln(1) */
@@ -98,7 +103,7 @@ public final class RHyper extends RandFunction3_DoubleWithWarnings {
     private static final double deltal = 0.0078;
     private static final double deltau = 0.0034;
 
-    private final Rbinom rbinom = new Rbinom();
+    private final Rbinom rbinom = Rbinom.create();
 
     // rhyper(NR, NB, n) -- NR 'red', NB 'blue', n drawn, how many are 'red'
     @Override

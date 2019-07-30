@@ -30,6 +30,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 
 public final class Qnt implements Function3_2 {
+
+    public static Qnt create() {
+        return new Qnt();
+    }
+
+    public static Qnt getUncached() {
+        return new Qnt();
+    }
+
     private static final double accu = 1e-13;
     private static final double Eps = 1e-11; /* must be > accu */
 

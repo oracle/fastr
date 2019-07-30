@@ -26,6 +26,15 @@ import com.oracle.truffle.r.runtime.nmath.GammaFunctions;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
 
 public final class DGamma implements Function3_1 {
+
+    public static DGamma create() {
+        return new DGamma();
+    }
+
+    public static DGamma getUncached() {
+        return new DGamma();
+    }
+
     @Override
     public double evaluate(double x, double shape, double scale, boolean giveLog) {
         return GammaFunctions.dgamma(x, shape, scale, giveLog);

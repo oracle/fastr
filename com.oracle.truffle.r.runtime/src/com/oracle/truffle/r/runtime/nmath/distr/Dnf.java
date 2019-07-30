@@ -32,6 +32,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Dnf implements Function4_1 {
+
+    public static Dnf create() {
+        return new Dnf();
+    }
+
+    public static Dnf getUncached() {
+        return new Dnf();
+    }
+
     private final DNChisq dnchisq = new DNChisq();
     private final DNBeta dnbeta = new DNBeta();
 

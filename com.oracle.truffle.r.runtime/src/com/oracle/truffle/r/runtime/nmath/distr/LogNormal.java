@@ -20,6 +20,9 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.nmath.DPQ;
 import com.oracle.truffle.r.runtime.nmath.DPQ.EarlyReturn;
 import com.oracle.truffle.r.runtime.nmath.MathConstants;
@@ -28,25 +31,43 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
+import com.oracle.truffle.r.runtime.nmath.distr.LogNormalFactory.RLNormNodeGen;
 
 public final class LogNormal {
     private LogNormal() {
         // only static members
     }
 
-    public static final class RLNorm extends RandFunction2_Double {
-        private final Rnorm rnorm = new Rnorm();
-
-        @Override
-        public double execute(double meanlog, double sdlog, RandomNumberProvider rand) {
+    @GenerateUncached
+    public abstract static class RLNorm extends RandFunction2_Double {
+        @Specialization
+        public double exec(double meanlog, double sdlog, RandomNumberProvider rand,
+                        @Cached() Rnorm rnorm) {
             if (Double.isNaN(meanlog) || !Double.isFinite(sdlog) || sdlog < 0.) {
                 return RMathError.defaultError();
             }
             return Math.exp(rnorm.execute(meanlog, sdlog, rand));
         }
+
+        public static RLNorm create() {
+            return RLNormNodeGen.create();
+        }
+
+        public static RLNorm getUncached() {
+            return RLNormNodeGen.getUncached();
+        }
     }
 
     public static final class DLNorm implements Function3_1 {
+
+        public static DLNorm create() {
+            return new DLNorm();
+        }
+
+        public static DLNorm getUncached() {
+            return new DLNorm();
+        }
+
         @Override
         public double evaluate(double x, double meanlog, double sdlog, boolean giveLog) {
             if (Double.isNaN(x) || Double.isNaN(meanlog) || Double.isNaN(sdlog)) {
@@ -70,6 +91,15 @@ public final class LogNormal {
     }
 
     public static final class QLNorm implements Function3_2 {
+
+        public static QLNorm create() {
+            return new QLNorm();
+        }
+
+        public static QLNorm getUncached() {
+            return new QLNorm();
+        }
+
         private final Qnorm qnorm = new Qnorm();
 
         @Override
@@ -87,6 +117,15 @@ public final class LogNormal {
     }
 
     public static final class PLNorm implements Function3_2 {
+
+        public static PLNorm create() {
+            return new PLNorm();
+        }
+
+        public static PLNorm getUncached() {
+            return new PLNorm();
+        }
+
         private final Pnorm pnorm = new Pnorm();
 
         @Override

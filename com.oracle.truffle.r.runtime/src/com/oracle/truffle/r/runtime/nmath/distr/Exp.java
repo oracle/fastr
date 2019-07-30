@@ -19,6 +19,8 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.nmath.DPQ;
 import com.oracle.truffle.r.runtime.nmath.DPQ.EarlyReturn;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
@@ -27,6 +29,7 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
+import com.oracle.truffle.r.runtime.nmath.distr.ExpFactory.RExpNodeGen;
 
 public final class Exp {
     private Exp() {
@@ -34,6 +37,15 @@ public final class Exp {
     }
 
     public static final class DExp implements Function2_1 {
+
+        public static DExp create() {
+            return new DExp();
+        }
+
+        public static DExp getUncached() {
+            return new DExp();
+        }
+
         @Override
         public double evaluate(double x, double scale, boolean giveLog) {
             /* NaNs propagated correctly */
@@ -52,17 +64,35 @@ public final class Exp {
         }
     }
 
-    public static final class RExp extends RandFunction1_Double {
-        @Override
-        public double execute(double scale, RandomNumberProvider rand) {
+    @GenerateUncached
+    public abstract static class RExp extends RandFunction1_Double {
+        @Specialization
+        public double exec(double scale, RandomNumberProvider rand) {
             if (!Double.isFinite(scale) || scale <= 0.0) {
                 return scale == 0. ? 0. : RMathError.defaultError();
             }
             return scale * rand.expRand();
         }
+
+        public static RExp create() {
+            return RExpNodeGen.create();
+        }
+
+        public static RExp getUncached() {
+            return RExpNodeGen.getUncached();
+        }
     }
 
     public static final class PExp implements Function2_2 {
+
+        public static PExp create() {
+            return new PExp();
+        }
+
+        public static PExp getUncached() {
+            return new PExp();
+        }
+
         @Override
         public double evaluate(double xIn, double scale, boolean lowerTail, boolean logP) {
             if (Double.isNaN(xIn) || Double.isNaN(scale)) {
@@ -83,6 +113,15 @@ public final class Exp {
     }
 
     public static final class QExp implements Function2_2 {
+
+        public static QExp create() {
+            return new QExp();
+        }
+
+        public static QExp getUncached() {
+            return new QExp();
+        }
+
         @Override
         public double evaluate(double p, double scale, boolean lowerTail, boolean logP) {
             if (Double.isNaN(p) || Double.isNaN(scale)) {

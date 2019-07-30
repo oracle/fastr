@@ -243,16 +243,11 @@ public final class AttributesAccessNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class CopyMostAttrib extends FFIUpCallNode.Arg2 {
-
-        @Child protected CopyOfRegAttributesNode copyRegAttributes;
-
         @Specialization
-        public Void doRAttributable(RAttributable x, RAttributable y) {
-            if (copyRegAttributes == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                copyRegAttributes = insert(CopyOfRegAttributesNode.create());
-            }
+        public Void doRAttributable(RAttributable x, RAttributable y,
+                        @Cached() CopyOfRegAttributesNode copyRegAttributes) {
             copyRegAttributes.execute(x, y);
             if (x.isS4()) {
                 y.setS4();

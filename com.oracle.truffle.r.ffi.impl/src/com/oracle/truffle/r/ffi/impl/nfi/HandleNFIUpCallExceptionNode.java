@@ -28,9 +28,9 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DownCallNodeFactory.NFIDownCallNode;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 @GenerateUncached
@@ -42,7 +42,7 @@ public abstract class HandleNFIUpCallExceptionNode extends Node implements UpCal
     @TruffleBoundary
     @Specialization
     public void handle(Throwable originalEx,
-                    @Cached(value = "createDownCallNode()", allowUncached = true) DownCallNode setFlagNode,
+                    @Cached() NFIDownCallNode setFlagNode,
                     @Cached("createBinaryProfile()") ConditionProfile isEmbeddedTopLevel) {
         if (isEmbeddedTopLevel.profile(RContext.isEmbedded() && isTopLevel())) {
             return;
@@ -59,9 +59,5 @@ public abstract class HandleNFIUpCallExceptionNode extends Node implements UpCal
 
     private static boolean isTopLevel() {
         return RContext.getInstance().getRFFI(TruffleNFI_Context.class).getCallDepth() == 0;
-    }
-
-    protected DownCallNode createDownCallNode() {
-        return TruffleNFI_DownCallNodeFactory.INSTANCE.createDownCallNode();
     }
 }

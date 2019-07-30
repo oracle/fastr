@@ -26,6 +26,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class DNorm implements Function3_1 {
+
+    public static DNorm create() {
+        return new DNorm();
+    }
+
+    public static DNorm getUncached() {
+        return new DNorm();
+    }
+
     @Override
     public double evaluate(double xa, double mu, double sigma, boolean giveLog) {
         double x = xa;

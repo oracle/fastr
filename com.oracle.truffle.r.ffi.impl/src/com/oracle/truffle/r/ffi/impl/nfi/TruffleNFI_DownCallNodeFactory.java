@@ -45,12 +45,20 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
     }
 
     @Override
-    public DownCallNode createDownCallNode() {
+    public NFIDownCallNode createDownCallNode() {
         return NFIDownCallNodeGen.create();
     }
 
     @GenerateUncached
     protected abstract static class NFIDownCallNode extends DownCallNode {
+
+        static NFIDownCallNode create() {
+            return NFIDownCallNodeGen.create();
+        }
+
+        static NFIDownCallNode getUncached() {
+            return NFIDownCallNodeGen.getUncached();
+        }
 
         @Specialization
         protected Object call(NativeFunction f, Object[] args,

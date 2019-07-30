@@ -24,10 +24,12 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.EnvironmentNodesFactory.GetFunctionEnvironmentNodeGen;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -132,14 +134,18 @@ public final class EnvironmentNodes {
         }
     }
 
-    public static final class GetFunctionEnvironmentNode extends RBaseNode {
-        private final ConditionProfile noEnvProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile createProfile = ConditionProfile.createBinaryProfile();
+    @GenerateUncached
+    public abstract static class GetFunctionEnvironmentNode extends RBaseNode {
+
+        public abstract Object execute(RFunction fun);
 
         /**
          * Returns the environment that {@code func} was created in.
          */
-        public Object getEnvironment(RFunction fun) {
+        @Specialization
+        protected Object getEnvironment(RFunction fun,
+                        @Cached("createBinaryProfile()") ConditionProfile noEnvProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile createProfile) {
             Frame enclosing = fun.getEnclosingFrame();
             if (noEnvProfile.profile(enclosing == null)) {
                 return RNull.instance;
@@ -152,7 +158,11 @@ public final class EnvironmentNodes {
         }
 
         public static GetFunctionEnvironmentNode create() {
-            return new GetFunctionEnvironmentNode();
+            return GetFunctionEnvironmentNodeGen.create();
+        }
+
+        public static GetFunctionEnvironmentNode getUncached() {
+            return GetFunctionEnvironmentNodeGen.getUncached();
         }
     }
 }

@@ -33,6 +33,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 
 public final class Dnt implements Function3_1 {
+
+    public static Dnt create() {
+        return new Dnt();
+    }
+
+    public static Dnt getUncached() {
+        return new Dnt();
+    }
+
     private final Dt dt = new Dt();
     private final DNorm dnorm = new DNorm();
     private final Pnt pnt = new Pnt();

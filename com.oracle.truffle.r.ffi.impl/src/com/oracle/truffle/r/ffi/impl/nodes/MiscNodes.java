@@ -40,6 +40,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RHasSlotNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RfPrintValueNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SET_TRUELENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionBodyNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionEnvironmentNodeGen;
@@ -292,21 +293,18 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class RDoSlotAssignNode extends FFIUpCallNode.Arg3 {
 
-        @Child private UpdateSlotNode updateSlotNode;
-
-        RDoSlotAssignNode() {
-            updateSlotNode = UpdateSlotNodeGen.create();
-        }
-
         @Specialization
-        Object doSlotAssign(Object o, String name, Object value) {
+        Object doSlotAssign(Object o, String name, Object value,
+                        @Cached() UpdateSlotNode updateSlotNode) {
             return updateSlotNode.executeUpdate(o, name, value);
         }
 
         @Specialization
-        Object doSlotAssign(Object o, RSymbol name, Object value) {
+        Object doSlotAssign(Object o, RSymbol name, Object value,
+                        @Cached() UpdateSlotNode updateSlotNode) {
             return updateSlotNode.executeUpdate(o, name.getName(), value);
         }
 
@@ -317,6 +315,10 @@ public final class MiscNodes {
 
         public static RDoSlotAssignNode create() {
             return RDoSlotAssignNodeGen.create();
+        }
+
+        public static RDoSlotAssignNode getUncached() {
+            return RDoSlotAssignNodeGen.getUncached();
         }
     }
 
@@ -424,16 +426,21 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class GetFunctionEnvironment extends FFIUpCallNode.Arg1 {
 
         @Specialization
         protected Object environment(RFunction fun,
                         @Cached("create()") GetFunctionEnvironmentNode getEnvNode) {
-            return getEnvNode.getEnvironment(fun);
+            return getEnvNode.execute(fun);
         }
 
         public static GetFunctionEnvironment create() {
             return GetFunctionEnvironmentNodeGen.create();
+        }
+
+        public static GetFunctionEnvironment getUncached() {
+            return GetFunctionEnvironmentNodeGen.getUncached();
         }
     }
 
@@ -506,11 +513,20 @@ public final class MiscNodes {
         }
     }
 
-    public static final class RfPrintValueNode extends FFIUpCallNode.Arg1 {
-        @Override
-        public Object executeObject(Object value) {
+    @GenerateUncached
+    public abstract static class RfPrintValueNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        public Object exec(Object value) {
             RContext.getEngine().printResult(RContext.getInstance(), value);
             return RNull.instance;
+        }
+
+        public static RfPrintValueNode create() {
+            return RfPrintValueNodeGen.create();
+        }
+
+        public static RfPrintValueNode getUncached() {
+            return RfPrintValueNodeGen.getUncached();
         }
     }
 

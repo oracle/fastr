@@ -29,6 +29,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 import com.oracle.truffle.r.runtime.nmath.TOMS708.Bratio;
 
 public final class PNBeta implements Function4_2 {
+
+    public static PNBeta create() {
+        return new PNBeta();
+    }
+
+    public static PNBeta getUncached() {
+        return new PNBeta();
+    }
+
     @Override
     public double evaluate(double x, double a, double b, double ncp, boolean lowerTail, boolean logP) {
         if (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || Double.isNaN(ncp)) {

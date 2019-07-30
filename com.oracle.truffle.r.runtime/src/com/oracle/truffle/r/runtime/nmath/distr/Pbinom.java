@@ -28,6 +28,14 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Pbinom implements Function3_2 {
 
+    public static Pbinom create() {
+        return new Pbinom();
+    }
+
+    public static Pbinom getUncached() {
+        return new Pbinom();
+    }
+
     private final BranchProfile nanProfile = BranchProfile.create();
 
     @Override

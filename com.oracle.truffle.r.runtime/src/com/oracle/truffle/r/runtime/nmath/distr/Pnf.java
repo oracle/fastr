@@ -25,6 +25,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_2;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Pnf implements Function4_2 {
+
+    public static Pnf create() {
+        return new Pnf();
+    }
+
+    public static Pnf getUncached() {
+        return new Pnf();
+    }
+
     private final PNChisq pnchisq = new PNChisq();
 
     @Override

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -31,12 +32,10 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+@GenerateUncached
 public abstract class RfFindFun extends FFIUpCallNode.Arg2 {
 
     protected static final int SYM_CACHE_SIZE = DSLConfig.getCacheSize(20);
-
-    private final ValueProfile frameProfile = ValueProfile.createClassProfile();
-    private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
 
     protected RfFindFun() {
     }
@@ -49,12 +48,16 @@ public abstract class RfFindFun extends FFIUpCallNode.Arg2 {
     Object findFunCached(@SuppressWarnings("unused") RSymbol funSym, REnvironment env,
                     @SuppressWarnings("unused") @Cached("funSym.getName()") String cachedFunName,
                     @SuppressWarnings("unused") @Cached("env.getFrame().getFrameDescriptor()") FrameDescriptor cachedFrameDesc,
-                    @Cached("createFunctionLookup(cachedFunName)") ReadVariableNode readFunNode) {
+                    @Cached("createFunctionLookup(cachedFunName)") ReadVariableNode readFunNode,
+                    @Cached("createClassProfile()") ValueProfile frameProfile,
+                    @Cached("createClassProfile()") ValueProfile frameAccessProfile) {
         return readFunNode.execute(frameProfile.profile(env.getFrame(frameAccessProfile)));
     }
 
     @Specialization(replaces = "findFunCached")
-    Object findFunUncached(RSymbol funSym, REnvironment env) {
+    Object findFunUncached(RSymbol funSym, REnvironment env,
+                    @Cached("createClassProfile()") ValueProfile frameProfile,
+                    @Cached("createClassProfile()") ValueProfile frameAccessProfile) {
         return ReadVariableNode.lookupFunction(funSym.getName(), frameProfile.profile(env.getFrame(frameAccessProfile)));
     }
 }

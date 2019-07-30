@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -40,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
-import com.oracle.truffle.r.runtime.nmath.MathFunctions;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_2;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
@@ -56,157 +56,112 @@ import com.oracle.truffle.r.runtime.nmath.distr.Rbinom;
 
 public final class RandFunctionsNodes {
 
-    public abstract static class RandFunction3_2Node extends FFIUpCallNode.Arg5 {
-        private final Function3_2 inner;
-
-        protected RandFunction3_2Node(MathFunctions.Function3_2 inner) {
-            this.inner = inner;
-        }
-
+    @GenerateUncached
+    public abstract static class RandFunction3_2Node extends FFIUpCallNode.Arg6 {
         @Specialization
-        protected double evaluate(double a, double b, double c, int d, int e) {
-            return inner.evaluate(a, b, c, d != 0, e != 0);
+        protected double evaluate(Function3_2 delegate, double a, double b, double c, int d, int e) {
+            return delegate.evaluate(a, b, c, d != 0, e != 0);
         }
 
-        public static RandFunction3_2Node create(Function3_2 inner) {
-            return RandFunctionsNodesFactory.RandFunction3_2NodeGen.create(inner);
-        }
-
-    }
-
-    public abstract static class RandFunction3_1Node extends FFIUpCallNode.Arg4 {
-        private final Function3_1 inner;
-
-        protected RandFunction3_1Node(MathFunctions.Function3_1 inner) {
-            this.inner = inner;
-        }
-
-        @Specialization
-        protected double evaluate(double a, double b, double c, int d) {
-            return inner.evaluate(a, b, c, d != 0);
-        }
-
-        public static RandFunction3_1Node create(Function3_1 inner) {
-            return RandFunctionsNodesFactory.RandFunction3_1NodeGen.create(inner);
+        public static RandFunction3_2Node create() {
+            return RandFunctionsNodesFactory.RandFunction3_2NodeGen.create();
         }
     }
 
-    public abstract static class RandFunction3Node extends FFIUpCallNode.Arg3 {
-        @Child private RandFunction3_DoubleBase inner;
-
-        protected RandFunction3Node(RandFunction3_DoubleBase inner) {
-            this.inner = inner;
-        }
-
+    @GenerateUncached
+    public abstract static class RandFunction3_1Node extends FFIUpCallNode.Arg5 {
         @Specialization
-        protected double evaluate(double a, double b, double c) {
-            return inner.execute(a, b, c, RandomNumberProvider.fromCurrentRNG());
+        protected double evaluate(Function3_1 delegate, double a, double b, double c, int d) {
+            return delegate.evaluate(a, b, c, d != 0);
         }
 
-        public static RandFunction3Node create(RandFunction3_DoubleBase inner) {
-            return RandFunctionsNodesFactory.RandFunction3NodeGen.create(inner);
+        public static RandFunction3_1Node create() {
+            return RandFunctionsNodesFactory.RandFunction3_1NodeGen.create();
         }
     }
 
-    public abstract static class RandFunction2Node extends FFIUpCallNode.Arg2 {
-        @Child private RandFunction2_Double inner;
-
-        protected RandFunction2Node(RandFunction2_Double inner) {
-            this.inner = inner;
-        }
-
+    @GenerateUncached
+    public abstract static class RandFunction3Node extends FFIUpCallNode.Arg4 {
         @Specialization
-        protected double evaluate(double a, double b) {
-            return inner.execute(a, b, RandomNumberProvider.fromCurrentRNG());
+        protected double evaluate(RandFunction3_DoubleBase delegate, double a, double b, double c) {
+            return delegate.execute(a, b, c, RandomNumberProvider.fromCurrentRNG());
         }
 
-        public static RandFunction2Node create(RandFunction2_Double inner) {
-            return RandFunctionsNodesFactory.RandFunction2NodeGen.create(inner);
+        public static RandFunction3Node create() {
+            return RandFunctionsNodesFactory.RandFunction3NodeGen.create();
         }
     }
 
-    public abstract static class RandFunction1Node extends FFIUpCallNode.Arg1 {
-        @Child private RandFunction1_Double inner;
-
-        protected RandFunction1Node(RandFunction1_Double inner) {
-            this.inner = inner;
-        }
+    @GenerateUncached
+    public abstract static class RandFunction2Node extends FFIUpCallNode.Arg3 {
 
         @Specialization
-        protected double evaluate(double a) {
-            return inner.execute(a, RandomNumberProvider.fromCurrentRNG());
+        protected double evaluate(RandFunction2_Double delegate, double a, double b) {
+            return delegate.execute(a, b, RandomNumberProvider.fromCurrentRNG());
         }
 
-        public static RandFunction1Node create(RandFunction1_Double inner) {
-            return RandFunctionsNodesFactory.RandFunction1NodeGen.create(inner);
+        public static RandFunction2Node create() {
+            return RandFunctionsNodesFactory.RandFunction2NodeGen.create();
         }
     }
 
-    public abstract static class RandFunction2_1Node extends FFIUpCallNode.Arg3 {
-        private final Function2_1 inner;
-
-        protected RandFunction2_1Node(MathFunctions.Function2_1 inner) {
-            this.inner = inner;
-        }
-
+    @GenerateUncached
+    public abstract static class RandFunction1Node extends FFIUpCallNode.Arg2 {
         @Specialization
-        protected double evaluate(double a, double b, int c) {
-            return inner.evaluate(a, b, c != 0);
+        protected double evaluate(RandFunction1_Double delegate, double a) {
+            return delegate.execute(a, RandomNumberProvider.fromCurrentRNG());
         }
 
-        public static RandFunction2_1Node create(Function2_1 inner) {
-            return RandFunctionsNodesFactory.RandFunction2_1NodeGen.create(inner);
+        public static RandFunction1Node create() {
+            return RandFunctionsNodesFactory.RandFunction1NodeGen.create();
         }
     }
 
-    public abstract static class RandFunction2_2Node extends FFIUpCallNode.Arg4 {
-        private final Function2_2 inner;
-
-        protected RandFunction2_2Node(MathFunctions.Function2_2 inner) {
-            this.inner = inner;
-        }
-
+    @GenerateUncached
+    public abstract static class RandFunction2_1Node extends FFIUpCallNode.Arg4 {
         @Specialization
-        protected double evaluate(double a, double b, int c, int d) {
-            return inner.evaluate(a, b, c != 0, d != 0);
+        protected double evaluate(Function2_1 delegate, double a, double b, int c) {
+            return delegate.evaluate(a, b, c != 0);
         }
 
-        public static RandFunction2_2Node create(Function2_2 inner) {
-            return RandFunctionsNodesFactory.RandFunction2_2NodeGen.create(inner);
+        public static RandFunction2_1Node create() {
+            return RandFunctionsNodesFactory.RandFunction2_1NodeGen.create();
         }
     }
 
-    public abstract static class RandFunction4_1Node extends FFIUpCallNode.Arg5 {
-        private final Function4_1 inner;
-
-        protected RandFunction4_1Node(MathFunctions.Function4_1 inner) {
-            this.inner = inner;
-        }
-
+    @GenerateUncached
+    public abstract static class RandFunction2_2Node extends FFIUpCallNode.Arg5 {
         @Specialization
-        protected double evaluate(double a, double b, double c, double d, int e) {
-            return inner.evaluate(a, b, c, d, e != 0);
+        protected double evaluate(Function2_2 delegate, double a, double b, int c, int d) {
+            return delegate.evaluate(a, b, c != 0, d != 0);
         }
 
-        public static RandFunction4_1Node create(Function4_1 inner) {
-            return RandFunctionsNodesFactory.RandFunction4_1NodeGen.create(inner);
+        public static RandFunction2_2Node create() {
+            return RandFunctionsNodesFactory.RandFunction2_2NodeGen.create();
         }
     }
 
-    public abstract static class RandFunction4_2Node extends FFIUpCallNode.Arg6 {
-        private final Function4_2 inner;
-
-        protected RandFunction4_2Node(MathFunctions.Function4_2 inner) {
-            this.inner = inner;
-        }
-
+    @GenerateUncached
+    public abstract static class RandFunction4_1Node extends FFIUpCallNode.Arg6 {
         @Specialization
-        protected double evaluate(double a, double b, double c, double d, int e, int f) {
-            return inner.evaluate(a, b, c, d, e != 0, f != 0);
+        protected double evaluate(Function4_1 delegate, double a, double b, double c, double d, int e) {
+            return delegate.evaluate(a, b, c, d, e != 0);
         }
 
-        public static RandFunction4_2Node create(Function4_2 inner) {
-            return RandFunctionsNodesFactory.RandFunction4_2NodeGen.create(inner);
+        public static RandFunction4_1Node create() {
+            return RandFunctionsNodesFactory.RandFunction4_1NodeGen.create();
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class RandFunction4_2Node extends FFIUpCallNode.Arg7 {
+        @Specialization
+        protected double evaluate(Function4_2 delegate, double a, double b, double c, double d, int e, int f) {
+            return delegate.evaluate(a, b, c, d, e != 0, f != 0);
+        }
+
+        public static RandFunction4_2Node create() {
+            return RandFunctionsNodesFactory.RandFunction4_2NodeGen.create();
         }
     }
 
@@ -274,7 +229,7 @@ public final class RandFunctionsNodes {
         protected void doRMultinom(int n, RAbstractDoubleVector prob, int k, RAbstractIntVector rN,
                         @Cached("prob.access()") VectorAccess probAccess,
                         @Cached("rN.access()") VectorAccess rNAccess,
-                        @Cached("new()") Rbinom rbinom) {
+                        @Cached() Rbinom rbinom) {
             int[] rNArr = new int[k];
             RMultinom.rmultinom(n, probAccess.access(prob), probAccess, 1d, rNArr, 0, RandomNumberProvider.fromCurrentRNG(), rbinom);
             int i = 0;
@@ -285,7 +240,7 @@ public final class RandFunctionsNodes {
 
         @Specialization(replaces = "doRMultinom")
         protected void doGeneric(int n, RAbstractDoubleVector prob, int k, RAbstractIntVector rN,
-                        @Cached("new()") Rbinom rbinom) {
+                        @Cached() Rbinom rbinom) {
             doRMultinom(n, prob, k, rN, prob.slowPathAccess(), rN.slowPathAccess(), rbinom);
         }
 

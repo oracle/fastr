@@ -50,6 +50,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq.PChisq;
 
 public final class PNChisq implements Function3_2 {
+
+    public static PNChisq create() {
+        return new PNChisq();
+    }
+
+    public static PNChisq getUncached() {
+        return new PNChisq();
+    }
+
     private static final double _dbl_min_exp = M_LN2 * DBL_MIN_EXP;
     private final PChisq pchisq = new PChisq();
 

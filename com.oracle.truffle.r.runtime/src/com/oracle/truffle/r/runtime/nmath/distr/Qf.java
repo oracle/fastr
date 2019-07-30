@@ -28,6 +28,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq.QChisq;
 
 public final class Qf implements Function3_2 {
+
+    public static Qf create() {
+        return new Qf();
+    }
+
+    public static Qf getUncached() {
+        return new Qf();
+    }
+
     private final QBeta qbeta = new QBeta();
     private final QChisq qchisq = new QChisq();
 

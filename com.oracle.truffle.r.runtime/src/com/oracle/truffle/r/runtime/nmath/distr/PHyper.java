@@ -37,6 +37,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class PHyper implements Function4_2 {
+
+    public static PHyper create() {
+        return new PHyper();
+    }
+
+    public static PHyper getUncached() {
+        return new PHyper();
+    }
+
     private final DHyper dhyper = new DHyper();
 
     @Override

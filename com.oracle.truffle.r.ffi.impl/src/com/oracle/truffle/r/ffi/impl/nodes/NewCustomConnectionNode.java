@@ -26,15 +26,21 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.InvalidConnection;
 import com.oracle.truffle.r.runtime.conn.NativeConnections.NativeRConnection;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 
+@GenerateUncached
 public abstract class NewCustomConnectionNode extends FFIUpCallNode.Arg4 {
 
     public static NewCustomConnectionNode create() {
         return NewCustomConnectionNodeGen.create();
+    }
+
+    public static NewCustomConnectionNode getUncached() {
+        return NewCustomConnectionNodeGen.getUncached();
     }
 
     @Specialization

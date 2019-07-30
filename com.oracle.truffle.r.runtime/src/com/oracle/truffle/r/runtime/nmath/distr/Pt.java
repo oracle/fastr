@@ -29,6 +29,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Pt implements Function2_2 {
+
+    public static Pt create() {
+        return new Pt();
+    }
+
+    public static Pt getUncached() {
+        return new Pt();
+    }
+
     private final BranchProfile pbetaNanProfile = BranchProfile.create();
     private final Pnorm pnorm = new Pnorm();
 

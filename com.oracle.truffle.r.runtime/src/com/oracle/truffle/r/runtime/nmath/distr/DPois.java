@@ -37,6 +37,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class DPois implements Function2_1 {
+
+    public static DPois create() {
+        return new DPois();
+    }
+
+    public static DPois getUncached() {
+        return new DPois();
+    }
+
     @Override
     public double evaluate(double x, double lambda, boolean giveLog) {
         if (Double.isNaN(x) || Double.isNaN(lambda)) {

@@ -19,6 +19,8 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.nmath.DPQ;
 import com.oracle.truffle.r.runtime.nmath.DPQ.EarlyReturn;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
@@ -27,6 +29,7 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
+import com.oracle.truffle.r.runtime.nmath.distr.WeibullFactory.RWeibullNodeGen;
 
 public final class Weibull {
     private Weibull() {
@@ -34,6 +37,14 @@ public final class Weibull {
     }
 
     public static final class QWeibull implements Function3_2 {
+        public static QWeibull create() {
+            return new QWeibull();
+        }
+
+        public static QWeibull getUncached() {
+            return new QWeibull();
+        }
+
         @Override
         public double evaluate(double p, double shape, double scale, boolean lowerTail, boolean logP) {
             if (Double.isNaN(p) || Double.isNaN(shape) || Double.isNaN(scale)) {
@@ -55,6 +66,15 @@ public final class Weibull {
     }
 
     public static final class PWeibull implements Function3_2 {
+
+        public static PWeibull create() {
+            return new PWeibull();
+        }
+
+        public static PWeibull getUncached() {
+            return new PWeibull();
+        }
+
         @Override
         public double evaluate(double x, double shape, double scale, boolean lowerTail, boolean logP) {
             if (Double.isNaN(x) || Double.isNaN(shape) || Double.isNaN(scale)) {
@@ -74,6 +94,15 @@ public final class Weibull {
     }
 
     public static final class DWeibull implements Function3_1 {
+
+        public static DWeibull create() {
+            return new DWeibull();
+        }
+
+        public static DWeibull getUncached() {
+            return new DWeibull();
+        }
+
         @Override
         public double evaluate(double x, double shape, double scale, boolean giveLog) {
             if (Double.isNaN(x) || Double.isNaN(shape) || Double.isNaN(scale)) {
@@ -100,15 +129,23 @@ public final class Weibull {
         }
     }
 
-    public static final class RWeibull extends RandFunction2_Double {
-        @Override
-        public double execute(double shape, double scale, RandomNumberProvider rand) {
+    @GenerateUncached
+    public abstract static class RWeibull extends RandFunction2_Double {
+        @Specialization
+        public double exec(double shape, double scale, RandomNumberProvider rand) {
             if (!Double.isFinite(shape) || !Double.isFinite(scale) || shape <= 0. || scale <= 0.) {
                 return scale == 0. ? 0. : RMathError.defaultError();
             }
 
             return scale * Math.pow(-Math.log(rand.unifRand()), 1.0 / shape);
+        }
 
+        public static RWeibull create() {
+            return RWeibullNodeGen.create();
+        }
+
+        public static RWeibull getUncached() {
+            return RWeibullNodeGen.getUncached();
         }
     }
 }

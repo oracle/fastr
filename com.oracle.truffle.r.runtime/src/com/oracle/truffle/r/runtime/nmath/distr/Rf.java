@@ -19,16 +19,19 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq.RChisq;
 
-public final class Rf extends RandFunction2_Double {
-    @Child private RChisq rchisq = new RChisq();
-
-    @Override
-    public double execute(double n1, double n2, RandomNumberProvider rand) {
+@GenerateUncached
+public abstract class Rf extends RandFunction2_Double {
+    @Specialization
+    public double exec(double n1, double n2, RandomNumberProvider rand,
+                    @Cached() RChisq rchisq) {
         if (Double.isNaN(n1) || Double.isNaN(n2) || n1 <= 0. || n2 <= 0.) {
             return RMathError.defaultError();
         }
@@ -38,5 +41,13 @@ public final class Rf extends RandFunction2_Double {
         v1 = Double.isFinite(n1) ? (rchisq.execute(n1, rand) / n1) : 1;
         v2 = Double.isFinite(n2) ? (rchisq.execute(n2, rand) / n2) : 1;
         return v1 / v2;
+    }
+
+    public static Rf create() {
+        return RfNodeGen.create();
+    }
+
+    public static Rf getUncached() {
+        return RfNodeGen.getUncached();
     }
 }

@@ -32,6 +32,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 // transcribed from qnorm.c
 
 public final class Qnorm implements Function3_2 {
+
+    public static Qnorm create() {
+        return new Qnorm();
+    }
+
+    public static Qnorm getUncached() {
+        return new Qnorm();
+    }
+
     private final BranchProfile nanProfile = BranchProfile.create();
 
     @Override

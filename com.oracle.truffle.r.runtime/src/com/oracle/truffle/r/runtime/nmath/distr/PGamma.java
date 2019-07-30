@@ -27,6 +27,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class PGamma implements Function3_2 {
+
+    public static PGamma create() {
+        return new PGamma();
+    }
+
+    public static PGamma getUncached() {
+        return new PGamma();
+    }
+
     @Override
     public double evaluate(double xIn, double alph, double scale, boolean lowerTail, boolean logP) {
         if (Double.isNaN(xIn) || Double.isNaN(alph) || Double.isNaN(scale)) {

@@ -26,6 +26,15 @@ import com.oracle.truffle.r.runtime.nmath.GammaFunctions;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 
 public final class QGamma implements Function3_2 {
+
+    public static QGamma create() {
+        return new QGamma();
+    }
+
+    public static QGamma getUncached() {
+        return new QGamma();
+    }
+
     @Override
     public double evaluate(double p, double shape, double scale, boolean lowerTail, boolean logP) {
         return GammaFunctions.qgamma(p, shape, scale, lowerTail, logP);

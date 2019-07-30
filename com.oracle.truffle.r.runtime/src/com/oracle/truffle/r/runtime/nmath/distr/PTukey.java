@@ -29,6 +29,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 
 public class PTukey implements Function4_2 {
+
+    public static PTukey create() {
+        return new PTukey();
+    }
+
+    public static PTukey getUncached() {
+        return new PTukey();
+    }
+
     private static final int nlegq = 16;
     private static final int ihalfq = 8;
     private static final int nleg = 12;

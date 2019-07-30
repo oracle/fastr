@@ -20,28 +20,39 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.nodes;
+package com.oracle.truffle.r.ffi.impl.upcalls;
 
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
-import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.ffi.impl.upcalls.GetRContextFactory.CachedGetRContextNodeGen;
+import com.oracle.truffle.r.runtime.ContextReferenceAccess;
+import com.oracle.truffle.r.runtime.context.RContext;
 
-@GenerateUncached
-public abstract class IsObjectNode extends RBaseNode {
+public abstract class GetRContext extends Node {
 
-    public static IsObjectNode create() {
-        return IsObjectNodeGen.create();
+    static GetRContext create() {
+        return CachedGetRContextNodeGen.create();
     }
 
-    public abstract int executeObject(Object x);
-
-    @Specialization
-    int isObject(RAttributable x,
-                    @Cached() GetClassAttributeNode getClassAttrNode) {
-        return getClassAttrNode.isObject(x) ? 1 : 0;
+    static GetRContext getUncached() {
+        return new UncachedGetRContext();
     }
 
+    abstract RContext execute();
+
+    protected abstract static class CachedGetRContext extends GetRContext {
+        @Child private ContextReferenceAccess.ContextReferenceNode contextReferenceNode = RContext.getContextReferenceAccess().createContextReferenceNode();
+
+        @Specialization
+        public RContext exec() {
+            return contextReferenceNode.execute().get();
+        }
+    }
+
+    protected static final class UncachedGetRContext extends GetRContext {
+        @Override
+        public RContext execute() {
+            return RContext.getInstance();
+        }
+    }
 }

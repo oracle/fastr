@@ -20,6 +20,9 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.nmath.Arithmetic;
 import com.oracle.truffle.r.runtime.nmath.RMath;
@@ -27,16 +30,23 @@ import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 
 // transcribed from rbinom.c
+@GenerateUncached
+public abstract class Rbinom extends RandFunction2_Double {
 
-public final class Rbinom extends RandFunction2_Double {
+    public static Rbinom create() {
+        return RbinomNodeGen.create();
+    }
 
-    private final Qbinom qbinom = new Qbinom();
+    public static Rbinom getUncached() {
+        return RbinomNodeGen.getUncached();
+    }
 
     // TODO: some of the variables below are static in GnuR, because they cache intermediate results
     // that depend on paremeters that often do not change between calls.
 
-    @Override
-    public double execute(double nin, double pp, RandomNumberProvider rand) {
+    @Specialization
+    public double exec(double nin, double pp, RandomNumberProvider rand,
+                    @Cached(allowUncached = true) Qbinom qbinom) {
         double psave = -1.0;
         int nsave = -1;
 

@@ -28,6 +28,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class QNBeta implements Function4_2 {
+
+    public static QNBeta create() {
+        return new QNBeta();
+    }
+
+    public static QNBeta getUncached() {
+        return new QNBeta();
+    }
+
     private static final double accu = 1e-15;
     private static final double Eps = 1e-14; /* must be > accu */
 

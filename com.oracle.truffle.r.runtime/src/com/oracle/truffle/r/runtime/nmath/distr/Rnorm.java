@@ -19,6 +19,9 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -26,14 +29,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 
-public final class Rnorm extends RandFunction2_Double {
-    private final BranchProfile errorProfile = BranchProfile.create();
-    private final ConditionProfile zeroSigmaProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile sigmaValueProfile = ValueProfile.createEqualityProfile();
-    private final ValueProfile muValueProfile = ValueProfile.createEqualityProfile();
+@GenerateUncached
+public abstract class Rnorm extends RandFunction2_Double {
 
-    @Override
-    public double execute(double muIn, double sigmaIn, RandomNumberProvider rand) {
+    @Specialization
+    public double exec(double muIn, double sigmaIn, RandomNumberProvider rand,
+                    @Cached("createBinaryProfile()") ConditionProfile zeroSigmaProfile,
+                    @Cached("createEqualityProfile()") ValueProfile sigmaValueProfile,
+                    @Cached("createEqualityProfile()") ValueProfile muValueProfile,
+                    @Cached() BranchProfile errorProfile) {
         double sigma = sigmaValueProfile.profile(sigmaIn);
         double mu = muValueProfile.profile(muIn);
         if (Double.isNaN(mu) || !Double.isFinite(sigma) || sigma < 0.) {
@@ -45,5 +49,13 @@ public final class Rnorm extends RandFunction2_Double {
         } else {
             return mu + sigma * rand.normRand();
         }
+    }
+
+    public static Rnorm create() {
+        return RnormNodeGen.create();
+    }
+
+    public static Rnorm getUncached() {
+        return RnormNodeGen.getUncached();
     }
 }

@@ -35,6 +35,15 @@ public final class QNBinom {
     }
 
     public static final class QNBinomFunc implements Function3_2 {
+
+        public static QNBinomFunc create() {
+            return new QNBinomFunc();
+        }
+
+        public static QNBinomFunc getUncached() {
+            return new QNBinomFunc();
+        }
+
         private final Qnorm qnorm = new Qnorm();
         private final PNBinomFunc pnbinom = new PNBinomFunc();
 
@@ -110,6 +119,15 @@ public final class QNBinom {
     }
 
     public static final class QNBinomMu implements Function3_2 {
+
+        public static QNBinomMu create() {
+            return new QNBinomMu();
+        }
+
+        public static QNBinomMu getUncached() {
+            return new QNBinomMu();
+        }
+
         private final QPois qpois = new QPois();
         private final QNBinomFunc qnbinom = new QNBinomFunc();
 

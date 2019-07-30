@@ -31,6 +31,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class DHyper implements Function4_1 {
+
+    public static DHyper create() {
+        return new DHyper();
+    }
+
+    public static DHyper getUncached() {
+        return new DHyper();
+    }
+
     @Override
     public double evaluate(double x, double r, double b, double n, boolean giveLog) {
         if (Double.isNaN(x) || Double.isNaN(r) || Double.isNaN(b) || Double.isNaN(n)) {

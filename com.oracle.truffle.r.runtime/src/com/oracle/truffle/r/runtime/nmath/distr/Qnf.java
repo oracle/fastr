@@ -24,6 +24,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_2;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Qnf implements Function4_2 {
+
+    public static Qnf create() {
+        return new Qnf();
+    }
+
+    public static Qnf getUncached() {
+        return new Qnf();
+    }
+
     private final QNChisq qnchisq = new QNChisq();
     private final QNBeta qnbeta = new QNBeta();
 

@@ -31,6 +31,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Dt implements Function2_1 {
+
+    public static Dt create() {
+        return new Dt();
+    }
+
+    public static Dt getUncached() {
+        return new Dt();
+    }
+
     private static final DNorm dnorm = new DNorm();
 
     @Override

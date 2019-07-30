@@ -35,6 +35,14 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 
 public final class Dbinom implements Function3_1 {
 
+    public static Dbinom create() {
+        return new Dbinom();
+    }
+
+    public static Dbinom getUncached() {
+        return new Dbinom();
+    }
+
     private final BranchProfile nanProfile = BranchProfile.create();
 
     public static double dbinomRaw(double x, double n, double p, double q, boolean giveLog) {

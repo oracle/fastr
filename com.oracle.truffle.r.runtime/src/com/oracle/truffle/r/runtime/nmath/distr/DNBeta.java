@@ -26,6 +26,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_1;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class DNBeta implements Function4_1 {
+
+    public static DNBeta create() {
+        return new DNBeta();
+    }
+
+    public static DNBeta getUncached() {
+        return new DNBeta();
+    }
+
     private static final double eps = 1.e-15;
     private final DBeta dbeta = new DBeta();
 

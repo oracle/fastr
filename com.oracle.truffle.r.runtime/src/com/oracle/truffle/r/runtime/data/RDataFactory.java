@@ -166,6 +166,10 @@ public final class RDataFactory {
         public static VectorFactory create() {
             return new VectorFactory();
         }
+
+        public static VectorFactory getUncached() {
+            return new VectorFactory();
+        }
     }
 
     @SuppressWarnings("static-method")

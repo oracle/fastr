@@ -26,6 +26,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_2;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class PPois implements Function2_2 {
+
+    public static PPois create() {
+        return new PPois();
+    }
+
+    public static PPois getUncached() {
+        return new PPois();
+    }
+
     @Override
     public double evaluate(double x, double lambda, boolean lowerTail, boolean logP) {
         if (Double.isNaN(x) || Double.isNaN(lambda) || lambda < 0.) {

@@ -31,6 +31,14 @@ import com.oracle.truffle.r.runtime.nmath.TOMS708.Bratio;
 
 public final class Pbeta implements Function3_2 {
 
+    public static Pbeta create() {
+        return new Pbeta();
+    }
+
+    public static Pbeta getUncached() {
+        return new Pbeta();
+    }
+
     private final BranchProfile naProfile = BranchProfile.create();
 
     @Override

@@ -24,8 +24,10 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.r.ffi.impl.nodes.MatchNodesFactory.NonNullStringMatchNodeGen;
 import com.oracle.truffle.r.nodes.builtin.MatchInternalNode;
 import com.oracle.truffle.r.nodes.builtin.MatchInternalNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -62,6 +64,7 @@ public final class MatchNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class NonNullStringMatchNode extends FFIUpCallNode.Arg2 {
 
         @Specialization(guards = {"s.getLength() == 1", "t.getLength() == 1"})
@@ -87,7 +90,11 @@ public final class MatchNodes {
         }
 
         public static NonNullStringMatchNode create() {
-            return MatchNodesFactory.NonNullStringMatchNodeGen.create();
+            return NonNullStringMatchNodeGen.create();
+        }
+
+        public static NonNullStringMatchNode getUncached() {
+            return NonNullStringMatchNodeGen.getUncached();
         }
     }
 

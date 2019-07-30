@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.rng.RandomNumberGenerator;
  */
 public class RandomFunctions {
     public interface RandFunction3_DoubleBase {
-        public abstract double execute(double a, double b, double c, RandomNumberProvider rand);
+        double execute(double a, double b, double c, RandomNumberProvider rand);
     }
 
     public abstract static class RandFunction3_DoubleWithWarnings extends RBaseNodeWithWarnings implements RandFunction3_DoubleBase {

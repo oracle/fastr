@@ -33,4 +33,6 @@ public @interface RFFIUpCallNode {
     Class<?> value();
 
     Class<?> functionClass() default Void.class;
+
+    boolean needsCallTarget() default false;
 }

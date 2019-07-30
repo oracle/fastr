@@ -19,16 +19,20 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq.RChisq;
 
-public final class Rt extends RandFunction1_Double {
-    @Child private RChisq rchisq = new RChisq();
+@GenerateUncached
+public abstract class Rt extends RandFunction1_Double {
 
-    @Override
-    public double execute(double df, RandomNumberProvider rand) {
+    @Specialization
+    public double exec(double df, RandomNumberProvider rand,
+                    @Cached() RChisq rchisq) {
         if (Double.isNaN(df) || df <= 0.0) {
             return RMathError.defaultError();
         }
@@ -39,4 +43,13 @@ public final class Rt extends RandFunction1_Double {
             return rand.normRand() / Math.sqrt(rchisq.execute(df, rand) / df);
         }
     }
+
+    public static Rt create() {
+        return RtNodeGen.create();
+    }
+
+    public static Rt getUncached() {
+        return RtNodeGen.getUncached();
+    }
+
 }

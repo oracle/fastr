@@ -36,6 +36,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Qt implements Function2_2 {
+
+    public static Qt create() {
+        return new Qt();
+    }
+
+    public static Qt getUncached() {
+        return new Qt();
+    }
+
     private static final double eps = 1.e-12;
     private static final double accu = 1e-13;
     private static final double Eps = 1e-11; /* must be > accu */

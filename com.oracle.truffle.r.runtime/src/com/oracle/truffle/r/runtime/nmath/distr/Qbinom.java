@@ -29,6 +29,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 // transcribed from qbinom.c
 
 public final class Qbinom implements Function3_2 {
+
+    public static Qbinom create() {
+        return new Qbinom();
+    }
+
+    public static Qbinom getUncached() {
+        return new Qbinom();
+    }
+
     private final BranchProfile nanProfile = BranchProfile.create();
     private final ConditionProfile smallNProfile = ConditionProfile.createBinaryProfile();
     private final Pbinom pbinom = new Pbinom();

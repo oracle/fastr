@@ -23,15 +23,21 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 
+@GenerateUncached
 public abstract class RNCharNode extends FFIUpCallNode.Arg5 {
 
     public static RNCharNode create() {
         return RNCharNodeGen.create();
+    }
+
+    public static RNCharNode getUncached() {
+        return RNCharNodeGen.getUncached();
     }
 
     private static boolean isNAKeptIn(int keepNAInArg, int typeId) {

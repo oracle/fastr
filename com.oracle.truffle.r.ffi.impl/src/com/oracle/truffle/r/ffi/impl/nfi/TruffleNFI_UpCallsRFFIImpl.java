@@ -126,6 +126,11 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         return HandleNFIUpCallExceptionNodeGen.create();
     }
 
+    @Override
+    public HandleUpCallExceptionNode getUncachedHandleUpCallExceptionNode() {
+        return HandleNFIUpCallExceptionNodeGen.getUncached();
+    }
+
     private static TruffleNFI_Context getContext() {
         return RContext.getInstance().getStateRFFI(TruffleNFI_Context.class);
     }

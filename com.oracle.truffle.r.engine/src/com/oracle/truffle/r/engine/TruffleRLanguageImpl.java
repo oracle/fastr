@@ -124,7 +124,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
     protected RContext createContext(Env env) {
         boolean initialContext = !systemInitialized;
         if (initialContext) {
-            RContext.initializeGlobalState(new RASTBuilder(false), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
+            RContext.initializeGlobalState(new RASTBuilder(false), new RRuntimeASTAccessImpl(), new ContextReferenceAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
         }
         return RContext.create(this, env, env.lookup(Instrumenter.class), initialContext);
     }

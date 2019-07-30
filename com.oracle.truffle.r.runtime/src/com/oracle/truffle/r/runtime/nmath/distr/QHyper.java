@@ -31,6 +31,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_2;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class QHyper implements Function4_2 {
+
+    public static QHyper create() {
+        return new QHyper();
+    }
+
+    public static QHyper getUncached() {
+        return new QHyper();
+    }
+
     @Override
     public double evaluate(double p, double nr, double nb, double n, boolean lowerTail, boolean logP) {
         return qhyper(p, nr, nb, n, lowerTail, logP);

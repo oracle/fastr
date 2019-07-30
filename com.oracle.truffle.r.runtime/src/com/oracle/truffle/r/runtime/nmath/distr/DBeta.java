@@ -27,6 +27,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class DBeta implements Function3_1 {
+
+    public static DBeta create() {
+        return new DBeta();
+    }
+
+    public static DBeta getUncached() {
+        return new DBeta();
+    }
+
     @Override
     public double evaluate(double x, double a, double b, boolean log) {
         /* NaNs propagated correctly */

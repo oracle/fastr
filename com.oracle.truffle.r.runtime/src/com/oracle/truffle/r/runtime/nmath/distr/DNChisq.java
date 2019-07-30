@@ -28,6 +28,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq.DChisq;
 
 public final class DNChisq implements Function3_1 {
+
+    public static DNChisq create() {
+        return new DNChisq();
+    }
+
+    public static DNChisq getUncached() {
+        return new DNChisq();
+    }
+
     private static final double eps = 5e-15;
     private final DChisq dchisq = new DChisq();
 

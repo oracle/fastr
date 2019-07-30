@@ -28,6 +28,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class QPois implements Function2_2 {
+
+    public static QPois create() {
+        return new QPois();
+    }
+
+    public static QPois getUncached() {
+        return new QPois();
+    }
+
     private final Qnorm qnorm = new Qnorm();
     private final PPois ppois = new PPois();
 

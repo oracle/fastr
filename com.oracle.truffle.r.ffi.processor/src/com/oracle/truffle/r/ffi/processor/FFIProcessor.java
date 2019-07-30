@@ -148,25 +148,56 @@ public final class FFIProcessor extends AbstractProcessor {
     private void generateCallClass(ExecutableElement m) throws IOException {
         RFFIUpCallNode nodeAnnotation = m.getAnnotation(RFFIUpCallNode.class);
         String canRunGc = m.getAnnotation(RFFIRunGC.class) == null ? "false" : "true";
-        String nodeClassName = null;
+        boolean needsNode = false;
+        boolean nodeHasCreate = false;
         TypeElement nodeClass = null;
-        boolean useFrame = false;
-        String functionClassName = null;
+        String nodeClassName = null;
+        String nodeQualifiedClassName = null;
+        boolean needsFrame = false;
+        boolean needsCallTarget = false;
+        boolean generateCreateNodeMethod = false;
+        boolean needsFunction = false;
+        boolean functionHasCreate = false;
         TypeElement functionClass = null;
+        String functionClassName = null;
+        String functionQualifiedClassName = null;
+
         if (nodeAnnotation != null) {
             try {
                 nodeAnnotation.value();
             } catch (MirroredTypeException e) {
                 nodeClass = (TypeElement) processingEnv.getTypeUtils().asElement(e.getTypeMirror());
-                nodeClassName = nodeClass.getQualifiedName().toString();
+                if (nodeClass != null) {
+                    nodeQualifiedClassName = nodeClass.getQualifiedName().toString();
+                    nodeClassName = nodeQualifiedClassName.substring(nodeQualifiedClassName.lastIndexOf(".") + 1);
+                    needsNode = true;
+                }
             }
             try {
                 nodeAnnotation.functionClass();
             } catch (MirroredTypeException e) {
                 functionClass = (TypeElement) processingEnv.getTypeUtils().asElement(e.getTypeMirror());
-                functionClassName = functionClass.getQualifiedName().toString();
+                functionQualifiedClassName = functionClass.getQualifiedName().toString();
+                if (!Void.class.getName().equals(functionQualifiedClassName)) {
+                    needsFunction = true;
+                    functionClassName = functionQualifiedClassName.substring(functionQualifiedClassName.lastIndexOf(".") + 1);
+                } else {
+                    functionClass = null;
+                    functionQualifiedClassName = null;
+                }
+            }
+            if (needsNode) {
+                needsCallTarget = nodeAnnotation.needsCallTarget();
             }
         }
+        if (needsNode) {
+            nodeHasCreate = hasCreate(nodeClass);
+            if (needsFunction) {
+                functionHasCreate = hasCreate(functionClass);
+            }
+            needsFrame = needsFrame(nodeClass);
+        }
+
         // process arguments first to see if unwrap is necessary
         List<? extends VariableElement> params = m.getParameters();
         StringBuilder arguments = new StringBuilder();
@@ -174,6 +205,10 @@ public final class FFIProcessor extends AbstractProcessor {
         StringBuilder unwrappedArgs = new StringBuilder();
         CharSequence resultOwnerRHS = null;
         boolean needsUnwrapImport = false;
+
+        if (!needsCallTarget && needsFunction) {
+            arguments.append("function, ");
+        }
         for (int i = 0; i < params.size(); i++) {
             if (i != 0) {
                 arguments.append(", ");
@@ -195,12 +230,12 @@ public final class FFIProcessor extends AbstractProcessor {
                 arguments.append('(').append(paramTypeName).append(") ");
             }
             needsUnwrapImport |= needsUnwrap;
-            unwrappedArgs.append("                    final Object ").append(paramName).append("Unwrapped = ");
+            unwrappedArgs.append("        final Object ").append(paramName).append("Unwrapped = ");
             if (needsUnwrap) {
-                unwrapNodes.append("                @Child private FFIUnwrapNode ").append(paramName).append("Unwrap").append(" = FFIUnwrapNode.create();\n");
+                unwrapNodes.append("                @Cached() FFIUnwrapNode ").append(paramName).append("Unwrap,\n");
                 unwrappedArgs.append(paramName).append("Unwrap").append(".execute(");
             }
-            unwrappedArgs.append("arguments.get(").append(i).append(")");
+            unwrappedArgs.append("arguments[").append(i).append("]");
             arguments.append(paramName).append("Unwrapped");
             if (needsUnwrap) {
                 unwrappedArgs.append(')');
@@ -217,7 +252,7 @@ public final class FFIProcessor extends AbstractProcessor {
                         !"java.lang.String".equals(getTypeName(m.getReturnType())) &&
                         m.getAnnotationsByType(RFFICpointer.class).length == 0;
         if (needsReturnWrap) {
-            unwrapNodes.append("                @Child private FFIWrapNode returnWrap").append(" = FFIWrapNode.create();\n");
+            unwrapNodes.append("                @Cached() FFIWrapNode returnWrap,\n");
         }
 
         String name = m.getSimpleName().toString();
@@ -228,27 +263,35 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("\n");
         w.append("package com.oracle.truffle.r.ffi.impl.upcalls;\n");
         w.append("\n");
-        w.append("import java.util.List;\n");
         w.append("\n");
-        w.append("import com.oracle.truffle.api.CallTarget;\n");
         w.append("import com.oracle.truffle.api.CompilerDirectives;\n");
-        w.append("import com.oracle.truffle.api.Truffle;\n");
-        w.append("import com.oracle.truffle.api.frame.VirtualFrame;\n");
-        w.append("import com.oracle.truffle.api.interop.ForeignAccess;\n");
-        w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
-        w.append("import com.oracle.truffle.api.nodes.Node;\n");
-        w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
-        w.append("import com.oracle.truffle.r.runtime.context.RContext;\n");
         if (!returnKind.isPrimitive() && returnKind != TypeKind.VOID) {
             w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
         }
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFILog;\n");
-        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
-        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI.HandleUpCallExceptionNode;\n");
         w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
-        w.append("import com.oracle.truffle.api.TruffleLanguage.ContextReference;\n");
-
+        w.append("import com.oracle.truffle.api.interop.InteropLibrary;\n");
+        w.append("import com.oracle.truffle.api.library.ExportLibrary;\n");
+        w.append("import com.oracle.truffle.api.library.ExportMessage;\n");
+        w.append("import com.oracle.truffle.api.dsl.Cached;\n");
+        w.append("import com.oracle.truffle.api.profiles.ValueProfile;\n");
+        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI.HandleUpCallExceptionNode;\n");
+        w.append("import com.oracle.truffle.r.runtime.context.RContext;\n");
+        if (needsNode) {
+            w.append("import ").append(nodeQualifiedClassName).append(";\n");
+        }
+        if (needsFunction) {
+            w.append("import ").append(functionQualifiedClassName).append(";\n");
+        }
+        if (needsCallTarget) {
+            w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
+            w.append("import com.oracle.truffle.api.frame.VirtualFrame;\n");
+            w.append("import com.oracle.truffle.api.Truffle;\n");
+            w.append("import com.oracle.truffle.api.CallTarget;\n");
+            w.append("import com.oracle.truffle.api.nodes.IndirectCallNode;\n");
+            w.append("import com.oracle.truffle.r.runtime.context.RFFIUpCallTargets;\n");
+        }
         if (needsUnwrapImport) {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;\n");
         }
@@ -256,112 +299,96 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrapNode;\n");
         }
         w.append("\n");
+
         w.append("// Checkstyle: stop method name check\n");
-        w.append("\n");
-        w.append("final class " + callName + " implements RTruffleObject {\n");
+        w.append("@ExportLibrary(InteropLibrary.class)\n");
+        w.append("final class ").append(callName).append(" implements RTruffleObject {\n");
         w.append('\n');
-        w.append("    private final ForeignAccess access;\n");
-        w.append("    " + callName + "(UpCallsRFFI upCallsImpl) {\n");
+        w.append("    protected final UpCallsRFFI upCallsImpl;\n");
+        w.append("    ").append(callName).append("(UpCallsRFFI upCallsImpl) {\n");
         w.append("        assert upCallsImpl != null;\n");
-        w.append("        this.access = ForeignAccess.createAccess(new " + callName + "Factory(upCallsImpl), null);\n");
+        w.append("        this.upCallsImpl = upCallsImpl;\n");
         w.append("    }\n");
-        w.append('\n');
-        w.append("    private static final class " + callName + "Factory extends AbstractDowncallForeign {\n");
         w.append("\n");
-        w.append("        private final UpCallsRFFI upCallsImpl;\n");
+        w.append("    @ExportMessage\n");
+        w.append("    boolean isExecutable(){\n");
+        w.append("        return true;\n");
+        w.append("    }\n");
         w.append("\n");
-        w.append("        " + callName + "Factory(UpCallsRFFI upCallsImpl) {\n");
-        w.append("            this.upCallsImpl = upCallsImpl;\n");
-        w.append("        }\n");
-        w.append("\n");
-        w.append("        @Override\n");
-        w.append("        public boolean canHandle(TruffleObject obj) {\n");
-        w.append("            return obj instanceof " + callName + ";\n");
-        w.append("        }\n");
-        w.append("\n");
-        w.append("        @Override\n");
-        w.append("        public CallTarget accessExecute(int argumentsLength) {\n");
-        w.append("            return Truffle.getRuntime().createCallTarget(new RootNode(null) {\n");
-        w.append("\n");
+        w.append("    @ExportMessage\n");
+        w.append("    Object execute(Object[] arguments,\n");
         if (unwrapNodes.length() > 0) {
             w.append(unwrapNodes);
-            w.append("\n");
         }
-        if (nodeClass != null) {
-            boolean createFunction = false;
-            for (Element element : nodeClass.getEnclosedElements()) {
-                if (element.getKind() == ElementKind.METHOD && element.getModifiers().contains(Modifier.STATIC) && "create".equals(element.getSimpleName().toString())) {
-                    createFunction = true;
-                }
-                if (element.getKind() == ElementKind.METHOD && element.getModifiers().contains(Modifier.ABSTRACT) && "executeObject".equals(element.getSimpleName().toString())) {
-                    final List<? extends VariableElement> parameters = ((ExecutableElement) element).getParameters();
-                    if (!parameters.isEmpty()) {
-                        final VariableElement first = parameters.get(0);
-                        final TypeMirror parType = first.asType();
-                        if (parType.toString().equals("com.oracle.truffle.api.frame.VirtualFrame")) {
-                            useFrame = true;
-                        }
-                    }
-                }
-            }
-            if (createFunction) {
-                if (!Void.class.getName().equals(functionClassName)) {
-                    w.append("                @Child private " + nodeClassName + " node = " + nodeClassName + ".create(new " + functionClassName + "());\n");
-                } else {
-                    w.append("                @Child private " + nodeClassName + " node = " + nodeClassName + ".create();\n");
-                }
-            } else if (nodeClass.getModifiers().contains(Modifier.ABSTRACT)) {
-                w.append("                @Child private " + nodeClassName + " node;\n");
-                processingEnv.getMessager().printMessage(Kind.ERROR, "Need static create for abstract classes", m);
-            } else {
-                if (!Void.class.getName().equals(functionClassName)) {
-                    w.append("                @Child private " + nodeClassName + " node = new " + nodeClassName + "(new " + functionClassName + "());\n");
-                } else {
-                    w.append("                @Child private " + nodeClassName + " node = new " + nodeClassName + "();\n");
-                }
-            }
 
+        w.append("                @Cached() GetRContext getRContext,\n");
+        if (needsCallTarget) {
+            w.append("                @Cached() IndirectCallNode callNode,\n");
+            w.append("                @Cached(value = \"createCallTarget(getRContext.execute())\", allowUncached = true) CallTarget callTarget,\n");
+        } else if (needsNode) {
+            if (nodeClass.getModifiers().contains(Modifier.ABSTRACT)) {
+                w.append("                @Cached() " + nodeClassName + " node,\n");
+                if (!nodeHasCreate) {
+                    processingEnv.getMessager().printMessage(Kind.ERROR, "Need static create for abstract classes", m);
+                }
+            } else {
+                w.append("                @Cached(\"createNode()\") " + nodeClassName + " node,\n");
+                generateCreateNodeMethod = true;
+            }
+            if (needsFunction) {
+                w.append("                @Cached() " + functionClassName + " function" + ",\n");
+            }
         }
-        w.append("                @Child private HandleUpCallExceptionNode handleExceptionNode;");
-        w.append("                final ContextReference<RContext> contextReference = RContext.getInstance().getLanguage().getContextReference();\n");
+
+        w.append("                @Cached(\"createClassProfile()\") ValueProfile upCallProfile,\n");
+        w.append("                @Cached(\"createClassProfile()\") ValueProfile ctxProfile,\n");
+        w.append("                @Cached(value = \"this.upCallsImpl.createHandleUpCallExceptionNode()\", uncached = \"this.upCallsImpl.getUncachedHandleUpCallExceptionNode()\") HandleUpCallExceptionNode handleExceptionNode");
+        w.append(") {\n");
         w.append("\n");
-        w.append("                @Override\n");
-        w.append("                public Object execute(VirtualFrame frame) {\n");
-        w.append("                    List<Object> arguments = ForeignAccess.getArguments(frame);\n");
-        w.append("                    assert arguments.size() == " + params.size() + " : \"wrong number of arguments passed to " + name + "\";\n");
-        w.append("                    if (RFFILog.logEnabled()) {\n");
-        w.append("                        RFFILog.logUpCall(\"" + name + "\", arguments);\n");
-        w.append("                    }\n");
-        w.append("                    RFFIContext ctx = contextReference.get().getStateRFFI();\n");
+        w.append("        assert arguments.length == " + params.size() + " : \"wrong number of arguments passed to " + name + "\";\n");
+        w.append("        if (RFFILog.logEnabled()) {\n");
+        w.append("            RFFILog.logUpCall(\"" + name + "\", arguments);\n");
+        w.append("        }\n");
+        w.append("        RContext ctx = getRContext.execute();\n");
+        w.append("        RFFIContext rffiCtx = ctxProfile.profile(ctx.getStateRFFI());\n");
+
         if (returnKind != TypeKind.VOID) {
-            w.append("                    Object resultRObj0;\n");
-            w.append("                    Object resultRObj;\n");
+            w.append("        Object resultRObj0;\n");
+            w.append("        Object resultRObj;\n");
         }
-        w.append("                    ctx.beforeUpcall(contextReference.get(), " + canRunGc + ", upCallsImpl.getRFFIType());\n");
+        w.append("        UpCallsRFFI impl = upCallProfile.profile(upCallsImpl);\n");
+        w.append("        rffiCtx.beforeUpcall(ctx, " + canRunGc + ", impl.getRFFIType());\n");
         w.append(unwrappedArgs);
         if (resultOwnerRHS != null) {
-            StringBuilder resultOwner = new StringBuilder("                    Object resultOwner = ").append(resultOwnerRHS).append(";\n");
+            StringBuilder resultOwner = new StringBuilder("        Object resultOwner = ").append(resultOwnerRHS).append(";\n");
             w.append(resultOwner);
         }
-        w.append("                    try {\n");
-        if (returnKind == TypeKind.VOID) {
-            w.append("                        ");
-        } else {
-            w.append("                        resultRObj0 = ");
+        w.append("        try {\n");
+
+        w.append("            ");
+        if (returnKind != TypeKind.VOID) {
+            w.append("resultRObj0 = ");
         }
-        if (nodeClass != null) {
-            w.append("node.executeObject");
+        if (needsNode) {
+            if (needsCallTarget) {
+                w.append("callNode.call");
+            } else {
+                w.append("node.executeObject");
+            }
         } else {
-            w.append("upCallsImpl." + name);
+            w.append("impl." + name);
         }
         w.append("(");
-        if (useFrame) {
+        if (needsCallTarget) {
+            w.append("callTarget, ");
+        }
+        if (needsFrame) {
             w.append("frame, ");
         }
         w.append(arguments).append(");\n");
 
         if (returnKind != TypeKind.VOID) {
-            w.append("                        resultRObj = ");
+            w.append("            resultRObj = ");
             if (needsReturnWrap) {
                 w.append("returnWrap.execute(");
             }
@@ -373,59 +400,115 @@ public final class FFIProcessor extends AbstractProcessor {
             }
         }
         if (resultOwnerRHS != null) {
-            w.append("                        ctx.protectChild(resultOwner, resultRObj, upCallsImpl.getRFFIType());\n");
+            w.append("            rffiCtx.protectChild(resultOwner, resultRObj, impl.getRFFIType());\n");
         } else {
             if (returnKind != TypeKind.VOID && needsReturnWrap) {
-                w.append("                        if (resultRObj0 != resultRObj) {\n");
-                w.append("                            ctx.protectChild(resultRObj0, resultRObj, upCallsImpl.getRFFIType());\n");
-                w.append("                        }\n");
+                w.append("            if (resultRObj0 != resultRObj) {\n");
+                w.append("                rffiCtx.protectChild(resultRObj0, resultRObj, impl.getRFFIType());\n");
+                w.append("            }\n");
             }
         }
-        w.append("                    } catch (Throwable ex) {\n");
-        w.append("                        CompilerDirectives.transferToInterpreter();\n");
-        w.append("                        RFFILog.logException(ex);\n");
-        w.append("                        getHandleExceptionNode().execute(ex);\n");
+        w.append("        } catch (Throwable ex) {\n");
+        w.append("            CompilerDirectives.transferToInterpreter();\n");
+        w.append("            RFFILog.logException(ex);\n");
+        w.append("            handleExceptionNode.execute(ex);\n");
         if (returnKind.isPrimitive()) {
-            w.append("                        resultRObj = Integer.valueOf(-1);\n");
+            w.append("            resultRObj = -1;\n");
         } else if (returnKind != TypeKind.VOID) {
-            w.append("                        resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
+            w.append("            resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
         }
-        w.append("                    }\n");
-        w.append("                    ctx.afterUpcall(" + canRunGc + ", upCallsImpl.getRFFIType());\n");
+        w.append("        }\n");
+        w.append("        rffiCtx.afterUpcall(" + canRunGc + ", impl.getRFFIType());\n");
         if (returnKind == TypeKind.VOID) {
-            w.append("                    if (RFFILog.logEnabled()) {\n");
-            w.append("                        RFFILog.logUpCallReturn(\"" + name + "\", null);\n");
-            w.append("                    }\n");
-            w.append("                    return 0; // void return type\n");
+            w.append("        if (RFFILog.logEnabled()) {\n");
+            w.append("            RFFILog.logUpCallReturn(\"" + name + "\", null);\n");
+            w.append("        }\n");
+            w.append("        return 0; // void return type\n");
         } else {
             if (!returnKind.isPrimitive() && m.getAnnotationsByType(RFFICpointer.class).length == 0) {
-                w.append("                    if (upCallsImpl.getRFFIType() == com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type.NFI) {\n");
-                w.append("                       ctx.registerReferenceUsedInNative(resultRObj); \n");
-                w.append("                    }\n");
+                w.append("        if (impl.getRFFIType() == com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type.NFI) {\n");
+                w.append("            rffiCtx.registerReferenceUsedInNative(resultRObj); \n");
+                w.append("        }\n");
             }
-            w.append("                    if (RFFILog.logEnabled()) {\n");
-            w.append("                        RFFILog.logUpCallReturn(\"" + name + "\", resultRObj);\n");
-            w.append("                    }\n");
-            w.append("                    return resultRObj;\n");
+            w.append("        if (RFFILog.logEnabled()) {\n");
+            w.append("            RFFILog.logUpCallReturn(\"" + name + "\", resultRObj);\n");
+            w.append("        }\n");
+            w.append("        return resultRObj;\n");
         }
-        w.append("                }\n");
-        w.append("    \n");
-        w.append("                private HandleUpCallExceptionNode getHandleExceptionNode() {\n");
-        w.append("                    if (handleExceptionNode == null) {\n");
-        w.append("                        CompilerDirectives.transferToInterpreterAndInvalidate();\n");
-        w.append("                        Node n = (Node) upCallsImpl.createHandleUpCallExceptionNode();\n");
-        w.append("                        handleExceptionNode = (HandleUpCallExceptionNode) insert(n);\n");
-        w.append("                    }\n");
-        w.append("                    return handleExceptionNode;\n");
-        w.append("                }\n");
-        w.append("            });\n");
-        w.append("        }\n");
         w.append("    }\n");
         w.append("\n");
-        w.append("    @Override\n");
-        w.append("    public ForeignAccess getForeignAccess() {\n");
-        w.append("        return access;\n");
-        w.append("    }\n");
+
+        if (needsCallTarget) {
+            w.append("    protected static CallTarget createCallTarget(RContext ctx) {\n");
+            w.append("        RFFIUpCallTargets targets = ctx.getRFFIUpCallTargets();\n");
+            w.append("        if(targets.").append(nodeClassName).append(" == null) {\n");
+            w.append("            targets.").append(nodeClassName).append(" =  Truffle.getRuntime().createCallTarget(new NodeRootNode());\n");
+            w.append("        }\n");
+            w.append("        return targets.").append(nodeClassName).append(";\n");
+            w.append("    }\n");
+            w.append("\n");
+
+            w.append("    private final static class NodeRootNode extends RootNode {\n");
+            if (nodeClass.getModifiers().contains(Modifier.ABSTRACT)) {
+                if (nodeHasCreate) {
+                    w.append("        @Child private " + nodeClassName + " node = " + nodeClassName + ".create();\n");
+                } else {
+                    w.append("        @Child private " + nodeClassName + " node;\n");
+                    processingEnv.getMessager().printMessage(Kind.ERROR, "Need static create for abstract classes", m);
+                }
+            } else {
+                w.append("        @Child private " + nodeClassName + " node = new " + nodeClassName + "();\n");
+            }
+
+            if (needsFunction) {
+                if (functionHasCreate) {
+                    w.append("        @Child private " + functionClassName + " function = " + functionClassName + ".create();\n");
+                } else {
+                    w.append("        @Child private " + functionClassName + " function = new " + functionClassName + "();\n");
+                }
+            }
+
+            w.append("\n");
+            w.append("        public NodeRootNode() {\n");
+            w.append("            super(null);\n");
+            w.append("        }\n");
+            w.append("\n");
+            w.append("        @Override\n");
+            w.append("        public Object execute(VirtualFrame frame) {\n");
+            w.append("            Object[] arguments = frame.getArguments();\n");
+
+            w.append("            return node.executeObject(");
+            if (needsFrame) {
+                w.append("frame, ");
+            }
+
+            StringBuilder args = new StringBuilder();
+            if (needsFunction) {
+                args.append("function, ");
+            }
+            for (int i = 0; i < params.size(); i++) {
+                if (i != 0) {
+                    args.append(", ");
+                }
+                TypeMirror paramType = params.get(i).asType();
+                String paramTypeName = getTypeName(paramType);
+                boolean needCast = !paramTypeName.equals("java.lang.Object");
+                if (needCast) {
+                    args.append('(').append(paramTypeName).append(") ");
+                }
+                args.append("arguments[").append(i).append("]");
+            }
+            w.append(args).append(");\n");
+
+            w.append("        }\n");
+            w.append("    }\n");
+        }
+
+        if (generateCreateNodeMethod) {
+            w.append("    protected static " + nodeClassName + " createNode() {\n");
+            w.append("        return new " + nodeClassName + "();\n");
+            w.append("    }\n");
+        }
         w.append("}\n");
         w.close();
     }
@@ -555,5 +638,33 @@ public final class FFIProcessor extends AbstractProcessor {
         writer.flush();
         string.flush();
         return e.getMessage() + "\r\n" + string.toString();
+    }
+
+    private static boolean hasCreate(TypeElement clazz) {
+        if (clazz == null) {
+            return false;
+        }
+        for (Element element : clazz.getEnclosedElements()) {
+            if (element.getKind() == ElementKind.METHOD && element.getModifiers().contains(Modifier.STATIC) && "create".equals(element.getSimpleName().toString())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean needsFrame(TypeElement nodeClass) {
+        for (Element element : nodeClass.getEnclosedElements()) {
+            if (element.getKind() == ElementKind.METHOD && element.getModifiers().contains(Modifier.ABSTRACT) && "executeObject".equals(element.getSimpleName().toString())) {
+                final List<? extends VariableElement> parameters = ((ExecutableElement) element).getParameters();
+                if (!parameters.isEmpty()) {
+                    final VariableElement first = parameters.get(0);
+                    final TypeMirror parType = first.asType();
+                    if (parType.toString().equals("com.oracle.truffle.api.frame.VirtualFrame")) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

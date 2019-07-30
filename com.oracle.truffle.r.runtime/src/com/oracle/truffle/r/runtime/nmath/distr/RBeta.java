@@ -20,6 +20,8 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MAX_EXP;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LN2;
 import static com.oracle.truffle.r.runtime.nmath.RMath.fmax2;
@@ -29,7 +31,16 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 
-public final class RBeta extends RandFunction2_Double {
+@GenerateUncached
+public abstract class RBeta extends RandFunction2_Double {
+
+    public static RBeta create() {
+        return RBetaNodeGen.create();
+    }
+
+    public static RBeta getUncached() {
+        return RBetaNodeGen.getUncached();
+    }
 
     private static final double expmax = (DBL_MAX_EXP * M_LN2); /* = log(DBL_MAX) */
 
@@ -41,8 +52,8 @@ public final class RBeta extends RandFunction2_Double {
     private static double olda = -1.0;
     private static double oldb = -1.0;
 
-    @Override
-    public double execute(double aa, double bb, RandomNumberProvider rand) {
+    @Specialization
+    public double exec(double aa, double bb, RandomNumberProvider rand) {
         if (Double.isNaN(aa) || Double.isNaN(bb) || aa < 0. || bb < 0.) {
             return RMathError.defaultError();
         }

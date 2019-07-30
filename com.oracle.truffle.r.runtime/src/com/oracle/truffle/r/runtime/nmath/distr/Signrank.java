@@ -25,6 +25,8 @@ import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LN2;
 import static com.oracle.truffle.r.runtime.nmath.RMath.forceint;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.nmath.DPQ;
 import com.oracle.truffle.r.runtime.nmath.DPQ.EarlyReturn;
@@ -35,6 +37,7 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
+import com.oracle.truffle.r.runtime.nmath.distr.SignrankFactory.RSignrankNodeGen;
 
 public final class Signrank {
     private Signrank() {
@@ -104,6 +107,15 @@ public final class Signrank {
     }
 
     public static final class DSignrank implements Function2_1 {
+
+        public static DSignrank create() {
+            return new DSignrank();
+        }
+
+        public static DSignrank getUncached() {
+            return new DSignrank();
+        }
+
         @Override
         public double evaluate(double xIn, double nIn, boolean giveLog) {
             /* NaNs propagated correctly */
@@ -136,6 +148,15 @@ public final class Signrank {
     }
 
     public static final class PSignrank implements Function2_2 {
+
+        public static PSignrank create() {
+            return new PSignrank();
+        }
+
+        public static PSignrank getUncached() {
+            return new PSignrank();
+        }
+
         @Override
         public double evaluate(double xIn, double nIn, boolean lowerTail, boolean logP) {
             if (Double.isNaN(xIn) || Double.isNaN(nIn)) {
@@ -189,6 +210,15 @@ public final class Signrank {
     }
 
     public static final class QSignrank implements Function2_2 {
+
+        public static QSignrank create() {
+            return new QSignrank();
+        }
+
+        public static QSignrank getUncached() {
+            return new QSignrank();
+        }
+
         @Override
         public double evaluate(double xIn, double nIn, boolean lowerTail, boolean logP) {
             if (Double.isNaN(xIn) || Double.isNaN(nIn)) {
@@ -247,9 +277,10 @@ public final class Signrank {
         }
     }
 
-    public static final class RSignrank extends RandFunction1_Double {
-        @Override
-        public double execute(double nIn, RandomNumberProvider rand) {
+    @GenerateUncached
+    public abstract static class RSignrank extends RandFunction1_Double {
+        @Specialization
+        public double exec(double nIn, RandomNumberProvider rand) {
             if (Double.isNaN(nIn)) {
                 return nIn;
             }
@@ -273,6 +304,14 @@ public final class Signrank {
                 r += (i + 1) * Math.floor(rand.unifRand() + 0.5);
             }
             return r;
+        }
+
+        public static RSignrank create() {
+            return RSignrankNodeGen.create();
+        }
+
+        public static RSignrank getUncached() {
+            return RSignrankNodeGen.getUncached();
         }
     }
 }
