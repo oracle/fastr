@@ -117,7 +117,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         for (int i = firstPos + 1; i < data.length; i++) {
             String s = x.getDataAt(i);
             boolean isNA = isNA(s, naStrings);
-            data[i] = isNA ? RRuntime.DOUBLE_NA : RRuntime.string2doubleNoCheck(s, true);
+            data[i] = isNA ? RRuntime.DOUBLE_NA : RRuntime.string2doubleNoCheck(s, true, true);
             complete = complete && !isNA;
         }
         return RDataFactory.createDoubleVector(data, complete);
@@ -165,7 +165,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
             // this is a mess
             // double takes precedence even if s is a hexadecimal integer
             try {
-                double doubleVal = RRuntime.string2doubleNoCheck(s, true);
+                double doubleVal = RRuntime.string2doubleNoCheck(s, true, true);
                 return readDoubleVector(x, i, doubleVal, naStrings);
             } catch (NumberFormatException ix) {
                 // fall through
@@ -176,7 +176,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
                 return readIntVector(x, i, intVal, naStrings);
             } catch (NumberFormatException ix) {
                 try {
-                    double doubleVal = RRuntime.string2doubleNoCheck(s, true);
+                    double doubleVal = RRuntime.string2doubleNoCheck(s, true, true);
                     try {
                         return readDoubleVector(x, i, doubleVal, naStrings);
                     } catch (NumberFormatException lx) {
