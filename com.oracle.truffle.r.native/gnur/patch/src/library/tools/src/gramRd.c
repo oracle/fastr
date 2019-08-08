@@ -4495,7 +4495,7 @@ SEXP parseRd(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP rConnection = CAR(args);
     ifile = asInteger(rConnection);                       args = CDR(args);
 
-    con = R_GetFastRConnection(ifile);
+    con = R_GetFastRConnection(rConnection);
     // wasopen = con->isopen;
     source = CAR(args);					args = CDR(args);
     /* encoding is unused */

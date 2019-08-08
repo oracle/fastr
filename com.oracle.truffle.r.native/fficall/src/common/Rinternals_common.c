@@ -124,6 +124,18 @@ void *DATAPTR(SEXP x) {
 	}
 }
 
+const void *DATAPTR_OR_NULL(SEXP x) {
+	return DATAPTR(x);
+}
+
+int *INTEGER0(SEXP x) {
+    return (int *) DATAPTR(x);
+}
+
+double *REAL0(SEXP x) {
+    return (double *) DATAPTR(x);
+}
+
 int R_check_class_and_super(SEXP x, const char **valid, SEXP rho) {
     int ans;
     SEXP cl = PROTECT(asChar(getAttrib(x, R_ClassSymbol)));
