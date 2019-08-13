@@ -1,8 +1,11 @@
 # 19.3.0
 
- Bug fixes:
+Bug fixes:
 
- * Tibble does not print properly when using knitr #68
+* `tibble` does not print properly when using `knitr` #68
+* `type.convert` uses locale #88
+* promise with the empty value is handled correctly in 'missing' #87
+* `scan` handles non-default value of `nmax` argument
 
 # 19.2.0
 

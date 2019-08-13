@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -77,6 +77,12 @@ public class TestBuiltin_scan extends TestBase {
         // sep should not be treated as a regex:
         assertEval("con <- textConnection(\"A|B|C\\n1|2|3\\n4|5|6\"); read.csv(con, sep=\"|\")");
 
+        assertEval("con <- textConnection('%%MatrixMarket matrix coordinate real general'); list(" +
+                        "scan(con, nmax = 1, what = character(), quiet = TRUE), " +
+                        "scan(con, nmax = 1, what = character(), quiet = TRUE), " +
+                        "scan(con, nmax = 1, what = character(), quiet = TRUE), " +
+                        "scan(con, nmax = 1, what = character(), quiet = TRUE), " +
+                        "scan(con, nmax = 1, what = character(), quiet = TRUE))");
     }
 
     @Test
