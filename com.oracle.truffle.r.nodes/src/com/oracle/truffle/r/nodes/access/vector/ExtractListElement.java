@@ -23,12 +23,15 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 /**
  * Internal node that extracts data under given index from any RAbstractContainer. In the case of
@@ -46,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
  * {@link UpdateShareableChildValueNode}. See also the documentation of
  * {@link RAbstractListBaseVector}.
  */
+@ImportStatic(DSLConfig.class)
 public abstract class ExtractListElement extends Node {
 
     public abstract Object execute(RAbstractContainer container, int index);
@@ -54,11 +58,21 @@ public abstract class ExtractListElement extends Node {
         return ExtractListElementNodeGen.create();
     }
 
-    @Specialization
+    @Specialization(guards = "listAccess.supports(list)", limit = "getVectorAccessCacheSize()")
     protected Object doList(RAbstractListBaseVector list, int index,
+                    @Cached("create(list)") VectorAccess listAccess,
                     @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
-        Object element = list.getDataAt(index);
+        Object element;
+        try (VectorAccess.RandomIterator it = listAccess.randomAccess(list)) {
+            element = listAccess.getListElement(it, index);
+        }
         return updateStateNode.updateState(list, element);
+    }
+
+    @Specialization(replaces = "doList")
+    protected Object doListUncached(RAbstractListBaseVector list, int index,
+                    @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
+        return doList(list, index, list.slowPathAccess(), updateStateNode);
     }
 
     @Specialization(guards = "isNotList(container)")

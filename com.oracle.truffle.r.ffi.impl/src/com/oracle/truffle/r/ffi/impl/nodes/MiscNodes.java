@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -87,6 +88,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 public final class MiscNodes {
 
     @TypeSystemReference(RTypes.class)
+    @ReportPolymorphism
     public abstract static class LENGTHNode extends FFIUpCallNode.Arg1 {
 
         @Specialization

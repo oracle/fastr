@@ -36,7 +36,7 @@ public class RFFIUtils {
         return unimplemented("");
     }
 
-    static RuntimeException unimplemented(String message) {
+    public static RuntimeException unimplemented(String message) {
         CompilerDirectives.transferToInterpreter();
         if (RFFILog.logEnabled()) {
             RFFILog.log("Error: unimplemented {0}", message);

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.runtime.data.RComplex;
 
 public final class Collections {
@@ -494,6 +495,82 @@ public final class Collections {
 
         public int[] toArray() {
             return Arrays.copyOf(data, size);
+        }
+    }
+
+    public static final class ArrayListObj<T> {
+        private Object[] data;
+        private int size;
+
+        public ArrayListObj(int capacity) {
+            this.data = new Object[capacity];
+        }
+
+        public ArrayListObj() {
+            this(8);
+        }
+
+        public void add(T value) {
+            if (size == data.length) {
+                data = Arrays.copyOf(data, size * 2);
+            }
+            data[size++] = value;
+        }
+
+        public void set(int index, T value) {
+            checkIndex(index);
+            data[index] = value;
+        }
+
+        @SuppressWarnings("unchecked")
+        public T get(int index) {
+            checkIndex(index);
+            return (T) data[index];
+        }
+
+        @SuppressWarnings("unchecked")
+        public T remove(int index) {
+            checkIndex(index);
+            T result = (T) data[index];
+            int shuffleLen = size - 1 - index;
+            if (shuffleLen >= 0) {
+                System.arraycopy(data, index + 1, data, index, shuffleLen);
+            }
+            data[size - 1] = null;
+            size--;
+            return result;
+        }
+
+        /**
+         * Removes the last element.
+         */
+        public void pop() {
+            if (size <= 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw new IllegalStateException("cannot pop from empty list");
+            }
+            size--;
+        }
+
+        public int size() {
+            return size;
+        }
+
+        @SuppressWarnings("unchecked")
+        public T[] toArray() {
+            return Arrays.copyOf((T[]) data, size);
+        }
+
+        public void clear() {
+            Arrays.fill(data, null);
+            size = 0;
+        }
+
+        private void checkIndex(int index) {
+            if (index >= size || index < 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw new IndexOutOfBoundsException();
+            }
         }
     }
 }

@@ -408,8 +408,8 @@ public class RFunctionEvalNodes {
      */
     public static final class FunctionEvalCallNode extends Node {
 
-        private final RFrameSlot argsIdentifier = RFrameSlot.createTemp(true);
-        private final RFrameSlot funIdentifier = RFrameSlot.createTemp(true);
+        private final RFrameSlot argsIdentifier = RFrameSlot.createTemp("FunctionEvalCallNode-argsIdentifier", true);
+        private final RFrameSlot funIdentifier = RFrameSlot.createTemp("FunctionEvalCallNode-funIdentifier", true);
         @CompilationFinal private FrameSlot argsFrameSlot;
         @CompilationFinal private FrameSlot funFrameSlot;
 
