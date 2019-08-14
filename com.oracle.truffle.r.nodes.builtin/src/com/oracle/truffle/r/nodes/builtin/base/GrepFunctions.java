@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -1643,6 +1644,52 @@ public class GrepFunctions {
             String[] result = new String[matches.size()];
             matches.toArray(result);
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
+        }
+    }
+
+    @RBuiltin(name = "grepRaw", kind = INTERNAL, parameterNames = {"pattern", "x", "offset", "ignore.case", "fixed", "value", "all", "invert"}, behavior = PURE)
+    public abstract static class GrepRaw extends RBuiltinNode.Arg8 {
+        static {
+            Casts casts = new Casts(GrepRaw.class);
+            casts.arg("pattern").asRawVector();
+            casts.arg("x").asRawVector();
+            casts.arg("ignore.case").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("fixed").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("value").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("all").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("invert").asLogicalVector().findFirst().map(toBoolean());
+        }
+
+        @TruffleBoundary
+        @Specialization
+        protected Object doIt(RRawVector pattern, RRawVector x, @SuppressWarnings("unused") Object offset, @SuppressWarnings("unused") Object ignoreCase, boolean fixed, boolean value, boolean all,
+                        boolean invert) {
+            if (!fixed) {
+                throw RInternalError.unimplemented("non fixed grepRaw");
+            }
+            if (value) {
+                throw RInternalError.unimplemented("grepRaw with value = TRUE");
+            }
+            if (all) {
+                throw RInternalError.unimplemented("grepRaw with all = FALSE");
+            }
+            if (invert) {
+                throw RInternalError.unimplemented("grepRaw with invert = TRUE");
+            }
+            for (int haystackIdx = 0; haystackIdx < x.getLength(); haystackIdx++) {
+                boolean found = true;
+                for (int patternIdx = 0; patternIdx < pattern.getLength(); patternIdx++) {
+                    if (pattern.getRawDataAt(patternIdx) != x.getRawDataAt(haystackIdx + patternIdx)) {
+                        found = false;
+                        break;
+                    }
+                }
+                if (found) {
+                    // 1-based indexing of R
+                    return haystackIdx + 1;
+                }
+            }
+            return RDataFactory.createEmptyIntVector();
         }
     }
 
