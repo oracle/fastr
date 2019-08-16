@@ -51,7 +51,7 @@ import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
-import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
+import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.nodes.function.signature.MissingNode;
 import com.oracle.truffle.r.nodes.function.signature.QuoteNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -306,7 +306,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 // default argument initialization is, in a sense, quite similar to local
                 // variable write and thus should do appropriate state transition and/or
                 // RShareable copy if need be
-                defaultValue = WrapDefaultArgumentNode.create(arg.value.asRNode());
+                defaultValue = WrapArgumentNode.create(arg.value.asRNode(), i);
             } else {
                 defaultValue = null;
             }

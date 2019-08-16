@@ -1,3 +1,24 @@
+# 19.3.0
+
+Bug fixes:
+
+* `tibble` does not print properly when using `knitr` #68
+* `type.convert` uses locale #88
+* promise with the empty value is handled correctly in 'missing' #87
+* `scan` handles non-default value of `nmax` argument
+
+# 19.2.0
+
+New features:
+
+* `fastRCluster` package that allows to run FastR inside GNU-R
+  * install in GNU-R or RStudio with: `devtools::install_github('oracle/fastr/com.oracle.truffle.r.pkgs/fastRCluster')`
+  * use `?fastRCluster` to learn more
+
+Bug fixes:
+
+* `SET_ATTRIB` does not validate the attributes (as expected by some packages)
+
 # 19.1.0
 
 New features:

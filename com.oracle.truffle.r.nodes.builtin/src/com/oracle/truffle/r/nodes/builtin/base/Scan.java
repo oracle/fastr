@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -106,6 +107,16 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
         boolean atStart = false;
         boolean embedWarn = false;
         boolean skipNull = false;
+    }
+
+    private static class GetQuotedItemsResult {
+        final String[] items;
+        final int pos;
+
+        GetQuotedItemsResult(String[] items, int pos) {
+            this.items = items;
+            this.pos = pos;
+        }
     }
 
     static {
@@ -227,7 +238,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
         return false;
     }
 
-    private static String[] getQuotedItems(LocalData data, String s) {
+    private static GetQuotedItemsResult getQuotedItems(LocalData data, int maxItems, String s) {
         ArrayList<String> items = new ArrayList<>();
 
         char sepchar = data.sepchar;
@@ -238,7 +249,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
             pos = skipWhitespace(s, pos);
         }
         if (pos == length) {
-            return new String[0];
+            return new GetQuotedItemsResult(new String[0], pos);
         }
         StringBuilder str = new StringBuilder();
         do {
@@ -277,22 +288,28 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
                 str.append(ch);
                 pos++;
             }
-        } while (pos < s.length());
-        items.add(str.toString());
-
-        return items.toArray(new String[items.size()]);
+        } while (pos < s.length() && (maxItems <= 0 || items.size() < maxItems));
+        if (str.length() > 0) {
+            items.add(str.toString());
+        }
+        return new GetQuotedItemsResult(items.toArray(new String[items.size()]), pos);
     }
 
-    private static String[] getItems(LocalData data, boolean blSkip) throws IOException {
+    private static String[] getItems(LocalData data, int maxItems, boolean blSkip) throws IOException {
         while (true) {
             String[] str = data.con.readLines(1, EnumSet.of(ReadLineWarning.EMBEDDED_NUL), false);
             if (str == null || str.length == 0) {
                 return null;
             } else {
-                String[] items = getQuotedItems(data, str[0]);
+                GetQuotedItemsResult res = getQuotedItems(data, maxItems, str[0]);
+                String[] items = res.items;
                 if (blSkip && items.length == 0) {
                     continue;
                 } else {
+                    if (res.pos < str[0].length()) {
+                        RStringVector remainder = RDataFactory.createStringVectorFromScalar(str[0].substring(res.pos));
+                        data.con.pushBack(remainder, true);
+                    }
                     return items.length == 0 ? new String[]{""} : items;
                 }
             }
@@ -340,7 +357,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
         int records = 0;
         while (true) {
             // TODO: does not do any fancy stuff, like handling comments
-            String[] strItems = getItems(data, blSkip);
+            String[] strItems = getItems(data, maxRecords, blSkip);
             if (strItems == null) {
                 break;
             }
@@ -357,7 +374,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
                     } else if (!multiLine) {
                         throw error(RError.Message.LINE_ELEMENTS, lines + 1, nc);
                     } else {
-                        strItems = getItems(data, blSkip);
+                        strItems = getItems(data, maxRecords, blSkip);
                         // Checkstyle: stop modified control variable check
                         i = 0;
                         // Checkstyle: resume modified control variable check
@@ -437,7 +454,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
         int lines = 0;
         while (true) {
             // TODO: does not do any fancy stuff, like handling comments
-            String[] strItems = getItems(data, blSkip);
+            String[] strItems = getItems(data, maxItems, blSkip);
             if (strItems == null) {
                 break;
             }

@@ -1509,9 +1509,9 @@ SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
 
 void *R_ExternalPtrAddr(SEXP s) {
     TRACE0();
-    SEXP result = ((call_R_ExternalPtrAddr) callbacks[R_ExternalPtrAddr_x])(s);
+    long result = ((call_R_ExternalPtrAddr) callbacks[R_ExternalPtrAddr_x])(s);
     checkExitCall();
-    return result;
+    return (void *)result;
 }
 
 SEXP R_ExternalPtrTag(SEXP s) {

@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
@@ -137,6 +138,8 @@ public final class MissingNode extends OperatorNode {
                 if (promiseHelper.isEvaluated(promise)) {
                     if (level > 0) {
                         return false;
+                    } else if (level == 0 && REmpty.instance == promise.getValue()) {
+                        return true;
                     }
                 } else {
                     // Check: If there is a cycle, return true. (This is done like in GNU R)

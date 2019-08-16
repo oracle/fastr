@@ -92,7 +92,7 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
         return new WrapArgumentNode(null, index);
     }
 
-    static RNode create(RNode operand, int index) {
+    public static RNode create(RNode operand, int index) {
         assert !(operand instanceof WrapArgumentNode);
         if (operand instanceof ConstantNode) {
             return operand;

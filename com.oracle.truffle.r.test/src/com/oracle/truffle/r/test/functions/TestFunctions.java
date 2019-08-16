@@ -245,6 +245,9 @@ public class TestFunctions extends TestBase {
         // If eager promise evaluates to another promise, that promise should only be evaluated if
         // it is again a simple expression without any side effects.
         assertEval(Ignored.ImplementationError, "{ bar <- function(x, y) { y; x; 42 }; foo <- function(a) bar(a, cat('side2')); foo(cat('side1')) }");
+
+        assertEval("{ options(list(width=80)); f <- function(arg, defArg = getOption('width')) { print(arg + defArg); print(defArg) }; f(80L); f(80L); f(80L) }");
+        assertEval("{ x <- rep(80, 1); f <- function(arg, defArg = x) {print(arg + defArg); print(defArg)}; f(80L); f(80L); f(80L) }");
     }
 
     @Test

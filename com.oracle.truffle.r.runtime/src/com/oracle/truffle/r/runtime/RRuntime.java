@@ -20,6 +20,9 @@
 package com.oracle.truffle.r.runtime;
 
 import java.math.BigInteger;
+import java.text.NumberFormat;
+import java.text.ParsePosition;
+import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -35,6 +38,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -496,6 +500,11 @@ public class RRuntime {
 
     @TruffleBoundary
     public static double string2doubleNoCheck(String v, boolean exceptionOnFail) {
+        return string2doubleNoCheck(v, exceptionOnFail, false);
+    }
+
+    @TruffleBoundary
+    public static double string2doubleNoCheck(String v, boolean exceptionOnFail, boolean useLocale) {
         // FIXME use R rules
         String trimmed = v.trim();
         if ("Inf".equals(trimmed) || "+Inf".equals(trimmed)) {
@@ -508,7 +517,20 @@ public class RRuntime {
             return DOUBLE_NA;
         }
         try {
-            return Double.parseDouble(trimmed);
+            if (useLocale) {
+                ParsePosition ppos = new ParsePosition(0);
+                if (trimmed.startsWith("+")) {
+                    trimmed = trimmed.substring(1);
+                }
+                Locale numLocale = RContext.getInstance().stateRLocale.getLocale(RLocale.NUMERIC);
+                Number val = NumberFormat.getInstance(numLocale).parse(trimmed, ppos);
+                if (ppos.getIndex() < trimmed.length()) {
+                    throw new NumberFormatException("Unparseable number: \"" + trimmed + "\". Failed at index " + ppos.getErrorIndex());
+                }
+                return val.doubleValue();
+            } else {
+                return Double.parseDouble(trimmed);
+            }
         } catch (NumberFormatException e) {
             if (hasHexPrefix(v)) {
                 switch (v.charAt(0)) {

@@ -45,7 +45,7 @@ class FastRProjectAdapter(mx.ArchivableProject):
                 if not filterfun or filterfun(f):
                     results.append(join(root, f))
 
-class FastRReleaseProject(FastRProjectAdapter):
+class FastRReleaseProject(FastRProjectAdapter):  # pylint: disable=too-many-ancestors
     '''
     Custom class for creating the FastR release project, which supports the
     FASTR_RELEASE distribution.

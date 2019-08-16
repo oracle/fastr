@@ -22,19 +22,5 @@
 # questions.
 #
 
-ORIG_CMD=$1
-
-SOURCE="$0"
-DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-
-if [ -d "${DIR}/../../llvm/native/bin/" ]
-then
-	# For GraalVM
-	TOOLCHAIN_CPP="${DIR}/../../llvm/native/bin/c++"
-else
-	# For dev
-	TOOLCHAIN_CPP="${DIR}/../../graal/sulong/mxbuild/SULONG_BOOTSTRAP_TOOLCHAIN/bin/c++"
-fi
-
-
+# TOOLCHAIN_CPP is set internally when launching a child process from FastR (see ProcessSystemFunctionFactory.updateEnvironment)
 ${TOOLCHAIN_CPP} "$@"

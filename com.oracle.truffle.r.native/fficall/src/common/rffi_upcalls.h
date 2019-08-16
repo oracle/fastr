@@ -232,7 +232,7 @@ typedef SEXP (*call_R_PromiseExpr)(SEXP x);
 typedef SEXP (*call_R_ClosureExpr)(SEXP x);
 typedef SEXP (*call_R_forceAndCall)(SEXP e, SEXP f, int n, SEXP rho);
 typedef SEXP (*call_R_MakeExternalPtr)(void *p, SEXP tag, SEXP prot);
-typedef void *(*call_R_ExternalPtrAddr)(SEXP s);
+typedef long (*call_R_ExternalPtrAddr)(SEXP s);
 typedef SEXP (*call_R_ExternalPtrTag)(SEXP s);
 typedef SEXP (*call_R_ExternalPtrProtected)(SEXP s);
 typedef void (*call_R_SetExternalPtrAddr)(SEXP s, void *p);

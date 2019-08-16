@@ -46,8 +46,22 @@ suite = {
   "libraries" : {
     "GNUR" : {
         "path" : "libdownloads/R-3.6.1.tar.gz", # keep in sync with the GraalVM support distribution
-        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.6.1.tar.gz"],
+        "urls" : ["https://cran.rstudio.com/src/base/R-3/R-3.6.1.tar.gz"],
         "sha1" : "0041c025561b5622e3dc88cdedf82334620cd3c2",
+        "resource" : "true"
+    },
+
+    "F2C" : {
+        "path" : "libdownloads/f2c/src.tgz",
+        "urls" : ["https://www.netlib.org/f2c/src.tgz"],
+        "sha1" : "9a12bd6038c2bb60409b29beafd2db10a06bad8e",
+        "resource" : "true"
+    },
+
+    "LIBF2C" : {
+        "path" : "libdownloads/f2c/libf2c.zip",
+        "urls" : ["https://www.netlib.org/f2c/libf2c.zip"],
+        "sha1" : "e39a00f425f8fc41dde434686080a94e94884f30",
         "resource" : "true"
     },
 
@@ -105,6 +119,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.library",
+        "sulong:SULONG_API",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -263,6 +278,8 @@ suite = {
       "sourceDirs" : [],
       "dependencies" : [
         "GNUR",
+        "F2C",
+        "LIBF2C",
         "truffle:TRUFFLE_NFI_NATIVE",
         "sulong:SULONG_BOOTSTRAP_TOOLCHAIN",
         "sulong:SULONG_LIBS",
