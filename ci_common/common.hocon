@@ -126,6 +126,9 @@ common : ${java8Downloads} {
     PKG_TEST_ENV_compare : "LC_ALL=C"
     FASTR_OPTION_PrintErrorStacktracesToFile: "true"
     GRAALVM_CHECK_EXPERIMENTAL_OPTIONS : "true"
+    # To be removed once we implement serialization version 3
+    R_DEFAULT_SAVE_VERSION: "2"
+    R_DEFAULT_SERIALIZE_VERSION: "2"
   }
 }
 
