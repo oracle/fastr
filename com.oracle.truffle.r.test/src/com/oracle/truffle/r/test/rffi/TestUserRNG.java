@@ -47,7 +47,7 @@ public class TestUserRNG extends TestBase {
             Process p = pb.start();
             int rc = p.waitFor();
             assert rc == 0;
-            assertEval(TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{dir.toString() + "/liburand.so"}));
+            assertEval(Ignored.NewRVersionMigration, TestBase.template("{ dyn.load(\"%0\"); RNGkind(\"user\"); print(RNGkind()); set.seed(4567); runif(10) }", new String[]{dir.toString() + "/liburand.so"}));
         } catch (IOException ex) {
             assert false;
         } catch (InterruptedException ex) {

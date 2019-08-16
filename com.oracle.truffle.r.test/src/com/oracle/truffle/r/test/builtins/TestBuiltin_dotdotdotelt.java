@@ -47,9 +47,9 @@ public class TestBuiltin_dotdotdotelt extends TestBase {
     @Test
     public void testdotdotdoteltError() {
         assertEval("tst <- function(n,...) ...elt(n); tst(-1, 1)");
-        assertEval("tst <- function(n,...) ...elt(n); tst(1)");
+        assertEval(Ignored.NewRVersionMigration, "tst <- function(n,...) ...elt(n); tst(1)");
         assertEval("tst <- function(n,...) ...elt(n); tst(0, 1)");
-        assertEval("tst <- function(n,...) ...elt(n); tst(5, 1, 2, 3)");
+        assertEval(Ignored.NewRVersionMigration, "tst <- function(n,...) ...elt(n); tst(5, 1, 2, 3)");
         // TODO: different error reporting for primitives
         assertEval(Output.IgnoreErrorMessage, "tst <- function(n,...) ...elt(); tst(c(1), c(1,2,3))");
         // TODO: error with conversion of string to interger

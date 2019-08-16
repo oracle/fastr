@@ -49,7 +49,7 @@ public class TestBuiltin_lgamma extends TestBase {
 
     @Test
     public void testlgamma5() {
-        assertEval("argv <- list(FALSE);lgamma(argv[[1]]);");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list(FALSE);lgamma(argv[[1]]);");
     }
 
     @Test
@@ -64,7 +64,7 @@ public class TestBuiltin_lgamma extends TestBase {
 
     @Test
     public void testlgamma9() {
-        assertEval("argv <- list(Inf);do.call('lgamma', argv)");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list(Inf);do.call('lgamma', argv)");
     }
 
     @Test
@@ -74,7 +74,7 @@ public class TestBuiltin_lgamma extends TestBase {
         assertEval("{ lgamma(7.42) }");
         assertEval("{ lgamma(as.double(NA)) }");
         assertEval("{ lgamma(c(100, 2.2)) }");
-        assertEval("{ lgamma(FALSE) }");
+        assertEval(Ignored.NewRVersionMigration, "{ lgamma(FALSE) }");
         assertEval("{ lgamma(as.raw(1)) }");
         assertEval("{ lgamma(1+1i) }");
     }

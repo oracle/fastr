@@ -91,7 +91,7 @@ public class TestS4 extends TestRBase {
         assertEval("{ x<-42; y<-asS4(x); isS4(y) }");
         assertEval("{ isS4(NULL) }");
         assertEval("{ asS4(NULL); isS4(NULL) }");
-        assertEval("{  asS4(7:42) }");
+        assertEval(Ignored.NewRVersionMigration, "{  asS4(7:42) }");
     }
 
     @Test
@@ -124,7 +124,8 @@ public class TestS4 extends TestRBase {
 
         assertEval("{ setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); res<-print(setGeneric(\"gen\", function(o) standardGeneric(\"gen\"))); removeGeneric(\"gen\"); res }");
 
-        assertEval("{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
+        assertEval(Ignored.NewRVersionMigration,
+                        "{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
 
         assertEval("{ setClass('A'); setClass('A1', contains = 'A'); setClass('A2', contains = 'A1'); setGeneric('foo', function(a, b) standardGeneric('foo')); setMethod('foo', signature('A1', 'A2'), function(a, b) '1-2'); setMethod('foo', signature('A2', 'A1'), function(a, b) '2-1'); foo(new('A2'), new('A2')) }");
 
@@ -132,7 +133,8 @@ public class TestS4 extends TestRBase {
 
         assertEval("{ setClass('A1', representation(a='numeric')); setMethod('length', 'A1', function(x) x@a); obj <- new('A1'); obj@a <- 10; length(obj) }");
 
-        assertEval("{ setClass('A2', representation(a = 'numeric')); setMethod('rep', 'A2', function(x, a, b, c) { c(x@a, a, b, c) }); setMethod('ifelse', c(yes = 'A2'), function(test, yes, no) print(test)) }");
+        assertEval(Ignored.NewRVersionMigration,
+                        "{ setClass('A2', representation(a = 'numeric')); setMethod('rep', 'A2', function(x, a, b, c) { c(x@a, a, b, c) }); setMethod('ifelse', c(yes = 'A2'), function(test, yes, no) print(test)) }");
     }
 
     @Test

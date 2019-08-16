@@ -52,7 +52,7 @@ public class TestBuiltin_printfunction extends TestBase {
 
     @Test
     public void testprintfunction4() {
-        assertEval("argv <- list(.Primitive('.Internal'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list(.Primitive('.Internal'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
     }
 
     @Test

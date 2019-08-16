@@ -79,7 +79,7 @@ public class TestBuiltin_unserialize extends TestBase {
         assertEval("options(keep.source=FALSE); unserialize(serialize(quote(f(g)$h.i), connection=NULL))");
         assertEval(Output.ContainsReferences, "options(keep.source=FALSE); val <- new.env(hash=FALSE); unserialize(serialize(val, connection=NULL))");
         assertEval(Output.ContainsReferences, "options(keep.source=FALSE); val <- list(enclos = new.env(hash=FALSE)); unserialize(serialize(val, connection=NULL))");
-        assertEval("options(keep.source=FALSE); val <- defaultPrototype(); unserialize(serialize(val, connection=NULL))");
+        assertEval(Ignored.NewRVersionMigration, "options(keep.source=FALSE); val <- defaultPrototype(); unserialize(serialize(val, connection=NULL))");
         assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function() new(\"foo\", x)), connection=NULL))");
         assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x) { new(\"BAR\", x) }), connection=NULL))");
         assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x, ...) { new(\"BAR\", x) }), connection=NULL))");

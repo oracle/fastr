@@ -79,13 +79,13 @@ public class TestBuiltin_options extends TestBase {
 
     @Test
     public void testPrompt() {
-        assertEval("{ options(prompt=NULL) }");
+        assertEval(Ignored.NewRVersionMigration, "{ options(prompt=NULL) }");
         assertEval("{ options(prompt=\"abc\"); identical(getOption(\"prompt\"), \"abc\") }");
     }
 
     @Test
     public void testContinue() {
-        assertEval("{ options(continue=NULL) }");
+        assertEval(Ignored.NewRVersionMigration, "{ options(continue=NULL) }");
         assertEval("{ options(continue=\"abc\"); identical(getOption(\"continue\"), \"abc\") }");
     }
 }

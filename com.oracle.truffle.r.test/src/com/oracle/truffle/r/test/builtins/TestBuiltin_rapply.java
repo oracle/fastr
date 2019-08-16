@@ -51,8 +51,8 @@ public class TestBuiltin_rapply extends TestBase {
         assertEval("l2 = list(a = 1:10, b = 11:20,c=c('d','a','t','a')); rapply(l2, mean, how = \"list\", classes = \"integer\")");
         assertEval("l2 = list(a = 1:10, b = 11:20,c=c('d','a','t','a')); rapply(l2, mean, how = \"unlist\", classes = \"integer\")");
         assertEval("l2 = list(a = 1:10, b = 11:20,c=c('d','a','t','a')); rapply(l2, mean, how = \"replace\", classes = \"integer\")");
-        assertEval("rapply(NULL, function(x) {2*x})");
-        assertEval("rapply(NA, function(x) {2*x})");
+        assertEval(Ignored.NewRVersionMigration, "rapply(NULL, function(x) {2*x})");
+        assertEval(Ignored.NewRVersionMigration, "rapply(NA, function(x) {2*x})");
         assertEval("rapply(list(NULL), function(x) {2*x})");
         assertEval("rapply(list(NA), function(x) {2*x})");
         assertEval("rapply(list(NULL), function(x) {2*x}, how=\"list\")");

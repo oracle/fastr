@@ -46,13 +46,13 @@ public class TestRRNG extends TestBase {
     @Test
     public void testDirectReadingSeed() {
         assertEval("invisible(runif(1)); length(.Random.seed)");
-        assertEval("set.seed(42); .Random.seed");
+        assertEval(Ignored.NewRVersionMigration, "set.seed(42); .Random.seed");
     }
 
     @Test
     public void testRemoveSeed() {
-        assertEval("{ rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(1); .Random.seed }");
+        assertEval(Ignored.NewRVersionMigration, "{ rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(1); .Random.seed }");
         assertEval(Output.IgnoreErrorContext, "{ rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); .Random.seed }");
-        assertEval("{ set.seed(1); rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(2); .Random.seed }");
+        assertEval(Ignored.NewRVersionMigration, "{ set.seed(1); rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(2); .Random.seed }");
     }
 }

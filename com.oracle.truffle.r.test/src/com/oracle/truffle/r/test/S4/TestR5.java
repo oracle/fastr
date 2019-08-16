@@ -35,11 +35,11 @@ public class TestR5 extends TestBase {
      * {@code suppressMessages} is needed to suppress messages about codetools not being available.
      */
     private void assertSuppress(String test) {
-        assertEval("print(suppressMessages({" + test + "}))");
+        assertEval(Ignored.NewRVersionMigration, "print(suppressMessages({" + test + "}))");
     }
 
     private void assertSuppressAndIgnoreWarnings(String test) {
-        assertEval(Output.IgnoreWarningMessage, "print(suppressMessages({" + test + "}))");
+        assertEval(Ignored.NewRVersionMigration, /*Output.IgnoreWarningMessage,*/"print(suppressMessages({" + test + "}))");
     }
 
     private void assertSuppress(TestTrait trait, String test) {
@@ -51,8 +51,8 @@ public class TestR5 extends TestBase {
         assertEval("{ DummyClass0 <- setRefClass('DummyClass0'); DummyClass0$new() }");
         assertEval("{ DummyClass1 <- setRefClass('DummyClass1'); is(DummyClass1, 'refClass') }");
         assertEval("{ DummyClass2 <- setRefClass('DummyClass2'); obj <- DummyClass2$new(); is(obj, 'refObject') }");
-        assertEval("{ fooClass <- setRefClass('Foo6R5', fields = list( a = 'numeric')); fooClass$new(a = 1) }");
-        assertEval("{ fooClass <- setRefClass('Foo7R5', fields = list( a = 'numeric')); fooClass$new(1) }");
+        assertEval(Ignored.NewRVersionMigration, "{ fooClass <- setRefClass('Foo6R5', fields = list( a = 'numeric')); fooClass$new(a = 1) }");
+        assertEval(Ignored.NewRVersionMigration, "{ fooClass <- setRefClass('Foo7R5', fields = list( a = 'numeric')); fooClass$new(1) }");
         assertEval("{ setRefClass('Foo16R5'); grep('Foo16R5', ls(topenv(parent.frame()), all.names = T), value = TRUE) }");
         assertEval("env0 <- new.env(); setRefClass('Foo17R5', where = env0); grep('Foo17R5', ls(topenv(parent.frame()), all.names = T), value = TRUE); ls(env0, all.names = T)");
     }
@@ -72,7 +72,7 @@ public class TestR5 extends TestBase {
         assertSuppressAndIgnoreWarnings("{ clazz <- setRefClass('Foo0R5', c('a', 'b')); clazz$methods(mean = function() { (a + b) / 2 }); obj <- clazz$new(a = 1, b = 5); obj$mean() }");
         assertEval("{ clazz <- setRefClass('Foo1R5', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); cobj <- obj$copy(); obj$a; cobj$a; obj$a <- 10; obj$a; cobj$a}");
         assertEval("clazz <- setRefClass('Foo2R5', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); obj$field('a'); obj$field('b')");
-        assertEval("clazz <- setRefClass('Foo3R5', c('a', 'b')); obj <- clazz$new(); obj$initFields(a = 5, b = 6)");
+        assertEval(Ignored.NewRVersionMigration, "clazz <- setRefClass('Foo3R5', c('a', 'b')); obj <- clazz$new(); obj$initFields(a = 5, b = 6)");
         assertEval(Output.IgnoreErrorContext, "{ clazz <- setRefClass('Foo4R5', c('a', 'b')); clazz$accessors() }");
         assertEval("{ clazz <- setRefClass('Foo5R5', c('a', 'b')); obj <- clazz$new(a = 1, b = 5); attributes(obj$getRefClass())$className }");
         assertSuppress("{ clazz <- setRefClass('Foo12R5', fields = list(a = 'numeric'), methods = list(inc = function() { a <<- a+1 })); obj <- clazz$new(a = 0); obj$inc(); obj$a }");

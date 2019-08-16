@@ -18,6 +18,7 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
+#Ignored.NewRVersionMigration
 setRefClass('A5R5', methods = list(foo = function() { print('A5R5$foo') }))
 setRefClass('B5R5', methods = list(foo = function() { print('B5R5$foo') }))
 C5R5 <- setRefClass('C5R5', contains = c('A5R5', 'B5R5'))
