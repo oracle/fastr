@@ -22,11 +22,15 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm.upcalls;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_UpCallsRFFIImpl;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
+@ExportLibrary(InteropLibrary.class)
 public class BytesToNativeCharArrayCall implements RTruffleObject {
 
     public final TruffleLLVM_UpCallsRFFIImpl upCallsImpl;
@@ -39,8 +43,21 @@ public class BytesToNativeCharArrayCall implements RTruffleObject {
         return value instanceof BytesToNativeCharArrayCall;
     }
 
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return BytesToNativeCharArrayCallMRForeign.ACCESS;
+    @ExportMessage
+    public Object execute(Object[] arguments) {
+        String strArg = (String) arguments[0];
+        return upCallsImpl.bytesToNativeCharArray(getBytes(strArg));
     }
+
+    @CompilerDirectives.TruffleBoundary
+    private static byte[] getBytes(String strArg) {
+        return strArg.getBytes();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isExecutable() {
+        return true;
+    }
+
 }

@@ -98,6 +98,7 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.LanguageClosureCache;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -310,7 +311,6 @@ public final class RContext {
     @CompilationFinal private static RRuntimeASTAccess runtimeASTAccess;
     @CompilationFinal private static ContextReferenceAccess contextReferenceAccess;
     @CompilationFinal private static RBuiltinLookup builtinLookup;
-    @CompilationFinal private static RForeignAccessFactory foreignAccessFactory;
     @CompilationFinal private static boolean initialContextInitialized;
     @CompilationFinal private static int initialPid;
 
@@ -321,13 +321,11 @@ public final class RContext {
     /**
      * Initialize VM-wide static values.
      */
-    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, ContextReferenceAccess contextReferenceAccess, RBuiltinLookup rBuiltinLookup,
-                    RForeignAccessFactory rForeignAccessFactory) {
+    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, ContextReferenceAccess contextReferenceAccess, RBuiltinLookup rBuiltinLookup) {
         RContext.astBuilder = rAstBuilder;
         RContext.runtimeASTAccess = rRuntimeASTAccess;
         RContext.contextReferenceAccess = contextReferenceAccess;
         RContext.builtinLookup = rBuiltinLookup;
-        RContext.foreignAccessFactory = rForeignAccessFactory;
     }
 
     // need an additional flag as we don't want multi-slot processing to start until context
@@ -886,10 +884,6 @@ public final class RContext {
      */
     public static RBuiltinDescriptor lookupBuiltinDescriptor(String name) {
         return builtinLookup.lookupBuiltinDescriptor(name);
-    }
-
-    public static RForeignAccessFactory getRForeignAccessFactory() {
-        return foreignAccessFactory;
     }
 
     public RCmdOptions getCmdOptions() {

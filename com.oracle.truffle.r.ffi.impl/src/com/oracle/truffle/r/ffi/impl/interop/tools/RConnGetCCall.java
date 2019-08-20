@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,17 +22,27 @@
  */
 package com.oracle.truffle.r.ffi.impl.interop.tools;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.r.runtime.conn.RConnection;
+import java.io.IOException;
 
-public class RConnGetCCall implements RTruffleObject {
-    public static boolean isInstance(TruffleObject value) {
-        return value instanceof RConnGetCCall;
+@ExportLibrary(InteropLibrary.class)
+public class RConnGetCCall implements TruffleObject {
+    @ExportMessage
+    public Object execute(Object[] arguments) {
+        try {
+            return ((RConnection) arguments[0]).getc();
+        } catch (IOException ex) {
+            return -1;
+        }
     }
 
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return RConnGetCCallMRForeign.ACCESS;
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isExecutable() {
+        return true;
     }
 }

@@ -28,24 +28,29 @@ import java.util.NoSuchElementException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Scope;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.Resolve;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.env.RScope.VariablesObject;
 import com.oracle.truffle.r.runtime.env.frame.REnvEmptyFrameAccess;
 import com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess;
 import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
@@ -192,6 +197,7 @@ public final class RScope {
         return obj;
     }
 
+    @ExportLibrary(InteropLibrary.class)
     abstract static class VariablesObject implements TruffleObject {
 
         private final REnvFrameAccess frameAccess;
@@ -202,10 +208,9 @@ public final class RScope {
             this.argumentsOnly = argumentsOnly;
         }
 
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return VariablesMessageResolutionForeign.ACCESS;
-        }
+        protected abstract String[] collectArgs();
+
+        protected abstract Object getArgument(String name);
 
         private String[] ls() {
             RStringVector ls = frameAccess.ls(true, null, false);
@@ -214,101 +219,148 @@ public final class RScope {
             return ls.getDataCopy();
         }
 
-        public static boolean isInstance(TruffleObject obj) {
-            return obj instanceof VariablesObject;
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        boolean hasMembers() {
+            return true;
         }
 
-        protected abstract String[] collectArgs();
+        @ExportMessage
+        boolean isMemberInsertable(String identifier) {
+            return !exists(identifier);
+        }
 
-        protected abstract Object getArgument(String name);
+        @ExportMessage
+        boolean isMemberModifiable(String identifier) {
+            if (!exists(identifier)) {
+                return false;
+            }
+            return frameAccess != null && !frameAccess.bindingIsLocked(identifier);
+        }
 
-        @MessageResolution(receiverType = VariablesObject.class)
-        static final class VariablesMessageResolution {
+        @ExportMessage
+        boolean isMemberInvocable(String identifier) {
+            if (!exists(identifier)) {
+                return false;
+            }
+            return frameAccess != null && get(identifier) instanceof RFunction;
+        }
 
-            @Resolve(message = "KEYS")
-            abstract static class VarsMapKeysNode extends Node {
+        @ExportMessage
+        @TruffleBoundary
+        public boolean hasMemberReadSideEffects(String identifier) {
+            if (!exists(identifier)) {
+                return false;
+            }
+            return frameAccess != null && isActiveBinding(identifier);
+        }
 
-                @TruffleBoundary
-                public Object access(VariablesObject varMap) {
-                    String[] names = null;
-                    if (varMap.argumentsOnly) {
-                        names = varMap.collectArgs();
-                    } else {
-                        names = varMap.ls();
-                    }
-                    return new ArgumentNamesObject(names);
+        @ExportMessage
+        @TruffleBoundary
+        public boolean hasMemberWriteSideEffects(String identifier) {
+            if (!exists(identifier)) {
+                return false;
+            }
+            return frameAccess != null && isActiveBinding(identifier);
+        }
+
+        @ExportMessage
+        @TruffleBoundary
+        public Object getMembers(@SuppressWarnings("unused") boolean internal) {
+            String[] names = null;
+            if (argumentsOnly) {
+                names = collectArgs();
+            } else {
+                names = ls();
+            }
+            return new ArgumentNamesObject(names);
+        }
+
+        private boolean exists(String identifier) {
+            for (String key : ls()) {
+                if (identifier.equals(key)) {
+                    return true;
                 }
             }
+            return false;
+        }
 
-            @Resolve(message = "KEY_INFO")
-            public abstract static class VarMapsKeyInfoNode extends Node {
+        @ExportMessage
+        boolean isMemberReadable(String identifier) {
+            return frameAccess != null && exists(identifier);
+        }
 
-                @TruffleBoundary
-                protected Object access(VariablesObject receiver, String identifier) {
-                    boolean exists = false;
-                    for (String key : receiver.ls()) {
-                        if (identifier.equals(key)) {
-                            exists = true;
-                            break;
-                        }
-                    }
-                    if (!exists) {
-                        return KeyInfo.INSERTABLE;
-                    }
-                    int result = KeyInfo.READABLE;
-                    if (!receiver.frameAccess.bindingIsLocked(identifier)) {
-                        result |= KeyInfo.MODIFIABLE;
-                    }
-                    if (receiver.frameAccess.isActiveBinding(identifier)) {
-                        result |= KeyInfo.READ_SIDE_EFFECTS | KeyInfo.WRITE_SIDE_EFFECTS;
-                    } else if (receiver.frameAccess.get(identifier) instanceof RFunction) {
-                        result |= KeyInfo.INVOCABLE;
-                    }
-                    return result;
-                }
+        @ExportMessage
+        Object readMember(String identifier,
+                        @Cached() R2Foreign r2Foreign,
+                        @Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnsupportedMessageException, UnknownIdentifierException {
+            if (frameAccess == null) {
+                throw UnsupportedMessageException.create();
             }
+            Object value = getValue(identifier);
 
-            @Resolve(message = "READ")
-            abstract static class VarsMapReadNode extends Node {
-                @Child private R2Foreign r2Foreign = R2Foreign.create();
-
-                @TruffleBoundary
-                public Object access(VariablesObject varMap, String name) {
-                    if (varMap.frameAccess == null) {
-                        throw UnsupportedMessageException.raise(Message.READ);
-                    }
-                    Object value = varMap.frameAccess.get(name);
-                    if (value == null) {
-                        // internal builtin argument?
-                        value = ((EnvVariablesObject) varMap).getArgument(name);
-                    }
-
-                    // If Java-null is returned, the identifier does not exist !
-                    if (value == null) {
-                        throw UnknownIdentifierException.raise(name);
-                    } else {
-                        return r2Foreign.convert(getInteropValue(value));
-                    }
-                }
+            // If Java-null is returned, the identifier does not exist !
+            if (unknownIdentifier.profile(value == null)) {
+                throw UnknownIdentifierException.create(identifier);
+            } else {
+                return r2Foreign.convert(getInteropValue(value));
             }
+        }
 
-            @Resolve(message = "WRITE")
-            abstract static class VarsMapWriteNode extends Node {
-                @Child private Foreign2R foreign2R = Foreign2R.create();
-
-                @TruffleBoundary
-                public Object access(VariablesObject varMap, String name, Object value) {
-                    if (varMap.frameAccess == null) {
-                        throw UnsupportedMessageException.raise(Message.WRITE);
-                    }
-                    try {
-                        varMap.frameAccess.put(name, foreign2R.convert(value));
-                        return value;
-                    } catch (PutException e) {
-                        throw RInternalError.shouldNotReachHere(e);
-                    }
-                }
+        private Object getValue(String identifier) {
+            Object value = get(identifier);
+            if (value == null) {
+                // internal builtin argument?
+                value = getArgument(identifier);
             }
+            return value;
+        }
+
+        @ExportMessage
+        void writeMember(String identifier, Object value,
+                        @Cached() Foreign2R foreign2R) throws UnsupportedMessageException {
+            if (frameAccess == null) {
+                throw UnsupportedMessageException.create();
+            }
+            try {
+                put(identifier, foreign2R.convert(value));
+            } catch (PutException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        }
+
+        @ExportMessage
+        Object invokeMember(String identifier, Object[] args,
+                        @Cached() RFunction.ExplicitCall c,
+                        @Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
+                        @Exclusive @Cached("createBinaryProfile()") ConditionProfile isFunction) throws UnsupportedMessageException, UnknownIdentifierException {
+            if (frameAccess == null) {
+                throw UnsupportedMessageException.create();
+            }
+            Object value = getValue(identifier);
+            // If Java-null is returned, the identifier does not exist !
+            if (unknownIdentifier.profile(value == null)) {
+                throw UnknownIdentifierException.create(identifier);
+            } else if (isFunction.profile(value instanceof RFunction)) {
+                return c.execute((RFunction) value, args);
+            } else {
+                throw UnsupportedMessageException.create();
+            }
+        }
+
+        @TruffleBoundary
+        private Object get(String identifier) {
+            return frameAccess.get(identifier);
+        }
+
+        @TruffleBoundary
+        private void put(String identifier, Object value) throws PutException {
+            frameAccess.put(identifier, value);
+        }
+
+        @TruffleBoundary
+        private boolean isActiveBinding(String identifier) {
+            return frameAccess.isActiveBinding(identifier);
         }
     }
 
@@ -352,6 +404,9 @@ public final class RScope {
                 } else {
                     signature = RArguments.getSuppliedSignature(env.getFrame());
                 }
+                if (signature == null) {
+                    return null;
+                }
                 for (int i = 0; i < signature.getLength(); i++) {
                     if (name.equals(signature.getName(i))) {
                         return RArguments.getArgument(env.getFrame(), i);
@@ -381,6 +436,7 @@ public final class RScope {
 
     }
 
+    @ExportLibrary(InteropLibrary.class)
     static final class ArgumentNamesObject implements TruffleObject {
 
         private final String[] names;
@@ -389,47 +445,35 @@ public final class RScope {
             this.names = names;
         }
 
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return ArgumentNamesMessageResolutionForeign.ACCESS;
-        }
-
         public static boolean isInstance(TruffleObject obj) {
             return obj instanceof ArgumentNamesObject;
         }
 
-        @MessageResolution(receiverType = ArgumentNamesObject.class)
-        static final class ArgumentNamesMessageResolution {
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        boolean hasArrayElements() {
+            return true;
+        }
 
-            @Resolve(message = "HAS_SIZE")
-            abstract static class ArgNamesHasSizeNode extends Node {
+        @ExportMessage
+        long getArraySize() {
+            return names.length;
+        }
 
-                public Object access(@SuppressWarnings("unused") ArgumentNamesObject varNames) {
-                    return true;
-                }
+        @ExportMessage
+        boolean isArrayElementReadable(long idx) {
+            return idx >= 0 && idx < names.length;
+        }
+
+        @ExportMessage
+        Object readArrayElement(long idx,
+                        @Cached("createBinaryProfile()") ConditionProfile invalidIndex) throws InvalidArrayIndexException {
+            String[] nms = this.names;
+            if (invalidIndex.profile(!isArrayElementReadable(idx))) {
+                throw InvalidArrayIndexException.create(idx);
             }
-
-            @Resolve(message = "GET_SIZE")
-            abstract static class ArgNamesGetSizeNode extends Node {
-
-                public Object access(ArgumentNamesObject varNames) {
-                    return varNames.names.length;
-                }
-            }
-
-            @Resolve(message = "READ")
-            abstract static class ArgNamesReadNode extends Node {
-
-                @TruffleBoundary
-                public Object access(ArgumentNamesObject varNames, int index) {
-                    String[] names = varNames.names;
-                    if (index >= 0 && index < names.length) {
-                        return names[index];
-                    } else {
-                        throw UnknownIdentifierException.raise(Integer.toString(index));
-                    }
-                }
-            }
+            int index = RRuntime.interopArrayIndexToInt(idx, this);
+            return nms[index];
         }
     }
 }

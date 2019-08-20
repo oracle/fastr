@@ -48,6 +48,7 @@ import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
@@ -143,7 +144,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
             }
         }
         RFFIVariables[] variables = RFFIVariables.initialize(context);
-        boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
+        boolean isNullSetting = RNull.setIsNull(context, false);
         try {
             for (int i = 0; i < variables.length; i++) {
                 RFFIVariables var = variables[i];
@@ -164,7 +165,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
                 }
             }
         } finally {
-            RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
+            RNull.setIsNull(context, isNullSetting);
         }
     }
 
@@ -257,7 +258,8 @@ public final class TruffleLLVM_Call implements CallRFFI {
 
         @ExplodeLoop
         private Object doInvoke(InteropLibrary interop, TruffleObject truffleObject, Object[] args, ToNativeNode[] convert) {
-            boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
+            RContext ctx = RContext.getInstance();
+            boolean isNullSetting = RNull.setIsNull(ctx, false);
             try {
                 if (convert != null) {
                     for (int i = 0; i < convert.length; i++) {
@@ -280,7 +282,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
                     throw ex;
                 }
             } finally {
-                RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
+                RNull.setIsNull(ctx, isNullSetting);
             }
         }
 

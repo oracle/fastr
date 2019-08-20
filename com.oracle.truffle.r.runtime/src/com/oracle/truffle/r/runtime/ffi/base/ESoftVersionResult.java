@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,12 @@ package com.oracle.truffle.r.runtime.ffi.base;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
+@ExportLibrary(InteropLibrary.class)
 public final class ESoftVersionResult implements RTruffleObject {
     private final Map<String, String> paths = new HashMap<>();
 
@@ -35,12 +38,22 @@ public final class ESoftVersionResult implements RTruffleObject {
         paths.put(libName, version);
     }
 
-    public Map<String, String> getVersions() {
-        return paths;
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isExecutable() {
+        return true;
     }
 
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return ESoftVersionResultMRForeign.ACCESS;
+    @ExportMessage
+    public Object execute(Object[] arguments) {
+        if (arguments.length == 2) {
+            putVersion("zlib", arguments[0].toString());
+            putVersion("PCRE", arguments[1].toString());
+        }
+        return this;
+    }
+
+    public Map<String, String> getVersions() {
+        return paths;
     }
 }

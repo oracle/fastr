@@ -42,6 +42,7 @@ import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_CallFactory.TruffleNFI_Invok
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
@@ -92,7 +93,8 @@ public class TruffleNFI_Call implements CallRFFI {
                         @CachedLibrary("cachedFunction") InteropLibrary interop) {
             Object result = null;
             Object[] realArgs = new Object[cachedArgsLength + 1];
-            boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
+            RContext ctx = RContext.getInstance();
+            boolean isNullSetting = prepareCall(ctx, nativeCallInfo.name, args, ffiWrapNodes);
             try {
                 System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
                 realArgs[0] = cachedAddress;
@@ -102,7 +104,7 @@ public class TruffleNFI_Call implements CallRFFI {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
                 assert realArgs != null; // to keep the values alive
-                prepareReturn(nativeCallInfo.name, result, isNullSetting);
+                prepareReturn(ctx, nativeCallInfo.name, result, isNullSetting);
             }
         }
 
@@ -114,7 +116,8 @@ public class TruffleNFI_Call implements CallRFFI {
                         @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
             Object result = null;
             Object[] realArgs = new Object[cachedArgsLength + 1];
-            boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
+            RContext ctx = RContext.getInstance();
+            boolean isNullSetting = prepareCall(ctx, nativeCallInfo.name, args, ffiWrapNodes);
             try {
                 System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
                 realArgs[0] = nativeCallInfo.address.asTruffleObject();
@@ -124,7 +127,7 @@ public class TruffleNFI_Call implements CallRFFI {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
                 assert realArgs != null; // to keep the values alive
-                prepareReturn(nativeCallInfo.name, result, isNullSetting);
+                prepareReturn(ctx, nativeCallInfo.name, result, isNullSetting);
             }
         }
 
@@ -145,15 +148,16 @@ public class TruffleNFI_Call implements CallRFFI {
         @Override
         public void execute(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
             boolean isNullSetting = true;
+            RContext ctx = RContext.getInstance();
             try {
                 switch (args.length) {
                     case 0:
-                        isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes0);
+                        isNullSetting = prepareCall(ctx, nativeCallInfo.name, args, ffiWrapNodes0);
                         TruffleObject callVoid0Function = getFunction("dot_call_void0", CallVoid0Sig);
                         execute0Interop.execute(callVoid0Function, nativeCallInfo.address.asTruffleObject());
                         break;
                     case 1:
-                        isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes1);
+                        isNullSetting = prepareCall(ctx, nativeCallInfo.name, args, ffiWrapNodes1);
                         TruffleObject callVoid1Function = getFunction("dot_call_void1", CallVoid1Sig);
                         execute1Interop.execute(callVoid1Function, nativeCallInfo.address.asTruffleObject(), args[0]);
                         break;
@@ -163,13 +167,13 @@ public class TruffleNFI_Call implements CallRFFI {
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                prepareReturn(nativeCallInfo.name, null, isNullSetting);
+                prepareReturn(ctx, nativeCallInfo.name, null, isNullSetting);
             }
         }
     }
 
     @ExplodeLoop
-    private static boolean prepareCall(String name, Object[] args, FFIWrapNode[] ffiWrapNodes) {
+    private static boolean prepareCall(RContext ctx, String name, Object[] args, FFIWrapNode[] ffiWrapNodes) {
         CompilerAsserts.compilationConstant(ffiWrapNodes.length);
         if (logEnabled()) {
             logDownCall(name, args);
@@ -177,12 +181,12 @@ public class TruffleNFI_Call implements CallRFFI {
         for (int i = 0; i < ffiWrapNodes.length; i++) {
             args[i] = ffiWrapNodes[i].execute(args[i]);
         }
-        boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
+        boolean isNullSetting = RNull.setIsNull(ctx, false);
         return isNullSetting;
     }
 
-    private static void prepareReturn(String name, Object result, boolean isNullSetting) {
-        RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
+    private static void prepareReturn(RContext ctx, String name, Object result, boolean isNullSetting) {
+        RNull.setIsNull(ctx, isNullSetting);
         if (logEnabled()) {
             logDownCallReturn(name, result);
         }

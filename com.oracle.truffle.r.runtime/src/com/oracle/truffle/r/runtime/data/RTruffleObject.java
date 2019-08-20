@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.context.RContext;
 
@@ -40,8 +39,4 @@ import com.oracle.truffle.r.runtime.context.RContext;
  *
  */
 public interface RTruffleObject extends TruffleObject {
-    @Override
-    default ForeignAccess getForeignAccess() {
-        return RContext.getRForeignAccessFactory().getForeignAccess(this);
-    }
 }

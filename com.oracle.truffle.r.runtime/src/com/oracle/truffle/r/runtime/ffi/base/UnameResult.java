@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,31 @@
  */
 package com.oracle.truffle.r.runtime.ffi.base;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
 
+@ExportLibrary(InteropLibrary.class)
 public final class UnameResult implements UtsName, RTruffleObject {
     private String sysname;
     private String release;
     private String version;
     private String machine;
     private String nodename;
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isExecutable() {
+        return true;
+    }
+
+    @ExportMessage
+    Object execute(Object[] arguments) {
+        setResult((String) arguments[0], (String) arguments[1], (String) arguments[2], (String) arguments[3], (String) arguments[4]);
+        return this;
+    }
 
     public void setResult(String sysnameA, String releaseA, String versionA, String machineA, String nodenameA) {
         sysname = sysnameA;
@@ -64,10 +79,5 @@ public final class UnameResult implements UtsName, RTruffleObject {
     @Override
     public String nodename() {
         return nodename;
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return UnameResultMRForeign.ACCESS;
     }
 }

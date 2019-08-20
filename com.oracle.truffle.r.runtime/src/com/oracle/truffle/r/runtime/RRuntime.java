@@ -1089,10 +1089,10 @@ public class RRuntime {
         } catch (UnsupportedMessageException ex) {
             throw RInternalError.shouldNotReachHere();
         }
-        return interopArraySizeToInt(size, object);
+        return interopArrayIndexToInt(size, object);
     }
 
-    private static int interopArraySizeToInt(long size, Object object) throws RError {
+    public static int interopArrayIndexToInt(long size, Object object) throws RError {
         if (size <= Integer.MAX_VALUE) {
             return (int) size;
         }

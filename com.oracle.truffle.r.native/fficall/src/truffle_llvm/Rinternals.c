@@ -68,13 +68,7 @@ char *ensure_truffle_chararray(const char *x) {
 }
 
 void *ensure_string(const char *x) {
-	if (polyglot_can_execute(x)) {
-		// The input argument may also be a NativeCharArray object. The wrapped String is
-		// extracted by sending the EXECUTE message.
-		return ((void*(*)())x)();
-	} else {
-		return x == NULL ? NULL : polyglot_from_string(x, "ascii");
-	}
+    return x == NULL ? NULL : polyglot_from_string(x, "ascii");
 }
 
 void *ensure_function(void *fptr) {

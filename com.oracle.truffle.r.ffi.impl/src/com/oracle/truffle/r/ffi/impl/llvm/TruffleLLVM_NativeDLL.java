@@ -24,13 +24,11 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.CanResolve;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
@@ -43,48 +41,30 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
  * Direct access to native {@code dlopen} for libraries for which no LLVM code is available.
  */
 class TruffleLLVM_NativeDLL {
-    public interface ErrorCallback {
-        void setResult(String errorMessage);
 
+    @ExportLibrary(InteropLibrary.class)
+    public abstract static class ErrorCallback implements RTruffleObject {
+        abstract void setResult(String errorMessage);
+
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        boolean isExecutable() {
+            return true;
+        }
+
+        @ExportMessage
+        public Object execute(Object[] arguments) {
+            setResult("" + arguments[0]);
+            return this;
+        }
     }
 
-    private static class ErrorCallbackImpl implements ErrorCallback, RTruffleObject {
+    private static class ErrorCallbackImpl extends ErrorCallback {
         private String errorMessage;
 
         @Override
         public void setResult(String errorMessage) {
             this.errorMessage = errorMessage;
-        }
-
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return ErrorCallbackCallbackMRForeign.ACCESS;
-        }
-    }
-
-    @MessageResolution(receiverType = ErrorCallback.class)
-    public static class ErrorCallbackCallbackMR {
-        @CanResolve
-        public abstract static class ErrorCallbackCheckNode extends Node {
-
-            protected static boolean test(TruffleObject receiver) {
-                return receiver instanceof ErrorCallback;
-            }
-        }
-
-        @Resolve(message = "IS_EXECUTABLE")
-        public abstract static class ErrorCallbackIsExecutableNode extends Node {
-            protected Object access(@SuppressWarnings("unused") ErrorCallback receiver) {
-                return true;
-            }
-        }
-
-        @Resolve(message = "EXECUTE")
-        public abstract static class ErrorCallbackExecuteNode extends Node {
-            protected Object access(@SuppressWarnings("unused") VirtualFrame frame, ErrorCallback receiver, Object[] arguments) {
-                receiver.setResult("" + arguments[0]);
-                return receiver;
-            }
         }
     }
 

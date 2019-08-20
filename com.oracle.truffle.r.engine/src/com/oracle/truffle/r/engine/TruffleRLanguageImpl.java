@@ -28,6 +28,9 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Scope;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.TruffleLanguage.InlineParsingRequest;
+import com.oracle.truffle.api.TruffleLanguage.ParsingRequest;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
@@ -38,7 +41,6 @@ import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -124,7 +126,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
     protected RContext createContext(Env env) {
         boolean initialContext = !systemInitialized;
         if (initialContext) {
-            RContext.initializeGlobalState(new RASTBuilder(false), new RRuntimeASTAccessImpl(), new ContextReferenceAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
+            RContext.initializeGlobalState(new RASTBuilder(false), new RRuntimeASTAccessImpl(), new ContextReferenceAccessImpl(), RBuiltinPackages.getInstance());
         }
         return RContext.create(this, env, env.lookup(Instrumenter.class), initialContext);
     }
