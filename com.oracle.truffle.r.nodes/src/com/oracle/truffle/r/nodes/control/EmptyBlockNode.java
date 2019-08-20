@@ -22,26 +22,49 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
-/**
- * A {@link AbstractBlockNode} represents a sequence of statements created by "{ ... }" in source
- * code.
- */
-public abstract class AbstractBlockNode extends OperatorNode {
+final class EmptyBlockNode extends AbstractBlockNode {
+    @Child private SetVisibilityNode visibility;
 
-    public AbstractBlockNode(SourceSection src, RSyntaxLookup operator) {
+    EmptyBlockNode(SourceSection src, RSyntaxLookup operator) {
         super(src, operator);
     }
 
-    public static AbstractBlockNode create(SourceSection src, RSyntaxLookup operator, RNode[] sequence) {
-        if (sequence.length == 0) {
-            return new EmptyBlockNode(src, operator);
-        } else if (sequence.length == 1) {
-            return new SingleStmtBlockNode(src, operator, sequence[0]);
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return RNull.instance;
+    }
+
+    @Override
+    public void voidExecute(VirtualFrame frame) {
+        // nop
+    }
+
+    @Override
+    public Object visibleExecute(VirtualFrame frame) {
+        if (visibility == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            visibility = insert(SetVisibilityNode.create());
         }
-        return new RBlockNode(src, operator, sequence);
+        visibility.execute(frame, true);
+        return RNull.instance;
+    }
+
+    @Override
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(0);
+    }
+
+    @Override
+    public RSyntaxElement[] getSyntaxArguments() {
+        return new RSyntaxElement[0];
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,8 +40,8 @@ public class RSyntaxTags {
      * {@code RootTag} is supposed to save arguments and then invoke the actual body tagged with
      * this tag.
      *
-     * More technically, this tag tags {@link com.oracle.truffle.r.nodes.control.BlockNode}s that
-     * have parent of type {@link RootBodyNode}.
+     * More technically, this tag tags {@link com.oracle.truffle.r.nodes.control.AbstractBlockNode}s
+     * that have parent of type {@link RootBodyNode}.
      */
     @Tag.Identifier("FUNCTIONBODYBLOCK")
     public static final class FunctionBodyBlockTag extends Tag {

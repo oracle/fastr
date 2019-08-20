@@ -134,6 +134,10 @@ public final class RASTUtils {
         return result;
     }
 
+    public static RSyntaxNode[] asSyntaxNodes(RNode node) {
+        return new RSyntaxNode[]{node.asRSyntaxNode()};
+    }
+
     public static boolean isLookup(RBaseNode node, String identifier) {
         RSyntaxNode element = node.asRSyntaxNode();
         return element instanceof RSyntaxLookup && identifier.equals(((RSyntaxLookup) element).getIdentifier());

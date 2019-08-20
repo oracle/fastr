@@ -35,6 +35,7 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.instrumentation.StandardTags.CallTag;
 import com.oracle.truffle.api.instrumentation.StandardTags.RootTag;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
+import com.oracle.truffle.api.nodes.BlockNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.launcher.RMain;
@@ -54,7 +55,6 @@ import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
 import com.oracle.truffle.r.nodes.control.AbstractBlockNode;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
-import com.oracle.truffle.r.nodes.control.BlockNode.HugeBlockRootNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -324,7 +324,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             // How to recognize statement from some node inside a statement (e.g. expression)?
             Node parent = ((RInstrumentableNode) node).unwrapParent();
-            if (parent instanceof AbstractBlockNode) {
+            if (parent instanceof BlockNode || parent instanceof AbstractBlockNode) {
                 // It's in a block of statements
                 return true;
             } else {
@@ -332,7 +332,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 // note: RepeatingNode is not a RSyntaxElement but the body of a loop is
                 // under the repeating node !
                 return parent instanceof RootBodyNode || parent instanceof IfNode || AbstractLoopNode.isLoopBody(node) ||
-                                EngineRootNode.isEngineBody(parent) || parent instanceof HugeBlockRootNode;
+                                EngineRootNode.isEngineBody(parent);
             }
         }
         // TODO: ExpressionTag: (!statement && !loop && !if && !call && !root)??
