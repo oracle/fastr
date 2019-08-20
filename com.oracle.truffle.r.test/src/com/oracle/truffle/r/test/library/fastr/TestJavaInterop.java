@@ -285,7 +285,7 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testNoJavaInterop() {
-        org.graalvm.polyglot.Context context = FastRSession.getContextBuilder("R").allowHostClassLookup(null).build();
+        org.graalvm.polyglot.Context context = FastRSession.getContextBuilder("R", "llvm").allowHostClassLookup(null).build();
         // new('integer') creates regular R object, no attempt to create a Java object
         assertEquals("integer(0)", context.eval("R", "new('integer');").toString());
         // cannot create Boolean object

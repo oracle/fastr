@@ -90,7 +90,7 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testPolyglotAccessWhenPolyglotBindingsAreDisabled() {
-        try (org.graalvm.polyglot.Context context = FastRSession.getContextBuilder("R").allowPolyglotAccess(PolyglotAccess.NONE).build()) {
+        try (org.graalvm.polyglot.Context context = FastRSession.getContextBuilder("R", "llvm").build()) {
             context.eval("R", "eval.polyglot('js', '1+3')");
             Assert.fail("no PolyglotException exception occurred");
         } catch (PolyglotException ex) {
