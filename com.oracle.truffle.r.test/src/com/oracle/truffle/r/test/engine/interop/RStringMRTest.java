@@ -36,6 +36,22 @@ public class RStringMRTest extends AbstractMRTest {
     }
 
     @Override
+    protected boolean isNull(TruffleObject obj) {
+        assert obj instanceof RString;
+        return ((RString) obj).isNA();
+    }
+
+    @Override
+    protected int getSize(TruffleObject arg0) {
+        return 1;
+    }
+
+    @Override
+    protected boolean canRead(TruffleObject arg0) {
+        return true;
+    }
+
+    @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
         return new TruffleObject[]{RString.valueOf("abc"), RString.valueOf(RRuntime.STRING_NA)};
     }
@@ -53,6 +69,6 @@ public class RStringMRTest extends AbstractMRTest {
 
     @Override
     protected boolean shouldTestToNative(TruffleObject obj) {
-        return false;
+        return true;
     }
 }

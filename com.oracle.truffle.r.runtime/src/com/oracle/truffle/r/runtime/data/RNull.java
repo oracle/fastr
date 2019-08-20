@@ -55,22 +55,6 @@ public final class RNull extends RBaseObject implements RScalar {
         return RContext.getInstance().stateRNullMR.isNull();
     }
 
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    void toNative() {
-        NativeDataAccess.asPointer(this);
-    }
-
     /**
      * Workaround to avoid NFI converting {@link RNull} to {@code null}.
      */

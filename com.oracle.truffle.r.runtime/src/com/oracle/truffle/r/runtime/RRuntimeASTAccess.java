@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -187,4 +188,23 @@ public interface RRuntimeASTAccess {
     RContext getCurrentContext();
 
     Object createLanguageElement(RSyntaxElement element);
+
+    interface ArrayAttributeAccess extends NodeInterface {
+        RAttribute[] execute(Object attrs);
+    }
+
+    ArrayAttributeAccess createArrayAttributeAccess(boolean cached);
+
+    interface UpdateSlotAccess extends NodeInterface {
+        Object execute(VirtualFrame frame, Object object, Object name, Object value);
+    }
+
+    UpdateSlotAccess createUpdateSlotAccess();
+
+    interface AccessSlotAccess extends NodeInterface {
+        Object execute(Object o, Object name);
+    }
+
+    AccessSlotAccess createAccessSlotAccess();
+
 }

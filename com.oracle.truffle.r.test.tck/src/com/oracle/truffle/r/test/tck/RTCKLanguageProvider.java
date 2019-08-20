@@ -111,8 +111,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         vals.add(createValueConstructor(context, "1.42", intersection(TypeDescriptor.NUMBER, array(TypeDescriptor.NUMBER))));
         vals.add(createValueConstructor(context, "FALSE", intersection(TypeDescriptor.BOOLEAN, array(TypeDescriptor.BOOLEAN))));
         vals.add(createValueConstructor(context, "'TEST'", intersection(TypeDescriptor.STRING, array(TypeDescriptor.STRING))));
-        vals.add(createValueConstructor(context, "1+1i", intersection())); // generic
-                                                                           // type
+        vals.add(createValueConstructor(context, "1+1i", intersection(TypeDescriptor.OBJECT, array(TypeDescriptor.OBJECT))));
 
         // TODO NULL, raw, s4, env, list, empty, ...
         vals.add(createValueConstructor(context, "NULL", TypeDescriptor.NULL));

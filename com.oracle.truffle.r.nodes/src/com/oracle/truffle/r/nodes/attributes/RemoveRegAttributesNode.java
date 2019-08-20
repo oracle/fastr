@@ -31,6 +31,9 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -44,9 +47,9 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
 
     private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
 
-    @Child private GetFixedAttributeNode dimAttrGetter = GetFixedAttributeNode.createDim();
-    @Child private GetFixedAttributeNode namesAttrGetter = GetFixedAttributeNode.createNames();
-    @Child private GetFixedAttributeNode classAttrGetter = GetFixedAttributeNode.createClass();
+    @Child private GetDimAttributeNode dimAttrGetter = GetFixedAttributeNode.createDim();
+    @Child private GetNamesAttributeNode namesAttrGetter = GetFixedAttributeNode.createNames();
+    @Child private GetClassAttributeNode classAttrGetter = GetFixedAttributeNode.createClass();
     @Child private RemoveFixedAttributeNode removeClassAttributeNode;
 
     protected RemoveRegAttributesNode() {

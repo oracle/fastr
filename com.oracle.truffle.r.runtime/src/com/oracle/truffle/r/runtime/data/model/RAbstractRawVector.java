@@ -30,10 +30,22 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import java.util.Arrays;
 
-public abstract class RAbstractRawVector extends RAbstractAtomicVector {
+public abstract class RAbstractRawVector extends RAbstractNumericVector {
 
     public RAbstractRawVector(boolean complete) {
         super(complete);
+    }
+
+    @Override
+    protected boolean isScalarNA() {
+        assert getLength() == 1;
+        return false;
+    }
+
+    @Override
+    protected Object getScalarValue() {
+        assert getLength() == 1;
+        return getRawDataAt(0);
     }
 
     @Override

@@ -23,6 +23,13 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
@@ -31,12 +38,69 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RInteropNA.RInteropComplexNA;
 import java.util.Arrays;
 
+@ExportLibrary(InteropLibrary.class)
 public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
+
+    public static final String MEMBER_RE = "re";
+    public static final String MEMBER_IM = "im";
 
     public RAbstractComplexVector(boolean complete) {
         super(complete);
+    }
+
+    @ExportMessage
+    public final boolean isNull() {
+        if (!isScalar()) {
+            return false;
+        }
+        return RRuntime.isNA(getDataAt(0));
+    }
+
+    @ExportMessage
+    boolean hasMembers() {
+        return isScalar() && !RRuntime.isNA(getDataAt(0));
+    }
+
+    @ExportMessage
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal,
+                    @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers) throws UnsupportedMessageException {
+        if (noMembers.profile(!hasMembers())) {
+            throw UnsupportedMessageException.create();
+        }
+        return RDataFactory.createStringVector(new String[]{MEMBER_RE, MEMBER_IM}, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @ExportMessage
+    boolean isMemberReadable(String member,
+                    @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers) {
+        if (noMembers.profile(!hasMembers())) {
+            return false;
+        }
+        return MEMBER_RE.equals(member) || MEMBER_IM.equals(member);
+    }
+
+    @ExportMessage
+    Object readMember(String member,
+                    @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNullIdentifier) throws UnknownIdentifierException, UnsupportedMessageException {
+        if (noMembers.profile(!hasMembers())) {
+            throw UnsupportedMessageException.create();
+        }
+        if (unknownIdentifier.profile(!isMemberReadable(member, noMembers))) {
+            throw UnknownIdentifierException.create(member);
+        }
+        if (isNullIdentifier.profile(isNull())) {
+            return new RInteropComplexNA(getDataAt(0));
+        }
+        if (MEMBER_RE.equals(member)) {
+            return getDataAt(0).getRealPart();
+        } else {
+            return getDataAt(0).getImaginaryPart();
+        }
     }
 
     @Override

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
@@ -50,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
  * {@link RAbstractListBaseVector}.
  */
 @ImportStatic(DSLConfig.class)
+@GenerateUncached
 public abstract class ExtractListElement extends Node {
 
     public abstract Object execute(RAbstractContainer container, int index);

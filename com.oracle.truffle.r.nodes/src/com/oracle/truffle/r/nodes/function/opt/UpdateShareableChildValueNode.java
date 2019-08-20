@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -32,6 +33,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 /**
  * Implements a fast-path version of {@code UpdateShareableChildValue}.
  */
+@GenerateUncached
 public abstract class UpdateShareableChildValueNode extends RBaseNode {
 
     public abstract void execute(Object owner, Object attrValue);

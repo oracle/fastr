@@ -22,9 +22,30 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+
+@ExportLibrary(InteropLibrary.class)
 public abstract class RBaseObject extends RObject implements RTypedValue {
 
     private int typedValueInfo;
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    public long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    public void toNative() {
+        NativeDataAccess.asPointer(this);
+    }
 
     @Override
     public final int getTypedValueInfo() {

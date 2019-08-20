@@ -229,22 +229,6 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
         throw UnsupportedMessageException.create();
     }
 
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    void toNative() {
-        NativeDataAccess.asPointer(this);
-    }
-
     @TruffleBoundary
     private void copyAttributesFromClosure() {
         RAttributable.copyAttributes(this, closure.getSyntaxElement().getAttributes());

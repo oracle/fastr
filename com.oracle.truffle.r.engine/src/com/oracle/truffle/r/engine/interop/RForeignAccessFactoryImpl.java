@@ -36,8 +36,8 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
-import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -104,7 +104,7 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
         } else if (obj instanceof RConnection) {
             return null;
         } else if (obj instanceof RS4Object) {
-            return RS4ObjectMRForeign.ACCESS;
+            return null;
         } else if (obj instanceof RPromise) {
             return null;
         } else if (obj instanceof RArgsValuesAndNames) {
@@ -120,7 +120,7 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
         } else if (obj instanceof RInteropNA) {
             return null;
         } else if (obj instanceof RAbstractAtomicVector) {
-            return RAbstractVectorAccessFactory.ACCESS;
+            return null;
         } else if (obj instanceof RForeignObjectWrapper) {
             return null;
         } else {

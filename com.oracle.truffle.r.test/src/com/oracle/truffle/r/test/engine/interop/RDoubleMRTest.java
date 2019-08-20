@@ -36,8 +36,24 @@ public class RDoubleMRTest extends AbstractMRTest {
     }
 
     @Override
+    protected boolean isNull(TruffleObject obj) {
+        assert obj instanceof RDouble;
+        return ((RDouble) obj).isNA();
+    }
+
+    @Override
+    protected int getSize(TruffleObject arg0) {
+        return 1;
+    }
+
+    @Override
+    protected boolean canRead(TruffleObject arg0) {
+        return true;
+    }
+
+    @Override
     protected boolean shouldTestToNative(TruffleObject obj) {
-        return false;
+        return true;
     }
 
     @Override

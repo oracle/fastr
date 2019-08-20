@@ -22,22 +22,21 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Test;
-
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 public class RS4ObjectMRTest extends AbstractMRTest {
 
@@ -46,6 +45,13 @@ public class RS4ObjectMRTest extends AbstractMRTest {
         TruffleObject s4 = createTruffleObjects()[0];
         int info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), s4, "nnoonnee");
         assertFalse(KeyInfo.isExisting(info));
+        assertFalse(KeyInfo.isReadable(info));
+        assertFalse(KeyInfo.isInsertable(info));
+        assertFalse(KeyInfo.isInternal(info));
+        assertFalse(KeyInfo.isInvocable(info));
+        assertFalse(KeyInfo.isModifiable(info));
+        assertFalse(KeyInfo.isRemovable(info));
+        assertFalse(KeyInfo.isWritable(info));
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), s4, 0);
         assertFalse(KeyInfo.isExisting(info));
 
@@ -100,25 +106,36 @@ public class RS4ObjectMRTest extends AbstractMRTest {
         assertSingletonVector(1.1, ForeignAccess.sendRead(Message.READ.createNode(), s4, "d"));
         assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), s4, "b"));
 
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), s4, "nnnoooonnne"), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), s4, 0), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), s4, 1d), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), s4, 1f), UnknownIdentifierException.class);
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), s4,
+                        "nnnoooonnne"), UnknownIdentifierException.class);
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), s4, 0),
+                        UnsupportedMessageException.class);
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), s4, 1d),
+                        UnsupportedMessageException.class);
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), s4, 1f),
+                        UnsupportedMessageException.class);
 
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "class", "cantchangeclass"), UnsupportedMessageException.class);
+        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "class",
+                        "cantchangeclass"), UnsupportedMessageException.class);
+
+        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), s4,
+                        "nnnoooonnne", "newvalue"), UnsupportedMessageException.class);
+
         // TODO this should fail !!!
-        // assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "i",
-        // "cant write string into int slot"), UnsupportedMessageException.class);
+        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "i",
+                        "cant write string into int slot"), RError.class);
 
         ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "s", "abc");
         Object value = ForeignAccess.sendRead(Message.READ.createNode(), s4, "s");
         assertSingletonVector("abc", value);
-        assertEquals("abc", ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) value, 0));
+        assertEquals("abc", ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) value,
+                        0));
 
         ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "b", false);
         value = ForeignAccess.sendRead(Message.READ.createNode(), s4, "b");
         assertSingletonVector(false, value);
-        assertEquals(false, ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) value, 0));
+        assertEquals(false, ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) value,
+                        0));
 
         ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "i", (short) 1234);
         value = ForeignAccess.sendRead(Message.READ.createNode(), s4, "i");
@@ -135,7 +152,8 @@ public class RS4ObjectMRTest extends AbstractMRTest {
                         "new('test', s = 'aaa', d = 1.1, i=123L, b = TRUE, fn = function() {})";
         Source src = Source.newBuilder("R", srcTxt, "<testS4object>").internal(true).buildLiteral();
         Value result = context.eval(src);
-        RS4Object s4 = (RS4Object) FastRSession.getReceiver(result);
+        Object s = FastRSession.getReceiver(result);
+        RS4Object s4 = (RS4Object) s;
         return new TruffleObject[]{s4};
     }
 

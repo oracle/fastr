@@ -67,7 +67,7 @@ public abstract class ForEachAttributeNode extends AttributeIterativeAccessNode 
     @Specialization(limit = "getCacheLimit()", guards = {"attrsLayout != null", "attrsLayout.shape.check(attrs)"})
     @ExplodeLoop
     protected Object iterateConstLayout(DynamicObject attrs, Object param,
-                    @Cached("findLayout(attrs)") AttrsLayout attrsLayout) {
+                    @Cached("findLayout(attrs, createLoopProfiles())") AttrsLayout attrsLayout) {
         final Property[] props = attrsLayout.properties;
         Context ctx = new Context(param);
         actionNode.init(ctx);

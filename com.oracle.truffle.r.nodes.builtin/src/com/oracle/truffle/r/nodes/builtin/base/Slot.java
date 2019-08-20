@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.function.RCallNode.BuiltinCallNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess.AccessSlotAccess;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.Closure;
@@ -89,28 +90,17 @@ final class PromiseAsNameNode extends Node {
 }
 
 @RBuiltin(name = "@", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1, behavior = COMPLEX)
-public abstract class Slot extends RBuiltinNode.Arg2 {
+public abstract class Slot extends RBuiltinNode.Arg2 implements AccessSlotAccess {
 
     private static final int UNINITIALIZED = 0;
     private static final int IS_LHS = 1;
     private static final int IS_NOT_LHS = 2;
 
     @CompilationFinal private int isLhsState = UNINITIALIZED;
-    @Child private UpdateShareableChildValueNode sharedAttrUpdate;
-    @Child private AccessSlotNode accessSlotNode;
-    @Child private PromiseAsNameNode promiseAsNameNode;
 
     static {
         Casts casts = new Casts(Slot.class);
         casts.arg(0).castForeignObjects(false).returnIf(foreign()).asAttributable(true, true, true);
-    }
-
-    private String getName(Object nameObj) {
-        if (promiseAsNameNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            promiseAsNameNode = insert(new PromiseAsNameNode());
-        }
-        return promiseAsNameNode.execute(nameObj);
     }
 
     private static boolean isLhsOfSyntaxCall(RSyntaxNode n) {
@@ -138,31 +128,43 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "isLhsOfForeignCall(object)")
     protected Object getSlot(TruffleObject object, Object nameObj,
-                    @Cached("createClassProfile()") ValueProfile nameObjProfile) {
-        String name = getName(nameObjProfile.profile(nameObj));
-
+                    @Cached("createClassProfile()") ValueProfile nameObjProfile,
+                    @Cached("new()") PromiseAsNameNode promiseAsNameNode) {
+        String name = promiseAsNameNode.execute(nameObjProfile.profile(nameObj));
         // just return evaluated receiver object and name
         return RCallNode.createDeferredMemberAccess(object, name);
     }
 
     @Specialization(guards = "!isLhsOfForeignCall(object)")
-    protected Object getSlot(Object object, Object nameObj,
-                    @Cached("createClassProfile()") ValueProfile nameObjProfile) {
-        String name = getName(nameObjProfile.profile(nameObj));
+    protected Object getSlot(Object object, String name,
+                    @Cached("createAccessSlotNode()") AccessSlotNode accessSlotNode,
+                    @Cached() UpdateShareableChildValueNode sharedAttrUpdate) {
+        return getSlot(accessSlotNode, object, name, sharedAttrUpdate);
+    }
 
-        if (accessSlotNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            accessSlotNode = insert(AccessSlotNodeGen.create(true));
-        }
+    @Specialization(guards = {"!isLhsOfForeignCall(object)", "!isString(nameObj)"})
+    protected Object getSlot(Object object, Object nameObj,
+                    @Cached("createAccessSlotNode()") AccessSlotNode accessSlotNode,
+                    @Cached() UpdateShareableChildValueNode sharedAttrUpdate,
+                    @Cached("createClassProfile()") ValueProfile nameObjProfile,
+                    @Cached("new()") PromiseAsNameNode promiseAsNameNode) {
+        String name = promiseAsNameNode.execute(nameObjProfile.profile(nameObj));
+        return getSlot(accessSlotNode, object, name, sharedAttrUpdate);
+    }
+
+    private static Object getSlot(AccessSlotNode accessSlotNode, Object object, String name, UpdateShareableChildValueNode sharedAttrUpdate) {
         Object result = accessSlotNode.executeAccess(object, name);
 
         // since we give the slot away, we probably have to increase the refCount
-        if (sharedAttrUpdate == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            sharedAttrUpdate = insert(UpdateShareableChildValueNode.create());
-        }
         sharedAttrUpdate.execute(object, result);
         return result;
     }
 
+    protected boolean isString(Object obj) {
+        return obj instanceof String;
+    }
+
+    protected static AccessSlotNode createAccessSlotNode() {
+        return AccessSlotNodeGen.create(true);
+    }
 }

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -35,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
  * This node is responsible for retrieving a value from an arbitrary attribute. Use
  * {@link GetFixedPropertyNode} is the attribute name is fixed, i.e. can be passed in constructor.
  */
+@GenerateUncached
 public abstract class GetAttributeNode extends AttributeAccessNode {
 
     protected GetAttributeNode() {
@@ -66,9 +68,7 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     protected static Object getAttrFromAttributable(RAttributable x, String name,
                     @Cached("create()") BranchProfile attrNullProfile,
                     @Cached("create()") GetPropertyNode getPropertyNode) {
-
         DynamicObject attributes = x.getAttributes();
-
         if (attributes == null) {
             attrNullProfile.enter();
             return null;

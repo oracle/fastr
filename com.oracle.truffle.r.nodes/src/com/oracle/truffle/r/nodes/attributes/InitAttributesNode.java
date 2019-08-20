@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -30,15 +33,18 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @NodeInfo(cost = NodeCost.NONE)
-public final class InitAttributesNode extends RBaseNode {
-
-    private final ConditionProfile hasAttributes = ConditionProfile.createBinaryProfile();
+@GenerateUncached
+public abstract class InitAttributesNode extends RBaseNode {
 
     public static InitAttributesNode create() {
-        return new InitAttributesNode();
+        return InitAttributesNodeGen.create();
     }
 
-    public DynamicObject execute(RAttributable attributable) {
+    public abstract DynamicObject execute(RAttributable attributable);
+
+    @Specialization
+    protected DynamicObject exec(RAttributable attributable,
+                    @Cached("createBinaryProfile()") ConditionProfile hasAttributes) {
         DynamicObject attributes = attributable.getAttributes();
         if (hasAttributes.profile(attributes == null)) {
             attributes = attributable.initAttributes();

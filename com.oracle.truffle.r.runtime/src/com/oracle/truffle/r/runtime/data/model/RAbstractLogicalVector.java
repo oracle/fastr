@@ -23,6 +23,12 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
@@ -31,10 +37,35 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import java.util.Arrays;
 
+@ExportLibrary(InteropLibrary.class)
 public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
 
     public RAbstractLogicalVector(boolean complete) {
         super(complete);
+    }
+
+    @ExportMessage
+    final boolean isNull() {
+        if (!isScalar()) {
+            return false;
+        }
+        return RRuntime.isNA(getDataAt(0));
+    }
+
+    @ExportMessage
+    final boolean isBoolean() {
+        if (!isScalar()) {
+            return false;
+        }
+        return !RRuntime.isNA(getDataAt(0));
+    }
+
+    @ExportMessage
+    final boolean asBoolean(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isBoolean) throws UnsupportedMessageException {
+        if (isBoolean.profile(!isBoolean())) {
+            throw UnsupportedMessageException.create();
+        }
+        return RRuntime.fromLogical(getDataAt(0));
     }
 
     @Override
