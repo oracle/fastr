@@ -22,56 +22,21 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import org.junit.Test;
 
-public class RIntegerMRTest extends AbstractMRTest {
+public class RUboundValueInteropTest extends AbstractInteropTest {
 
     @Test
     @Override
     public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
-    }
-
-    @Override
-    protected boolean isNull(TruffleObject obj) {
-        assert obj instanceof RInteger;
-        return ((RInteger) obj).isNA();
-    }
-
-    @Override
-    protected int getSize(TruffleObject arg0) {
-        return 1;
-    }
-
-    @Override
-    protected boolean canRead(TruffleObject arg0) {
-        return true;
-    }
-
-    @Override
-    protected Class<? extends InteropException> readException(TruffleObject obj, int index) {
-        return UnknownIdentifierException.class;
+        super.testIsNull(); // force inherited tests from AbstractInteropTest
     }
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RInteger.valueOf(123), RInteger.createNA()};
-    }
-
-    @Override
-    protected boolean shouldTestToNative(TruffleObject obj) {
-        return true;
-    }
-
-    @Override
-    protected Object getUnboxed(TruffleObject obj) {
-        int unboxed = ((RInteger) obj).getValue();
-        return RRuntime.isNA(unboxed) ? null : unboxed;
+        return new TruffleObject[]{RUnboundValue.instance};
     }
 
     @Override

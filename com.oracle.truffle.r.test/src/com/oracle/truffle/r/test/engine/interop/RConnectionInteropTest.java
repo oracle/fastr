@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,27 +23,21 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.test.generate.FastRSession;
-import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.Value;
+import com.oracle.truffle.r.runtime.conn.FileConnections;
+import java.io.File;
 import org.junit.Test;
 
-public class RExternalPointerMRTest extends AbstractMRTest {
+public class RConnectionInteropTest extends AbstractInteropTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        String srcTxt = "methods:::.newExternalptr()";
-        Source src = Source.newBuilder("R", srcTxt, "<testExternalPointerMR>").internal(true).buildLiteral();
-        Value result = context.eval(src);
-        RExternalPtr ptr = (RExternalPtr) FastRSession.getReceiver(result);
-        return new TruffleObject[]{ptr};
+        return new TruffleObject[]{new FileConnections.FileRConnection("test", File.createTempFile("fastrTestConnectiopnMR", null).getAbsolutePath(), "r", false, null, false, false)};
     }
 
     @Test
     @Override
     public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
+        super.testIsNull(); // force inherited tests from AbstractInteropTest
     }
 
     @Override

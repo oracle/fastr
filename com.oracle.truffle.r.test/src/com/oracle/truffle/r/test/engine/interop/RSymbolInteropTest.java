@@ -23,40 +23,20 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import org.junit.Test;
 
-public class RRawMRTest extends AbstractMRTest {
-
-    @Override
-    protected int getSize(TruffleObject arg0) {
-        return 1;
-    }
-
-    @Override
-    protected boolean canRead(TruffleObject arg0) {
-        return true;
-    }
-
-    @Override
-    protected boolean shouldTestToNative(TruffleObject obj) {
-        return true;
-    }
+public class RSymbolInteropTest extends AbstractInteropTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RRaw.valueOf((byte) 1)};
+        return new TruffleObject[]{RSymbol.MISSING};
     }
 
     @Test
     @Override
     public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
-    }
-
-    @Override
-    protected Object getUnboxed(TruffleObject obj) {
-        return ((RRaw) obj).getValue();
+        super.testIsNull(); // force inherited tests from AbstractInteropTest
     }
 
     @Override

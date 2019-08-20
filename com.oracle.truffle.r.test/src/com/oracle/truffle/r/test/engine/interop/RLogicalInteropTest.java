@@ -23,30 +23,48 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.data.RInteropNA;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RLogical;
 import org.junit.Test;
 
-public class RInteropNAMRTest extends AbstractMRTest {
-
-    @Override
-    protected boolean shouldTestToNative(TruffleObject obj) {
-        return false;
-    }
+public class RLogicalInteropTest extends AbstractInteropTest {
 
     @Test
     @Override
     public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
-    }
-
-    @Override
-    protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RInteropNA.DOUBLE, RInteropNA.INT, RInteropNA.LOGICAL, RInteropNA.STRING};
+        super.testIsNull(); // force inherited tests from AbstractInteropTest
     }
 
     @Override
     protected boolean isNull(TruffleObject obj) {
+        assert obj instanceof RLogical;
+        return ((RLogical) obj).isNA();
+    }
+
+    @Override
+    protected int getSize(TruffleObject arg0) {
+        return 1;
+    }
+
+    @Override
+    protected boolean canRead(TruffleObject arg0) {
         return true;
+    }
+
+    @Override
+    protected boolean shouldTestToNative(TruffleObject obj) {
+        return true;
+    }
+
+    @Override
+    protected TruffleObject[] createTruffleObjects() throws Exception {
+        return new TruffleObject[]{RLogical.valueOf(true), RLogical.valueOf(false), RLogical.valueOf(RRuntime.LOGICAL_NA)};
+    }
+
+    @Override
+    protected Object getUnboxed(TruffleObject obj) {
+        byte unboxed = ((RLogical) obj).getValue();
+        return RRuntime.isNA(unboxed) ? null : RRuntime.fromLogical(unboxed);
     }
 
     @Override

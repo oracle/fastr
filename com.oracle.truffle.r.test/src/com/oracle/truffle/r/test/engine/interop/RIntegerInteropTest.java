@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,56 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RInteger;
 import org.junit.Test;
 
-public class RMissingMRTest extends AbstractMRTest {
+public class RIntegerInteropTest extends AbstractInteropTest {
 
     @Test
     @Override
     public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
+        super.testIsNull(); // force inherited tests from AbstractInteropTest
+    }
+
+    @Override
+    protected boolean isNull(TruffleObject obj) {
+        assert obj instanceof RInteger;
+        return ((RInteger) obj).isNA();
+    }
+
+    @Override
+    protected int getSize(TruffleObject arg0) {
+        return 1;
+    }
+
+    @Override
+    protected boolean canRead(TruffleObject arg0) {
+        return true;
+    }
+
+    @Override
+    protected Class<? extends InteropException> readException(TruffleObject obj, int index) {
+        return UnknownIdentifierException.class;
     }
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RMissing.instance};
+        return new TruffleObject[]{RInteger.valueOf(123), RInteger.createNA()};
+    }
+
+    @Override
+    protected boolean shouldTestToNative(TruffleObject obj) {
+        return true;
+    }
+
+    @Override
+    protected Object getUnboxed(TruffleObject obj) {
+        int unboxed = ((RInteger) obj).getValue();
+        return RRuntime.isNA(unboxed) ? null : unboxed;
     }
 
     @Override

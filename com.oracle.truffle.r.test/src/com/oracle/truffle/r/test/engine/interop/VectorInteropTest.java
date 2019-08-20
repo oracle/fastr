@@ -22,15 +22,13 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -55,7 +53,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import static org.junit.Assert.fail;
 
-public class VectorMRTest extends AbstractMRTest {
+public class VectorInteropTest extends AbstractInteropTest {
 
     @Override
     protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
@@ -65,17 +63,18 @@ public class VectorMRTest extends AbstractMRTest {
     @Test
     public void testRead() throws Exception {
         final TruffleObject vi = RDataFactory.createIntSequence(1, 1, 10);
-        assertEquals(3, ForeignAccess.sendRead(Message.READ.createNode(), vi, 2));
-        assertEquals(3, ForeignAccess.sendRead(Message.READ.createNode(), vi, 2L));
+        assertEquals(3, getInterop().readArrayElement(vi, 2));
+        assertEquals(3, getInterop().readArrayElement(vi, 2L));
 
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), vi, "a"), UnsupportedMessageException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), vi, 100), UnknownIdentifierException.class);
+        assertInteropException(() -> getInterop().readMember(vi, "a"), UnsupportedMessageException.class);
+        assertInteropException(() -> getInterop().readArrayElement(vi, -1), InvalidArrayIndexException.class);
+        assertInteropException(() -> getInterop().readArrayElement(vi, 100), InvalidArrayIndexException.class);
 
         TruffleObject vd = RDataFactory.createDoubleSequence(1.1, 1, 10);
-        assertEquals(1.1, ForeignAccess.sendRead(Message.READ.createNode(), vd, 0));
+        assertEquals(1.1, getInterop().readArrayElement(vd, 0));
 
         TruffleObject vb = RDataFactory.createLogicalVector(new byte[]{1, 0, 1}, true);
-        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), vb, 0));
+        assertEquals(true, getInterop().readArrayElement(vb, 0));
     }
 
     @Test
@@ -87,38 +86,38 @@ public class VectorMRTest extends AbstractMRTest {
 
         // scalar NA
         RComplexVector complexScalar = RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, 1}, false);
-        assertFalse(ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), complexScalar));
-        assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), complexScalar));
+        assertFalse(getInterop().hasMembers(complexScalar));
+        assertTrue(getInterop().isNull(complexScalar));
         complexScalar = RDataFactory.createComplexVector(new double[]{1, RRuntime.COMPLEX_NA_IMAGINARY_PART}, false);
-        assertFalse(ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), complexScalar));
-        assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), complexScalar));
+        assertFalse(getInterop().hasMembers(complexScalar));
+        assertTrue(getInterop().isNull(complexScalar));
         complexScalar = RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, false);
-        assertFalse(ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), complexScalar));
-        assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), complexScalar));
+        assertFalse(getInterop().hasMembers(complexScalar));
+        assertTrue(getInterop().isNull(complexScalar));
 
         // non scalar
         RComplexVector complexVector = RDataFactory.createComplexVector(new double[]{1, 2, 3, 4}, true);
-        assertFalse(ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), complexVector));
+        assertFalse(getInterop().hasMembers(complexVector));
 
-        assertEquals(3.0, ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) ForeignAccess.sendRead(Message.READ.createNode(), complexVector, 1), "re"));
-        assertEquals(4.0, ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) ForeignAccess.sendRead(Message.READ.createNode(), complexVector, 1), "im"));
+        assertEquals(3.0, getInterop().readMember(getInterop().readArrayElement(complexVector, 1), "re"));
+        assertEquals(4.0, getInterop().readMember(getInterop().readArrayElement(complexVector, 1), "im"));
     }
 
-    private static void testReadComplexScalar(RAbstractComplexVector complexScalar) throws UnsupportedMessageException, UnknownIdentifierException {
-        assertTrue(ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), complexScalar));
+    private static void testReadComplexScalar(RAbstractComplexVector complexScalar) throws UnsupportedMessageException, UnknownIdentifierException, InvalidArrayIndexException {
+        assertTrue(getInterop().hasArrayElements(complexScalar));
         testReadComplexScalarMembers(complexScalar);
 
-        TruffleObject scalarElement = (TruffleObject) ForeignAccess.sendRead(Message.READ.createNode(), complexScalar, 0);
-        assertFalse(ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), scalarElement));
+        TruffleObject scalarElement = (TruffleObject) getInterop().readArrayElement(complexScalar, 0);
+        assertFalse(getInterop().hasArrayElements(scalarElement));
         testReadComplexScalarMembers(scalarElement);
     }
 
-    private static void testReadComplexScalarMembers(TruffleObject scalar) throws UnknownIdentifierException, UnsupportedMessageException {
-        assertTrue(ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), scalar));
-        TruffleObject members = ForeignAccess.sendKeys(Message.KEYS.createNode(), scalar);
-        assertEquals(ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), members), 2);
-        assertEquals(1.0, ForeignAccess.sendRead(Message.READ.createNode(), scalar, "re"));
-        assertEquals(2.0, ForeignAccess.sendRead(Message.READ.createNode(), scalar, "im"));
+    private static void testReadComplexScalarMembers(TruffleObject scalar) throws UnsupportedMessageException, UnknownIdentifierException {
+        assertTrue(getInterop().hasMembers(scalar));
+        Object members = getInterop().getMembers(scalar, false);
+        assertEquals(getInterop().getArraySize(members), 2);
+        assertEquals(1.0, getInterop().readMember(scalar, "re"));
+        assertEquals(2.0, getInterop().readMember(scalar, "im"));
     }
 
     @Test
@@ -126,69 +125,63 @@ public class VectorMRTest extends AbstractMRTest {
         // logical
         testRNARTOTIN(RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR), true);
         testRNARTOTIN(new RForeignBooleanWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new Boolean[]{true, null})), true);
-        ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR));
+        getInterop().isNull(RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR));
 
         // int
         testRNARTOTIN(RDataFactory.createIntVector(new int[]{42, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), 42);
         testRNARTOTIN(RClosures.createToIntVector(RDataFactory.createDoubleVector(new double[]{42, RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR), true), 42);
         testRNARTOTIN(new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{42, RRuntime.INT_NA})), 42);
         testRNARTOTIN(new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new Integer[]{42, null})), 42);
-        ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR));
+        getInterop().isNull(RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR));
 
         // double
         testRNARTOTIN(RDataFactory.createDoubleVector(new double[]{42, RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR), 42.0);
         testRNARTOTIN(RClosures.createToDoubleVector(RDataFactory.createIntVector(new int[]{42, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true), 42.0);
         testRNARTOTIN(new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{42, RRuntime.DOUBLE_NA})), 42.0);
         testRNARTOTIN(new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new Double[]{42.0, null})), 42.0);
-        ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR));
+        getInterop().isNull(RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR));
 
         // string
         testRNARTOTIN(RDataFactory.createStringVector(new String[]{"42", RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR), "42");
         testRNARTOTIN(RClosures.createToStringVector(RDataFactory.createIntVector(new int[]{42, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true), "42");
         testRNARTOTIN(new RForeignStringWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{"42", RRuntime.STRING_NA})), "42");
-        ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR));
+        getInterop().isNull(RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR));
 
         // complex
         testRNARTOTIN(RDataFactory.createComplexVector(new double[]{1, 1, 2, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR), new RInteropComplex(RComplex.valueOf(1, 1)));
-        testRNARTOTIN(RDataFactory.createComplexVector(new double[]{1, 1, 2, RRuntime.COMPLEX_NA_REAL_PART}, RDataFactory.INCOMPLETE_VECTOR), new RInteropComplex(RComplex.valueOf(1, 1)));
+        testRNARTOTIN(RDataFactory.createComplexVector(new double[]{1, 1, RRuntime.COMPLEX_NA_REAL_PART, 2}, RDataFactory.INCOMPLETE_VECTOR), new RInteropComplex(RComplex.valueOf(1, 1)));
         testRNARTOTIN(RDataFactory.createComplexVector(new double[]{1, 1, RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR),
                         new RInteropComplex(RComplex.valueOf(1, 1)));
         testRNARTOTIN(RClosures.createToComplexVector(RDataFactory.createIntVector(new int[]{1, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true), new RInteropComplex(RComplex.valueOf(1, 0)));
-        ForeignAccess.sendIsNull(Message.IS_NULL.createNode(),
-                        RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR));
-        ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, 1}, RDataFactory.INCOMPLETE_VECTOR));
-        ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), RDataFactory.createComplexVector(new double[]{1, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR));
+        getInterop().isNull(RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR));
+        getInterop().isNull(RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, 1}, RDataFactory.INCOMPLETE_VECTOR));
+        getInterop().isNull(RDataFactory.createComplexVector(new double[]{1, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR));
     }
 
-    public static void testRNARTOTIN(TruffleObject vec, Object expectedFirst) throws Exception {
-        assertEquals(expectedFirst, ForeignAccess.sendRead(Message.READ.createNode(), vec, 0));
-        Object expectedNA = ForeignAccess.sendRead(Message.READ.createNode(), vec, 1);
-        assertEquals(true, ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) expectedNA));
+    public void testRNARTOTIN(TruffleObject vec, Object expectedFirst) throws Exception {
+        assertEquals(expectedFirst, getInterop().readArrayElement(vec, 0));
+        Object expectedNA = getInterop().readArrayElement(vec, 1);
+        assertEquals(true, getInterop().isNull(expectedNA));
     }
 
     @Test
     public void testKeyInfo() throws Exception {
         for (TruffleObject o : createTruffleObjects()) {
             if (o instanceof RAbstractComplexVector && ((RAbstractComplexVector) o).getLength() == 1 && !isNull(o)) {
-                assertTrue(ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), o));
+                assertTrue(getInterop().hasMembers(o));
             } else {
-                assertInteropException(() -> ForeignAccess.sendKeys(Message.KEYS.createNode(), o), UnsupportedMessageException.class);
+                assertInteropException(() -> getInterop().getMembers(o), UnsupportedMessageException.class);
             }
 
             for (int i = 0; i < getSize(o); i++) {
-                int keyInfo = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), o, i);
-                assertTrue(KeyInfo.isExisting(keyInfo));
-                assertFalse(KeyInfo.isInsertable(keyInfo));
-                assertFalse(KeyInfo.isInternal(keyInfo));
-                assertFalse(KeyInfo.isInvocable(keyInfo));
-                assertFalse(KeyInfo.isModifiable(keyInfo));
-                assertTrue(KeyInfo.isReadable(keyInfo));
-                assertFalse(KeyInfo.isRemovable(keyInfo));
-                assertFalse(KeyInfo.isWritable(keyInfo));
-                assertFalse(KeyInfo.hasReadSideEffects(keyInfo));
-                assertFalse(KeyInfo.hasWriteSideEffects(keyInfo));
+                assertTrue(getInterop().isArrayElementExisting(o, i));
+                assertFalse(getInterop().isArrayElementInsertable(o, i));
+                assertFalse(getInterop().isArrayElementModifiable(o, i));
+                assertTrue(getInterop().isArrayElementReadable(o, i));
+                assertFalse(getInterop().isArrayElementRemovable(o, i));
+                assertFalse(getInterop().isArrayElementWritable(o, i));
             }
-            assertFalse(KeyInfo.isExisting(ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), o, getSize(o))));
+            assertFalse(getInterop().isArrayElementExisting(o, getSize(o)));
         }
     }
 
@@ -215,7 +208,6 @@ public class VectorMRTest extends AbstractMRTest {
                         RClosures.createToIntVector(RDataFactory.createDoubleVector(new double[]{1, RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR), true),
                         RClosures.createToIntVector(RDataFactory.createEmptyDoubleVector(), true),
                         // int foreign wrapper
-                        // XXX foreign NAs vs null
                         new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{1})),
                         new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{1, 2, 3})),
                         new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE})),

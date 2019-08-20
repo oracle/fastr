@@ -23,20 +23,48 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDouble;
 import org.junit.Test;
 
-public class RSymbolMRTest extends AbstractMRTest {
-
-    @Override
-    protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RSymbol.MISSING};
-    }
+public class RDoubleInteropTest extends AbstractInteropTest {
 
     @Test
     @Override
     public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
+        super.testIsNull(); // force inherited tests from AbstractInteropTest
+    }
+
+    @Override
+    protected boolean isNull(TruffleObject obj) {
+        assert obj instanceof RDouble;
+        return ((RDouble) obj).isNA();
+    }
+
+    @Override
+    protected int getSize(TruffleObject arg0) {
+        return 1;
+    }
+
+    @Override
+    protected boolean canRead(TruffleObject arg0) {
+        return true;
+    }
+
+    @Override
+    protected boolean shouldTestToNative(TruffleObject obj) {
+        return true;
+    }
+
+    @Override
+    protected TruffleObject[] createTruffleObjects() throws Exception {
+        return new TruffleObject[]{RDouble.valueOf(1.1), RDouble.createNA()};
+    }
+
+    @Override
+    protected Object getUnboxed(TruffleObject obj) {
+        double unboxed = ((RDouble) obj).getValue();
+        return RRuntime.isNA(unboxed) ? null : unboxed;
     }
 
     @Override

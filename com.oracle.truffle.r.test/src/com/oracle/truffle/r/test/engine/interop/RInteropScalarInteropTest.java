@@ -29,12 +29,12 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
+import static org.junit.Assert.fail;
 
-public class RInteropScalarMRTest extends AbstractMRTest {
+public class RInteropScalarInteropTest extends AbstractInteropTest {
 
     @Override
     protected boolean shouldTestToNative(TruffleObject obj) {
@@ -50,11 +50,11 @@ public class RInteropScalarMRTest extends AbstractMRTest {
     }
 
     private static void testRIS(TruffleObject obj, Class<?> unboxedType) throws Exception {
-        assertFalse(obj.getClass().getName() + " " + obj + " isn't expected to be null", ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), obj));
-        assertFalse(obj.getClass().getName() + " " + obj + " isn't expected to have a size", ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj));
+        assertFalse(obj.getClass().getName() + " " + obj + " isn't expected to be null", getInterop().isNull(obj));
+        assertFalse(obj.getClass().getName() + " " + obj + " isn't expected to have a size", getInterop().hasArrayElements(obj));
 
-        assertTrue(obj.getClass().getName() + " " + obj + " is expected to be boxed", ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
-        Object ub = ForeignAccess.sendUnbox(Message.UNBOX.createNode(), obj);
+        assertTrue(obj.getClass().getName() + " " + obj + " is expected to be boxed", isBoxed(obj));
+        Object ub = unbox(obj);
         if (unboxedType == Character.TYPE) {
             assertEquals(obj.getClass().getName() + " " + obj, String.class, ub.getClass());
         } else {
@@ -93,6 +93,43 @@ public class RInteropScalarMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject createEmptyTruffleObject() throws Exception {
+        return null;
+    }
+
+    private static boolean isBoxed(Object obj) {
+        if (getInterop().fitsInByte(obj) ||
+                        getInterop().fitsInDouble(obj) ||
+                        getInterop().fitsInFloat(obj) ||
+                        getInterop().fitsInInt(obj) ||
+                        getInterop().fitsInLong(obj) ||
+                        getInterop().fitsInShort(obj) ||
+                        getInterop().isBoolean(obj) ||
+                        getInterop().isString(obj)) {
+            return true;
+        }
+        return false;
+    }
+
+    private static Object unbox(Object obj) throws UnsupportedMessageException {
+        if (getInterop().isString(obj)) {
+            return getInterop().asString(obj);
+        }
+        if (getInterop().isBoolean(obj)) {
+            return getInterop().asBoolean(obj);
+        }
+        if (getInterop().fitsInByte(obj)) {
+            return getInterop().asByte(obj);
+        }
+        if (getInterop().fitsInShort(obj)) {
+            return getInterop().asShort(obj);
+        }
+        if (getInterop().fitsInFloat(obj)) {
+            return getInterop().asFloat(obj);
+        }
+        if (getInterop().fitsInLong(obj)) {
+            return getInterop().asLong(obj);
+        }
+        fail();
         return null;
     }
 }

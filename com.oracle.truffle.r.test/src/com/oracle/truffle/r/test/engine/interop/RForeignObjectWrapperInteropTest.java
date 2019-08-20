@@ -23,10 +23,8 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -43,7 +41,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
-public class RForeignObjectWrapperMRTest extends AbstractMRTest {
+public class RForeignObjectWrapperInteropTest extends AbstractInteropTest {
 
     private RForeignObjectWrapper array;
     private RForeignObjectWrapper rwMember;
@@ -103,82 +101,109 @@ public class RForeignObjectWrapperMRTest extends AbstractMRTest {
     @Test
     public void testReadWriteByIdx() throws Exception {
         TruffleObject obj = createArray();
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), obj, -1), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), obj, 100), UnknownIdentifierException.class);
+        assertInteropException(() -> getInterop().readArrayElement(obj, -1), InvalidArrayIndexException.class);
+        assertInteropException(() -> getInterop().readArrayElement(obj, 100), InvalidArrayIndexException.class);
 
-        assertEquals(1, ForeignAccess.sendRead(Message.READ.createNode(), obj, 0));
-        assertEquals(2, ForeignAccess.sendRead(Message.READ.createNode(), obj, 1));
-        assertEquals(3, ForeignAccess.sendRead(Message.READ.createNode(), obj, 2));
+        assertEquals(1, getInterop().readArrayElement(obj, 0));
+        assertEquals(2, getInterop().readArrayElement(obj, 1));
+        assertEquals(3, getInterop().readArrayElement(obj, 2));
 
-        ForeignAccess.sendWrite(Message.WRITE.createNode(), obj, 0, 111);
-        assertEquals(111, ForeignAccess.sendRead(Message.READ.createNode(), obj, 0));
+        getInterop().writeArrayElement(obj, 0, 111);
+        assertEquals(111, getInterop().readArrayElement(obj, 0));
     }
 
     @Test
     public void testReadWriteByName() throws Exception {
         TruffleObject obj = createRWMembers();
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), obj, "nnnnooooonnnneee"), UnknownIdentifierException.class);
+        assertInteropException(() -> getInterop().readMember(obj, "nnnnooooonnnneee"), UnknownIdentifierException.class);
 
-        assertEquals(1, ForeignAccess.sendRead(Message.READ.createNode(), obj, "a"));
-        assertEquals(2.0, ForeignAccess.sendRead(Message.READ.createNode(), obj, "b"));
-        assertEquals("test", ForeignAccess.sendRead(Message.READ.createNode(), obj, "s"));
+        assertEquals(1, getInterop().readMember(obj, "a"));
+        assertEquals(2.0, getInterop().readMember(obj, "b"));
+        assertEquals("test", getInterop().readMember(obj, "s"));
 
-        ForeignAccess.sendWrite(Message.WRITE.createNode(), obj, "a", 222);
-        assertEquals(222, ForeignAccess.sendRead(Message.READ.createNode(), obj, "a"));
+        getInterop().writeMember(obj, "a", 222);
+        assertEquals(222, getInterop().readMember(obj, "a"));
     }
 
     @Test
     public void testInvoke() throws Exception {
         TruffleObject obj = createInvokable();
 
-        int info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, "nnoonnee");
-        assertFalse(KeyInfo.isExisting(info));
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, "m");
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info)); // XXX ??? readable???
-        assertTrue(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isWritable(info));
-        assertFalse(KeyInfo.isInternal(info));
+        assertFalse(getInterop().isMemberExisting(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberInsertable(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberInternal(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberInvocable(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberModifiable(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberReadable(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberRemovable(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberWritable(obj, "nnoonnee"));
+        assertFalse(getInterop().hasMemberReadSideEffects(obj, "nnoonnee"));
+        assertFalse(getInterop().hasMemberWriteSideEffects(obj, "nnoonnee"));
 
-        assertTrue((boolean) ForeignAccess.sendInvoke(Message.INVOKE.createNode(), obj, "m", true));
+        assertTrue(getInterop().isMemberExisting(obj, "m"));
+        assertFalse(getInterop().isMemberInsertable(obj, "m"));
+        assertFalse(getInterop().isMemberInternal(obj, "m"));
+        assertTrue(getInterop().isMemberInvocable(obj, "m"));
+        assertFalse(getInterop().isMemberModifiable(obj, "m"));
+        assertTrue(getInterop().isMemberReadable(obj, "m"));
+        assertFalse(getInterop().isMemberRemovable(obj, "m"));
+        assertFalse(getInterop().isMemberWritable(obj, "m"));
+        assertFalse(getInterop().hasMemberReadSideEffects(obj, "m"));
+        assertFalse(getInterop().hasMemberWriteSideEffects(obj, "m"));
+
+        assertTrue((boolean) getInterop().invokeMember(obj, "m", true));
     }
 
     @Test
     public void testKeysInfo() throws Exception {
         TruffleObject obj = createArray();
-        int info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, 100);
-        assertFalse(KeyInfo.isExisting(info));
+        assertFalse(getInterop().isArrayElementExisting(obj, 100));
+        assertFalse(getInterop().isArrayElementInsertable(obj, 100));
+        assertFalse(getInterop().isArrayElementModifiable(obj, 100));
+        assertFalse(getInterop().isArrayElementReadable(obj, 100));
+        assertFalse(getInterop().isArrayElementRemovable(obj, 100));
+        assertFalse(getInterop().isArrayElementWritable(obj, 100));
 
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, 0);
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
-        assertFalse(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
-        assertFalse(KeyInfo.hasReadSideEffects(info));
-        assertFalse(KeyInfo.hasWriteSideEffects(info));
+        assertTrue(getInterop().isArrayElementExisting(obj, 0));
+        assertFalse(getInterop().isArrayElementInsertable(obj, 0));
+        assertTrue(getInterop().isArrayElementModifiable(obj, 0));
+        assertTrue(getInterop().isArrayElementReadable(obj, 0));
+        assertFalse(getInterop().isArrayElementRemovable(obj, 0));
+        assertTrue(getInterop().isArrayElementWritable(obj, 0));
 
         obj = createRWMembers();
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, "nnoonnee");
-        assertFalse(KeyInfo.isExisting(info));
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, "a");
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
-        assertFalse(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
-        assertFalse(KeyInfo.hasReadSideEffects(info));
-        assertFalse(KeyInfo.hasWriteSideEffects(info));
+        assertFalse(getInterop().isMemberExisting(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberInsertable(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberInternal(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberInvocable(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberModifiable(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberReadable(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberRemovable(obj, "nnoonnee"));
+        assertFalse(getInterop().isMemberWritable(obj, "nnoonnee"));
+        assertFalse(getInterop().hasMemberReadSideEffects(obj, "nnoonnee"));
+        assertFalse(getInterop().hasMemberWriteSideEffects(obj, "nnoonnee"));
+
+        assertTrue(getInterop().isMemberExisting(obj, "a"));
+        assertFalse(getInterop().isMemberInsertable(obj, "a"));
+        assertFalse(getInterop().isMemberInternal(obj, "a"));
+        assertFalse(getInterop().isMemberInvocable(obj, "a"));
+        assertTrue(getInterop().isMemberModifiable(obj, "a"));
+        assertTrue(getInterop().isMemberReadable(obj, "a"));
+        assertFalse(getInterop().isMemberRemovable(obj, "a"));
+        assertTrue(getInterop().isMemberWritable(obj, "a"));
+        assertFalse(getInterop().hasMemberReadSideEffects(obj, "a"));
+        assertFalse(getInterop().hasMemberWriteSideEffects(obj, "a"));
 
         obj = createEnv();
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, "testBinding");
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
-        assertTrue(KeyInfo.hasReadSideEffects(info));
-        assertTrue(KeyInfo.hasWriteSideEffects(info));
-        assertFalse(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
+        assertTrue(getInterop().isMemberExisting(obj, "testBinding"));
+        assertFalse(getInterop().isMemberInsertable(obj, "testBinding"));
+        assertFalse(getInterop().isMemberInternal(obj, "testBinding"));
+        assertFalse(getInterop().isMemberInvocable(obj, "testBinding"));
+        assertTrue(getInterop().isMemberModifiable(obj, "testBinding"));
+        assertTrue(getInterop().isMemberReadable(obj, "testBinding"));
+        assertTrue(getInterop().isMemberWritable(obj, "testBinding"));
+        assertTrue(getInterop().hasMemberReadSideEffects(obj, "testBinding"));
+        assertTrue(getInterop().hasMemberWriteSideEffects(obj, "testBinding"));
     }
 
     @Override

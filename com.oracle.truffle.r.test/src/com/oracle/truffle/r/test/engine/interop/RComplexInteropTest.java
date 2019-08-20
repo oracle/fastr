@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -37,12 +35,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
-public class RComplexMRTest extends AbstractMRTest {
+public class RComplexInteropTest extends AbstractInteropTest {
 
     @Test
     @Override
     public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
+        super.testIsNull(); // force inherited tests from AbstractInteropTest
     }
 
     @Test
@@ -51,11 +49,11 @@ public class RComplexMRTest extends AbstractMRTest {
         assertEquals(RComplex.valueOf(1, 42), c);
 
         RFunction fun = (RFunction) create("function() 1+42i");
-        TruffleObject obj = (TruffleObject) ForeignAccess.sendExecute(Message.EXECUTE.createNode(), fun);
+        Object obj = getInterop().execute(fun);
         assertTrue(obj instanceof RAbstractComplexVector);
         assertFalse(obj instanceof RInteropComplex);
 
-        obj = (TruffleObject) ForeignAccess.sendRead(Message.READ.createNode(), obj, 0);
+        obj = getInterop().readArrayElement(obj, 0);
         assertFalse(obj instanceof RAbstractComplexVector);
         assertTrue(obj instanceof RInteropComplex);
     }
