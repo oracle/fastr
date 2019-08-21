@@ -868,7 +868,7 @@ public class FastRInterop {
 
         private static Object toArray(RAbstractVector vec, boolean flat, Class<?> clazz, VecElementToArray vecToArray) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
             int[] dims = getDim(flat, vec);
-            // TODO need ForeignAccess.sendNew(multiDimArrayClass, dims)
+            // TODO need interop.instantiate(multiDimArrayClass, dims)
             final Object array = Array.newInstance(clazz, dims);
             for (int d = 0; d < dims.length; d++) {
                 int dim = dims[d];
@@ -1047,7 +1047,7 @@ public class FastRInterop {
                         Class<?> cls = (Class<?>) obj;
                         if (cls.isArray()) {
                             // TODO temporary hot fix
-                            // need ForeignAccess.sendNew(multiDimArrayClass, dims)
+                            // need interop.instantiate(multiDimArrayClass, dims)
                             Object arg0 = args.getArgument(0);
                             if (arg0 instanceof RAbstractIntVector) {
                                 RAbstractIntVector vec = (RAbstractIntVector) arg0;
