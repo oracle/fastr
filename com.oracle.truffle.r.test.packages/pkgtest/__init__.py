@@ -164,6 +164,15 @@ def prepare_r_install_arguments(args):
         args += ["--verbose"]
     elif verbosity_level > 1:
         args += ["--very-verbose"]
+    
+    # install and test the packages, unless just listing versions
+    if not '--list-versions' in args:
+        args += ['--run-tests']
+        args += ['--test-mode', 'system']
+        args += ['--test-executable', get_fastr_rscript()]
+        args += ['--testdir', get_opts().fastr_testdir]
+        if not '--print-install-status' in args:
+            args += ['--print-install-status']
 
     # get default CRAN mirror from our FastR home
     default_cran_mirror_url = "CRAN=" + get_default_cran_mirror()
@@ -491,7 +500,7 @@ def _get_test_outputs(rvm, pkg_name, test_info):
 
 
 def _args_to_forward_to_gnur(args):
-    forwarded_args = ['--repos', '--run-mode', '--cache-pkgs', "--ignore-suggests"]
+    forwarded_args = ['--repos', '--run-mode', '--cache-pkgs', '--test-mode', "--ignore-suggests"]
     result = []
     i = 0
     while i < len(args):
@@ -524,6 +533,7 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     args = list(forwarded_args)
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
+    args += ['--test-executable', get_gnur_rscript()]
     args += ['--ignore-blacklist']
     args += ['--testdir', get_opts().gnur_testdir]
     log_step('BEGIN', 'install/test', 'GnuR')
