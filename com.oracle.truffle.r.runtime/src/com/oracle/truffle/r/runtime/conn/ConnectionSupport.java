@@ -649,7 +649,7 @@ public class ConnectionSupport {
 
         @Override
         public RType getRType() {
-            throw RInternalError.shouldNotReachHere();
+            return RType.Connection;
         }
 
         public ConnectionClass getConnectionClass() {

@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -42,7 +43,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -108,7 +108,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
                 } else if (x instanceof RPairList) {
                     printer = ((RPairList) x).isLanguage() ? LanguagePrinter.INSTANCE : PairListPrinter.INSTANCE;
                 } else if (x instanceof TruffleObject) {
-                    assert !(x instanceof RTypedValue) : x;
+                    assert !(x instanceof RBaseObject) : x;
                     printer = TruffleObjectPrinter.INSTANCE;
                 } else {
                     RInternalError.shouldNotReachHere("unexpected type: " + x.getClass());

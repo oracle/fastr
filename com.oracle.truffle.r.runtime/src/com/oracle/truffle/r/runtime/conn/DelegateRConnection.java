@@ -634,7 +634,7 @@ abstract class DelegateRConnection extends RBaseObject implements RConnection, B
 
     @Override
     public RType getRType() {
-        throw RInternalError.shouldNotReachHere();
+        return RType.Connection;
     }
 
     private static final int GZIP_BUFFER_SIZE = (2 << 20);

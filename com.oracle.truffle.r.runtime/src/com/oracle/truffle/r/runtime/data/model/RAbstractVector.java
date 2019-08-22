@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -787,13 +786,13 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
-    public final RTypedValue getNonShared() {
+    public final RBaseObject getNonShared() {
         RAbstractVector materialized = materialize();
         assert materialized.isMaterialized();
         return materialized.getNonSharedSuper();
     }
 
-    private RTypedValue getNonSharedSuper() {
+    private RBaseObject getNonSharedSuper() {
         return super.getNonShared();
     }
 

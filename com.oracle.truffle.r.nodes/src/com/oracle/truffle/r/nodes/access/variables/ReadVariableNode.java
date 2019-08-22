@@ -66,7 +66,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -86,6 +85,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import java.util.logging.Level;
 import static com.oracle.truffle.r.runtime.RLogger.LOGGER_COMPLEX_LOOKUPS;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 
 final class LookupNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
@@ -1035,7 +1035,7 @@ abstract class CheckTypeNode extends RBaseNode {
     }
 
     protected static boolean isExternalObject(TruffleObject o) {
-        return !(o instanceof RTypedValue);
+        return !(o instanceof RBaseObject);
     }
 
     @Fallback

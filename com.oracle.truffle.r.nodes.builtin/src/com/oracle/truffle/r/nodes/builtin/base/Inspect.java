@@ -47,10 +47,10 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -130,19 +130,19 @@ public abstract class Inspect extends RBuiltinNode.Arg2 {
             sb.append('"').append(obj).append("\"\n");
         } else if (obj instanceof CharSXPWrapper) {
             int typeinfo = ((CharSXPWrapper) obj).getTypedValueInfo();
-            if (typeinfo == RTypedValue.BYTES_MASK) {
+            if (typeinfo == RBaseObject.BYTES_MASK) {
                 sb.append("[bytes] ");
             }
-            if (typeinfo == RTypedValue.LATIN1_MASK) {
+            if (typeinfo == RBaseObject.LATIN1_MASK) {
                 sb.append("[latin1] ");
             }
-            if (typeinfo == RTypedValue.UTF8_MASK) {
+            if (typeinfo == RBaseObject.UTF8_MASK) {
                 sb.append("[UTF8] ");
             }
-            if (typeinfo == RTypedValue.CACHED_MASK) {
+            if (typeinfo == RBaseObject.CACHED_MASK) {
                 sb.append("[cached] ");
             }
-            if (typeinfo == RTypedValue.ASCII_MASK) {
+            if (typeinfo == RBaseObject.ASCII_MASK) {
                 sb.append("[ASCII] ");
             }
             sb.append('"').append(((CharSXPWrapper) obj).getContents()).append("\"\n");

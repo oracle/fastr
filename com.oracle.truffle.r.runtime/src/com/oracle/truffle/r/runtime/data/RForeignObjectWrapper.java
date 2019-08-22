@@ -32,7 +32,6 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 
@@ -51,7 +50,7 @@ import com.oracle.truffle.r.runtime.RType;
  * 
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RForeignObjectWrapper extends RBaseObject implements RTruffleObject, RForeignVectorWrapper {
+public final class RForeignObjectWrapper extends RBaseObject implements RForeignVectorWrapper {
 
     protected final TruffleObject delegate;
 
@@ -70,7 +69,7 @@ public final class RForeignObjectWrapper extends RBaseObject implements RTruffle
 
     @Override
     public RType getRType() {
-        throw RInternalError.shouldNotReachHere();
+        return RType.TruffleObject;
     }
 
     @ExportMessage

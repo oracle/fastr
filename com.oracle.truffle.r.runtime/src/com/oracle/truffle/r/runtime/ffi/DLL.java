@@ -67,7 +67,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLCloseRootNode;
@@ -181,7 +180,7 @@ public class DLL {
      * for FastR.
      */
     @ExportLibrary(InteropLibrary.class)
-    public static class DotSymbol extends RBaseObject implements RTruffleObject {
+    public static class DotSymbol extends RBaseObject {
         public final String name;
         public final SymbolHandle fun;
         public final int numArgs;
@@ -220,7 +219,7 @@ public class DLL {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    public static final class DLLInfo extends RBaseObject implements RTruffleObject, CustomNativeMirror {
+    public static final class DLLInfo extends RBaseObject implements CustomNativeMirror {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"name", "path", "dynamicLookup", "handle", "info"}, RDataFactory.COMPLETE_VECTOR);
         public static final String DLL_INFO_REFERENCE = "DLLInfoReference";
         private static final RStringVector INFO_REFERENCE_CLASS = RDataFactory.createStringVectorFromScalar(DLL_INFO_REFERENCE);

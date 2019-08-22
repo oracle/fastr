@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.interop.R2Foreign;
  * A simple wrapper class for passing the ... argument through RArguments
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RArgsValuesAndNames extends RBaseObject implements RTypedValue {
+public final class RArgsValuesAndNames extends RBaseObject {
 
     /**
      * Array of arguments; semantics have to be specified by child classes.
@@ -171,19 +171,6 @@ public final class RArgsValuesAndNames extends RBaseObject implements RTypedValu
     public RType getRType() {
         return RType.Dots;
     }
-
-    // XXX
-    // @Override
-    // public int getTypedValueInfo() {
-    // // RArgsValuesAndNames can get serialized under specific circumstances (ggplot2 does that)
-    // // and getTypedValueInfo() must be defined for this to work.
-    // return 0;
-    // }
-    //
-    // @Override
-    // public void setTypedValueInfo(int value) {
-    // throw RInternalError.shouldNotReachHere();
-    // }
 
     public ArgumentsSignature getSignature() {
         return signature;

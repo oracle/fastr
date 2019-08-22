@@ -35,10 +35,10 @@ import com.oracle.truffle.r.nodes.unary.UnaryNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public abstract class ImplicitClassHierarchyNode extends UnaryNode {
 
@@ -93,8 +93,8 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization(limit = "getCacheSize(5)", guards = "value.getClass() == valueClass")
-    protected RStringVector getCachedClass(RTypedValue value,
-                    @Cached("value.getClass()") Class<? extends RTypedValue> valueClass,
+    protected RStringVector getCachedClass(RBaseObject value,
+                    @Cached("value.getClass()") Class<? extends RBaseObject> valueClass,
                     @Cached("createBinaryProfile()") ConditionProfile isArray,
                     @Cached("createBinaryProfile()") ConditionProfile isMatrix,
                     @Cached("create()") GetDimAttributeNode getDim) {
@@ -102,7 +102,7 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization(replaces = "getCachedClass", limit = "getCacheSize(5)", guards = "value.getRType() == type")
-    protected RStringVector getCachedType(RTypedValue value,
+    protected RStringVector getCachedType(RBaseObject value,
                     @Cached("value.getRType()") RType type,
                     @Cached("createBinaryProfile()") ConditionProfile isArray,
                     @Cached("createBinaryProfile()") ConditionProfile isMatrix,
@@ -118,7 +118,7 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
     }
 
     @Specialization(replaces = {"getCachedClass", "getCachedType"})
-    protected RStringVector get(RTypedValue value,
+    protected RStringVector get(RBaseObject value,
                     @Cached("createBinaryProfile()") ConditionProfile isArray,
                     @Cached("createBinaryProfile()") ConditionProfile isMatrix,
                     @Cached("create()") GetDimAttributeNode getDim) {
@@ -159,6 +159,6 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
                 }
             }
         }
-        return getImplicitClass(((RTypedValue) value).getRType(), forDispatch);
+        return getImplicitClass(((RBaseObject) value).getRType(), forDispatch);
     }
 }

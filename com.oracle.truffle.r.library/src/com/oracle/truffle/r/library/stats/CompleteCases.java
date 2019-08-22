@@ -26,11 +26,11 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -47,7 +47,7 @@ public final class CompleteCases extends RExternalBuiltinNode {
     }
 
     private RError invalidType(Object entry) {
-        throw error(RError.Message.INVALID_TYPE_ARGUMENT, ((RTypedValue) entry).getRType().getName());
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, ((RBaseObject) entry).getRType().getName());
     }
 
     private RError lengthMismatch() {

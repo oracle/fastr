@@ -32,11 +32,11 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -380,7 +380,7 @@ public class RRNG {
         }
         if (tmp == RRuntime.INT_NA || tmp < 0 || tmp > 1000) {
             assert seeds != RMissing.instance;
-            String type = seeds instanceof RTypedValue ? ((RTypedValue) seeds).getRType().getName() : "unknown";
+            String type = seeds instanceof RBaseObject ? ((RBaseObject) seeds).getRType().getName() : "unknown";
             RError.warning(RError.NO_CALLER, RError.Message.SEED_TYPE, type);
             handleInvalidSeed();
             return;

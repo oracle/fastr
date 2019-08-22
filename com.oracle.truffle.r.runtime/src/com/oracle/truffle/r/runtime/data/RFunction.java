@@ -60,7 +60,7 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
  * </ul>
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RFunction extends RSharingAttributeStorage implements RTypedValue, Shareable {
+public final class RFunction extends RSharingAttributeStorage implements Shareable {
 
     public static final String NO_NAME = new String("");
 

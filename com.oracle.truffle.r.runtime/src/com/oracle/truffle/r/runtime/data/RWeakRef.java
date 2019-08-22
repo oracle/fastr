@@ -24,9 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.RType;
 
-public final class RWeakRef extends RBaseObject implements RTruffleObject, RTypedValue {
-
-    private int typedValueInfo = ASCII_MASK_SHIFTED;
+public final class RWeakRef extends RBaseObject {
 
     private final Object key;
     private final Object value;

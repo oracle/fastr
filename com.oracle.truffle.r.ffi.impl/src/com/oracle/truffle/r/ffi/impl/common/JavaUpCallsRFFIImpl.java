@@ -93,7 +93,6 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
@@ -541,16 +540,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int LEVELS(Object x) {
-        if (x instanceof RTypedValue) {
-            return ((RTypedValue) x).getGPBits();
+        if (x instanceof RBaseObject) {
+            return ((RBaseObject) x).getGPBits();
         }
         throw RInternalError.shouldNotReachHere();
     }
 
     @Override
     public void SETLEVELS(Object x, int gpbits) {
-        if (x instanceof RTypedValue) {
-            ((RTypedValue) x).setGPBits(gpbits);
+        if (x instanceof RBaseObject) {
+            ((RBaseObject) x).setGPBits(gpbits);
         } else {
             throw RInternalError.shouldNotReachHere();
         }
@@ -1139,17 +1138,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int IS_S4_OBJECT(Object x) {
-        return ((x instanceof RTypedValue) && ((RTypedValue) x).isS4()) ? 1 : 0;
+        return ((x instanceof RBaseObject) && ((RBaseObject) x).isS4()) ? 1 : 0;
     }
 
     @Override
     public void SET_S4_OBJECT(Object x) {
-        guaranteeInstanceOf(x, RTypedValue.class).setS4();
+        guaranteeInstanceOf(x, RBaseObject.class).setS4();
     }
 
     @Override
     public void UNSET_S4_OBJECT(Object x) {
-        guaranteeInstanceOf(x, RTypedValue.class).unsetS4();
+        guaranteeInstanceOf(x, RBaseObject.class).unsetS4();
     }
 
     @Override

@@ -29,10 +29,10 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 // transcribed from src/main/objects.c
 public abstract class AsS4 extends Node {
@@ -65,7 +65,7 @@ public abstract class AsS4 extends Node {
                     getS4DataSlot = insert(GetS4DataSlot.create(RType.Any));
 
                 }
-                RTypedValue value = getS4DataSlot.executeObject(obj);
+                RBaseObject value = getS4DataSlot.executeObject(obj);
                 if (value != RNull.instance && !value.isS4()) {
                     return value;
                 } else if (complete == 1) {

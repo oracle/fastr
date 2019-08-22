@@ -27,10 +27,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public abstract class RAbstractContainer extends RSharingAttributeStorage implements RTypedValue {
+public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
     public abstract boolean isComplete();
 

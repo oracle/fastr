@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public class RPromise extends RBaseObject implements RTypedValue {
+public class RPromise extends RBaseObject {
 
     private static final int DEFAULT_BIT = 0x1;
     private static final int FULL_PROMISE_BIT = 0x2;
@@ -529,23 +529,6 @@ public class RPromise extends RBaseObject implements RTypedValue {
             return state;
         }
     }
-
-    // XXX
-    // @Override
-    // public int getTypedValueInfo() {
-    // return 0;
-    // }
-    //
-    // @Override
-    // public void setTypedValueInfo(int value) {
-    // XXX
-    // // This gets called from RSerialize, just ignore (for now)
-    // }
-    //
-    // @Override
-    // public boolean isS4() {
-    // return false;
-    // }
 
     public void setUnderEvaluation() {
         assert (state & UNDER_EVALUATION_BIT) == 0;

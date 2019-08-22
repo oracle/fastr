@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,11 +35,11 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -171,7 +171,7 @@ abstract class PositionCheckNode extends RBaseNode {
             castPosition = characterLookup.execute(vector, (RAbstractStringVector) castPosition, dimensionLength);
         }
 
-        RTypedValue positionVector = (RTypedValue) profilePosition(castPosition);
+        RBaseObject positionVector = (RBaseObject) profilePosition(castPosition);
 
         int positionLength;
         if (positionVector instanceof RMissing) {
@@ -191,7 +191,7 @@ abstract class PositionCheckNode extends RBaseNode {
         return castedValue.profile(positionVector);
     }
 
-    private static boolean isValidCastedType(RTypedValue positionVector) {
+    private static boolean isValidCastedType(RBaseObject positionVector) {
         RType type = positionVector.getRType();
         return type == RType.Integer || type == RType.Logical || type == RType.Character || type == RType.Double || type == RType.Null;
     }

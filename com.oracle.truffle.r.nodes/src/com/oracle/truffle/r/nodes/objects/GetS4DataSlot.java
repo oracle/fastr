@@ -31,10 +31,10 @@ import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 // transcribed from src/main/attrib.c
 public final class GetS4DataSlot extends Node {
@@ -63,7 +63,7 @@ public final class GetS4DataSlot extends Node {
         return new GetS4DataSlot(RType.Environment);
     }
 
-    public RTypedValue executeObject(RAttributable attrObj) {
+    public RBaseObject executeObject(RAttributable attrObj) {
         RAttributable obj = attrObj;
         Object value = null;
         if (!(obj instanceof RS4Object) || type == RType.S4Object) {
@@ -120,7 +120,7 @@ public final class GetS4DataSlot extends Node {
             value = dotXDataAttrAccess.execute(obj);
         }
         if (value != null && (type == RType.Any || type == typeOf.execute(value))) {
-            return (RTypedValue) value;
+            return (RBaseObject) value;
         } else {
             return RNull.instance;
         }

@@ -51,7 +51,7 @@ import java.nio.charset.StandardCharsets;
  * N.B. Use limited to RFFI implementations.
  */
 @ExportLibrary(InteropLibrary.class)
-public final class CharSXPWrapper extends RBaseObject implements RTruffleObject, RTypedValue {
+public final class CharSXPWrapper extends RBaseObject {
     private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
     private String contents;

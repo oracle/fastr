@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -54,7 +55,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -66,8 +66,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private static final boolean DEFAULT_DROP_DIMENSION = true;
 
     private final Class<? extends RAbstractContainer> targetClass;
-    private final Class<? extends RTypedValue> exactClass;
-    private final Class<? extends RTypedValue> dropDimensionsClass;
+    private final Class<? extends RBaseObject> exactClass;
+    private final Class<? extends RBaseObject> dropDimensionsClass;
     private final boolean exact;
     private final boolean dropDimensions;
 
@@ -105,7 +105,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private final ConditionProfile extractedLengthGTZeroProfile;
     private final ConditionProfile oneDimensionProfile;
 
-    CachedExtractVectorNode(ElementAccessMode mode, RAbstractContainer vector, Object[] positions, RTypedValue exact, RTypedValue dropDimensions, boolean recursive) {
+    CachedExtractVectorNode(ElementAccessMode mode, RAbstractContainer vector, Object[] positions, RBaseObject exact, RBaseObject dropDimensions, boolean recursive) {
         super(mode, vector, positions, recursive);
         assert vectorType != RType.Null && vectorType != RType.Environment;
         this.targetClass = vector.getClass();
@@ -422,7 +422,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private Object extractNames(RAbstractStringVector originalNames, Object[] positions, PositionProfile[] profiles, int dimension, Object originalExact, Object originalDropDimensions) {
         if (extractNames[dimension] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            extractNames[dimension] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RTypedValue) originalExact, (RTypedValue) originalDropDimensions, recursive));
+            extractNames[dimension] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RBaseObject) originalExact, (RBaseObject) originalDropDimensions, recursive));
         }
 
         if (extractNames[dimension].isSupported(originalNames, positions, originalExact, originalDropDimensions)) {
@@ -431,7 +431,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             // necessary because the positions might change to logical in case of negative indices
             if (extractNamesAlternative[dimension] == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                extractNamesAlternative[dimension] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RTypedValue) originalExact, (RTypedValue) originalDropDimensions, recursive));
+                extractNamesAlternative[dimension] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RBaseObject) originalExact, (RBaseObject) originalDropDimensions, recursive));
             }
             assert extractNamesAlternative[dimension].isSupported(originalNames, positions, originalExact, originalDropDimensions);
             return extractNamesAlternative[dimension].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
@@ -526,7 +526,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private RList extractSrcref(RList originalSrcref, Object[] positions, PositionProfile[] profiles, Object originalExact, Object originalDropDimensions) {
         if (extractSrcrefNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            extractSrcrefNode = insert(new CachedExtractVectorNode(mode, originalSrcref, positions, (RTypedValue) originalExact, (RTypedValue) originalDropDimensions, recursive));
+            extractSrcrefNode = insert(new CachedExtractVectorNode(mode, originalSrcref, positions, (RBaseObject) originalExact, (RBaseObject) originalDropDimensions, recursive));
         }
         return (RList) extractSrcrefNode.apply(originalSrcref, positions, profiles, originalExact, originalDropDimensions);
     }

@@ -40,6 +40,7 @@ import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
@@ -56,7 +57,6 @@ import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -1015,7 +1015,7 @@ public class RRuntime {
             case Builtin:
             case Closure:
             case Function:
-                return (obj instanceof RFunction) || (obj instanceof TruffleObject && !(obj instanceof RTypedValue));
+                return (obj instanceof RFunction) || (obj instanceof TruffleObject && !(obj instanceof RBaseObject));
             case Symbol:
                 return obj instanceof RSymbol;
             case Environment:
@@ -1074,11 +1074,11 @@ public class RRuntime {
     }
 
     public static boolean isForeignObject(TruffleObject obj) {
-        return !(obj instanceof RTypedValue);
+        return !(obj instanceof RBaseObject);
     }
 
     public static boolean isForeignObject(Object obj) {
-        return obj instanceof TruffleObject && !(obj instanceof RTypedValue);
+        return obj instanceof TruffleObject && !(obj instanceof RBaseObject);
     }
 
     public static int getForeignArraySize(Object object, InteropLibrary interop) {
@@ -1149,11 +1149,11 @@ public class RRuntime {
     }
 
     public static boolean isS4Object(Object o) {
-        return o instanceof RTypedValue && ((RTypedValue) o).isS4();
+        return o instanceof RBaseObject && ((RBaseObject) o).isS4();
     }
 
     public static String getRTypeName(Object arg) {
         CompilerAsserts.neverPartOfCompilation();
-        return isForeignObject(arg) ? "polyglot.value" : ((RTypedValue) convertScalarVectors(arg)).getRType().getName();
+        return isForeignObject(arg) ? "polyglot.value" : ((RBaseObject) convertScalarVectors(arg)).getRType().getName();
     }
 }

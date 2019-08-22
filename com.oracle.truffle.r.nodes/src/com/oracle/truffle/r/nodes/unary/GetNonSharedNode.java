@@ -27,8 +27,8 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -61,13 +61,13 @@ public abstract class GetNonSharedNode extends Node {
     }
 
     @Specialization(guards = {"shareable.getClass() == shareableClass", "isShareable(shareable)"})
-    protected RTypedValue getNonSharedCached(RSharingAttributeStorage shareable,
+    protected RBaseObject getNonSharedCached(RSharingAttributeStorage shareable,
                     @Cached("shareable.getClass()") Class<? extends RSharingAttributeStorage> shareableClass) {
         return shareableClass.cast(shareable).getNonShared();
     }
 
     @Specialization(replaces = "getNonSharedCached", guards = "isShareable(shareable)")
-    protected RTypedValue getNonShared(RSharingAttributeStorage shareable) {
+    protected RBaseObject getNonShared(RSharingAttributeStorage shareable) {
         return shareable.getNonShared();
     }
 

@@ -25,9 +25,16 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RType;
 
+/**
+ * R values that are publicly flowing through the interpreter. Be aware that also the primitive
+ * values {@link Integer}, {@link Double}, {@link Byte} and {@link String} flow but are not
+ * implementing this interface.
+ */
 @ExportLibrary(InteropLibrary.class)
-public abstract class RBaseObject implements RTypedValue {
+public abstract class RBaseObject implements RTruffleObject {
 
     // mask values are the same as in GNU R
     // as is the layout of data (but it's never exposed so it does not matter for correctness)
@@ -48,14 +55,6 @@ public abstract class RBaseObject implements RTypedValue {
 
     private Object nativeMirror;
 
-    public final void setNativeMirror(Object mirror) {
-        this.nativeMirror = mirror;
-    }
-
-    public final Object getNativeMirror() {
-        return nativeMirror;
-    }
-
     @SuppressWarnings("static-method")
     @ExportMessage
     public final boolean isPointer() {
@@ -72,37 +71,53 @@ public abstract class RBaseObject implements RTypedValue {
         NativeDataAccess.asPointer(this);
     }
 
-    @Override
+    public abstract RType getRType();
+
+    public final void setNativeMirror(Object mirror) {
+        this.nativeMirror = mirror;
+    }
+
+    public final Object getNativeMirror() {
+        return nativeMirror;
+    }
+
     public final int getTypedValueInfo() {
         return typedValueInfo;
     }
 
-    @Override
     public final void setTypedValueInfo(int value) {
+        // TODO
+        // RArgsValuesAndNames can get serialized under specific circumstances (ggplot2 does that)
+        // and getTypedValueInfo() must be defined for this to work,
+        // but should setTypedValueInfo(RArgsValuesAndNames) work as well
+        if (this instanceof RArgsValuesAndNames) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        // TODO This gets called from RSerialize, should accept a non 0 value?
+        if (this instanceof RPromise) {
+            // do nothing
+            return;
+        }
         typedValueInfo = value;
     }
 
-    @Override
     public final int getGPBits() {
         return (getTypedValueInfo() & GP_BITS_MASK) >>> GP_BITS_MASK_SHIFT;
     }
 
-    @Override
     public final void setGPBits(int gpbits) {
         setTypedValueInfo((getTypedValueInfo() & ~GP_BITS_MASK) | (gpbits << GP_BITS_MASK_SHIFT));
     }
 
-    @Override
     public final boolean isS4() {
         return (getTypedValueInfo() & S4_MASK_SHIFTED) != 0;
     }
 
-    @Override
     public final void setS4() {
         setTypedValueInfo(getTypedValueInfo() | S4_MASK_SHIFTED);
     }
 
-    @Override
     public final void unsetS4() {
         setTypedValueInfo(getTypedValueInfo() & ~S4_MASK_SHIFTED);
     }

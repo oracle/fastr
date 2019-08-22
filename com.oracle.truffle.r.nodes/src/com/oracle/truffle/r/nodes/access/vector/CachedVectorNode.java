@@ -25,8 +25,8 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -56,7 +56,7 @@ abstract class CachedVectorNode extends RBaseNodeWithWarnings {
 
     @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
 
-    CachedVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, boolean recursive) {
+    CachedVectorNode(ElementAccessMode mode, RBaseObject vector, Object[] positions, boolean recursive) {
         this.mode = mode;
         this.vectorType = vector.getRType();
         this.recursive = recursive;
@@ -114,7 +114,7 @@ abstract class CachedVectorNode extends RBaseNodeWithWarnings {
         return position instanceof RMissing;
     }
 
-    protected static boolean logicalAsBoolean(RTypedValue cast, boolean defaultValue) {
+    protected static boolean logicalAsBoolean(RBaseObject cast, boolean defaultValue) {
         if (cast instanceof RMissing) {
             return defaultValue;
         } else {

@@ -77,6 +77,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -84,7 +85,6 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import java.nio.file.FileVisitor;
@@ -863,7 +863,7 @@ public class FileFunctions {
             String[][] inputs = new String[argsLen][];
             for (int i = 0; i < argsLen; i++) {
                 Object elem = args.getDataAt(i);
-                if (elem instanceof RTypedValue && ((RTypedValue) elem).isS4()) {
+                if (elem instanceof RBaseObject && ((RBaseObject) elem).isS4()) {
                     throw RError.nyi(this, "list files: S4 elem");
                 } else if (elem instanceof RSymbol) {
                     inputs[i] = new String[]{((RSymbol) elem).getName()};
