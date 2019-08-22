@@ -61,6 +61,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RSrcref.SrcrefFields;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
@@ -2803,7 +2804,15 @@ public class RSerialize {
     private static void handleSrcrefAttr(RAttributable func, RSyntaxCall elem) {
         Object srcref = func.getAttr(RRuntime.R_SRCREF);
         if (srcref instanceof RAbstractIntVector) {
-            SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) srcref, null);
+            Object srcfile = func.getAttr(RRuntime.R_SRCFILE);
+            assert srcfile instanceof REnvironment;
+            Source source;
+            try {
+                source = RSource.fromSrcfile((REnvironment) srcfile);
+            } catch (IOException e) {
+                source = null;
+            }
+            SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) srcref, source);
             elem.setSourceSection(ss);
         } else if (srcref instanceof RList) {
             try {
