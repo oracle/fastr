@@ -42,20 +42,19 @@ import java.util.List;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -518,7 +517,7 @@ public class ConnectionSupport {
      * and this can be repeated indefinitely.
      */
     @ExportLibrary(InteropLibrary.class)
-    public abstract static class BaseRConnection extends RObject implements RConnection {
+    public abstract static class BaseRConnection extends RBaseObject implements RConnection {
 
         /**
          * {@code true} is the connection has been opened successfully. N.B. This supports lazy
@@ -648,20 +647,9 @@ public class ConnectionSupport {
             this.openMode = mode;
         }
 
-        @SuppressWarnings("static-method")
-        @ExportMessage
-        boolean isPointer() {
-            return true;
-        }
-
-        @ExportMessage
-        long asPointer() {
-            return NativeDataAccess.asPointer(this);
-        }
-
-        @ExportMessage
-        void toNative() {
-            NativeDataAccess.asPointer(this);
+        @Override
+        public RType getRType() {
+            throw RInternalError.shouldNotReachHere();
         }
 
         public ConnectionClass getConnectionClass() {

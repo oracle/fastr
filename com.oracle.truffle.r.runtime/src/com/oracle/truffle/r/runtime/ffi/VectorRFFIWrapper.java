@@ -56,7 +56,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.AtomicVectorGetterNodeGen;
@@ -70,21 +70,21 @@ public final class VectorRFFIWrapper implements TruffleObject {
     private final TruffleObject vector;
 
     private VectorRFFIWrapper(TruffleObject vector) {
-        assert vector instanceof RObject;
+        assert vector instanceof RBaseObject;
         this.vector = vector;
-        NativeDataAccess.setNativeWrapper((RObject) vector, this);
+        NativeDataAccess.setNativeWrapper((RBaseObject) vector, this);
     }
 
     public static VectorRFFIWrapper get(TruffleObject x) {
-        assert x instanceof RObject;
-        Object wrapper = NativeDataAccess.getNativeWrapper((RObject) x);
+        assert x instanceof RBaseObject;
+        Object wrapper = NativeDataAccess.getNativeWrapper((RBaseObject) x);
         if (wrapper != null) {
             assert wrapper instanceof VectorRFFIWrapper;
             return (VectorRFFIWrapper) wrapper;
         } else {
             wrapper = new VectorRFFIWrapper(x);
             // Establish the 1-1 relationship between the object and its native wrapper
-            NativeDataAccess.setNativeWrapper((RObject) x, wrapper);
+            NativeDataAccess.setNativeWrapper((RBaseObject) x, wrapper);
             return (VectorRFFIWrapper) wrapper;
         }
     }
@@ -154,7 +154,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         VectorRFFIWrapperNativePointer(TruffleObject vector) {
             this.vector = vector;
-            assert vector instanceof RObject;
+            assert vector instanceof RBaseObject;
             NativeDataAccess.asPointer(vector); // initialize the native mirror in the vector
         }
 

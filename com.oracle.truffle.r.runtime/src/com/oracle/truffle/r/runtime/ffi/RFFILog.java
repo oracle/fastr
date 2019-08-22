@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.context.RContext;
 import java.util.logging.Level;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import java.util.List;
 import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -148,8 +148,8 @@ public class RFFILog {
             }
             // Note: it makes sense to include native mirrors only once they have been create
             // already
-            if (mode.logNativeMirror && arg instanceof RObject) {
-                sb.append(((RObject) arg).getNativeMirror());
+            if (mode.logNativeMirror && arg instanceof RBaseObject) {
+                sb.append(((RBaseObject) arg).getNativeMirror());
             }
             sb.append(')');
         }

@@ -42,12 +42,12 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFFIAccess;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
@@ -150,7 +150,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      * {@link GetReadonlyData} node for fast path in such cases.
      *
      * @see GetReadonlyData
-     * @see RObject#getNativeMirror()
+     * @see RBaseObject#getNativeMirror()
      * @return vector data
      */
     public abstract Object getReadonlyData();

@@ -32,7 +32,9 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 
 /**
  * <p>
@@ -49,7 +51,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
  * 
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RForeignObjectWrapper extends RObject implements RTruffleObject, RForeignVectorWrapper {
+public final class RForeignObjectWrapper extends RBaseObject implements RTruffleObject, RForeignVectorWrapper {
 
     protected final TruffleObject delegate;
 
@@ -64,6 +66,11 @@ public final class RForeignObjectWrapper extends RObject implements RTruffleObje
     @Override
     public String toString() {
         return RRuntime.NULL;
+    }
+
+    @Override
+    public RType getRType() {
+        throw RInternalError.shouldNotReachHere();
     }
 
     @ExportMessage
@@ -191,22 +198,6 @@ public final class RForeignObjectWrapper extends RObject implements RTruffleObje
     void writeMember(String member, Object value,
                     @CachedLibrary("this.delegate") InteropLibrary interop) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
         interop.writeMember(delegate, member, value);
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    void toNative() {
-        NativeDataAccess.asPointer(this);
     }
 
     @ExportMessage

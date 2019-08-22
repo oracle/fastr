@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public class RPromise extends RObject implements RTypedValue {
+public class RPromise extends RBaseObject implements RTypedValue {
 
     private static final int DEFAULT_BIT = 0x1;
     private static final int FULL_PROMISE_BIT = 0x2;
@@ -227,22 +227,6 @@ public class RPromise extends RObject implements RTypedValue {
         } else {
             throw UnknownIdentifierException.create(member);
         }
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    void toNative() {
-        NativeDataAccess.asPointer(this);
     }
 
     @Override
@@ -546,20 +530,22 @@ public class RPromise extends RObject implements RTypedValue {
         }
     }
 
-    @Override
-    public int getTypedValueInfo() {
-        return 0;
-    }
-
-    @Override
-    public void setTypedValueInfo(int value) {
-        // This gets called from RSerialize, just ignore (for now)
-    }
-
-    @Override
-    public boolean isS4() {
-        return false;
-    }
+    // XXX
+    // @Override
+    // public int getTypedValueInfo() {
+    // return 0;
+    // }
+    //
+    // @Override
+    // public void setTypedValueInfo(int value) {
+    // XXX
+    // // This gets called from RSerialize, just ignore (for now)
+    // }
+    //
+    // @Override
+    // public boolean isS4() {
+    // return false;
+    // }
 
     public void setUnderEvaluation() {
         assert (state & UNDER_EVALUATION_BIT) == 0;

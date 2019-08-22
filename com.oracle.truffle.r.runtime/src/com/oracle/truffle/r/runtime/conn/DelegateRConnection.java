@@ -43,9 +43,10 @@ import java.util.Objects;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -57,7 +58,7 @@ import java.util.zip.GZIPOutputStream;
  * operations.
  * </p>
  */
-abstract class DelegateRConnection extends RObject implements RConnection, ByteChannel {
+abstract class DelegateRConnection extends RBaseObject implements RConnection, ByteChannel {
     public static final int DEFAULT_CACHE_SIZE = 16 * 1024;
     protected final BaseRConnection base;
     private final ByteBuffer cache;
@@ -629,6 +630,11 @@ abstract class DelegateRConnection extends RObject implements RConnection, ByteC
     public void closeAndDestroy() throws IOException {
         base.closed = true;
         close();
+    }
+
+    @Override
+    public RType getRType() {
+        throw RInternalError.shouldNotReachHere();
     }
 
     private static final int GZIP_BUFFER_SIZE = (2 << 20);

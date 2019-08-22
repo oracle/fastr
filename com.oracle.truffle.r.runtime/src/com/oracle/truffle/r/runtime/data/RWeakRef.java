@@ -22,13 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RType;
 
-@ExportLibrary(InteropLibrary.class)
-public final class RWeakRef extends RObject implements RTruffleObject, RTypedValue {
+public final class RWeakRef extends RBaseObject implements RTruffleObject, RTypedValue {
 
     private int typedValueInfo = ASCII_MASK_SHIFTED;
 
@@ -42,22 +38,7 @@ public final class RWeakRef extends RObject implements RTruffleObject, RTypedVal
         this.value = value;
         this.fin = fin;
         this.onexit = onexit;
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    public long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    public void toNative() {
-        NativeDataAccess.asPointer(this);
+        setTypedValueInfo(ASCII_MASK_SHIFTED);
     }
 
     public Object getKey() {
@@ -71,15 +52,5 @@ public final class RWeakRef extends RObject implements RTruffleObject, RTypedVal
     @Override
     public RType getRType() {
         return RType.WeakRef;
-    }
-
-    @Override
-    public int getTypedValueInfo() {
-        return typedValueInfo;
-    }
-
-    @Override
-    public void setTypedValueInfo(int value) {
-        typedValueInfo = value;
     }
 }

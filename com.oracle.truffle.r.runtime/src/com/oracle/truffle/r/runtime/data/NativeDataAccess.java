@@ -87,7 +87,7 @@ class UnsafeAdapter {
 }
 
 /**
- * Provides API to work with objects returned by {@link RObject#getNativeMirror()}. The native
+ * Provides API to work with objects returned by {@link RBaseObject#getNativeMirror()}. The native
  * mirror represents what on the native side is SEXP, but not directly the raw data of the vector.
  * Use {@link #asPointer(Object)} to assign a native mirror object to the given vector. The raw data
  * in native memory for a vector that already has a native mirror object assigned can be allocated
@@ -176,7 +176,7 @@ public final class NativeDataAccess {
         return nativeRefQueue;
     }
 
-    private static final class NativeMirror extends WeakReference<RObject> implements Releasable {
+    private static final class NativeMirror extends WeakReference<RBaseObject> implements Releasable {
         /**
          * ID of the mirror, this will be used as the value for SEXP. When native up-calls to Java,
          * we get this value and find the corresponding object for it.
@@ -211,7 +211,7 @@ public final class NativeDataAccess {
          * through which the native code accesses it. For instance, Sulong implements the "pointer"
          * equality of two objects that are not pointers (i.e. <code>IS_POINTER</code> returns
          * <code>false</code>) as the reference equality of the objects. It follows that the pointer
-         * comparison would fail if the same <code>RObject</code> instance were wrapped by two
+         * comparison would fail if the same <code>RBaseObject</code> instance were wrapped by two
          * different native wrappers.
          */
         private NativeWrapperReference nativeWrapperRef;
@@ -221,7 +221,7 @@ public final class NativeDataAccess {
          */
         private boolean external;
 
-        NativeMirror(RObject owner) {
+        NativeMirror(RBaseObject owner) {
             super(owner, nativeReferenceQueue());
             this.id = counter.addAndGet(2);
             nativeMirrors.put(id, this);
@@ -231,7 +231,7 @@ public final class NativeDataAccess {
          * Creates a new mirror with a specified native address as both ID and address. The buffer
          * will be freed when the Java object is collected.
          */
-        NativeMirror(RObject ownerVec, long address) {
+        NativeMirror(RBaseObject ownerVec, long address) {
             // address == 0 means no nativeMirrors registration and no release() call
             super(ownerVec, (address != 0) ? nativeReferenceQueue() : null);
             this.id = address;
@@ -347,15 +347,15 @@ public final class NativeDataAccess {
     private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = TRACE_MIRROR_ALLOCATION_SITES ? new ConcurrentHashMap<>() : null;
 
     public static boolean isPointer(Object obj) {
-        return obj instanceof RObject;
+        return obj instanceof RBaseObject;
     }
 
     /**
-     * Assigns a native mirror object to the given RObject object.
+     * Assigns a native mirror object to the given RBaseObject object.
      */
     public static long asPointer(Object arg) {
-        if (arg instanceof RObject) {
-            RObject obj = (RObject) arg;
+        if (arg instanceof RBaseObject) {
+            RBaseObject obj = (RBaseObject) arg;
             NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
             if (mirror == null || mirror.id == 0) {
                 mirror = putMirrorObject(arg, obj, mirror);
@@ -366,7 +366,7 @@ public final class NativeDataAccess {
     }
 
     @TruffleBoundary
-    private static NativeMirror putMirrorObject(Object arg, RObject obj, NativeMirror oldMirror) {
+    private static NativeMirror putMirrorObject(Object arg, RBaseObject obj, NativeMirror oldMirror) {
         NativeMirror newMirror;
         obj.setNativeMirror(newMirror = arg instanceof CustomNativeMirror ? new NativeMirror(obj, ((CustomNativeMirror) arg).getCustomMirrorAddress()) : new NativeMirror(obj));
         if (oldMirror != null) {
@@ -397,7 +397,7 @@ public final class NativeDataAccess {
     }
 
     public static Object toNative(Object obj) {
-        assert obj instanceof RObject : "non-RObjects will not be able to provide native pointers";
+        assert obj instanceof RBaseObject : "non-RBaseObjects will not be able to provide native pointers";
         return obj;
     }
 
@@ -412,7 +412,7 @@ public final class NativeDataAccess {
             CompilerDirectives.transferToInterpreter();
             throw reportDataAccessError(address);
         }
-        RObject result = nativeMirror.get();
+        RBaseObject result = nativeMirror.get();
         if (result == null) {
             CompilerDirectives.transferToInterpreter();
             throw reportDataAccessError(address);
@@ -1259,7 +1259,7 @@ public final class NativeDataAccess {
         return new String(bytes, StandardCharsets.US_ASCII);
     }
 
-    public static void setNativeContents(RObject obj, long address, int length) {
+    public static void setNativeContents(RBaseObject obj, long address, int length) {
         assert obj.getNativeMirror() != null;
         if (noDoubleNative.isValid() && obj instanceof RDoubleVector) {
             noDoubleNative.invalidate();
@@ -1281,7 +1281,7 @@ public final class NativeDataAccess {
         mirror.external = true;
     }
 
-    public static void setNativeWrapper(RObject obj, Object wrapper) {
+    public static void setNativeWrapper(RBaseObject obj, Object wrapper) {
         NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
         if (mirror == null) {
             mirror = new NativeMirror(obj, 0);
@@ -1290,7 +1290,7 @@ public final class NativeDataAccess {
         mirror.nativeWrapperRef = new NativeWrapperReference(wrapper);
     }
 
-    public static Object getNativeWrapper(RObject obj) {
+    public static Object getNativeWrapper(RBaseObject obj) {
         NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
         if (mirror == null) {
             return null;
@@ -1341,7 +1341,7 @@ public final class NativeDataAccess {
 
         @Override
         public String getAttribute(String idString, String attrName) {
-            RObject obj = (RObject) lookup(Long.decode(idString));
+            RBaseObject obj = (RBaseObject) lookup(Long.decode(idString));
             if (obj instanceof RAttributable) {
                 return "" + ((RAttributable) obj).getAttr(attrName);
             } else {

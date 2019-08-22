@@ -27,23 +27,48 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
 @ExportLibrary(InteropLibrary.class)
-public abstract class RBaseObject extends RObject implements RTypedValue {
+public abstract class RBaseObject implements RTypedValue {
+
+    // mask values are the same as in GNU R
+    // as is the layout of data (but it's never exposed so it does not matter for correctness)
+    public static final int S4_MASK = 1 << 4;
+    public static final int GP_BITS_MASK_SHIFT = 8;
+    public static final int GP_BITS_MASK = 0xFFFF << GP_BITS_MASK_SHIFT;
+
+    public static final int S4_MASK_SHIFTED = 1 << (4 + GP_BITS_MASK_SHIFT);
+    public static final int ASCII_MASK_SHIFTED = 1 << 14;
+
+    public static final int BYTES_MASK = 1 << 1;
+    public static final int LATIN1_MASK = 1 << 2;
+    public static final int UTF8_MASK = 1 << 3;
+    public static final int CACHED_MASK = 1 << 5;
+    public static final int ASCII_MASK = 1 << 6;
 
     private int typedValueInfo;
 
+    private Object nativeMirror;
+
+    public final void setNativeMirror(Object mirror) {
+        this.nativeMirror = mirror;
+    }
+
+    public final Object getNativeMirror() {
+        return nativeMirror;
+    }
+
     @SuppressWarnings("static-method")
     @ExportMessage
-    public boolean isPointer() {
+    public final boolean isPointer() {
         return true;
     }
 
     @ExportMessage
-    public long asPointer() {
+    public final long asPointer() {
         return NativeDataAccess.asPointer(this);
     }
 
     @ExportMessage
-    public void toNative() {
+    public final void toNative() {
         NativeDataAccess.asPointer(this);
     }
 

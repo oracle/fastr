@@ -30,8 +30,8 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -73,7 +73,7 @@ public abstract class CRFFIWrapVectorNode extends Node {
 
     @Fallback
     protected Object fallback(Object vector) {
-        if (vector instanceof RObject) { // Used for passing RFunction so far
+        if (vector instanceof RBaseObject) { // Used for passing RFunction so far
             return wrapNode.execute(vector);
         }
         return fallbackError(vector);
