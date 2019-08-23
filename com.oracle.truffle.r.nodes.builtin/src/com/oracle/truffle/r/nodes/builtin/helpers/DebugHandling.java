@@ -37,7 +37,6 @@ import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -267,7 +266,7 @@ public class DebugHandling {
         protected final FunctionDefinitionNode functionDefinitionNode;
         protected EventBinding<StepIntoInstrumentListener> stepIntoInstrument;
 
-        @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
+        private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
 
         protected InteractingDebugEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
             this.text = text;
