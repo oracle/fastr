@@ -1667,9 +1667,6 @@ public class GrepFunctions {
             if (!fixed) {
                 throw RInternalError.unimplemented("non fixed grepRaw");
             }
-            if (value) {
-                throw RInternalError.unimplemented("grepRaw with value = TRUE");
-            }
             if (all) {
                 throw RInternalError.unimplemented("grepRaw with all = FALSE");
             }
@@ -1685,11 +1682,19 @@ public class GrepFunctions {
                     }
                 }
                 if (found) {
-                    // 1-based indexing of R
-                    return haystackIdx + 1;
+                    if (value) {
+                        return pattern;
+                    } else {
+                        // 1-based indexing of R
+                        return haystackIdx + 1;
+                    }
                 }
             }
-            return RDataFactory.createEmptyIntVector();
+            if (value) {
+                return RDataFactory.createEmptyRawVector();
+            } else {
+                return RDataFactory.createEmptyIntVector();
+            }
         }
     }
 

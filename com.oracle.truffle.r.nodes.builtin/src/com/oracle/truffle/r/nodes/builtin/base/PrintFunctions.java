@@ -136,7 +136,7 @@ public class PrintFunctions {
                 argsArr[i] = RRuntime.fromLogical(missing.getDataAt(i)) ? RMissing.instance : nextNode.car();
                 args = nextNode.cdr();
                 i++;
-                if (i > OLD_PRINT_ARGS_SIZE) {
+                if (i >= OLD_PRINT_ARGS_SIZE) {
                     // From the documentation: further arguments in "..." are ignored
                     break;
                 }
