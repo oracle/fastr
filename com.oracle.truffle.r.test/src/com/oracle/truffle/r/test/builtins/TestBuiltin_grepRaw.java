@@ -32,5 +32,7 @@ public class TestBuiltin_grepRaw extends TestBase {
     public void testFixedNoValueNoAll() {
         assertEval("grepRaw('no match', 'textText', fixed=T)");
         assertEval("grepRaw('adf', 'adadfadfdfadadf', fixed=T)");
+        assertEval("grepRaw('text', 'textText', fixed=T, value=T)");
+        assertEval("grepRaw('no match', 'textText', fixed=T, value=T)");
     }
 }
