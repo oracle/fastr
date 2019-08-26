@@ -298,13 +298,13 @@ public class REPL {
     }
 
     public static void handleError(ExecutorService executor, Context context, PolyglotException e) {
-        String errorText = getErrorText(e);
+        String errorText = getErrorText(executor, e);
         if (!errorText.isEmpty()) {
             run(executor, () -> context.eval(PRINT_ERROR).execute(errorText));
         }
     }
 
-    private static String getErrorText(PolyglotException eIn) {
+    private static String getErrorText(ExecutorService executor, PolyglotException eIn) {
         PolyglotException e = eIn;
         if (eIn.getCause() instanceof PolyglotException) {
             e = (PolyglotException) eIn.getCause();
@@ -345,7 +345,7 @@ public class REPL {
             sb.append("Error in polyglot evaluation : ");
         }
 
-        if (!wasPrinted(e)) {
+        if (!wasPrinted(executor, e)) {
             if (e.isHostException()) {
                 sb.append(e.asHostException().toString());
             } else if (e.getMessage() != null) {
@@ -368,18 +368,20 @@ public class REPL {
         return sb.toString();
     }
 
-    private static boolean wasPrinted(PolyglotException e) {
-        Value guestObject = e.getGuestObject();
-        // TODO ensure we are accessing only the FastR RError object and
-        // not some another guest object with a wasPrinted member
-        if (guestObject == null || !guestObject.hasMember("wasPrinted")) {
-            return false;
-        }
-        Value wasPrinted = guestObject.getMember("wasPrinted");
-        if (!wasPrinted.isBoolean()) {
-            return false;
-        }
-        return wasPrinted.asBoolean();
+    private static boolean wasPrinted(ExecutorService executor, PolyglotException e) {
+        return run(executor, () -> {
+            Value guestObject = e.getGuestObject();
+            // TODO ensure we are accessing only the FastR RError object and
+            // not some another guest object with a wasPrinted member
+            if (guestObject == null || !guestObject.hasMember("wasPrinted")) {
+                return false;
+            }
+            Value wasPrinted = guestObject.getMember("wasPrinted");
+            if (!wasPrinted.isBoolean()) {
+                return false;
+            }
+            return wasPrinted.asBoolean();
+        });
     }
 
     /**
