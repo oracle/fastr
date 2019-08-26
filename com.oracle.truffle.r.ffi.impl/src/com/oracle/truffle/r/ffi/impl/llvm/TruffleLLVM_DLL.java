@@ -83,7 +83,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 before = stateRFFI.beforeDowncall(null, Type.LLVM);
             }
             Source src = Source.newBuilder("llvm", file).internal(true).build();
-            Object lib = env.parse(src).call();
+            Object lib = env.parseInternal(src).call();
             assert lib instanceof TruffleObject;
             if (isLibR) {
                 // TODO: accessing what used to be a private field, this will be refactored

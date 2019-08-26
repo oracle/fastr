@@ -178,7 +178,7 @@ public class FastRInterop {
             }
             Source sourceObject = RSource.fromTextInternalInvisible(code, RSource.Internal.EVAL_WRAPPER, languageId);
             try {
-                return env.parse(sourceObject);
+                return env.parsePublic(sourceObject);
             } catch (Throwable t) {
                 throw error(RError.Message.GENERIC, "Error while parsing: " + t.getMessage());
             }
@@ -238,7 +238,7 @@ public class FastRInterop {
                 }
                 SourceBuilder sourceBuilder = Source.newBuilder(languageId, tFile).name(tFile.getName());
                 Source sourceObject = sourceBuilder.build();
-                return env.parse(sourceObject);
+                return env.parsePublic(sourceObject);
             } catch (IOException e) {
                 throw error(RError.Message.GENERIC, "Error reading file: " + e.getMessage());
             } catch (Throwable t) {
