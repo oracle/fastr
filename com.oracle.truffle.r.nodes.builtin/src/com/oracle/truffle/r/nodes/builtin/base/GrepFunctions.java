@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,6 +50,7 @@ import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Collections.ArrayListObj;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -1653,6 +1655,7 @@ public class GrepFunctions {
             Casts casts = new Casts(GrepRaw.class);
             casts.arg("pattern").asRawVector();
             casts.arg("x").asRawVector();
+            casts.arg("offset").asIntegerVector().findFirst(1);
             casts.arg("ignore.case").asLogicalVector().findFirst().map(toBoolean());
             casts.arg("fixed").asLogicalVector().findFirst().map(toBoolean());
             casts.arg("value").asLogicalVector().findFirst().map(toBoolean());
@@ -1660,41 +1663,403 @@ public class GrepFunctions {
             casts.arg("invert").asLogicalVector().findFirst().map(toBoolean());
         }
 
-        @TruffleBoundary
-        @Specialization
-        protected Object doIt(RRawVector pattern, RRawVector x, @SuppressWarnings("unused") Object offset, @SuppressWarnings("unused") Object ignoreCase, boolean fixed, boolean value, boolean all,
-                        boolean invert) {
-            if (!fixed) {
-                throw RInternalError.unimplemented("non fixed grepRaw");
+        /**
+         * After haystack is searched for pattern, it is divided into ranges which are either
+         * matched or unmatched. This class contains all these ranges.
+         *
+         * Note that there cannot be two adjacent unmatched ranges.
+         */
+        public static class HaystackDescriptor implements Iterable<Range> {
+            private ArrayListObj<Range> ranges = new ArrayListObj<>();
+            private RRawVector haystack;
+            private int matchedRangesCount;
+            private int unmatchedRangesCount;
+
+            public HaystackDescriptor(RRawVector haystack) {
+                this.haystack = haystack;
             }
-            if (all) {
-                throw RInternalError.unimplemented("grepRaw with all = FALSE");
+
+            public RRawVector getHaystack() {
+                return haystack;
             }
-            if (invert) {
-                throw RInternalError.unimplemented("grepRaw with invert = TRUE");
+
+            public void addRange(Range range) {
+                if (ranges.size() > 1) {
+                    Range lastRange = ranges.get(ranges.size() - 1);
+                    assert !(lastRange.isUnmatched() && range.isUnmatched());
+                }
+
+                ranges.add(range);
+
+                if (range.isMatched()) {
+                    matchedRangesCount++;
+                } else {
+                    unmatchedRangesCount++;
+                }
             }
-            for (int haystackIdx = 0; haystackIdx < x.getLength(); haystackIdx++) {
-                boolean found = true;
+
+            public int getRangesCount() {
+                return ranges.size();
+            }
+
+            public int getMatchedRangesCount() {
+                return matchedRangesCount;
+            }
+
+            public int getUnmatchedRangesCount() {
+                return unmatchedRangesCount;
+            }
+
+            public Range getRange(int index) {
+                return ranges.get(index);
+            }
+
+            @Override
+            public Iterator<Range> iterator() {
+                return new Iterator<Range>() {
+                    private int currIdx = 0;
+
+                    @Override
+                    public boolean hasNext() {
+                        return currIdx < ranges.size();
+                    }
+
+                    @Override
+                    public Range next() {
+                        return ranges.get(currIdx++);
+                    }
+                };
+            }
+        }
+
+        public static class Range {
+            private int fromIdx;
+            private int toIdx;
+            private boolean matched;
+
+            public Range(int fromIdx, int toIdx, boolean matched) {
+                assert fromIdx < toIdx;
+                this.fromIdx = fromIdx;
+                this.toIdx = toIdx;
+                this.matched = matched;
+            }
+
+            public boolean isMatched() {
+                return matched;
+            }
+
+            public boolean isUnmatched() {
+                return !matched;
+            }
+
+            public int getFromIdx() {
+                return fromIdx;
+            }
+
+            public int getToIdx() {
+                return toIdx;
+            }
+
+            public int size() {
+                return toIdx - fromIdx;
+            }
+        }
+
+        public static final class FixedPatternFinder {
+            private RRawVector pattern;
+            private RRawVector haystack;
+            private int haystackIdx;
+
+            public FixedPatternFinder(RRawVector pattern, RRawVector haystack) {
+                this.pattern = pattern;
+                this.haystack = haystack;
+                this.haystackIdx = 0;
+            }
+
+            public FixedPatternFinder(RRawVector pattern, RRawVector haystack, int offset) {
+                assert 1 <= offset && offset <= haystack.getLength();
+                this.pattern = pattern;
+                this.haystack = haystack;
+                this.haystackIdx = offset - 1;
+            }
+
+            public HaystackDescriptor findFirst() {
+                HaystackDescriptor haystackDescriptor = new HaystackDescriptor(haystack);
+                int firstMatchedIndex = findNextIndex();
+
+                if (firstMatchedIndex == -1) {
+                    haystackDescriptor.addRange(new Range(0, haystack.getLength(), false));
+                    return haystackDescriptor;
+                }
+
+                if (firstMatchedIndex > 0) {
+                    haystackDescriptor.addRange(new Range(0, firstMatchedIndex, false));
+                }
+                haystackDescriptor.addRange(
+                                new Range(firstMatchedIndex, firstMatchedIndex + pattern.getLength(), true));
+                if (firstMatchedIndex + pattern.getLength() < haystack.getLength()) {
+                    haystackDescriptor.addRange(
+                                    new Range(firstMatchedIndex + pattern.getLength(), haystack.getLength(), false));
+                }
+                return haystackDescriptor;
+            }
+
+            public HaystackDescriptor findAll() {
+                HaystackDescriptor haystackDescriptor = new HaystackDescriptor(haystack);
+                int endOfLastMatch = 0;
+                int index;
+                while ((index = findNextIndex()) != -1) {
+                    if (endOfLastMatch < index) {
+                        // Create unmatched range [endOfLastMatch, index].
+                        haystackDescriptor.addRange(new Range(endOfLastMatch, index, false));
+                    }
+                    // Create matched range [index, index + len(pattern)].
+                    haystackDescriptor.addRange(new Range(index, index + pattern.getLength(), true));
+                    endOfLastMatch = index + pattern.getLength();
+                }
+
+                // Create last unmatched range if necessary.
+                if (endOfLastMatch < haystack.getLength()) {
+                    haystackDescriptor.addRange(new Range(endOfLastMatch, haystack.getLength(), false));
+                }
+
+                return haystackDescriptor;
+            }
+
+            private int findNextIndex() {
+                for (int i = haystackIdx; i < haystack.getLength(); i++) {
+                    if (patternMatchesAtIndex(i)) {
+                        haystackIdx = i + pattern.getLength();
+                        return i;
+                    }
+                }
+                return -1;
+            }
+
+            private boolean patternMatchesAtIndex(int idx) {
                 for (int patternIdx = 0; patternIdx < pattern.getLength(); patternIdx++) {
-                    if (pattern.getRawDataAt(patternIdx) != x.getRawDataAt(haystackIdx + patternIdx)) {
-                        found = false;
-                        break;
+                    if (pattern.getRawDataAt(patternIdx) != haystack.getRawDataAt(idx + patternIdx)) {
+                        return false;
                     }
                 }
-                if (found) {
-                    if (value) {
-                        return pattern;
-                    } else {
-                        // 1-based indexing of R
-                        return haystackIdx + 1;
-                    }
-                }
+                return true;
             }
-            if (value) {
+        }
+
+        /**
+         * Inverter that should be used when all argument is TRUE, more specifically the combination
+         * of the arguments should be: value=T, invert=T, all=T.
+         */
+        private static class AllInverter {
+            private HaystackDescriptor haystackDescriptor;
+
+            AllInverter(HaystackDescriptor haystackDescriptor) {
+                this.haystackDescriptor = haystackDescriptor;
+            }
+
+            public RList invertAllValues() {
+                ArrayListObj<RRawVector> vectors = new ArrayListObj<>();
+
+                if (haystackDescriptor.getRangesCount() == 1) {
+                    Range range = haystackDescriptor.getRange(0);
+                    if (range.isMatched()) {
+                        // Return list([], []).
+                        Object[] data = new Object[2];
+                        data[0] = RDataFactory.createEmptyRawVector();
+                        data[1] = RDataFactory.createEmptyRawVector();
+                        return RDataFactory.createList(data);
+                    } else {
+                        // Return list(haystack).
+                        RList list = RDataFactory.createList(1);
+                        list.setDataAt(0, haystackDescriptor.getHaystack());
+                        return list;
+                    }
+                }
+
+                for (int i = 0; i < haystackDescriptor.getRangesCount(); i++) {
+                    Range range = haystackDescriptor.getRange(i);
+                    Range previousRange = null;
+                    if (i > 0) {
+                        previousRange = haystackDescriptor.getRange(i - 1);
+                    }
+
+                    if (previousRange != null) {
+                        if (range.isMatched() && previousRange.isMatched()) {
+                            vectors.add(RDataFactory.createEmptyRawVector());
+                        }
+                    }
+
+                    if (isRangeFirstInHaystack(range) && range.isMatched() ||
+                                    isRangeLastInHaystack(range) && range.isMatched()) {
+                        vectors.add(RDataFactory.createEmptyRawVector());
+                    }
+
+                    if (range.isUnmatched()) {
+                        vectors.add(constructVectorFromRange(range));
+                    }
+                }
+
+                Object[] data = vectors.toArray();
+                return RDataFactory.createList(data);
+            }
+
+            private RRawVector constructVectorFromRange(Range range) {
+                byte[] data = new byte[range.size()];
+                for (int idx = range.fromIdx, dataIdx = 0; idx < range.toIdx; idx++, dataIdx++) {
+                    data[dataIdx] = haystackDescriptor.getHaystack().getRawDataAt(idx);
+                }
+                return RDataFactory.createRawVector(data);
+            }
+
+            private boolean isRangeFirstInHaystack(Range range) {
+                return range.getFromIdx() == 0;
+            }
+
+            private boolean isRangeLastInHaystack(Range range) {
+                return range.getToIdx() >= haystackDescriptor.getHaystack().getLength();
+            }
+        }
+
+        /**
+         * Inverter that should be used when all argument is FALSE, more specifically the
+         * combination of the arguments should be: value=T, invert=T, all=F.
+         */
+        private static class FirstInverter {
+            private HaystackDescriptor haystackDescriptor;
+
+            FirstInverter(HaystackDescriptor haystackDescriptor) {
+                this.haystackDescriptor = haystackDescriptor;
+            }
+
+            public RRawVector invertAllValues() {
+                final RRawVector haystack = haystackDescriptor.getHaystack();
+                byte[] unmatchedData = new byte[haystack.getLength()];
+                int unmatchedDataIdx = 0;
+                for (Range range : haystackDescriptor) {
+                    if (range.isUnmatched()) {
+                        for (int i = range.getFromIdx(); i < range.getToIdx(); i++) {
+                            unmatchedData[unmatchedDataIdx++] = haystack.getRawDataAt(i);
+                        }
+                    }
+                }
+
+                byte[] unmatchedDataFit = Arrays.copyOf(unmatchedData, unmatchedDataIdx);
+                return RDataFactory.createRawVector(unmatchedDataFit);
+            }
+        }
+
+        private HaystackDescriptor findFirstOccurrence(RRawVector pattern, RRawVector rawVector, int offset) {
+            FixedPatternFinder patternFinder = new FixedPatternFinder(pattern, rawVector, offset);
+            return patternFinder.findFirst();
+        }
+
+        private HaystackDescriptor findAllOccurrences(RRawVector pattern, RRawVector rawVector, int offset) {
+            FixedPatternFinder patternFinder = new FixedPatternFinder(pattern, rawVector, offset);
+            return patternFinder.findAll();
+        }
+
+        private Object createEmptyReturnValue(boolean valueArgument, boolean allArgument) {
+            if (valueArgument && allArgument) {
+                return RDataFactory.createList();
+            } else if (valueArgument && !allArgument) {
                 return RDataFactory.createEmptyRawVector();
             } else {
                 return RDataFactory.createEmptyIntVector();
             }
+        }
+
+        private RIntVector convertMatchedRangesToRIndices(HaystackDescriptor haystackDescriptor) {
+            int[] rVectorIndices = new int[haystackDescriptor.getMatchedRangesCount()];
+            int vectorIdx = 0;
+            for (Range range : haystackDescriptor) {
+                if (range.isMatched()) {
+                    rVectorIndices[vectorIdx++] = range.getFromIdx() + 1;
+                }
+            }
+            return RDataFactory.createIntVector(rVectorIndices, true);
+        }
+
+        private RIntVector convertFirstMatchedRangeToRIndex(HaystackDescriptor haystackDescriptor) {
+            Range firstMatchedRange = null;
+            for (Range range : haystackDescriptor) {
+                if (range.isMatched()) {
+                    firstMatchedRange = range;
+                    break;
+                }
+            }
+            assert firstMatchedRange != null;
+            return RDataFactory.createIntVector(new int[]{firstMatchedRange.getFromIdx() + 1}, true);
+        }
+
+        @Specialization(guards = {"fixed", "!invert"})
+        protected Object grepFixedNoInvert(RRawVector pattern, RRawVector x, int offset, @SuppressWarnings("unused") Object ignoreCase, @SuppressWarnings("unused") boolean fixed, boolean value,
+                        boolean all,
+                        @SuppressWarnings("unused") boolean invert) {
+            HaystackDescriptor haystackDescriptor = null;
+            if (all) {
+                haystackDescriptor = findAllOccurrences(pattern, x, offset);
+            } else {
+                haystackDescriptor = findFirstOccurrence(pattern, x, offset);
+            }
+            final int matchedRangesCount = haystackDescriptor.getMatchedRangesCount();
+
+            if (matchedRangesCount == 0) {
+                return createEmptyReturnValue(value, all);
+            }
+
+            if (all) {
+                if (value) {
+                    // Return list(pattern, pattern, ...)
+                    Object[] data = new Object[matchedRangesCount];
+                    for (int i = 0; i < matchedRangesCount; i++) {
+                        data[i] = pattern;
+                    }
+                    return RDataFactory.createList(data);
+                } else {
+                    return convertMatchedRangesToRIndices(haystackDescriptor);
+                }
+            } else {
+                if (value) {
+                    return pattern;
+                } else {
+                    return convertFirstMatchedRangeToRIndex(haystackDescriptor);
+                }
+            }
+        }
+
+        @Specialization(guards = {"fixed", "value", "invert"})
+        protected Object grepFixedInvert(RRawVector pattern, RRawVector x, int offset, @SuppressWarnings("unused") Object ignoreCase, @SuppressWarnings("unused") boolean fixed,
+                        @SuppressWarnings("unused") boolean value, boolean all,
+                        @SuppressWarnings("unused") boolean invert) {
+            HaystackDescriptor haystackDescriptor = null;
+            if (all) {
+                haystackDescriptor = findAllOccurrences(pattern, x, offset);
+            } else {
+                haystackDescriptor = findFirstOccurrence(pattern, x, offset);
+            }
+
+            if (all) {
+                AllInverter inverter = new AllInverter(haystackDescriptor);
+                return inverter.invertAllValues();
+            } else {
+                FirstInverter inverter = new FirstInverter(haystackDescriptor);
+                return inverter.invertAllValues();
+            }
+        }
+
+        @Specialization(guards = {"fixed", "invert", "!value"})
+        protected Object grepFixedIgnoreInvert(RRawVector pattern, RRawVector x, int offset, @SuppressWarnings("unused") Object ignoreCase, boolean fixed, boolean value, boolean all,
+                        boolean invert) {
+            warning(Message.ARGUMENT_IGNORED, "invert = TRUE");
+            return grepFixedNoInvert(pattern, x, offset, ignoreCase, fixed, value, all, invert);
+        }
+
+        @Specialization(guards = "!fixed")
+        protected Object grepUnfixed(@SuppressWarnings("unused") RRawVector pattern, @SuppressWarnings("unused") RRawVector x, @SuppressWarnings("unused") Object offset,
+                        @SuppressWarnings("unused") Object ignoreCase, @SuppressWarnings("unused") boolean fixed,
+                        @SuppressWarnings("unused") boolean value, @SuppressWarnings("unused") boolean all,
+                        @SuppressWarnings("unused") boolean invert) {
+            throw RInternalError.unimplemented("grepRaw with fixed = FALSE");
         }
     }
 
