@@ -136,18 +136,22 @@ public class PrintFunctions {
                 argsArr[i] = RRuntime.fromLogical(missing.getDataAt(i)) ? RMissing.instance : nextNode.car();
                 args = nextNode.cdr();
                 i++;
-                if (i >= OLD_PRINT_ARGS_SIZE) {
+                if (i > OLD_PRINT_ARGS_SIZE) {
                     // From the documentation: further arguments in "..." are ignored
                     break;
                 }
             }
 
-            // Pad with missing (noOpt seems to be now optional passed in ...)
-            for (; i < OLD_PRINT_ARGS_SIZE; i++) {
-                argsArr[i] = RMissing.instance;
-            }
+            padArgsWithMissing(argsArr, i);
 
             return oldPrintDefault.call(frame, x, argsArr[0], argsArr[1], argsArr[2], argsArr[3], argsArr[4], argsArr[5], argsArr[6]);
+        }
+
+        private static void padArgsWithMissing(Object[] argsArr, int i) {
+            // Pad with missing (noOpt seems to be now optional passed in ...)
+            for (int j = i; j < OLD_PRINT_ARGS_SIZE; j++) {
+                argsArr[j] = RMissing.instance;
+            }
         }
     }
 }
