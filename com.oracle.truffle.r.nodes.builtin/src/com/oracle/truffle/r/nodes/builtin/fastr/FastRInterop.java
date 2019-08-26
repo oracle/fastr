@@ -261,7 +261,7 @@ public class FastRInterop {
     }
 
     private static void checkPolyglotAccess(Env env) {
-        if (!env.isPolyglotAccessAllowed()) {
+        if (!env.isPolyglotBindingsAccessAllowed()) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.POLYGLOT_BINDING_NOT_AVAILABLE);
         }
     }
