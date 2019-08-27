@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.access.RemoveAndAnswerNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PeekLocalVariableNode;
+import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
@@ -306,7 +307,7 @@ abstract class ReplacementNode extends OperatorNode {
      */
     private static final class SpecialVoidReplacementNode extends ReplacementNode {
 
-        @Child private RCallSpecialNode replaceCall;
+        @Child private RCallBaseNode replaceCall;
 
         private final RNode rhs;
         private final List<RSyntaxCall> calls;
@@ -332,8 +333,9 @@ abstract class ReplacementNode extends OperatorNode {
                 extractFunc = createSpecialFunctionQuery(calls.get(i), extractFunc.asRSyntaxNode(), codeBuilderContext);
                 ((RCallSpecialNode) extractFunc).setPropagateFullCallNeededException();
             }
-            this.replaceCall = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), rhs.asRSyntaxNode(), calls.get(0), codeBuilderContext);
-            this.replaceCall.setPropagateFullCallNeededException();
+            RCallSpecialNode node = (RCallSpecialNode) createFunctionUpdate(source, extractFunc.asRSyntaxNode(), rhs.asRSyntaxNode(), calls.get(0), codeBuilderContext);
+            node.setPropagateFullCallNeededException();
+            this.replaceCall = node;
         }
 
         @Override
