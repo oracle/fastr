@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -42,7 +42,7 @@ public class TestBuiltin_setS4Object extends TestBase {
 
     @Test
     public void testsetS4Object3() {
-        assertEval(Ignored.NewRVersionMigration, /*Output.IgnoreWhitespace,*/
+        assertEval(Ignored.NewRVersionMigration, /* Output.IgnoreWhitespace, */
                         "argv <- list(structure(character(0), package = character(0), class = structure('ObjectsWithPackage', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
@@ -55,7 +55,8 @@ public class TestBuiltin_setS4Object extends TestBase {
 
     @Test
     public void testsetS4Object5() {
-        assertEval(Ignored.NewRVersionMigration, "argv <- list(structure(c('nonStructure', 'ANY', 'ANY', 'ANY'), .Names = c(NA_character_, NA_character_, NA_character_, NA_character_), package = character(0), class = structure('signature', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.NewRVersionMigration,
+                        "argv <- list(structure(c('nonStructure', 'ANY', 'ANY', 'ANY'), .Names = c(NA_character_, NA_character_, NA_character_, NA_character_), package = character(0), class = structure('signature', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test

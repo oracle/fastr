@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -40,7 +40,7 @@ public class TestBuiltin_listfiles extends TestBase {
     @Test
     public void testlistfiles3() {
         // FastR bug; not recursing in to "."
-        assertEval(Ignored.NewRVersionMigration, /*Output.IgnoreWhitespace,*/
+        assertEval(Ignored.NewRVersionMigration, /* Output.IgnoreWhitespace, */
                         "print('Work dir: ', getwd()); argv <- list('.', '^CITATION.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); sort(.Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]])))");
     }
 

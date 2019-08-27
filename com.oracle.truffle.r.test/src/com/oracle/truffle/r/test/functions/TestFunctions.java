@@ -366,7 +366,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ g <- function(a,b,aa,bb) { a ; x <<- 10 ; aa ; c(a, aa) } ; f <- function(...) {  g(..., ...) } ; x <- 1; y <- 2; f(x, y) }");
         assertEval("{ f <- function(a, b) { a - b } ; g <- function(...) { f(1, ...) } ; g(a = 2) }");
 
-        assertEval(Ignored.NewRVersionMigration, /*Output.IgnoreErrorContext,*/"{ f <- function(...) { ..3 } ; f(1,2) }");
+        assertEval(Ignored.NewRVersionMigration, /* Output.IgnoreErrorContext, */"{ f <- function(...) { ..3 } ; f(1,2) }");
 
         assertEval(Output.IgnoreErrorContext, "{ f <- function() { dummy() } ; f() }");
         assertEval(Output.IgnoreErrorContext, "{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }");

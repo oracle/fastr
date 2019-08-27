@@ -26,7 +26,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.graalvm.polyglot.PolyglotAccess;
 import org.graalvm.polyglot.PolyglotException;
 import org.junit.Assert;
 import org.junit.Test;
