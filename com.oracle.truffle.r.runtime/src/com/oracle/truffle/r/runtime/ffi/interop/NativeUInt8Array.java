@@ -99,7 +99,7 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    boolean isArrayElementInsertable(long index) {
+    boolean isArrayElementInsertable(@SuppressWarnings("unused") long index) {
         return false;
     }
 

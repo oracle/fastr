@@ -46,17 +46,17 @@ public final class ReadlinkResult implements RTruffleObject {
     @ExportMessage
     Object execute(Object[] arguments,
                     @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
-        Object link = arguments[0];
-        if (link instanceof TruffleObject) {
-            if (interop.isNull(link)) {
-                link = null;
+        Object arg = arguments[0];
+        if (arg instanceof TruffleObject) {
+            if (interop.isNull(arg)) {
+                arg = null;
             } else {
                 assert false;
             }
         } else {
-            assert link instanceof String;
+            assert arg instanceof String;
         }
-        setResult((String) link, (int) arguments[1]);
+        setResult((String) arg, (int) arguments[1]);
         return this;
     }
 

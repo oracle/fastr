@@ -743,8 +743,7 @@ public final class MathFunctionsNodes {
         @Specialization(limit = "getInteropLibraryCacheSize()", guards = "!bInterop.isPointer(b)")
         protected double besselEx(BesselExCaller caller, Object b,
                         @Cached("create()") GetReadonlyData.Double bReadonlyData,
-                        @CachedLibrary("b") InteropLibrary bInterop) {
-            // @Cached() ConvertForeignObjectNode bConvertForeign) {
+                        @SuppressWarnings("unused") @CachedLibrary("b") InteropLibrary bInterop) {
             RAbstractDoubleVector bVec;
             if (bConvertForeign == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

@@ -311,6 +311,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("    }\n");
         w.append("\n");
         w.append("    @ExportMessage\n");
+        w.append("    @SuppressWarnings(\"static-method\")\n");
         w.append("    boolean isExecutable(){\n");
         w.append("        return true;\n");
         w.append("    }\n");

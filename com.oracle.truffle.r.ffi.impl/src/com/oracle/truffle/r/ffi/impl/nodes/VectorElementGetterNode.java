@@ -65,7 +65,7 @@ public abstract class VectorElementGetterNode extends RBaseNode {
         return doListImpl(list, i, extractNode, outOfBounds);
     }
 
-    private Object doListImpl(RAbstractListVector list, long i,
+    private static Object doListImpl(RAbstractListVector list, long i,
                     ExtractListElement extractNode,
                     BranchProfile outOfBounds) {
         if (list.getLength() == i) {

@@ -98,7 +98,6 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.LanguageClosureCache;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -321,10 +320,11 @@ public final class RContext {
     /**
      * Initialize VM-wide static values.
      */
-    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, ContextReferenceAccess contextReferenceAccess, RBuiltinLookup rBuiltinLookup) {
+    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, ContextReferenceAccess rContextReferenceAccess,
+                    RBuiltinLookup rBuiltinLookup) {
         RContext.astBuilder = rAstBuilder;
         RContext.runtimeASTAccess = rRuntimeASTAccess;
-        RContext.contextReferenceAccess = contextReferenceAccess;
+        RContext.contextReferenceAccess = rContextReferenceAccess;
         RContext.builtinLookup = rBuiltinLookup;
     }
 

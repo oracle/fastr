@@ -85,7 +85,7 @@ public final class NativeIntegerArray extends NativeArray<int[]> {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    boolean isArrayElementInsertable(long index) {
+    boolean isArrayElementInsertable(@SuppressWarnings("unused") long index) {
         return false;
     }
 

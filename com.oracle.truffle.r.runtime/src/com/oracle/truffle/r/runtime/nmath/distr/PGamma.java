@@ -2,7 +2,7 @@
  * Copyright (C) 2005-6 Morten Welinder <terra@gnome.org>
  * Copyright (C) 2005-10 The R Foundation
  * Copyright (C) 2006-2015 The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

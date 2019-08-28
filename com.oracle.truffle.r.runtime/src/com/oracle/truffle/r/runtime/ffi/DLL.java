@@ -299,6 +299,7 @@ public class DLL {
             return 2;
         }
 
+        @SuppressWarnings("static-method")
         @ExportMessage
         boolean isArrayElementReadable(long idx) {
             return idx == 0 || idx == 1;

@@ -116,24 +116,6 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject, RTy
         }
     }
 
-    // /**
-    // * The <code>EXECUTABLE</code> message is used to extract the string wrapped in
-    // * {@link CharSXPWrapper}. It is called only from the LLVM version of the
-    // * <code>ensure_string</code> function in
-    // * <code>com.oracle.truffle.r.native/fficall/src/truffle_llvm/Rinternals.c</code>.
-    // */
-    // // XXX execute vs is/asString
-    // @ExportMessage
-    // public Object execute(@SuppressWarnings("unused") Object[] args) {
-    // return getContents();
-    // }
-    //
-    // @SuppressWarnings("static-method")
-    // @ExportMessage
-    // public boolean isExecutable() {
-    // return true;
-    // }
-
     @SuppressWarnings("static-method")
     @ExportMessage
     boolean isString() {
@@ -142,7 +124,6 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject, RTy
 
     @ExportMessage
     String asString() {
-        System.out.println(" ++++++++++ CHARSXP +++++++++++");
         return getContents();
     }
 

@@ -48,11 +48,13 @@ public class NativePointer implements RTruffleObject {
         return obj instanceof NativePointer;
     }
 
+    @SuppressWarnings("static-method")
     @ExportMessage
     final boolean isPointer() {
         return true;
     }
 
+    @SuppressWarnings("static-method")
     @ExportMessage
     final long asPointer() {
         return 0;

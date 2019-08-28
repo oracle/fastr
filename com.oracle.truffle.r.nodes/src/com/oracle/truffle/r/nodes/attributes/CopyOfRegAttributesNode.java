@@ -84,8 +84,8 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     @Specialization(guards = "onlyDimAttribute(source, sizeOneProfile, dimAttrGetter)")
     protected void copyDimOnly(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target,
-                    @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
-                    @Cached("createDim()") GetFixedAttributeNode dimAttrGetter) {
+                    @SuppressWarnings("unused") @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
+                    @SuppressWarnings("unused") @Cached("createDim()") GetFixedAttributeNode dimAttrGetter) {
         // nothing to do
     }
 
@@ -96,8 +96,8 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     @Specialization(guards = "onlyNamesAttribute(source, sizeOneProfile, namesAttrGetter)")
     protected void copyNamesOnly(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target,
-                    @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
-                    @Cached("createNames()") GetFixedAttributeNode namesAttrGetter) {
+                    @SuppressWarnings("unused") @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
+                    @SuppressWarnings("unused") @Cached("createNames()") GetFixedAttributeNode namesAttrGetter) {
         // nothing to do
     }
 
@@ -110,7 +110,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     protected void copyClassOnly(RAttributable source, RAbstractVector target,
                     @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode,
-                    @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
+                    @SuppressWarnings("unused") @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
                     @Cached("createClass()") GetFixedAttributeNode classAttrGetter) {
         Object classAttr = classAttrGetter.execute(source);
         updateRefCountNode.execute(updateChildRefCountNode.updateState(source, classAttr));
