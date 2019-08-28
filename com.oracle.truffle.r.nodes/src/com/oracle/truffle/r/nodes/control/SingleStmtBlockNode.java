@@ -22,26 +22,44 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
-/**
- * A {@link AbstractBlockNode} represents a sequence of statements created by "{ ... }" in source
- * code.
- */
-public abstract class AbstractBlockNode extends OperatorNode {
+public class SingleStmtBlockNode extends AbstractBlockNode {
+    @Child private RNode stmt;
 
-    public AbstractBlockNode(SourceSection src, RSyntaxLookup operator) {
+    public SingleStmtBlockNode(SourceSection src, RSyntaxLookup operator, RNode stmt) {
         super(src, operator);
+        this.stmt = stmt;
     }
 
-    public static AbstractBlockNode create(SourceSection src, RSyntaxLookup operator, RNode[] sequence) {
-        if (sequence.length == 0) {
-            return new EmptyBlockNode(src, operator);
-        } else if (sequence.length == 1) {
-            return new SingleStmtBlockNode(src, operator, sequence[0]);
-        }
-        return new RBlockNode(src, operator, sequence);
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return stmt.execute(frame);
+    }
+
+    @Override
+    public void voidExecute(VirtualFrame frame) {
+        stmt.voidExecute(frame);
+    }
+
+    @Override
+    public Object visibleExecute(VirtualFrame frame) {
+        return stmt.visibleExecute(frame);
+    }
+
+    @Override
+    public ArgumentsSignature getSyntaxSignature() {
+        return ArgumentsSignature.empty(1);
+    }
+
+    @Override
+    public RSyntaxElement[] getSyntaxArguments() {
+        return RASTUtils.asSyntaxNodes(stmt);
     }
 }
