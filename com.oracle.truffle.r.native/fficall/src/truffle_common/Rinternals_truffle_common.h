@@ -1736,7 +1736,9 @@ Rboolean R_forceSymbols(DllInfo *dllInfo, Rboolean value) {
     return result;
 }
 
-void *Rdynload_setSymbol(DllInfo *info, int nstOrd, void* routinesAddr, int index) {
+// This function is specific to FastR, it is called from up-called registerRoutines Java method
+// in order to extract values from given array of C structs
+void Rdynload_setSymbol(DllInfo *info, int nstOrd, void* routinesAddr, int index) {
     TRACE0();
     const char *name;
     void *fun;
@@ -1772,9 +1774,8 @@ void *Rdynload_setSymbol(DllInfo *info, int nstOrd, void* routinesAddr, int inde
         break;
     }
     }
-    void *result = ((call_setDotSymbolValues) callbacks[setDotSymbolValues_x])(info, ensure_string(name), (DL_FUNC) ensure_function(fun), numArgs);
+    ((call_setDotSymbolValues) callbacks[setDotSymbolValues_x])(info, nstOrd, index, ensure_string(name), (DL_FUNC) ensure_function(fun), numArgs);
     checkExitCall();
-    return result;
 }
 
 void R_RegisterCCallable(const char *package, const char *name, DL_FUNC fptr) {

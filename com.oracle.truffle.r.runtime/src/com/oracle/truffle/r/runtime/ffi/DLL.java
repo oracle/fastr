@@ -285,6 +285,10 @@ public class DLL {
             nativeSymbols[nstOrd] = symbols;
         }
 
+        public void setNativeSymbol(int nstOrd, int index, DotSymbol symbol) {
+            nativeSymbols[nstOrd][index] = symbol;
+        }
+
         public DotSymbol[] getNativeSymbols(NativeSymbolType nst) {
             if (nst == null) {
                 int totalLen = 0;
