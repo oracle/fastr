@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -39,10 +40,15 @@ import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@GenerateUncached
 public abstract class MakeActiveBindingNode extends RBaseNode {
 
     public static MakeActiveBindingNode create() {
         return MakeActiveBindingNodeGen.create();
+    }
+
+    public static MakeActiveBindingNode getUncached() {
+        return MakeActiveBindingNodeGen.getUncached();
     }
 
     public abstract Object executeObject(Object sym, Object fun, Object env);

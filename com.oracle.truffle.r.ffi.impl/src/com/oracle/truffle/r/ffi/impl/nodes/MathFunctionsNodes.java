@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropException;
@@ -54,6 +55,7 @@ import com.oracle.truffle.r.runtime.nmath.distr.Pnorm.PnormBoth;
 public final class MathFunctionsNodes {
 
     @ImportStatic(DSLConfig.class)
+    @GenerateUncached
     public abstract static class RfPnormBothNode extends FFIUpCallNode.Arg5 {
 
         @Specialization(limit = "getInteropLibraryCacheSize()")
@@ -116,8 +118,13 @@ public final class MathFunctionsNodes {
         public static RfPnormBothNode create() {
             return MathFunctionsNodesFactory.RfPnormBothNodeGen.create();
         }
+
+        public static RfPnormBothNode getUncached() {
+            return MathFunctionsNodesFactory.RfPnormBothNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class Log1pmxNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -128,8 +135,13 @@ public final class MathFunctionsNodes {
         public static Log1pmxNode create() {
             return MathFunctionsNodesFactory.Log1pmxNodeGen.create();
         }
+
+        public static Log1pmxNode getUncached() {
+            return MathFunctionsNodesFactory.Log1pmxNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class Log1pexpNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -140,8 +152,13 @@ public final class MathFunctionsNodes {
         public static Log1pexpNode create() {
             return MathFunctionsNodesFactory.Log1pexpNodeGen.create();
         }
+
+        public static Log1pexpNode getUncached() {
+            return MathFunctionsNodesFactory.Log1pexpNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class Lgamma1pNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -152,8 +169,13 @@ public final class MathFunctionsNodes {
         public static Lgamma1pNode create() {
             return MathFunctionsNodesFactory.Lgamma1pNodeGen.create();
         }
+
+        public static Lgamma1pNode getUncached() {
+            return MathFunctionsNodesFactory.Lgamma1pNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class LogspaceAddNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -164,8 +186,13 @@ public final class MathFunctionsNodes {
         public static LogspaceAddNode create() {
             return MathFunctionsNodesFactory.LogspaceAddNodeGen.create();
         }
+
+        public static LogspaceAddNode getUncached() {
+            return MathFunctionsNodesFactory.LogspaceAddNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class LogspaceSubNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -176,8 +203,13 @@ public final class MathFunctionsNodes {
         public static LogspaceSubNode create() {
             return MathFunctionsNodesFactory.LogspaceSubNodeGen.create();
         }
+
+        public static LogspaceSubNode getUncached() {
+            return MathFunctionsNodesFactory.LogspaceSubNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class GammafnNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -188,8 +220,13 @@ public final class MathFunctionsNodes {
         public static GammafnNode create() {
             return MathFunctionsNodesFactory.GammafnNodeGen.create();
         }
+
+        public static GammafnNode getUncached() {
+            return MathFunctionsNodesFactory.GammafnNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class LGammafnNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -200,9 +237,14 @@ public final class MathFunctionsNodes {
         public static LGammafnNode create() {
             return MathFunctionsNodesFactory.LGammafnNodeGen.create();
         }
+
+        public static LGammafnNode getUncached() {
+            return MathFunctionsNodesFactory.LGammafnNodeGen.getUncached();
+        }
     }
 
     @ImportStatic(DSLConfig.class)
+    @GenerateUncached
     public abstract static class LGammafnSignNode extends FFIUpCallNode.Arg2 {
 
         @Specialization(limit = "getInteropLibraryCacheSize()")
@@ -242,9 +284,14 @@ public final class MathFunctionsNodes {
         public static LGammafnSignNode create() {
             return MathFunctionsNodesFactory.LGammafnSignNodeGen.create();
         }
+
+        public static LGammafnSignNode getUncached() {
+            return MathFunctionsNodesFactory.LGammafnSignNodeGen.getUncached();
+        }
     }
 
     @ImportStatic(DSLConfig.class)
+    @GenerateUncached
     public abstract static class DpsiFnNode extends FFIUpCallNode.Arg7 {
 
         @Specialization(limit = "getInteropLibraryCacheSize()")
@@ -343,8 +390,13 @@ public final class MathFunctionsNodes {
         public static DpsiFnNode create() {
             return MathFunctionsNodesFactory.DpsiFnNodeGen.create();
         }
+
+        public static DpsiFnNode getUncached() {
+            return MathFunctionsNodesFactory.DpsiFnNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class PsiGammaNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -355,8 +407,13 @@ public final class MathFunctionsNodes {
         public static PsiGammaNode create() {
             return MathFunctionsNodesFactory.PsiGammaNodeGen.create();
         }
+
+        public static PsiGammaNode getUncached() {
+            return MathFunctionsNodesFactory.PsiGammaNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class DiGammaNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -367,8 +424,13 @@ public final class MathFunctionsNodes {
         public static DiGammaNode create() {
             return MathFunctionsNodesFactory.DiGammaNodeGen.create();
         }
+
+        public static DiGammaNode getUncached() {
+            return MathFunctionsNodesFactory.DiGammaNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class TriGammaNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -379,8 +441,13 @@ public final class MathFunctionsNodes {
         public static TriGammaNode create() {
             return MathFunctionsNodesFactory.TriGammaNodeGen.create();
         }
+
+        public static TriGammaNode getUncached() {
+            return MathFunctionsNodesFactory.TriGammaNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class TetraGammaNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -391,8 +458,13 @@ public final class MathFunctionsNodes {
         public static TetraGammaNode create() {
             return MathFunctionsNodesFactory.TetraGammaNodeGen.create();
         }
+
+        public static TetraGammaNode getUncached() {
+            return MathFunctionsNodesFactory.TetraGammaNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class PentaGammaNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -403,8 +475,13 @@ public final class MathFunctionsNodes {
         public static PentaGammaNode create() {
             return MathFunctionsNodesFactory.PentaGammaNodeGen.create();
         }
+
+        public static PentaGammaNode getUncached() {
+            return MathFunctionsNodesFactory.PentaGammaNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class BetaNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -415,8 +492,13 @@ public final class MathFunctionsNodes {
         public static BetaNode create() {
             return MathFunctionsNodesFactory.BetaNodeGen.create();
         }
+
+        public static BetaNode getUncached() {
+            return MathFunctionsNodesFactory.BetaNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class LBetaNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -427,8 +509,13 @@ public final class MathFunctionsNodes {
         public static LBetaNode create() {
             return MathFunctionsNodesFactory.LBetaNodeGen.create();
         }
+
+        public static LBetaNode getUncached() {
+            return MathFunctionsNodesFactory.LBetaNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class ChooseNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -439,8 +526,13 @@ public final class MathFunctionsNodes {
         public static ChooseNode create() {
             return MathFunctionsNodesFactory.ChooseNodeGen.create();
         }
+
+        public static ChooseNode getUncached() {
+            return MathFunctionsNodesFactory.ChooseNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class LChooseNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -451,8 +543,13 @@ public final class MathFunctionsNodes {
         public static LChooseNode create() {
             return MathFunctionsNodesFactory.LChooseNodeGen.create();
         }
+
+        public static LChooseNode getUncached() {
+            return MathFunctionsNodesFactory.LChooseNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class BesselINode extends FFIUpCallNode.Arg3 {
 
         @Specialization
@@ -463,8 +560,13 @@ public final class MathFunctionsNodes {
         public static BesselINode create() {
             return MathFunctionsNodesFactory.BesselINodeGen.create();
         }
+
+        public static BesselINode getUncached() {
+            return MathFunctionsNodesFactory.BesselINodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class BesselJNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -475,8 +577,13 @@ public final class MathFunctionsNodes {
         public static BesselJNode create() {
             return MathFunctionsNodesFactory.BesselJNodeGen.create();
         }
+
+        public static BesselJNode getUncached() {
+            return MathFunctionsNodesFactory.BesselJNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class BesselKNode extends FFIUpCallNode.Arg3 {
 
         @Specialization
@@ -487,8 +594,13 @@ public final class MathFunctionsNodes {
         public static BesselKNode create() {
             return MathFunctionsNodesFactory.BesselKNodeGen.create();
         }
+
+        public static BesselKNode getUncached() {
+            return MathFunctionsNodesFactory.BesselKNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class BesselYNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -499,8 +611,13 @@ public final class MathFunctionsNodes {
         public static BesselYNode create() {
             return MathFunctionsNodesFactory.BesselYNodeGen.create();
         }
+
+        public static BesselYNode getUncached() {
+            return MathFunctionsNodesFactory.BesselYNodeGen.getUncached();
+        }
     }
 
+    // @GenerateUncached
     public abstract static class BesselIExNode extends FFIUpCallNode.Arg4 {
 
         @Specialization
@@ -608,27 +725,31 @@ public final class MathFunctionsNodes {
 
         public abstract double execute(BesselExCaller caller, Object b);
 
-        @Specialization(limit = "getInteropLibraryCacheSize()")
-        protected double besselEx(BesselExCaller caller, Object b,
+        @Specialization(limit = "getInteropLibraryCacheSize()", guards = "bInterop.isPointer(b)")
+        protected double besselExForPointer(BesselExCaller caller, Object b,
                         @Cached("create()") GetReadonlyData.Double bReadonlyData,
                         @CachedLibrary("b") InteropLibrary bInterop) {
             RAbstractDoubleVector bVec;
-            if (bInterop.isPointer(b)) {
-                long addr;
-                try {
-                    addr = bInterop.asPointer(b);
-                    bVec = RDataFactory.createDoubleVectorFromNative(addr, caller.arrLen());
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
-                }
-            } else {
-                if (bConvertForeign == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    bConvertForeign = insert(ConvertForeignObjectNode.create());
-                }
-                bVec = (RAbstractDoubleVector) bConvertForeign.convert((TruffleObject) b);
+            long addr;
+            try {
+                addr = bInterop.asPointer(b);
+                bVec = RDataFactory.createDoubleVectorFromNative(addr, caller.arrLen());
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
             }
+            return caller.call(bReadonlyData.execute(bVec.materialize()));
+        }
 
+        @Specialization(limit = "getInteropLibraryCacheSize()", guards = "!bInterop.isPointer(b)")
+        protected double besselEx(BesselExCaller caller, Object b,
+                        @Cached("create()") GetReadonlyData.Double bReadonlyData,
+                        @SuppressWarnings("unused") @CachedLibrary("b") InteropLibrary bInterop) {
+            RAbstractDoubleVector bVec;
+            if (bConvertForeign == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                bConvertForeign = insert(ConvertForeignObjectNode.create());
+            }
+            bVec = (RAbstractDoubleVector) bConvertForeign.convert((TruffleObject) b);
             return caller.call(bReadonlyData.execute(bVec.materialize()));
         }
 
@@ -638,6 +759,7 @@ public final class MathFunctionsNodes {
 
     }
 
+    @GenerateUncached
     public abstract static class SignNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -648,8 +770,13 @@ public final class MathFunctionsNodes {
         public static SignNode create() {
             return MathFunctionsNodesFactory.SignNodeGen.create();
         }
+
+        public static SignNode getUncached() {
+            return MathFunctionsNodesFactory.SignNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class FPrecNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -660,8 +787,13 @@ public final class MathFunctionsNodes {
         public static FPrecNode create() {
             return MathFunctionsNodesFactory.FPrecNodeGen.create();
         }
+
+        public static FPrecNode getUncached() {
+            return MathFunctionsNodesFactory.FPrecNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class SinpiNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -672,8 +804,13 @@ public final class MathFunctionsNodes {
         public static SinpiNode create() {
             return MathFunctionsNodesFactory.SinpiNodeGen.create();
         }
+
+        public static SinpiNode getUncached() {
+            return MathFunctionsNodesFactory.SinpiNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class CospiNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -684,8 +821,13 @@ public final class MathFunctionsNodes {
         public static CospiNode create() {
             return MathFunctionsNodesFactory.CospiNodeGen.create();
         }
+
+        public static CospiNode getUncached() {
+            return MathFunctionsNodesFactory.CospiNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class TanpiNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -695,6 +837,10 @@ public final class MathFunctionsNodes {
 
         public static TanpiNode create() {
             return MathFunctionsNodesFactory.TanpiNodeGen.create();
+        }
+
+        public static TanpiNode getUncached() {
+            return MathFunctionsNodesFactory.TanpiNodeGen.getUncached();
         }
     }
 

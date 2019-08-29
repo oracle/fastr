@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2008, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,8 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_1_SQRT_2PI;
 
 import com.oracle.truffle.r.runtime.nmath.RMath;
@@ -27,7 +29,8 @@ import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 
-public final class RPois extends RandFunction1_Double {
+@GenerateUncached
+public abstract class RPois extends RandFunction1_Double {
 
     private static final double a0 = -0.5;
     private static final double a1 = 0.3333333;
@@ -283,8 +286,16 @@ public final class RPois extends RandFunction1_Double {
         return pois;
     }
 
-    @Override
-    public double execute(double mu, RandomNumberProvider rand) {
+    @Specialization
+    public double exec(double mu, RandomNumberProvider rand) {
         return rpois(mu, rand);
+    }
+
+    public static RPois create() {
+        return RPoisNodeGen.create();
+    }
+
+    public static RPois getUncached() {
+        return RPoisNodeGen.getUncached();
     }
 }

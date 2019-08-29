@@ -22,15 +22,21 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import java.lang.ref.WeakReference;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Internally GNU R distinguishes "strings" and "vectors of strings" using the {@code CHARSXP} and
@@ -44,6 +50,7 @@ import com.oracle.truffle.r.runtime.Utils;
  *
  * N.B. Use limited to RFFI implementations.
  */
+@ExportLibrary(InteropLibrary.class)
 public final class CharSXPWrapper extends RObject implements RTruffleObject, RTypedValue {
     private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
@@ -53,6 +60,71 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject, RTy
 
     private CharSXPWrapper(String contents) {
         this.contents = contents;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    public long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    public void toNative() {
+        NativeDataAccess.asPointer(this);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    public long getArraySize() {
+        return getLength();
+    }
+
+    @ExportMessage
+    boolean isArrayElementReadable(long idx,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile prof) {
+        int index = RRuntime.interopArrayIndexToInt(idx, this);
+        int len = getLength();
+        if (prof.profile(index <= len)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @ExportMessage
+    public Object readArrayElement(long idx,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile prof1,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile prof2) throws InvalidArrayIndexException {
+        int index = RRuntime.interopArrayIndexToInt(idx, this);
+        int len = getLength();
+        if (prof1.profile(index < len)) {
+            return getByteAt(index);
+        } else if (prof2.profile(index == len)) {
+            return 0;
+        } else {
+            throw InvalidArrayIndexException.create(idx);
+        }
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isString() {
+        return true;
+    }
+
+    @ExportMessage
+    String asString() {
+        return getContents();
     }
 
     public String getContents() {

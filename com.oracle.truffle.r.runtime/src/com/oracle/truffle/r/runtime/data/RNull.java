@@ -58,8 +58,8 @@ public final class RNull extends RBaseObject implements RScalar {
     /**
      * Workaround to avoid NFI converting {@link RNull} to {@code null}.
      */
-    public static boolean setIsNull(boolean value) {
-        RNullMRContextState state = RContext.getInstance().stateRNullMR;
+    public static boolean setIsNull(RContext ctx, boolean value) {
+        RNullMRContextState state = ctx.stateRNullMR;
         boolean prev = state.isNull();
         state.setIsNull(value);
         return prev;

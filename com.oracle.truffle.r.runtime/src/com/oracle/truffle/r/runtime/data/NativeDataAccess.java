@@ -39,15 +39,10 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
 import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -351,26 +346,8 @@ public final class NativeDataAccess {
     private static final ConcurrentHashMap<Long, NativeMirror> dataAddressToNativeMirrors = System.getenv(FastROptions.NATIVE_DATA_INSPECTOR) != null ? new ConcurrentHashMap<>(512) : null;
     private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = TRACE_MIRROR_ALLOCATION_SITES ? new ConcurrentHashMap<>() : null;
 
-    public static CallTarget createIsPointer() {
-        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-            @Override
-            public Object execute(VirtualFrame frame) {
-                return isPointer(ForeignAccess.getReceiver(frame));
-            }
-        });
-    }
-
     public static boolean isPointer(Object obj) {
         return obj instanceof RObject;
-    }
-
-    public static CallTarget createAsPointer() {
-        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-            @Override
-            public Object execute(VirtualFrame frame) {
-                return asPointer(ForeignAccess.getReceiver(frame));
-            }
-        });
     }
 
     /**
@@ -385,7 +362,7 @@ public final class NativeDataAccess {
             }
             return mirror.id;
         }
-        throw UnsupportedMessageException.raise(Message.AS_POINTER);
+        throw RInternalError.shouldNotReachHere();
     }
 
     @TruffleBoundary

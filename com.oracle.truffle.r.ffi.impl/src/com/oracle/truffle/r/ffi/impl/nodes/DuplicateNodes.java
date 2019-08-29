@@ -25,6 +25,7 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.DuplicateNodeGen;
@@ -47,6 +48,7 @@ import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 
 public final class DuplicateNodes {
 
+    @GenerateUncached
     public abstract static class DuplicateNode extends FFIUpCallNode.Arg2 {
 
         @Specialization(guards = "!isSequence(x)")
@@ -84,16 +86,17 @@ public final class DuplicateNodes {
             return DuplicateNodeGen.create();
         }
 
-        protected boolean isSequence(Object o) {
+        protected static boolean isSequence(Object o) {
             return o instanceof RSequence;
         }
     }
 
+    @GenerateUncached
     public abstract static class RfDuplicated extends FFIUpCallNode.Arg2 {
         @Specialization
         public RLogicalVector doDuplicate(RAbstractVector vec, int fromLast,
                         @Cached("createBinaryProfile()") ConditionProfile isEmptyProfile,
-                        @Cached("create()") VectorFactory factory) {
+                        @Cached() VectorFactory factory) {
             if (isEmptyProfile.profile(vec.getLength() <= 1)) {
                 return factory.createEmptyLogicalVector();
             } else {
@@ -112,6 +115,7 @@ public final class DuplicateNodes {
         }
     }
 
+    @GenerateUncached
     public abstract static class RfAnyDuplicated extends FFIUpCallNode.Arg2 {
         @Specialization
         public int doDuplicate(RAbstractVector vec, int fromLast,
@@ -131,8 +135,13 @@ public final class DuplicateNodes {
         public static RfAnyDuplicated create() {
             return RfAnyDuplicatedNodeGen.create();
         }
+
+        public static RfAnyDuplicated getUncached() {
+            return RfAnyDuplicatedNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class RfAnyDuplicated3 extends FFIUpCallNode.Arg3 {
         @Specialization
         public int doDuplicate(RAbstractVector vec, RAbstractVector incomparables, int fromLast,
@@ -151,6 +160,10 @@ public final class DuplicateNodes {
 
         public static RfAnyDuplicated3 create() {
             return RfAnyDuplicated3NodeGen.create();
+        }
+
+        public static RfAnyDuplicated3 getUncached() {
+            return RfAnyDuplicated3NodeGen.getUncached();
         }
     }
 }

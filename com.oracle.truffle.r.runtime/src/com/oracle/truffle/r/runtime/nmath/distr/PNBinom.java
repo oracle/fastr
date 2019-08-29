@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000-2016, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,15 @@ public final class PNBinom {
     }
 
     public static final class PNBinomFunc implements Function3_2 {
+
+        public static PNBinomFunc create() {
+            return new PNBinomFunc();
+        }
+
+        public static PNBinomFunc getUncached() {
+            return new PNBinomFunc();
+        }
+
         private final Pbeta pbeta = new Pbeta();
 
         @Override
@@ -60,6 +69,15 @@ public final class PNBinom {
     }
 
     public static final class PNBinomMu implements Function3_2 {
+
+        public static PNBinomMu create() {
+            return new PNBinomMu();
+        }
+
+        public static PNBinomMu getUncached() {
+            return new PNBinomMu();
+        }
+
         private final PPois ppois = new PPois();
 
         @Override

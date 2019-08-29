@@ -74,6 +74,11 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         return new HandleLLVMUpCallExceptionNode();
     }
 
+    @Override
+    public HandleUpCallExceptionNode getUncachedHandleUpCallExceptionNode() {
+        return new HandleLLVMUpCallExceptionNode();
+    }
+
     // Checkstyle: stop method name check
 
     @Override

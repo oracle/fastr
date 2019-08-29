@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1998-2015, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 
 public class Pnt implements Function3_2 {
+
+    public static Pnt create() {
+        return new Pnt();
+    }
+
+    public static Pnt getUncached() {
+        return new Pnt();
+    }
+
     private static final int itrmax = 1000;
     private static final double errmax = 1.e-12;
 

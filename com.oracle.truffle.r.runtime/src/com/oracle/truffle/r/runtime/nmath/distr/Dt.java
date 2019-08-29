@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2000--2014, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Dt implements Function2_1 {
+
+    public static Dt create() {
+        return new Dt();
+    }
+
+    public static Dt getUncached() {
+        return new Dt();
+    }
+
     private static final DNorm dnorm = new DNorm();
 
     @Override

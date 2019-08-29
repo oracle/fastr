@@ -23,12 +23,26 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CAARNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CAD4RNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADDDRNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADDRNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CARNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDARNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDDDRNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDRNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCAD4RNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCADDDRNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCADDRNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCADRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCARNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
@@ -47,6 +61,7 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 public final class ListAccessNodes {
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class CARNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object car(RPairList pl,
@@ -89,6 +104,7 @@ public final class ListAccessNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class CDRNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object cdr(RPairList pl,
@@ -125,79 +141,103 @@ public final class ListAccessNodes {
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class CAARNode extends FFIUpCallNode.Arg1 {
-
-        @Child private CARNode car1 = CARNode.create();
-        @Child private CARNode car2 = CARNode.create();
-
-        @Override
-        public Object executeObject(Object x) {
+    @GenerateUncached
+    public abstract static class CAARNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        public Object executeObject(Object x,
+                        @Cached() CARNode car1,
+                        @Cached() CARNode car2) {
             return car2.executeObject(car1.executeObject(x));
         }
 
         public static CAARNode create() {
-            return new CAARNode();
+            return CAARNodeGen.create();
+        }
+
+        public static CAARNode getUncached() {
+            return CAARNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class SETCADRNode extends FFIUpCallNode.Arg2 {
-        @Child private SETCARNode setcarNode = SETCARNode.create();
-        @Child private CDRNode cdrNode = CDRNode.create();
-
-        @Override
-        public Object executeObject(Object x, Object y) {
+    @GenerateUncached
+    public abstract static class SETCADRNode extends FFIUpCallNode.Arg2 {
+        @Specialization
+        public Object executeObject(Object x, Object y,
+                        @Cached() SETCARNode setcarNode,
+                        @Cached() CDRNode cdrNode) {
             return setcarNode.executeObject(cdrNode.executeObject(x), y);
         }
+
+        public static SETCADRNode create() {
+            return SETCADRNodeGen.create();
+        }
+
+        public static SETCADRNode getUncached() {
+            return SETCADRNodeGen.getUncached();
+        }
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class SETCADDRNode extends FFIUpCallNode.Arg2 {
-        @Child private CDDRNode cddr = CDDRNode.create();
-        @Child private SETCARNode setcarNode = SETCARNode.create();
-
-        @Override
-        public Object executeObject(Object x, Object val) {
+    @GenerateUncached
+    public abstract static class SETCADDRNode extends FFIUpCallNode.Arg2 {
+        @Specialization
+        public Object executeObject(Object x, Object val,
+                        @Cached() CDDRNode cddr,
+                        @Cached() SETCARNode setcarNode) {
             return setcarNode.executeObject(cddr.executeObject(x), val);
         }
 
         public static SETCADDRNode create() {
-            return new SETCADDRNode();
+            return SETCADDRNodeGen.create();
+        }
+
+        public static SETCADDRNode getUncached() {
+            return SETCADDRNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class SETCADDDRNode extends FFIUpCallNode.Arg2 {
-        @Child private CDDDRNode cdddr = CDDDRNode.create();
-        @Child private SETCARNode setcarNode = SETCARNode.create();
-
-        @Override
-        public Object executeObject(Object x, Object val) {
+    @GenerateUncached
+    public abstract static class SETCADDDRNode extends FFIUpCallNode.Arg2 {
+        @Specialization
+        public Object executeObject(Object x, Object val,
+                        @Cached() CDDDRNode cdddr,
+                        @Cached() SETCARNode setcarNode) {
             return setcarNode.executeObject(cdddr.executeObject(x), val);
         }
 
         public static SETCADDDRNode create() {
-            return new SETCADDDRNode();
+            return SETCADDDRNodeGen.create();
+        }
+
+        public static SETCADDDRNode getUncached() {
+            return SETCADDDRNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class SETCAD4RNode extends FFIUpCallNode.Arg2 {
-        @Child private CDDDRNode cdddr = CDDDRNode.create();
-        @Child private CDRNode cdr = CDRNode.create();
-        @Child private SETCARNode setcarNode = SETCARNode.create();
-
-        @Override
-        public Object executeObject(Object x, Object val) {
+    @GenerateUncached
+    public abstract static class SETCAD4RNode extends FFIUpCallNode.Arg2 {
+        @Specialization
+        public Object executeObject(Object x, Object val,
+                        @Cached() CDDDRNode cdddr,
+                        @Cached() CDRNode cdr,
+                        @Cached() SETCARNode setcarNode) {
             return setcarNode.executeObject(cdddr.executeObject(cdr.executeObject(x)), val);
         }
 
         public static SETCAD4RNode create() {
-            return new SETCAD4RNode();
+            return SETCAD4RNodeGen.create();
+        }
+
+        public static SETCAD4RNode getUncached() {
+            return SETCAD4RNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class SETCARNode extends FFIUpCallNode.Arg2 {
         public static SETCARNode create() {
             return SETCARNodeGen.create();
@@ -217,110 +257,138 @@ public final class ListAccessNodes {
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class CADRNode extends FFIUpCallNode.Arg1 {
-        @Child private CDRNode cdr = CDRNode.create();
-        @Child private CARNode car = CARNode.create();
-
-        @Override
-        public Object executeObject(Object x) {
+    @GenerateUncached
+    public abstract static class CADRNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        public Object executeObject(Object x,
+                        @Cached() CDRNode cdr,
+                        @Cached() CARNode car) {
             return car.executeObject(cdr.executeObject(x));
         }
 
         public static CADRNode create() {
-            return new CADRNode();
+            return CADRNodeGen.create();
+        }
+
+        public static CADRNode getUncached() {
+            return CADRNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class CDARNode extends FFIUpCallNode.Arg1 {
-        @Child private CARNode car = CARNode.create();
-        @Child private CDRNode cdr = CDRNode.create();
-
-        @Override
-        public Object executeObject(Object x) {
+    @GenerateUncached
+    public abstract static class CDARNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        public Object executeObject(Object x,
+                        @Cached() CARNode car,
+                        @Cached() CDRNode cdr) {
             return cdr.executeObject(car.executeObject(x));
         }
 
         public static CDARNode create() {
-            return new CDARNode();
+            return CDARNodeGen.create();
+        }
+
+        public static CDARNode getUncached() {
+            return CDARNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class CADDRNode extends FFIUpCallNode.Arg1 {
-        @Child private CARNode car = CARNode.create();
-        @Child private CDRNode cdr1 = CDRNode.create();
-        @Child private CDRNode cdr2 = CDRNode.create();
-
-        @Override
-        public Object executeObject(Object x) {
+    @GenerateUncached
+    public abstract static class CADDRNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        public Object executeObject(Object x,
+                        @Cached() CARNode car,
+                        @Cached() CDRNode cdr1,
+                        @Cached() CDRNode cdr2) {
             return car.executeObject(cdr1.executeObject(cdr2.executeObject(x)));
         }
 
         public static CADDRNode create() {
-            return new CADDRNode();
+            return CADDRNodeGen.create();
+        }
+
+        public static CADDRNode getUncached() {
+            return CADDRNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class CADDDRNode extends FFIUpCallNode.Arg1 {
-        @Child private CARNode car = CARNode.create();
-        @Child private CDRNode cdr1 = CDRNode.create();
-        @Child private CDRNode cdr2 = CDRNode.create();
-        @Child private CDRNode cdr3 = CDRNode.create();
-
-        @Override
-        public Object executeObject(Object x) {
+    @GenerateUncached
+    public abstract static class CADDDRNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        public Object executeObject(Object x,
+                        @Cached() CARNode car,
+                        @Cached() CDRNode cdr1,
+                        @Cached() CDRNode cdr2,
+                        @Cached() CDRNode cdr3) {
             return car.executeObject(cdr1.executeObject(cdr2.executeObject(cdr3.executeObject(x))));
         }
 
         public static CADDDRNode create() {
-            return new CADDDRNode();
+            return CADDDRNodeGen.create();
+        }
+
+        public static CADDDRNode getUncached() {
+            return CADDDRNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class CAD4RNode extends FFIUpCallNode.Arg1 {
-        @Child private CADDDRNode cadddr = CADDDRNode.create();
-        @Child private CDRNode cdr = CDRNode.create();
-
-        @Override
-        public Object executeObject(Object x) {
+    @GenerateUncached
+    public abstract static class CAD4RNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        public Object executeObject(Object x,
+                        @Cached() CADDDRNode cadddr,
+                        @Cached() CDRNode cdr) {
             return cadddr.executeObject(cdr.executeObject(x));
         }
 
         public static CAD4RNode create() {
-            return new CAD4RNode();
+            return CAD4RNodeGen.create();
+        }
+
+        public static CAD4RNode getUncached() {
+            return CAD4RNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class CDDRNode extends FFIUpCallNode.Arg1 {
-        @Child private CDRNode cdr1 = CDRNode.create();
-        @Child private CDRNode cdr2 = CDRNode.create();
-
-        @Override
-        public Object executeObject(Object x) {
+    @GenerateUncached
+    public abstract static class CDDRNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        public Object executeObject(Object x,
+                        @Cached() CDRNode cdr1,
+                        @Cached() CDRNode cdr2) {
             return cdr1.executeObject(cdr2.executeObject(x));
         }
 
         public static CDDRNode create() {
-            return new CDDRNode();
+            return CDDRNodeGen.create();
+        }
+
+        public static CDDRNode getUncached() {
+            return CDDRNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public static final class CDDDRNode extends FFIUpCallNode.Arg1 {
-        @Child private CDDRNode cddr = CDDRNode.create();
-        @Child private CDRNode cdr = CDRNode.create();
-
-        @Override
-        public Object executeObject(Object x) {
+    @GenerateUncached
+    public abstract static class CDDDRNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        public Object executeObject(Object x,
+                        @Cached() CDDRNode cddr,
+                        @Cached() CDRNode cdr) {
             return cdr.executeObject(cddr.executeObject(x));
         }
 
         public static CDDDRNode create() {
-            return new CDDDRNode();
+            return CDDDRNodeGen.create();
+        }
+
+        public static CDDDRNode getUncached() {
+            return CDDDRNodeGen.getUncached();
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,16 +25,21 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
 
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.r.ffi.impl.nodes.EnvNodesFactory.LockBindingNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.EnvNodesFactory.UnlockBindingNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+@GenerateUncached
 public class EnvNodes {
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class LockBindingNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -52,11 +57,16 @@ public class EnvNodes {
         }
 
         public static LockBindingNode create() {
-            return EnvNodesFactory.LockBindingNodeGen.create();
+            return LockBindingNodeGen.create();
+        }
+
+        public static LockBindingNode getUncached() {
+            return LockBindingNodeGen.getUncached();
         }
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class UnlockBindingNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -74,7 +84,11 @@ public class EnvNodes {
         }
 
         public static UnlockBindingNode create() {
-            return EnvNodesFactory.UnlockBindingNodeGen.create();
+            return UnlockBindingNodeGen.create();
+        }
+
+        public static UnlockBindingNode getUncached() {
+            return UnlockBindingNodeGen.getUncached();
         }
     }
 }

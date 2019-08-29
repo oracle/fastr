@@ -177,16 +177,16 @@ public interface StdUpCallsRFFI {
 
     Object Rf_ScalarString(Object value);
 
-    @RFFIUpCallNode(AsIntegerNode.class)
+    @RFFIUpCallNode(value = AsIntegerNode.class, needsCallTarget = true)
     int Rf_asInteger(Object x);
 
-    @RFFIUpCallNode(AsRealNode.class)
+    @RFFIUpCallNode(value = AsRealNode.class, needsCallTarget = true)
     double Rf_asReal(Object x);
 
-    @RFFIUpCallNode(AsLogicalNode.class)
+    @RFFIUpCallNode(value = AsLogicalNode.class, needsCallTarget = true)
     int Rf_asLogical(Object x);
 
-    @RFFIUpCallNode(AsCharNode.class)
+    @RFFIUpCallNode(value = AsCharNode.class, needsCallTarget = true)
     Object Rf_asChar(Object x);
 
     @RFFIUpCallNode(CoerceVectorNode.class)
@@ -204,7 +204,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(DoMakeClassNode.class)
     Object R_do_MAKE_CLASS(@RFFICstring(convert = false) Object clazz);
 
-    @RFFIUpCallNode(MiscNodes.RDoNewObjectNode.class)
+    @RFFIUpCallNode(value = MiscNodes.RDoNewObjectNode.class, needsCallTarget = true)
     Object R_do_new_object(Object classDef);
 
     /**
@@ -216,13 +216,13 @@ public interface StdUpCallsRFFI {
 
     Object Rf_findVarInFrame3(@RFFIResultOwner Object envArg, Object symbolArg, int doGet);
 
-    @RFFIUpCallNode(ATTRIB.class)
+    @RFFIUpCallNode(value = ATTRIB.class, needsCallTarget = true)
     Object ATTRIB(@RFFIResultOwner Object obj);
 
-    @RFFIUpCallNode(GetAttrib.class)
+    @RFFIUpCallNode(value = GetAttrib.class, needsCallTarget = true)
     Object Rf_getAttrib(@RFFIResultOwner Object obj, Object name);
 
-    @RFFIUpCallNode(RfSetAttribNode.class)
+    @RFFIUpCallNode(value = RfSetAttribNode.class, needsCallTarget = true)
     void Rf_setAttrib(Object obj, Object name, Object val);
 
     int Rf_inherits(Object x, @RFFICstring String clazz);
@@ -306,7 +306,7 @@ public interface StdUpCallsRFFI {
 
     Object STRING_ELT(@RFFIResultOwner Object x, long i);
 
-    @RFFIUpCallNode(VectorElementGetterNode.class)
+    @RFFIUpCallNode(value = VectorElementGetterNode.class)
     Object VECTOR_ELT(@RFFIResultOwner Object x, long i);
 
     int NAMED(Object x);
@@ -420,7 +420,7 @@ public interface StdUpCallsRFFI {
 
     Object R_FindNamespace(Object name);
 
-    @RFFIUpCallNode(RfEvalNode.class)
+    @RFFIUpCallNode(value = RfEvalNode.class, needsCallTarget = true)
     Object Rf_eval(Object expr, Object env);
 
     @RFFIUpCallNode(RfFindFun.class)
@@ -440,7 +440,7 @@ public interface StdUpCallsRFFI {
 
     void Rf_copyMatrix(Object s, Object t, int byrow);
 
-    @RFFIUpCallNode(TryRfEvalNode.class)
+    @RFFIUpCallNode(value = TryRfEvalNode.class, needsCallTarget = true)
     Object R_tryEval(Object expr, Object env, @RFFICpointer Object errorFlag, int silent);
 
     Object R_ToplevelExec();
@@ -525,7 +525,7 @@ public interface StdUpCallsRFFI {
 
     Object R_GetConnection(int fd);
 
-    @RFFIUpCallNode(MiscNodes.RDoSlotNode.class)
+    @RFFIUpCallNode(value = MiscNodes.RDoSlotNode.class, needsCallTarget = true)
     Object R_do_slot(Object o, Object name);
 
     @RFFIUpCallNode(MiscNodes.RDoSlotAssignNode.class)
@@ -717,7 +717,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_2Node.class, functionClass = QHyper.class)
     double Rf_qhyper(double a, double b, double c, double d, int e, int f);
 
-    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3Node.class, functionClass = RHyper.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3Node.class, functionClass = RHyper.class, needsCallTarget = true)
     double Rf_rhyper(double a, double b, double c);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = DNBinom.DNBinomFunc.class)
@@ -744,7 +744,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = RNBinom.RNBinomMu.class)
     double Rf_rnbinom_mu(double a, double b);
 
-    @RFFIUpCallNode(value = RandFunctionsNodes.RfRMultinomNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RfRMultinomNode.class, needsCallTarget = true)
     void Rf_rmultinom(int a, @RFFICpointer Object b, int c, @RFFICpointer Object d);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_1Node.class, functionClass = DPois.class)
@@ -894,16 +894,16 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(MathFunctionsNodes.BesselYNode.class)
     double Rf_bessel_y(double a, double b);
 
-    @RFFIUpCallNode(MathFunctionsNodes.BesselIExNode.class)
+    @RFFIUpCallNode(value = MathFunctionsNodes.BesselIExNode.class, needsCallTarget = true)
     double Rf_bessel_i_ex(double a, double b, double c, @RFFICpointer Object d);
 
-    @RFFIUpCallNode(MathFunctionsNodes.BesselJExNode.class)
+    @RFFIUpCallNode(value = MathFunctionsNodes.BesselJExNode.class, needsCallTarget = true)
     double Rf_bessel_j_ex(double a, double b, @RFFICpointer Object c);
 
-    @RFFIUpCallNode(MathFunctionsNodes.BesselKExNode.class)
+    @RFFIUpCallNode(value = MathFunctionsNodes.BesselKExNode.class, needsCallTarget = true)
     double Rf_bessel_k_ex(double a, double b, double c, @RFFICpointer Object d);
 
-    @RFFIUpCallNode(MathFunctionsNodes.BesselYExNode.class)
+    @RFFIUpCallNode(value = MathFunctionsNodes.BesselYExNode.class, needsCallTarget = true)
     double Rf_bessel_y_ex(double a, double b, @RFFICpointer Object c);
 
     @RFFIUpCallNode(MathFunctionsNodes.SignNode.class)
@@ -923,28 +923,28 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(MathFunctionsNodes.TanpiNode.class)
     double Rf_tanpi(double a);
 
-    @RFFIUpCallNode(MiscNodes.NamesGetsNode.class)
+    @RFFIUpCallNode(value = MiscNodes.NamesGetsNode.class, needsCallTarget = true)
     Object Rf_namesgets(Object vec, Object val);
 
     @RFFIUpCallNode(CopyMostAttrib.class)
     void Rf_copyMostAttrib(Object x, Object y);
 
-    @RFFIUpCallNode(VectorToPairListNode.class)
+    @RFFIUpCallNode(value = VectorToPairListNode.class, needsCallTarget = true)
     Object Rf_VectorToPairList(Object x);
 
-    @RFFIUpCallNode(AsCharacterFactor.class)
+    @RFFIUpCallNode(value = AsCharacterFactor.class, needsCallTarget = true)
     Object Rf_asCharacterFactor(Object x);
 
-    @RFFIUpCallNode(MatchNodes.MatchNode.class)
+    @RFFIUpCallNode(value = MatchNodes.MatchNode.class, needsCallTarget = true)
     Object Rf_match(Object itables, Object ix, int nmatch);
 
     @RFFIUpCallNode(MatchNodes.NonNullStringMatchNode.class)
     boolean Rf_NonNullStringMatch(Object s, Object t);
 
-    @RFFIUpCallNode(MiscNodes.RHasSlotNode.class)
+    @RFFIUpCallNode(value = MiscNodes.RHasSlotNode.class, needsCallTarget = true)
     int R_has_slot(Object container, Object name);
 
-    @RFFIUpCallNode(MiscNodes.OctSizeNode.class)
+    @RFFIUpCallNode(value = MiscNodes.OctSizeNode.class, needsCallTarget = true)
     Object octsize(Object size);
 
     @RFFIUpCallNode(MiscNodes.RfPrintValueNode.class)
@@ -953,7 +953,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(RNCharNode.class)
     int R_nchar(Object string, int type, int allowNA, int keepNA, @RFFICstring Object msgName);
 
-    @RFFIUpCallNode(RForceAndCallNode.class)
+    @RFFIUpCallNode(value = RForceAndCallNode.class, needsCallTarget = true)
     Object R_forceAndCall(Object e, Object f, int n, Object args);
 
     @RFFIUpCallNode(IsObjectNode.class)

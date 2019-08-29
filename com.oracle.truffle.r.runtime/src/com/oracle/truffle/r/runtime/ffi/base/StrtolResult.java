@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,27 @@
  */
 package com.oracle.truffle.r.runtime.ffi.base;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
+@ExportLibrary(InteropLibrary.class)
 public final class StrtolResult implements RTruffleObject {
     private long result;
     private int errno;
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isExecutable() {
+        return true;
+    }
+
+    @ExportMessage
+    public Object execute(Object[] arguments) {
+        setResult((long) arguments[0], (int) arguments[1]);
+        return this;
+    }
 
     public void setResult(long result, int errno) {
         this.result = result;
@@ -40,10 +55,5 @@ public final class StrtolResult implements RTruffleObject {
 
     public int getErrno() {
         return errno;
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return StrtolResultMRForeign.ACCESS;
     }
 }

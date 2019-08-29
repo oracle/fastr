@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
+@GenerateUncached
 public abstract class RSetExternalPtrNode extends FFIUpCallNode.Arg2 {
 
     @Specialization
@@ -44,6 +46,10 @@ public abstract class RSetExternalPtrNode extends FFIUpCallNode.Arg2 {
 
     public static RSetExternalPtrNode create() {
         return RSetExternalPtrNodeGen.create();
+    }
+
+    public static RSetExternalPtrNode getUncached() {
+        return RSetExternalPtrNodeGen.getUncached();
     }
 
 }

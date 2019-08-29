@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2000--2014, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class DPois implements Function2_1 {
+
+    public static DPois create() {
+        return new DPois();
+    }
+
+    public static DPois getUncached() {
+        return new DPois();
+    }
+
     @Override
     public double evaluate(double x, double lambda, boolean giveLog) {
         if (Double.isNaN(x) || Double.isNaN(lambda)) {

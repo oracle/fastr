@@ -57,7 +57,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
 @ImportStatic(DSLConfig.class)
 public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
 
-    private final Rbinom rbinom = new Rbinom();
+    private final Rbinom rbinom = Rbinom.create();
 
     private final ValueProfile randGeneratorClassProfile = ValueProfile.createClassProfile();
     private final ConditionProfile hasAttributesProfile = ConditionProfile.createBinaryProfile();

@@ -1157,6 +1157,10 @@ public final class SpecialAttributesFunctions {
             return GetClassAttributeNodeGen.create();
         }
 
+        public static GetClassAttributeNode getUncached() {
+            return GetClassAttributeNodeGen.getUncached();
+        }
+
         @Override
         protected String getAttributeName() {
             return RRuntime.CLASS_ATTR_KEY;

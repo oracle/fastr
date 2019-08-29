@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996, Robert Gentleman and Ross Ihaka
  * Copyright (c) 2000-2007, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Pt implements Function2_2 {
+
+    public static Pt create() {
+        return new Pt();
+    }
+
+    public static Pt getUncached() {
+        return new Pt();
+    }
+
     private final BranchProfile pbetaNanProfile = BranchProfile.create();
     private final Pnorm pnorm = new Pnorm();
 

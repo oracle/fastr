@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2006-2015, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 
 public final class Qnt implements Function3_2 {
+
+    public static Qnt create() {
+        return new Qnt();
+    }
+
+    public static Qnt getUncached() {
+        return new Qnt();
+    }
+
     private static final double accu = 1e-13;
     private static final double Eps = 1e-11; /* must be > accu */
 

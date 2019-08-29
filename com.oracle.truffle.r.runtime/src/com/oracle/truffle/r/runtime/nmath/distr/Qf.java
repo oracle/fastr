@@ -2,7 +2,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2015, The R Core Team
  * Copyright (c) 2005, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq.QChisq;
 
 public final class Qf implements Function3_2 {
+
+    public static Qf create() {
+        return new Qf();
+    }
+
+    public static Qf getUncached() {
+        return new Qf();
+    }
+
     private final QBeta qbeta = new QBeta();
     private final QChisq qchisq = new QChisq();
 

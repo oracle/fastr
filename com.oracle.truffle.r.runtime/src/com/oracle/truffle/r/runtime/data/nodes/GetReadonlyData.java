@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -43,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  */
 public class GetReadonlyData {
 
+    @GenerateUncached
     public abstract static class Double extends Node {
         public abstract double[] execute(RDoubleVector vector);
 

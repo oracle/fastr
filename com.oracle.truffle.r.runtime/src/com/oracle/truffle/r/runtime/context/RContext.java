@@ -73,6 +73,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RStartParams;
+import com.oracle.truffle.r.runtime.ContextReferenceAccess;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -240,15 +241,19 @@ public final class RContext {
     private final RStartParams startParameters;
     private final RCmdOptions cmdOptions;
     private final RContext.ContextKind contextKind;
-    public final Map<Class<?>, RootCallTarget> cachedCallTagets = new HashMap<>();
+    private final Map<Class<?>, RootCallTarget> cachedCallTargets = new HashMap<>();
 
     public RootCallTarget getOrCreateCachedCallTarget(Class<?> clazz, Supplier<RootCallTarget> createFunction) {
-        RootCallTarget result = cachedCallTagets.get(clazz);
+        RootCallTarget result = cachedCallTargets.get(clazz);
         if (result == null) {
             result = createFunction.get();
-            cachedCallTagets.put(clazz, result);
+            cachedCallTargets.put(clazz, result);
         }
         return result;
+    }
+
+    public RFFIUpCallTargets getRFFIUpCallTargets() {
+        return rffiUpCallTargets;
     }
 
     /**
@@ -303,8 +308,8 @@ public final class RContext {
      */
     @CompilationFinal private static RCodeBuilder<RSyntaxNode> astBuilder;
     @CompilationFinal private static RRuntimeASTAccess runtimeASTAccess;
+    @CompilationFinal private static ContextReferenceAccess contextReferenceAccess;
     @CompilationFinal private static RBuiltinLookup builtinLookup;
-    @CompilationFinal private static RForeignAccessFactory foreignAccessFactory;
     @CompilationFinal private static boolean initialContextInitialized;
     @CompilationFinal private static int initialPid;
 
@@ -315,11 +320,12 @@ public final class RContext {
     /**
      * Initialize VM-wide static values.
      */
-    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, RBuiltinLookup rBuiltinLookup, RForeignAccessFactory rForeignAccessFactory) {
+    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, ContextReferenceAccess rContextReferenceAccess,
+                    RBuiltinLookup rBuiltinLookup) {
         RContext.astBuilder = rAstBuilder;
         RContext.runtimeASTAccess = rRuntimeASTAccess;
+        RContext.contextReferenceAccess = rContextReferenceAccess;
         RContext.builtinLookup = rBuiltinLookup;
-        RContext.foreignAccessFactory = rForeignAccessFactory;
     }
 
     // need an additional flag as we don't want multi-slot processing to start until context
@@ -356,6 +362,8 @@ public final class RContext {
     public final DLL.ContextStateImpl stateDLL;
     public final RNullMRContextState stateRNullMR;
     public final GCTortureState gcTorture;
+
+    public final RFFIUpCallTargets rffiUpCallTargets;
 
     @CompilationFinal private RFFIContext stateRFFI;
 
@@ -467,6 +475,9 @@ public final class RContext {
         this.stateInstrumentation = InstrumentationState.newContextState(instrumenter);
         this.stateInternalCode = ContextStateImpl.newContextState();
         this.stateDLL = DLL.ContextStateImpl.newContextState();
+
+        this.rffiUpCallTargets = new RFFIUpCallTargets();
+
         this.stateRNullMR = RNullMRContextState.newContextState();
         this.gcTorture = GCTortureState.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
@@ -848,6 +859,10 @@ public final class RContext {
         return runtimeASTAccess;
     }
 
+    public static ContextReferenceAccess getContextReferenceAccess() {
+        return contextReferenceAccess;
+    }
+
     /**
      * Is {@code name} a builtin function (but not a {@link RBuiltinKind#INTERNAL}?
      */
@@ -869,10 +884,6 @@ public final class RContext {
      */
     public static RBuiltinDescriptor lookupBuiltinDescriptor(String name) {
         return builtinLookup.lookupBuiltinDescriptor(name);
-    }
-
-    public static RForeignAccessFactory getRForeignAccessFactory() {
-        return foreignAccessFactory;
     }
 
     public RCmdOptions getCmdOptions() {

@@ -143,10 +143,10 @@ import com.oracle.truffle.r.runtime.nmath.distr.Exp.RExp;
 import com.oracle.truffle.r.runtime.nmath.distr.Geom;
 import com.oracle.truffle.r.runtime.nmath.distr.Geom.DGeom;
 import com.oracle.truffle.r.runtime.nmath.distr.Geom.RGeom;
-import com.oracle.truffle.r.runtime.nmath.distr.LogNormal;
 import com.oracle.truffle.r.runtime.nmath.distr.LogNormal.DLNorm;
 import com.oracle.truffle.r.runtime.nmath.distr.LogNormal.PLNorm;
 import com.oracle.truffle.r.runtime.nmath.distr.LogNormal.QLNorm;
+import com.oracle.truffle.r.runtime.nmath.distr.LogNormal.RLNorm;
 import com.oracle.truffle.r.runtime.nmath.distr.Logis;
 import com.oracle.truffle.r.runtime.nmath.distr.Logis.DLogis;
 import com.oracle.truffle.r.runtime.nmath.distr.Logis.RLogis;
@@ -343,41 +343,41 @@ public class CallAndExternalFunctions {
                 case "qnorm":
                     return StatsFunctionsNodes.Function3_2Node.create(new Qnorm());
                 case "rnorm":
-                    return RandFunction2Node.createDouble(Rnorm::new);
+                    return RandFunction2Node.createDouble(Rnorm::create);
                 case "runif":
-                    return RandFunction2Node.createDouble(Runif::new);
+                    return RandFunction2Node.createDouble(Runif::create);
                 case "rbeta":
-                    return RandFunction2Node.createDouble(RBeta::new);
+                    return RandFunction2Node.createDouble(RBeta::create);
                 case "rgamma":
-                    return RandFunction2Node.createDouble(RGamma::new);
+                    return RandFunction2Node.createDouble(RGamma::create);
                 case "rcauchy":
-                    return RandFunction2Node.createDouble(RCauchy::new);
+                    return RandFunction2Node.createDouble(RCauchy::create);
                 case "rf":
-                    return RandFunction2Node.createDouble(Rf::new);
+                    return RandFunction2Node.createDouble(Rf::create);
                 case "rlogis":
-                    return RandFunction2Node.createDouble(RLogis::new);
+                    return RandFunction2Node.createDouble(RLogis::create);
                 case "rweibull":
-                    return RandFunction2Node.createDouble(RWeibull::new);
+                    return RandFunction2Node.createDouble(RWeibull::create);
                 case "rnchisq":
-                    return RandFunction2Node.createDouble(RNchisq::new);
+                    return RandFunction2Node.createDouble(RNchisq::create);
                 case "rnbinom_mu":
-                    return RandFunction2Node.createDouble(RNBinomMu::new);
+                    return RandFunction2Node.createDouble(RNBinomMu::create);
                 case "rwilcox":
-                    return RandFunction2Node.createInt(RWilcox::new);
+                    return RandFunction2Node.createInt(RWilcox::create);
                 case "rchisq":
-                    return RandFunction1Node.createDouble(RChisq::new);
+                    return RandFunction1Node.createDouble(RChisq::create);
                 case "rexp":
-                    return RandFunction1Node.createDouble(RExp::new);
+                    return RandFunction1Node.createDouble(RExp::create);
                 case "rgeom":
-                    return RandFunction1Node.createInt(RGeom::new);
+                    return RandFunction1Node.createInt(RGeom::create);
                 case "rpois":
-                    return RandFunction1Node.createInt(RPois::new);
+                    return RandFunction1Node.createInt(RPois::create);
                 case "rnbinom":
-                    return RandFunction2Node.createInt(RNBinomFunc::new);
+                    return RandFunction2Node.createInt(RNBinomFunc::create);
                 case "rt":
-                    return RandFunction1Node.createDouble(Rt::new);
+                    return RandFunction1Node.createDouble(Rt::create);
                 case "rsignrank":
-                    return RandFunction1Node.createInt(RSignrank::new);
+                    return RandFunction1Node.createInt(RSignrank::create);
                 case "rhyper":
                     return RandFunction3Node.createInt(RHyper::new);
                 case "phyper":
@@ -419,7 +419,7 @@ public class CallAndExternalFunctions {
                 case "dweibull":
                     return StatsFunctionsNodes.Function3_1Node.create(new DWeibull());
                 case "rbinom":
-                    return RandFunction2Node.createInt(Rbinom::new);
+                    return RandFunction2Node.createInt(Rbinom::create);
                 case "pbinom":
                     return StatsFunctionsNodes.Function3_2Node.create(new Pbinom());
                 case "pbeta":
@@ -477,7 +477,7 @@ public class CallAndExternalFunctions {
                 case "dt":
                     return StatsFunctionsNodes.Function2_1Node.create(new Dt());
                 case "rlnorm":
-                    return RandFunction2Node.createDouble(LogNormal.RLNorm::new);
+                    return RandFunction2Node.createDouble(RLNorm::create);
                 case "dlnorm":
                     return StatsFunctionsNodes.Function3_1Node.create(new DLNorm());
                 case "qlnorm":

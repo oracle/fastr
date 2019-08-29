@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,16 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.context;
+package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.nodes.NodeInterface;
+import com.oracle.truffle.r.runtime.context.RContext;
 
-public interface RForeignAccessFactory {
+public interface ContextReferenceAccess {
+    ContextReferenceNode createContextReferenceNode();
 
-    /**
-     * Return the appropriate {@code ForeignAccess} instance for {@code obj}.
-     */
-    ForeignAccess getForeignAccess(RTruffleObject obj);
-
-    /**
-     * Changes the interpretation of {@RNull} as {@code null} to {@code value}. This allows the
-     * {@code FFI} implementations to prevent {@RNull} being converted across the {@code FFI}
-     * interface, which would be incorrect.
-     * 
-     * @return the previous setting
-     */
-    boolean setIsNull(boolean value);
-
+    public interface ContextReferenceNode extends NodeInterface {
+        ContextReference<RContext> execute();
+    }
 }

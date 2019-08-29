@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,11 +36,11 @@ public final class StatsRFFI {
 
     public static final class FactorNode extends NativeCallNode {
         private FactorNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.fft_factor));
+            super(factory.createDownCallNode());
         }
 
         public void execute(int n, int[] pmaxf, int[] pmaxp) {
-            call(n, pmaxf, pmaxp);
+            call(NativeFunction.fft_factor, n, pmaxf, pmaxp);
         }
 
         public static FactorNode create() {
@@ -50,11 +50,11 @@ public final class StatsRFFI {
 
     public static final class SetupWorkNode extends NativeCallNode {
         private SetupWorkNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.fft_setup_work));
+            super(factory.createDownCallNode());
         }
 
         public int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
-            return (int) call(a, nseg, n, nspn, isn, work, iwork);
+            return (int) call(NativeFunction.fft_setup_work, a, nseg, n, nspn, isn, work, iwork);
         }
 
         public static SetupWorkNode create() {
@@ -64,11 +64,11 @@ public final class StatsRFFI {
 
     public static final class LminflNode extends NativeCallNode {
         private LminflNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.lminfl));
+            super(factory.createDownCallNode());
         }
 
         public void execute(double[] x, int ldx, int n, int k, int docoef, double[] qraux, double[] resid, double[] hat, double[] coef, double[] sigma, double tol) {
-            call(x, ldx, n, k, docoef, qraux, resid, hat, coef, sigma, tol);
+            call(NativeFunction.lminfl, x, ldx, n, k, docoef, qraux, resid, hat, coef, sigma, tol);
         }
 
         public static LminflNode create() {

@@ -73,11 +73,11 @@ public final class PCRERFFI {
         @Child private InteropLibrary interop;
 
         private MaketablesNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.maketables));
+            super(factory.createDownCallNode());
         }
 
         public long execute() {
-            Object result = call();
+            Object result = call(NativeFunction.maketables);
             if (result instanceof Long) {
                 return (long) result;
             }
@@ -100,12 +100,12 @@ public final class PCRERFFI {
 
     public static final class CompileNode extends NativeCallNode {
         private CompileNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.compile));
+            super(factory.createDownCallNode());
         }
 
         public Result execute(String pattern, int options, long tables) {
             CompileResult data = new CompileResult();
-            call(data, pattern, options, tables);
+            call(NativeFunction.compile, data, pattern, options, tables);
             return data.getResult();
         }
 
@@ -116,11 +116,11 @@ public final class PCRERFFI {
 
     public static final class GetCaptureCountNode extends NativeCallNode {
         private GetCaptureCountNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.getcapturecount));
+            super(factory.createDownCallNode());
         }
 
         public int execute(long code, long extra) {
-            return (int) call(code, extra);
+            return (int) call(NativeFunction.getcapturecount, code, extra);
         }
 
         public static GetCaptureCountNode create() {
@@ -130,12 +130,12 @@ public final class PCRERFFI {
 
     public static final class GetCaptureNamesNode extends NativeCallNode {
         private GetCaptureNamesNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.getcapturenames));
+            super(factory.createDownCallNode());
         }
 
         public String[] execute(long code, long extra, int captureCount) {
             CaptureNamesResult data = new CaptureNamesResult(captureCount);
-            int result = (int) call(data, code, extra);
+            int result = (int) call(NativeFunction.getcapturenames, data, code, extra);
             if (result < 0) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, result);
@@ -151,7 +151,7 @@ public final class PCRERFFI {
 
     public static final class StudyNode extends NativeCallNode {
         private StudyNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.study));
+            super(factory.createDownCallNode());
         }
 
         @SuppressWarnings("unused")
@@ -178,13 +178,13 @@ public final class PCRERFFI {
         private AtomicReference<SoftReference<BytesCache>> cachedBytes = new AtomicReference<>();
 
         private ExecNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.exec));
+            super(factory.createDownCallNode());
         }
 
         public int execute(long code, long extra, String subject, int offset, int options, int[] ovector) {
             byte[] subjectBytes = getBytes(subject);
             NativeCharArray subjectChars = new NativeCharArray(subjectBytes);
-            return (int) call(code, extra, subjectChars, subjectBytes.length, offset, options, ovector, ovector.length);
+            return (int) call(NativeFunction.exec, code, extra, subjectChars, subjectBytes.length, offset, options, ovector, ovector.length);
         }
 
         @TruffleBoundary

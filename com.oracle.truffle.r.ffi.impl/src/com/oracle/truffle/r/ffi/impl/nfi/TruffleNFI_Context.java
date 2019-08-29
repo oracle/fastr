@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -188,7 +189,7 @@ public class TruffleNFI_Context extends RFFIContext {
             if (!variablesInitialized) {
                 variablesInitialized = true;
                 RFFIVariables[] variables = RFFIVariables.initialize(context);
-                boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
+                boolean isNullSetting = RNull.setIsNull(context, false);
                 try {
                     for (int i = 0; i < variables.length; i++) {
                         RFFIVariables var = variables[i];
@@ -212,7 +213,7 @@ public class TruffleNFI_Context extends RFFIContext {
                         }
                     }
                 } finally {
-                    RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
+                    RNull.setIsNull(context, isNullSetting);
                 }
             }
         }

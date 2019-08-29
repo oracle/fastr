@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2006, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Dnf implements Function4_1 {
+
+    public static Dnf create() {
+        return new Dnf();
+    }
+
+    public static Dnf getUncached() {
+        return new Dnf();
+    }
+
     private final DNChisq dnchisq = new DNChisq();
     private final DNBeta dnbeta = new DNBeta();
 

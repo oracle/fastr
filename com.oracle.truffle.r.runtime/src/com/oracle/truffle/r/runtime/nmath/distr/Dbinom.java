@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2000-2014, The R Core Team
  * Copyright (c) 2008, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,6 +34,14 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 // transcribed from dbinom.c
 
 public final class Dbinom implements Function3_1 {
+
+    public static Dbinom create() {
+        return new Dbinom();
+    }
+
+    public static Dbinom getUncached() {
+        return new Dbinom();
+    }
 
     private final BranchProfile nanProfile = BranchProfile.create();
 

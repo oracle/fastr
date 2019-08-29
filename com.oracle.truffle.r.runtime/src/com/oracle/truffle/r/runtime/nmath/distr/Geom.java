@@ -1,7 +1,8 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2008, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2004--2005, The R Foundation
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,33 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, a copy is available at
  * https://www.R-project.org/Licenses/
- */
-/*
- * Copyright (c) 2000--2014, The R Core Team
- * Copyright (c) 2016, Oracle and/or its affiliates
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, a copy is available at
- * https://www.R-project.org/Licenses/
- */
-/*
- * Copyright (C) 1998       Ross Ihaka
- * Copyright (C) 2000-12    The R Core Team
- * Copyright (C) 2004--2005 The R Foundation
- * Copyright (c) 2016, Oracle and/or its affiliates
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import static com.oracle.truffle.r.runtime.nmath.RMath.forceint;
 
 import com.oracle.truffle.r.runtime.nmath.DPQ;
@@ -53,6 +32,7 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
+import com.oracle.truffle.r.runtime.nmath.distr.GeomFactory.RGeomNodeGen;
 
 public final class Geom {
     private Geom() {
@@ -60,6 +40,15 @@ public final class Geom {
     }
 
     public static final class QGeom implements Function2_2 {
+
+        public static QGeom create() {
+            return new QGeom();
+        }
+
+        public static QGeom getUncached() {
+            return new QGeom();
+        }
+
         @Override
         public double evaluate(double p, double prob, boolean lowerTail, boolean logP) {
             if (Double.isNaN(p) || Double.isNaN(prob)) {
@@ -90,6 +79,15 @@ public final class Geom {
     }
 
     public static final class DGeom implements Function2_1 {
+
+        public static DGeom create() {
+            return new DGeom();
+        }
+
+        public static DGeom getUncached() {
+            return new DGeom();
+        }
+
         @Override
         public double evaluate(double x, double p, boolean giveLog) {
             if (Double.isNaN(x) || Double.isNaN(p)) {
@@ -115,6 +113,15 @@ public final class Geom {
     }
 
     public static final class PGeom implements Function2_2 {
+
+        public static PGeom create() {
+            return new PGeom();
+        }
+
+        public static PGeom getUncached() {
+            return new PGeom();
+        }
+
         @Override
         public double evaluate(double xIn, double p, boolean lowerTail, boolean logP) {
             if (Double.isNaN(xIn) || Double.isNaN(p)) {
@@ -145,13 +152,22 @@ public final class Geom {
         }
     }
 
-    public static final class RGeom extends RandFunction1_Double {
-        @Override
-        public double execute(double p, RandomNumberProvider rand) {
+    @GenerateUncached
+    public abstract static class RGeom extends RandFunction1_Double {
+        @Specialization
+        public double exec(double p, RandomNumberProvider rand) {
             if (!Double.isFinite(p) || p <= 0 || p > 1) {
                 return RMathError.defaultError();
             }
             return RPois.rpois(rand.expRand() * ((1 - p) / p), rand);
+        }
+
+        public static RGeom create() {
+            return RGeomNodeGen.create();
+        }
+
+        public static RGeom getUncached() {
+            return RGeomNodeGen.getUncached();
         }
     }
 }

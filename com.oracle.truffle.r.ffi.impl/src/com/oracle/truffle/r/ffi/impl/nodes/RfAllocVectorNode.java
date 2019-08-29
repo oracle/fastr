@@ -25,6 +25,7 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
@@ -37,6 +38,7 @@ import java.util.Arrays;
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
 
 @ReportPolymorphism
+@GenerateUncached
 public abstract class RfAllocVectorNode extends FFIUpCallNode.Arg2 {
     protected static final int SEXPTYPE_COUNT = SEXPTYPE.values().length + 1;
 
@@ -52,7 +54,7 @@ public abstract class RfAllocVectorNode extends FFIUpCallNode.Arg2 {
 
     @Specialization(guards = "mode == type.code", limit = "SEXPTYPE_COUNT")
     public Object doIt(@SuppressWarnings("unused") int mode, long n,
-                    @Cached("getType(mode)") SEXPTYPE type) {
+                    @Cached(value = "getType(mode)", allowUncached = true) SEXPTYPE type) {
         CompilerAsserts.compilationConstant(type);
         if (n > Integer.MAX_VALUE) {
             CompilerDirectives.transferToInterpreter();

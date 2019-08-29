@@ -38,7 +38,6 @@ import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -124,7 +123,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
     protected RContext createContext(Env env) {
         boolean initialContext = !systemInitialized;
         if (initialContext) {
-            RContext.initializeGlobalState(new RASTBuilder(false), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
+            RContext.initializeGlobalState(new RASTBuilder(false), new RRuntimeASTAccessImpl(), new ContextReferenceAccessImpl(), RBuiltinPackages.getInstance());
         }
         return RContext.create(this, env, env.lookup(Instrumenter.class), initialContext);
     }

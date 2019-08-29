@@ -233,7 +233,7 @@ com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Dnt.ja
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/DPois.java,gnu_r.core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Dt.java,gnu_r.core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Exp.java,gnu_r_ihaka_core.copyright
-com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Geom.java,gnu_r_ihaka_core.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Geom.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Logis.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/LogNormal.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Pbeta.java,gnu_r.core.copyright

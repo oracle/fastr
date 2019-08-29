@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2000-2013, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 import com.oracle.truffle.r.runtime.nmath.TOMS708.Bratio;
 
 public final class PNBeta implements Function4_2 {
+
+    public static PNBeta create() {
+        return new PNBeta();
+    }
+
+    public static PNBeta getUncached() {
+        return new PNBeta();
+    }
+
     @Override
     public double evaluate(double x, double a, double b, double ncp, boolean lowerTail, boolean logP) {
         if (Double.isNaN(x) || Double.isNaN(a) || Double.isNaN(b) || Double.isNaN(ncp)) {

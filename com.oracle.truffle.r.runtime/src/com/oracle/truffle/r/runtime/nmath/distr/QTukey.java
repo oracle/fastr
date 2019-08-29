@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2005, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,6 +56,15 @@ import com.oracle.truffle.r.runtime.nmath.TOMS708;
  */
 
 public final class QTukey implements Function4_2 {
+
+    public static QTukey create() {
+        return new QTukey();
+    }
+
+    public static QTukey getUncached() {
+        return new QTukey();
+    }
+
     private static final double eps = 0.0001;
     private static final int maxiter = 50;
 

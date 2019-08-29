@@ -22,22 +22,35 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
-public final class RMakeExternalPtrNode extends FFIUpCallNode.Arg3 {
+@ImportStatic(DSLConfig.class)
+@GenerateUncached
+public abstract class RMakeExternalPtrNode extends FFIUpCallNode.Arg3 {
 
-    @Child private InteropLibrary interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
+    public static RMakeExternalPtrNode create() {
+        return RMakeExternalPtrNodeGen.create();
+    }
 
-    private final ConditionProfile isPointerProfile = ConditionProfile.createBinaryProfile();
+    public static RMakeExternalPtrNode getUncached() {
+        return RMakeExternalPtrNodeGen.getUncached();
+    }
 
-    @Override
-    public Object executeObject(Object addrObj, Object tag, Object prot) {
+    @Specialization(limit = "getInteropLibraryCacheSize()")
+    public Object executeObject(Object addrObj, Object tag, Object prot,
+                    @CachedLibrary("addrObj") InteropLibrary interop,
+                    @Cached("createBinaryProfile()") ConditionProfile isPointerProfile) {
         try {
             long addr;
             if (isPointerProfile.profile(interop.isPointer(addrObj))) {

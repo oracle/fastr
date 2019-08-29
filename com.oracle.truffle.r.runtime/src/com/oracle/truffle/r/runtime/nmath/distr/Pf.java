@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2008, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,14 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 
 // transcribed from nmath/pf.c
 public final class Pf implements Function3_2 {
+
+    public static Pf create() {
+        return new Pf();
+    }
+
+    public static Pf getUncached() {
+        return new Pf();
+    }
 
     private final BranchProfile nanProfile = BranchProfile.create();
 

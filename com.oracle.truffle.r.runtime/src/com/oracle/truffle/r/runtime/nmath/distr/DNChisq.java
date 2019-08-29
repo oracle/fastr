@@ -2,7 +2,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000-15, The R Core Team
  * Copyright (c) 2004-15, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq.DChisq;
 
 public final class DNChisq implements Function3_1 {
+
+    public static DNChisq create() {
+        return new DNChisq();
+    }
+
+    public static DNChisq getUncached() {
+        return new DNChisq();
+    }
+
     private static final double eps = 5e-15;
     private final DChisq dchisq = new DChisq();
 
