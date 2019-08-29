@@ -407,6 +407,14 @@ public class TruffleNFI_Context extends RFFIContext {
     }
 
     @Override
+    public void beforeUpcall(RContext context, boolean canRunGc, Type rffiType) {
+        super.beforeUpcall(context, canRunGc, rffiType);
+        // up-call is where we are returning from native code to Java, if we run GC now, any
+        // unreferenced (and unprotected) R objects should be collected
+        context.gcTorture.runGC();
+    }
+
+    @Override
     public void afterDowncall(Object beforeValue, RFFIFactory.Type rffiType) {
         Object[] tokens = (Object[]) beforeValue;
         super.afterDowncall(tokens[0], rffiType);

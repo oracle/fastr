@@ -116,6 +116,8 @@ public class FastROptions {
     public static final OptionKey<Integer> ChannelReceiveTimeout = new OptionKey<>(0);
     @Option(category = OptionCategory.EXPERT, help = "Restrict force splitting of call targets") //
     public static final OptionKey<Boolean> RestrictForceSplitting = new OptionKey<>(true);
+    @Option(category = OptionCategory.INTERNAL, help = "Turn on explicit GC via the gc built-in. Otherwise calls to gc are ignored.") //
+    public static final OptionKey<Boolean> EnableExplicitGC = new OptionKey<>(false);
 
     // Discontinued since rc12
     // only a warning is printed to use the default logger mechanism
@@ -204,7 +206,14 @@ public class FastROptions {
     }
 
     public static String getForwardedOptions(RContext context) {
-        return context.getOption(PrintErrorStacktracesToFile) ? "--R.PrintErrorStacktracesToFile=true " : null;
+        StringBuilder sb = new StringBuilder();
+        if (context.getOption(PrintErrorStacktracesToFile)) {
+            sb.append("--R.PrintErrorStacktracesToFile=true ");
+        }
+        if (context.getOption(EnableExplicitGC)) {
+            sb.append("--R.EnableExplicitGC=true ");
+        }
+        return sb.toString();
     }
 
     @TruffleBoundary

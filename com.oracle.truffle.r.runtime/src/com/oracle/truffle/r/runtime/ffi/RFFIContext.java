@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 
 /**
  * Holds per RContext specific state of the RFFI. RFFI implementation agnostic data and methods are
@@ -93,7 +94,10 @@ public abstract class RFFIContext extends RFFI {
      * they became unreachable.
      */
     public final void registerReferenceUsedInNative(Object obj) {
-        rffiContextState.protectedNativeReferences.add(obj);
+        // RSymbols are cached and never freed anyway -- dictated by GNU-R
+        if (!(obj instanceof RSymbol)) {
+            rffiContextState.protectedNativeReferences.add(obj);
+        }
     }
 
     public abstract TruffleObject lookupNativeFunction(NativeFunction function);
@@ -101,10 +105,10 @@ public abstract class RFFIContext extends RFFI {
     public abstract <C extends RFFIContext> C as(Class<C> rffiCtxClass);
 
     /**
+     * @param context
      * @param canRunGc {@code true} if this upcall can cause a gc on GNU R, and therefore can clear
-     *            the list of preserved objects.
      */
-    public void beforeUpcall(boolean canRunGc, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+    public void beforeUpcall(RContext context, boolean canRunGc, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         // empty by default
     }
 

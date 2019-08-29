@@ -355,6 +355,7 @@ public final class RContext {
     public final ContextStateImpl stateInternalCode;
     public final DLL.ContextStateImpl stateDLL;
     public final RNullMRContextState stateRNullMR;
+    public final GCTortureState gcTorture;
 
     @CompilationFinal private RFFIContext stateRFFI;
 
@@ -467,6 +468,7 @@ public final class RContext {
         this.stateInternalCode = ContextStateImpl.newContextState();
         this.stateDLL = DLL.ContextStateImpl.newContextState();
         this.stateRNullMR = RNullMRContextState.newContextState();
+        this.gcTorture = GCTortureState.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
         state.add(State.CONSTRUCTED);
 
@@ -546,6 +548,7 @@ public final class RContext {
         stateInstrumentation.initialize(this);
         stateInternalCode.initialize(this);
         stateRNullMR.initialize(this);
+        gcTorture.initialize(this);
         state.add(State.INITIALIZED);
 
         if (!embedded) {

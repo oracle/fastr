@@ -337,7 +337,7 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("                    Object resultRObj0;\n");
             w.append("                    Object resultRObj;\n");
         }
-        w.append("                    ctx.beforeUpcall(" + canRunGc + ", upCallsImpl.getRFFIType());\n");
+        w.append("                    ctx.beforeUpcall(contextReference.get(), " + canRunGc + ", upCallsImpl.getRFFIType());\n");
         w.append(unwrappedArgs);
         if (resultOwnerRHS != null) {
             StringBuilder resultOwner = new StringBuilder("                    Object resultOwner = ").append(resultOwnerRHS).append(";\n");
