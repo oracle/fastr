@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
@@ -101,14 +100,14 @@ public final class TruffleMixed_Context extends RFFIContext {
     }
 
     @Override
-    public void beforeUpcall(boolean canRunGc, Type rffiType) {
+    public void beforeUpcall(RContext context, boolean canRunGc, Type rffiType) {
         switch (rffiType) {
             case LLVM:
-                llvmContext.beforeUpcall(canRunGc, rffiType);
+                llvmContext.beforeUpcall(context, canRunGc, rffiType);
                 break;
 
             case NFI:
-                nfiContext.beforeUpcall(canRunGc, rffiType);
+                nfiContext.beforeUpcall(context, canRunGc, rffiType);
                 break;
 
             default:
@@ -184,20 +183,6 @@ public final class TruffleMixed_Context extends RFFIContext {
         } catch (Exception e) {
         }
         return result != null ? result : nfiContext.lookupNativeFunction(function);
-    }
-
-    @Override
-    public Object protectChild(Object parent, Object child, RFFIFactory.Type rffiType) {
-        switch (rffiType) {
-            case LLVM:
-                return llvmContext.protectChild(parent, child, rffiType);
-
-            case NFI:
-                return nfiContext.protectChild(parent, child, rffiType);
-
-            default:
-                throw RInternalError.shouldNotReachHere();
-        }
     }
 
     @Override

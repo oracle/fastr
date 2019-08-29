@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,19 +23,25 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
-import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 
+import java.util.Arrays;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.FastROptions;
+import com.oracle.truffle.r.runtime.context.GCTortureState;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RNull;
-import java.util.Arrays;
 
 /**
  * Implementation of GC related builtins.
@@ -55,17 +61,27 @@ public final class GcFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RDoubleVector gc(boolean verbose, boolean reset, boolean full) {
+        protected RDoubleVector gc(boolean verbose, boolean reset, boolean full,
+                        @Cached BranchProfile doRunGCProfile) {
             /*
              * It is rarely advisable to actually force a gc in Java, therefore we simply ignore
-             * this builtin.
+             * this builtin unless explicitly specified.
              */
-            // TODO: somehow produce the (semi?) correct values
+            RContext ctx = RContext.getInstance();
+            if (ctx.getOption(FastROptions.EnableExplicitGC)) {
+                doRunGCProfile.enter();
+                doRunGC();
+            }
+            // produce at-least similarly shaped data:
             double[] data = new double[14];
             Arrays.fill(data, RRuntime.DOUBLE_NA);
             return RDataFactory.createDoubleVector(data, RDataFactory.INCOMPLETE_VECTOR);
         }
 
+        @TruffleBoundary
+        private static void doRunGC() {
+            System.gc();
+        }
     }
 
     @RBuiltin(name = "gctorture", visibility = OFF, kind = INTERNAL, parameterNames = "on", behavior = PURE)
@@ -76,9 +92,17 @@ public final class GcFunctions {
             casts.arg("on").allowNull().asLogicalVector().findFirst().map(toBoolean());
         }
 
+        @TruffleBoundary
         @Specialization
-        protected Object gctorture(@SuppressWarnings("unused") Object on) {
-            return RNull.instance;
+        protected byte gctorture(boolean on) {
+            GCTortureState gcTorture = RContext.getInstance().gcTorture;
+            boolean result = gcTorture.isOn();
+            if (on) {
+                gcTorture.on();
+            } else {
+                gcTorture.off();
+            }
+            return RRuntime.asLogical(result);
         }
     }
 
@@ -91,9 +115,17 @@ public final class GcFunctions {
             casts.arg("inhibit_release").allowNull().asLogicalVector().findFirst().map(toBoolean());
         }
 
+        @TruffleBoundary
         @Specialization
-        protected Object gctorture2(@SuppressWarnings("unused") Object step, @SuppressWarnings("unused") Object wait, @SuppressWarnings("unused") Object inhibitRelease) {
-            return 0;
+        protected Object gctorture2(int step, @SuppressWarnings("unused") Object wait, @SuppressWarnings("unused") Object inhibitRelease) {
+            GCTortureState gcTorture = RContext.getInstance().gcTorture;
+            int previous = gcTorture.getSteps();
+            if (step != 0) {
+                gcTorture.on(step);
+            } else {
+                gcTorture.off();
+            }
+            return previous;
         }
     }
 
