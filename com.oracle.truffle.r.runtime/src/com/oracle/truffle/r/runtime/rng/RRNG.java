@@ -250,6 +250,39 @@ public class RRNG {
         return currentGenerator().genrandDouble();
     }
 
+    private static final double LOG2 = Math.log(2);
+
+    private static double rbits(int bits) {
+        // The following code is transcribed from GNU R src/main/RNG.c lines 851-861 in
+        // function do_sample.
+
+        // generate a random non-negative integer < 2 ^ bits in 16 bit chunks
+        long v = 0;
+        for (int n = 0; n <= bits; n += 16) {
+            int v1 = (int) Math.floor(unifRand() * 65536);
+            v = 65536 * v + v1;
+        }
+        long one64 = 1L;
+        // mask out the bits in the result that are not needed
+        return v & ((one64 << bits) - 1);
+    }
+
+    public static double unifIndex(double dn) {
+        // The following code is transcribed from GNU R src/main/RNG.c lines 863-875 in
+        // function do_sample.
+
+        // rejection sampling from integers below the next larger power of two
+        if (dn <= 0) {
+            return 0.0;
+        }
+        int bits = (int) Math.ceil(Math.log(dn) / LOG2);
+        double dv;
+        do {
+            dv = rbits(bits);
+        } while (dn <= dv);
+        return dv;
+    }
+
     /**
      * Set the seed and optionally the RNG kind and norm kind.
      *

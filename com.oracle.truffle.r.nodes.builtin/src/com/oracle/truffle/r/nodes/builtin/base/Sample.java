@@ -145,7 +145,7 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
         /* avoid allocation for a single sample */
         if (sampleSizeProfile.profile(isRepeatable || size < 2)) {
             for (int i = 0; i < size; i++) {
-                result[i] = (int) (x * RRNG.unifRand() + 1);
+                result[i] = (int) (RRNG.unifIndex(x) + 1);
             }
         } else {
             int n = x;
@@ -154,7 +154,7 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
                 ix[i] = i;
             }
             for (int i = 0; i < size; i++) {
-                int j = (int) (n * RRNG.unifRand());
+                int j = (int) RRNG.unifIndex(n);
                 result[i] = ix[j] + 1;
                 ix[j] = ix[--n];
             }

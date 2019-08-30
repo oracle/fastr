@@ -49,19 +49,19 @@ public class TestBuiltin_sample extends TestBase {
 
     @Test
     public void testSample() {
-        assertEval(Ignored.NewRVersionMigration, "{  set.seed(4357, \"default\"); x <- 5 ; sample(x, 5, TRUE, NULL) ;}");
-        assertEval(Ignored.NewRVersionMigration, "{  set.seed(4357, \"default\"); x <- 5 ; sample(x, 5, FALSE, NULL) ;}");
+        assertEval("{  set.seed(4357, \"default\"); x <- 5 ; sample(x, 5, TRUE, NULL) ;}");
+        assertEval("{  set.seed(4357, \"default\"); x <- 5 ; sample(x, 5, FALSE, NULL) ;}");
 
         assertEval("{ set.seed(4357, \"default\");  x <- c(5, \"cat\"); sample(x, 2, TRUE, NULL) ;}");
         assertEval("{ set.seed(4357, \"default\"); x <- c(5, \"cat\"); sample(x, 2, FALSE, NULL) ;}");
         assertEval("{ set.seed(4357, \"default\"); x <- c(5, \"cat\"); sample(x, 3, TRUE, NULL) ;}");
 
-        assertEval(Ignored.NewRVersionMigration, "{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5; sample(x, 5, TRUE, NULL) ;}");
-        assertEval(Ignored.NewRVersionMigration, "{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5; sample(x, 5, FALSE, NULL) ;}");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5; sample(x, 5, TRUE, NULL) ;}");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5; sample(x, 5, FALSE, NULL) ;}");
 
-        assertEval(Ignored.NewRVersionMigration, "{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- c(5, \"cat\") ; sample(x, 2, TRUE, NULL) ;}");
-        assertEval(Ignored.NewRVersionMigration, "{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- c(5, \"cat\") ; sample(x, 2, FALSE, NULL) ;}");
-        assertEval(Ignored.NewRVersionMigration, "{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- c(5, \"cat\") ; sample(x, 3, TRUE, NULL) ;}");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- c(5, \"cat\") ; sample(x, 2, TRUE, NULL) ;}");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- c(5, \"cat\") ; sample(x, 2, FALSE, NULL) ;}");
+        assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- c(5, \"cat\") ; sample(x, 3, TRUE, NULL) ;}");
 
         assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; prob <- c(.1, .2, .3, .2, .1) ; sample(x, 10, TRUE, prob) ; }");
         assertEval("{ set.seed(9567, \"Marsaglia-Multicarry\"); x <- 5 ; prob <- c(.5, .5, .5, .5, .5) ; sample(x, 5, FALSE, prob) ; }");
@@ -115,14 +115,14 @@ public class TestBuiltin_sample extends TestBase {
         assertEval("set.seed(42); .Internal(sample(NULL, NULL, F, NULL))");
         assertEval("set.seed(42); .Internal(sample(NULL, NULL, F, seq(1.2,3)))");
         assertEval(Output.IgnoreErrorMessage, "set.seed(42); .Internal(sample(5,6,T,))");
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42); .Internal(sample(5,6,T,NULL))");
+        assertEval("set.seed(42); .Internal(sample(5,6,T,NULL))");
         assertEval(Output.IgnoreErrorMessage, "set.seed(42); .Internal(sample(5,6,T,seq(1.2,3)))");
         // Note: we treat Infinity in NaN check
         assertEval(Output.IgnoreErrorMessage, "set.seed(42); .Internal(sample(1/0, 1, FALSE, NULL))");
         // size
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42); sample(3, '2')");
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42); sample(3, 2.0)");
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42); sample(3, c(2,3))");
+        assertEval("set.seed(42); sample(3, '2')");
+        assertEval("set.seed(42); sample(3, 2.0)");
+        assertEval("set.seed(42); sample(3, c(2,3))");
         assertEval("set.seed(42); sample(3, TRUE)");
         assertEval("set.seed(42); sample(3, -3)");
         assertEval("set.seed(42); sample(3, NA)");
@@ -130,8 +130,8 @@ public class TestBuiltin_sample extends TestBase {
         assertEval("set.seed(42); sample(0, 0)");
         // replace
         assertEval("set.seed(42); sample(4, replace=c(T,F))");
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42); sample(4, replace=1)");
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42); sample(4, replace=1.2)");
+        assertEval("set.seed(42); sample(4, replace=1)");
+        assertEval("set.seed(42); sample(4, replace=1.2)");
         assertEval(Output.IgnoreErrorMessage, "set.seed(42); sample(4, replace='s')");
         // prob
         assertEval("set.seed(42); sample(4, prob=c(1,2))");
