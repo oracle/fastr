@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory.BaseVectorFactory;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
@@ -62,7 +63,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 
 /**
  * RPairList objects can represent both "normal" pairlists (which are rarely used from R directly)
@@ -415,10 +415,25 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
         }
     }
 
-    public void setCar(Object newCar) {
-        ensurePairList();
-        assert newCar != null;
-        car = newCar;
+    @Ignore
+    public void setCar(Object car) {
+        RPairListLibrary.getUncached().setCar(this, car);
+    }
+
+    @ExportMessage
+    static class SetCar {
+        @Specialization(guards = "!pl.hasClosure()")
+        static void withoutClosureAndOwner(RPairList pl, Object value) {
+            pl.mayBeClosure = false;
+            pl.car = value;
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "pl.hasClosure()")
+        static void withClosure(RPairList pl, Object value) {
+            pl.ensurePairList();
+            pl.car = value;
+        }
     }
 
     @Ignore
@@ -493,10 +508,25 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
         }
     }
 
-    public void setTag(Object newTag) {
-        ensurePairList();
-        assert newTag != null;
-        this.tag = newTag;
+    @Ignore
+    public void setTag(Object tag) {
+        RPairListLibrary.getUncached().setTag(this, tag);
+    }
+
+    @ExportMessage
+    static class SetTag {
+        @Specialization(guards = "!pl.hasClosure()")
+        static void withoutClosureWithoutOwner(RPairList pl, Object value) {
+            pl.mayBeClosure = false;
+            pl.tag = value;
+        }
+
+        @TruffleBoundary
+        @Specialization(guards = "pl.hasClosure()")
+        static void withClosure(RPairList pl, Object value) {
+            pl.ensurePairList();
+            pl.tag = value;
+        }
     }
 
     public void setType(SEXPTYPE type) {
@@ -1107,5 +1137,19 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
     @Override
     public VectorAccess slowPathAccess() {
         return SLOW_PATH_ACCESS;
+    }
+
+    private static final RPairList[] EMPTY_CELLS = new RPairList[0];
+
+    public static RPairList[] getCells(RPairList head) {
+        if (head == null) {
+            return EMPTY_CELLS;
+        }
+        RPairList[] cells = new RPairList[head.getLength()];
+        int cellIdx = 0;
+        for (RPairList cell : head) {
+            cells[cellIdx++] = cell;
+        }
+        return cells;
     }
 }

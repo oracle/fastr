@@ -26,8 +26,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -399,7 +399,10 @@ public final class MiscNodes {
         public static Object body(RFunction fun) {
             RootNode root = fun.getRootNode();
             if (root instanceof FunctionDefinitionNode) {
-                return RASTUtils.createLanguageElement(((FunctionDefinitionNode) root).getBody());
+                return RContext.getInstance().getRFFI().getOrCreateFunctionBody(fun, f -> {
+                    FunctionDefinitionNode funRoot = (FunctionDefinitionNode) f.getRootNode();
+                    return RASTUtils.createLanguageElement(funRoot.getBody());
+                });
             } else {
                 return RNull.instance;
             }
@@ -416,7 +419,11 @@ public final class MiscNodes {
 
         @Specialization
         protected Object formals(RFunction fun) {
-            return RASTUtils.createFormals(fun);
+            if (fun.isBuiltin()) {
+                return RNull.instance;
+            } else {
+                return RContext.getInstance().getRFFI().getOrCreateFunctionFormals(fun, RASTUtils::createFormals);
+            }
         }
 
         public static GetFunctionFormals create() {
@@ -450,7 +457,10 @@ public final class MiscNodes {
         @Specialization
         @TruffleBoundary
         protected Object body(RFunction fun, Object body) {
-            RASTUtils.modifyFunction(fun, body, RASTUtils.createFormals(fun), fun.getEnclosingFrame());
+            if (!fun.isBuiltin()) {
+                RASTUtils.modifyFunction(fun, body, RASTUtils.createFormals(fun), fun.getEnclosingFrame());
+                RContext.getInstance().getRFFI().removeFunctionBody(fun);
+            }
             return RNull.instance;
         }
 
@@ -466,7 +476,10 @@ public final class MiscNodes {
         @Specialization
         @TruffleBoundary
         protected Object formals(RFunction fun, Object formals) {
-            RASTUtils.modifyFunction(fun, GetFunctionBody.body(fun), formals, fun.getEnclosingFrame());
+            if (!fun.isBuiltin()) {
+                RASTUtils.modifyFunction(fun, GetFunctionBody.body(fun), formals, fun.getEnclosingFrame());
+                RContext.getInstance().getRFFI().removeFunctionFormals(fun);
+            }
             return RNull.instance;
         }
 

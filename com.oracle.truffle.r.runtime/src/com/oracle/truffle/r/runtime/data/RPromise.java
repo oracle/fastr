@@ -303,6 +303,16 @@ public class RPromise extends RBaseObject {
     }
 
     /**
+     * Allows in-place update of the value.
+     */
+    public final void updateValue(Object newValue) {
+        assert newValue != null;
+        assert !(newValue instanceof RPromise);
+        assert value != null;
+        this.value = newValue;
+    }
+
+    /**
      * Promises to constants can be optimized, which means that they only hold the value, but do not
      * need to keep the frame and will never need the frame.
      */

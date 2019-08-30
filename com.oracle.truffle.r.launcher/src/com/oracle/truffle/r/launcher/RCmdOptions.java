@@ -199,9 +199,9 @@ public final class RCmdOptions {
         optionValues.put(option, value);
     }
 
+    @SuppressWarnings("unchecked")
     private static void setValue(EnumMap<RCmdOption, Object> optionValues, RCmdOption option, String value) {
         if (option.type == RCmdOptionType.REPEATED_STRING) {
-            @SuppressWarnings("unchecked")
             ArrayList<String> list = (ArrayList<String>) optionValues.get(option);
             if (list == null) {
                 optionValues.put(option, list = new ArrayList<>());

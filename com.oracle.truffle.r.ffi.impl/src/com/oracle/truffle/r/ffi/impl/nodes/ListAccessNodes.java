@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CAARNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CAD4RNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADDDRNodeGen;
@@ -53,6 +54,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 
 /**
  * Nodes that implement {@code CAR}, {@code CDR}, etc. N.B. GNU R does not error check the
@@ -65,16 +67,30 @@ public final class ListAccessNodes {
     public abstract static class CARNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object car(RPairList pl,
+                        @Cached FFIMaterializeNode wrapResult,
+                        @Cached("createBinaryProfile()") ConditionProfile wrapResultProfile,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib) {
-            return plLib.car(pl);
+            Object result = plLib.car(pl);
+            Object wrapped = wrapResult.execute(result);
+            if (wrapResultProfile.profile(wrapped != result)) {
+                plLib.setCar(pl, wrapped);
+            }
+            return wrapped;
         }
 
         @Specialization
-        protected Object car(RArgsValuesAndNames args) {
+        protected Object car(RArgsValuesAndNames args,
+                        @Cached FFIMaterializeNode wrapResult,
+                        @Cached("createBinaryProfile()") ConditionProfile wrapResultProfile) {
             if (args.isEmpty()) {
                 return RNull.instance;
             }
-            return args.getArgument(0);
+            Object result = args.getArgument(0);
+            Object wrapped = wrapResult.execute(result);
+            if (wrapResultProfile.profile(wrapped != result)) {
+                args.getArguments()[0] = wrapped;
+            }
+            return wrapped;
         }
 
         @Specialization
@@ -115,7 +131,6 @@ public final class ListAccessNodes {
         @Specialization
         protected Object cdr(RArgsValuesAndNames args,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib) {
-            // TODO: this is too late - "..." should be converted to pairlist earlier
             return plLib.cdr(args.toPairlist());
         }
 

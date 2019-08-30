@@ -296,7 +296,7 @@ public final class SpecialAttributesFunctions {
 
         private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
         @Child private CastNode castValue = newCastBuilder().allowNull().boxPrimitive().asStringVector(true, true, true).buildCastNode();
-        @Child private MaterializeNode materializeNode = MaterializeNode.create(false);
+        @Child private MaterializeNode materializeNode = MaterializeNode.create();
 
         protected SetNamesAttributeNode() {
             super(RRuntime.NAMES_ATTR_KEY);

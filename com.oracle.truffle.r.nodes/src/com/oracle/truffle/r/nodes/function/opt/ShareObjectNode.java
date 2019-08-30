@@ -47,6 +47,10 @@ public abstract class ShareObjectNode extends Node {
 
     public abstract Object execute(Object obj);
 
+    public static Object executeUncached(Object obj) {
+        return ShareObjectNodeGen.getUncached().execute(obj);
+    }
+
     public static ShareObjectNode create() {
         return ShareObjectNodeGen.create();
     }

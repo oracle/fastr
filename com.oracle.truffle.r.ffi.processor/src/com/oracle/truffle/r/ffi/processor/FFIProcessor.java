@@ -203,7 +203,6 @@ public final class FFIProcessor extends AbstractProcessor {
         StringBuilder arguments = new StringBuilder();
         StringBuilder unwrapNodes = new StringBuilder();
         StringBuilder unwrappedArgs = new StringBuilder();
-        CharSequence resultOwnerRHS = null;
         boolean needsUnwrapImport = false;
 
         if (!needsCallTarget && needsFunction) {
@@ -217,7 +216,6 @@ public final class FFIProcessor extends AbstractProcessor {
 
             RFFICpointer[] pointerAnnotations = params.get(i).getAnnotationsByType(RFFICpointer.class);
             RFFICstring[] stringAnnotations = params.get(i).getAnnotationsByType(RFFICstring.class);
-            RFFIResultOwner[] resultOwnerAnnotations = params.get(i).getAnnotationsByType(RFFIResultOwner.class);
 
             String paramName = params.get(i).getSimpleName().toString();
             String paramTypeName = getTypeName(paramType);
@@ -241,10 +239,6 @@ public final class FFIProcessor extends AbstractProcessor {
                 unwrappedArgs.append(')');
             }
             unwrappedArgs.append(";\n");
-
-            if (resultOwnerAnnotations.length > 0) {
-                resultOwnerRHS = new StringBuilder(paramName).append("Unwrapped");
-            }
         }
 
         TypeKind returnKind = m.getReturnType().getKind();
@@ -365,10 +359,6 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("        UpCallsRFFI impl = upCallProfile.profile(upCallsImpl);\n");
         w.append("        rffiCtx.beforeUpcall(ctx, " + canRunGc + ", impl.getRFFIType());\n");
         w.append(unwrappedArgs);
-        if (resultOwnerRHS != null) {
-            StringBuilder resultOwner = new StringBuilder("        Object resultOwner = ").append(resultOwnerRHS).append(";\n");
-            w.append(resultOwner);
-        }
         w.append("        try {\n");
 
         w.append("            ");
@@ -403,15 +393,6 @@ public final class FFIProcessor extends AbstractProcessor {
                 w.append(");\n");
             } else {
                 w.append(";\n");
-            }
-        }
-        if (resultOwnerRHS != null) {
-            w.append("            rffiCtx.protectChild(resultOwner, resultRObj, impl.getRFFIType());\n");
-        } else {
-            if (returnKind != TypeKind.VOID && needsReturnWrap) {
-                w.append("            if (resultRObj0 != resultRObj) {\n");
-                w.append("                rffiCtx.protectChild(resultRObj0, resultRObj, impl.getRFFIType());\n");
-                w.append("            }\n");
             }
         }
         w.append("        } catch (ControlFlowException ex) {\n");
