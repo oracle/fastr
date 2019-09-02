@@ -39,10 +39,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
-import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
@@ -89,15 +88,14 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     @TruffleBoundary
-    protected DotSymbol setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
+    protected void setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
         setSymbolCallTarget.compareAndSet(null, Truffle.getRuntime().createCallTarget(new SetSymbolRootNode()));
-        return (DotSymbol) setSymbolCallTarget.get().call(dllInfo, nstOrd, routines, index);
+        setSymbolCallTarget.get().call(dllInfo, nstOrd, routines, index);
     }
 
     private class SetSymbolRootNode extends RootNode {
         @CompilationFinal TruffleObject setSymFun;
         @Child private InteropLibrary interop;
-        @Child private FFIUnwrapNode unwrapNode = FFIUnwrapNode.create();
 
         SetSymbolRootNode() {
             super(null);
@@ -108,8 +106,8 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         @Override
         public Object execute(VirtualFrame frame) {
             try {
-                Object result = interop.execute(setSymFun, frame.getArguments());
-                return unwrapNode.execute(result);
+                interop.execute(setSymFun, frame.getArguments());
+                return RNull.instance;
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             }

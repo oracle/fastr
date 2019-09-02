@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
-import com.oracle.truffle.r.ffi.processor.RFFIResultOwner;
 
 public interface DLLUpCallsRFFI {
 
@@ -41,15 +39,21 @@ public interface DLLUpCallsRFFI {
     int registerRoutines(Object dllInfo, int nstOrd, int num, @RFFICpointer Object routines);
 
     /**
-     * Internal upcall used by {@code Rdynload_setSymbol}. The {@code fun} value must be converted
-     * to a {@link TruffleObject} representing the symbol}.
+     * Internal upcall used by {@code Rdynload_setSymbol}. The argument values are converted to
+     * {@link com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol} and it is added to given
+     * {@link com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo} under given index.
+     * {@code Rdynload_setSymbol} is native function down-called from
+     * {@link #registerRoutines(Object, int, int, Object)} for each symbol.
      *
      * @param dllInfo library the symbol is defined in
+     * @param nstOrd type of the symbol
+     * @param index index into the symbols table in
+     *            {@link com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo}.
      * @param name name of function
      * @param fun a representation of the the C address of the function (in the table)
      * @param numArgs the number of arguments the function takes.
      */
-    Object setDotSymbolValues(Object dllInfo, @RFFICstring String name, @RFFIResultOwner @RFFICpointer Object fun, int numArgs);
+    void setDotSymbolValues(Object dllInfo, int nstOrd, int index, @RFFICstring String name, @RFFICpointer Object fun, int numArgs);
 
     /**
      * Directly implements {@code R_useDynamicSymbols}.

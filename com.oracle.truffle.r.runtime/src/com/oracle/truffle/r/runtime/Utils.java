@@ -611,11 +611,16 @@ public final class Utils {
                 // this is extra robustness. In ideal world we should not encounter invalid ones
                 return null;
             }
+            RPairList rl = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
+            if (rl == null) {
+                // this can happen if the call represents promise frame and its logical parent is
+                // the top level execution context
+                return null;
+            }
             if (skip > 0) {
                 skip--;
                 return null;
             }
-            RPairList rl = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
             SourceSection section = rl.getSourceSection();
             // fabricate a srcref attribute from ss
             Source source = section != null ? section.getSource() : null;

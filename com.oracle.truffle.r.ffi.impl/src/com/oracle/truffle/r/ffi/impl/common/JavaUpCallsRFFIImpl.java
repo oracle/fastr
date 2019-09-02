@@ -1568,7 +1568,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             for (int i = 0; i < x; i++) {
                 context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
             }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException e) {
             debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
         }
     }
@@ -1625,11 +1625,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public int registerRoutines(Object dllInfoObj, int nstOrd, int num, Object routines) {
         DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
         DotSymbol[] array = new DotSymbol[num];
-        for (int i = 0; i < num; i++) {
-            Object sym = setSymbol(dllInfo, nstOrd, routines, i);
-            array[i] = (DotSymbol) sym;
-        }
         dllInfo.setNativeSymbols(nstOrd, array);
+        for (int i = 0; i < num; i++) {
+            // Calls C function to extract the DotSymbol data from the native array, which contains
+            // C structures, the C function up-calls to Java function setDotSymbolValues, which
+            // actually creates the DotSymbol Java object and adds it to the symbol to the DllInfo
+            setSymbol(dllInfo, nstOrd, routines, i);
+        }
         return 0;
     }
 
@@ -1656,10 +1658,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public DotSymbol setDotSymbolValues(Object dllInfoObj, String name, Object fun, int numArgs) {
-        @SuppressWarnings("unused")
+    public void setDotSymbolValues(Object dllInfoObj, int nstOrd, int index, String name, Object fun, int numArgs) {
         DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
-        return new DotSymbol(name, new SymbolHandle(fun), numArgs);
+        dllInfo.setNativeSymbol(nstOrd, index, new DotSymbol(name, new SymbolHandle(fun), numArgs));
     }
 
     @Override
@@ -1667,7 +1668,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return DLL.getEmbeddingDLLInfo();
     }
 
-    protected abstract Object setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index);
+    protected abstract void setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index);
 
     @Override
     public double Rf_dunif(double a, double b, double c, int d) {
