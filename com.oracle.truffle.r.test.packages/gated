@@ -1,3 +1,4 @@
+miniUI
 foreign
 mime
 rjson
@@ -6,6 +7,9 @@ OptimalCutpoints
 rjson
 RSclient
 rstudioapi
+naivebayes
+glmnet
+nnet
 compare
 shinythemes
 ROCR
