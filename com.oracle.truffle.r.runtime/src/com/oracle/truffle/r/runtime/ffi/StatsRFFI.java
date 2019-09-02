@@ -67,8 +67,8 @@ public final class StatsRFFI {
             super(factory.createDownCallNode(NativeFunction.lminfl));
         }
 
-        public void execute(double[] x, int ldx, int n, int k, int docoef, double[] qraux, double[] resid, double[] hat, double[] coef, double[] sigma, double tol) {
-            call(x, ldx, n, k, docoef, qraux, resid, hat, coef, sigma, tol);
+        public void execute(double[] x, int ldx, int n, int k, int q, int docoef, double[] qraux, double[] resid, double[] hat, double[] coef, double[] sigma, double tol) {
+            call(x, ldx, n, k, q, docoef, qraux, resid, hat, coef, sigma, tol);
         }
 
         public static LminflNode create() {
