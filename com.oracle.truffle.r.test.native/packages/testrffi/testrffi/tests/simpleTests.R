@@ -388,3 +388,8 @@ print(dim(v))
 # Complex vectors
 x <- c(4+3i,2+1i)
 rffi.test_sort_complex(x)
+
+# allocate large vector: checks integer overflow bug in allocation via Unsafe
+# we need to force the materialization to native memory via rffi.get_dataptr,
+# which returns NULL in case of an error
+stopifnot(!is.null(rffi.get_dataptr(api.Rf_allocVector(14, 268435457))))

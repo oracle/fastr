@@ -1,15 +1,25 @@
 # 19.3.0
 
+New features:
+
+* `gc` attempts to invoke Java GC when FastR is run with `--R.EnableExplicitGC=true`
+  * this is intended only for testing purposes and it is not recommended to run GC explicitly in FastR.
+  * `gc` is not invoking Java GC by default because GNU-R GC and Java GC are fundamentally
+    different and this may lead to unintended behavior.
+
+Added missing R builtins and C APIs
+
+* `gctorture` and `gctorture2` built-ins for testing purposes
+* `grepRaw` (only for `fixed=T`)
+
 Bug fixes:
 
 * `tibble` does not print properly when using `knitr` #68
 * `type.convert` uses locale #88
 * promise with the empty value is handled correctly in 'missing' #87
 * `scan` handles non-default value of `nmax` argument
-
-Added missing R builtins and C API:
-
-* `grepRaw` (only for `fixed=T`)
+* `Rf_allocVector` fails gracefully when FastR runs out of memory
+* bug in `DATAPTR` for vectors of size in bytes larger than 2^31
 
 # 19.2.0
 

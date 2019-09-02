@@ -301,3 +301,5 @@ rffi.test_setAttribDimDoubleVec <- function(vec, dimDoubleVec) {
 rffi.test_sort_complex <- function(complexVec) {
     .Call('test_sort_complex', complexVec)
 }
+
+rffi.get_dataptr <- function(x) .Call('get_dataptr', x)

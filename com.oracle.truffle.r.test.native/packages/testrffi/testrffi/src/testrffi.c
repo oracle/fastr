@@ -954,3 +954,20 @@ SEXP test_sort_complex(SEXP complexVec) {
     R_csort(cpl, LENGTH(complexVec));
     return complexVec;
 }
+
+SEXP get_dataptr(SEXP vec) {
+    switch (TYPEOF(vec)) {
+        case INTSXP:
+            return R_MakeExternalPtr(INTEGER(vec), R_NilValue, R_NilValue);
+        case REALSXP:
+            return R_MakeExternalPtr(REAL(vec), R_NilValue, R_NilValue);
+        case RAWSXP:
+            return R_MakeExternalPtr(RAW(vec), R_NilValue, R_NilValue);
+        case LGLSXP:
+            return R_MakeExternalPtr(LOGICAL(vec), R_NilValue, R_NilValue);
+        default:
+            printf("Error: unexpected type");
+    }
+    return R_NilValue;
+}
+

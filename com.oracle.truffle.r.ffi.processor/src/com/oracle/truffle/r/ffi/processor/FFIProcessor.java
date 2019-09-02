@@ -268,9 +268,9 @@ public final class FFIProcessor extends AbstractProcessor {
         if (!returnKind.isPrimitive() && returnKind != TypeKind.VOID) {
             w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
         }
+        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallBase;");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFILog;\n");
-        w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
         w.append("import com.oracle.truffle.api.interop.InteropLibrary;\n");
         w.append("import com.oracle.truffle.api.library.ExportLibrary;\n");
         w.append("import com.oracle.truffle.api.library.ExportMessage;\n");
@@ -302,7 +302,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
         w.append("// Checkstyle: stop method name check\n");
         w.append("@ExportLibrary(InteropLibrary.class)\n");
-        w.append("final class ").append(callName).append(" implements RTruffleObject {\n");
+        w.append("final class ").append(callName).append(" extends UpCallBase {\n");
         w.append('\n');
         w.append("    protected final UpCallsRFFI upCallsImpl;\n");
         w.append("    ").append(callName).append("(UpCallsRFFI upCallsImpl) {\n");
@@ -411,6 +411,7 @@ public final class FFIProcessor extends AbstractProcessor {
         }
         w.append("        } catch (Throwable ex) {\n");
         w.append("            CompilerDirectives.transferToInterpreter();\n");
+        w.append("            assert reportException(ex);\n");
         w.append("            RFFILog.logException(ex);\n");
         w.append("            handleExceptionNode.execute(ex);\n");
         if (returnKind.isPrimitive()) {
