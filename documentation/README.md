@@ -33,7 +33,7 @@ FastR employs many different solution strategies in order to overcome these prob
 
 FastR is available in two forms:
 
-1. As a [pre-built binary](http://www.graalvm.org/downloads/). Note that this also includes (Truffle) implementations of JavaScript and optionally Ruby and Python. The pre-built binaries are available for Linux and Mac OS X. The binary release is updated monthly.
+1. As a pre-built binary. Note that this also includes (Truffle) implementations of JavaScript and optionally Ruby and Python. The pre-built binaries are available for Linux and Mac OS X. The binary release is updated monthly. To install and setup GraalVM and FastR follow the Getting Started instructions in FastR [README](../../README.md#getting_started).
 2. As a source release on [GitHub](https://github.com/graalvm/fastr) for developers wishing to contribute to the project and/or study the implementation. The source release is updated regularly and always contains the latest tested version.
     * Note: there is a comunity provided and maintained [Dockerfile](https://github.com/nuest/fastr-docker) for FastR.
 

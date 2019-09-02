@@ -5,13 +5,14 @@ This tutorial shows how to take advantage of FastR`s Java interoperability featu
 All following examples are meant to be executed in the R Console, no additional Java dependencies are necessary.
 
 # Setup
-* download and unzip GraalVM/FastR. The bin directory contains the R and Rscript commands.
-* or build from the [FastR Github repository](https://github.com/graalvm/fastr)
+To install and setup GraalVM and FastR follow the Getting Started instructions in FastR [README](../../../README.md#getting_started).
+
+Note that:
 * in order to run FastR with Java interoperability features the R and Rscript commands have to be executed with the --jvm switch.
 ```
 $bin/R --jvm
 ```
-* to access third party java libraries, they have to be placed on FastR class path
+* to access third party java libraries, they have to be placed on FastR class path.
 ```
 > java.addToClasspath("/foo/bar.jar")
 > java.addToClasspath(c("/foo/bar.jar", "/foo/bar2.jar"))
