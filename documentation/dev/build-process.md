@@ -7,6 +7,7 @@ then delving into individual scripts that patch and build parts of GNUR. Last se
 
 ## `mx build`
 
+ * As of August 2018 requires LLVM <= 8
  * locates the module definition in `$(FASTR_R_HOME)/mx.fastr`
  * possibly loads the `env` file from `mx.fastr` (there is none, by default)
  * sets up binary suites, if any
