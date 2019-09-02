@@ -34,6 +34,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.ToNativeNode;
 
 /**
  * <p>
@@ -41,8 +42,9 @@ import com.oracle.truffle.r.runtime.RType;
  * </p>
  * <p>
  * Meant to be used only in {@link com.oracle.truffle.r.runtime.ffi.FFIWrapNode} and
- * {@link com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode} together with {@link #isPointer() },
- * {@link #asPointer()} and {@link #toNative()}. Remaining interop messages are delegated to
+ * {@link com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode} together with
+ * {@link RBaseObject#isPointer() }, {@link RBaseObject#asPointer()} and
+ * {@link RBaseObject#toNative(ToNativeNode)}. Remaining interop messages are delegated to
  * {@link InteropLibrary} for the case that some some FastR specific native code should try doing
  * interop calls.
  * </p>

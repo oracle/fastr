@@ -155,7 +155,8 @@ public final class VectorRFFIWrapper implements TruffleObject {
         VectorRFFIWrapperNativePointer(TruffleObject vector) {
             this.vector = vector;
             assert vector instanceof RBaseObject;
-            NativeDataAccess.asPointer(vector); // initialize the native mirror in the vector
+            // initialize the native mirror in the vector
+            NativeDataAccess.toNative((RBaseObject) vector);
         }
 
         abstract static class InteropRootNode extends RootNode {

@@ -67,7 +67,6 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -1449,7 +1448,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     private static VectorRFFIWrapper wrapString(String s) {
         CharSXPWrapper v = CharSXPWrapper.create(s);
-        NativeDataAccess.asPointer(v);
         return VectorRFFIWrapper.get(v);
     }
 

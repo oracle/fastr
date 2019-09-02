@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.ToNativeNode;
 
 /**
  * R values that are publicly flowing through the interpreter. Be aware that also the primitive
@@ -58,7 +60,7 @@ public abstract class RBaseObject implements RTruffleObject {
     @SuppressWarnings("static-method")
     @ExportMessage
     public final boolean isPointer() {
-        return true;
+        return NativeDataAccess.isPointer(this);
     }
 
     @ExportMessage
@@ -67,8 +69,8 @@ public abstract class RBaseObject implements RTruffleObject {
     }
 
     @ExportMessage
-    public final void toNative() {
-        NativeDataAccess.asPointer(this);
+    public final void toNative(@Cached() ToNativeNode toNative) {
+        toNative.execute(this);
     }
 
     public abstract RType getRType();

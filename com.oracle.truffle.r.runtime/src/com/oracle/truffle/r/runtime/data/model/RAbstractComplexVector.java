@@ -33,6 +33,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -52,11 +53,15 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    public final boolean isNull() {
+    public final boolean isNull(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNA) {
         if (!isScalar()) {
             return false;
         }
-        return RRuntime.isNA(getDataAt(0));
+        if (isNA.profile(RRuntime.isNA(getDataAt(0)))) {
+            return RContext.getInstance().stateRNullMR.isNull();
+        } else {
+            return false;
+        }
     }
 
     @ExportMessage
@@ -86,14 +91,15 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
     Object readMember(String member,
                     @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers,
                     @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
-                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNullIdentifier) throws UnknownIdentifierException, UnsupportedMessageException {
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNullIdentifier,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNA) throws UnknownIdentifierException, UnsupportedMessageException {
         if (noMembers.profile(!hasMembers())) {
             throw UnsupportedMessageException.create();
         }
         if (unknownIdentifier.profile(!isMemberReadable(member, noMembers))) {
             throw UnknownIdentifierException.create(member);
         }
-        if (isNullIdentifier.profile(isNull())) {
+        if (isNullIdentifier.profile(isNull(isNA))) {
             return new RInteropComplexNA(getDataAt(0));
         }
         if (MEMBER_RE.equals(member)) {

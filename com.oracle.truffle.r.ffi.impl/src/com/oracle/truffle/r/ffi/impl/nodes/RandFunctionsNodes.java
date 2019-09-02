@@ -179,7 +179,16 @@ public final class RandFunctionsNodes {
             // prob is double* and rN is int*
             // Return a vector data in rN rN[1:K] {K := length(prob)}
             RAbstractDoubleVector probVector;
-            if (probInterop.isPointer(prob)) {
+            if (probInterop.hasArrayElements(prob)) {
+                if (probConvertForeign == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    probConvertForeign = insert(ConvertForeignObjectNode.create());
+                }
+                probVector = (RAbstractDoubleVector) probConvertForeign.convert((TruffleObject) prob);
+            } else {
+                if (!probInterop.isPointer(prob)) {
+                    probInterop.toNative(prob);
+                }
                 long addr;
                 try {
                     addr = probInterop.asPointer(prob);
@@ -187,16 +196,19 @@ public final class RandFunctionsNodes {
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
-            } else {
-                if (probConvertForeign == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    probConvertForeign = insert(ConvertForeignObjectNode.create());
-                }
-                probVector = (RAbstractDoubleVector) probConvertForeign.convert((TruffleObject) prob);
             }
 
             RAbstractIntVector rNVector;
-            if (rNInterop.isPointer(rN)) {
+            if (rNInterop.hasArrayElements(rN)) {
+                if (rNConvertForeign == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    rNConvertForeign = insert(ConvertForeignObjectNode.create());
+                }
+                rNVector = (RAbstractIntVector) rNConvertForeign.convert((TruffleObject) rN);
+            } else {
+                if (!rNInterop.isPointer(rN)) {
+                    rNInterop.toNative(rN);
+                }
                 long addr;
                 try {
                     addr = rNInterop.asPointer(rN);
@@ -204,12 +216,6 @@ public final class RandFunctionsNodes {
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
-            } else {
-                if (rNConvertForeign == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    rNConvertForeign = insert(ConvertForeignObjectNode.create());
-                }
-                rNVector = (RAbstractIntVector) rNConvertForeign.convert((TruffleObject) rN);
             }
 
             doRMultinomNode.execute(n, probVector, k, rNVector);

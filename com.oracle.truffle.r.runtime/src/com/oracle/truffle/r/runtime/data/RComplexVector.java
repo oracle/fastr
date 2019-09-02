@@ -60,7 +60,7 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
 
     static RComplexVector fromNative(long address, int length) {
         RComplexVector result = new RComplexVector();
-        NativeDataAccess.asPointer(result);
+        NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
         return result;
     }
