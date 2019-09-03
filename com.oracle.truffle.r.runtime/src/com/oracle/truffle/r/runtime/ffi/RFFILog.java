@@ -55,10 +55,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 public class RFFILog {
 
     /**
-     * WARNING: stdout is problematic for embedded mode when using this logger. Always specify a log
-     * file e.g. mx r --log.R.com.oracle.truffle.r.traceNativeCalls.level=FINE
-     * --log.file=&lt;yourfile&gt;
-     * 
+     * @see RLogger#LOGGER_RFFI
      */
     private static final TruffleLogger LOGGER = RLogger.getLogger(LOGGER_RFFI);
 
