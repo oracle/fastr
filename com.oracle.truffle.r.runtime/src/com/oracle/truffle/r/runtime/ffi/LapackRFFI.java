@@ -43,12 +43,12 @@ public final class LapackRFFI {
         }
 
         private IlaverNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.ilaver));
+            super(factory.createDownCallNode());
         }
 
         public void execute(int[] version) {
             // Note: primitive array is not treated as varagrs
-            call(version);
+            call(NativeFunction.ilaver, version);
         }
     }
 
@@ -59,11 +59,11 @@ public final class LapackRFFI {
         }
 
         private DgeevNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dgeev));
+            super(factory.createDownCallNode());
         }
 
         public int execute(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork) {
-            return (int) call(jobVL, jobVR, n, a, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork);
+            return (int) call(NativeFunction.dgeev, jobVL, jobVR, n, a, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork);
         }
     }
 
@@ -74,11 +74,11 @@ public final class LapackRFFI {
         }
 
         private Dgeqp3Node(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dgeqp3));
+            super(factory.createDownCallNode());
         }
 
         public int execute(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork) {
-            return (int) call(m, n, a, lda, jpvt, tau, work, lwork);
+            return (int) call(NativeFunction.dgeqp3, m, n, a, lda, jpvt, tau, work, lwork);
         }
     }
 
@@ -89,11 +89,11 @@ public final class LapackRFFI {
         }
 
         private DormqrNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dormq));
+            super(factory.createDownCallNode());
         }
 
         public int execute(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork) {
-            return (int) call(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork);
+            return (int) call(NativeFunction.dormq, side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork);
         }
     }
 
@@ -104,11 +104,11 @@ public final class LapackRFFI {
         }
 
         private DtrtrsNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dtrtrs));
+            super(factory.createDownCallNode());
         }
 
         public int execute(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
-            return (int) call(uplo, trans, diag, n, nrhs, a, lda, b, ldb);
+            return (int) call(NativeFunction.dtrtrs, uplo, trans, diag, n, nrhs, a, lda, b, ldb);
         }
     }
 
@@ -119,11 +119,11 @@ public final class LapackRFFI {
         }
 
         private DgetrfNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dgetrf));
+            super(factory.createDownCallNode());
         }
 
         public int execute(int m, int n, double[] a, int lda, int[] ipiv) {
-            return (int) call(m, n, a, lda, ipiv);
+            return (int) call(NativeFunction.dgetrf, m, n, a, lda, ipiv);
         }
     }
 
@@ -134,11 +134,11 @@ public final class LapackRFFI {
         }
 
         private DpotrfNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dpotrf));
+            super(factory.createDownCallNode());
         }
 
         public int execute(char uplo, int n, double[] a, int lda) {
-            return (int) call(uplo, n, a, lda);
+            return (int) call(NativeFunction.dpotrf, uplo, n, a, lda);
         }
     }
 
@@ -149,11 +149,11 @@ public final class LapackRFFI {
         }
 
         private DpotriNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dpotri));
+            super(factory.createDownCallNode());
         }
 
         public int execute(char uplo, int n, double[] a, int lda) {
-            return (int) call(uplo, n, a, lda);
+            return (int) call(NativeFunction.dpotri, uplo, n, a, lda);
         }
     }
 
@@ -164,11 +164,11 @@ public final class LapackRFFI {
         }
 
         private DpstrfNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dpstrf));
+            super(factory.createDownCallNode());
         }
 
         public int execute(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work) {
-            return (int) call(uplo, n, a, lda, piv, rank, tol, work);
+            return (int) call(NativeFunction.dpstrf, uplo, n, a, lda, piv, rank, tol, work);
         }
     }
 
@@ -179,11 +179,11 @@ public final class LapackRFFI {
         }
 
         private DgesvNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dgesv));
+            super(factory.createDownCallNode());
         }
 
         public int execute(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb) {
-            return (int) call(n, nrhs, a, lda, ipiv, b, ldb);
+            return (int) call(NativeFunction.dgesv, n, nrhs, a, lda, ipiv, b, ldb);
         }
     }
 
@@ -194,11 +194,11 @@ public final class LapackRFFI {
         }
 
         private DgesddNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dgesdd));
+            super(factory.createDownCallNode());
         }
 
         public int execute(char jobz, int m, int n, double[] a, int lda, double[] s, double[] u, int ldu, double[] vt, int ldtv, double[] work, int lwork, int[] iwork) {
-            return (int) call(jobz, m, n, a, lda, s, u, ldu, vt, ldtv, work, lwork, iwork);
+            return (int) call(NativeFunction.dgesdd, jobz, m, n, a, lda, s, u, ldu, vt, ldtv, work, lwork, iwork);
         }
     }
 
@@ -209,11 +209,11 @@ public final class LapackRFFI {
         }
 
         private DlangeNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dlange));
+            super(factory.createDownCallNode());
         }
 
         public double execute(char norm, int m, int n, double[] a, int lda, double[] work) {
-            return (double) call(norm, m, n, a, lda, work);
+            return (double) call(NativeFunction.dlange, norm, m, n, a, lda, work);
         }
     }
 
@@ -224,11 +224,11 @@ public final class LapackRFFI {
         }
 
         private DgeconNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dgecon));
+            super(factory.createDownCallNode());
         }
 
         public int execute(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork) {
-            return (int) call(norm, n, a, lda, anorm, rcond, work, iwork);
+            return (int) call(NativeFunction.dgecon, norm, n, a, lda, anorm, rcond, work, iwork);
         }
     }
 
@@ -239,12 +239,12 @@ public final class LapackRFFI {
         }
 
         private DsyevrNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dsyevr));
+            super(factory.createDownCallNode());
         }
 
         public int execute(char jobz, char range, char uplo, int n, double[] a, int lda, double vl, double vu, int il, int iu, double abstol, int[] m, double[] w, double[] z, int ldz, int[] isuppz,
                         double[] work, int lwork, int[] iwork, int liwork) {
-            return (int) call(jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, iwork, liwork);
+            return (int) call(NativeFunction.dsyevr, jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, iwork, liwork);
         }
     }
 
@@ -255,11 +255,11 @@ public final class LapackRFFI {
         }
 
         private ZunmqrNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.zunmqr));
+            super(factory.createDownCallNode());
         }
 
         public int execute(String side, String trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork) {
-            return (int) call(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork);
+            return (int) call(NativeFunction.zunmqr, side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork);
         }
 
     }
@@ -271,11 +271,11 @@ public final class LapackRFFI {
         }
 
         private ZtrtrsNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.ztrtrs));
+            super(factory.createDownCallNode());
         }
 
         public int execute(String uplo, String trans, String diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
-            return (int) call(uplo, trans, diag, n, nrhs, a, lda, b, ldb);
+            return (int) call(NativeFunction.ztrtrs, uplo, trans, diag, n, nrhs, a, lda, b, ldb);
         }
     }
 
@@ -286,11 +286,11 @@ public final class LapackRFFI {
         }
 
         private DtrsmNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dtrsm));
+            super(factory.createDownCallNode());
         }
 
         public void execute(String side, String uplo, String transa, String diag, int m, int n, double alpha, double[] a, int lda, double[] b, int ldb) {
-            call(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
+            call(NativeFunction.dtrsm, side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
         }
 
     }

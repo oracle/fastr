@@ -23,6 +23,12 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
@@ -32,10 +38,35 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import java.util.Arrays;
 
+@ExportLibrary(InteropLibrary.class)
 public abstract class RAbstractStringVector extends RAbstractAtomicVector {
 
     public RAbstractStringVector(boolean complete) {
         super(complete);
+    }
+
+    @ExportMessage
+    final boolean isNull() {
+        if (!isScalar()) {
+            return false;
+        }
+        return RRuntime.isNA(getDataAt(0));
+    }
+
+    @ExportMessage
+    final boolean isString() {
+        if (!isScalar()) {
+            return false;
+        }
+        return !RRuntime.isNA(getDataAt(0));
+    }
+
+    @ExportMessage
+    final String asString(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isString) throws UnsupportedMessageException {
+        if (!isString.profile(isString())) {
+            throw UnsupportedMessageException.create();
+        }
+        return getDataAt(0);
     }
 
     @Override

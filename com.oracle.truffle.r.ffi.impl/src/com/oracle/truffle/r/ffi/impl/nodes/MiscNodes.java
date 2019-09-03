@@ -26,6 +26,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -38,6 +40,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RHasSlotNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RfPrintValueNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SET_TRUELENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionBodyNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionEnvironmentNodeGen;
@@ -49,7 +52,6 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.HasSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
-import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.SetNamesAttributeNodeGen;
@@ -75,7 +77,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -87,6 +88,8 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 public final class MiscNodes {
 
     @TypeSystemReference(RTypes.class)
+    @ReportPolymorphism
+    @GenerateUncached
     public abstract static class LENGTHNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -148,6 +151,7 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class TRUELENGTHNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -207,6 +211,7 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class SET_TRUELENGTHNode extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -287,21 +292,18 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class RDoSlotAssignNode extends FFIUpCallNode.Arg3 {
 
-        @Child private UpdateSlotNode updateSlotNode;
-
-        RDoSlotAssignNode() {
-            updateSlotNode = UpdateSlotNodeGen.create();
-        }
-
         @Specialization
-        Object doSlotAssign(Object o, String name, Object value) {
+        Object doSlotAssign(Object o, String name, Object value,
+                        @Cached() UpdateSlotNode updateSlotNode) {
             return updateSlotNode.executeUpdate(o, name, value);
         }
 
         @Specialization
-        Object doSlotAssign(Object o, RSymbol name, Object value) {
+        Object doSlotAssign(Object o, RSymbol name, Object value,
+                        @Cached() UpdateSlotNode updateSlotNode) {
             return updateSlotNode.executeUpdate(o, name.getName(), value);
         }
 
@@ -312,6 +314,10 @@ public final class MiscNodes {
 
         public static RDoSlotAssignNode create() {
             return RDoSlotAssignNodeGen.create();
+        }
+
+        public static RDoSlotAssignNode getUncached() {
+            return RDoSlotAssignNodeGen.getUncached();
         }
     }
 
@@ -385,6 +391,7 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class GetFunctionBody extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -404,6 +411,7 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class GetFunctionFormals extends FFIUpCallNode.Arg1 {
 
         @Specialization
@@ -417,20 +425,26 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class GetFunctionEnvironment extends FFIUpCallNode.Arg1 {
 
         @Specialization
         protected Object environment(RFunction fun,
                         @Cached("create()") GetFunctionEnvironmentNode getEnvNode) {
-            return getEnvNode.getEnvironment(fun);
+            return getEnvNode.execute(fun);
         }
 
         public static GetFunctionEnvironment create() {
             return GetFunctionEnvironmentNodeGen.create();
         }
+
+        public static GetFunctionEnvironment getUncached() {
+            return GetFunctionEnvironmentNodeGen.getUncached();
+        }
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class SetFunctionBody extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -446,6 +460,7 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class SetFunctionFormals extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -461,6 +476,7 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    @GenerateUncached
     public abstract static class SetFunctionEnvironment extends FFIUpCallNode.Arg2 {
 
         @Specialization
@@ -496,23 +512,32 @@ public final class MiscNodes {
         }
     }
 
-    public static final class RfPrintValueNode extends FFIUpCallNode.Arg1 {
-        @Override
-        public Object executeObject(Object value) {
+    @GenerateUncached
+    public abstract static class RfPrintValueNode extends FFIUpCallNode.Arg1 {
+        @Specialization
+        public Object exec(Object value) {
             RContext.getEngine().printResult(RContext.getInstance(), value);
             return RNull.instance;
         }
+
+        public static RfPrintValueNode create() {
+            return RfPrintValueNodeGen.create();
+        }
+
+        public static RfPrintValueNode getUncached() {
+            return RfPrintValueNodeGen.getUncached();
+        }
     }
 
+    @GenerateUncached
     public abstract static class SetObjectNode extends FFIUpCallNode.Arg2 {
         public static SetObjectNode create() {
             return SetObjectNodeGen.create();
         }
 
-        @Child private GetClassAttributeNode getClassAttributeNode;
-
         @Specialization
-        protected Object doIt(RTypedValue target, int flag) {
+        protected Object doIt(RTypedValue target, int flag,
+                        @Cached() GetClassAttributeNode getClassAttributeNode) {
             // Note: "OBJECT" is an internal flag in SEXP that internal dispatching (in FastR
             // INTERNAL_DISPATCH builtins) is checking first before even checking the attributes
             // collection for presence of the "class" attribute. FastR always checks attributes and
@@ -521,8 +546,8 @@ public final class MiscNodes {
             // internal dispatch builtins like 'as.character' will not dispatch to the S3 method
             // even thought the object has S3 class and FastR would dispatch.
             // See simpleTests.R in testrffi package for example.
-            if (flag == 0 && RSharingAttributeStorage.isShareable(target)) {
-                RStringVector clazz = getClass((RSharingAttributeStorage) target);
+            if (flag == 0 && target instanceof RAttributable) {
+                RStringVector clazz = getClassAttributeNode.getClassAttr((RAttributable) target);
                 if (clazz != null && clazz.getLength() != 0) {
                     CompilerDirectives.transferToInterpreter();
                     throw RError.error(RError.NO_CALLER, Message.GENERIC, "SET_OBJECT(SEXP, 0) not implemented for SEXP with 'class' attribute");
@@ -536,12 +561,5 @@ public final class MiscNodes {
             throw unsupportedTypes("SET_OBJECT", value, flag);
         }
 
-        private RStringVector getClass(RSharingAttributeStorage value) {
-            if (getClassAttributeNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getClassAttributeNode = insert(GetClassAttributeNode.create());
-            }
-            return getClassAttributeNode.getClassAttr(value);
-        }
     }
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2000--2014, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Df implements Function3_1 {
+
+    public static Df create() {
+        return new Df();
+    }
+
+    public static Df getUncached() {
+        return new Df();
+    }
+
     @Override
     public double evaluate(double x, double m, double n, boolean giveLog) {
         double p;

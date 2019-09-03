@@ -2,7 +2,7 @@
  * Copyright (C) 2005-6 Morten Welinder <terra@gnome.org>
  * Copyright (C) 2005-10 The R Foundation
  * Copyright (C) 2006-2015 The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class PGamma implements Function3_2 {
+
+    public static PGamma create() {
+        return new PGamma();
+    }
+
+    public static PGamma getUncached() {
+        return new PGamma();
+    }
+
     @Override
     public double evaluate(double xIn, double alph, double scale, boolean lowerTail, boolean logP) {
         if (Double.isNaN(xIn) || Double.isNaN(alph) || Double.isNaN(scale)) {

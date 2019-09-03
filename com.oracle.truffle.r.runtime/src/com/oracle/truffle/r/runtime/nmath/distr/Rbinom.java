@@ -2,7 +2,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2009, The R Core Team
  * Copyright (c) 2003--2009, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,9 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.nmath.Arithmetic;
 import com.oracle.truffle.r.runtime.nmath.RMath;
@@ -27,16 +30,23 @@ import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 
 // transcribed from rbinom.c
+@GenerateUncached
+public abstract class Rbinom extends RandFunction2_Double {
 
-public final class Rbinom extends RandFunction2_Double {
+    public static Rbinom create() {
+        return RbinomNodeGen.create();
+    }
 
-    private final Qbinom qbinom = new Qbinom();
+    public static Rbinom getUncached() {
+        return RbinomNodeGen.getUncached();
+    }
 
     // TODO: some of the variables below are static in GnuR, because they cache intermediate results
     // that depend on paremeters that often do not change between calls.
 
-    @Override
-    public double execute(double nin, double pp, RandomNumberProvider rand) {
+    @Specialization
+    public double exec(double nin, double pp, RandomNumberProvider rand,
+                    @Cached(allowUncached = true) Qbinom qbinom) {
         double psave = -1.0;
         int nsave = -1;
 

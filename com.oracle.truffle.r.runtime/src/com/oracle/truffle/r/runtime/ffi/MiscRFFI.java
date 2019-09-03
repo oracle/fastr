@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,11 +35,11 @@ public final class MiscRFFI {
 
     public static final class ExactSumNode extends NativeCallNode {
         private ExactSumNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.exactSumFunc));
+            super(factory.createDownCallNode());
         }
 
         public double execute(double[] values, boolean hasNa, boolean naRm) {
-            return (double) call(values, values.length, hasNa ? 1 : 0, naRm ? 1 : 0);
+            return (double) call(NativeFunction.exactSumFunc, values, values.length, hasNa ? 1 : 0, naRm ? 1 : 0);
         }
 
         public static ExactSumNode create() {
@@ -49,11 +49,11 @@ public final class MiscRFFI {
 
     public static final class DqrlsNode extends NativeCallNode {
         private DqrlsNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.dqrls));
+            super(factory.createDownCallNode());
         }
 
         public void execute(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
-            call(x, n, p, y, ny, tol, b, rsd, qty, k, jpvt, qraux, work);
+            call(NativeFunction.dqrls, x, n, p, y, ny, tol, b, rsd, qty, k, jpvt, qraux, work);
         }
 
         public static DqrlsNode create() {

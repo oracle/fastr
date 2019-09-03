@@ -40,5 +40,7 @@ public interface UpCallsRFFI extends StdUpCallsRFFI, IDEUpCallsRFFI, VariableUpC
 
     HandleUpCallExceptionNode createHandleUpCallExceptionNode();
 
+    HandleUpCallExceptionNode getUncachedHandleUpCallExceptionNode();
+
     RFFIFactory.Type getRFFIType();
 }

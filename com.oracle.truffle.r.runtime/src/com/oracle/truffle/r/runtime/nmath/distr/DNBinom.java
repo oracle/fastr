@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2000--2016, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,15 @@ public final class DNBinom {
     }
 
     public static final class DNBinomFunc implements Function3_1 {
+
+        public static DNBinomFunc create() {
+            return new DNBinomFunc();
+        }
+
+        public static DNBinomFunc getUncached() {
+            return new DNBinomFunc();
+        }
+
         private final BranchProfile nanProfile = BranchProfile.create();
 
         @Override
@@ -78,6 +87,15 @@ public final class DNBinom {
     }
 
     public static final class DNBinomMu implements Function3_1 {
+
+        public static DNBinomMu create() {
+            return new DNBinomMu();
+        }
+
+        public static DNBinomMu getUncached() {
+            return new DNBinomMu();
+        }
+
         @Override
         public double evaluate(double x, double size, double mu, boolean giveLog) {
             /*

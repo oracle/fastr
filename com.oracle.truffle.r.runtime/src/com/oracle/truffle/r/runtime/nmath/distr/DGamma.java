@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,15 @@ import com.oracle.truffle.r.runtime.nmath.GammaFunctions;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
 
 public final class DGamma implements Function3_1 {
+
+    public static DGamma create() {
+        return new DGamma();
+    }
+
+    public static DGamma getUncached() {
+        return new DGamma();
+    }
+
     @Override
     public double evaluate(double x, double shape, double scale, boolean giveLog) {
         return GammaFunctions.dgamma(x, shape, scale, giveLog);

@@ -16,7 +16,7 @@ the path where GraalVM was installed if successful (invisible), otherwise this f
 Downloads GraalVM Community Edition and installs the R ("FastR") component for GraalVM.
 }
 \details{
-Note: the download is around 300MB. The installation usually takes few seconds.
+Note: the download size is around 300MB. The installation usually takes few seconds.
 If the given directory already contains GraalVM, this function installs the R ("FastR") component.
 }
 \seealso{

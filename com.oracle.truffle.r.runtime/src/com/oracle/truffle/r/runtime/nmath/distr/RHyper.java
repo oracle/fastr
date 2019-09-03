@@ -2,7 +2,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2009, The R Core Team
  * Copyright (c) 2003--2009, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,10 +27,15 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
-import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_Double;
+import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_DoubleWithWarnings;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 
-public final class RHyper extends RandFunction3_Double {
+public final class RHyper extends RandFunction3_DoubleWithWarnings {
+
+    public static RHyper create() {
+        return new RHyper();
+    }
+
     private static final double[] al = {
                     0.0, /* ln(0!)=ln(1) */
                     0.0, /* ln(1!)=ln(1) */
@@ -98,7 +103,7 @@ public final class RHyper extends RandFunction3_Double {
     private static final double deltal = 0.0078;
     private static final double deltau = 0.0034;
 
-    private final Rbinom rbinom = new Rbinom();
+    private final Rbinom rbinom = Rbinom.create();
 
     // rhyper(NR, NB, n) -- NR 'red', NB 'blue', n drawn, how many are 'red'
     @Override

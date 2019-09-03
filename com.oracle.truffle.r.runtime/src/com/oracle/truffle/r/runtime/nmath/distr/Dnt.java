@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 
 public final class Dnt implements Function3_1 {
+
+    public static Dnt create() {
+        return new Dnt();
+    }
+
+    public static Dnt getUncached() {
+        return new Dnt();
+    }
+
     private final Dt dt = new Dt();
     private final DNorm dnorm = new DNorm();
     private final Pnt pnt = new Pnt();

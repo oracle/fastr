@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.ForceSources;
+import static com.oracle.truffle.r.runtime.context.FastROptions.RefCountIncrementOnly;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +40,7 @@ import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.InternalNode;
-import com.oracle.truffle.r.nodes.control.BlockNode;
+import com.oracle.truffle.r.nodes.control.AbstractBlockNode;
 import com.oracle.truffle.r.nodes.control.BreakNode;
 import com.oracle.truffle.r.nodes.control.ForNodeGen;
 import com.oracle.truffle.r.nodes.control.IfNode;
@@ -55,8 +58,6 @@ import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.nodes.function.signature.MissingNode;
 import com.oracle.truffle.r.nodes.function.signature.QuoteNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import static com.oracle.truffle.r.runtime.context.FastROptions.ForceSources;
-import static com.oracle.truffle.r.runtime.context.FastROptions.RefCountIncrementOnly;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -190,7 +191,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             }
             switch (symbol) {
                 case "{":
-                    return BlockNode.create(source, lhsLookup, toRNodeArray(args));
+                    return AbstractBlockNode.create(source, lhsLookup, toRNodeArray(args));
                 case "missing":
                     return new MissingNode(source, lhsLookup, createSignature(args), toSyntaxElementArray(args));
                 case "quote":

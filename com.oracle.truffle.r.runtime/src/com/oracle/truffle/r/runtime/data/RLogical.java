@@ -23,10 +23,6 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -38,7 +34,6 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
-@ExportLibrary(InteropLibrary.class)
 public final class RLogical extends RAbstractLogicalVector implements RScalarVector {
 
     public static final RLogical NA = new RLogical(RRuntime.LOGICAL_NA);
@@ -50,19 +45,6 @@ public final class RLogical extends RAbstractLogicalVector implements RScalarVec
     private RLogical(byte value) {
         super(!RRuntime.isNA(value));
         this.value = value;
-    }
-
-    @ExportMessage
-    boolean isBoolean() {
-        return !RRuntime.isNA(value);
-    }
-
-    @ExportMessage
-    boolean asBoolean() throws UnsupportedMessageException {
-        if (!isBoolean()) {
-            throw UnsupportedMessageException.create();
-        }
-        return RRuntime.fromLogical(value);
     }
 
     public static RLogical valueOf(byte value) {

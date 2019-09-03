@@ -2,7 +2,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2009, The R Core Team
  * Copyright (c) 2003--2009, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 // transcribed from qbinom.c
 
 public final class Qbinom implements Function3_2 {
+
+    public static Qbinom create() {
+        return new Qbinom();
+    }
+
+    public static Qbinom getUncached() {
+        return new Qbinom();
+    }
+
     private final BranchProfile nanProfile = BranchProfile.create();
     private final ConditionProfile smallNProfile = ConditionProfile.createBinaryProfile();
     private final Pbinom pbinom = new Pbinom();

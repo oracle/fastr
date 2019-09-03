@@ -2,7 +2,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000-2013, The R Core Team
  * Copyright (c) 2003-2013, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,15 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Qt implements Function2_2 {
+
+    public static Qt create() {
+        return new Qt();
+    }
+
+    public static Qt getUncached() {
+        return new Qt();
+    }
+
     private static final double eps = 1.e-12;
     private static final double accu = 1e-13;
     private static final double Eps = 1e-11; /* must be > accu */

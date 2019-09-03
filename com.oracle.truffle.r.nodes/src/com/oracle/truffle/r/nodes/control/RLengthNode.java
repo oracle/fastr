@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -47,6 +48,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * function returns, like in {@code seq_along}.
  */
 @ReportPolymorphism
+@GenerateUncached
 public abstract class RLengthNode extends RBaseNode {
 
     public abstract int executeInteger(Object value);
@@ -99,7 +101,7 @@ public abstract class RLengthNode extends RBaseNode {
 
     @Specialization(replaces = "doCachedContainer")
     protected int doContainer(RAbstractContainer operand,
-                    @Cached("create()") VectorLengthProfile lengthProfile) {
+                    @Cached(allowUncached = true) VectorLengthProfile lengthProfile) {
         return lengthProfile.profile(operand.getLength());
     }
 
@@ -112,7 +114,7 @@ public abstract class RLengthNode extends RBaseNode {
 
     @Specialization
     protected int getLength(REnvironment env,
-                    @Cached("create()") VectorLengthProfile lengthProfile) {
+                    @Cached(allowUncached = true) VectorLengthProfile lengthProfile) {
         /*
          * This is a bit wasteful but only in the creation of the RStringVector; all the logic to
          * decide whether to include a name is still necessary

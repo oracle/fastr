@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,71 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.interop.CanResolve;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.Resolve;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
-@MessageResolution(receiverType = StringArrayWrapper.class)
-final class StringArrayWrapperMR {
-
-    @Resolve(message = "READ")
-    public abstract static class StringArrayWrapperReadNode extends Node {
-        protected Object access(StringArrayWrapper receiver, int index) {
-            return receiver.getNativeCharArray(index);
-        }
-
-        protected Object access(StringArrayWrapper receiver, long index) {
-            return receiver.getNativeCharArray((int) index);
-        }
-    }
-
-    @Resolve(message = "HAS_SIZE")
-    public abstract static class StringArrayWrapperHasSizeNode extends Node {
-        protected boolean access(@SuppressWarnings("unused") StringArrayWrapper receiver) {
-            return true;
-        }
-    }
-
-    @Resolve(message = "GET_SIZE")
-    public abstract static class StringArrayWrapperGetSizeNode extends Node {
-        protected int access(StringArrayWrapper receiver) {
-            return receiver.getLength();
-        }
-    }
-
-    @Resolve(message = "IS_POINTER")
-    public abstract static class StringArrayWrapperIsPointerNode extends Node {
-        protected Object access(@SuppressWarnings("unused") StringArrayWrapper receiver) {
-            return true;
-        }
-    }
-
-    @Resolve(message = "AS_POINTER")
-    public abstract static class StringArrayWrapperAsPointerNode extends Node {
-        private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
-
-        protected Object access(StringArrayWrapper receiver) {
-            long address = receiver.address;
-            if (profile.profile(address == 0)) {
-                return receiver.asPointer();
-            }
-            return address;
-        }
-    }
-
-    @CanResolve
-    public abstract static class StringArrayWrapperCheck extends Node {
-        protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof StringArrayWrapper;
-        }
-    }
-}
-
+@ExportLibrary(InteropLibrary.class)
 public final class StringArrayWrapper implements TruffleObject {
 
     long address;
@@ -97,13 +39,42 @@ public final class StringArrayWrapper implements TruffleObject {
         this.vector = vector;
     }
 
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return StringArrayWrapperMRForeign.ACCESS;
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasArrayElements() {
+        return true;
     }
 
-    public long asPointer() {
+    @ExportMessage
+    long getArraySize() {
+        return getLength();
+    }
+
+    @ExportMessage
+    boolean isArrayElementReadable(long idx) {
+        return idx > 0 && idx < getLength();
+    }
+
+    @ExportMessage
+    public Object readArrayElement(long index) {
+        return getNativeCharArray((int) index);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isPointer() {
+        return address != 0;
+    }
+
+    @ExportMessage
+    public void toNative() {
+        assert address == 0;
         address = NativeDataAccess.allocateNativeStringArray(vector.getReadonlyStringData());
+    }
+
+    @ExportMessage
+    public long asPointer() {
+        assert address != 0;
         return address;
     }
 

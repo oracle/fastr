@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RType;
 
 /**
@@ -32,7 +29,6 @@ import com.oracle.truffle.r.runtime.RType;
  *
  * @see REmpty
  */
-@ExportLibrary(InteropLibrary.class)
 public final class RMissing extends RBaseObject implements RScalar {
 
     public static final RMissing instance = new RMissing();
@@ -48,21 +44,5 @@ public final class RMissing extends RBaseObject implements RScalar {
     @Override
     public String toString() {
         return "missing";
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    void toNative() {
-        NativeDataAccess.asPointer(this);
     }
 }

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2006, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,14 @@ import com.oracle.truffle.r.runtime.nmath.TOMS708.Bratio;
 // transcribed from pbeta.c
 
 public final class Pbeta implements Function3_2 {
+
+    public static Pbeta create() {
+        return new Pbeta();
+    }
+
+    public static Pbeta getUncached() {
+        return new Pbeta();
+    }
 
     private final BranchProfile naProfile = BranchProfile.create();
 

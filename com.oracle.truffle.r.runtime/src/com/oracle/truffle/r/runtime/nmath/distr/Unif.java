@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000-2006, The R Core Team
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,9 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -36,14 +39,14 @@ public final class Unif {
         // only static members
     }
 
-    public static final class Runif extends RandFunction2_Double {
-        private final BranchProfile errorProfile = BranchProfile.create();
-        private final ConditionProfile minEqualsMaxProfile = ConditionProfile.createBinaryProfile();
-        private final ValueProfile minValueProfile = ValueProfile.createEqualityProfile();
-        private final ValueProfile maxValueProfile = ValueProfile.createEqualityProfile();
-
-        @Override
-        public double execute(double minIn, double maxIn, RandomNumberProvider rand) {
+    @GenerateUncached
+    public abstract static class Runif extends RandFunction2_Double {
+        @Specialization
+        public double exec(double minIn, double maxIn, RandomNumberProvider rand,
+                        @Cached() BranchProfile errorProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile minEqualsMaxProfile,
+                        @Cached("createEqualityProfile()") ValueProfile minValueProfile,
+                        @Cached("createEqualityProfile()") ValueProfile maxValueProfile) {
             double min = minValueProfile.profile(minIn);
             double max = maxValueProfile.profile(maxIn);
             if (!RRuntime.isFinite(min) || !RRuntime.isFinite(max) || max < min) {
@@ -55,9 +58,26 @@ public final class Unif {
             }
             return min + rand.unifRand() * (max - min);
         }
+
+        public static Runif create() {
+            return UnifFactory.RunifNodeGen.create();
+        }
+
+        public static Runif getUncached() {
+            return UnifFactory.RunifNodeGen.getUncached();
+        }
     }
 
     public static final class PUnif implements Function3_2 {
+
+        public static PUnif create() {
+            return new PUnif();
+        }
+
+        public static PUnif getUncached() {
+            return new PUnif();
+        }
+
         @Override
         public double evaluate(double x, double min, double max, boolean lowerTail, boolean logP) {
             if (Double.isNaN(x) || Double.isNaN(min) || Double.isNaN(max)) {
@@ -81,6 +101,15 @@ public final class Unif {
     }
 
     public static final class DUnif implements Function3_1 {
+
+        public static DUnif create() {
+            return new DUnif();
+        }
+
+        public static DUnif getUncached() {
+            return new DUnif();
+        }
+
         @Override
         public double evaluate(double x, double min, double max, boolean giveLog) {
             if (Double.isNaN(x) || Double.isNaN(min) || Double.isNaN(max)) {
@@ -97,6 +126,14 @@ public final class Unif {
     }
 
     public static final class QUnif implements Function3_2 {
+
+        public static QUnif create() {
+            return new QUnif();
+        }
+
+        public static QUnif getUncached() {
+            return new QUnif();
+        }
 
         @Override
         public double evaluate(double p, double min, double max, boolean lowerTail, boolean logP) {

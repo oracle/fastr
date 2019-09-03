@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,10 @@ package com.oracle.truffle.r.runtime.ffi.interop;
 import static com.oracle.truffle.r.runtime.ffi.UnsafeAdapter.UNSAFE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.r.runtime.RRuntime;
 
 import sun.misc.Unsafe;
 
@@ -39,6 +43,7 @@ import sun.misc.Unsafe;
  * If {@link #fakesNullTermination()} is {@code true}, then {@link #read} returns 0, else it is an
  * error; similar for {@link #write}.
  */
+@ExportLibrary(InteropLibrary.class)
 public abstract class NativeUInt8Array extends NativeArray<byte[]> {
 
     private int effectiveLength;
@@ -46,6 +51,61 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
     protected NativeUInt8Array(byte[] array, boolean nullTerminate) {
         super(array);
         this.effectiveLength = array.length + (nullTerminate ? 1 : 0);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isPointer() {
+        return nativeAddress() != 0;
+    }
+
+    @ExportMessage
+    public long asPointer() {
+        long na = nativeAddress();
+        assert na != 0L : "toNative() expected to be called first";
+        return na;
+    }
+
+    @ExportMessage
+    public void toNative() {
+        convertToNative();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    long getArraySize() {
+        return array.length;
+    }
+
+    @ExportMessage
+    boolean isArrayElementReadable(long index) {
+        return index >= 0 && index < getArraySize();
+    }
+
+    @ExportMessage
+    Object readArrayElement(long index) {
+        return read(RRuntime.interopArrayIndexToInt(index, this));
+    }
+
+    @ExportMessage
+    boolean isArrayElementModifiable(long index) {
+        return index >= 0 && index < getArraySize();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isArrayElementInsertable(@SuppressWarnings("unused") long index) {
+        return false;
+    }
+
+    @ExportMessage
+    void writeArrayElement(long index, Object value) {
+        write(RRuntime.interopArrayIndexToInt(index, this), (byte) value);
     }
 
     public boolean fakesNullTermination() {
@@ -56,6 +116,10 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
         if (index < 0 || index >= effectiveLength) {
             throw new ArrayIndexOutOfBoundsException(index);
         }
+    }
+
+    protected void writeObject(int index, Object value) {
+        write(index, (byte) value);
     }
 
     void write(int index, byte value) {

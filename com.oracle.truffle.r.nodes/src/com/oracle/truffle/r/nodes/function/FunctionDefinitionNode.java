@@ -127,8 +127,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
 
     @CompilationFinal private boolean containsDispatch;
 
-    private final Assumption noHandlerStackSlot = Truffle.getRuntime().createAssumption();
-    private final Assumption noRestartStackSlot = Truffle.getRuntime().createAssumption();
+    private final Assumption noHandlerStackSlot = Truffle.getRuntime().createAssumption("noHandlerStackSlot");
+    private final Assumption noRestartStackSlot = Truffle.getRuntime().createAssumption("noRestartStackSlot");
     @CompilationFinal private FrameSlot handlerStackSlot;
     @CompilationFinal private FrameSlot restartStackSlot;
 

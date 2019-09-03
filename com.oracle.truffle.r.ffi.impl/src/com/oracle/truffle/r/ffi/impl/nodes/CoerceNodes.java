@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -201,10 +202,15 @@ public final class CoerceNodes {
     /**
      * Implements Rf_coerceVector.
      */
+    @GenerateUncached
     public abstract static class CoerceVectorNode extends FFIUpCallNode.Arg2 {
 
         public static CoerceVectorNode create() {
             return CoerceNodesFactory.CoerceVectorNodeGen.create();
+        }
+
+        public static CoerceVectorNode getUncached() {
+            return CoerceNodesFactory.CoerceVectorNodeGen.getUncached();
         }
 
         @Specialization(guards = "value.isS4()")

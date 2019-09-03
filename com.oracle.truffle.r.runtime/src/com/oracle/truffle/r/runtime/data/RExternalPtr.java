@@ -22,16 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 /**
  * The rarely seen {@code externalptr} type used in native code.
  */
-@ExportLibrary(InteropLibrary.class)
 public final class RExternalPtr extends RAttributable implements RTypedValue {
     /**
      * In GNU R, typically the address of some C structure, so a {@code void*}. Represented here as
@@ -53,22 +49,6 @@ public final class RExternalPtr extends RAttributable implements RTypedValue {
         this.externalObject = externalObject;
         this.tag = tag;
         this.prot = prot;
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    void toNative() {
-        NativeDataAccess.asPointer(this);
     }
 
     public RExternalPtr copy() {

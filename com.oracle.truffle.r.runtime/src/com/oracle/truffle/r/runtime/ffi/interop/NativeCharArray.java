@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,16 @@ package com.oracle.truffle.r.runtime.ffi.interop;
 import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 
 /**
  * A {@link TruffleObject} that represents an array of {@code unsigned char} values, that is
  * {@code NULL} terminated in the C domain.
  */
+@ExportLibrary(InteropLibrary.class)
 public final class NativeCharArray extends NativeUInt8Array {
 
     public NativeCharArray(byte[] bytes) {
@@ -45,6 +48,18 @@ public final class NativeCharArray extends NativeUInt8Array {
 
     private NativeCharArray(byte[] bytes, boolean nullTerminate) {
         super(bytes, nullTerminate);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isString() {
+        return true;
+    }
+
+    @ExportMessage
+    @TruffleBoundary
+    String asString() {
+        return new String(getValue());
     }
 
     /**
@@ -73,10 +88,5 @@ public final class NativeCharArray extends NativeUInt8Array {
     public String getString() {
         byte[] val = getValue();
         return new String(val, 0, fakesNullTermination() ? val.length : val.length - 1);
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return NativeCharArrayMRForeign.ACCESS;
     }
 }

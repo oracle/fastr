@@ -24,61 +24,71 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Shape;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNodeGen.GetClassPropertyNodeGen;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNodeGen.GetCommentPropertyNodeGen;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNodeGen.GetDimNamesPropertyNodeGen;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNodeGen.GetDimPropertyNodeGen;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNodeGen.GetGenericPropertyNodeGen;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNodeGen.GetNamesPropertyNodeGen;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNodeGen.GetRowNamesPropertyNodeGen;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNodeGen.GetTspPropertyNodeGen;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 /**
  * Retrieves fixed property (passed in constructor) from dynamic object.
  */
 @ImportStatic(DSLConfig.class)
+@GenerateUncached
 public abstract class GetFixedPropertyNode extends PropertyAccessNode {
-    protected final String name;
-
-    protected GetFixedPropertyNode(String name) {
-        this.name = name;
-    }
 
     public abstract Object execute(DynamicObject obj);
 
-    public static GetFixedPropertyNode create(String name) {
-        return GetFixedPropertyNodeGen.create(name);
+    protected String getPropertyName() {
+        throw RInternalError.shouldNotReachHere();
     }
 
-    public static GetFixedPropertyNode createClass() {
-        return create(RRuntime.CLASS_ATTR_KEY);
+    public static GetGenericPropertyNode create(String propertyName) {
+        return GetGenericPropertyNodeGen.create(propertyName);
     }
 
-    public static GetFixedPropertyNode createNames() {
-        return create(RRuntime.NAMES_ATTR_KEY);
+    public static GetClassPropertyNode createClass() {
+        return GetClassPropertyNodeGen.create();
     }
 
-    public static GetFixedPropertyNode createDim() {
-        return create(RRuntime.DIM_ATTR_KEY);
+    public static GetNamesPropertyNode createNames() {
+        return GetNamesPropertyNodeGen.create();
     }
 
-    public static GetFixedPropertyNode createDimNames() {
-        return create(RRuntime.DIMNAMES_ATTR_KEY);
+    public static GetDimPropertyNode createDim() {
+        return GetDimPropertyNodeGen.create();
     }
 
-    public static GetFixedPropertyNode createRowNames() {
-        return create(RRuntime.ROWNAMES_ATTR_KEY);
+    public static GetDimNamesPropertyNode createDimNames() {
+        return GetDimNamesPropertyNodeGen.create();
     }
 
-    public static GetFixedPropertyNode createTsp() {
-        return create(RRuntime.TSP_ATTR_KEY);
+    public static GetRowNamesPropertyNode createRowNames() {
+        return GetRowNamesPropertyNodeGen.create();
     }
 
-    public static GetFixedPropertyNode createComment() {
-        return create(RRuntime.COMMENT_ATTR_KEY);
+    public static GetTspPropertyNode createTsp() {
+        return GetTspPropertyNodeGen.create();
+    }
+
+    public static GetCommentPropertyNode createComment() {
+        return GetCommentPropertyNodeGen.create();
     }
 
     protected boolean hasProperty(Shape shape) {
-        return shape.hasProperty(name);
+        return shape.hasProperty(getPropertyName());
     }
 
     @Specialization(limit = "getCacheSize(3)", //
@@ -86,13 +96,82 @@ public abstract class GetFixedPropertyNode extends PropertyAccessNode {
                     assumptions = {"shape.getValidAssumption()"})
     protected Object getAttrCached(DynamicObject attrs,
                     @Cached("lookupShape(attrs)") Shape shape,
-                    @Cached("lookupLocation(shape, name)") Location location) {
+                    @Cached("lookupLocation(shape, getPropertyName())") Location location) {
         return location == null ? null : location.get(attrs, shape);
     }
 
     @Specialization(replaces = "getAttrCached")
     @TruffleBoundary
     protected Object getAttrFallback(DynamicObject attrs) {
-        return attrs.get(name);
+        return attrs.get(getPropertyName());
+    }
+
+    @GenerateUncached
+    public abstract static class GetClassPropertyNode extends GetFixedPropertyNode {
+        @Override
+        protected String getPropertyName() {
+            return RRuntime.CLASS_ATTR_KEY;
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class GetNamesPropertyNode extends GetFixedPropertyNode {
+        @Override
+        protected String getPropertyName() {
+            return RRuntime.NAMES_ATTR_KEY;
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class GetDimPropertyNode extends GetFixedPropertyNode {
+        @Override
+        protected String getPropertyName() {
+            return RRuntime.DIM_ATTR_KEY;
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class GetDimNamesPropertyNode extends GetFixedPropertyNode {
+        @Override
+        protected String getPropertyName() {
+            return RRuntime.DIMNAMES_ATTR_KEY;
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class GetRowNamesPropertyNode extends GetFixedPropertyNode {
+        @Override
+        protected String getPropertyName() {
+            return RRuntime.ROWNAMES_ATTR_KEY;
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class GetTspPropertyNode extends GetFixedPropertyNode {
+        @Override
+        protected String getPropertyName() {
+            return RRuntime.TSP_ATTR_KEY;
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class GetCommentPropertyNode extends GetFixedPropertyNode {
+        @Override
+        protected String getPropertyName() {
+            return RRuntime.COMMENT_ATTR_KEY;
+        }
+    }
+
+    public abstract static class GetGenericPropertyNode extends GetFixedPropertyNode {
+        private final String propertyName;
+
+        public GetGenericPropertyNode(String propertyName) {
+            this.propertyName = propertyName;
+        }
+
+        @Override
+        protected String getPropertyName() {
+            return propertyName;
+        }
     }
 }

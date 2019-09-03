@@ -36,7 +36,8 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropNA;
+import com.oracle.truffle.r.runtime.data.RInteropComplex;
+import com.oracle.truffle.r.runtime.data.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
@@ -122,6 +123,11 @@ public abstract class Foreign2R extends Node {
     @Specialization
     public Object doInteropNA(RInteropNA interopNA, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return interopNA.getValue();
+    }
+
+    @Specialization
+    public Object doInteropComplex(RInteropComplex interopComplex, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
+        return interopComplex.getValue();
     }
 
     @Specialization(guards = "isNA(d)")

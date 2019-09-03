@@ -46,7 +46,6 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.control.BlockNode.HugeBlockRootNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -348,9 +347,6 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
                 }
                 for (RSyntaxElement node : intervalStack) {
                     RootNode rootNode = ((RSyntaxNode) node).asRNode().getRootNode();
-                    if (rootNode instanceof HugeBlockRootNode) {
-                        rootNode = ((HugeBlockRootNode) rootNode).getOriginalRootNode();
-                    }
                     if (rootNode instanceof FunctionDefinitionNode) {
                         String name = rootNode.getName();
                         if (this.lineProfiling) {

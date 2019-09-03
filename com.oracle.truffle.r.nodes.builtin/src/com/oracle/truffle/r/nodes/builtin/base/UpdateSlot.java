@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess.UpdateSlotAccess;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -46,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "@<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, nonEvalArgs = 1, behavior = COMPLEX)
-public abstract class UpdateSlot extends RBuiltinNode.Arg3 {
+public abstract class UpdateSlot extends RBuiltinNode.Arg3 implements UpdateSlotAccess {
 
     @Child private UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create();
     @Child private PromiseAsNameNode promiseAsNameNode;
@@ -55,6 +56,9 @@ public abstract class UpdateSlot extends RBuiltinNode.Arg3 {
         Casts casts = new Casts(UpdateSlot.class);
         casts.arg(0).asAttributable(true, true, true);
     }
+
+    @Override
+    public abstract Object execute(VirtualFrame frameValue, Object arg0Value, Object arg1Value, Object arg2Value);
 
     private String getName(Object nameObj) {
         if (promiseAsNameNode == null) {
@@ -112,6 +116,13 @@ public abstract class UpdateSlot extends RBuiltinNode.Arg3 {
     protected Object updateSlot(VirtualFrame frame, Object object, RPromise nameObj, Object value,
                     @Cached("new()") CheckSlotAssignNode check) {
         String name = getName(nameObj);
+        check.execute(frame, object, name, value);
+        return updateSlotNode.executeUpdate(object, name, value);
+    }
+
+    @Specialization
+    protected Object updateSlot(VirtualFrame frame, Object object, String name, Object value,
+                    @Cached("new()") CheckSlotAssignNode check) {
         check.execute(frame, object, name, value);
         return updateSlotNode.executeUpdate(object, name, value);
     }

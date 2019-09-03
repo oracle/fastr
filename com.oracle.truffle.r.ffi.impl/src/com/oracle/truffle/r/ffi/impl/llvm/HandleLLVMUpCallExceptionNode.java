@@ -23,9 +23,11 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 
+@GenerateUncached
 public class HandleLLVMUpCallExceptionNode extends Node implements UpCallsRFFI.HandleUpCallExceptionNode {
     @Override
     @TruffleBoundary

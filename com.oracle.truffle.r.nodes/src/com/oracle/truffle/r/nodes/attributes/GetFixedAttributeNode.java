@@ -23,32 +23,32 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNodeGen.GenericGetFixedAttributeAccessNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 
 /**
  * This node is responsible for retrieving a value from the predefined (fixed) attribute.
  */
+@GenerateUncached
 public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
-
-    protected GetFixedAttributeNode(String name) {
-        super(name);
-    }
 
     public static GetFixedAttributeNode create(String name) {
         if (SpecialAttributesFunctions.IsSpecialAttributeNode.isSpecialAttribute(name)) {
             return SpecialAttributesFunctions.createGetSpecialAttributeNode(name);
         } else {
-            return GetFixedAttributeNodeGen.create(name);
+            return GenericGetFixedAttributeAccessNodeGen.create(name);
         }
     }
 
-    public static GetFixedAttributeNode createNames() {
+    public static GetNamesAttributeNode createNames() {
         return GetNamesAttributeNode.create();
     }
 
@@ -68,10 +68,8 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
     @Specialization
     protected Object getAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("create(name)") GetFixedPropertyNode getFixedPropertyNode) {
-
+                    @Cached("create(getAttributeName())") GetFixedPropertyNode getFixedPropertyNode) {
         DynamicObject attributes = x.getAttributes();
-
         if (attributes == null) {
             attrNullProfile.enter();
             return null;
@@ -79,4 +77,19 @@ public abstract class GetFixedAttributeNode extends FixedAttributeAccessNode {
 
         return getFixedPropertyNode.execute(attributes);
     }
+
+    public abstract static class GenericGetFixedAttributeAccessNode extends GetFixedAttributeNode {
+        private final String name;
+
+        protected GenericGetFixedAttributeAccessNode(String name) {
+            assert Utils.isInterned(name);
+            this.name = name;
+        }
+
+        @Override
+        protected String getAttributeName() {
+            return name;
+        }
+    }
+
 }

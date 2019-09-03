@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Set;
@@ -33,10 +32,12 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 
 /**
  * Holds per RContext specific state of the RFFI. RFFI implementation agnostic data and methods are
@@ -61,7 +62,7 @@ public abstract class RFFIContext extends RFFI {
         /**
          * @see #registerReferenceUsedInNative(Object)
          */
-        private final ArrayList<Object> protectedNativeReferences = new ArrayList<>();
+        private final Collections.ArrayListObj<Object> protectedNativeReferences = new Collections.ArrayListObj<>(256);
 
         /**
          * FastR equivalent of GNUR's special dedicated global list that is GC root and so any
@@ -75,7 +76,7 @@ public abstract class RFFIContext extends RFFI {
          * this stack do necessarily not have to be {@linke #registerReferenceUsedInNative}, but
          * once popped off, they must be put into that list.
          */
-        public final ArrayList<RObject> protectStack = new ArrayList<>();
+        public final Collections.ArrayListObj<RObject> protectStack = new Collections.ArrayListObj<>(32);
 
         public MaterializedFrame currentDowncallFrame = null;
     }
@@ -93,7 +94,10 @@ public abstract class RFFIContext extends RFFI {
      * they became unreachable.
      */
     public final void registerReferenceUsedInNative(Object obj) {
-        rffiContextState.protectedNativeReferences.add(obj);
+        // RSymbols are cached and never freed anyway -- dictated by GNU-R
+        if (!(obj instanceof RSymbol)) {
+            rffiContextState.protectedNativeReferences.add(obj);
+        }
     }
 
     public abstract TruffleObject lookupNativeFunction(NativeFunction function);
@@ -101,10 +105,10 @@ public abstract class RFFIContext extends RFFI {
     public abstract <C extends RFFIContext> C as(Class<C> rffiCtxClass);
 
     /**
+     * @param context
      * @param canRunGc {@code true} if this upcall can cause a gc on GNU R, and therefore can clear
-     *            the list of preserved objects.
      */
-    public void beforeUpcall(boolean canRunGc, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+    public void beforeUpcall(RContext context, boolean canRunGc, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         // empty by default
     }
 
@@ -167,7 +171,6 @@ public abstract class RFFIContext extends RFFI {
     }
 
     // this emulates GNUR's cooperative GC
-    @TruffleBoundary
     private void cooperativeGc() {
         rffiContextState.protectedNativeReferences.clear();
     }

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2014, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_2;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class QHyper implements Function4_2 {
+
+    public static QHyper create() {
+        return new QHyper();
+    }
+
+    public static QHyper getUncached() {
+        return new QHyper();
+    }
+
     @Override
     public double evaluate(double p, double nr, double nb, double n, boolean lowerTail, boolean logP) {
         return qhyper(p, nr, nb, n, lowerTail, logP);

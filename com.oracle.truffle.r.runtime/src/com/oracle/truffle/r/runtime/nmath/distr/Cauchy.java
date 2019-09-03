@@ -19,6 +19,8 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_PI;
 import static com.oracle.truffle.r.runtime.nmath.TOMS708.fabs;
 
@@ -31,15 +33,17 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
+import com.oracle.truffle.r.runtime.nmath.distr.CauchyFactory.RCauchyNodeGen;
 
 public final class Cauchy {
     private Cauchy() {
         // contains only static classes
     }
 
-    public static final class RCauchy extends RandFunction2_Double {
-        @Override
-        public double execute(double location, double scale, RandomNumberProvider rand) {
+    @GenerateUncached
+    public abstract static class RCauchy extends RandFunction2_Double {
+        @Specialization
+        public double exec(double location, double scale, RandomNumberProvider rand) {
             if (Double.isNaN(location) || !Double.isFinite(scale) || scale < 0) {
                 return RMathError.defaultError();
             }
@@ -49,9 +53,26 @@ public final class Cauchy {
                 return location + scale * Math.tan(M_PI * rand.unifRand());
             }
         }
+
+        public static RCauchy create() {
+            return RCauchyNodeGen.create();
+        }
+
+        public static RCauchy getUncached() {
+            return RCauchyNodeGen.getUncached();
+        }
     }
 
     public static final class DCauchy implements Function3_1 {
+
+        public static DCauchy create() {
+            return new DCauchy();
+        }
+
+        public static DCauchy getUncached() {
+            return new DCauchy();
+        }
+
         @Override
         public double evaluate(double x, double location, double scale, boolean giveLog) {
             double y;
@@ -69,6 +90,15 @@ public final class Cauchy {
     }
 
     public static final class PCauchy implements Function3_2 {
+
+        public static PCauchy create() {
+            return new PCauchy();
+        }
+
+        public static PCauchy getUncached() {
+            return new PCauchy();
+        }
+
         @Override
         public double evaluate(double x, double location, double scale, boolean lowerTail, boolean logP) {
             if (Double.isNaN(x) || Double.isNaN(location) || Double.isNaN(scale)) {
@@ -113,6 +143,15 @@ public final class Cauchy {
     }
 
     public static final class QCauchy implements Function3_2 {
+
+        public static QCauchy create() {
+            return new QCauchy();
+        }
+
+        public static QCauchy getUncached() {
+            return new QCauchy();
+        }
+
         @Override
         public double evaluate(double pIn, double location, double scale, boolean lowerTailIn, boolean logP) {
             double p = pIn;

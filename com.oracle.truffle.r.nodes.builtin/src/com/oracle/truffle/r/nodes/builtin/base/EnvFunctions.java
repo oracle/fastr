@@ -361,7 +361,7 @@ public class EnvFunctions {
         @Specialization
         protected Object environment(RFunction fun,
                         @Cached("create()") GetFunctionEnvironmentNode getEnv) {
-            return getEnv.getEnvironment(fun);
+            return getEnv.execute(fun);
         }
 
         protected static GetFixedAttributeNode createDotEnv() {

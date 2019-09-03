@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2006-8, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_2;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Qnf implements Function4_2 {
+
+    public static Qnf create() {
+        return new Qnf();
+    }
+
+    public static Qnf getUncached() {
+        return new Qnf();
+    }
+
     private final QNChisq qnchisq = new QNChisq();
     private final QNBeta qnbeta = new QNBeta();
 

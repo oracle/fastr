@@ -2,7 +2,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000-2016, The R Core Team
  * Copyright (c) 2005-2016, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,15 @@ public final class QNBinom {
     }
 
     public static final class QNBinomFunc implements Function3_2 {
+
+        public static QNBinomFunc create() {
+            return new QNBinomFunc();
+        }
+
+        public static QNBinomFunc getUncached() {
+            return new QNBinomFunc();
+        }
+
         private final Qnorm qnorm = new Qnorm();
         private final PNBinomFunc pnbinom = new PNBinomFunc();
 
@@ -110,6 +119,15 @@ public final class QNBinom {
     }
 
     public static final class QNBinomMu implements Function3_2 {
+
+        public static QNBinomMu create() {
+            return new QNBinomMu();
+        }
+
+        public static QNBinomMu getUncached() {
+            return new QNBinomMu();
+        }
+
         private final QPois qpois = new QPois();
         private final QNBinomFunc qnbinom = new QNBinomFunc();
 

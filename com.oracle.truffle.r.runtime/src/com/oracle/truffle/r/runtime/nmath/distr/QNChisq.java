@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 2000-2008, The R Core Team
  * Copyright (c) 2004, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq.QChisq;
 
 public final class QNChisq implements Function3_2 {
+
+    public static QNChisq create() {
+        return new QNChisq();
+    }
+
+    public static QNChisq getUncached() {
+        return new QNChisq();
+    }
+
     private static final double accu = 1e-13;
     private static final double racc = 4 * DBL_EPSILON;
     /* these two are for the "search" loops, can have less accuracy: */

@@ -22,6 +22,7 @@ package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
@@ -37,7 +38,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 // Transcribed from src/main/attrib.c file (R_do_slot_assign function)
-
+@GenerateUncached
 public abstract class UpdateSlotNode extends RBaseNode {
 
     private static final String SET_DATA_PART = "setDataPart";
@@ -71,7 +72,7 @@ public abstract class UpdateSlotNode extends RBaseNode {
         return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.createInvalid(null), true, null, object, prepareValue(value), RRuntime.LOGICAL_TRUE);
     }
 
-    protected boolean isData(String name) {
+    protected static boolean isData(String name) {
         return Utils.identityEquals(name, RRuntime.DOT_DATA);
     }
 }

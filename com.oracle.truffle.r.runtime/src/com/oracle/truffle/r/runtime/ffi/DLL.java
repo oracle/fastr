@@ -33,12 +33,17 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -52,6 +57,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.CustomNativeMirror;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -174,6 +180,7 @@ public class DLL {
      * Denotes info in registered native routines. GnuR has "subclasses" for C/Fortran, which is TBD
      * for FastR.
      */
+    @ExportLibrary(InteropLibrary.class)
     public static class DotSymbol extends RObject implements RTruffleObject {
         public final String name;
         public final SymbolHandle fun;
@@ -185,6 +192,21 @@ public class DLL {
             this.numArgs = numArgs;
         }
 
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public boolean isPointer() {
+            return true;
+        }
+
+        @ExportMessage
+        public long asPointer() {
+            return NativeDataAccess.asPointer(this);
+        }
+
+        @ExportMessage
+        public void toNative() {
+            NativeDataAccess.asPointer(this);
+        }
     }
 
     public static class RegisteredNativeSymbol {
@@ -207,6 +229,7 @@ public class DLL {
         }
     }
 
+    @ExportLibrary(InteropLibrary.class)
     public static final class DLLInfo extends RObject implements RTruffleObject, CustomNativeMirror {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"name", "path", "dynamicLookup", "handle", "info"}, RDataFactory.COMPLETE_VECTOR);
         public static final String DLL_INFO_REFERENCE = "DLLInfoReference";
@@ -248,6 +271,55 @@ public class DLL {
             this.syntheticHandle = syntheticHandle;
         }
 
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public boolean isPointer() {
+            return true;
+        }
+
+        @ExportMessage
+        public long asPointer() {
+            return NativeDataAccess.asPointer(this);
+        }
+
+        @ExportMessage
+        public void toNative() {
+            NativeDataAccess.asPointer(this);
+        }
+
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public boolean hasArrayElements() {
+            return true;
+        }
+
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        public long getArraySize() {
+            return 2;
+        }
+
+        @SuppressWarnings("static-method")
+        @ExportMessage
+        boolean isArrayElementReadable(long idx) {
+            return idx == 0 || idx == 1;
+        }
+
+        @ExportMessage
+        public Object readArrayElement(long idx,
+                        @Cached("createBinaryProfile()") ConditionProfile prof1,
+                        @Cached("createBinaryProfile()") ConditionProfile prof2) throws InvalidArrayIndexException {
+            CharSXPWrapper res;
+            if (prof1.profile(idx == 0)) {
+                res = pathSXP;
+            } else if (prof2.profile(idx == 0)) {
+                res = nameSXP;
+            } else {
+                throw InvalidArrayIndexException.create(idx);
+            }
+            return VectorRFFIWrapper.get(res);
+        }
+
         private static DLLInfo create(String name, String path, boolean dynamicLookup, LibHandle handle, boolean addToList) {
             return create(name, path, dynamicLookup, handle, addToList, false);
         }
@@ -283,6 +355,10 @@ public class DLL {
 
         public void setNativeSymbols(int nstOrd, DotSymbol[] symbols) {
             nativeSymbols[nstOrd] = symbols;
+        }
+
+        public void setNativeSymbol(int nstOrd, int index, DotSymbol symbol) {
+            nativeSymbols[nstOrd][index] = symbol;
         }
 
         public DotSymbol[] getNativeSymbols(NativeSymbolType nst) {
@@ -362,7 +438,9 @@ public class DLL {
         @Override
         public long getCustomMirrorAddress() {
             RStringVector table = RDataFactory.createStringVector(new String[]{path, name}, true);
-            return new StringArrayWrapper(table).asPointer();
+            StringArrayWrapper ret = new StringArrayWrapper(table);
+            ret.toNative();
+            return ret.asPointer();
         }
     }
 

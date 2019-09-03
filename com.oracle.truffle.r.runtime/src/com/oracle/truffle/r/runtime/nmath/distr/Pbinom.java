@@ -2,7 +2,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2014, The R Core Team
  * Copyright (c) 2007, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,14 @@ import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 
 public final class Pbinom implements Function3_2 {
+
+    public static Pbinom create() {
+        return new Pbinom();
+    }
+
+    public static Pbinom getUncached() {
+        return new Pbinom();
+    }
 
     private final BranchProfile nanProfile = BranchProfile.create();
 

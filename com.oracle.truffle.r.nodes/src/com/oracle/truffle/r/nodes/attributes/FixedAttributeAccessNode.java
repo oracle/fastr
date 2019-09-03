@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 
 /**
@@ -30,14 +30,21 @@ import com.oracle.truffle.r.runtime.Utils;
  */
 public abstract class FixedAttributeAccessNode extends AttributeAccessNode {
 
-    protected int getCacheLimit() {
-        return DSLConfig.getCacheSize(3);
+    protected String getAttributeName() {
+        throw RInternalError.shouldNotReachHere();
     }
 
-    protected final String name;
+    public abstract static class GenericFixedAttributeAccessNode extends FixedAttributeAccessNode {
+        private final String name;
 
-    protected FixedAttributeAccessNode(String name) {
-        assert Utils.isInterned(name);
-        this.name = name;
+        protected GenericFixedAttributeAccessNode(String name) {
+            assert Utils.isInterned(name);
+            this.name = name;
+        }
+
+        @Override
+        protected String getAttributeName() {
+            return name;
+        }
     }
 }

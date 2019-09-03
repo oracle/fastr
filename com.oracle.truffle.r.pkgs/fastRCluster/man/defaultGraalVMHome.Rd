@@ -14,7 +14,7 @@ Gives the path to the default location of GraalVM installation that includes Fas
 The default location is inside the directory where the fastRCluster was installed.
 }
 \details{
-\code{\link{getGraalVMHome()}} uses this value as the default,
+\code{\link{getGraalVMHome}} uses this value as the default,
 if no other value is explicitly configured via R options or an environment variable.
 }
 \seealso{

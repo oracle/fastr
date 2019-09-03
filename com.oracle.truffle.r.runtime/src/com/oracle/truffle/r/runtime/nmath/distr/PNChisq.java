@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2000-2015, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,6 +50,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq.PChisq;
 
 public final class PNChisq implements Function3_2 {
+
+    public static PNChisq create() {
+        return new PNChisq();
+    }
+
+    public static PNChisq getUncached() {
+        return new PNChisq();
+    }
+
     private static final double _dbl_min_exp = M_LN2 * DBL_MIN_EXP;
     private final PChisq pchisq = new PChisq();
 

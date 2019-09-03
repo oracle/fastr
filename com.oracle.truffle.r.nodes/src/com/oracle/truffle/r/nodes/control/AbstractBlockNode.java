@@ -23,10 +23,12 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /**
- * Used for tagging purposes - denotes a block node.
+ * A {@link AbstractBlockNode} represents a sequence of statements created by "{ ... }" in source
+ * code.
  */
 public abstract class AbstractBlockNode extends OperatorNode {
 
@@ -34,4 +36,12 @@ public abstract class AbstractBlockNode extends OperatorNode {
         super(src, operator);
     }
 
+    public static AbstractBlockNode create(SourceSection src, RSyntaxLookup operator, RNode[] sequence) {
+        if (sequence.length == 0) {
+            return new EmptyBlockNode(src, operator);
+        } else if (sequence.length == 1) {
+            return new SingleStmtBlockNode(src, operator, sequence[0]);
+        }
+        return new RBlockNode(src, operator, sequence);
+    }
 }

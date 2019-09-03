@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.FixedAttributeAccessNode.GenericFixedAttributeAccessNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
  * the first argument is {@link RAttributable} and its attributes are initialized, the recursive
  * instance of this class is used to determine the existence from the attributes.
  */
-public abstract class HasFixedAttributeNode extends FixedAttributeAccessNode {
+public abstract class HasFixedAttributeNode extends GenericFixedAttributeAccessNode {
 
     protected HasFixedAttributeNode(String name) {
         super(name);
@@ -58,10 +59,8 @@ public abstract class HasFixedAttributeNode extends FixedAttributeAccessNode {
     @Specialization
     protected boolean hasAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
-                    @Cached("create(name)") HasFixedPropertyNode hasFixedPropertyNode) {
-
+                    @Cached("create(getAttributeName())") HasFixedPropertyNode hasFixedPropertyNode) {
         DynamicObject attributes = x.getAttributes();
-
         if (attributes == null) {
             attrNullProfile.enter();
             return false;

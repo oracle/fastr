@@ -59,7 +59,6 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -275,22 +274,6 @@ public abstract class REnvironment extends RAttributable {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    void toNative() {
-        NativeDataAccess.asPointer(this);
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
     boolean hasMembers() {
         return true;
     }
@@ -307,17 +290,17 @@ public abstract class REnvironment extends RAttributable {
 
     @ExportMessage
     boolean isMemberModifiable(String member) {
-        return get(member) != null && !isLocked() && !bindingIsLocked(member);
+        return get(member) != null && !bindingIsLocked(member);
     }
 
     @ExportMessage
     boolean isMemberInsertable(String member) {
-        return get(member) == null;
+        return !isLocked() && get(member) == null;
     }
 
     @ExportMessage
     boolean isMemberRemovable(String member) {
-        return isMemberModifiable(member);
+        return !isLocked() && isMemberModifiable(member);
     }
 
     @ExportMessage
@@ -343,7 +326,6 @@ public abstract class REnvironment extends RAttributable {
 
         if (get(member) != null) {
             if (roIdentifier.profile(!isMemberModifiable(member))) {
-                // TODO - this is a bit weird - should be Message.WRITE and identifier
                 throw UnsupportedMessageException.create();
             }
         } else if (isLocked()) {

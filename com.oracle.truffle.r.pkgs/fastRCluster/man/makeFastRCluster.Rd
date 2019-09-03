@@ -13,9 +13,9 @@ makeFastRCluster(nnodes = 1L, graalVMHome = getGraalVMHome(),
 
 \item{graalVMHome}{Path to the installation directory of GraalVM and FastR. Default value is obtained from \code{getGraalVMHome()}.}
 
-\item{mode}{Mode in which to run FastR. See the FastR documentation on the details on the difference between jvm and native modes.}
+\item{mode}{The mode in which to run FastR. See the FastR documentation for the details on the difference between jvm and native modes.}
 
-\item{polyglot}{Run FastR in a polyglot mode: other installed GraalVM languages will be available via \code{eval.polyglot}. See \code{installGraalVMLanguage}. Allowed only for mode 'jvm' (the default).}
+\item{polyglot}{Run FastR in a polyglot mode: other installed GraalVM languages will be available via \code{eval.polyglot}. Allowed only for mode 'jvm' (the default).}
 
 \item{fastROptions}{Additional options for the FastR engine.}
 
@@ -26,13 +26,16 @@ The cluster object that can be passed to functions like \code{parallel::clusterA
 }
 \description{
 FastR is an alternative implementation of the R programming language,
-which provides superb performance for computation intensive and longer
-running jobs, but takes bit more time to warm-up.
+which provides superb performance for computation intensive and long
+running jobs but takes bit more time to warm-up.
 }
 \examples{
+\donttest{
 fastrNode <- makeFastRCluster()
 parallel::clusterApply(fastrNode, 'dummy', function(...) R.version)
 fastr(fastrNode, R.version)
+parallel::stopCluster(fastrNode)
+}
 }
 \seealso{
 \code{\link{getGraalVMHome}}

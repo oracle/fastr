@@ -31,10 +31,16 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import java.util.Arrays;
 
-public abstract class RAbstractDoubleVector extends RAbstractAtomicVector {
+public abstract class RAbstractDoubleVector extends RAbstractNumericVector {
 
     public RAbstractDoubleVector(boolean complete) {
         super(complete);
+    }
+
+    @Override
+    protected boolean isScalarNA() {
+        assert getLength() == 1;
+        return RRuntime.isNA(getDataAt(0));
     }
 
     @Override

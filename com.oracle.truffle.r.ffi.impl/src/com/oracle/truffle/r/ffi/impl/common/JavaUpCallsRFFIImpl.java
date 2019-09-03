@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +47,7 @@ import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
@@ -428,40 +428,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object Rf_allocVector(int mode, long n) {
-        SEXPTYPE type = SEXPTYPE.mapInt(mode);
-        if (n > Integer.MAX_VALUE) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.LONG_VECTORS_NOT_SUPPORTED);
-            // TODO check long vector
-        }
-        int ni = (int) n;
-        switch (type) {
-            case INTSXP:
-                return RDataFactory.createIntVector(new int[ni], RDataFactory.COMPLETE_VECTOR);
-            case REALSXP:
-                return RDataFactory.createDoubleVector(new double[ni], RDataFactory.COMPLETE_VECTOR);
-            case LGLSXP:
-                return RDataFactory.createLogicalVector(new byte[ni], RDataFactory.COMPLETE_VECTOR);
-            case STRSXP:
-                // fill list with empty strings
-                String[] data = new String[ni];
-                Arrays.fill(data, "");
-                return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-            case CPLXSXP:
-                return RDataFactory.createComplexVector(new double[2 * ni], RDataFactory.COMPLETE_VECTOR);
-            case RAWSXP:
-                return RDataFactory.createRawVector(new byte[ni]);
-            case VECSXP:
-                return RDataFactory.createList(ni);
-            case LISTSXP:
-            case LANGSXP:
-                return RDataFactory.createPairList(ni, type);
-            case NILSXP:
-                return RNull.instance;
-            default:
-                throw unimplemented("unexpected SEXPTYPE " + type);
-        }
+        throw implementedAsNode();
     }
 
     @Override
@@ -1587,51 +1555,47 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object Rf_protect(Object x) {
         getContext().rffiContextState.protectStack.add(guaranteeInstanceOf(x, RObject.class));
         return x;
     }
 
     @Override
-    @TruffleBoundary
     public void Rf_unprotect(int x) {
         RFFIContext context = getContext();
-        ArrayList<RObject> stack = context.rffiContextState.protectStack;
+        Collections.ArrayListObj<RObject> stack = context.rffiContextState.protectStack;
         try {
             for (int i = 0; i < x; i++) {
                 context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
             }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (IndexOutOfBoundsException e) {
             debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
         }
     }
 
     private static boolean debugWarning(String message) {
+        CompilerDirectives.transferToInterpreter();
         RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
         return true;
     }
 
     @Override
-    @TruffleBoundary
     public int R_ProtectWithIndex(Object x) {
-        ArrayList<RObject> stack = getContext().rffiContextState.protectStack;
+        Collections.ArrayListObj<RObject> stack = getContext().rffiContextState.protectStack;
         stack.add(guaranteeInstanceOf(x, RObject.class));
         return stack.size() - 1;
     }
 
     @Override
-    @TruffleBoundary
     public void R_Reprotect(Object x, int y) {
-        ArrayList<RObject> stack = getContext().rffiContextState.protectStack;
+        Collections.ArrayListObj<RObject> stack = getContext().rffiContextState.protectStack;
         stack.set(y, guaranteeInstanceOf(x, RObject.class));
     }
 
     @Override
-    @TruffleBoundary
     public void Rf_unprotect_ptr(Object x) {
         RFFIContext context = getContext();
-        ArrayList<RObject> stack = context.rffiContextState.protectStack;
+        Collections.ArrayListObj<RObject> stack = context.rffiContextState.protectStack;
         for (int i = stack.size() - 1; i >= 0; i--) {
             if (stack.get(i) == x) {
                 context.registerReferenceUsedInNative(stack.remove(i));
@@ -1661,11 +1625,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public int registerRoutines(Object dllInfoObj, int nstOrd, int num, Object routines) {
         DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
         DotSymbol[] array = new DotSymbol[num];
-        for (int i = 0; i < num; i++) {
-            Object sym = setSymbol(dllInfo, nstOrd, routines, i);
-            array[i] = (DotSymbol) sym;
-        }
         dllInfo.setNativeSymbols(nstOrd, array);
+        for (int i = 0; i < num; i++) {
+            // Calls C function to extract the DotSymbol data from the native array, which contains
+            // C structures, the C function up-calls to Java function setDotSymbolValues, which
+            // actually creates the DotSymbol Java object and adds it to the symbol to the DllInfo
+            setSymbol(dllInfo, nstOrd, routines, i);
+        }
         return 0;
     }
 
@@ -1692,10 +1658,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public DotSymbol setDotSymbolValues(Object dllInfoObj, String name, Object fun, int numArgs) {
-        @SuppressWarnings("unused")
+    public void setDotSymbolValues(Object dllInfoObj, int nstOrd, int index, String name, Object fun, int numArgs) {
         DLLInfo dllInfo = guaranteeInstanceOf(dllInfoObj, DLLInfo.class);
-        return new DotSymbol(name, new SymbolHandle(fun), numArgs);
+        dllInfo.setNativeSymbol(nstOrd, index, new DotSymbol(name, new SymbolHandle(fun), numArgs));
     }
 
     @Override
@@ -1703,7 +1668,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return DLL.getEmbeddingDLLInfo();
     }
 
-    protected abstract Object setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index);
+    protected abstract void setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index);
 
     @Override
     public double Rf_dunif(double a, double b, double c, int d) {

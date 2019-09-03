@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RType;
 
+@ExportLibrary(InteropLibrary.class)
 public final class RWeakRef extends RObject implements RTruffleObject, RTypedValue {
 
     private int typedValueInfo = ASCII_MASK_SHIFTED;
@@ -38,6 +42,22 @@ public final class RWeakRef extends RObject implements RTruffleObject, RTypedVal
         this.value = value;
         this.fin = fin;
         this.onexit = onexit;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isPointer() {
+        return true;
+    }
+
+    @ExportMessage
+    public long asPointer() {
+        return NativeDataAccess.asPointer(this);
+    }
+
+    @ExportMessage
+    public void toNative() {
+        NativeDataAccess.asPointer(this);
     }
 
     public Object getKey() {

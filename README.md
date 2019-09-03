@@ -17,7 +17,7 @@ The measurements were [reproduced independently](https://nextjournal.com/sdanisc
 ![Java embedding](documentation/assets/javaui.png)
 ![Speedup](documentation/assets/speedup.png)
 
- ## Getting Started
+ ## <a name="getting_started"></a>Getting Started
 See the documentation on the GraalVM website on how to [get GraalVM](https://www.graalvm.org/docs/getting-started/) and [install and use FastR](http://www.graalvm.org/docs/reference-manual/languages/r/).
 
 ```

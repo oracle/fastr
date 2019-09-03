@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,43 @@
  */
 package com.oracle.truffle.r.runtime.ffi.base;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
+@ImportStatic(DSLConfig.class)
+@ExportLibrary(InteropLibrary.class)
 public final class ReadlinkResult implements RTruffleObject {
     private String link;
     private int errno;
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean isExecutable() {
+        return true;
+    }
+
+    @ExportMessage
+    Object execute(Object[] arguments,
+                    @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
+        Object arg = arguments[0];
+        if (arg instanceof TruffleObject) {
+            if (interop.isNull(arg)) {
+                arg = null;
+            } else {
+                assert false;
+            }
+        } else {
+            assert arg instanceof String;
+        }
+        setResult((String) arg, (int) arguments[1]);
+        return this;
+    }
 
     public void setResult(String link, int errno) {
         this.link = link;
@@ -40,10 +71,5 @@ public final class ReadlinkResult implements RTruffleObject {
 
     public int getErrno() {
         return errno;
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return ReadlinkResultMRForeign.ACCESS;
     }
 }

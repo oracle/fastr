@@ -2,7 +2,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2014, The R Core Team
  * Copyright (c) 2007, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,15 @@ import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
 // transcribed from qnorm.c
 
 public final class Qnorm implements Function3_2 {
+
+    public static Qnorm create() {
+        return new Qnorm();
+    }
+
+    public static Qnorm getUncached() {
+        return new Qnorm();
+    }
+
     private final BranchProfile nanProfile = BranchProfile.create();
 
     @Override

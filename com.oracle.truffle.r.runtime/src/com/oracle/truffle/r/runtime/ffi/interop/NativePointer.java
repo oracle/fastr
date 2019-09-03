@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.ffi.interop;
 
-import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
@@ -31,42 +33,36 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
  * Created when a {@link RTruffleObject} subclass has no meaningful native representation,
  * nevertheless a {@code Message#TO_NATIVE} message is sent to it.
  */
-public abstract class NativePointer implements TruffleObject {
+@ExportLibrary(InteropLibrary.class)
+public class NativePointer implements RTruffleObject {
 
     /**
      * This is used when an {@link RNull} is stored in memory (LLVM).
      */
-    private static final class NullNativePointer extends NativePointer {
-        private NullNativePointer() {
-            super(RNull.instance);
-        }
+    public static final NativePointer NULL_NATIVEPOINTER = new NativePointer();
 
-        @Override
-        protected long asPointerImpl() {
-            return 0;
-        }
-    }
-
-    public static final NullNativePointer NULL_NATIVEPOINTER = new NullNativePointer();
-
-    final RTruffleObject object;
-
-    protected NativePointer(RTruffleObject object) {
-        this.object = object;
-    }
-
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return NativePointerMRForeign.ACCESS;
+    protected NativePointer() {
     }
 
     public static boolean isInstance(TruffleObject obj) {
         return obj instanceof NativePointer;
     }
 
-    final long asPointer() {
-        return asPointerImpl();
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    final boolean isPointer() {
+        return true;
     }
 
-    protected abstract long asPointerImpl();
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    final long asPointer() {
+        return 0;
+    }
+
+    @ExportMessage
+    final void toNative() {
+
+    }
+
 }

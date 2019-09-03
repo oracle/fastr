@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -48,18 +49,17 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  *
  * @see UnaryCopyAttributesNode
  */
+@GenerateUncached
 public abstract class CopyOfRegAttributesNode extends RBaseNode {
-
-    private final ConditionProfile sizeOneProfile = ConditionProfile.createBinaryProfile();
-
-    @Child private GetFixedAttributeNode dimAttrGetter = GetFixedAttributeNode.createDim();
-    @Child private GetFixedAttributeNode namesAttrGetter = GetFixedAttributeNode.createNames();
-    @Child private GetFixedAttributeNode classAttrGetter = GetFixedAttributeNode.createClass();
 
     public abstract void execute(RAttributable source, RAttributable target);
 
     public static CopyOfRegAttributesNode create() {
         return CopyOfRegAttributesNodeGen.create();
+    }
+
+    public static CopyOfRegAttributesNode getUncached() {
+        return CopyOfRegAttributesNodeGen.getUncached();
     }
 
     @Specialization(guards = "source.getAttributes() == null")
@@ -77,35 +77,41 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         // nothing to do
     }
 
-    protected final boolean onlyDimAttribute(RAttributable source) {
+    protected static final boolean onlyDimAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode dimAttrGetter) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(source) != null;
     }
 
-    @Specialization(guards = "onlyDimAttribute(source)")
-    protected void copyDimOnly(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target) {
+    @Specialization(guards = "onlyDimAttribute(source, sizeOneProfile, dimAttrGetter)")
+    protected void copyDimOnly(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target,
+                    @SuppressWarnings("unused") @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
+                    @SuppressWarnings("unused") @Cached("createDim()") GetFixedAttributeNode dimAttrGetter) {
         // nothing to do
     }
 
-    protected final boolean onlyNamesAttribute(RAttributable source) {
+    protected static final boolean onlyNamesAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode namesAttrGetter) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(source) != null;
     }
 
-    @Specialization(guards = "onlyNamesAttribute(source)")
-    protected void copyNamesOnly(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target) {
+    @Specialization(guards = "onlyNamesAttribute(source, sizeOneProfile, namesAttrGetter)")
+    protected void copyNamesOnly(@SuppressWarnings("unused") RAttributable source, @SuppressWarnings("unused") RAttributable target,
+                    @SuppressWarnings("unused") @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
+                    @SuppressWarnings("unused") @Cached("createNames()") GetFixedAttributeNode namesAttrGetter) {
         // nothing to do
     }
 
-    protected final boolean onlyClassAttribute(RAttributable source) {
+    protected static final boolean onlyClassAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode classAttrGetter) {
         DynamicObject attributes = source.getAttributes();
         return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(source) != null;
     }
 
-    @Specialization(guards = "onlyClassAttribute(source)")
+    @Specialization(guards = "onlyClassAttribute(source, sizeOneProfile, classAttrGetter)")
     protected void copyClassOnly(RAttributable source, RAbstractVector target,
                     @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
-                    @Cached("create()") ShareObjectNode updateRefCountNode) {
+                    @Cached("create()") ShareObjectNode updateRefCountNode,
+                    @SuppressWarnings("unused") @Cached("createBinaryProfile()") ConditionProfile sizeOneProfile,
+                    @Cached("createClass()") GetFixedAttributeNode classAttrGetter) {
         Object classAttr = classAttrGetter.execute(source);
         updateRefCountNode.execute(updateChildRefCountNode.updateState(source, classAttr));
         target.initAttributes(RAttributesLayout.createClass(classAttr));
@@ -129,9 +135,5 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
                 }
             }
         }
-    }
-
-    protected static boolean isAttributeStorage(Object o) {
-        return o instanceof RAttributable;
     }
 }

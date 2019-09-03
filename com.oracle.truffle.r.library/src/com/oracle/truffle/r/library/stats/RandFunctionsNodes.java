@@ -58,7 +58,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
-import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_Double;
+import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_DoubleBase;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
@@ -67,7 +67,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
 /**
  * Contains infrastructure for R external functions implementing generation of a random value from
  * given random value distribution. To implement such external function, implement one of:
- * {@link RandFunction3_Double}, {@link RandFunction2_Double} or {@link RandFunction1_Double}.
+ * {@link RandFunction3_DoubleBase}, {@link RandFunction2_Double} or {@link RandFunction1_Double}.
  */
 public final class RandFunctionsNodes {
     private static final RDouble DUMMY_VECTOR = RDouble.valueOf(1);
@@ -111,14 +111,14 @@ public final class RandFunctionsNodes {
     /**
      * Executor node handles the validation, the loop over all vector elements, the creation of the
      * result vector, and similar. The random function is provided as implementation of
-     * {@link RandFunction3_Double}.
+     * {@link RandFunction3_DoubleBase}.
      */
     protected abstract static class RandFunctionExecutorBase extends RBaseNode {
 
-        protected final Function<Supplier<? extends RandFunction3_Double>, RandFunctionIterator> iteratorFactory;
-        protected final Supplier<? extends RandFunction3_Double> functionFactory;
+        protected final Function<Supplier<? extends RandFunction3_DoubleBase>, RandFunctionIterator> iteratorFactory;
+        protected final Supplier<? extends RandFunction3_DoubleBase> functionFactory;
 
-        protected RandFunctionExecutorBase(Function<Supplier<? extends RandFunction3_Double>, RandFunctionIterator> iteratorFactory, Supplier<? extends RandFunction3_Double> functionFactory) {
+        protected RandFunctionExecutorBase(Function<Supplier<? extends RandFunction3_DoubleBase>, RandFunctionIterator> iteratorFactory, Supplier<? extends RandFunction3_DoubleBase> functionFactory) {
             this.iteratorFactory = iteratorFactory;
             this.functionFactory = functionFactory;
         }
@@ -158,16 +158,16 @@ public final class RandFunctionsNodes {
 
     protected abstract static class RandFunctionIterator extends RBaseNodeWithWarnings {
 
-        protected final Supplier<? extends RandFunction3_Double> functionFactory;
+        protected final Supplier<? extends RandFunction3_DoubleBase> functionFactory;
         protected final BranchProfile nanResult = BranchProfile.create();
         protected final BranchProfile nan = BranchProfile.create();
         protected final LoopConditionProfile loopConditionProfile = LoopConditionProfile.createCountingProfile();
 
-        protected RandFunctionIterator(Supplier<? extends RandFunction3_Double> functionFactory) {
+        protected RandFunctionIterator(Supplier<? extends RandFunction3_DoubleBase> functionFactory) {
             this.functionFactory = functionFactory;
         }
 
-        protected final RandFunction3_Double createFunction() {
+        protected final RandFunction3_DoubleBase createFunction() {
             return functionFactory.get();
         }
 
@@ -187,13 +187,13 @@ public final class RandFunctionsNodes {
 
     protected abstract static class RandFunctionIntExecutorNode extends RandFunctionIterator {
 
-        protected RandFunctionIntExecutorNode(Supplier<? extends RandFunction3_Double> functionFactory) {
+        protected RandFunctionIntExecutorNode(Supplier<? extends RandFunction3_DoubleBase> functionFactory) {
             super(functionFactory);
         }
 
         @Specialization(guards = {"aAccess.supports(a)", "bAccess.supports(b)", "cAccess.supports(c)"})
         protected RAbstractIntVector cached(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
-                        @Cached("createFunction()") RandFunction3_Double function,
+                        @Cached("createFunction()") RandFunction3_DoubleBase function,
                         @Cached("a.access()") VectorAccess aAccess,
                         @Cached("b.access()") VectorAccess bAccess,
                         @Cached("c.access()") VectorAccess cAccess) {
@@ -232,20 +232,20 @@ public final class RandFunctionsNodes {
 
         @Specialization(replaces = "cached")
         protected RAbstractIntVector generic(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
-                        @Cached("createFunction()") RandFunction3_Double function) {
+                        @Cached("createFunction()") RandFunction3_DoubleBase function) {
             return cached(length, a, b, c, randProvider, function, a.slowPathAccess(), b.slowPathAccess(), c.slowPathAccess());
         }
     }
 
     protected abstract static class RandFunctionDoubleExecutorNode extends RandFunctionIterator {
 
-        protected RandFunctionDoubleExecutorNode(Supplier<? extends RandFunction3_Double> functionFactory) {
+        protected RandFunctionDoubleExecutorNode(Supplier<? extends RandFunction3_DoubleBase> functionFactory) {
             super(functionFactory);
         }
 
         @Specialization(guards = {"aAccess.supports(a)", "bAccess.supports(b)", "cAccess.supports(c)"})
         protected RAbstractDoubleVector cached(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
-                        @Cached("createFunction()") RandFunction3_Double function,
+                        @Cached("createFunction()") RandFunction3_DoubleBase function,
                         @Cached("a.access()") VectorAccess aAccess,
                         @Cached("b.access()") VectorAccess bAccess,
                         @Cached("c.access()") VectorAccess cAccess) {
@@ -282,7 +282,7 @@ public final class RandFunctionsNodes {
 
         @Specialization(replaces = "cached")
         protected RAbstractDoubleVector generic(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
-                        @Cached("createFunction()") RandFunction3_Double function) {
+                        @Cached("createFunction()") RandFunction3_DoubleBase function) {
             return cached(length, a, b, c, randProvider, function, a.slowPathAccess(), b.slowPathAccess(), c.slowPathAccess());
         }
 
@@ -295,12 +295,12 @@ public final class RandFunctionsNodes {
             this.inner = inner;
         }
 
-        public static RandFunction3Node createInt(Supplier<RandFunction3_Double> function) {
+        public static RandFunction3Node createInt(Supplier<RandFunction3_DoubleBase> function) {
             return RandFunction3NodeGen.create(RandFunctionExecutorBaseNodeGen.create(RandFunctionIntExecutorNodeGen::create, function));
         }
 
         // Note: for completeness of the API
-        public static RandFunction3Node createDouble(Supplier<RandFunction3_Double> function) {
+        public static RandFunction3Node createDouble(Supplier<RandFunction3_DoubleBase> function) {
             return RandFunction3NodeGen.create(RandFunctionExecutorBaseNodeGen.create(RandFunctionDoubleExecutorNodeGen::create, function));
         }
 

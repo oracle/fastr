@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2007, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,15 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 
 public class PTukey implements Function4_2 {
+
+    public static PTukey create() {
+        return new PTukey();
+    }
+
+    public static PTukey getUncached() {
+        return new PTukey();
+    }
+
     private static final int nlegq = 16;
     private static final int ihalfq = 8;
     private static final int nleg = 12;

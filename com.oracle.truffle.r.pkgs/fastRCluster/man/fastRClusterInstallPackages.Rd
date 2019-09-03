@@ -16,5 +16,7 @@ Invisible \code{NULL}
 Installs packages on the FastR engine
 }
 \examples{
-fastRClusterInstallPackages(c('rlang', 'ggplot2'), INSTALL_opts='--no-test-load')
+\donttest{
+fastRClusterInstallPackages(c('bmp'), INSTALL_opts='--no-test-load')
+}
 }

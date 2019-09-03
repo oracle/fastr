@@ -22,24 +22,25 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@GenerateUncached
 public abstract class IsObjectNode extends RBaseNode {
 
     public static IsObjectNode create() {
         return IsObjectNodeGen.create();
     }
 
-    @Child private GetClassAttributeNode getClassAttrNode = GetClassAttributeNodeGen.create();
-
     public abstract int executeObject(Object x);
 
     @Specialization
-    int isObject(RAttributable x) {
+    int isObject(RAttributable x,
+                    @Cached() GetClassAttributeNode getClassAttrNode) {
         return getClassAttrNode.isObject(x) ? 1 : 0;
     }
 

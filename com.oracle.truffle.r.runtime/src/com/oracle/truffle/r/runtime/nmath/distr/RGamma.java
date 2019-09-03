@@ -19,6 +19,8 @@
  */
 package com.oracle.truffle.r.runtime.nmath.distr;
 
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import static com.oracle.truffle.r.runtime.nmath.TOMS708.fabs;
 
 import com.oracle.truffle.r.runtime.nmath.RMath;
@@ -26,7 +28,8 @@ import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 
-public final class RGamma extends RandFunction2_Double {
+@GenerateUncached
+public abstract class RGamma extends RandFunction2_Double {
     private static final double sqrt32 = 5.656854;
     private static final double exp_m1 = 0.36787944117144232159; /* exp(-1) = 1/e */
 
@@ -50,8 +53,8 @@ public final class RGamma extends RandFunction2_Double {
     private static final double a6 = -0.1367177;
     private static final double a7 = 0.1233795;
 
-    @Override
-    public double execute(double a, double scale, RandomNumberProvider rand) {
+    @Specialization
+    public double exec(double a, double scale, RandomNumberProvider rand) {
 
         // TODO: state variables
         double aa = 0;
@@ -213,5 +216,13 @@ public final class RGamma extends RandFunction2_Double {
         } /* repeat .. until `t' is accepted */
         x = s + 0.5 * t;
         return scale * x * x;
+    }
+
+    public static RGamma create() {
+        return RGammaNodeGen.create();
+    }
+
+    public static RGamma getUncached() {
+        return RGammaNodeGen.getUncached();
     }
 }

@@ -26,6 +26,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.oracle.truffle.r.runtime.Collections.ArrayListInt;
+import com.oracle.truffle.r.runtime.Collections.ArrayListObj;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestCollections extends TestBase {
@@ -50,5 +51,89 @@ public class TestCollections extends TestBase {
         for (int i = 0; i < 5; i++) {
             Assert.assertEquals(i + 1, arr[i]);
         }
+    }
+
+    @Test
+    public void testArrayListObj() {
+        ArrayListObj<Integer> list = new ArrayListObj<>(2);
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        list.add(4);
+        Assert.assertEquals(4, list.size());
+        for (int i = 0; i < 4; i++) {
+            Assert.assertEquals(Integer.valueOf(i + 1), list.get(i));
+        }
+        list.add(5);
+        Assert.assertEquals(5, list.size());
+        for (int i = 0; i < 5; i++) {
+            Assert.assertEquals(Integer.valueOf(i + 1), list.get(i));
+        }
+        Object[] arr = list.toArray();
+        Assert.assertEquals(5, arr.length);
+        for (int i = 0; i < 5; i++) {
+            Assert.assertEquals(i + 1, arr[i]);
+        }
+    }
+
+    @Test
+    public void testArrayListObjSetAndRemove() {
+        ArrayListObj<Integer> list = new ArrayListObj<>(2);
+        list.add(33);
+        list.set(0, 1);
+        Assert.assertEquals(Integer.valueOf(1), list.get(0));
+        list.add(2);
+        list.remove(0);
+        Assert.assertEquals(1, list.size());
+        Assert.assertEquals(Integer.valueOf(2), list.get(0));
+    }
+
+    @Test
+    public void testArrayListObjPop() {
+        ArrayListObj<Integer> list = new ArrayListObj<>(2);
+
+        list.add(33);
+        list.add(44);
+        list.add(55);
+        list.pop();
+        Assert.assertEquals(2, list.size());
+        Assert.assertEquals(Integer.valueOf(33), list.get(0));
+        Assert.assertEquals(Integer.valueOf(44), list.get(1));
+
+        list.add(66);
+        Assert.assertEquals(3, list.size());
+        Assert.assertEquals(Integer.valueOf(33), list.get(0));
+        Assert.assertEquals(Integer.valueOf(44), list.get(1));
+        Assert.assertEquals(Integer.valueOf(66), list.get(2));
+
+        list.pop();
+        list.pop();
+        Assert.assertEquals(1, list.size());
+        Assert.assertEquals(Integer.valueOf(33), list.get(0));
+    }
+
+    @Test
+    public void testArrayListObjClear() {
+        ArrayListObj<Integer> list = new ArrayListObj<>(2);
+        list.add(33);
+        list.add(44);
+        list.add(55);
+        list.clear();
+        Assert.assertEquals(0, list.size());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testArrayListObjPopEmpty() {
+        ArrayListObj<Integer> list = new ArrayListObj<>(2);
+        list.add(33);
+        list.pop();
+        list.pop();
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void testArrayListObjIndexOutOfBounds() {
+        ArrayListObj<Integer> list = new ArrayListObj<>(2);
+        list.add(33);
+        list.get(1);
     }
 }

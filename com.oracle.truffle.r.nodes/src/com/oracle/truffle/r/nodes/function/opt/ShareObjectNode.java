@@ -26,6 +26,7 @@ import static com.oracle.truffle.api.nodes.NodeCost.NONE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -41,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
  * RSharingAttributeStorage.
  */
 @NodeInfo(cost = NONE)
+@GenerateUncached
 public abstract class ShareObjectNode extends Node {
 
     public abstract Object execute(Object obj);

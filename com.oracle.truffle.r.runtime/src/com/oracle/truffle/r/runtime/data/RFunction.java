@@ -95,22 +95,6 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
         return call.execute(this, arguments);
     }
 
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    void toNative() {
-        NativeDataAccess.asPointer(this);
-    }
-
     @Override
     public RType getRType() {
         // Note: GnuR distinguishes "builtins" and "specials" (BUILTINSXP vs SPECIALSXP). The later

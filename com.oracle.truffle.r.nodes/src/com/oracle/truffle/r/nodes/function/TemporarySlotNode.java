@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,12 @@ import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 public final class TemporarySlotNode extends Node {
 
-    private static final RFrameSlot[] defaultTempIdentifiers = new RFrameSlot[]{RFrameSlot.createTemp(true), RFrameSlot.createTemp(true), RFrameSlot.createTemp(true), RFrameSlot.createTemp(true)};
+    private static final RFrameSlot[] defaultTempIdentifiers = new RFrameSlot[]{
+                    RFrameSlot.createTemp("TemporarySlotNode0", true),
+                    RFrameSlot.createTemp("TemporarySlotNode1", true),
+                    RFrameSlot.createTemp("TemporarySlotNode2", true),
+                    RFrameSlot.createTemp("TemporarySlotNode3", true)
+    };
 
     @CompilationFinal private FrameSlot tempSlot;
     private int tempIdentifier;
@@ -52,7 +57,7 @@ public final class TemporarySlotNode extends Node {
                 // keep the complete loop in the slow path
                 do {
                     tempIdentifier++;
-                    RFrameSlot identifier = tempIdentifier < defaultTempIdentifiers.length ? defaultTempIdentifiers[tempIdentifier] : RFrameSlot.createTemp(true);
+                    RFrameSlot identifier = tempIdentifier < defaultTempIdentifiers.length ? defaultTempIdentifiers[tempIdentifier] : RFrameSlot.createTemp("TemporarySlotNode" + tempIdentifier, true);
                     tempSlot = slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), identifier, FrameSlotKind.Object);
                     if (frame.getObject(slot) == null) {
                         break;
