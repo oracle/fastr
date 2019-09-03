@@ -25,9 +25,14 @@ package com.oracle.truffle.r.runtime.ffi.interop;
 import static com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter.UNSAFE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 import sun.misc.Unsafe;
@@ -89,9 +94,28 @@ public final class NativeIntegerArray extends NativeArray<int[]> {
         return false;
     }
 
+    @Ignore
+    void writeArrayElement(long index, Object value) throws UnsupportedMessageException, UnsupportedTypeException, InvalidArrayIndexException {
+        InteropLibrary.getFactory().getUncached().writeArrayElement(this, index, value);
+    }
+
     @ExportMessage
-    void writeArrayElement(long index, Object value) {
-        write(RRuntime.interopArrayIndexToInt(index, this), (int) value);
+    static class WriteArrayElement {
+
+        @Specialization
+        static void withoutClosure(NativeIntegerArray arr, long index, Long value) {
+            arr.write(RRuntime.interopArrayIndexToInt(index, arr), value.intValue());
+        }
+
+        @Specialization
+        static void withClosure(NativeIntegerArray arr, long index, Integer value) {
+            arr.write(RRuntime.interopArrayIndexToInt(index, arr), value);
+        }
+
+        @Specialization
+        static void withClosure(NativeIntegerArray arr, long index, Double value) {
+            arr.write(RRuntime.interopArrayIndexToInt(index, arr), value.intValue());
+        }
     }
 
     int read(int index) {
