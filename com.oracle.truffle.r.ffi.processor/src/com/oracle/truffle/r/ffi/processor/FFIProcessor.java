@@ -274,9 +274,11 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.api.interop.InteropLibrary;\n");
         w.append("import com.oracle.truffle.api.library.ExportLibrary;\n");
         w.append("import com.oracle.truffle.api.library.ExportMessage;\n");
+        w.append("import com.oracle.truffle.api.nodes.ControlFlowException;\n");
         w.append("import com.oracle.truffle.api.dsl.Cached;\n");
         w.append("import com.oracle.truffle.api.profiles.ValueProfile;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI.HandleUpCallExceptionNode;\n");
+        w.append("import com.oracle.truffle.r.runtime.RError;\n");
         w.append("import com.oracle.truffle.r.runtime.context.RContext;\n");
         if (needsNode) {
             w.append("import ").append(nodeQualifiedClassName).append(";\n");
@@ -284,6 +286,7 @@ public final class FFIProcessor extends AbstractProcessor {
         if (needsFunction) {
             w.append("import ").append(functionQualifiedClassName).append(";\n");
         }
+        w.append("import com.oracle.truffle.api.profiles.BranchProfile;\n");
         if (needsCallTarget) {
             w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
             w.append("import com.oracle.truffle.api.frame.VirtualFrame;\n");
@@ -343,6 +346,8 @@ public final class FFIProcessor extends AbstractProcessor {
 
         w.append("                @Cached(\"createClassProfile()\") ValueProfile upCallProfile,\n");
         w.append("                @Cached(\"createClassProfile()\") ValueProfile ctxProfile,\n");
+        w.append("                @Cached BranchProfile controlFlowExBranch,\n");
+        w.append("                @Cached BranchProfile errorExBranch,\n");
         w.append("                @Cached(value = \"this.upCallsImpl.createHandleUpCallExceptionNode()\", uncached = \"this.upCallsImpl.getUncachedHandleUpCallExceptionNode()\") HandleUpCallExceptionNode handleExceptionNode");
         w.append(") {\n");
         w.append("\n");
@@ -409,16 +414,20 @@ public final class FFIProcessor extends AbstractProcessor {
                 w.append("            }\n");
             }
         }
+        w.append("        } catch (ControlFlowException ex) {\n");
+        w.append("            controlFlowExBranch.enter();\n");
+        w.append("            handleExceptionNode.execute(ex);\n");
+        appendCreateDummyResultObj(returnKind, w);
+        w.append("        } catch (RError ex) {\n");
+        w.append("            errorExBranch.enter();\n");
+        w.append("            handleExceptionNode.execute(ex);\n");
+        appendCreateDummyResultObj(returnKind, w);
         w.append("        } catch (Throwable ex) {\n");
         w.append("            CompilerDirectives.transferToInterpreter();\n");
         w.append("            assert reportException(ex);\n");
         w.append("            RFFILog.logException(ex);\n");
         w.append("            handleExceptionNode.execute(ex);\n");
-        if (returnKind.isPrimitive()) {
-            w.append("            resultRObj = -1;\n");
-        } else if (returnKind != TypeKind.VOID) {
-            w.append("            resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
-        }
+        appendCreateDummyResultObj(returnKind, w);
         w.append("        }\n");
         w.append("        rffiCtx.afterUpcall(" + canRunGc + ", impl.getRFFIType());\n");
         if (returnKind == TypeKind.VOID) {
@@ -513,6 +522,14 @@ public final class FFIProcessor extends AbstractProcessor {
         }
         w.append("}\n");
         w.close();
+    }
+
+    private static void appendCreateDummyResultObj(TypeKind returnKind, Writer w) throws IOException {
+        if (returnKind.isPrimitive()) {
+            w.append("            resultRObj = -1;\n");
+        } else if (returnKind != TypeKind.VOID) {
+            w.append("            resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
+        }
     }
 
     private void generateCallbacks(ExecutableElement[] methods) throws IOException {
