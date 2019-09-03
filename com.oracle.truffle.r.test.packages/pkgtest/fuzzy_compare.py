@@ -195,7 +195,8 @@ def _get_next_line(prompt, content, content_len, line_idx):
 
 
 def _ignore_whitespace(gnur_line, fastr_line):
-    return gnur_line.translate(None, ' \t') == fastr_line.translate(None, ' \t')
+    translate_table = {ord(' '): None, ord('\t'): None}
+    return gnur_line.translate(translate_table) == fastr_line.translate(translate_table)
 
 
 def _capture_prompt(lines, idx):

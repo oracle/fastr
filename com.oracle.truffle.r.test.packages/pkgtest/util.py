@@ -233,7 +233,7 @@ def computeApiChecksum(includeDir):
     for fileName in fileList:
         try:
             with open(fileName) as f:
-                m.update(f.read())
+                m.update(f.read().encode())
         except IOError as e:
             # Ignore errors on broken symlinks
             if not os.path.islink(fileName) or os.path.exists(fileName):

@@ -55,7 +55,7 @@ class FastRReleaseProject(FastRProjectAdapter):  # pylint: disable=too-many-ance
 
     def getResults(self):
         results = []
-        if os.environ.has_key('FASTR_RELEASE'):
+        if 'FASTR_RELEASE' in os.environ:
             for rdir in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
                 self._get_files(rdir, results)
             results.append(join(self.dir, 'LICENSE'))
@@ -77,7 +77,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
             targetFile.write(LauncherTemplate(open(source).read()).substitute(dictionary))
 
     def build(self):
-        if not os.environ.has_key('FASTR_RELEASE'):
+        if 'FASTR_RELEASE' not in os.environ:
             mx.log('FastR: set FASTR_RELEASE to update release project')
             return
         # copy the release directories
@@ -182,7 +182,7 @@ class FastRArchiveParticipant:
     def __opened__(self, arc, srcArc, services):
         pass
 
-    def __add__(self, arcname, contents):
+    def __add__(self, arcname, contents):  # pylint: disable=unexpected-special-method-signature
         return False
 
     def __addsrc__(self, arcname, contents):
