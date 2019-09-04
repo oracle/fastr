@@ -1847,118 +1847,100 @@ public class GrepFunctions {
         }
 
         /**
-         * Inverter that should be used when all argument is TRUE, more specifically the combination
-         * of the arguments should be: value=T, invert=T, all=T.
+         * Invert all values for all=TRUE. More specifically for value=T, invert=T, all=T.
          */
-        private static class AllInverter {
-            private HaystackDescriptor haystackDescriptor;
+        private static RList invertAllMatches(HaystackDescriptor haystackDescriptor) {
+            ArrayListObj<RRawVector> vectors = new ArrayListObj<>();
 
-            AllInverter(HaystackDescriptor haystackDescriptor) {
-                this.haystackDescriptor = haystackDescriptor;
+            if (haystackDescriptor.getRangesCount() == 1) {
+                Range range = haystackDescriptor.getRange(0);
+                if (range.isMatched()) {
+                    // Return list([], []).
+                    Object[] data = new Object[2];
+                    data[0] = RDataFactory.createEmptyRawVector();
+                    data[1] = RDataFactory.createEmptyRawVector();
+                    return RDataFactory.createList(data);
+                } else {
+                    // Return list(haystack).
+                    RList list = RDataFactory.createList(1);
+                    list.setDataAt(0, haystackDescriptor.getHaystack());
+                    return list;
+                }
             }
 
-            public RList invertAllValues() {
-                ArrayListObj<RRawVector> vectors = new ArrayListObj<>();
-
-                if (haystackDescriptor.getRangesCount() == 1) {
-                    Range range = haystackDescriptor.getRange(0);
-                    if (range.isMatched()) {
-                        // Return list([], []).
-                        Object[] data = new Object[2];
-                        data[0] = RDataFactory.createEmptyRawVector();
-                        data[1] = RDataFactory.createEmptyRawVector();
-                        return RDataFactory.createList(data);
-                    } else {
-                        // Return list(haystack).
-                        RList list = RDataFactory.createList(1);
-                        list.setDataAt(0, haystackDescriptor.getHaystack());
-                        return list;
-                    }
+            for (int i = 0; i < haystackDescriptor.getRangesCount(); i++) {
+                Range range = haystackDescriptor.getRange(i);
+                Range previousRange = null;
+                if (i > 0) {
+                    previousRange = haystackDescriptor.getRange(i - 1);
                 }
 
-                for (int i = 0; i < haystackDescriptor.getRangesCount(); i++) {
-                    Range range = haystackDescriptor.getRange(i);
-                    Range previousRange = null;
-                    if (i > 0) {
-                        previousRange = haystackDescriptor.getRange(i - 1);
-                    }
-
-                    if (previousRange != null) {
-                        if (range.isMatched() && previousRange.isMatched()) {
-                            vectors.add(RDataFactory.createEmptyRawVector());
-                        }
-                    }
-
-                    if (isRangeFirstInHaystack(range) && range.isMatched() ||
-                                    isRangeLastInHaystack(range) && range.isMatched()) {
+                if (previousRange != null) {
+                    if (range.isMatched() && previousRange.isMatched()) {
                         vectors.add(RDataFactory.createEmptyRawVector());
                     }
-
-                    if (range.isUnmatched()) {
-                        vectors.add(constructVectorFromRange(range));
-                    }
                 }
 
-                Object[] data = vectors.toArray();
-                return RDataFactory.createList(data);
-            }
-
-            private RRawVector constructVectorFromRange(Range range) {
-                byte[] data = new byte[range.size()];
-                for (int idx = range.fromIdx, dataIdx = 0; idx < range.toIdx; idx++, dataIdx++) {
-                    data[dataIdx] = haystackDescriptor.getHaystack().getRawDataAt(idx);
+                if (isRangeFirstInHaystack(range) && range.isMatched() ||
+                                isRangeLastInHaystack(range, haystackDescriptor) && range.isMatched()) {
+                    vectors.add(RDataFactory.createEmptyRawVector());
                 }
-                return RDataFactory.createRawVector(data);
+
+                if (range.isUnmatched()) {
+                    vectors.add(constructVectorFromRange(range, haystackDescriptor));
+                }
             }
 
-            private boolean isRangeFirstInHaystack(Range range) {
-                return range.getFromIdx() == 0;
-            }
-
-            private boolean isRangeLastInHaystack(Range range) {
-                return range.getToIdx() >= haystackDescriptor.getHaystack().getLength();
-            }
+            Object[] data = vectors.toArray();
+            return RDataFactory.createList(data);
         }
 
         /**
-         * Inverter that should be used when all argument is FALSE, more specifically the
-         * combination of the arguments should be: value=T, invert=T, all=F.
+         * Invert all values for all=FALSE. More specifically for value=T, invert=T, all=F.
          */
-        private static class FirstInverter {
-            private HaystackDescriptor haystackDescriptor;
-
-            FirstInverter(HaystackDescriptor haystackDescriptor) {
-                this.haystackDescriptor = haystackDescriptor;
-            }
-
-            public RRawVector invertAllValues() {
-                final RRawVector haystack = haystackDescriptor.getHaystack();
-                byte[] unmatchedData = new byte[haystack.getLength()];
-                int unmatchedDataIdx = 0;
-                for (Range range : haystackDescriptor) {
-                    if (range.isUnmatched()) {
-                        for (int i = range.getFromIdx(); i < range.getToIdx(); i++) {
-                            unmatchedData[unmatchedDataIdx++] = haystack.getRawDataAt(i);
-                        }
+        private static RRawVector invertFirstMatch(HaystackDescriptor haystackDescriptor) {
+            final RRawVector haystack = haystackDescriptor.getHaystack();
+            byte[] unmatchedData = new byte[haystack.getLength()];
+            int unmatchedDataIdx = 0;
+            for (Range range : haystackDescriptor) {
+                if (range.isUnmatched()) {
+                    for (int i = range.getFromIdx(); i < range.getToIdx(); i++) {
+                        unmatchedData[unmatchedDataIdx++] = haystack.getRawDataAt(i);
                     }
                 }
-
-                byte[] unmatchedDataFit = Arrays.copyOf(unmatchedData, unmatchedDataIdx);
-                return RDataFactory.createRawVector(unmatchedDataFit);
             }
+
+            byte[] unmatchedDataFit = Arrays.copyOf(unmatchedData, unmatchedDataIdx);
+            return RDataFactory.createRawVector(unmatchedDataFit);
         }
 
-        private HaystackDescriptor findFirstOccurrence(RRawVector pattern, RRawVector rawVector, int offset) {
+        private static boolean isRangeFirstInHaystack(Range range) {
+            return range.getFromIdx() == 0;
+        }
+
+        private static boolean isRangeLastInHaystack(Range range, HaystackDescriptor haystackDescriptor) {
+            return range.getToIdx() >= haystackDescriptor.getHaystack().getLength();
+        }
+
+        private static RRawVector constructVectorFromRange(Range range, HaystackDescriptor haystackDescriptor) {
+            byte[] data = new byte[range.size()];
+            for (int idx = range.fromIdx, dataIdx = 0; idx < range.toIdx; idx++, dataIdx++) {
+                data[dataIdx] = haystackDescriptor.getHaystack().getRawDataAt(idx);
+            }
+            return RDataFactory.createRawVector(data);
+        }
+
+        private static HaystackDescriptor findFirstOccurrence(RRawVector pattern, RRawVector rawVector, int offset) {
             FixedPatternFinder patternFinder = new FixedPatternFinder(pattern, rawVector, offset);
             return patternFinder.findFirst();
         }
 
-        private HaystackDescriptor findAllOccurrences(RRawVector pattern, RRawVector rawVector, int offset) {
+        private static HaystackDescriptor findAllOccurrences(RRawVector pattern, RRawVector rawVector, int offset) {
             FixedPatternFinder patternFinder = new FixedPatternFinder(pattern, rawVector, offset);
             return patternFinder.findAll();
         }
 
-        private Object createEmptyReturnValue(boolean valueArgument, boolean allArgument) {
+        private static Object createEmptyReturnValue(boolean valueArgument, boolean allArgument) {
             if (valueArgument && allArgument) {
                 return RDataFactory.createList();
             } else if (valueArgument && !allArgument) {
@@ -1968,7 +1950,7 @@ public class GrepFunctions {
             }
         }
 
-        private RIntVector convertMatchedRangesToRIndices(HaystackDescriptor haystackDescriptor) {
+        private static RIntVector convertMatchedRangesToRIndices(HaystackDescriptor haystackDescriptor) {
             int[] rVectorIndices = new int[haystackDescriptor.getMatchedRangesCount()];
             int vectorIdx = 0;
             for (Range range : haystackDescriptor) {
@@ -1979,7 +1961,7 @@ public class GrepFunctions {
             return RDataFactory.createIntVector(rVectorIndices, true);
         }
 
-        private RIntVector convertFirstMatchedRangeToRIndex(HaystackDescriptor haystackDescriptor) {
+        private static RIntVector convertFirstMatchedRangeToRIndex(HaystackDescriptor haystackDescriptor) {
             Range firstMatchedRange = null;
             for (Range range : haystackDescriptor) {
                 if (range.isMatched()) {
@@ -2011,9 +1993,7 @@ public class GrepFunctions {
                 if (value) {
                     // Return list(pattern, pattern, ...)
                     Object[] data = new Object[matchedRangesCount];
-                    for (int i = 0; i < matchedRangesCount; i++) {
-                        data[i] = pattern;
-                    }
+                    Arrays.fill(data, pattern);
                     return RDataFactory.createList(data);
                 } else {
                     return convertMatchedRangesToRIndices(haystackDescriptor);
@@ -2039,11 +2019,9 @@ public class GrepFunctions {
             }
 
             if (all) {
-                AllInverter inverter = new AllInverter(haystackDescriptor);
-                return inverter.invertAllValues();
+                return invertAllMatches(haystackDescriptor);
             } else {
-                FirstInverter inverter = new FirstInverter(haystackDescriptor);
-                return inverter.invertAllValues();
+                return invertFirstMatch(haystackDescriptor);
             }
         }
 

@@ -171,14 +171,14 @@ public class TestBuiltin_grepRaw extends TestBase {
         Assert.assertEquals(1, haystackDescriptor.getMatchedRangesCount());
     }
 
-    private HaystackDescriptor findFirst(byte[] patternData, byte[] haystackData) {
+    private static HaystackDescriptor findFirst(byte[] patternData, byte[] haystackData) {
         RRawVector haystack = RDataFactory.createRawVector(haystackData);
         RRawVector pattern = RDataFactory.createRawVector(patternData);
         FixedPatternFinder patternFinder = new FixedPatternFinder(pattern, haystack);
         return patternFinder.findFirst();
     }
 
-    private HaystackDescriptor findAll(byte[] patternData, byte[] haystackData) {
+    private static HaystackDescriptor findAll(byte[] patternData, byte[] haystackData) {
         RRawVector haystack = RDataFactory.createRawVector(haystackData);
         RRawVector pattern = RDataFactory.createRawVector(patternData);
         FixedPatternFinder patternFinder = new FixedPatternFinder(pattern, haystack);

@@ -7,6 +7,10 @@ Bug fixes:
 * promise with the empty value is handled correctly in 'missing' #87
 * `scan` handles non-default value of `nmax` argument
 
+Added missing R builtins and C API:
+
+* `grepRaw` (only for `fixed=T`)
+
 # 19.2.0
 
 New features:
