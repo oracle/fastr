@@ -30,7 +30,6 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestExternal_influence extends TestBase {
     @Test
     public void testInfluence() {
-        // TODO: GR-17331, segfault
-        assertEval(Ignored.NewRVersionMigration, "lm.influence(lm(sr ~ pop15 + pop75 + dpi + ddpi, data = LifeCycleSavings[1:10,]))");
+        assertEval("lm.influence(lm(sr ~ pop15 + pop75 + dpi + ddpi, data = LifeCycleSavings[1:10,]))");
     }
 }
