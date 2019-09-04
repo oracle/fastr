@@ -102,6 +102,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_forceAndCall, 3),
         CALLDEF(test_constant_types, 0),
         CALLDEF(test_sort_complex, 1),
+        CALLDEF(testMultiSetProtection, 0),
         #include "init_api.h"
         {NULL, NULL, 0}
 };

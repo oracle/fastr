@@ -954,3 +954,56 @@ SEXP test_sort_complex(SEXP complexVec) {
     R_csort(cpl, LENGTH(complexVec));
     return complexVec;
 }
+
+
+SEXP testMultiSetProtection() {
+	SEXP mset;
+    int npreserved;
+    SEXP v1, v2;
+
+    PROTECT(mset = R_NewPreciousMSet(1));
+    
+	R_PreserveInMSet(R_NilValue, mset);
+    npreserved = INTEGER(CDR(mset))[0];
+    if (npreserved != 0) {
+		UNPROTECT(1);
+		Rf_error("NULL is not stored in mset");
+		return R_NilValue;
+    }
+
+    R_PreserveInMSet(v1 = allocVector(INTSXP, 1), mset);
+    npreserved = INTEGER(CDR(mset))[0];
+    if (npreserved != 1) {
+		UNPROTECT(1);
+		Rf_error("The first vector must get stored in mset");
+		return R_NilValue;
+    }    
+
+    R_PreserveInMSet(v2 = allocVector(INTSXP, 1), mset);
+    npreserved = INTEGER(CDR(mset))[0];
+    if (npreserved != 2) {
+		UNPROTECT(1);
+		Rf_error("The second vector must get stored in mset");
+		return R_NilValue;
+    }    
+    
+    R_ReleaseFromMSet(v1, mset);
+    npreserved = INTEGER(CDR(mset))[0];
+    if (npreserved != 1) {
+		UNPROTECT(1);
+		Rf_error("The first vector must get removed from mset");
+		return R_NilValue;
+    }    
+    
+	R_ReleaseMSet(mset, 0);
+    npreserved = INTEGER(CDR(mset))[0];
+    if (npreserved != 0) {
+		UNPROTECT(1);
+		Rf_error("mset must be empty");
+		return R_NilValue;
+    }    
+
+	UNPROTECT(1);
+	
+	return R_NilValue;
+}

@@ -146,3 +146,5 @@ extern SEXP shareStringElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex);
 extern SEXP shareListElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex);
 
 extern SEXP test_sort_complex(SEXP complexVec);
+
+extern SEXP testMultiSetProtection();
