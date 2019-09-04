@@ -51,23 +51,22 @@ import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSuicide;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.CustomNativeMirror;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLCloseRootNode;
@@ -181,7 +180,7 @@ public class DLL {
      * for FastR.
      */
     @ExportLibrary(InteropLibrary.class)
-    public static class DotSymbol extends RObject implements RTruffleObject {
+    public static class DotSymbol extends RBaseObject {
         public final String name;
         public final SymbolHandle fun;
         public final int numArgs;
@@ -192,21 +191,11 @@ public class DLL {
             this.numArgs = numArgs;
         }
 
-        @SuppressWarnings("static-method")
-        @ExportMessage
-        public boolean isPointer() {
-            return true;
+        @Override
+        public RType getRType() {
+            throw RInternalError.shouldNotReachHere();
         }
 
-        @ExportMessage
-        public long asPointer() {
-            return NativeDataAccess.asPointer(this);
-        }
-
-        @ExportMessage
-        public void toNative() {
-            NativeDataAccess.asPointer(this);
-        }
     }
 
     public static class RegisteredNativeSymbol {
@@ -230,7 +219,7 @@ public class DLL {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    public static final class DLLInfo extends RObject implements RTruffleObject, CustomNativeMirror {
+    public static final class DLLInfo extends RBaseObject implements CustomNativeMirror {
         private static final RStringVector NAMES = RDataFactory.createStringVector(new String[]{"name", "path", "dynamicLookup", "handle", "info"}, RDataFactory.COMPLETE_VECTOR);
         public static final String DLL_INFO_REFERENCE = "DLLInfoReference";
         private static final RStringVector INFO_REFERENCE_CLASS = RDataFactory.createStringVectorFromScalar(DLL_INFO_REFERENCE);
@@ -271,20 +260,9 @@ public class DLL {
             this.syntheticHandle = syntheticHandle;
         }
 
-        @SuppressWarnings("static-method")
-        @ExportMessage
-        public boolean isPointer() {
-            return true;
-        }
-
-        @ExportMessage
-        public long asPointer() {
-            return NativeDataAccess.asPointer(this);
-        }
-
-        @ExportMessage
-        public void toNative() {
-            NativeDataAccess.asPointer(this);
+        @Override
+        public RType getRType() {
+            throw RInternalError.shouldNotReachHere();
         }
 
         @SuppressWarnings("static-method")

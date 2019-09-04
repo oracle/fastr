@@ -56,10 +56,6 @@ public abstract class NativeStringCastNode extends Node {
         return s;
     }
 
-    protected boolean isPointerNode(TruffleObject s, InteropLibrary interop) {
-        return interop.isPointer(s);
-    }
-
     @Specialization(guards = "interop.isPointer(s)", limit = "getInteropLibraryCacheSize()")
     String handlePointerAddress(TruffleObject s,
                     @CachedLibrary("s") InteropLibrary interop) {

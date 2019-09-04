@@ -65,12 +65,12 @@ Typically special initialization may be required on the initialization of the in
 
 # Sharing data structures from Java with the native code
 
-Every subclass of `RObject` abstract class, notably `RVector<ArrayT>` subclasses, may have a so called `NativeMirror` object associated with it.
-This object is created once the `RObject` is passed to the native code. Initially FastR assigns a unique number (ID) to such `RObject` and keeps this
+Every subclass of `RBaseObject` abstract class, notably `RVector<ArrayT>` subclasses, may have a so called `NativeMirror` object associated with it.
+This object is created once the `RBaseObject` is passed to the native code. Initially FastR assigns a unique number (ID) to such `RBaseObject` and keeps this
 ID in the `NativeMirror` object, the ID is then passed to the native code as opaque pointer. The native code then may call R-API function,
-e.g. `Rf_eval` passing it an opaque pointer, this transitions back to Java and FastR finds `RObject` corresponding to the value stored in the
-opaque pointer and passes this `RObject` the FastR implementation of `Rf_eval` in `JavaUpCallsRFFIImpl#Rf_eval`. Note that any opaque pointer can only
-be obtained using R-API function, e.g. `allocVec`, which up-calls to Java and FastR creates `RObject`, corresponding `NativeMirror` with ID and
+e.g. `Rf_eval` passing it an opaque pointer, this transitions back to Java and FastR finds `RBaseObject` corresponding to the value stored in the
+opaque pointer and passes this `RBaseObject` the FastR implementation of `Rf_eval` in `JavaUpCallsRFFIImpl#Rf_eval`. Note that any opaque pointer can only
+be obtained using R-API function, e.g. `allocVec`, which up-calls to Java and FastR creates `RBaseObject`, corresponding `NativeMirror` with ID and
 passes that as the opaque pointer back to the native code.
 
 Every subclass of `RVector<ArrayT>` can be materialized into native memory. In such case, its `data` field that normally holds a reference to

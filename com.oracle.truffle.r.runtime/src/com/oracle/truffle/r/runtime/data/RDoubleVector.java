@@ -59,7 +59,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     static RDoubleVector fromNative(long address, int length) {
         RDoubleVector result = new RDoubleVector();
-        NativeDataAccess.asPointer(result);
+        NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
         assert result.data == null;
         return result;

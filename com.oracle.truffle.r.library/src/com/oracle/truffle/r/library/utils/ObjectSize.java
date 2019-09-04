@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,11 +28,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RObjectSize;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 /**
- * Similarly to GNU R's version, this is approximate and based, for {@link RTypedValue} instances on
+ * Similarly to GNU R's version, this is approximate and based, for {@link RBaseObject} instances on
  * {@link RObjectSize#getObjectSize}. As per GNU R the AST size for a closure is included. TODO AST
  * size not included owing to problems sizing it automatically.
  */

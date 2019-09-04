@@ -62,7 +62,11 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         // TODO: handle encoding properly
         long address;
         try {
-            address = InteropLibrary.getFactory().getUncached().asPointer(bytes);
+            InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+            if (!interop.isPointer(bytes)) {
+                interop.toNative(bytes);
+            }
+            address = interop.asPointer(bytes);
         } catch (UnsupportedMessageException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }

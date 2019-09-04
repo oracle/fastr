@@ -36,8 +36,8 @@ import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 
 /**
  * Holds per RContext specific state of the RFFI. RFFI implementation agnostic data and methods are
@@ -68,7 +68,7 @@ public abstract class RFFIContext extends RFFI {
          * FastR equivalent of GNUR's special dedicated global list that is GC root and so any
          * vectors added to it will be guaranteed to be preserved.
          */
-        public final IdentityHashMap<RObject, AtomicInteger> preserveList = new IdentityHashMap<>();
+        public final IdentityHashMap<RBaseObject, AtomicInteger> preserveList = new IdentityHashMap<>();
 
         public final WeakHashMap<Object, Set<Object>> protectedChildren = new WeakHashMap<>();
         /**
@@ -76,7 +76,7 @@ public abstract class RFFIContext extends RFFI {
          * this stack do necessarily not have to be {@linke #registerReferenceUsedInNative}, but
          * once popped off, they must be put into that list.
          */
-        public final Collections.ArrayListObj<RObject> protectStack = new Collections.ArrayListObj<>(32);
+        public final Collections.ArrayListObj<RBaseObject> protectStack = new Collections.ArrayListObj<>(32);
 
         public MaterializedFrame currentDowncallFrame = null;
     }

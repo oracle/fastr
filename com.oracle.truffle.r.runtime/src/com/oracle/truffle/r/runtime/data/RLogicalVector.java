@@ -59,7 +59,7 @@ public final class RLogicalVector extends RAbstractLogicalVector implements RMat
 
     static RLogicalVector fromNative(long address, int length) {
         RLogicalVector result = new RLogicalVector();
-        NativeDataAccess.asPointer(result);
+        NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
         return result;
     }

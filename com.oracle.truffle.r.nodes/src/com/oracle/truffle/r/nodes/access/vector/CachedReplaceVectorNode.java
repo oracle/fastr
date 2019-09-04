@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -59,7 +60,6 @@ import com.oracle.truffle.r.runtime.data.RScalarList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -413,8 +413,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getResultNamesNode = insert(GetNamesAttributeNode.create());
         }
-        RTypedValue originalNames = getResultNamesNode.getNames(resultVector);
-        RTypedValue names = originalNames;
+        RBaseObject originalNames = getResultNamesNode.getNames(resultVector);
+        RBaseObject names = originalNames;
         if (names == null) {
             String[] emptyVector = new String[resultVector.getLength()];
             Arrays.fill(emptyVector, "");

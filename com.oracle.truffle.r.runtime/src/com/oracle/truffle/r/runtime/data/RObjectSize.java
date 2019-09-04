@@ -47,7 +47,7 @@ import sun.misc.Unsafe;
 
 /**
  * Support for the sizing of the objects that flow through the interpreter, i.e., mostly
- * {@link RTypedValue}, but also including scalar types like {@code String}.
+ * {@link RBaseObject}, but also including scalar types like {@code String}.
  */
 public class RObjectSize {
     public static final int INT_SIZE = 4;
@@ -127,7 +127,7 @@ public class RObjectSize {
 
     private static long getObjectSizeImpl(Object obj) {
         // Note: if this gets too complex, it may be replaced by a system of providers or getSize
-        // abstract method on RTypedValue. For now, we do not want to add yet another abstract
+        // abstract method on RBaseObject. For now, we do not want to add yet another abstract
         // method to already complicated hierarchy and providers would only mean OO version of the
         // same code below.
         if (obj == null) {
@@ -143,8 +143,8 @@ public class RObjectSize {
         } else if (obj instanceof String) {
             return CHAR_SIZE * ((String) obj).length();
         }
-        // Check that we have RTypedValue:
-        if (!(obj instanceof RTypedValue)) {
+        // Check that we have RBaseObject:
+        if (!(obj instanceof RBaseObject)) {
             // We ignore objects from other languages for now
             if (!(obj instanceof TruffleObject)) {
                 reportWarning(obj);
@@ -158,7 +158,7 @@ public class RObjectSize {
                 attributesSize = OBJECT_HEADER_SIZE + attrs.size() * OBJECT_SIZE;
             }
         }
-        // Individual RTypedValues:
+        // Individual RBaseObjects:
         if (obj instanceof RPromise || obj instanceof REnvironment || obj instanceof RExternalPtr || obj instanceof RFunction || obj instanceof RSymbol || obj instanceof RPairList ||
                         obj instanceof RS4Object) {
             // promise: there is no value allocated yet, we may use the size of the closure

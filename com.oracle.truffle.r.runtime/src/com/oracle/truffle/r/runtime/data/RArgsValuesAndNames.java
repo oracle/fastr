@@ -35,7 +35,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RFunction.ExplicitCall;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -45,7 +44,7 @@ import com.oracle.truffle.r.runtime.interop.R2Foreign;
  * A simple wrapper class for passing the ... argument through RArguments
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RArgsValuesAndNames extends RObject implements RTypedValue {
+public final class RArgsValuesAndNames extends RBaseObject {
 
     /**
      * Array of arguments; semantics have to be specified by child classes.
@@ -154,22 +153,6 @@ public final class RArgsValuesAndNames extends RObject implements RTypedValue {
         throw UnsupportedMessageException.create();
     }
 
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    void toNative() {
-        NativeDataAccess.asPointer(this);
-    }
-
     private int getMemberIndex(String member) {
         ArgumentsSignature sig = getSignature();
         String[] names = sig.getNames();
@@ -187,18 +170,6 @@ public final class RArgsValuesAndNames extends RObject implements RTypedValue {
     @Override
     public RType getRType() {
         return RType.Dots;
-    }
-
-    @Override
-    public int getTypedValueInfo() {
-        // RArgsValuesAndNames can get serialized under specific circumstances (ggplot2 does that)
-        // and getTypedValueInfo() must be defined for this to work.
-        return 0;
-    }
-
-    @Override
-    public void setTypedValueInfo(int value) {
-        throw RInternalError.shouldNotReachHere();
     }
 
     public ArgumentsSignature getSignature() {

@@ -22,62 +22,104 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.ToNativeNode;
 
+/**
+ * R values that are publicly flowing through the interpreter. Be aware that also the primitive
+ * values {@link Integer}, {@link Double}, {@link Byte} and {@link String} flow but are not
+ * implementing this interface.
+ */
 @ExportLibrary(InteropLibrary.class)
-public abstract class RBaseObject extends RObject implements RTypedValue {
+public abstract class RBaseObject implements RTruffleObject {
+
+    // mask values are the same as in GNU R
+    // as is the layout of data (but it's never exposed so it does not matter for correctness)
+    public static final int S4_MASK = 1 << 4;
+    public static final int GP_BITS_MASK_SHIFT = 8;
+    public static final int GP_BITS_MASK = 0xFFFF << GP_BITS_MASK_SHIFT;
+
+    public static final int S4_MASK_SHIFTED = 1 << (4 + GP_BITS_MASK_SHIFT);
+    public static final int ASCII_MASK_SHIFTED = 1 << 14;
+
+    public static final int BYTES_MASK = 1 << 1;
+    public static final int LATIN1_MASK = 1 << 2;
+    public static final int UTF8_MASK = 1 << 3;
+    public static final int CACHED_MASK = 1 << 5;
+    public static final int ASCII_MASK = 1 << 6;
 
     private int typedValueInfo;
 
+    private Object nativeMirror;
+
     @SuppressWarnings("static-method")
     @ExportMessage
-    public boolean isPointer() {
-        return true;
+    public final boolean isPointer() {
+        return NativeDataAccess.isPointer(this);
     }
 
     @ExportMessage
-    public long asPointer() {
+    public final long asPointer() {
         return NativeDataAccess.asPointer(this);
     }
 
     @ExportMessage
-    public void toNative() {
-        NativeDataAccess.asPointer(this);
+    public final void toNative(@Cached() ToNativeNode toNative) {
+        toNative.execute(this);
     }
 
-    @Override
+    public abstract RType getRType();
+
+    public final void setNativeMirror(Object mirror) {
+        this.nativeMirror = mirror;
+    }
+
+    public final Object getNativeMirror() {
+        return nativeMirror;
+    }
+
     public final int getTypedValueInfo() {
         return typedValueInfo;
     }
 
-    @Override
     public final void setTypedValueInfo(int value) {
+        // TODO
+        // RArgsValuesAndNames can get serialized under specific circumstances (ggplot2 does that)
+        // and getTypedValueInfo() must be defined for this to work,
+        // but should setTypedValueInfo(RArgsValuesAndNames) work as well
+        if (this instanceof RArgsValuesAndNames) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        // TODO This gets called from RSerialize, should accept a non 0 value?
+        if (this instanceof RPromise) {
+            // do nothing
+            return;
+        }
         typedValueInfo = value;
     }
 
-    @Override
     public final int getGPBits() {
         return (getTypedValueInfo() & GP_BITS_MASK) >>> GP_BITS_MASK_SHIFT;
     }
 
-    @Override
     public final void setGPBits(int gpbits) {
         setTypedValueInfo((getTypedValueInfo() & ~GP_BITS_MASK) | (gpbits << GP_BITS_MASK_SHIFT));
     }
 
-    @Override
     public final boolean isS4() {
         return (getTypedValueInfo() & S4_MASK_SHIFTED) != 0;
     }
 
-    @Override
     public final void setS4() {
         setTypedValueInfo(getTypedValueInfo() | S4_MASK_SHIFTED);
     }
 
-    @Override
     public final void unsetS4() {
         setTypedValueInfo(getTypedValueInfo() & ~S4_MASK_SHIFTED);
     }

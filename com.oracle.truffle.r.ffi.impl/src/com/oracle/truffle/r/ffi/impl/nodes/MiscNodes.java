@@ -69,6 +69,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -79,7 +80,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -536,7 +536,7 @@ public final class MiscNodes {
         }
 
         @Specialization
-        protected Object doIt(RTypedValue target, int flag,
+        protected Object doIt(RBaseObject target, int flag,
                         @Cached() GetClassAttributeNode getClassAttributeNode) {
             // Note: "OBJECT" is an internal flag in SEXP that internal dispatching (in FastR
             // INTERNAL_DISPATCH builtins) is checking first before even checking the attributes

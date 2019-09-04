@@ -59,10 +59,10 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -107,7 +107,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
 
     @Override
     protected boolean isObjectOfLanguage(Object object) {
-        return object instanceof RTypedValue;
+        return object instanceof RBaseObject;
     }
 
     @Override
@@ -220,8 +220,8 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
         }
         // Wrap scalars Integer, Double, etc.
         unwrappedValue = RRuntime.convertScalarVectors(unwrappedValue);
-        if (unwrappedValue instanceof RTypedValue) {
-            return ((RTypedValue) unwrappedValue).getRType().getName();
+        if (unwrappedValue instanceof RBaseObject) {
+            return ((RBaseObject) unwrappedValue).getRType().getName();
         } else {
             return "Object";
         }

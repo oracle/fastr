@@ -47,13 +47,13 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -214,7 +214,7 @@ public final class CoerceNodes {
         }
 
         @Specialization(guards = "value.isS4()")
-        Object doS4Object(@SuppressWarnings("unused") RTypedValue value, @SuppressWarnings("unused") int mode) {
+        Object doS4Object(@SuppressWarnings("unused") RBaseObject value, @SuppressWarnings("unused") int mode) {
             throw RError.nyi(RError.NO_CALLER, "Rf_coerceVector for S4 objects.");
         }
 
@@ -249,7 +249,7 @@ public final class CoerceNodes {
         }
 
         static boolean isS4Object(Object obj) {
-            return obj instanceof RTypedValue && ((RTypedValue) obj).isS4();
+            return obj instanceof RBaseObject && ((RBaseObject) obj).isS4();
         }
 
         static boolean isNotList(Object obj) {
@@ -319,7 +319,7 @@ public final class CoerceNodes {
                 if (value == null) {
                     return "null";
                 }
-                return value instanceof RTypedValue ? ((RTypedValue) value).getRType().getName() : value.getClass().getSimpleName();
+                return value instanceof RBaseObject ? ((RBaseObject) value).getRType().getName() : value.getClass().getSimpleName();
             }
         }
 

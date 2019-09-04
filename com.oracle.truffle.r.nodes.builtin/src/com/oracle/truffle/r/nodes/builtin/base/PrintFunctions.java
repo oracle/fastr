@@ -46,8 +46,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 public class PrintFunctions {
 
@@ -88,7 +88,7 @@ public class PrintFunctions {
         }
 
         @Specialization(guards = "isS4(o)")
-        protected Object printDefaultS4(@SuppressWarnings("unused") VirtualFrame frame, RTypedValue o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max,
+        protected Object printDefaultS4(@SuppressWarnings("unused") VirtualFrame frame, RBaseObject o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max,
                         boolean useSource, boolean noOpt,
                         @Cached("createShowFunction(frame)") RFunction showFunction) {
             if (noOpt) {

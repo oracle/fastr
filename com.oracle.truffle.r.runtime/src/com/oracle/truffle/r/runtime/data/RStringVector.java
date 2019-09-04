@@ -279,7 +279,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
 
     static RStringVector fromNative(long address, int length) {
         RStringVector result = new RStringVector();
-        NativeDataAccess.asPointer(result);
+        NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
         return result;
     }

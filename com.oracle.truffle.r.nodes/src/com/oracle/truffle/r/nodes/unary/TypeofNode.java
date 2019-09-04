@@ -31,8 +31,8 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 @ImportStatic(DSLConfig.class)
 public abstract class TypeofNode extends UnaryNode {
@@ -78,21 +78,21 @@ public abstract class TypeofNode extends UnaryNode {
 
     @Specialization(guards = {"operand.getClass() == cachedClass"}, limit = "getCacheSize(NUMBER_OF_CACHED_CLASSES)")
     protected static RType doCachedTyped(Object operand,
-                    @Cached("getTypedValueClass(operand)") Class<? extends RTypedValue> cachedClass) {
+                    @Cached("getTypedValueClass(operand)") Class<? extends RBaseObject> cachedClass) {
         return cachedClass.cast(operand).getRType();
     }
 
-    protected static Class<? extends RTypedValue> getTypedValueClass(Object operand) {
+    protected static Class<? extends RBaseObject> getTypedValueClass(Object operand) {
         CompilerAsserts.neverPartOfCompilation();
-        if (operand instanceof RTypedValue) {
-            return ((RTypedValue) operand).getClass();
+        if (operand instanceof RBaseObject) {
+            return ((RBaseObject) operand).getClass();
         } else {
             throw new AssertionError("Invalid untyped value " + operand.getClass() + ".");
         }
     }
 
     @Specialization(replaces = {"doCachedTyped"})
-    protected static RType doGenericTyped(RTypedValue operand) {
+    protected static RType doGenericTyped(RBaseObject operand) {
         return operand.getRType();
     }
 
@@ -102,7 +102,7 @@ public abstract class TypeofNode extends UnaryNode {
 
     public static RType getTypeof(Object operand) {
         CompilerAsserts.neverPartOfCompilation();
-        return ((RTypedValue) RRuntime.convertScalarVectors(operand)).getRType();
+        return ((RBaseObject) RRuntime.convertScalarVectors(operand)).getRType();
     }
 
     public static TypeofNode create() {
