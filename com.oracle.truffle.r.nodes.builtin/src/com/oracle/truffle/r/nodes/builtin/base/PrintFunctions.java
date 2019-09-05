@@ -79,13 +79,7 @@ public class PrintFunctions {
 
         @Specialization(guards = "!isS4(o)")
         protected Object printDefault(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource) {
-            // TODO: we may need to preserve missing values to figure out "noOpt" (GR-17328)
-            // but: check what GNU-R does now w.r.t. to noOpt, maybe we can just get rid of it
-            // In 3.5.1 it was: noOpt <- missing(digits) && missing(quote) && missing(na.print) &&
-            // missing(print.gap) && missing(right) && missing(max) &&
-            // missing(useSource) && missing(...)
-            boolean noOpt = true;
-            valuePrinter.execute(o, digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+            valuePrinter.execute(o, digits, quote, naPrint, printGap, right, max, useSource);
             return o;
         }
 

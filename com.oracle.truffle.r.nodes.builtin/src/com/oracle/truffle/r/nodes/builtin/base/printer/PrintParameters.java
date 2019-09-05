@@ -57,7 +57,7 @@ public final class PrintParameters {
     }
 
     @TruffleBoundary
-    PrintParameters(Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, @SuppressWarnings("unused") boolean noOpt) {
+    PrintParameters(Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource) {
 
         setDefaults();
 
