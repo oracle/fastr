@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -59,6 +60,8 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(NativeTypeLibrary.class)
@@ -126,8 +129,23 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
     @ExportMessage
     public Object readArrayElement(long index,
-                    @Cached ReadElementDispatcher readElement) throws InvalidArrayIndexException {
-        return readElement.execute(vector, (int) index);
+                    @Cached ReadElementDispatcher readElement,
+                    @Cached.Shared("setterNode") @Cached AtomicVectorSetterNode setterNode,
+                    @Cached() FFIMaterializeNode materializeNode,
+                    @Cached() FFIToNativeMirrorNode wrapperNode,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isList,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isCharSxp) throws InvalidArrayIndexException {
+        assert vector instanceof RAbstractVector || vector instanceof CharSXPWrapper;
+        Object elem = readElement.execute(vector, (int) index);
+        if (isList.profile(!(vector instanceof RAbstractAtomicVector) && !(vector instanceof CharSXPWrapper))) {
+            elem = materializeNode.execute(elem, false);
+            setterNode.execute(vector, (int) index, elem);
+            return wrapperNode.execute(elem);
+        } else if (isCharSxp.profile(elem instanceof CharSXPWrapper)) {
+            return wrapperNode.execute(elem);
+        } else {
+            return elem;
+        }
     }
 
     @SuppressWarnings("static-method")
@@ -137,7 +155,8 @@ public final class VectorRFFIWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    public boolean isArrayElementModifiable(long index, @CachedLibrary("this.vector") InteropLibrary interop) {
+    public boolean isArrayElementModifiable(long index,
+                    @CachedLibrary("this.vector") InteropLibrary interop) {
         try {
             return index > 0 && index < interop.getArraySize(vector);
         } catch (UnsupportedMessageException e) {
@@ -146,8 +165,15 @@ public final class VectorRFFIWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    public void writeArrayElement(long index, Object value, @Cached AtomicVectorSetterNode setterNode) {
-        setterNode.execute(vector, (int) index, value);
+    public void writeArrayElement(long index, Object value,
+                    @Cached.Shared("setterNode") @Cached AtomicVectorSetterNode setterNode,
+                    @Cached() FFIUnwrapNode unwrap,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNative) {
+        if (isNative.profile(value instanceof NativeMirror)) {
+            setterNode.execute(vector, (int) index, unwrap.execute(value));
+        } else {
+            setterNode.execute(vector, (int) index, value);
+        }
     }
 
     @ExportMessage

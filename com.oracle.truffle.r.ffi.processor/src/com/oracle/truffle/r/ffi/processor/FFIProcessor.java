@@ -246,7 +246,8 @@ public final class FFIProcessor extends AbstractProcessor {
                         !"java.lang.String".equals(getTypeName(m.getReturnType())) &&
                         m.getAnnotationsByType(RFFICpointer.class).length == 0;
         if (needsReturnWrap) {
-            unwrapNodes.append("                @Cached() FFIWrapNode returnWrap,\n");
+            unwrapNodes.append("                @Cached() FFIMaterializeNode materializeNode,\n");
+            unwrapNodes.append("                @Cached() FFIToNativeMirrorNode toNativeWrapperNode,\n");
         }
 
         String name = m.getSimpleName().toString();
@@ -293,7 +294,9 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;\n");
         }
         if (needsReturnWrap) {
-            w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrapNode;\n");
+            w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrap;\n");
+            w.append("import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;\n");
+            w.append("import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;\n");
         }
         w.append("import com.oracle.truffle.api.TruffleLanguage.ContextReference;\n");
         w.append("import com.oracle.truffle.api.dsl.CachedContext;\n");
@@ -360,6 +363,9 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("        Object resultRObj0;\n");
             w.append("        Object resultRObj;\n");
         }
+        if (needsReturnWrap) {
+            w.append("        Object registerRObj;\n");
+        }
         w.append("        UpCallsRFFI impl = upCallProfile.profile(upCallsImpl);\n");
         w.append("        rffiCtx.beforeUpcall(ctx, " + canRunGc + ", impl.getRFFIType());\n");
         w.append(unwrappedArgs);
@@ -388,31 +394,28 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append(arguments).append(");\n");
 
         if (returnKind != TypeKind.VOID) {
-            w.append("            resultRObj = ");
             if (needsReturnWrap) {
-                w.append("returnWrap.execute(");
-            }
-            w.append("resultRObj0");
-            if (needsReturnWrap) {
-                w.append(");\n");
+                w.append("            FFIWrap ffiWrap = new FFIWrap();\n");
+                w.append("            resultRObj = ffiWrap.wrap(resultRObj0, materializeNode, toNativeWrapperNode);\n");
+                w.append("            registerRObj = ffiWrap.materialized[0];\n");
             } else {
-                w.append(";\n");
+                w.append("            resultRObj = resultRObj0;\n");
             }
         }
         w.append("        } catch (ControlFlowException ex) {\n");
         w.append("            controlFlowExBranch.enter();\n");
         w.append("            handleExceptionNode.execute(ex);\n");
-        appendCreateDummyResultObj(returnKind, w);
+        appendCreateDummyResultObj(returnKind, needsReturnWrap, w);
         w.append("        } catch (RError ex) {\n");
         w.append("            errorExBranch.enter();\n");
         w.append("            handleExceptionNode.execute(ex);\n");
-        appendCreateDummyResultObj(returnKind, w);
+        appendCreateDummyResultObj(returnKind, needsReturnWrap, w);
         w.append("        } catch (Throwable ex) {\n");
         w.append("            CompilerDirectives.transferToInterpreter();\n");
         w.append("            assert reportException(ex);\n");
         w.append("            RFFILog.logException(ex);\n");
         w.append("            handleExceptionNode.execute(ex);\n");
-        appendCreateDummyResultObj(returnKind, w);
+        appendCreateDummyResultObj(returnKind, needsReturnWrap, w);
         w.append("        }\n");
         w.append("        rffiCtx.afterUpcall(" + canRunGc + ", impl.getRFFIType());\n");
         if (returnKind == TypeKind.VOID) {
@@ -421,6 +424,15 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("        }\n");
             w.append("        return 0; // void return type\n");
         } else {
+            if (!returnKind.isPrimitive() && m.getAnnotationsByType(RFFICpointer.class).length == 0) {
+                w.append("        if (impl.getRFFIType() == com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type.NFI) {\n");
+                if (needsReturnWrap) {
+                    w.append("            rffiCtx.registerReferenceUsedInNative(registerRObj); \n");
+                } else {
+                    w.append("            rffiCtx.registerReferenceUsedInNative(resultRObj); \n");
+                }
+                w.append("        }\n");
+            }
             w.append("        if (RFFILog.logEnabled()) {\n");
             w.append("            RFFILog.logUpCallReturn(\"" + name + "\", resultRObj);\n");
             w.append("        }\n");
@@ -504,11 +516,14 @@ public final class FFIProcessor extends AbstractProcessor {
         w.close();
     }
 
-    private static void appendCreateDummyResultObj(TypeKind returnKind, Writer w) throws IOException {
+    private static void appendCreateDummyResultObj(TypeKind returnKind, boolean needsReturnWrap, Writer w) throws IOException {
         if (returnKind.isPrimitive()) {
             w.append("            resultRObj = -1;\n");
         } else if (returnKind != TypeKind.VOID) {
             w.append("            resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
+            if (needsReturnWrap) {
+                w.append("            registerRObj = resultRObj;\n");
+            }
         }
     }
 

@@ -35,8 +35,8 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 
 /**
@@ -55,11 +55,11 @@ public abstract class FFIUnwrapNode extends Node {
     }
 
     @Specialization()
-    public Object unwrap(RTruffleObject x) {
-        return x;
+    public Object unwrap(NativeMirror x) {
+        return x.get();
     }
 
-    @Specialization(guards = {"isForeignObject(x)", "interop.isPointer(x)"}, limit = "getInteropLibraryCacheSize()")
+    @Specialization(guards = {"!isNativeMirror(x)", "interop.isPointer(x)"}, limit = "getInteropLibraryCacheSize()")
     public Object unwrapPointer(TruffleObject x,
                     @CachedLibrary("x") InteropLibrary interop) {
         try {
@@ -75,7 +75,7 @@ public abstract class FFIUnwrapNode extends Node {
         }
     }
 
-    @Specialization(guards = {"isForeignObject(x)", "!interop.isPointer(x)"}, limit = "getInteropLibraryCacheSize()")
+    @Specialization(guards = {"!isNativeMirror(x)", "!interop.isPointer(x)"}, limit = "getInteropLibraryCacheSize()")
     public Object unwrapForeign(TruffleObject x,
                     @CachedLibrary("x") InteropLibrary interop) {
         try {
@@ -94,6 +94,10 @@ public abstract class FFIUnwrapNode extends Node {
 
     protected static boolean isStringORTruffleObject(Object x) {
         return x instanceof String || x instanceof TruffleObject;
+    }
+
+    protected static boolean isNativeMirror(Object x) {
+        return x instanceof NativeMirror;
     }
 
     public static FFIUnwrapNode create() {

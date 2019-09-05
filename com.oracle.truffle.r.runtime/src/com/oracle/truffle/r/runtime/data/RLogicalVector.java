@@ -27,6 +27,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -225,7 +226,7 @@ public final class RLogicalVector extends RAbstractLogicalVector implements RMat
 
         @Override
         protected byte getLogicalImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((byte[]) accessIter.getStore())[index] : NativeDataAccess.getLogicalNativeMirrorData(accessIter.getStore(), index);
+            return hasStore ? ((byte[]) accessIter.getStore())[index] : NativeDataAccess.getLogicalNativeMirrorData((NativeMirror) accessIter.getStore(), index);
         }
 
         @Override
@@ -233,7 +234,7 @@ public final class RLogicalVector extends RAbstractLogicalVector implements RMat
             if (hasStore) {
                 ((byte[]) accessIter.getStore())[index] = value;
             } else {
-                NativeDataAccess.setNativeMirrorLogicalData(accessIter.getStore(), index, value);
+                NativeDataAccess.setNativeMirrorLogicalData((NativeMirror) accessIter.getStore(), index, value);
             }
         }
     }

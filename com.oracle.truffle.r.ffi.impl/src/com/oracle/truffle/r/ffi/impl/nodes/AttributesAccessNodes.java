@@ -108,7 +108,7 @@ public final class AttributesAccessNodes {
             if (result == null) {
                 return RNull.instance;
             }
-            Object materializedResult = materializeNode.execute(result);
+            Object materializedResult = materializeNode.materialize(result);
             if (materializeResultProfile.profile(materializedResult != result)) {
                 // We need to tie together the life-cycle of the result with the owner
                 setAttributeNode.execute(attributable, name, materializedResult);
@@ -248,7 +248,7 @@ public final class AttributesAccessNodes {
 
         @Specialization
         public Object doPairlist(RPairList obj,
-                        @Cached FFIMaterializeNode wrapResult,
+                        @Cached FFIMaterializeNode materializeNode,
                         @Cached BranchProfile notSymbol,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             Object result = plLib.getTag(obj);
@@ -258,11 +258,11 @@ public final class AttributesAccessNodes {
             }
             // Probably unlikely: but we need to materialize and write back the result in such case
             notSymbol.enter();
-            Object wrapped = wrapResult.execute(result);
-            if (wrapped != result) {
-                plLib.setTag(obj, wrapped);
+            Object materialized = materializeNode.materialize(result);
+            if (materialized != result) {
+                plLib.setTag(obj, materialized);
             }
-            return wrapped;
+            return materialized;
         }
 
         @Specialization
@@ -277,7 +277,7 @@ public final class AttributesAccessNodes {
 
         @Specialization
         public Object doExternalPtr(RExternalPtr obj,
-                        @Cached FFIMaterializeNode wrapResult,
+                        @Cached FFIMaterializeNode materializeNode,
                         @Cached BranchProfile notSymbol) {
             Object result = obj.getTag();
             if (result instanceof RSymbol) {
@@ -286,11 +286,11 @@ public final class AttributesAccessNodes {
             }
             // Probably unlikely: but we need to materialize and write back the result in such case
             notSymbol.enter();
-            Object wrapped = wrapResult.execute(result);
-            if (wrapped != result) {
-                obj.setTag(wrapped);
+            Object materialized = materializeNode.materialize(result);
+            if (materialized != result) {
+                obj.setTag(materialized);
             }
-            return wrapped;
+            return materialized;
         }
 
         @Specialization

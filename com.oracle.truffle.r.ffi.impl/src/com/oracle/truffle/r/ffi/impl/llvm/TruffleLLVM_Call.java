@@ -22,9 +22,10 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropException;
@@ -33,9 +34,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_CallFactory.ToNativeNodeGen;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_CallFactory.TruffleLLVM_InvokeCallNodeGen;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.ffi.impl.llvm.upcalls.BytesToNativeCharArrayCall;
@@ -48,14 +47,14 @@ import com.oracle.truffle.r.runtime.RLogger;
 import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RScalar;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
+import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
+import com.oracle.truffle.r.runtime.ffi.FFIWrap;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
@@ -179,7 +178,14 @@ public final class TruffleLLVM_Call implements CallRFFI {
                     } else if (value instanceof Integer) {
                         interop.execute(INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
                     } else if (value instanceof TruffleObject) {
-                        interop.execute(INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, value);
+                        FFIWrap ffiWrap = new FFIWrap();
+                        try {
+                            interop.execute(INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, ffiWrap.wrapUncached(value));
+                        } finally {
+                            // FFIwrap holds the materialized values,
+                            // we have to keep them alive until the call returns
+                            CompilerDirectives.materialize(ffiWrap);
+                        }
                     }
                 } catch (InteropException ex) {
                     throw RInternalError.shouldNotReachHere(ex);
@@ -190,46 +196,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
         }
     }
 
-    abstract static class ToNativeNode extends Node {
-
-        public abstract Object execute(Object value);
-
-        @Specialization
-        protected static Object convert(int value) {
-            return RDataFactory.createIntVectorFromScalar(value);
-        }
-
-        @Specialization
-        protected static Object convert(double value) {
-            return RDataFactory.createDoubleVectorFromScalar(value);
-        }
-
-        @Specialization
-        protected static Object convert(RAbstractVector value) {
-            return value;
-        }
-
-        @Specialization
-        protected static Object convert(RScalar value) {
-            return value;
-        }
-
-        @Specialization
-        protected static Object convert(byte value) {
-            return RDataFactory.createLogicalVectorFromScalar(value);
-        }
-
-        @Specialization
-        protected static Object convert(String value) {
-            return RDataFactory.createStringVectorFromScalar(value);
-        }
-
-        @Fallback
-        protected static Object convert(Object value) {
-            return value;
-        }
-    }
-
+    @ImportStatic(DSLConfig.class)
     abstract static class TruffleLLVM_InvokeCallNode extends Node implements InvokeCallNode {
 
         @Child private FFIUnwrapNode unwrap;
@@ -242,10 +209,18 @@ public final class TruffleLLVM_Call implements CallRFFI {
             this.unwrap = isVoid ? null : FFIUnwrapNode.create();
         }
 
-        protected static ToNativeNode[] createConvertNodes(int length) {
-            ToNativeNode[] result = new ToNativeNode[length];
+        protected static FFIMaterializeNode[] createMaterializeNodes(int length) {
+            FFIMaterializeNode[] result = new FFIMaterializeNode[length];
             for (int i = 0; i < length; i++) {
-                result[i] = ToNativeNodeGen.create();
+                result[i] = FFIMaterializeNode.create();
+            }
+            return result;
+        }
+
+        protected static FFIToNativeMirrorNode[] createWrapperNodes(int length) {
+            FFIToNativeMirrorNode[] result = new FFIToNativeMirrorNode[length];
+            for (int i = 0; i < length; i++) {
+                result[i] = FFIToNativeMirrorNode.create();
             }
             return result;
         }
@@ -261,32 +236,36 @@ public final class TruffleLLVM_Call implements CallRFFI {
             }
         }
 
-        @Specialization(guards = {"cachedNativeCallInfo.name.equals(nativeCallInfo.name)", "args.length == cachedArgCount"})
+        @Specialization(guards = {"args.length == cachedArgCount", "cachedNativeCallInfo.name.equals(nativeCallInfo.name)"})
         protected Object invokeCallCached(@SuppressWarnings("unused") NativeCallInfo nativeCallInfo, Object[] args,
                         @SuppressWarnings("unused") @Cached("nativeCallInfo") NativeCallInfo cachedNativeCallInfo,
                         @SuppressWarnings("unused") @Cached("argCount(args)") int cachedArgCount,
-                        @Cached("createConvertNodes(cachedArgCount)") ToNativeNode[] convert,
+                        @Cached("createMaterializeNodes(cachedArgCount)") FFIMaterializeNode[] ffiMaterializeNodes,
+                        @Cached("createWrapperNodes(cachedArgCount)") FFIToNativeMirrorNode[] ffiWrapperNodes,
                         @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject truffleObject,
                         @CachedLibrary("truffleObject") InteropLibrary interop) {
-            return doInvoke(interop, truffleObject, args, convert);
+            return doInvoke(interop, truffleObject, args, ffiMaterializeNodes, ffiWrapperNodes);
         }
 
-        @Specialization(replaces = "invokeCallCached")
+        @Specialization(limit = "99", guards = "args.length == cachedArgCount")
         @TruffleBoundary
-        protected Object invokeCallNormal(NativeCallInfo nativeCallInfo, Object[] args) {
-            return doInvoke(InteropLibrary.getFactory().getUncached(), nativeCallInfo.address.asTruffleObject(), args, null);
+        protected Object invokeCallNormal(NativeCallInfo nativeCallInfo, Object[] args,
+                        @SuppressWarnings("unused") @Cached("argCount(args)") int cachedArgCount,
+                        @Cached("createMaterializeNodes(cachedArgCount)") FFIMaterializeNode[] ffiMaterializeNodes,
+                        @Cached("createWrapperNodes(cachedArgCount)") FFIToNativeMirrorNode[] ffiToNativeMirrorNodes,
+                        @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
+            return doInvoke(interop, nativeCallInfo.address.asTruffleObject(), args, ffiMaterializeNodes, ffiToNativeMirrorNodes);
         }
 
-        @ExplodeLoop
-        private Object doInvoke(InteropLibrary interop, TruffleObject truffleObject, Object[] args, ToNativeNode[] convert) {
-            RContext ctx = RContext.getInstance();
-            boolean isNullSetting = RNull.setIsNull(ctx, false);
+        private Object doInvoke(InteropLibrary interop, TruffleObject truffleObject, Object[] args, FFIMaterializeNode[] ffiMaterializeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
+            FFIWrap ffiWrap;
+            if (ffiToNativeMirrorNodes != null) {
+                ffiWrap = new FFIWrap(args.length);
+                ffiWrap.wrap(args, ffiMaterializeNodes, ffiToNativeMirrorNodes);
+            } else {
+                ffiWrap = null;
+            }
             try {
-                if (convert != null) {
-                    for (int i = 0; i < convert.length; i++) {
-                        args[i] = convert[i].execute(args[i]);
-                    }
-                }
                 Object result = interop.execute(truffleObject, args);
                 if (!isVoid) {
                     result = unwrap.execute(result);
@@ -303,7 +282,9 @@ public final class TruffleLLVM_Call implements CallRFFI {
                     throw ex;
                 }
             } finally {
-                RNull.setIsNull(ctx, isNullSetting);
+                // FFIwrap holds the materialized values,
+                // we have to keep them alive until the call returns
+                CompilerDirectives.materialize(ffiWrap);
             }
         }
 

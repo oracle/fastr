@@ -27,6 +27,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -211,12 +212,12 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
 
         @Override
         protected double getComplexRImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((double[]) accessIter.getStore())[index * 2] : NativeDataAccess.getComplexNativeMirrorDataR(accessIter.getStore(), index);
+            return hasStore ? ((double[]) accessIter.getStore())[index * 2] : NativeDataAccess.getComplexNativeMirrorDataR((NativeMirror) accessIter.getStore(), index);
         }
 
         @Override
         protected double getComplexIImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((double[]) accessIter.getStore())[index * 2 + 1] : NativeDataAccess.getComplexNativeMirrorDataI(accessIter.getStore(), index);
+            return hasStore ? ((double[]) accessIter.getStore())[index * 2 + 1] : NativeDataAccess.getComplexNativeMirrorDataI((NativeMirror) accessIter.getStore(), index);
         }
 
         @Override
@@ -226,8 +227,8 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
                 ((double[]) store)[index * 2] = real;
                 ((double[]) store)[index * 2 + 1] = imaginary;
             } else {
-                NativeDataAccess.setNativeMirrorComplexRealPartData(store, index, real);
-                NativeDataAccess.setNativeMirrorComplexImaginaryPartData(store, index, imaginary);
+                NativeDataAccess.setNativeMirrorComplexRealPartData((NativeMirror) store, index, real);
+                NativeDataAccess.setNativeMirrorComplexImaginaryPartData((NativeMirror) store, index, imaginary);
             }
         }
     }

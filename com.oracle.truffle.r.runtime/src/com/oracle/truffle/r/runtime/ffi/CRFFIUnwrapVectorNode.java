@@ -26,7 +26,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 
 public abstract class CRFFIUnwrapVectorNode extends Node {
@@ -44,8 +43,10 @@ public abstract class CRFFIUnwrapVectorNode extends Node {
     }
 
     @Specialization
-    protected Object unwrapOthers(RBaseObject wrapper) { // Used for passing RFunction so far
-        return wrapper;
+    protected Object unwrapOthers(Object obj,
+                    @Cached() FFIUnwrapNode unwrap) {
+        // Used for passing RFunction so far
+        return unwrap.execute(obj);
     }
 
     public abstract static class CRFFIUnwrapVectorsNode extends Node {

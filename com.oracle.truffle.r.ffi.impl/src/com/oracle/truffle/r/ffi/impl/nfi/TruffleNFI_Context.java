@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.FFIWrap;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -207,7 +208,14 @@ public class TruffleNFI_Context extends RFFIContext {
                             } else if (value instanceof String) {
                                 interop.execute(lookupNativeFunction(NativeFunction.initvar_string), i, value);
                             } else {
-                                interop.execute(lookupNativeFunction(NativeFunction.initvar_obj), i, value);
+                                FFIWrap ffiWrap = new FFIWrap();
+                                try {
+                                    interop.execute(lookupNativeFunction(NativeFunction.initvar_obj), i, ffiWrap.wrapUncached(value));
+                                } finally {
+                                    // FFIwrap holds the materialized values,
+                                    // we have to keep them alive until the call returns
+                                    CompilerDirectives.materialize(ffiWrap);
+                                }
                             }
                         } catch (InteropException ex) {
                             throw RInternalError.shouldNotReachHere(ex);

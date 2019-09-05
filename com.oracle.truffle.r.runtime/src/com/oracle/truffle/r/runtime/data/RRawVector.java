@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -183,7 +184,7 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
 
         @Override
         protected byte getRawImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((byte[]) accessIter.getStore())[index] : NativeDataAccess.getRawNativeMirrorData(accessIter.getStore(), index);
+            return hasStore ? ((byte[]) accessIter.getStore())[index] : NativeDataAccess.getRawNativeMirrorData((NativeMirror) accessIter.getStore(), index);
         }
 
         @Override
@@ -191,7 +192,7 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
             if (hasStore) {
                 ((byte[]) accessIter.getStore())[index] = value;
             } else {
-                NativeDataAccess.setNativeMirrorRawData(accessIter.getStore(), index, value);
+                NativeDataAccess.setNativeMirrorRawData((NativeMirror) accessIter.getStore(), index, value);
             }
         }
     }

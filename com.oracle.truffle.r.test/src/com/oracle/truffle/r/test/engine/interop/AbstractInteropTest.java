@@ -44,6 +44,8 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
+import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import java.util.HashSet;
 import java.util.Set;
@@ -206,8 +208,10 @@ public abstract class AbstractInteropTest {
             if (!shouldTestToNative(obj)) {
                 continue;
             }
-            getInterop().toNative(obj);
-            assertTrue(toString(obj), getInterop().isPointer(obj));
+            Object wrappedForNative = FFIMaterializeNode.getUncached().materialize(obj);
+            wrappedForNative = FFIToNativeMirrorNode.getUncached().execute(obj);
+            getInterop().toNative(wrappedForNative);
+            assertTrue(toString(obj), getInterop().isPointer(wrappedForNative));
         }
     }
 

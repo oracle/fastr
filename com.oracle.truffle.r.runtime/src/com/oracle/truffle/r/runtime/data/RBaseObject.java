@@ -22,21 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.AsPointerNode;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.ToNativeNode;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 
 /**
  * R values that are publicly flowing through the interpreter. Be aware that also the primitive
  * values {@link Integer}, {@link Double}, {@link Byte} and {@link String} flow but are not
  * implementing this interface.
  */
-@ExportLibrary(InteropLibrary.class)
 public abstract class RBaseObject implements RTruffleObject {
 
     // mask values are the same as in GNU R
@@ -56,31 +50,15 @@ public abstract class RBaseObject implements RTruffleObject {
 
     private int typedValueInfo;
 
-    private Object nativeMirror;
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public final boolean isPointer() {
-        return NativeDataAccess.isPointer(this);
-    }
-
-    @ExportMessage
-    public final long asPointer(@Cached() AsPointerNode asPointer) {
-        return asPointer.execute(this);
-    }
-
-    @ExportMessage
-    public final void toNative(@Cached() ToNativeNode toNative) {
-        toNative.execute(this);
-    }
+    private NativeMirror nativeMirror;
 
     public abstract RType getRType();
 
-    public final void setNativeMirror(Object mirror) {
+    final void setNativeMirror(NativeMirror mirror) {
         this.nativeMirror = mirror;
     }
 
-    public final Object getNativeMirror() {
+    public final NativeMirror getNativeMirror() {
         return nativeMirror;
     }
 
