@@ -29,13 +29,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
@@ -104,12 +104,12 @@ public abstract class FFIWrapNode extends Node {
         return wrap(RDataFactory.createComplexVectorFromScalar(value));
     }
 
-    protected static boolean isRScalarVectorOrSequence(RObject value) {
+    protected static boolean isRScalarVectorOrSequence(RBaseObject value) {
         return value instanceof RScalarVector || value instanceof RSequence;
     }
 
     @Specialization(guards = "!isRScalarVectorOrSequence(value)")
-    protected static Object wrap(RObject value) {
+    protected static Object wrap(RBaseObject value) {
         return value;
     }
 

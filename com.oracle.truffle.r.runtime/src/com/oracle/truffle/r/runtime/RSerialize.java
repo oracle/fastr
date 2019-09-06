@@ -67,6 +67,7 @@ import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -82,7 +83,6 @@ import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -705,7 +705,7 @@ public class RSerialize {
                         assert (levs == 0);
                     } else {
                         assert result != null;
-                        ((RTypedValue) result).setGPBits(levs);
+                        ((RBaseObject) result).setGPBits(levs);
                     }
                     return checkResult(result);
                 }
@@ -887,7 +887,7 @@ public class RSerialize {
                 if (Flags.hasAttr(flags)) {
                     Object attr = readItem();
                     result = setAttributes(result, attr);
-                    ((RTypedValue) result).setGPBits(levs);
+                    ((RBaseObject) result).setGPBits(levs);
                 }
             }
 
@@ -1484,8 +1484,8 @@ public class RSerialize {
 
         private static int getGPBits(Object obj) {
             // TODO: this feels a bit ad hoc
-            if (obj instanceof RTypedValue && !(obj instanceof RExternalPtr || obj instanceof RScalar)) {
-                return ((RTypedValue) obj).getGPBits();
+            if (obj instanceof RBaseObject && !(obj instanceof RExternalPtr || obj instanceof RScalar)) {
+                return ((RBaseObject) obj).getGPBits();
             } else {
                 return 0;
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,8 +30,8 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 @RBuiltin(name = "isS4", kind = PRIMITIVE, parameterNames = {"object"}, behavior = PURE)
 public abstract class IsS4 extends RBuiltinNode.Arg1 {
@@ -48,7 +48,7 @@ public abstract class IsS4 extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "!isNull(object)")
-    protected byte isS4(RTypedValue object) {
+    protected byte isS4(RBaseObject object) {
         return RRuntime.asLogical(object.isS4());
     }
 
@@ -58,10 +58,10 @@ public abstract class IsS4 extends RBuiltinNode.Arg1 {
     }
 
     protected boolean isTypedValue(Object object) {
-        return object instanceof RTypedValue;
+        return object instanceof RBaseObject;
     }
 
-    protected boolean isNull(RTypedValue object) {
+    protected boolean isNull(RBaseObject object) {
         return object == RNull.instance;
     }
 }

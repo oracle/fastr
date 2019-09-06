@@ -42,14 +42,13 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFFIAccess;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -150,7 +149,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      * {@link GetReadonlyData} node for fast path in such cases.
      *
      * @see GetReadonlyData
-     * @see RObject#getNativeMirror()
+     * @see RBaseObject#getNativeMirror()
      * @return vector data
      */
     public abstract Object getReadonlyData();
@@ -787,13 +786,13 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
-    public final RTypedValue getNonShared() {
+    public final RBaseObject getNonShared() {
         RAbstractVector materialized = materialize();
         assert materialized.isMaterialized();
         return materialized.getNonSharedSuper();
     }
 
-    private RTypedValue getNonSharedSuper() {
+    private RBaseObject getNonSharedSuper() {
         return super.getNonShared();
     }
 

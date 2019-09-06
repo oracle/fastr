@@ -58,7 +58,7 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
 
     static RRawVector fromNative(long address, int length) {
         RRawVector result = new RRawVector();
-        NativeDataAccess.asPointer(result);
+        NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
         return result;
     }

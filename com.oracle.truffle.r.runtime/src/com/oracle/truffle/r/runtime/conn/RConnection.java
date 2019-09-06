@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,13 +32,12 @@ import java.util.EnumSet;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
  * Denotes an R {@code connection} instance used in the {@code base} I/O library.
  */
-public interface RConnection extends AutoCloseable, RTruffleObject {
+public interface RConnection extends AutoCloseable {
 
     static BaseRConnection fromIndex(int con) {
         return RContext.getInstance().stateRConnection.getConnection(con, true);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 
 public abstract class CRFFIUnwrapVectorNode extends Node {
@@ -44,7 +44,7 @@ public abstract class CRFFIUnwrapVectorNode extends Node {
     }
 
     @Specialization
-    protected Object unwrapOthers(RObject wrapper) { // Used for passing RFunction so far
+    protected Object unwrapOthers(RBaseObject wrapper) { // Used for passing RFunction so far
         return wrapper;
     }
 

@@ -1379,25 +1379,25 @@ public final class RDataFactory {
 
             allocationReporter.onEnter(null, 0, AllocationReporter.SIZE_UNKNOWN);
 
-            long size = data instanceof RTypedValue ? getSize((RTypedValue) data) : AllocationReporter.SIZE_UNKNOWN;
+            long size = data instanceof RBaseObject ? getSize((RBaseObject) data) : AllocationReporter.SIZE_UNKNOWN;
             allocationReporter.onReturnValue(data, 0, size);
         }
         for (Listener listener : listeners) {
-            listener.reportAllocation((RTypedValue) data);
+            listener.reportAllocation((RBaseObject) data);
         }
         return data;
     }
 
     public interface Listener {
         /**
-         * Invoked when an instance of an {@link RTypedValue} is created. Note that the initial
+         * Invoked when an instance of an {@link RBaseObject} is created. Note that the initial
          * state of the complex objects, i.e., those with additional {@code Object} subclass fields,
-         * which may also be {@link RTypedValue} instances is undefined other than by inspection. A
+         * which may also be {@link RBaseObject} instances is undefined other than by inspection. A
          * listener that computes the "size" of an object must take into account that
-         * {@link RTypedValue} instances passed to a {@code createXXX} method will already have been
+         * {@link RBaseObject} instances passed to a {@code createXXX} method will already have been
          * reported, but other data such as {@code int[]} instances for array dimensions will not.
          */
-        void reportAllocation(RTypedValue data);
+        void reportAllocation(RBaseObject data);
     }
 
     /**
@@ -1420,7 +1420,7 @@ public final class RDataFactory {
         return data;
     }
 
-    private static long getSize(RTypedValue data) {
+    private static long getSize(RBaseObject data) {
         return RObjectSize.getObjectSize(data);
     }
 }

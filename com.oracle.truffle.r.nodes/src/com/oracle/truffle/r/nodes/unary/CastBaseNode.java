@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,11 +37,11 @@ import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -179,14 +179,14 @@ public abstract class CastBaseNode extends CastNode {
     @TruffleBoundary
     protected Object doOther(Object value) {
         Object mappedValue = RRuntime.asAbstractVector(value);
-        if (forRFFI && mappedValue instanceof RTypedValue) {
+        if (forRFFI && mappedValue instanceof RBaseObject) {
             return doOtherRFFI(mappedValue);
         }
         throw error(Message.CANNOT_COERCE, RRuntime.getRTypeName(mappedValue), getTargetType().getName());
     }
 
     protected Object doOtherRFFI(Object mappedValue) {
-        warning(Message.CANNOT_COERCE_RFFI, ((RTypedValue) mappedValue).getRType().getName(), getTargetType().getName());
+        warning(Message.CANNOT_COERCE_RFFI, ((RBaseObject) mappedValue).getRType().getName(), getTargetType().getName());
         return RNull.instance;
     }
 

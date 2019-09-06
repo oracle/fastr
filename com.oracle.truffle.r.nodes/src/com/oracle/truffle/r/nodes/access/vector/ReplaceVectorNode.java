@@ -42,12 +42,12 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -112,7 +112,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         if (vector instanceof RAbstractListVector && isRecursiveSubscript(vector, positions)) {
             return null;
         }
-        return new CachedReplaceVectorNode(mode, vector, positions, value.getClass(), RRuntime.isForeignObject(value) ? RType.TruffleObject : ((RTypedValue) value).getRType(), true,
+        return new CachedReplaceVectorNode(mode, vector, positions, value.getClass(), RRuntime.isForeignObject(value) ? RType.TruffleObject : ((RBaseObject) value).getRType(), true,
                         recursive, CachedReplaceVectorNode.isValueLengthGreaterThanOne(value), ignoreRefCount);
     }
 
@@ -146,7 +146,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
     protected Object doReplaceS4Object(RS4Object obj, Object[] positions, Object value,
                     @Cached("createEnvironment()") GetS4DataSlot getS4DataSlotNode,
                     @Cached("create(mode, ignoreRecursive)") ReplaceVectorNode recursiveReplace) {
-        RTypedValue dataSlot = getS4DataSlotNode.executeObject(obj);
+        RBaseObject dataSlot = getS4DataSlotNode.executeObject(obj);
         if (dataSlot == RNull.instance) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.NO_METHOD_ASSIGNING_SUBSET_S4);
         }

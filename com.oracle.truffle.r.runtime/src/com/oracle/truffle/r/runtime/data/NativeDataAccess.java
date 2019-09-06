@@ -43,7 +43,13 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
@@ -51,6 +57,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.ToNativeNodeGen;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -87,11 +94,11 @@ class UnsafeAdapter {
 }
 
 /**
- * Provides API to work with objects returned by {@link RObject#getNativeMirror()}. The native
+ * Provides API to work with objects returned by {@link RBaseObject#getNativeMirror()}. The native
  * mirror represents what on the native side is SEXP, but not directly the raw data of the vector.
- * Use {@link #asPointer(Object)} to assign a native mirror object to the given vector. The raw data
- * in native memory for a vector that already has a native mirror object assigned can be allocated
- * using e.g. {@link #allocateNativeContents(RIntVector, int[], int)} .
+ * Use {@link #asPointer(RBaseObject)} to assign a native mirror object to the given vector. The raw
+ * data in native memory for a vector that already has a native mirror object assigned can be
+ * allocated using e.g. {@link #allocateNativeContents(RIntVector, int[], int)} .
  *
  * There is a registry of weak references to all native mirrors ever assigned to some vector object.
  * We use the finalizer to free the native memory (if allocated).
@@ -176,7 +183,7 @@ public final class NativeDataAccess {
         return nativeRefQueue;
     }
 
-    private static final class NativeMirror extends WeakReference<RObject> implements Releasable {
+    private static final class NativeMirror extends WeakReference<RBaseObject> implements Releasable {
         /**
          * ID of the mirror, this will be used as the value for SEXP. When native up-calls to Java,
          * we get this value and find the corresponding object for it.
@@ -211,7 +218,7 @@ public final class NativeDataAccess {
          * through which the native code accesses it. For instance, Sulong implements the "pointer"
          * equality of two objects that are not pointers (i.e. <code>IS_POINTER</code> returns
          * <code>false</code>) as the reference equality of the objects. It follows that the pointer
-         * comparison would fail if the same <code>RObject</code> instance were wrapped by two
+         * comparison would fail if the same <code>RBaseObject</code> instance were wrapped by two
          * different native wrappers.
          */
         private NativeWrapperReference nativeWrapperRef;
@@ -221,7 +228,7 @@ public final class NativeDataAccess {
          */
         private boolean external;
 
-        NativeMirror(RObject owner) {
+        NativeMirror(RBaseObject owner) {
             super(owner, nativeReferenceQueue());
             this.id = counter.addAndGet(2);
             nativeMirrors.put(id, this);
@@ -231,7 +238,7 @@ public final class NativeDataAccess {
          * Creates a new mirror with a specified native address as both ID and address. The buffer
          * will be freed when the Java object is collected.
          */
-        NativeMirror(RObject ownerVec, long address) {
+        NativeMirror(RBaseObject ownerVec, long address) {
             // address == 0 means no nativeMirrors registration and no release() call
             super(ownerVec, (address != 0) ? nativeReferenceQueue() : null);
             this.id = address;
@@ -285,7 +292,7 @@ public final class NativeDataAccess {
             } else {
                 long addr = setDataAddress(allocateNativeMemory(wrappers.length * Long.BYTES));
                 for (int i = 0; i < wrappers.length; i++) {
-                    UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, asPointer(wrappers[i]));
+                    UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, getPointer(wrappers[i]));
                 }
             }
         }
@@ -302,7 +309,11 @@ public final class NativeDataAccess {
                         element = ((RSequence) element).materialize();
                         elements[i] = element;
                     }
-                    UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, asPointer(element));
+                    if (element instanceof RBaseObject) {
+                        UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, getPointer((RBaseObject) element));
+                    } else {
+                        throw RInternalError.shouldNotReachHere();
+                    }
                 }
             }
         }
@@ -346,41 +357,66 @@ public final class NativeDataAccess {
     private static final ConcurrentHashMap<Long, NativeMirror> dataAddressToNativeMirrors = System.getenv(FastROptions.NATIVE_DATA_INSPECTOR) != null ? new ConcurrentHashMap<>(512) : null;
     private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = TRACE_MIRROR_ALLOCATION_SITES ? new ConcurrentHashMap<>() : null;
 
-    public static boolean isPointer(Object obj) {
-        return obj instanceof RObject;
+    /**
+     * Determines whether the given object already has an assigned pointer or not.
+     */
+    static boolean isPointer(RBaseObject obj) {
+        NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+        return mirror != null && mirror.id != 0;
     }
 
     /**
-     * Assigns a native mirror object to the given RObject object.
+     * Provides pointer id from the assigned native mirror object.<br>
+     * Pointer existence has to be first ensured via {@link #isPointer} and {@link #toNative}.
      */
-    public static long asPointer(Object arg) {
-        if (arg instanceof RObject) {
-            RObject obj = (RObject) arg;
+    static long asPointer(RBaseObject obj) {
+        NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+        return mirror.id;
+    }
+
+    /**
+     * Assigns a native mirror object to the given RBaseObject object.
+     */
+    public static void toNative(RBaseObject obj) {
+        ToNativeNodeGen.getUncached().execute(obj);
+    }
+
+    @ImportStatic(NativeDataAccess.class)
+    @GenerateUncached
+    public abstract static class ToNativeNode extends Node {
+        abstract void execute(RBaseObject obj);
+
+        @Specialization
+        void toNative(RBaseObject obj,
+                        @Cached("createBinaryProfile()") ConditionProfile hasMirror) {
             NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
-            if (mirror == null || mirror.id == 0) {
-                mirror = putMirrorObject(arg, obj, mirror);
+            if (hasMirror.profile(mirror == null || mirror.id == 0)) {
+                putMirrorObject(obj, mirror);
+                assert ((NativeMirror) obj.getNativeMirror()).id != 0;
             }
-            return mirror.id;
         }
-        throw RInternalError.shouldNotReachHere();
+    }
+
+    private static long getPointer(RBaseObject obj) {
+        toNative(obj);
+        return asPointer(obj);
     }
 
     @TruffleBoundary
-    private static NativeMirror putMirrorObject(Object arg, RObject obj, NativeMirror oldMirror) {
+    private static void putMirrorObject(RBaseObject obj, NativeMirror oldMirror) {
         NativeMirror newMirror;
-        obj.setNativeMirror(newMirror = arg instanceof CustomNativeMirror ? new NativeMirror(obj, ((CustomNativeMirror) arg).getCustomMirrorAddress()) : new NativeMirror(obj));
+        obj.setNativeMirror(newMirror = obj instanceof CustomNativeMirror ? new NativeMirror(obj, ((CustomNativeMirror) obj).getCustomMirrorAddress()) : new NativeMirror(obj));
         if (oldMirror != null) {
             newMirror.nativeWrapperRef = oldMirror.nativeWrapperRef;
         }
         // System.out.println(String.format("adding %16x = %s", mirror.id,
         // obj.getClass().getSimpleName()));
         if (TRACE_MIRROR_ALLOCATION_SITES) {
-            registerAllocationSite(arg, newMirror);
+            registerAllocationSite(obj, newMirror);
         }
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.log(Level.FINE, "NativeMirror: {0}->{1} ({2})", new Object[]{Long.toHexString(newMirror.id), obj.getClass().getSimpleName(), Utils.getDebugInfo(obj)});
         }
-        return newMirror;
     }
 
     @TruffleBoundary
@@ -396,11 +432,6 @@ public final class NativeDataAccess {
         nativeMirrorInfo.put(mirror.id, new RuntimeException(arg.getClass().getSimpleName() + " " + argInfo));
     }
 
-    public static Object toNative(Object obj) {
-        assert obj instanceof RObject : "non-RObjects will not be able to provide native pointers";
-        return obj;
-    }
-
     /**
      * For given native mirror ID returns the Java side object (vector). TruffleBoundary because it
      * calls into HashMap.
@@ -412,7 +443,7 @@ public final class NativeDataAccess {
             CompilerDirectives.transferToInterpreter();
             throw reportDataAccessError(address);
         }
-        RObject result = nativeMirror.get();
+        RBaseObject result = nativeMirror.get();
         if (result == null) {
             CompilerDirectives.transferToInterpreter();
             throw reportDataAccessError(address);
@@ -548,7 +579,7 @@ public final class NativeDataAccess {
         assert address != 0;
         assert index < ((NativeMirror) nativeMirror).length;
 
-        long asPointer = asPointer(value);
+        long asPointer = getPointer(value);
         UnsafeAdapter.UNSAFE.putLong(address + index * Long.BYTES, asPointer);
     }
 
@@ -557,8 +588,12 @@ public final class NativeDataAccess {
         assert address != 0;
         assert index < ((NativeMirror) nativeMirror).length;
 
-        long asPointer = asPointer(value);
-        UnsafeAdapter.UNSAFE.putLong(address + index * Long.BYTES, asPointer);
+        if (value instanceof RBaseObject) {
+            long asPointer = getPointer((RBaseObject) value);
+            UnsafeAdapter.UNSAFE.putLong(address + index * Long.BYTES, asPointer);
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     public static double[] copyDoubleNativeData(Object mirrorObj) {
@@ -656,7 +691,7 @@ public final class NativeDataAccess {
 
     static void setDataLength(RIntVector vector, int[] data, int length) {
         if (noIntNative.isValid() || data != null) {
-            asPointer(vector);
+            toNative(vector);
             allocateNativeContents(vector, data, length);
         } else {
             ((NativeMirror) vector.getNativeMirror()).length = length;
@@ -671,7 +706,7 @@ public final class NativeDataAccess {
     }
 
     static void setTrueDataLength(RIntVector vector, int truelength) {
-        asPointer(vector);
+        toNative(vector);
         ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
     }
 
@@ -719,7 +754,7 @@ public final class NativeDataAccess {
 
     static void setDataLength(RLogicalVector vector, byte[] data, int length) {
         if (noLogicalNative.isValid() || data != null) {
-            asPointer(vector);
+            toNative(vector);
             allocateNativeContents(vector, data, length);
         } else {
             ((NativeMirror) vector.getNativeMirror()).length = length;
@@ -734,7 +769,7 @@ public final class NativeDataAccess {
     }
 
     static void setTrueDataLength(RLogicalVector vector, int truelength) {
-        asPointer(vector);
+        toNative(vector);
         ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
     }
 
@@ -756,7 +791,7 @@ public final class NativeDataAccess {
 
     static void setDataLength(RRawVector vector, byte[] data, int length) {
         if (noRawNative.isValid() || data != null) {
-            asPointer(vector);
+            toNative(vector);
             allocateNativeContents(vector, data, length);
         } else {
             ((NativeMirror) vector.getNativeMirror()).length = length;
@@ -771,7 +806,7 @@ public final class NativeDataAccess {
     }
 
     static void setTrueDataLength(RRawVector vector, int truelength) {
-        asPointer(vector);
+        toNative(vector);
         ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
     }
 
@@ -803,7 +838,7 @@ public final class NativeDataAccess {
 
     static void setDataLength(RDoubleVector vector, double[] data, int length) {
         if (noDoubleNative.isValid() || data != null) {
-            asPointer(vector);
+            toNative(vector);
             allocateNativeContents(vector, data, length);
         } else {
             ((NativeMirror) vector.getNativeMirror()).length = length;
@@ -818,7 +853,7 @@ public final class NativeDataAccess {
     }
 
     static void setTrueDataLength(RDoubleVector vector, int truelength) {
-        asPointer(vector);
+        toNative(vector);
         ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
     }
 
@@ -872,7 +907,7 @@ public final class NativeDataAccess {
 
     static void setDataLength(RComplexVector vector, double[] data, int length) {
         if (noComplexNative.isValid() || data != null) {
-            asPointer(vector);
+            toNative(vector);
             allocateNativeContents(vector, data, length);
         } else {
             ((NativeMirror) vector.getNativeMirror()).length = length;
@@ -887,7 +922,7 @@ public final class NativeDataAccess {
     }
 
     static void setTrueDataLength(RComplexVector vector, int truelength) {
-        asPointer(vector);
+        toNative(vector);
         ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
     }
 
@@ -915,7 +950,7 @@ public final class NativeDataAccess {
 
     static void setDataLength(RStringVector vector, CharSXPWrapper[] data, int length) {
         if (noStringNative.isValid() || data != null) {
-            asPointer(vector);
+            toNative(vector);
             allocateNativeContents(vector, data, length);
         } else {
             ((NativeMirror) vector.getNativeMirror()).length = length;
@@ -930,7 +965,7 @@ public final class NativeDataAccess {
     }
 
     static void setTrueDataLength(RStringVector vector, int truelength) {
-        asPointer(vector);
+        toNative(vector);
         ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
     }
 
@@ -942,7 +977,7 @@ public final class NativeDataAccess {
     }
 
     static void setTrueDataLength(CharSXPWrapper charsxp, int truelength) {
-        asPointer(charsxp);
+        toNative(charsxp);
         ((NativeMirror) charsxp.getNativeMirror()).truelength = truelength;
     }
 
@@ -972,7 +1007,7 @@ public final class NativeDataAccess {
 
     static void setDataLength(RList list, Object[] data, int length) {
         if (noListNative.isValid() || data != null) {
-            asPointer(list);
+            toNative(list);
             allocateNativeContents(list, data, length);
         } else {
             ((NativeMirror) list.getNativeMirror()).length = length;
@@ -987,7 +1022,7 @@ public final class NativeDataAccess {
     }
 
     static void setTrueDataLength(RList list, int truelength) {
-        asPointer(list);
+        toNative(list);
         ((NativeMirror) list.getNativeMirror()).truelength = truelength;
     }
 
@@ -1259,7 +1294,7 @@ public final class NativeDataAccess {
         return new String(bytes, StandardCharsets.US_ASCII);
     }
 
-    public static void setNativeContents(RObject obj, long address, int length) {
+    public static void setNativeContents(RBaseObject obj, long address, int length) {
         assert obj.getNativeMirror() != null;
         if (noDoubleNative.isValid() && obj instanceof RDoubleVector) {
             noDoubleNative.invalidate();
@@ -1281,7 +1316,7 @@ public final class NativeDataAccess {
         mirror.external = true;
     }
 
-    public static void setNativeWrapper(RObject obj, Object wrapper) {
+    public static void setNativeWrapper(RBaseObject obj, Object wrapper) {
         NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
         if (mirror == null) {
             mirror = new NativeMirror(obj, 0);
@@ -1290,7 +1325,7 @@ public final class NativeDataAccess {
         mirror.nativeWrapperRef = new NativeWrapperReference(wrapper);
     }
 
-    public static Object getNativeWrapper(RObject obj) {
+    public static Object getNativeWrapper(RBaseObject obj) {
         NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
         if (mirror == null) {
             return null;
@@ -1341,7 +1376,7 @@ public final class NativeDataAccess {
 
         @Override
         public String getAttribute(String idString, String attrName) {
-            RObject obj = (RObject) lookup(Long.decode(idString));
+            RBaseObject obj = (RBaseObject) lookup(Long.decode(idString));
             if (obj instanceof RAttributable) {
                 return "" + ((RAttributable) obj).getAttr(attrName);
             } else {

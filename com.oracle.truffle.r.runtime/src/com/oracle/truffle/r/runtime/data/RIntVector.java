@@ -59,7 +59,7 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
 
     static RIntVector fromNative(long address, int length) {
         RIntVector result = new RIntVector();
-        NativeDataAccess.asPointer(result);
+        NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
         return result;
     }

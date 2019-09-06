@@ -82,6 +82,7 @@ import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -89,7 +90,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
@@ -667,7 +667,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     private static void printValue(RContext ctx, MaterializedFrame callingFrame, Object result) {
-        if (result instanceof RTypedValue || result instanceof TruffleObject) {
+        if (result instanceof RBaseObject || result instanceof TruffleObject) {
             Object resultValue = ShareObjectNode.share(evaluatePromise(result));
             if (result instanceof RAttributable && ((RAttributable) result).isS4()) {
                 Object printMethod = REnvironment.getRegisteredNamespace(ctx, "methods").get("show");

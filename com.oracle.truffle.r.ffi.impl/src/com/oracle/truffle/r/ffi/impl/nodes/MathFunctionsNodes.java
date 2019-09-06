@@ -67,30 +67,36 @@ public final class MathFunctionsNodes {
             double[] ccumArr = new double[1];
             long cumPtr;
             long ccumPtr;
-            if (cumInterop.isPointer(cum)) {
-                try {
-                    cumPtr = cumInterop.asPointer(cum);
-                    cumArr[0] = UnsafeAdapter.UNSAFE.getDouble(cumPtr);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
-                }
-            } else {
+            if (cumInterop.hasArrayElements(cum)) {
                 cumPtr = 0L;
                 try {
                     cumArr[0] = ((Number) cumInterop.readArrayElement(cum, 0)).doubleValue();
                 } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
+            } else {
+                if (!cumInterop.isPointer(cum)) {
+                    cumInterop.toNative(cum);
+                }
+                try {
+                    cumPtr = cumInterop.asPointer(cum);
+                    cumArr[0] = UnsafeAdapter.UNSAFE.getDouble(cumPtr);
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
+                }
             }
 
-            if (ccumInterop.isPointer(ccum)) {
+            if (cumInterop.hasArrayElements(cum)) {
+                ccumPtr = 0L;
+            } else {
                 try {
+                    if (!ccumInterop.isPointer(ccum)) {
+                        ccumInterop.toNative(ccum);
+                    }
                     ccumPtr = ccumInterop.asPointer(ccum);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
-            } else {
-                ccumPtr = 0L;
             }
 
             PnormBoth.evaluate(x, cumArr, ccumArr, lowerTail != 0, logP != 0);
@@ -252,19 +258,22 @@ public final class MathFunctionsNodes {
                         @CachedLibrary("sgn") InteropLibrary sgnInterop) {
             int[] sgnArr = new int[1];
             long sgnPtr;
-            if (sgnInterop.isPointer(sgn)) {
-                try {
-                    sgnPtr = sgnInterop.asPointer(sgn);
-                    sgnArr[0] = UnsafeAdapter.UNSAFE.getInt(sgnPtr);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
-                }
-            } else {
+            if (sgnInterop.hasArrayElements(sgn)) {
                 sgnPtr = 0L;
                 try {
                     sgnArr[0] = ((Number) sgnInterop.readArrayElement(sgn, 0)).intValue();
                 } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                     throw RInternalError.shouldNotReachHere(e);
+                }
+            } else {
+                if (!sgnInterop.isPointer(sgn)) {
+                    sgnInterop.toNative(sgn);
+                }
+                try {
+                    sgnPtr = sgnInterop.asPointer(sgn);
+                    sgnArr[0] = UnsafeAdapter.UNSAFE.getInt(sgnPtr);
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             }
 
@@ -305,31 +314,27 @@ public final class MathFunctionsNodes {
             int nzIn;
             int ierrIn;
             long ansPtr;
-            if (ansInterop.isPointer(ans)) {
-                try {
-                    ansPtr = ansInterop.asPointer(ans);
-                    ansIn = UnsafeAdapter.UNSAFE.getDouble(ansPtr);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
-                }
-            } else {
+            if (ansInterop.hasArrayElements(ans)) {
                 ansPtr = 0L;
                 try {
                     ansIn = ((Number) ansInterop.readArrayElement(ans, 0)).doubleValue();
                 } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
-            }
-
-            long nzPtr;
-            if (nzInterop.isPointer(nz)) {
+            } else {
+                if (!ansInterop.isPointer(ans)) {
+                    ansInterop.toNative(ans);
+                }
                 try {
-                    nzPtr = nzInterop.asPointer(nz);
-                    nzIn = UnsafeAdapter.UNSAFE.getInt(nzPtr);
+                    ansPtr = ansInterop.asPointer(ans);
+                    ansIn = UnsafeAdapter.UNSAFE.getDouble(ansPtr);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
-            } else {
+            }
+
+            long nzPtr;
+            if (nzInterop.hasArrayElements(nz)) {
                 nzPtr = 0L;
 
                 try {
@@ -337,22 +342,35 @@ public final class MathFunctionsNodes {
                 } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
-            }
-
-            long ierrPtr;
-            if (ierrInterop.isPointer(ierr)) {
+            } else {
+                if (!nzInterop.isPointer(nz)) {
+                    nzInterop.toNative(nz);
+                }
                 try {
-                    ierrPtr = ierrInterop.asPointer(ierr);
-                    ierrIn = UnsafeAdapter.UNSAFE.getInt(ierrPtr);
+                    nzPtr = nzInterop.asPointer(nz);
+                    nzIn = UnsafeAdapter.UNSAFE.getInt(nzPtr);
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
-            } else {
+            }
+
+            long ierrPtr;
+            if (ierrInterop.hasArrayElements(ierr)) {
                 ierrPtr = 0L;
                 try {
                     ierrIn = ((Number) ierrInterop.readArrayElement(ierr, 0)).intValue();
                 } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
                     throw RInternalError.shouldNotReachHere(e);
+                }
+            } else {
+                if (!ierrInterop.isPointer(ierr)) {
+                    ierrInterop.toNative(ierr);
+                }
+                try {
+                    ierrPtr = ierrInterop.asPointer(ierr);
+                    ierrIn = UnsafeAdapter.UNSAFE.getInt(ierrPtr);
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             }
 
@@ -725,13 +743,16 @@ public final class MathFunctionsNodes {
 
         public abstract double execute(BesselExCaller caller, Object b);
 
-        @Specialization(limit = "getInteropLibraryCacheSize()", guards = "bInterop.isPointer(b)")
+        @Specialization(limit = "getInteropLibraryCacheSize()", guards = "!bInterop.hasArrayElements(b)")
         protected double besselExForPointer(BesselExCaller caller, Object b,
                         @Cached("create()") GetReadonlyData.Double bReadonlyData,
                         @CachedLibrary("b") InteropLibrary bInterop) {
             RAbstractDoubleVector bVec;
             long addr;
             try {
+                if (!bInterop.isPointer(b)) {
+                    bInterop.toNative(b);
+                }
                 addr = bInterop.asPointer(b);
                 bVec = RDataFactory.createDoubleVectorFromNative(addr, caller.arrLen());
             } catch (UnsupportedMessageException e) {
@@ -740,7 +761,7 @@ public final class MathFunctionsNodes {
             return caller.call(bReadonlyData.execute(bVec.materialize()));
         }
 
-        @Specialization(limit = "getInteropLibraryCacheSize()", guards = "!bInterop.isPointer(b)")
+        @Specialization(limit = "getInteropLibraryCacheSize()", guards = "bInterop.hasArrayElements(b)")
         protected double besselEx(BesselExCaller caller, Object b,
                         @Cached("create()") GetReadonlyData.Double bReadonlyData,
                         @SuppressWarnings("unused") @CachedLibrary("b") InteropLibrary bInterop) {

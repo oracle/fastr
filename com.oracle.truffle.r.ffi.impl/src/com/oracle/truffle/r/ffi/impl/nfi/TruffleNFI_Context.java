@@ -355,7 +355,7 @@ public class TruffleNFI_Context extends RFFIContext {
                 case SHARE_ALL:
                     // new thread, initialize properly
                     assert defaultLibrary == null;
-                    defaultLibrary = (TruffleObject) RContext.getInstance().getEnv().parse(Source.newBuilder("nfi", "default", "(load default)").build()).call();
+                    defaultLibrary = (TruffleObject) RContext.getInstance().getEnv().parseInternal(Source.newBuilder("nfi", "default", "(load default)").build()).call();
                     initCallbacks(context);
                     break;
                 case SHARE_PARENT_RO:

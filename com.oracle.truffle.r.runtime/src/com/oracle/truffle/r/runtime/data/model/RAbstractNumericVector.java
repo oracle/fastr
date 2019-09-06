@@ -28,6 +28,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * Provides interop messages for numeric vectors. <br>
@@ -53,11 +54,15 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean isNull() {
+    final boolean isNull(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNA) {
         if (!isScalar()) {
             return false;
         }
-        return isScalarNA();
+        if (isNA.profile(isScalarNA())) {
+            return RContext.getInstance().stateRNullMR.isNull();
+        } else {
+            return false;
+        }
     }
 
     @ExportMessage

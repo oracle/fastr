@@ -56,10 +56,10 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObjectSize;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -135,7 +135,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
     private static final RDataFactory.Listener LISTENER = new RDataFactory.Listener() {
         @Override
         @TruffleBoundary
-        public void reportAllocation(RTypedValue data) {
+        public void reportAllocation(RBaseObject data) {
             RprofState profState = RprofState.get();
             if (profState.memoryQuad == null) {
                 return;

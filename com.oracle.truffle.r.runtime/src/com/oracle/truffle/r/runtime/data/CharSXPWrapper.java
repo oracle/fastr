@@ -51,31 +51,15 @@ import java.nio.charset.StandardCharsets;
  * N.B. Use limited to RFFI implementations.
  */
 @ExportLibrary(InteropLibrary.class)
-public final class CharSXPWrapper extends RObject implements RTruffleObject, RTypedValue {
+public final class CharSXPWrapper extends RBaseObject {
     private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
-    private int typedValueInfo = ASCII_MASK_SHIFTED;
     private String contents;
     private byte[] bytes;
 
     private CharSXPWrapper(String contents) {
         this.contents = contents;
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    public long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    public void toNative() {
-        NativeDataAccess.asPointer(this);
+        setTypedValueInfo(ASCII_MASK_SHIFTED);
     }
 
     @SuppressWarnings("static-method")
@@ -241,16 +225,6 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject, RTy
     @Override
     public RType getRType() {
         return RType.Char;
-    }
-
-    @Override
-    public int getTypedValueInfo() {
-        return typedValueInfo;
-    }
-
-    @Override
-    public void setTypedValueInfo(int value) {
-        typedValueInfo = value;
     }
 
 }

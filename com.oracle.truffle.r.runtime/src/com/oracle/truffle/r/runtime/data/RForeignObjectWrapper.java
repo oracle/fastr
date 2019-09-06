@@ -33,6 +33,8 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.ToNativeNode;
 
 /**
  * <p>
@@ -40,8 +42,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
  * </p>
  * <p>
  * Meant to be used only in {@link com.oracle.truffle.r.runtime.ffi.FFIWrapNode} and
- * {@link com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode} together with {@link #isPointer() },
- * {@link #asPointer()} and {@link #toNative()}. Remaining interop messages are delegated to
+ * {@link com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode} together with
+ * {@link RBaseObject#isPointer() }, {@link RBaseObject#asPointer()} and
+ * {@link RBaseObject#toNative(ToNativeNode)}. Remaining interop messages are delegated to
  * {@link InteropLibrary} for the case that some some FastR specific native code should try doing
  * interop calls.
  * </p>
@@ -49,7 +52,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
  * 
  */
 @ExportLibrary(InteropLibrary.class)
-public final class RForeignObjectWrapper extends RObject implements RTruffleObject, RForeignVectorWrapper {
+public final class RForeignObjectWrapper extends RBaseObject implements RForeignVectorWrapper {
 
     protected final TruffleObject delegate;
 
@@ -64,6 +67,11 @@ public final class RForeignObjectWrapper extends RObject implements RTruffleObje
     @Override
     public String toString() {
         return RRuntime.NULL;
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.TruffleObject;
     }
 
     @ExportMessage
@@ -191,22 +199,6 @@ public final class RForeignObjectWrapper extends RObject implements RTruffleObje
     void writeMember(String member, Object value,
                     @CachedLibrary("this.delegate") InteropLibrary interop) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
         interop.writeMember(delegate, member, value);
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isPointer() {
-        return true;
-    }
-
-    @ExportMessage
-    long asPointer() {
-        return NativeDataAccess.asPointer(this);
-    }
-
-    @ExportMessage
-    void toNative() {
-        NativeDataAccess.asPointer(this);
     }
 
     @ExportMessage

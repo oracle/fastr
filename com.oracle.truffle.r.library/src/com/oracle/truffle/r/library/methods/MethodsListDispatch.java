@@ -62,6 +62,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -71,7 +72,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -258,7 +258,7 @@ public class MethodsListDispatch {
         @Specialization
         @TruffleBoundary
         protected Object setPrimitiveMethods(String fnameString, Object op, String codeVecString, Object fundefObj, Object mlist) {
-            RTypedValue fundef = (RTypedValue) fundefObj;
+            RBaseObject fundef = (RBaseObject) fundefObj;
 
             if (op == RNull.instance) {
                 byte value = RRuntime.asLogical(RContext.getInstance().allowPrimitiveMethods());
@@ -285,7 +285,7 @@ public class MethodsListDispatch {
             return fnameString;
         }
 
-        private void setPrimitiveMethodsInternal(Object op, String codeVec, RTypedValue fundef, Object mlist) {
+        private void setPrimitiveMethodsInternal(Object op, String codeVec, RBaseObject fundef, Object mlist) {
             MethodCode code;
             if (codeVec.charAt(0) == 'c') {
                 code = MethodCode.NO_METHODS;

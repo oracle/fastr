@@ -42,12 +42,12 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -136,7 +136,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
     }
 
     protected static CachedExtractVectorNode createDefaultCache(ExtractVectorNode node, RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions) {
-        return new CachedExtractVectorNode(node.getMode(), vector, positions, (RTypedValue) exact, (RTypedValue) dropDimensions, node.recursive);
+        return new CachedExtractVectorNode(node.getMode(), vector, positions, (RBaseObject) exact, (RBaseObject) dropDimensions, node.recursive);
     }
 
     // Note: RAbstractContainer is not foreign by definition.
@@ -170,7 +170,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
     protected Object doExtractS4Object(RS4Object obj, Object[] positions, Object exact, Object dropDimensions,
                     @Cached("createEnvironment()") GetS4DataSlot getS4DataSlotNode,
                     @Cached("create(mode, True)") ExtractVectorNode recursiveExtract) {
-        RTypedValue dataSlot = getS4DataSlotNode.executeObject(obj);
+        RBaseObject dataSlot = getS4DataSlotNode.executeObject(obj);
         if (dataSlot == RNull.instance) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.OP_NOT_DEFINED_FOR_S4_CLASS, "$");
         }

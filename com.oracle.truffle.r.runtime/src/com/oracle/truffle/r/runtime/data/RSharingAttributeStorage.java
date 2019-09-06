@@ -114,7 +114,7 @@ public abstract class RSharingAttributeStorage extends RAttributable {
         return this;
     }
 
-    public RTypedValue getNonShared() {
+    public RBaseObject getNonShared() {
         if (isShared()) {
             RSharingAttributeStorage res = copy();
             assert res.isTemporary();
