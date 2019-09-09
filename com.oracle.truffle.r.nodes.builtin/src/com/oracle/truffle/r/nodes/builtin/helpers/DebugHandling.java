@@ -266,8 +266,6 @@ public class DebugHandling {
         protected final FunctionDefinitionNode functionDefinitionNode;
         protected EventBinding<StepIntoInstrumentListener> stepIntoInstrument;
 
-        private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
-
         protected InteractingDebugEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
             this.text = text;
             this.condition = condition;
@@ -279,7 +277,7 @@ public class DebugHandling {
         }
 
         protected void browserInteract(Node node, VirtualFrame frame) {
-            int exitMode = browserInteractNode.execute(frame, RArguments.getCall(frame));
+            int exitMode = BrowserInteractNodeGen.getUncached().execute(frame.materialize(), RArguments.getCall(frame));
             switch (exitMode) {
                 case BrowserInteractNode.NEXT:
                     break;

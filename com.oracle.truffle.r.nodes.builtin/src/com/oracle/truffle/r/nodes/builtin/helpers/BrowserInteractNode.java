@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,12 @@
 package com.oracle.truffle.r.nodes.builtin.helpers;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -62,6 +63,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * </ol>
  *
  */
+@GenerateUncached
 public abstract class BrowserInteractNode extends Node {
 
     public static final int STEP = 0;
@@ -69,19 +71,17 @@ public abstract class BrowserInteractNode extends Node {
     public static final int CONTINUE = 2;
     public static final int FINISH = 3;
 
-    @Child private GetFixedAttributeNode getSrcRefAttrNode;
-    @Child private GetFixedAttributeNode getSrcFileAttrNode;
-
-    public abstract int execute(VirtualFrame frame, RCaller caller);
+    public abstract int execute(MaterializedFrame frame, RCaller caller);
 
     @Specialization
-    protected int interact(VirtualFrame frame, RCaller caller) {
+    protected static int interact(MaterializedFrame mFrame, RCaller caller,
+                    @Cached GetAttributeNode getSrcRefAttrNode,
+                    @Cached GetAttributeNode getSrcFileAttrNode) {
         CompilerDirectives.transferToInterpreter();
-        MaterializedFrame mFrame = frame.materialize();
         ConsoleIO ch = RContext.getInstance().getConsole();
         BrowserState browserState = RContext.getInstance().stateInstrumentation.getBrowserState();
         String savedPrompt = ch.getPrompt();
-        RFunction callerFunction = RArguments.getFunction(frame);
+        RFunction callerFunction = RArguments.getFunction(mFrame);
         // we may be at top level where there is not caller
         boolean callerIsDebugged = callerFunction == null || DebugHandling.isDebugged(callerFunction);
         int exitMode = NEXT;
@@ -142,7 +142,7 @@ public abstract class BrowserInteractNode extends Node {
                             while (stack != RNull.instance) {
                                 RPairList pl = (RPairList) stack;
                                 RStringVector element = (RStringVector) pl.car();
-                                ch.printf("where %d%s: %s%n", idepth, getSrcinfo(element), element.getDataAt(0));
+                                ch.printf("where %d%s: %s%n", idepth, getSrcinfo(element, getSrcRefAttrNode, getSrcFileAttrNode), element.getDataAt(0));
                                 idepth++;
                                 stack = pl.cdr();
                             }
@@ -183,20 +183,11 @@ public abstract class BrowserInteractNode extends Node {
         return exitMode;
     }
 
-    private String getSrcinfo(RStringVector element) {
-        if (getSrcRefAttrNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            getSrcRefAttrNode = insert(GetFixedAttributeNode.create(RRuntime.R_SRCREF));
-        }
-
-        Object srcref = getSrcRefAttrNode.execute(element);
+    private static String getSrcinfo(RStringVector element, GetAttributeNode getSrcRefAttrNode, GetAttributeNode getSrcFileAttrNode) {
+        Object srcref = getSrcRefAttrNode.execute(element, RRuntime.R_SRCREF);
         if (srcref != null) {
-            if (getSrcFileAttrNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getSrcFileAttrNode = insert(GetFixedAttributeNode.create(RRuntime.R_SRCFILE));
-            }
             RIntVector lloc = (RIntVector) srcref;
-            Object srcfile = getSrcFileAttrNode.execute(lloc);
+            Object srcfile = getSrcFileAttrNode.execute(lloc, RRuntime.R_SRCFILE);
             if (srcfile != null) {
                 REnvironment env = (REnvironment) srcfile;
                 return " at " + RRuntime.asString(env.get(RSrcref.SrcrefFields.filename.name())) + "#" + lloc.getDataAt(0);

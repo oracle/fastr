@@ -117,10 +117,7 @@ public final class NativeDataAccess {
     }
 
     /**
-     * WARNING: stdout is problematic for embedded mode when using this logger. Always specify a log
-     * file e.g. mx r --log.R.com.oracle.truffle.r.traceNativeCalls.level=FINE
-     * --log.file=&lt;yourfile&gt;
-     *
+     * @see RLogger#LOGGER_RFFI
      */
     private static final TruffleLogger LOGGER = RLogger.getLogger(LOGGER_RFFI);
 
@@ -261,8 +258,9 @@ public final class NativeDataAccess {
         void allocateNative(Object source, int len, int trueLen, int elementBase, int elementSize) {
             assert dataAddress == 0;
             if (len != 0) {
-                setDataAddress(allocateNativeMemory(trueLen * elementSize));
-                UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress, trueLen * elementSize);
+                long bytesCount = trueLen * (long) elementSize;
+                setDataAddress(allocateNativeMemory(bytesCount));
+                UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress, bytesCount);
             } else {
                 setDataAddress(getEmptyDataAddress());
             }
@@ -290,9 +288,9 @@ public final class NativeDataAccess {
             if (wrappers.length == 0) {
                 setDataAddress(getEmptyDataAddress());
             } else {
-                long addr = setDataAddress(allocateNativeMemory(wrappers.length * Long.BYTES));
+                long addr = setDataAddress(allocateNativeMemory(wrappers.length * (long) Long.BYTES));
                 for (int i = 0; i < wrappers.length; i++) {
-                    UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, getPointer(wrappers[i]));
+                    UnsafeAdapter.UNSAFE.putLong(addr + (long) i * Long.BYTES, getPointer(wrappers[i]));
                 }
             }
         }
@@ -302,7 +300,7 @@ public final class NativeDataAccess {
             if (elements.length == 0) {
                 setDataAddress(getEmptyDataAddress());
             } else {
-                long addr = setDataAddress(allocateNativeMemory(elements.length * Long.BYTES));
+                long addr = setDataAddress(allocateNativeMemory(elements.length * (long) Long.BYTES));
                 for (int i = 0; i < elements.length; i++) {
                     Object element = elements[i];
                     if (element instanceof RSequence) {
@@ -310,7 +308,7 @@ public final class NativeDataAccess {
                         elements[i] = element;
                     }
                     if (element instanceof RBaseObject) {
-                        UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, getPointer((RBaseObject) element));
+                        UnsafeAdapter.UNSAFE.putLong(addr + (long) i * Long.BYTES, getPointer((RBaseObject) element));
                     } else {
                         throw RInternalError.shouldNotReachHere();
                     }
