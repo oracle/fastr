@@ -51,7 +51,7 @@ import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetHiddenAttrsProperty;
 import com.oracle.truffle.r.nodes.attributes.SetPropertyNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
-import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.InternStringNode;
@@ -183,7 +183,6 @@ public final class AttributesAccessNodes {
                         @Cached("createWithCompactRowNames()") GetAttributesNode getAttributesNode) {
             DynamicObject attrsDynamicObj = obj.getAttributes();
             if (attrsDynamicObj == null) {
-                setHiddenAttrsProperty.execute(obj, RNull.instance);
                 return RNull.instance;
             }
 
@@ -194,6 +193,7 @@ public final class AttributesAccessNodes {
 
             Object resultObj = getAttributesNode.execute(obj);
             if (resultObj == RNull.instance) {
+                setHiddenAttrsProperty.execute(obj, RNull.instance);
                 return resultObj;
             }
             assert resultObj instanceof RList : "GetAttributesNode should return RList or RNull";

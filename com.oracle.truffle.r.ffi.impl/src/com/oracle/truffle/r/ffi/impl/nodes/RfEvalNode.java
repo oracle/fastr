@@ -48,7 +48,7 @@ import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionEvalCallNo
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfo;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfoNode;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.SlowPathFunctionEvalCallNode;
-import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments;
