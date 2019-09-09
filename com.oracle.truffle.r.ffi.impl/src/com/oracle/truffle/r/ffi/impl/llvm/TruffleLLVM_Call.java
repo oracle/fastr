@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.RLogger;
 import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
@@ -164,35 +163,30 @@ public final class TruffleLLVM_Call implements CallRFFI {
             }
         }
         RFFIVariables[] variables = RFFIVariables.initialize(context);
-        boolean isNullSetting = RNull.setIsNull(context, false);
-        try {
-            for (int i = 0; i < variables.length; i++) {
-                RFFIVariables var = variables[i];
-                Object value = var.getValue();
-                if (value == null) {
-                    continue;
-                }
-                try {
-                    if (value instanceof Double) {
-                        interop.execute(INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
-                    } else if (value instanceof Integer) {
-                        interop.execute(INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
-                    } else if (value instanceof TruffleObject) {
-                        FFIWrap ffiWrap = new FFIWrap();
-                        try {
-                            interop.execute(INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, ffiWrap.wrapUncached(value));
-                        } finally {
-                            // FFIwrap holds the materialized values,
-                            // we have to keep them alive until the call returns
-                            CompilerDirectives.materialize(ffiWrap);
-                        }
-                    }
-                } catch (InteropException ex) {
-                    throw RInternalError.shouldNotReachHere(ex);
-                }
+        for (int i = 0; i < variables.length; i++) {
+            RFFIVariables var = variables[i];
+            Object value = var.getValue();
+            if (value == null) {
+                continue;
             }
-        } finally {
-            RNull.setIsNull(context, isNullSetting);
+            try {
+                if (value instanceof Double) {
+                    interop.execute(INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
+                } else if (value instanceof Integer) {
+                    interop.execute(INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
+                } else if (value instanceof TruffleObject) {
+                    FFIWrap ffiWrap = new FFIWrap();
+                    try {
+                        interop.execute(INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, ffiWrap.wrapUncached(value));
+                    } finally {
+                        // FFIwrap holds the materialized values,
+                        // we have to keep them alive until the call returns
+                        CompilerDirectives.materialize(ffiWrap);
+                    }
+                }
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
+            }
         }
     }
 

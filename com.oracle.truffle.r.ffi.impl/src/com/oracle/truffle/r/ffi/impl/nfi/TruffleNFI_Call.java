@@ -146,7 +146,6 @@ public class TruffleNFI_Call implements CallRFFI {
 
         @Override
         public void execute(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
-
             FFIWrap ffiWrap = null;
             try {
                 switch (args.length) {

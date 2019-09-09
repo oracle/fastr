@@ -27,8 +27,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.interop.RNullMRContextState;
 
 @ExportLibrary(InteropLibrary.class)
 public final class RNull extends RBaseObject implements RScalar {
@@ -52,16 +50,6 @@ public final class RNull extends RBaseObject implements RScalar {
     @SuppressWarnings("static-method")
     @ExportMessage
     boolean isNull() {
-        return RContext.getInstance().stateRNullMR.isNull();
-    }
-
-    /**
-     * Workaround to avoid NFI converting {@link RNull} to {@code null}.
-     */
-    public static boolean setIsNull(RContext ctx, boolean value) {
-        RNullMRContextState state = ctx.stateRNullMR;
-        boolean prev = state.isNull();
-        state.setIsNull(value);
-        return prev;
+        return true;
     }
 }
