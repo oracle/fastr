@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.ffi.interop;
 import static com.oracle.truffle.r.runtime.ffi.UnsafeAdapter.UNSAFE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;

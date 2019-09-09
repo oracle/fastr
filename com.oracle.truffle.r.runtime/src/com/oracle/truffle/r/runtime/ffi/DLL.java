@@ -420,7 +420,7 @@ public class DLL {
             RStringVector table = RDataFactory.createStringVector(new String[]{path, name}, true);
             StringArrayWrapper ret = new StringArrayWrapper(table);
             ret.toNative();
-            return ret.asPointer();
+            return ret.getAddress();
         }
     }
 
