@@ -129,6 +129,7 @@ SEXP R_new_custom_connection(const char *description, const char *mode, const ch
     SEXP addrObj = R_MakeExternalPtr(new, R_NilValue, R_NilValue);
     SEXP fastRConn = ((call_R_new_custom_connection) callbacks[R_new_custom_connection_x])(ensure_truffle_chararray(description), ensure_truffle_chararray(mode),
                                                                                            ensure_truffle_chararray(class_name), addrObj);
+    checkExitCall();
     // printf("DEBUG: R_new_custom_connection address %p SEXP value %p\n", ptr, addrObj);
     if (fastRConn) {
         new->class = (char *) malloc(strlen(class_name) + 1);
@@ -273,11 +274,15 @@ SEXP __SeekNativeConnection(SEXP rConnAddrObj, SEXP whereVec, SEXP originVec, SE
  */
 
 size_t R_ReadConnection(Rconnection con, void *buf, size_t n) {
-    return (size_t) ((call_R_ReadConnection) callbacks[R_ReadConnection_x])(getFd(con), (long) buf, (int) n);
+    size_t result = (size_t) ((call_R_ReadConnection) callbacks[R_ReadConnection_x])(getFd(con), (long) buf, (int) n);
+    checkExitCall();
+    return result;
 }
 
 size_t R_WriteConnection(Rconnection con, void *buf, size_t n) {
-    return (size_t) ((call_R_WriteConnection) callbacks[R_WriteConnection_x])(getFd(con), (long) buf, (int) n);
+    size_t result = (size_t) ((call_R_WriteConnection) callbacks[R_WriteConnection_x])(getFd(con), (long) buf, (int) n);
+    checkExitCall();
+    return result;
 }
 
 Rconnection R_GetConnection(SEXP sConn) {
@@ -288,10 +293,15 @@ Rconnection R_GetConnection(SEXP sConn) {
     int fd = asInteger(sConn);
 
     SEXP fastRCon = ((call_R_GetConnection) callbacks[R_GetConnection_x])(fd);
+    checkExitCall();
     char *connClass = ((call_getConnectionClassString) callbacks[getConnectionClassString_x])(fastRCon);
+    checkExitCall();
     char *summaryDesc = ((call_getSummaryDescription) callbacks[getSummaryDescription_x])(fastRCon);
+    checkExitCall();
     char *openMode = ((call_getOpenModeString) callbacks[getOpenModeString_x])(fastRCon);
+    checkExitCall();
     int isSeekable = ((call_isSeekable) callbacks[isSeekable_x])(fastRCon);
+    checkExitCall();
 
     Rconnection new = (Rconnection) malloc(sizeof(struct Rconn));
     if (!new) {
@@ -330,5 +340,6 @@ void* R_GetFastRConnection(SEXP sConn) {
     int fd = asInteger(sConn);
 
     SEXP fastRCon = ((call_R_GetConnection) callbacks[R_GetConnection_x])(fd);
+    checkExitCall();
     return fastRCon;
 }
