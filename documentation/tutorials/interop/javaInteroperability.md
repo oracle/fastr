@@ -4,6 +4,11 @@ This tutorial shows how to take advantage of FastR`s Java interoperability featu
 
 All following examples are meant to be executed in the R Console, no additional Java dependencies are necessary.
 
+There are also tests that are supposed to serve as executable documentation:
+
+* [Interop via Java embdedding](../../../com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/engine/interop/RInteropSimpleTest.java)
+* [Rules for lazy conversion of foreign objects to R objects](../../../com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/library/fastr/R/interop-array-conversion-test.R)
+
 # Setup
 To install and setup GraalVM and FastR follow the Getting Started instructions in FastR [README](../../../README.md#getting_started).
 

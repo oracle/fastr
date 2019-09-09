@@ -223,7 +223,7 @@ public abstract class AccessForeignElementNode extends RBaseNode {
         }
 
         protected static boolean hasWritableMember(InteropLibrary interop, String position, TruffleObject object) {
-            return interop.isMemberExisting(object, position) && interop.isMemberWritable(object, position);
+            return interop.isMemberWritable(object, position);
         }
     }
 
