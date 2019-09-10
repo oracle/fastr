@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -74,7 +75,7 @@ public abstract class InlineCacheNode extends RBaseNode {
 
     @Specialization(replaces = "doCached")
     protected Object doGeneric(Frame frame, Object value) {
-        return evalPromise(frame, (Closure) value);
+        return evalPromise(frame.materialize(), (Closure) value);
     }
 
     protected RNode cache(Object value) {
@@ -83,7 +84,7 @@ public abstract class InlineCacheNode extends RBaseNode {
 
     /**
      * Creates an inline cache that will execute promises closures by using a PIC and falling back
-     * to {@link InlineCacheNode#evalPromise(Frame, Closure)}.
+     * to {@link InlineCacheNode#evalPromise(MaterializedFrame, Closure)}.
      *
      * @param maxPicDepth maximum number of entries in the polymorphic inline cache
      */
@@ -92,8 +93,8 @@ public abstract class InlineCacheNode extends RBaseNode {
     }
 
     @TruffleBoundary
-    protected static Object evalPromise(Frame frame, Closure closure) {
-        return closure.eval(frame.materialize());
+    protected static Object evalPromise(MaterializedFrame frame, Closure closure) {
+        return closure.eval(frame);
     }
 
     protected class NodeInsertedClosure {

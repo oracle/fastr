@@ -56,6 +56,8 @@ public final class RArgsValuesAndNames extends RBaseObject {
      */
     private final ArgumentsSignature signature;
 
+    private RPairList materialized;
+
     /**
      * Default instance for empty "..." ("..." that resolve to contain no expression at runtime).
      * The {@link RMissing#instance} for "...".
@@ -206,11 +208,24 @@ public final class RArgsValuesAndNames extends RBaseObject {
         if (isEmpty()) {
             return RMissing.instance;
         }
+
+        RPairList[] existingCells = RPairList.getCells(materialized);
         Object current = RNull.instance;
         for (int i = getLength() - 1; i >= 0; i--) {
             String name = signature.getName(i);
-            current = RDataFactory.createPairList(getArgument(i), current, name != null ? RDataFactory.createSymbol(name) : RNull.instance, SEXPTYPE.DOTSXP);
+            Object tag = name != null ? RDataFactory.createSymbol(name) : RNull.instance;
+            Object car = getArgument(i);
+            if (i < existingCells.length) {
+                RPairList existing = existingCells[i];
+                existing.setCar(car);
+                existing.setTag(tag);
+                existing.setCdr(current);
+                current = existing;
+            } else {
+                current = RDataFactory.createPairList(car, current, tag, SEXPTYPE.DOTSXP);
+            }
         }
+        materialized = (RPairList) current;
         return current;
     }
 }

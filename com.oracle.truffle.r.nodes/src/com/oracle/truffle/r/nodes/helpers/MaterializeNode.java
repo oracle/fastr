@@ -22,76 +22,64 @@
  */
 package com.oracle.truffle.r.nodes.helpers;
 
-import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.attributes.HasAttributesNode;
-import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
+/**
+ * Profiled version of slow path operation {@link RAbstractVector#materialize()}.
+ */
 @ImportStatic(DSLConfig.class)
+@GenerateUncached
 public abstract class MaterializeNode extends Node {
 
     protected static final int LIMIT = 10;
 
-    @Child private HasAttributesNode hasAttributes;
-    @Child private IterableAttributeNode attributesIt;
-    @Child private SetAttributeNode setAttributeNode;
-
-    private final boolean deep;
-
-    protected MaterializeNode(boolean deep) {
-        this.deep = deep;
-        if (deep) {
-            CompilerAsserts.neverPartOfCompilation();
-            hasAttributes = insert(HasAttributesNode.create());
-        }
-    }
-
     public abstract Object execute(Object arg);
+
+    // few simple fast-paths for common types:
 
     @Specialization
     protected RList doList(RList vec) {
-        RList materialized = materializeContents(vec);
-        materializeAttributes(materialized);
-        return materialized;
+        return vec;
     }
+
+    @Specialization
+    protected RIntVector doList(RIntVector vec) {
+        return vec;
+    }
+
+    @Specialization
+    protected RDoubleVector doList(RDoubleVector vec) {
+        return vec;
+    }
+
+    @Specialization
+    protected RStringVector doList(RStringVector vec) {
+        return vec;
+    }
+
+    // specialization that caches on the class of the vector
 
     @Specialization(limit = "getCacheSize(LIMIT)", guards = {"vec.getClass() == cachedClass"})
-    protected RAttributable doAbstractContainerCached(RAttributable vec,
-                    @SuppressWarnings("unused") @Cached("vec.getClass()") Class<?> cachedClass) {
-        if (vec instanceof RList) {
-            return doList((RList) vec);
-        } else if (vec instanceof RAbstractContainer) {
-            RAbstractContainer materialized = ((RAbstractContainer) vec).materialize();
-            materializeAttributes(materialized);
-            return materialized;
-        }
-        materializeAttributes(vec);
-        return vec;
+    protected RAttributable doAbstractVectorCached(RAbstractVector vec,
+                    @SuppressWarnings("unused") @Cached("vec.getClass()") Class<? extends RAbstractVector> cachedClass) {
+        return cachedClass.cast(vec).materialize();
     }
 
-    @Specialization(replaces = "doAbstractContainerCached")
-    protected RAttributable doAbstractContainer(RAttributable vec) {
-        if (vec instanceof RList) {
-            return doList((RList) vec);
-        } else if (vec instanceof RAbstractContainer) {
-            RAbstractContainer materialized = ((RAbstractContainer) vec).materialize();
-            materializeAttributes(materialized);
-            return materialized;
-        }
-        materializeAttributes(vec);
-        return vec;
+    @Specialization(replaces = "doAbstractVectorCached")
+    protected RAttributable doAbstractVector(RAbstractVector vec) {
+        return vec.materialize();
     }
 
     @Fallback
@@ -99,47 +87,8 @@ public abstract class MaterializeNode extends Node {
         return o;
     }
 
-    private RList materializeContents(RList list) {
-        for (int i = 0; i < list.getLength(); i++) {
-            Object element = list.getDataAt(i);
-            Object materializedElem = doGenericSlowPath(element);
-            if (materializedElem != element) {
-                list.setDataAt(i, materializedElem);
-            }
-        }
-        return list;
-    }
-
-    private void materializeAttributes(RAttributable materialized) {
-        // TODO we could further optimize by first checking for fixed/special attributes
-        if (deep && hasAttributes.execute(materialized)) {
-            if (attributesIt == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                attributesIt = insert(IterableAttributeNode.create());
-            }
-            for (RAttribute attr : attributesIt.execute(materialized)) {
-                Object materializedAttr = doGenericSlowPath(attr.getValue());
-                if (materializedAttr != attr.getValue()) {
-                    if (setAttributeNode == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        setAttributeNode = insert(SetAttributeNode.create());
-                    }
-                    setAttributeNode.execute(materialized, attr.getName(), materializedAttr);
-                }
-            }
-        }
-    }
-
-    @TruffleBoundary
-    private Object doGenericSlowPath(Object element) {
-        if (element instanceof RAttributable) {
-            return doAbstractContainer((RAttributable) element);
-        }
-        return element;
-    }
-
-    public static MaterializeNode create(boolean deep) {
-        return MaterializeNodeGen.create(deep);
+    public static MaterializeNode create() {
+        return MaterializeNodeGen.create();
     }
 
 }

@@ -60,6 +60,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.ToNativeNodeGen;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 import sun.misc.Unsafe;
@@ -303,9 +305,9 @@ public final class NativeDataAccess {
                 long addr = setDataAddress(allocateNativeMemory(elements.length * (long) Long.BYTES));
                 for (int i = 0; i < elements.length; i++) {
                     Object element = elements[i];
-                    if (element instanceof RSequence) {
-                        element = ((RSequence) element).materialize();
-                        elements[i] = element;
+                    Object materialized = FFIMaterializeNode.executeUncached(element);
+                    if (element != materialized) {
+                        elements[i] = ShareObjectNode.executeUncached(materialized);
                     }
                     if (element instanceof RBaseObject) {
                         UnsafeAdapter.UNSAFE.putLong(addr + (long) i * Long.BYTES, getPointer((RBaseObject) element));

@@ -49,12 +49,14 @@ public final class GCTortureState implements RContext.ContextState {
     public RContext.ContextState initialize(RContext context) {
         // R_GCTORTURE is also used by GNU-R with the same meaning
         String tortureEnvVar = System.getenv("R_GCTORTURE");
+        if (tortureEnvVar == null) {
+            tortureEnvVar = System.getenv("FASTR_GCTORTURE");
+        }
         if (tortureEnvVar != null) {
             int steps = parsePositiveInt(tortureEnvVar);
             if (steps > 0) {
-                this.on = true;
-                this.stepThreshold = steps;
                 gcTortureOffAssumption.invalidate("From env variable");
+                this.on(steps);
             }
         }
         return this;
@@ -76,9 +78,8 @@ public final class GCTortureState implements RContext.ContextState {
     }
 
     public void on(int step) {
-        this.on = true;
+        this.on();
         stepThreshold = step;
-        stepCounter = 0;
     }
 
     public void off() {

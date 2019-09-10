@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.HiddenKey;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -38,6 +39,12 @@ import java.util.Iterator;
  * {@link RAttributable} is implemented by the {@link DynamicObject} class.
  */
 public abstract class RAttributable extends RBaseObject {
+
+    /**
+     * This hidden property is used to store a pair-list that presents these attributes to the
+     * native code.
+     */
+    public static final HiddenKey ATTRS_KEY = new HiddenKey("attrs");
 
     protected DynamicObject attributes;
 

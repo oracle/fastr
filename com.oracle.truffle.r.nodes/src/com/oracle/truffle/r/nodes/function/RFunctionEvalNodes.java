@@ -47,7 +47,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.RCallNode.ExplicitArgs;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodesFactory.FunctionInfoFactoryNodeGen;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodesFactory.FunctionInfoNodeGen;
-import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
