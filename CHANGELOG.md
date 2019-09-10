@@ -1,5 +1,21 @@
 # 19.3.0
 
+New features:
+
+* `gc` attempts to invoke Java GC when FastR is run with `--R.EnableExplicitGC=true`
+  * this is intended only for testing purposes and it is not recommended to run GC explicitly in FastR.
+  * `gc` is not invoking Java GC by default because GNU-R GC and Java GC are fundamentally
+    different and this may lead to unintended behavior.
+* Option `--R.BackEndLLVM` activates the LLVM native code backend loading the LLVM bitcode bundled with package libraries
+* Option `--R.DebugLLVMLibs` activates debugging of native code using the bundled LLVM bitcode
+* Builtin `fastr.useDebugMakevars(use)` activates/deactivates a special `etc/Makevars.site` for debugging native code
+* Builtin `fastr.setToolchain(name)` (`name` can be `llvm` or `native`) sets the compiler toolchain used for package building
+
+Added missing R builtins and C APIs
+
+* `gctorture` and `gctorture2` built-ins for testing purposes
+* `grepRaw` (only for `fixed=T`)
+
 Bug fixes:
 
 * `tibble` does not print properly when using `knitr` #68
@@ -10,6 +26,7 @@ Bug fixes:
 Added missing R builtins and C API:
 
 * `grepRaw` (only for `fixed=T`)
+
 
 # 19.2.0
 
