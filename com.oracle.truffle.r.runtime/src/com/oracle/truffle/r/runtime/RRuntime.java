@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -1074,11 +1075,11 @@ public class RRuntime {
     }
 
     public static boolean isForeignObject(TruffleObject obj) {
-        return !(obj instanceof RBaseObject);
+        return !(obj instanceof RTruffleObject);
     }
 
     public static boolean isForeignObject(Object obj) {
-        return obj instanceof TruffleObject && !(obj instanceof RBaseObject);
+        return obj instanceof TruffleObject && !(obj instanceof RTruffleObject);
     }
 
     public static int getForeignArraySize(Object object, InteropLibrary interop) {
