@@ -92,6 +92,8 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp $(GNUR_HOME_BINARY)/etc/ldpaths $(FASTR_ETC_DIR)/ldpaths
 	# the ed script adds -DFASTR to compiler options and removes JAVA related variables
 	ed Makeconf.etc < edMakeconf.etc
+	# Backup the current state of Makeconf.etc to allow users to switch back to the native toolchain
+	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf.native
 
 	echo $(DEFAULT_CRAN_MIRROR) > $(FASTR_ETC_DIR)/DEFAULT_CRAN_MIRROR
 
@@ -112,6 +114,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 
 	cp $(LLVM_TOOLS) $(FASTR_BIN_DIR)
 
+	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf.llvm
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
 	cp Makevars.site.debug $(FASTR_ETC_DIR)
 

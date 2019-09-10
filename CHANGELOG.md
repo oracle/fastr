@@ -6,6 +6,10 @@ New features:
   * this is intended only for testing purposes and it is not recommended to run GC explicitly in FastR.
   * `gc` is not invoking Java GC by default because GNU-R GC and Java GC are fundamentally
     different and this may lead to unintended behavior.
+* Option `--R.BackEndLLVM` activates the LLVM native code backend loading the LLVM bitcode bundled with package libraries
+* Option `--R.DebugLLVMLibs` activates debugging of native code using the bundled LLVM bitcode
+* Builtin `fastr.useDebugMakevars(use)` activates/deactivates a special `etc/Makevars.site` for debugging native code
+* Builtin `fastr.setToolchain(name)` (`name` can be `llvm` or `native`) sets the compiler toolchain used for package building
 
 Added missing R builtins and C APIs
 
@@ -20,6 +24,7 @@ Bug fixes:
 * `scan` handles non-default value of `nmax` argument
 * `Rf_allocVector` fails gracefully when FastR runs out of memory
 * bug in `DATAPTR` for vectors of size in bytes larger than 2^31
+
 
 # 19.2.0
 
