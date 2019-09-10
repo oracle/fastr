@@ -408,12 +408,10 @@ public class RFunctionEvalNodes {
      */
     public static final class FunctionEvalCallNode extends Node {
 
-        private final RFrameSlot argsIdentifier = RFrameSlot.createTemp("FunctionEvalCallNode-argsIdentifier", true);
-        private final RFrameSlot funIdentifier = RFrameSlot.createTemp("FunctionEvalCallNode-funIdentifier", true);
         @CompilationFinal private FrameSlot argsFrameSlot;
         @CompilationFinal private FrameSlot funFrameSlot;
 
-        private final FunctionEvalRootNode funEvalRootNode = new FunctionEvalRootNode(argsIdentifier, funIdentifier);
+        private final FunctionEvalRootNode funEvalRootNode = new FunctionEvalRootNode(RFrameSlot.FunctionEvalNodeArgsIdentifier, RFrameSlot.FunctionEvalNodeFunIdentifier);
         @Child private DirectCallNode directCallNode = DirectCallNode.create(funEvalRootNode.getCallTarget());
 
         public Object execute(VirtualFrame evalFrame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame) {
@@ -421,8 +419,8 @@ public class RFunctionEvalNodes {
                 assert funFrameSlot == null;
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 synchronized (FrameSlotChangeMonitor.class) {
-                    argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), argsIdentifier, FrameSlotKind.Object);
-                    funFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), funIdentifier, FrameSlotKind.Object);
+                    argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), RFrameSlot.FunctionEvalNodeArgsIdentifier, FrameSlotKind.Object);
+                    funFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), RFrameSlot.FunctionEvalNodeFunIdentifier, FrameSlotKind.Object);
                 }
             }
             try {
