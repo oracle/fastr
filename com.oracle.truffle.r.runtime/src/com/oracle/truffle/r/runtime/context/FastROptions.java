@@ -65,6 +65,9 @@ public class FastROptions {
     @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "BackEndLLVM=([-]pkg(,pkg)*)?; Specifies for which packages LLVM version will be used or will not, if the dash is present. Empty list stands for all packages.") //
     public static final OptionKey<String> BackEndLLVM = new OptionKey<>("");
 
+    @Option(category = OptionCategory.EXPERT, stability = OptionStability.EXPERIMENTAL, help = "Enable or disable cache of AST instances specialized for given R environment.") //
+    public static final OptionKey<Boolean> EnableClosureCallTargetsCache = new OptionKey<>(true);
+
     @Option(category = OptionCategory.INTERNAL, help = "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.")//
     public static final OptionKey<String> Debug = new OptionKey<>("");
     @Option(category = OptionCategory.INTERNAL, help = "Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)") //
