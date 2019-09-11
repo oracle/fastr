@@ -121,6 +121,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
+import org.graalvm.collections.EconomicMap;
 import sun.misc.Unsafe;
 
 /**
@@ -653,11 +654,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int TYPEOF(Object x) {
-        if (x instanceof CharSXPWrapper) {
-            return SEXPTYPE.CHARSXP.code;
-        } else {
-            return SEXPTYPE.gnuRCodeForObject(x);
-        }
+        throw implementedAsNode();
     }
 
     @Override
@@ -1571,28 +1568,28 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public void R_PreserveObject(Object obj) {
         guaranteeInstanceOf(obj, RBaseObject.class);
-        IdentityHashMap<RBaseObject, AtomicInteger> preserveList = getContext().rffiContextState.preserveList;
-        AtomicInteger prevCnt = preserveList.putIfAbsent((RBaseObject) obj, new AtomicInteger(1));
+        EconomicMap<RBaseObject, AtomicInteger> preserveList = getContext().rffiContextState.preserveList;
+        AtomicInteger prevCnt = preserveList.get((RBaseObject) obj);
         if (prevCnt != null) {
             prevCnt.incrementAndGet();
+        } else {
+            preserveList.put((RBaseObject) obj, new AtomicInteger(1));
         }
     }
 
     @Override
-    @TruffleBoundary
     public void R_ReleaseObject(Object obj) {
         guaranteeInstanceOf(obj, RBaseObject.class);
         RFFIContext context = getContext();
-        IdentityHashMap<RBaseObject, AtomicInteger> preserveList = context.rffiContextState.preserveList;
-        AtomicInteger atomicInteger = preserveList.get(obj);
+        EconomicMap<RBaseObject, AtomicInteger> preserveList = context.rffiContextState.preserveList;
+        AtomicInteger atomicInteger = preserveList.get((RBaseObject) obj);
         if (atomicInteger != null) {
             int decrementAndGet = atomicInteger.decrementAndGet();
             if (decrementAndGet == 0) {
                 // remove from "list"
-                preserveList.remove(obj);
+                preserveList.removeKey((RBaseObject) obj);
                 context.registerReferenceUsedInNative(obj);
             }
         } else {

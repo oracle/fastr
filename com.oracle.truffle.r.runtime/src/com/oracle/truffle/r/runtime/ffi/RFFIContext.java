@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.util.IdentityHashMap;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+
+import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
@@ -86,7 +87,7 @@ public abstract class RFFIContext extends RFFI {
          * FastR equivalent of GNUR's special dedicated global list that is GC root and so any
          * vectors added to it will be guaranteed to be preserved.
          */
-        public final IdentityHashMap<RBaseObject, AtomicInteger> preserveList = new IdentityHashMap<>();
+        public final EconomicMap<RBaseObject, AtomicInteger> preserveList = EconomicMap.create();
 
         public final WeakHashMap<RScalar, RAbstractVector> protectedMaterializedScalarVectors = new WeakHashMap<>();
 

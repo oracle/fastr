@@ -102,7 +102,7 @@ public abstract class RAbstractIntVector extends RAbstractNumericVector {
     }
 
     @Override
-    public RType getRType() {
+    public final RType getRType() {
         return RType.Integer;
     }
 

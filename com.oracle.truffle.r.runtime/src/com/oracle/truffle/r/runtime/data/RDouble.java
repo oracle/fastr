@@ -99,11 +99,6 @@ public final class RDouble extends RAbstractDoubleVector implements RScalarVecto
     }
 
     @Override
-    public RType getRType() {
-        return RType.Double;
-    }
-
-    @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return Double.toString(value);
