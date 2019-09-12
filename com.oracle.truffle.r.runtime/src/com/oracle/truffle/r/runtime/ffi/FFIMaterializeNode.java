@@ -52,7 +52,7 @@ public abstract class FFIMaterializeNode extends Node {
     public abstract Object execute(Object value);
 
     public static Object executeUncached(Object value) {
-        return FFIWrapNodeGen.getUncached().execute(value);
+        return FFIMaterializeNodeGen.getUncached().execute(value);
     }
 
     // Scalar values:
