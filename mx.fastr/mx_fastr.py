@@ -115,7 +115,7 @@ def run_grid_server(args, **kwargs):
     return mx.run_java(vmArgs + args, jdk=get_default_jdk(), **kwargs)
 
 def r_classpath(args):
-    print mx.classpath('FASTR', jdk=mx.get_jdk())
+    print(mx.classpath('FASTR', jdk=mx.get_jdk()))  # pylint: disable=superfluous-parens
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''
@@ -168,7 +168,7 @@ def _get_ldpaths(env, lib_env_name):
     command = ['bash', '-c', 'source ' + ldpaths + ' && env']
 
     try:
-        proc = subprocess.Popen(command, stdout=subprocess.PIPE)
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
         for line in proc.stdout:
             (key, _, value) = line.partition("=")
             if key == lib_env_name:
@@ -238,10 +238,10 @@ def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, **kwargs):
     # special cases normally handled in shell script startup
     if command == 'r' and len(rargs) > 0:
         if rargs[0] == 'RHOME':
-            print _fastr_suite.dir
+            print(_fastr_suite.dir)  # pylint: disable=superfluous-parens
             sys.exit(0)
         elif rargs[0] == 'CMD':
-            print 'CMD not implemented via mx, use: bin/R CMD ...'
+            print('CMD not implemented via mx, use: bin/R CMD ...')  # pylint: disable=superfluous-parens
             sys.exit(1)
 
     return do_run_r(rargs, command, extraVmArgs=extraVmArgs, jdk=jdk, **kwargs)
@@ -368,7 +368,7 @@ def _test_subpackage(name):
     return '.'.join((_test_package(), name))
 
 def _simple_generated_unit_tests():
-    return map(_test_subpackage, ['engine.shell', 'engine.interop', 'library.base', 'library.grid', 'library.fastrGrid', 'library.methods', 'library.parallel', 'library.stats', 'library.tools', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'rffi', 'rng', 'runtime.data', 'S4'])
+    return list(map(_test_subpackage, ['engine.shell', 'engine.interop', 'library.base', 'library.grid', 'library.fastrGrid', 'library.methods', 'library.parallel', 'library.stats', 'library.tools', 'library.utils', 'library.fastr', 'builtins', 'functions', 'parser', 'rffi', 'rng', 'runtime.data', 'S4']))  # pylint: disable=line-too-long
 
 def _simple_unit_tests():
     # com.oracle.truffle.tck.tests - truffle language inter-operability tck in com.oracle.truffle.r.test.tck/
@@ -405,7 +405,7 @@ def testgen(args):
         mx.abort('must run rtestgen from FastR home directory')
 
     def need_version_check():
-        vardef = os.environ.has_key('FASTR_TESTGEN_GNUR')
+        vardef = 'FASTR_TESTGEN_GNUR' in os.environ
         varval = os.environ['FASTR_TESTGEN_GNUR'] if vardef else None
         version_check = vardef and varval != 'internal'
         if version_check:
@@ -436,10 +436,10 @@ def testgen(args):
 
 def _unset_conflicting_envs():
     # this can interfere with the recommended packages
-    if os.environ.has_key('R_LIBS_USER'):
+    if 'R_LIBS_USER' in os.environ:
         del os.environ['R_LIBS_USER']
     # the default must be vi for unit tests
-    if os.environ.has_key('EDITOR'):
+    if 'EDITOR' in os.environ:
         del os.environ['EDITOR']
 
 def rbcheck(args):
@@ -539,13 +539,13 @@ def gnu_rtests(args, env=None):
             srcd = join(tstsrc, subd)
             for f in sorted(os.listdir(srcd)):
                 if f.endswith('.R'):
-                    print 'Running {} explicitly by FastR CMD BATCH ...'.format(f)
+                    print('Running {} explicitly by FastR CMD BATCH ...'.format(f))  # pylint: disable=superfluous-parens
                     mx.run([r_path(), '--vanilla', 'CMD', 'BATCH', join(srcd, f)] + args, nonZeroIsFatal=False, env=env, timeout=90)
                     outf = f + 'out'
                     if os.path.isfile(outf):
                         outff = outf + '.fastr'
                         os.rename(outf, outff)
-                        print 'Running {} explicitly by GnuR CMD BATCH ...'.format(f)
+                        print('Running {} explicitly by GnuR CMD BATCH ...'.format(f))  # pylint: disable=superfluous-parens
                         mx.run([join(_gnur_path(), 'bin', 'R'), '--vanilla', 'CMD', 'BATCH', join(srcd, f)] + args, nonZeroIsFatal=False, env=env, timeout=90)
                         if os.path.isfile(outf):
                             outfg = outf + '.gnur'
@@ -555,7 +555,7 @@ def gnu_rtests(args, env=None):
                             subprocess.Popen([r_path(), 'CMD', 'Rdiff', outfg, outff], stdout=diff, stderr=diff, shell=False)
                             diff.flush()
         diff.close()
-        print 'FastR to GnuR diff was written to {}'.format(diffname)
+        print('FastR to GnuR diff was written to {}'.format(diffname))  # pylint: disable=superfluous-parens
     finally:
         shutil.rmtree(join(_fastr_suite.dir, 'deparse'), True)
 
@@ -638,9 +638,9 @@ def pkgtest_load():
 
 def _pkgtest_args(args):
     graalvm_home = None
-    if os.environ.has_key('FASTR_GRAALVM'):
+    if 'FASTR_GRAALVM' in os.environ:
         graalvm_home = os.environ['FASTR_GRAALVM']
-    elif os.environ.has_key('GRAALVM_FASTR'):
+    elif 'GRAALVM_FASTR' in os.environ:
         graalvm_home = os.environ['GRAALVM_FASTR']
 
     pkgtest_args = []

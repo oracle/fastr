@@ -35,10 +35,10 @@ and tests, namely 'lib.install.packages.{fastr,gnur}' and 'test.{fastr,gnur}' (s
 from os.path import relpath
 import shutil, os, re
 
-from subproc import pkgtest_run
-from output_filter import select_filters_for_package
-from fuzzy_compare import fuzzy_compare
-from util import *
+from .subproc import pkgtest_run
+from .output_filter import select_filters_for_package
+from .fuzzy_compare import fuzzy_compare
+from .util import *
 
 
 def _create_libinstall(rvm, test_installed):
@@ -114,7 +114,7 @@ def _installpkgs(args, **kwargs):
     '''
     Runs the R script that does package/installation and testing.
     '''
-    if kwargs.has_key('env'):
+    if 'env' in kwargs:
         env = kwargs['env']
     else:
         env = os.environ.copy()
@@ -212,7 +212,7 @@ def pkgtest(args):
         abort(status=rc)
 
     rc = 0
-    for status in out.install_status.itervalues():
+    for status in out.install_status.values():
         if not status:
             rc = 1
     log_step('END', 'install/test', 'FastR')
@@ -222,7 +222,7 @@ def pkgtest(args):
     if '--run-tests' in install_args and not install_failure:
         # in order to compare the test output with GnuR we have to install/test the same
         # set of packages with GnuR
-        ok_pkgs = [k for k, v in out.install_status.iteritems() if v]
+        ok_pkgs = [k for k, v in out.install_status.items() if v]
         gnur_args = _args_to_forward_to_gnur(install_args)
 
         # If '--cache-pkgs' is set, then also set the native API version value
@@ -231,13 +231,13 @@ def pkgtest(args):
         _gnur_install_test(gnur_args, ok_pkgs, gnur_libinstall, gnur_install_tmp)
         _set_test_status(out.test_info)
         logging.info('Test Status')
-        for pkg, test_status in out.test_info.iteritems():
+        for pkg, test_status in out.test_info.items():
             if test_status.status != "OK":
                 rc = rc | 2
             logging.info('{0}: {1}'.format(pkg, test_status.status))
 
         diffdir = _create_testdot('diffs')
-        for pkg, _ in out.test_info.iteritems():
+        for pkg, _ in out.test_info.items():
             diff_file = join(diffdir, pkg)
             subprocess.call(['diff', '-r', _pkg_testdir('fastr', pkg), _pkg_testdir('gnur', pkg)],
                             stdout=open(diff_file, 'w'))
@@ -496,17 +496,17 @@ def _set_test_status(fastr_test_info):
         '''
         return False iff outputs has no .fail files
         '''
-        for _, testfile_status in outputs.iteritems():
+        for _, testfile_status in outputs.items():
             if testfile_status.status == "FAILED":
                 return [testfile_status.abspath]
         return False
 
     gnur_test_info = dict()
-    for pkg, _ in fastr_test_info.iteritems():
+    for pkg, _ in fastr_test_info.items():
         _get_test_outputs('gnur', pkg, gnur_test_info)
 
     # gnur is definitive so drive off that
-    for pkg in gnur_test_info.keys():
+    for pkg in list(gnur_test_info.keys()):
         logging.info('BEGIN checking ' + pkg)
         gnur_test_status = gnur_test_info[pkg]
         fastr_test_status = fastr_test_info[pkg]
@@ -528,7 +528,7 @@ def _set_test_status(fastr_test_info):
             fastr_test_status.set_status_code("FAILED")
 
         # Now for each successful GNU R output we compare content (assuming FastR didn't fail)
-        for gnur_test_output_relpath, gnur_testfile_status in gnur_outputs.iteritems():
+        for gnur_test_output_relpath, gnur_testfile_status in gnur_outputs.items():
 
             # If FastR does not have a corresponding test output file ...
             if not gnur_test_output_relpath in fastr_outputs:
@@ -622,7 +622,7 @@ def _set_test_status(fastr_test_info):
         # write out a file with the test status for each output (that exists)
         with open(join(_pkg_testdir('fastr', pkg), 'testfile_status'), 'w') as f:
             f.write('# <file path> <tests passed> <tests skipped> <tests failed>\n')
-            for fastr_relpath, fastr_testfile_status in fastr_outputs.iteritems():
+            for fastr_relpath, fastr_testfile_status in fastr_outputs.items():
                 logging.info("generating testfile_status for {0}".format(fastr_relpath))
                 relpath = fastr_relpath
                 test_output_file = join(_pkg_testdir('fastr', pkg), relpath)
@@ -774,7 +774,7 @@ def pkgtest_check(args):
     parser.add_argument('pkg_name', metavar="PKG_NAME",
                         help='Package name for checking.')
 
-    import util
+    from . import util
     _opts = parser.parse_args(args=args, namespace=util.get_opts())
 
     log_format = '%(message)s'
@@ -829,7 +829,7 @@ def pkgtest_cmp(args):
         gnur_content = f.readlines()
     with open(fastr_filename) as f:
         fastr_content = f.readlines()
-    from fuzzy_compare import fuzzy_compare
+    from .fuzzy_compare import fuzzy_compare
     return fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, filters, dump_preprocessed)
 
 

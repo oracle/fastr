@@ -25,7 +25,7 @@ import logging
 from threading import Thread
 import time, signal, errno, sys, os, subprocess
 
-from util import abort
+from .util import abort
 
 ERROR_TIMEOUT = 0x700000000 # not 32 bits
 _currentSubprocesses = []
@@ -101,7 +101,7 @@ def _waitWithTimeout(process, args, timeout, nonZeroIsFatal=True):
         while True:
             try:
                 return os.waitpid(pid, os.WNOHANG)
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.EINTR:
                     continue
                 raise
@@ -154,7 +154,7 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
         env = os.environ.copy()
 
     msg = 'Environment variables:\n'
-    msg += '\n'.join(['    ' + key + '=' + env[key] for key in env.keys()])
+    msg += '\n'.join(['    ' + key + '=' + env[key] for key in list(env.keys())])
     logging.debug(msg)
 
     sub = None
@@ -174,7 +174,7 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
             stream.close()
         stdout = out if not callable(out) else subprocess.PIPE
         stderr = err if not callable(err) else subprocess.PIPE
-        p = subprocess.Popen(args, cwd=cwd, stdout=stdout, stderr=stderr, preexec_fn=preexec_fn, creationflags=creationflags, env=env, **kwargs)
+        p = subprocess.Popen(args, cwd=cwd, stdout=stdout, stderr=stderr, preexec_fn=preexec_fn, creationflags=creationflags, env=env, universal_newlines=True, **kwargs)
         sub = _addSubprocess(p, args)
         joiners = []
         if callable(out):
