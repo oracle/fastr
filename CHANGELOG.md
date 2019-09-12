@@ -25,6 +25,7 @@ Bug fixes:
 * `Rf_allocVector` fails gracefully when FastR runs out of memory
 * bug in `DATAPTR` for vectors of size in bytes larger than 2^31
 * provide correct daylight saving time info in `as.POSIXlt` #98
+* `list.files` handles `no..` and `all` arguments correctly
 
 
 # 19.2.0

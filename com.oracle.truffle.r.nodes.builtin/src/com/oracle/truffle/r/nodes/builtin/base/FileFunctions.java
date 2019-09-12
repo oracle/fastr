@@ -720,7 +720,7 @@ public class FileFunctions {
                      * Annoyingly "." and ".." are never visited by Files.find, so we have to
                      * process them manually.
                      */
-                    if (!noDotDot) {
+                    if (!recursive && allFiles && !noDotDot) {
                         if (pattern == null || pattern.matcher(DOT).find()) {
                             files.add(fullNames ? FileSystemUtils.getSafeTruffleFile(env, vecPathString).resolve(DOT).getPath() : DOT);
                         }
