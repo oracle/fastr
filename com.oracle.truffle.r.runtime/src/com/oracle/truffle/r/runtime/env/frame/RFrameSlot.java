@@ -30,8 +30,14 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 /**
  * Description of different internal frame slots used by FastR. This enum is used as an identifier,
  * so that these internal frame slots have non-string names.
+ * 
+ * IMPORTANT NOTE: this class deliberately does not override {@code equals} and {@code hashCode} and
+ * uses reference equality. New instances should not be created dynamically but only as
+ * "singletons".
  */
 public final class RFrameSlot {
+    private static final ArrayList<RFrameSlot> defaultTempIdentifiers = new ArrayList<>();
+
     private final String name;
     private final boolean multiSlot;
 
@@ -53,7 +59,16 @@ public final class RFrameSlot {
         return multiSlot;
     }
 
-    public static RFrameSlot createTemp(String name, boolean multiSlot) {
+    public static RFrameSlot getTemp(int idx) {
+        if (idx >= defaultTempIdentifiers.size()) {
+            for (int i = defaultTempIdentifiers.size(); i <= idx; i++) {
+                defaultTempIdentifiers.add(RFrameSlot.createTemp("TempFrameSlot" + i, true));
+            }
+        }
+        return defaultTempIdentifiers.get(idx);
+    }
+
+    private static RFrameSlot createTemp(String name, boolean multiSlot) {
         return new RFrameSlot(name, multiSlot);
     }
 
@@ -87,6 +102,12 @@ public final class RFrameSlot {
      * Used to save the restart stack in frames that modify it.
      */
     public static final RFrameSlot RestartStack = new RFrameSlot("RestartStack", false);
+
+    public static final RFrameSlot ExplicitCallArgs = new RFrameSlot("RExplicitCall-argsIdentifier", true);
+
+    public static final RFrameSlot FunctionEvalNodeArgsIdentifier = RFrameSlot.createTemp("FunctionEvalCallNode-argsIdentifier", true);
+
+    public static final RFrameSlot FunctionEvalNodeFunIdentifier = RFrameSlot.createTemp("FunctionEvalCallNode-funIdentifier", true);
 
     public static RFrameSlot[] values() {
         return new RFrameSlot[]{OnExit, Visibility, HandlerStack, RestartStack};
