@@ -29,6 +29,7 @@
 
 static const R_CMethodDef CEntries[]  = {
     {"dotCModifiedArguments", (DL_FUNC) &dotCModifiedArguments, 5},
+    {"benchRf_isNull", (DL_FUNC) &benchRf_isNull, 1},
     {NULL, NULL, 0}
 };
 
@@ -103,6 +104,8 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_constant_types, 0),
         CALLDEF(test_sort_complex, 1),
         CALLDEF(get_dataptr, 1),
+        CALLDEF(benchMultipleUpcalls, 1),
+        CALLDEF(test_lapplyWithForceAndCall, 4),
         #include "init_api.h"
         {NULL, NULL, 0}
 };
