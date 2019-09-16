@@ -200,16 +200,6 @@ void vmmin(int n0, double *b, double *Fmin, optimfn fminfn, optimgr fmingr,
     *grcount = gradcount;
 }
 
-void
-optif9(int nr, int n, double *x, fcn_p fcn, fcn_p d1fcn, d2fcn_p d2fcn,
-       void *state, double *typsiz, double fscale, int method,
-       int iexp, int *msg, int ndigit, int itnlim, int iagflg, int iahflg,
-       double dlt, double gradtl, double stepmx, double steptl,
-       double *xpls, double *fpls, double *gpls, int *itrmcd, double *a,
-       double *wrk, int *itncnt) {
-	unimplemented("optif9");
-}
-
 #define stepredn	0.2
 #define acctol		0.0001
 #define reltest		10.0

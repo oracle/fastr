@@ -574,7 +574,6 @@ public class CallAndExternalFunctions {
                     // individually
                     // Furthermore it requires to pull lbfgsb.c and linkpack (Appl/Linpack.h)
                     // routines from core
-                    return new UnimplementedExternal(name);
 
                 case "pp_sum":
                     return PPSumExternal.create();
