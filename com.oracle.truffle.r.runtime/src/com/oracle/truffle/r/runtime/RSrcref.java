@@ -80,7 +80,7 @@ public class RSrcref {
      * Internal version of srcfile(path).
      */
     public static REnvironment createSrcfile(RContext context, String path, Set<Object> envRefHolder) {
-        TruffleFile file = context.getEnv().getTruffleFile(Utils.tildeExpand(path));
+        TruffleFile file = FileSystemUtils.getSafeTruffleFile(context.getEnv(), Utils.tildeExpand(path));
         return createSrcfile(context, file, envRefHolder);
     }
 
@@ -166,7 +166,7 @@ public class RSrcref {
             env.setClassAttr(RDataFactory.createStringVector(new String[]{"srcfilecopy", RRuntime.R_SRCFILE}, true));
             try {
                 String pathStr = RSource.getPathInternal(source);
-                TruffleFile path = context.getEnv().getTruffleFile(pathStr != null ? pathStr : "");
+                TruffleFile path = FileSystemUtils.getSafeTruffleFile(context.getEnv(), pathStr != null ? pathStr : "");
 
                 env.put(SrcrefFields.filename.name(), path.toString());
                 env.put(SrcrefFields.fixedNewlines.name(), RRuntime.LOGICAL_TRUE);

@@ -1832,8 +1832,7 @@ public class RSerialize {
                     String path = RSource.getPathInternal(ss.getSource());
                     if (path != null) {
                         // do this only for packages
-                        Env env = context.getEnv();
-                        TruffleFile relPath = relativizeLibPath(env, env.getTruffleFile(path));
+                        TruffleFile relPath = relativizeLibPath(context.getEnv(), FileSystemUtils.getSafeTruffleFile(context.getEnv(), path));
                         if (relPath != null) {
                             REnvironment createSrcfile = RSrcref.createSrcfile(context, relPath, state.envRefHolder);
                             Object createLloc = RSrcref.createLloc(ss, createSrcfile);
@@ -2557,7 +2556,7 @@ public class RSerialize {
             // do this only for packages
             RContext ctx = state.getContext();
             Env env = ctx.getEnv();
-            TruffleFile relPath = relativizeLibPath(env, env.getTruffleFile(pathInternal));
+            TruffleFile relPath = relativizeLibPath(env, FileSystemUtils.getSafeTruffleFile(env, pathInternal));
             if (relPath != null) {
                 RAttributable attributable = (RAttributable) serObj;
                 attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(ctx, relPath, state.envRefHolder));
@@ -2581,7 +2580,7 @@ public class RSerialize {
     private static TruffleFile relativizeLibPath(Env env, TruffleFile sourcePath) {
         for (String libPath : RContext.getInstance().libraryPaths) {
             if (sourcePath.startsWith(libPath)) {
-                return env.getTruffleFile(libPath).relativize(sourcePath);
+                return FileSystemUtils.getSafeTruffleFile(env, libPath).relativize(sourcePath);
             }
         }
         return null;

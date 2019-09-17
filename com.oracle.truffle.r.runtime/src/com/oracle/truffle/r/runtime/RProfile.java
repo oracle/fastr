@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,18 +45,17 @@ public final class RProfile implements RContext.ContextState {
     @Override
     @TruffleBoundary
     public RContext.ContextState initialize(RContext context) {
-        String rHome = REnvVars.rHome();
         Source newSiteProfile = null;
         Source newUserProfile = null;
 
         if (context.getStartParams().getLoadSiteFile()) {
             String siteProfilePath = envVars.get("R_PROFILE");
             if (siteProfilePath == null) {
-                siteProfilePath = context.getEnv().getTruffleFile(rHome).resolve("etc").resolve("Rprofile.site").toString();
+                siteProfilePath = REnvVars.getRHomeTruffleFile(context.getEnv()).resolve("etc").resolve("Rprofile.site").toString();
             } else {
                 siteProfilePath = Utils.tildeExpand(siteProfilePath);
             }
-            TruffleFile siteProfileFile = context.getEnv().getTruffleFile(siteProfilePath);
+            TruffleFile siteProfileFile = FileSystemUtils.getSafeTruffleFile(context.getEnv(), siteProfilePath);
             if (siteProfileFile.exists()) {
                 newSiteProfile = getProfile(siteProfilePath, false);
             }
@@ -66,15 +65,15 @@ public final class RProfile implements RContext.ContextState {
             String userProfilePath = envVars.get("R_PROFILE_USER");
             if (userProfilePath == null) {
                 String dotRenviron = ".Rprofile";
-                userProfilePath = context.getEnv().getTruffleFile((String) BaseRFFI.GetwdRootNode.create().getCallTarget().call()).resolve(dotRenviron).getPath();
-                if (!context.getEnv().getTruffleFile(userProfilePath).exists()) {
-                    userProfilePath = context.getEnv().getTruffleFile(System.getProperty("user.home")).resolve(dotRenviron).getPath();
+                userProfilePath = FileSystemUtils.getSafeTruffleFile(context.getEnv(), (String) BaseRFFI.GetwdRootNode.create().getCallTarget().call()).resolve(dotRenviron).getPath();
+                if (!FileSystemUtils.getSafeTruffleFile(context.getEnv(), userProfilePath).exists()) {
+                    userProfilePath = FileSystemUtils.getSafeTruffleFile(context.getEnv(), System.getProperty("user.home")).resolve(dotRenviron).getPath();
                 }
             } else {
                 userProfilePath = Utils.tildeExpand(userProfilePath);
             }
             if (userProfilePath != null) {
-                TruffleFile userProfileFile = context.getEnv().getTruffleFile(userProfilePath);
+                TruffleFile userProfileFile = FileSystemUtils.getSafeTruffleFile(context.getEnv(), userProfilePath);
                 if (userProfileFile.exists()) {
                     newUserProfile = getProfile(userProfilePath, false);
                 }
@@ -89,7 +88,7 @@ public final class RProfile implements RContext.ContextState {
     private Source userProfile;
 
     public static Source systemProfile() {
-        TruffleFile path = RContext.getInstance().getEnv().getTruffleFile(REnvVars.rHome()).resolve("library").resolve("base").resolve("R").resolve("Rprofile");
+        TruffleFile path = REnvVars.getRHomeTruffleFile(RContext.getInstance().getEnv()).resolve("library").resolve("base").resolve("R").resolve("Rprofile");
         Source source = getProfile(path.getPath(), true);
         if (source == null) {
             RSuicide.rSuicide("can't find system profile");

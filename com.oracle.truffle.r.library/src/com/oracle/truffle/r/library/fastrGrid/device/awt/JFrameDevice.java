@@ -47,6 +47,7 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.ImageSaver;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 
 /**
  * This device paints everything into an image, which is painted into a AWT component in its
@@ -197,7 +198,7 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
 
     @Override
     public void save(Env env, String path, String fileType) throws IOException {
-        ImageIO.write(image, fileType, env.getTruffleFile(path).newOutputStream());
+        ImageIO.write(image, fileType, FileSystemUtils.getSafeTruffleFile(env, path).newOutputStream());
     }
 
     public void setResizeListener(Runnable onResize) {

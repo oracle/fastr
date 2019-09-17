@@ -36,6 +36,7 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.library.fastrGrid.device.FileGridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class BufferedImageDevice extends Graphics2DDevice implements FileGridDevice {
@@ -78,7 +79,7 @@ public final class BufferedImageDevice extends Graphics2DDevice implements FileG
 
     private void saveImage() throws DeviceCloseException {
         try {
-            TruffleFile file = env.getTruffleFile(filename);
+            TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, filename);
             TruffleFile parent = file.getParent();
             if (FileGridDevice.isDevNull(file)) {
                 return;

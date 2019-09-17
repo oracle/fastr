@@ -65,6 +65,7 @@ import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.LoopTag;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -448,7 +449,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "redirect missing");
                 }
                 try {
-                    in = RContext.getInstance().getEnv().getTruffleFile(file).newInputStream();
+                    in = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), file).newInputStream();
                 } catch (IOException ex) {
                     throw RError.error(RError.NO_CALLER, RError.Message.NO_SUCH_FILE, file);
                 }

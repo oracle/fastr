@@ -51,10 +51,11 @@ public abstract class FastRUseDebugMakevars extends RBuiltinNode.Arg1 {
     @TruffleBoundary
     @Specialization
     protected RNull useDebugMakevars(boolean use) {
-        TruffleFile dst = RContext.getInstance().getEnv().getInternalTruffleFile(REnvVars.rHome()).resolve("etc").resolve("Makevars.site");
+        TruffleFile rHome = REnvVars.getRHomeTruffleFile(RContext.getInstance().getEnv());
+        TruffleFile dst = rHome.resolve("etc").resolve("Makevars.site");
         try {
             if (use) {
-                TruffleFile src = RContext.getInstance().getEnv().getInternalTruffleFile(REnvVars.rHome()).resolve("etc").resolve("Makevars.site.debug");
+                TruffleFile src = rHome.resolve("etc").resolve("Makevars.site.debug");
                 src.copy(dst, StandardCopyOption.REPLACE_EXISTING);
             } else {
                 if (dst.exists()) {

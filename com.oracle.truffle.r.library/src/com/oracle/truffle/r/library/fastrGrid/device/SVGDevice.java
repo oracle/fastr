@@ -38,6 +38,7 @@ import com.oracle.truffle.r.library.fastrGrid.GridColorUtils;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -220,7 +221,7 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     private void saveFile() throws DeviceCloseException {
         closeSVGDocument(data);
         try {
-            TruffleFile file = env.getTruffleFile(filename);
+            TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, filename);
             if (FileGridDevice.isDevNull(file)) {
                 return;
             }

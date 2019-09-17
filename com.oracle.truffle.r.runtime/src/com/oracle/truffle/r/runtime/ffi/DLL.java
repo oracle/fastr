@@ -45,6 +45,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
@@ -620,7 +621,7 @@ public class DLL {
     }
 
     public static String libName(String absPath) {
-        TruffleFile file = RContext.getInstance().getEnv().getTruffleFile(absPath);
+        TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), absPath);
         String name = file.getName();
         int dx = name.lastIndexOf('.');
         if (dx > 0) {

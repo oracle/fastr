@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -41,4 +41,24 @@ public class TestBuiltin_fileexists extends TestBase {
     public void testfileexists3() {
         assertEval("argv <- list(character(0)); .Internal(file.exists(argv[[1]]))");
     }
+
+    private static String dirPath = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/data/tree1";
+
+    @Test
+    public void testFileExist() {
+    }
+
+    @Test
+    public void testFileDoesNotExist() {
+        // make sure dirPath exists
+        assertEvalFastR(" file.exists('" + dirPath + "')", "TRUE");
+
+        assertEval(" file.exists('" + dirPath + "/filedoesnotexist')");
+        assertEval(" file.exists('" + dirPath + "/filedoesnotexist/..')");
+        assertEval(" file.exists('" + dirPath + "/filedoesnotexist/../aa')");
+        assertEval(" file.exists('" + dirPath + "/filedoesnotexist/../aa/..')");
+
+        assertEval(" file.exists('" + dirPath + "/filedoesnotexist/../dummy.txt')");
+    }
+
 }
