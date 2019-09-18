@@ -91,7 +91,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         writeLengthNode.execute(frame, length.executeInteger(range));
         writeInitialElementNode.execute(frame);
 
-        l.executeLoop(frame);
+        l.execute(frame);
 
         return RNull.instance;
     }
@@ -136,7 +136,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         } catch (UnsupportedMessageException ex) {
             throw RInternalError.shouldNotReachHere();
         }
-        l.executeLoop(frame);
+        l.execute(frame);
         return RNull.instance;
     }
 
