@@ -107,6 +107,13 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	sed -i -e 's~LIBR0 =~LIBR0 = -lR~' Makeconf.etc
 	sed -i -e 's~LDFLAGS =~LDFLAGS = -Wl,-rpath,$$\(R_HOME\)/lib/ -L$$\(R_HOME\)/lib -lf2c~' Makeconf.etc
 	sed -i -e 's~^CXXFLAGS =\(.*\)~CXXFLAGS = \1 $(FASTR_CXXFLAGS)~g' Makeconf.etc
+	# Remove the GCC flags to prevent a conflict with Toolchain Clang
+ifneq ($(PKG_LDFLAGS_GCC),)
+		sed -i -e 's@'"$$PKG_LDFLAGS_GCC"'@@'g Makeconf.etc
+endif
+ifneq ($(PKG_INCLUDE_FLAGS_GCC),)
+		sed -i -e 's@'"$$PKG_INCLUDE_FLAGS_GCC"'@@'g Makeconf.etc
+endif
 	# A workaround for a Sulong issue: TODO: the issue ID
 	sed -i -e 's/-O2//' Makeconf.etc
 	# the undefined option is not compatible with LLVM bundling

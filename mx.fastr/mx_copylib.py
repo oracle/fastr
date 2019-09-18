@@ -108,13 +108,16 @@ def copylib(args):
     and do nothing.
     '''
     if 'PKG_LDFLAGS_OVERRIDE' in os.environ:
-        parts = os.environ['PKG_LDFLAGS_OVERRIDE'].split(' ')
+        partsVar = os.environ['PKG_LDFLAGS_OVERRIDE']
+        if 'PKG_LDFLAGS_GCC' in os.environ:
+            partsVar += ' ' + os.environ['PKG_LDFLAGS_GCC']
+        parts = partsVar.split(' ')
         ext = 'dylib' if platform.system() == 'Darwin' else 'so'
         lib_prefix = 'lib' + args[0] + '.'
+        plain_libpath_base = lib_prefix + ext
         ver_env_key = 'FASTR_LIB' + args[0].upper() + '_VER'
         if ver_env_key in os.environ:
-            lib_prefix += os.environ[ver_env_key] + '.'
-        plain_libpath_base = lib_prefix + ext
+            plain_libpath_base += '.' + os.environ[ver_env_key]
         for part in parts:
             path = part.strip('"').lstrip('-L')
             if os.path.exists(path):
