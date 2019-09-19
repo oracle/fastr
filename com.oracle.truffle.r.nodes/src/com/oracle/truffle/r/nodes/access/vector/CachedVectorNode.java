@@ -29,7 +29,6 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 
 /**
@@ -138,23 +137,5 @@ abstract class CachedVectorNode extends RBaseNodeWithWarnings {
 
     public ElementAccessMode getMode() {
         return mode;
-    }
-
-    protected String tryCastSingleString(PositionsCheckNode check, Object[] positions) {
-        if (numberOfPositions > 1) {
-            return null;
-        }
-
-        String positionString = null;
-        Object position = check.getPositionCheckAt(0).getPositionClass().cast(positions[0]);
-        if (position instanceof String) {
-            positionString = (String) position;
-        } else if (position instanceof RAbstractStringVector) {
-            RAbstractStringVector vector = (RAbstractStringVector) position;
-            if (vector.getLength() == 1) {
-                positionString = vector.getDataAt(0);
-            }
-        }
-        return positionString;
     }
 }
