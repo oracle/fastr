@@ -172,8 +172,9 @@ public class FastRInterop {
         protected CallTarget parse(String languageId, String code) {
             CompilerAsserts.neverPartOfCompilation();
             Env env = RContext.getInstance().getEnv();
-            LanguageInfo languageInfo = languageId != null ? env.getLanguages().get(languageId) : null;
-            if ((languageId != null && languageInfo == null) || (languageInfo != null && languageInfo.isInternal())) {
+            LanguageInfo languageInfo = languageId != null ? env.getPublicLanguages().get(languageId) : null;
+            if ((languageId != null && languageInfo == null) || (languageInfo != null &&
+                            languageInfo.isInternal())) {
                 throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageId);
             }
             Source sourceObject = RSource.fromTextInternalInvisible(code, RSource.Internal.EVAL_WRAPPER, languageId);
@@ -229,8 +230,9 @@ public class FastRInterop {
             LanguageInfo languageInfo = null;
             try {
                 String languageId = languageIdArg;
-                languageInfo = languageId != null ? env.getLanguages().get(languageId) : null;
-                if ((languageId != null && languageInfo == null) || (languageInfo != null && languageInfo.isInternal())) {
+                languageInfo = languageId != null ? env.getPublicLanguages().get(languageId) : null;
+                if ((languageId != null && languageInfo == null) || (languageInfo != null &&
+                                languageInfo.isInternal())) {
                     throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageIdArg);
                 }
                 if (languageId == null) {
