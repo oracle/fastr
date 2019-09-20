@@ -303,3 +303,15 @@ rffi.test_sort_complex <- function(complexVec) {
 }
 
 rffi.get_dataptr <- function(x) .Call('get_dataptr', x)
+
+rffi.benchRf_isNull <- function(n) {
+	.C("benchRf_isNull", as.integer(n))
+}
+
+rffi.benchMultipleUpcalls <- function(x) {
+    .Call('benchMultipleUpcalls', x)
+}
+
+rffi.test_lapplyWithForceAndCall <- function(list, fn, fa, ...) {
+    .Call('test_lapplyWithForceAndCall', list, fn, fa, environment())
+}

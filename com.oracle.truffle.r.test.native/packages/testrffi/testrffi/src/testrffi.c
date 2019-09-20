@@ -646,6 +646,22 @@ SEXP test_lapply(SEXP list, SEXP fn, SEXP rho) {
     return ans;
 }
 
+SEXP test_lapplyWithForceAndCall(SEXP list, SEXP fn, SEXP fa, SEXP rho) {
+    int n = length(list);
+    SEXP R_fcall, ans;
+
+    R_fcall = PROTECT(lang3(fn, R_NilValue, R_DotsSymbol));
+    ans = PROTECT(allocVector(VECSXP, n));
+    for(int i = 0; i < n; i++) {
+        SETCADR(R_fcall, VECTOR_ELT(list, i));
+        SET_VECTOR_ELT(ans, i, R_forceAndCall(R_fcall, Rf_asInteger(fa), rho));
+
+    }
+    setAttrib(ans, R_NamesSymbol, getAttrib(list, R_NamesSymbol));
+    UNPROTECT(2);
+    return ans;
+}
+
 SEXP test_RfEvalWithPromiseInPairList() {
     SEXP fun = Rf_findVarInFrame(R_FindNamespace(ScalarString(mkChar("stats"))), Rf_install("runif"));
     if (TYPEOF(fun) != PROMSXP) {
@@ -971,3 +987,21 @@ SEXP get_dataptr(SEXP vec) {
     return R_NilValue;
 }
 
+void benchRf_isNull(int* n) {
+	for (int i = 0; i < *n; i++) {
+		Rf_isNull(R_NilValue);
+	}
+}
+
+SEXP benchMultipleUpcalls(SEXP x) {
+  SEXP result;
+  PROTECT(result = Rf_allocVector(VECSXP, Rf_length(x)));
+  for (int i = 0; i < Rf_length(x); ++i) {
+    SEXP val;
+    PROTECT(val = ScalarInteger(Rf_length(VECTOR_ELT(x, i))));
+    SET_VECTOR_ELT(result, i, val);
+    UNPROTECT(1);
+  }
+  UNPROTECT(1);
+  return result;
+}
