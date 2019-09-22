@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -87,5 +87,7 @@ public class TestBuiltin_asPOSIXlt extends TestBase {
         assertEval(Output.MayIgnoreErrorContext, ".Internal(as.POSIXlt(, 1))");
         assertEval(Output.MayIgnoreErrorContext, ".Internal(as.POSIXlt(2, ))");
         assertEval("{ q <- Sys.time(); as.vector(unclass(as.POSIXct(as.POSIXlt(q))) - unclass(q)) }");
+        assertEval("as.POSIXlt(c('10/1/2017 0:00', '10/1/2017 0:00'), '%m/%e/%Y %H:%M', tz='Europe/Belarus')$isdst");
+        assertEval("as.POSIXlt(c('10/1/2017 0:00', '10/1/2017 0:00'), '%m/%e/%Y %H:%M', tz='America/Los_Angeles')$isdst");
     }
 }
