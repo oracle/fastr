@@ -31,7 +31,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
@@ -93,6 +92,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.CallAndExternalFunctions.DotExternal.CallNamedFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
+import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.runtime.RError;
@@ -114,7 +114,6 @@ import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.ffi.FFIWrapNode;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nmath.distr.Cauchy;
@@ -249,9 +248,8 @@ public class CallAndExternalFunctions {
      */
     @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCall extends Dot {
-        private static final int WRAP_NODES_COUNT = 4;
-        @Children private FFIWrapNode[] wrapNode = new FFIWrapNode[WRAP_NODES_COUNT];
-        @Child FFIWrapNode overflowWrapNode;
+
+        @Child private MaterializeNode materializeNode = MaterializeNode.create();
 
         static {
             Casts.noCasts(DotCall.class);
@@ -262,34 +260,10 @@ public class CallAndExternalFunctions {
             return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RMissing.instance};
         }
 
-        @ExplodeLoop
-        private void explodedWrapArguments(Object[] args, Object[] materializedArgs) {
-            for (int i = 0; i < WRAP_NODES_COUNT; i++) {
-                if (i >= args.length) {
-                    return;
-                }
-                if (wrapNode[i] == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    wrapNode[i] = insert(FFIWrapNode.create());
-                }
-                materializedArgs[i] = wrapNode[i].execute(args[i]);
-            }
-        }
-
-        // Note: we do not need to wrap the arguments for .External(2) because there we send them to
-        // the native code inside a pair-list and we materialize them inside the up-calls that reads
-        // the elements of that pair-list
-        private Object[] wrapArguments(Object[] args) {
+        private Object[] materializeArgs(Object[] args) {
             Object[] materializedArgs = new Object[args.length];
-            explodedWrapArguments(args, materializedArgs);
-            if (args.length > WRAP_NODES_COUNT) {
-                if (overflowWrapNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    overflowWrapNode = insert(FFIWrapNode.create());
-                }
-                for (int i = WRAP_NODES_COUNT; i < args.length; i++) {
-                    materializedArgs[i] = overflowWrapNode.execute(args[i]);
-                }
+            for (int i = 0; i < args.length; i++) {
+                materializedArgs[i] = materializeNode.execute(args[i]);
             }
             return materializedArgs;
         }
@@ -691,7 +665,7 @@ public class CallAndExternalFunctions {
             if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
                 return explicitCall(frame, nativeCallInfo, args);
             } else {
-                return dispatch(frame, nativeCallInfo, wrapArguments(args.getArguments()));
+                return dispatch(frame, nativeCallInfo, materializeArgs(args.getArguments()));
             }
         }
 
@@ -711,7 +685,7 @@ public class CallAndExternalFunctions {
             if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
                 return explicitCall(frame, nativeCallInfo, args);
             } else {
-                return dispatch(frame, nativeCallInfo, wrapArguments(args.getArguments()));
+                return dispatch(frame, nativeCallInfo, materializeArgs(args.getArguments()));
             }
         }
 
@@ -742,7 +716,7 @@ public class CallAndExternalFunctions {
             if (registeredProfile.profile(isRegisteredRFunction(func))) {
                 return explicitCall(frame, func, args);
             } else {
-                return dispatch(frame, new NativeCallInfo(symbol, func, rns.getDllInfo()), wrapArguments(args.getArguments()));
+                return dispatch(frame, new NativeCallInfo(symbol, func, rns.getDllInfo()), materializeArgs(args.getArguments()));
             }
         }
 
@@ -752,7 +726,7 @@ public class CallAndExternalFunctions {
             if (registeredProfile.profile(isRegisteredRFunction(symbol))) {
                 return explicitCall(frame, symbol, args);
             } else {
-                return dispatch(frame, new NativeCallInfo("", symbol.getAddr(), null), wrapArguments(args.getArguments()));
+                return dispatch(frame, new NativeCallInfo("", symbol.getAddr(), null), materializeArgs(args.getArguments()));
             }
         }
 

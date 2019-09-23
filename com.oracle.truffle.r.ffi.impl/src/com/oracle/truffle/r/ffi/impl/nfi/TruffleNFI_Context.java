@@ -48,6 +48,7 @@ import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -329,7 +330,7 @@ public class TruffleNFI_Context extends RFFIContext {
     public ContextState initialize(RContext context) {
         if (RContext.getInstance().getOption(TraceNativeCalls)) {
             System.out.println("WARNING: The TraceNativeCalls option was discontinued!\n" +
-                            "You can rerun FastR with --log.R.com.oracle.truffle.r.nativeCalls.level=FINE --log.file=<yourfile>.\n" +
+                            "You can rerun FastR with --log.R." + RLogger.LOGGER_RFFI + ".level=FINE --log.file=<yourfile>.\n" +
                             "NOTE that stdout is problematic for embedded mode, when using this logger, also always specify a log file");
         }
         initializeLock();
