@@ -47,7 +47,6 @@ import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -99,6 +98,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -1602,27 +1602,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object Rf_protect(Object x) {
-        getContext().rffiContextState.protectStack.add(guaranteeInstanceOf(x, RBaseObject.class));
-        return x;
+        throw implementedAsNode();
     }
 
     @Override
     public void Rf_unprotect(int x) {
-        RFFIContext context = getContext();
-        Collections.ArrayListObj<RBaseObject> stack = context.rffiContextState.protectStack;
-        try {
-            for (int i = 0; i < x; i++) {
-                context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
-            }
-        } catch (IndexOutOfBoundsException e) {
-            debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
-        }
-    }
-
-    private static boolean debugWarning(String message) {
-        CompilerDirectives.transferToInterpreter();
-        RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
-        return true;
+        throw implementedAsNode();
     }
 
     @Override

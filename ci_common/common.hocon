@@ -44,6 +44,7 @@ logfiles : [
     "**/com.oracle.truffle.r.test.native/embedded/*.output"
     "**/com.oracle.truffle.r.test.native/embedded/src/*.output"
     "test.gnur/**/*.fail"
+    "test.fastr/**/*.fail"
     # Uncomment to debug the event loop hanging issue. It must be accompanied by enabling
     # the logging by setting the TRACE_EVENT_LOOP env var to true.
     # "traceEventLoop.log"

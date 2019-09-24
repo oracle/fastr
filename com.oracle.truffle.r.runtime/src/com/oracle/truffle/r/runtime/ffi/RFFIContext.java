@@ -98,10 +98,11 @@ public abstract class RFFIContext extends RFFI {
 
         /**
          * Stack used by RFFI to implement the PROTECT/UNPROTECT functions. Objects registered on
-         * this stack do necessarily not have to be {@linke #registerReferenceUsedInNative}, but
-         * once popped off, they must be put into that list.
+         * this stack do necessarily not have to be {@link #registerReferenceUsedInNative}, but once
+         * popped off, they must be put into that list. The initial size should "reasonably" big.
+         * (Should a special FastR configuration property be introduced to control the size?)
          */
-        public final Collections.ArrayListObj<RBaseObject> protectStack = new Collections.ArrayListObj<>(32);
+        public final Collections.ArrayListObj<RBaseObject> protectStack = new Collections.ArrayListObj<>(1000);
 
         public MaterializedFrame currentDowncallFrame = null;
     }

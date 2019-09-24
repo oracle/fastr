@@ -312,6 +312,10 @@ rffi.benchMultipleUpcalls <- function(x) {
     .Call('benchMultipleUpcalls', x)
 }
 
+rffi.benchProtect <- function(x, n) {
+    .Call('benchProtect', x, n)
+}
+
 rffi.test_lapplyWithForceAndCall <- function(list, fn, fa, ...) {
     .Call('test_lapplyWithForceAndCall', list, fn, fa, environment())
 }

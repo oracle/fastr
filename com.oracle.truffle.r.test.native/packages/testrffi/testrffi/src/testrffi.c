@@ -1005,3 +1005,13 @@ SEXP benchMultipleUpcalls(SEXP x) {
   UNPROTECT(1);
   return result;
 }
+
+SEXP benchProtect(SEXP x, SEXP nn) {
+  int n = INTEGER_VALUE(nn);
+  for (int i = 0; i < n; ++i) {
+    PROTECT(x);
+    UNPROTECT(1);
+  }
+  return R_NilValue;
+}
+

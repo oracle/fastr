@@ -93,6 +93,16 @@ public final class MiscNodes {
     public abstract static class LENGTHNode extends FFIUpCallNode.Arg1 {
 
         @Specialization
+        protected int length(@SuppressWarnings("unused") RSymbol sym) {
+            return 1;
+        }
+
+        @Specialization
+        protected int length(@SuppressWarnings("unused") RFunction fun) {
+            return 1;
+        }
+
+        @Specialization
         protected int length(@SuppressWarnings("unused") RNull obj) {
             return 0;
         }
