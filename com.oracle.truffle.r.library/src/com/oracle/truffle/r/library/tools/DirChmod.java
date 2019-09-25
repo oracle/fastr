@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -58,8 +57,7 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
     @Specialization
     @TruffleBoundary
     protected RNull dirChmod(String pathName, boolean setGroupWrite) {
-        Env env = RContext.getInstance().getEnv();
-        TruffleFile path = env.getTruffleFile(pathName);
+        TruffleFile path = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), pathName);
         int fileMask = setGroupWrite ? GRPWRITE_FILE_MASK : FILE_MASK;
         int dirMask = setGroupWrite ? GRPWRITE_DIR_MASK : DIR_MASK;
         if (!path.exists()) {

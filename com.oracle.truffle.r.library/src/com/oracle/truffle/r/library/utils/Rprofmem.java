@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -73,7 +74,8 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
             }
             boolean append = RRuntime.fromLogical(appendL);
             try {
-                PrintStream out = new PrintStream(RContext.getInstance().getEnv().getTruffleFile(filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.WRITE));
+                PrintStream out = new PrintStream(
+                                FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.WRITE));
                 assert thresholdVec != null;
                 profmemState.initialize(out, thresholdVec.getDataAt(0));
                 RDataFactory.addListener(LISTENER);

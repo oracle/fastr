@@ -59,7 +59,7 @@ public abstract class TempFile extends RBuiltinNode.Arg3 {
         int patternInd = 0;
         int fileExtInd = 0;
         for (int i = 0; i < maxLength; i++) {
-            data[i] = TempPathName.createNonExistingFilePath(RContext.getInstance().getEnv(), pattern.getDataAt(patternInd), tempDir, fileExt.getDataAt(fileExtInd));
+            data[i] = TempPathName.createNonExistingFilePath(RContext.getInstance(), pattern.getDataAt(patternInd), tempDir, fileExt.getDataAt(fileExtInd));
             patternInd = Utils.incMod(patternInd, patternLength);
             fileExtInd = Utils.incMod(fileExtInd, fileExtLength);
         }

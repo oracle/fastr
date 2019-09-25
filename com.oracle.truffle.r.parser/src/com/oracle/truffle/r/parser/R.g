@@ -46,6 +46,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -211,7 +212,7 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.RCodeToken;
 	    		if(q0 != -1 && q1 != -1) {
 	    			String path = commentLine.substring(q0+1, q1);
 	    			try {
-	    			    String content = new String(RContext.getInstance().getEnv().getTruffleFile(path).readAllBytes(), StandardCharsets.UTF_8);
+	    			    String content = new String(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path).readAllBytes(), StandardCharsets.UTF_8);
 	    			    String lineEnding = detectLineEnding(initialSource.getCharacters());
 	    			    content = convertToLineEnding(content, lineEnding);
                         source = RSource.fromFileName(content, path, false);

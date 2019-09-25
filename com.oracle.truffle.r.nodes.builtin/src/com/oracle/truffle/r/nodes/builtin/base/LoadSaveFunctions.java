@@ -39,6 +39,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RSerialize;
@@ -141,7 +142,7 @@ public class LoadSaveFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector load(String pathIn, @SuppressWarnings("unused") REnvironment envir) {
-            try (BufferedInputStream bs = new BufferedInputStream(RContext.getInstance().getEnv().getTruffleFile(Utils.tildeExpand(pathIn)).newInputStream())) {
+            try (BufferedInputStream bs = new BufferedInputStream(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), Utils.tildeExpand(pathIn)).newInputStream())) {
                 int magic = readMagic(bs);
                 switch (magic) {
                     case R_MAGIC_EMPTY:

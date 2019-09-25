@@ -73,6 +73,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -226,7 +227,7 @@ public class FastRInterop {
         protected CallTarget parseFile(String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
             Env env = RContext.getInstance().getEnv();
-            TruffleFile tFile = env.getTruffleFile(Utils.tildeExpand(path, false)).getAbsoluteFile();
+            TruffleFile tFile = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(path, false)).getAbsoluteFile();
             LanguageInfo languageInfo = null;
             try {
                 String languageId = languageIdArg;
@@ -531,7 +532,7 @@ public class FastRInterop {
             Env env = RContext.getInstance().getEnv();
 
             for (int i = 0; i < value.getLength(); i++) {
-                TruffleFile file = env.getTruffleFile(value.getDataAt(i));
+                TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, value.getDataAt(i));
                 try {
                     env.addToHostClassPath(file);
                 } catch (Exception e) {

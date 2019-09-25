@@ -202,7 +202,7 @@ public final class Utils {
         private WorkingDirectoryState() {
             initial = System.getProperty("user.dir");
             current = initial;
-            currentPath = RContext.getInstance().getEnv().getTruffleFile(initial);
+            currentPath = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), initial);
         }
 
         private TruffleFile getCurrentPath() {
@@ -211,7 +211,7 @@ public final class Utils {
 
         private void setCurrent(String path) {
             current = path;
-            currentPath = RContext.getInstance().getEnv().getTruffleFile(path);
+            currentPath = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
         }
 
         private boolean isInitial() {
@@ -342,7 +342,7 @@ public final class Utils {
                 if (path.length() == 0) {
                     return keepRelative ? path : wdState().getCurrentPath().getPath();
                 } else {
-                    TruffleFile p = RContext.getInstance().getEnv().getTruffleFile(path);
+                    TruffleFile p = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
                     if (p.isAbsolute()) {
                         return path;
                     } else {
@@ -842,7 +842,7 @@ public final class Utils {
     }
 
     private static boolean isWriteableDirectory(String path) {
-        TruffleFile f = RContext.getInstance().getEnv().getTruffleFile(path);
+        TruffleFile f = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
         return f.exists() && f.isDirectory() && f.isWritable();
     }
 

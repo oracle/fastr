@@ -87,6 +87,11 @@ public class RLogger {
      */
     public static final String LOGGER_PERFORMANCE_WARNINGS = "com.oracle.truffle.r.performanceWarnings";
 
+    /**
+     * Log file access.
+     */
+    public static final String LOGGER_FILE_ACCEESS = "com.oracle.truffle.r.fileAccess";
+
     public static TruffleLogger getLogger(String name) {
         return TruffleLogger.getLogger(R_LANGUAGE_ID, name);
     }

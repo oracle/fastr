@@ -52,6 +52,7 @@ import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
@@ -242,7 +243,7 @@ public class HiddenInternalFunctions {
                 LoopNode.reportLoopCount(this, -5);
             }
             String dbPath = datafile.getDataAt(0);
-            String packageName = RContext.getInstance().getEnv().getTruffleFile(dbPath).getName();
+            String packageName = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), dbPath).getName();
             byte[] dbData = RContext.getInstance().stateLazyDBCache.getData(dbPath);
             int dotIndex;
             if ((dotIndex = packageName.lastIndexOf('.')) > 0) {
@@ -508,7 +509,7 @@ public class HiddenInternalFunctions {
          * @return offset in file of appended data
          */
         private int appendFile(String path, byte[] cdata, int ulen, RCompression.Type type) {
-            TruffleFile file = RContext.getInstance().getEnv().getTruffleFile(path);
+            TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
             try (BufferedOutputStream out = new BufferedOutputStream(file.newOutputStream(StandardOpenOption.APPEND))) {
                 int result = (int) file.size();
                 ByteBuffer dataLengthBuf = ByteBuffer.allocate(4);

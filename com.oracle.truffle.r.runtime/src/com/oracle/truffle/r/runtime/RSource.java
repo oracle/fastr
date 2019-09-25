@@ -35,7 +35,6 @@ import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RSrcref.SrcrefFields;
@@ -110,7 +109,7 @@ public class RSource {
      * system path {@code path}.
      */
     public static Source fromFileName(String text, String path, boolean internal) throws URISyntaxException {
-        TruffleFile file = RContext.getInstance().getEnv().getTruffleFile(path).getAbsoluteFile();
+        TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path).getAbsoluteFile();
         URI uri = new URI("file://" + file.getPath());
         return Source.newBuilder(RRuntime.R_LANGUAGE_ID, text, path).content(text).uri(uri).internal(internal).build();
     }
@@ -180,8 +179,7 @@ public class RSource {
      * Create an (external) source from the file system path {@code path}.
      */
     public static Source fromFileName(String path, boolean internal) throws IOException {
-        Env env = RContext.getInstance().getEnv();
-        final TruffleFile file = env.getTruffleFile(path);
+        final TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
         return getCachedByOrigin(file, origin -> Source.newBuilder(RRuntime.R_LANGUAGE_ID, file).internal(internal).build());
     }
 
