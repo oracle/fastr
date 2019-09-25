@@ -24,6 +24,7 @@ Bug fixes:
 * `scan` handles non-default value of `nmax` argument
 * `Rf_allocVector` fails gracefully when FastR runs out of memory
 * bug in `DATAPTR` for vectors of size in bytes larger than 2^31
+* provide correct daylight saving time info in `as.POSIXlt` #98
 
 
 # 19.2.0
