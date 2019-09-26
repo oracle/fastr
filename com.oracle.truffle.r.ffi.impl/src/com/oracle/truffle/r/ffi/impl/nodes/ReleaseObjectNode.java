@@ -22,33 +22,48 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.graalvm.collections.EconomicMap;
+
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.r.runtime.Collections.StackLibrary;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 
 @GenerateUncached
-public abstract class ProtectNode extends FFIUpCallNode.Arg1 {
+public abstract class ReleaseObjectNode extends FFIUpCallNode.Arg1 {
 
-    public static ProtectNode create() {
-        return ProtectNodeGen.create();
+    public static ReleaseObjectNode create() {
+        return ReleaseObjectNodeGen.create();
     }
 
-    public static ProtectNode getUncached() {
-        return ProtectNodeGen.getUncached();
+    public static ReleaseObjectNode getUncached() {
+        return ReleaseObjectNodeGen.getUncached();
     }
 
     @Specialization
     Object protect(RBaseObject x,
                     @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
-                    @CachedLibrary(limit = "1") StackLibrary stacks) {
-        RContext ctx = ctxRef.get();
-        stacks.push(ctx.getStateRFFI().rffiContextState.protectStack, x);
-        return x;
+                    @Cached("createBinaryProfile()") ConditionProfile profile) {
+        RFFIContext ctx = ctxRef.get().getStateRFFI();
+        EconomicMap<RBaseObject, AtomicInteger> preserveList = ctx.rffiContextState.preserveList;
+        AtomicInteger atomicInteger = preserveList.get(x);
+        if (profile.profile(atomicInteger != null)) {
+            int decrementAndGet = atomicInteger.decrementAndGet();
+            if (decrementAndGet == 0) {
+                // remove from "list"
+                preserveList.removeKey(x);
+            }
+        } else {
+            // TODO report ?
+        }
+        return null;
     }
 }

@@ -26,29 +26,29 @@ import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.r.runtime.Collections.StackLibrary;
+import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 
 @GenerateUncached
-public abstract class ProtectNode extends FFIUpCallNode.Arg1 {
+public abstract class ProtectWithIndexNode extends FFIUpCallNode.Arg1 {
 
-    public static ProtectNode create() {
-        return ProtectNodeGen.create();
+    public static ProtectWithIndexNode create() {
+        return ProtectWithIndexNodeGen.create();
     }
 
-    public static ProtectNode getUncached() {
-        return ProtectNodeGen.getUncached();
+    public static ProtectWithIndexNode getUncached() {
+        return ProtectWithIndexNodeGen.getUncached();
     }
 
     @Specialization
-    Object protect(RBaseObject x,
-                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
-                    @CachedLibrary(limit = "1") StackLibrary stacks) {
-        RContext ctx = ctxRef.get();
-        stacks.push(ctx.getStateRFFI().rffiContextState.protectStack, x);
-        return x;
+    int protect(RBaseObject x,
+                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+        RFFIContext ctx = ctxRef.get().getStateRFFI();
+        Collections.ArrayListObj<RBaseObject> stack = ctx.rffiContextState.protectStack;
+        stack.add(x);
+        return stack.size() - 1;
     }
 }

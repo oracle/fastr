@@ -51,14 +51,12 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.ContextReferenceAccess;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.GetRContextFactory.CachedGetRContextNodeGen;
 import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.ToNativeNodeGen;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
@@ -373,6 +371,12 @@ public final class NativeDataAccess {
      */
     static long asPointer(RBaseObject obj) {
         NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+
+        RContext rContext = RContext.getInstance();
+        if (rContext.getStateRFFI().getCallDepth() > 0) {
+            rContext.getStateRFFI().registerReferenceUsedInNative(obj);
+        }
+
         return mirror.id;
     }
 
@@ -390,48 +394,14 @@ public final class NativeDataAccess {
 
         @Specialization
         void toNative(RBaseObject obj,
-                        @Cached GetRContext getRContext,
                         @Cached("createBinaryProfile()") ConditionProfile hasMirror) {
             NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
             if (hasMirror.profile(mirror == null || mirror.id == 0)) {
                 putMirrorObject(obj, mirror);
-                RContext rContext = getRContext.execute();
-                if (rContext.getStateRFFI().getCallDepth() > 0) {
-                    rContext.getStateRFFI().registerReferenceUsedInNative(obj);
-                }
                 assert ((NativeMirror) obj.getNativeMirror()).id != 0;
             }
         }
 
-    }
-
-    public abstract static class GetRContext extends Node {
-
-        public static GetRContext create() {
-            return CachedGetRContextNodeGen.create();
-        }
-
-        public static GetRContext getUncached() {
-            return new UncachedGetRContext();
-        }
-
-        public abstract RContext execute();
-
-        protected abstract static class CachedGetRContext extends GetRContext {
-            @Child private ContextReferenceAccess.ContextReferenceNode contextReferenceNode = RContext.getContextReferenceAccess().createContextReferenceNode();
-
-            @Specialization
-            public RContext exec() {
-                return contextReferenceNode.execute().get();
-            }
-        }
-
-        protected static final class UncachedGetRContext extends GetRContext {
-            @Override
-            public RContext execute() {
-                return RContext.getInstance();
-            }
-        }
     }
 
     private static long getPointer(RBaseObject obj) {

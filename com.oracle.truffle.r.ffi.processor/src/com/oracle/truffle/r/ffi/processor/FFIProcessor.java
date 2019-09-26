@@ -295,6 +295,10 @@ public final class FFIProcessor extends AbstractProcessor {
         if (needsReturnWrap) {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrapNode;\n");
         }
+        w.append("import com.oracle.truffle.api.TruffleLanguage.ContextReference;\n");
+        w.append("import com.oracle.truffle.api.dsl.CachedContext;\n");
+        w.append("import com.oracle.truffle.r.runtime.context.TruffleRLanguage;\n");
+
         w.append("\n");
 
         w.append("// Checkstyle: stop method name check\n");
@@ -319,10 +323,10 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append(unwrapNodes);
         }
 
-        w.append("                @Cached() GetRContext getRContext,\n");
+        w.append("                @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,\n");
         if (needsCallTarget) {
             w.append("                @Cached() IndirectCallNode callNode,\n");
-            w.append("                @Cached(value = \"createCallTarget(getRContext.execute())\", allowUncached = true) CallTarget callTarget,\n");
+            w.append("                @Cached(value = \"createCallTarget(ctxRef.get())\", allowUncached = true) CallTarget callTarget,\n");
         } else if (needsNode) {
             if (nodeClass.getModifiers().contains(Modifier.ABSTRACT)) {
                 w.append("                @Cached() " + nodeClassName + " node,\n");
@@ -349,7 +353,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("        if (RFFILog.logEnabled()) {\n");
         w.append("            RFFILog.logUpCall(\"" + name + "\", arguments);\n");
         w.append("        }\n");
-        w.append("        RContext ctx = getRContext.execute();\n");
+        w.append("        RContext ctx = ctxRef.get();\n");
         w.append("        RFFIContext rffiCtx = ctxProfile.profile(ctx.getStateRFFI());\n");
 
         if (returnKind != TypeKind.VOID) {
@@ -417,11 +421,6 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("        }\n");
             w.append("        return 0; // void return type\n");
         } else {
-            if (!returnKind.isPrimitive() && m.getAnnotationsByType(RFFICpointer.class).length == 0) {
-                w.append("        if (impl.getRFFIType() == com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type.NFI) {\n");
-                w.append("            rffiCtx.registerReferenceUsedInNative(resultRObj); \n");
-                w.append("        }\n");
-            }
             w.append("        if (RFFILog.logEnabled()) {\n");
             w.append("            RFFILog.logUpCallReturn(\"" + name + "\", resultRObj);\n");
             w.append("        }\n");

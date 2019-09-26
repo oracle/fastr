@@ -23,15 +23,17 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.r.ffi.impl.upcalls.GetRContext;
 import com.oracle.truffle.r.runtime.Collections.StackLibrary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @GenerateUncached
@@ -52,9 +54,9 @@ public abstract class UnprotectNode extends FFIUpCallNode.Arg1 {
 
     @Specialization(guards = "n == 1")
     Object unprotectSingle(@SuppressWarnings("unused") int n,
-                    @Cached GetRContext getRContext,
+                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @CachedLibrary(limit = "1") StackLibrary stacks) {
-        RContext ctx = getRContext.execute();
+        RContext ctx = ctxRef.get();
         try {
             stacks.pop(ctx.getStateRFFI().rffiContextState.protectStack);
         } catch (IndexOutOfBoundsException e) {
@@ -67,9 +69,9 @@ public abstract class UnprotectNode extends FFIUpCallNode.Arg1 {
     @ExplodeLoop
     Object unprotectMultipleCached(@SuppressWarnings("unused") int n,
                     @Cached("n") int nCached,
-                    @Cached() GetRContext getRContext,
+                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @CachedLibrary(limit = "1") StackLibrary stacks) {
-        RContext ctx = getRContext.execute();
+        RContext ctx = ctxRef.get();
         try {
             for (int i = 0; i < nCached; i++) {
                 stacks.pop(ctx.getStateRFFI().rffiContextState.protectStack);
@@ -82,9 +84,9 @@ public abstract class UnprotectNode extends FFIUpCallNode.Arg1 {
 
     @Specialization(guards = "n > 1", replaces = "unprotectMultipleCached")
     Object unprotectMultipleUnchached(int n,
-                    @Cached() GetRContext getRContext,
+                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @CachedLibrary(limit = "1") StackLibrary stacks) {
-        RContext ctx = getRContext.execute();
+        RContext ctx = ctxRef.get();
         try {
             for (int i = 0; i < n; i++) {
                 stacks.pop(ctx.getStateRFFI().rffiContextState.protectStack);

@@ -20,31 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine;
+package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.ContextReferenceAccessImplFactory.ContextReferenceNodeImplNodeGen;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ContextReferenceAccess;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
-public class ContextReferenceAccessImpl implements ContextReferenceAccess {
+@GenerateUncached
+public abstract class R_InteractiveNode extends FFIUpCallNode.Arg0 {
 
-    @Override
-    public ContextReferenceNode createContextReferenceNode() {
-        return ContextReferenceNodeImplNodeGen.create();
+    public static R_InteractiveNode create() {
+        return R_InteractiveNodeGen.create();
     }
 
-    protected abstract static class ContextReferenceNodeImpl extends Node implements ContextReferenceNode {
-        @Override
-        public abstract ContextReference<RContext> execute();
-
-        @Specialization
-        ContextReference<RContext> get(@CachedContext(TruffleRLanguageImpl.class) ContextReference<RContext> ref) {
-            return ref;
-        }
+    public static R_InteractiveNode getUncached() {
+        return R_InteractiveNodeGen.getUncached();
     }
 
+    @Specialization
+    Object get(@CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+        RContext ctx = ctxRef.get();
+        return ctx.isInteractive() ? 1 : 0;
+    }
 }

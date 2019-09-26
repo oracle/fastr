@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.conn;
+package com.oracle.truffle.r.ffi.impl.nodes;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
-import com.oracle.truffle.r.runtime.RRuntime;
+@GenerateUncached
+public abstract class R_BaseEnvNode extends FFIUpCallNode.Arg0 {
 
-public final class RFileTypeDetector implements TruffleFile.FileTypeDetector {
-
-    @Override
-    public String findMimeType(TruffleFile file) throws IOException {
-        String fileName = file.getName();
-        if (fileName != null && (fileName.endsWith(".R") || fileName.endsWith(".r"))) {
-            return RRuntime.R_TEXT_MIME;
-        }
-        return null;
+    public static R_BaseEnvNode create() {
+        return R_BaseEnvNodeGen.create();
     }
 
-    @Override
-    public Charset findEncoding(TruffleFile file) throws IOException {
-        return null;
+    public static R_BaseEnvNode getUncached() {
+        return R_BaseEnvNodeGen.getUncached();
+    }
+
+    @Specialization
+    Object get(@CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+        RContext ctx = ctxRef.get();
+        return ctx.stateREnvironment.getBaseEnv();
     }
 }

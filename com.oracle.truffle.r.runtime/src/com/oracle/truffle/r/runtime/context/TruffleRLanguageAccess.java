@@ -20,16 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.runtime.context;
 
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.nodes.NodeInterface;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 
-public interface ContextReferenceAccess {
-    ContextReferenceNode createContextReferenceNode();
+public interface TruffleRLanguageAccess {
 
-    public interface ContextReferenceNode extends NodeInterface {
-        ContextReference<RContext> execute();
-    }
+    void onInitializeContext(Env env);
+
+    String toString(RContext context, Object value);
+
 }

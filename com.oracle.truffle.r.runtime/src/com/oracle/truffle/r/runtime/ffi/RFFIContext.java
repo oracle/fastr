@@ -35,6 +35,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -124,6 +125,13 @@ public abstract class RFFIContext extends RFFI {
         // RSymbols are cached and never freed anyway -- dictated by GNU-R
         if (!(obj instanceof RSymbol)) {
             rffiContextState.protectedNativeReferences.add(obj);
+        }
+    }
+
+    public final void registerReferenceUsedInNative(Object obj, BranchProfile profile) {
+        // RSymbols are cached and never freed anyway -- dictated by GNU-R
+        if (!(obj instanceof RSymbol)) {
+            rffiContextState.protectedNativeReferences.add(obj, profile);
         }
     }
 

@@ -20,39 +20,39 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.upcalls;
+package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.upcalls.GetRContextFactory.CachedGetRContextNodeGen;
-import com.oracle.truffle.r.runtime.ContextReferenceAccess;
+import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 
-public abstract class GetRContext extends Node {
+@GenerateUncached
+public abstract class UnprotectPtrNode extends FFIUpCallNode.Arg1 {
 
-    public static GetRContext create() {
-        return CachedGetRContextNodeGen.create();
+    public static UnprotectPtrNode create() {
+        return UnprotectPtrNodeGen.create();
     }
 
-    public static GetRContext getUncached() {
-        return new UncachedGetRContext();
+    public static UnprotectPtrNode getUncached() {
+        return UnprotectPtrNodeGen.getUncached();
     }
 
-    public abstract RContext execute();
-
-    protected abstract static class CachedGetRContext extends GetRContext {
-        @Child private ContextReferenceAccess.ContextReferenceNode contextReferenceNode = RContext.getContextReferenceAccess().createContextReferenceNode();
-
-        @Specialization
-        public RContext exec() {
-            return contextReferenceNode.execute().get();
+    @Specialization
+    Object unprotect(RBaseObject x,
+                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+        RFFIContext ctx = ctxRef.get().getStateRFFI();
+        Collections.ArrayListObj<RBaseObject> stack = ctx.rffiContextState.protectStack;
+        for (int i = stack.size() - 1; i >= 0; i--) {
+            if (stack.get(i) == x) {
+                return null;
+            }
         }
-    }
-
-    protected static final class UncachedGetRContext extends GetRContext {
-        @Override
-        public RContext execute() {
-            return RContext.getInstance();
-        }
+        return null;
     }
 }
