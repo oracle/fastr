@@ -33,7 +33,7 @@ import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
+
 import static com.oracle.truffle.r.runtime.context.FastROptions.TraceCalls;
 import static com.oracle.truffle.r.runtime.context.FastROptions.TraceCallsToFile;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import java.io.IOException;
 import java.util.logging.Level;

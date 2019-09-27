@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.util.IdentityHashMap;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+
+import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
@@ -34,6 +35,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -86,7 +88,7 @@ public abstract class RFFIContext extends RFFI {
          * FastR equivalent of GNUR's special dedicated global list that is GC root and so any
          * vectors added to it will be guaranteed to be preserved.
          */
-        public final IdentityHashMap<RBaseObject, AtomicInteger> preserveList = new IdentityHashMap<>();
+        public final EconomicMap<RBaseObject, AtomicInteger> preserveList = EconomicMap.create();
 
         public final WeakHashMap<RScalar, RAbstractVector> protectedMaterializedScalarVectors = new WeakHashMap<>();
 
@@ -98,10 +100,11 @@ public abstract class RFFIContext extends RFFI {
 
         /**
          * Stack used by RFFI to implement the PROTECT/UNPROTECT functions. Objects registered on
-         * this stack do necessarily not have to be {@linke #registerReferenceUsedInNative}, but
-         * once popped off, they must be put into that list.
+         * this stack do necessarily not have to be {@link #registerReferenceUsedInNative}, but once
+         * popped off, they must be put into that list. The initial size should "reasonably" big.
+         * (Should a special FastR configuration property be introduced to control the size?)
          */
-        public final Collections.ArrayListObj<RBaseObject> protectStack = new Collections.ArrayListObj<>(32);
+        public final Collections.ArrayListObj<RBaseObject> protectStack = new Collections.ArrayListObj<>(1000);
 
         public MaterializedFrame currentDowncallFrame = null;
     }
@@ -122,6 +125,13 @@ public abstract class RFFIContext extends RFFI {
         // RSymbols are cached and never freed anyway -- dictated by GNU-R
         if (!(obj instanceof RSymbol)) {
             rffiContextState.protectedNativeReferences.add(obj);
+        }
+    }
+
+    public final void registerReferenceUsedInNative(Object obj, BranchProfile profile) {
+        // RSymbols are cached and never freed anyway -- dictated by GNU-R
+        if (!(obj instanceof RSymbol)) {
+            rffiContextState.protectedNativeReferences.add(obj, profile);
         }
     }
 

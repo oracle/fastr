@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.instrumentation;
+package com.oracle.truffle.r.runtime.instrument;
 
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
@@ -40,7 +40,7 @@ public class RSyntaxTags {
      * {@code RootTag} is supposed to save arguments and then invoke the actual body tagged with
      * this tag.
      *
-     * More technically, this tag tags {@link com.oracle.truffle.r.nodes.control.AbstractBlockNode}s
+     * More technically, this tag tags {@code com.oracle.truffle.r.nodes.control.AbstractBlockNode}s
      * that have parent of type {@link RootBodyNode}.
      */
     @Tag.Identifier("FUNCTIONBODYBLOCK")

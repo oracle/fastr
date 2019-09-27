@@ -30,8 +30,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.IdentityHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -47,8 +45,6 @@ import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
-import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
@@ -99,6 +95,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -110,7 +107,6 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
-import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
@@ -653,11 +649,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int TYPEOF(Object x) {
-        if (x instanceof CharSXPWrapper) {
-            return SEXPTYPE.CHARSXP.code;
-        } else {
-            return SEXPTYPE.gnuRCodeForObject(x);
-        }
+        throw implementedAsNode();
     }
 
     @Override
@@ -1142,27 +1134,27 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object R_GlobalEnv() {
-        return RContext.getInstance().stateREnvironment.getGlobalEnv();
+        throw implementedAsNode();
     }
 
     @Override
     public Object R_BaseEnv() {
-        return RContext.getInstance().stateREnvironment.getBaseEnv();
+        throw implementedAsNode();
     }
 
     @Override
     public Object R_BaseNamespace() {
-        return RContext.getInstance().stateREnvironment.getBaseNamespace();
+        throw implementedAsNode();
     }
 
     @Override
     public Object R_NamespaceRegistry() {
-        return RContext.getInstance().stateREnvironment.getNamespaceRegistry();
+        throw implementedAsNode();
     }
 
     @Override
     public int R_Interactive() {
-        return RContext.getInstance().isInteractive() ? 1 : 0;
+        throw implementedAsNode();
     }
 
     @Override
@@ -1571,83 +1563,38 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public void R_PreserveObject(Object obj) {
-        guaranteeInstanceOf(obj, RBaseObject.class);
-        IdentityHashMap<RBaseObject, AtomicInteger> preserveList = getContext().rffiContextState.preserveList;
-        AtomicInteger prevCnt = preserveList.putIfAbsent((RBaseObject) obj, new AtomicInteger(1));
-        if (prevCnt != null) {
-            prevCnt.incrementAndGet();
-        }
+        throw implementedAsNode();
     }
 
     @Override
-    @TruffleBoundary
     public void R_ReleaseObject(Object obj) {
-        guaranteeInstanceOf(obj, RBaseObject.class);
-        RFFIContext context = getContext();
-        IdentityHashMap<RBaseObject, AtomicInteger> preserveList = context.rffiContextState.preserveList;
-        AtomicInteger atomicInteger = preserveList.get(obj);
-        if (atomicInteger != null) {
-            int decrementAndGet = atomicInteger.decrementAndGet();
-            if (decrementAndGet == 0) {
-                // remove from "list"
-                preserveList.remove(obj);
-                context.registerReferenceUsedInNative(obj);
-            }
-        } else {
-            // TODO report ?
-        }
+        throw implementedAsNode();
     }
 
     @Override
     public Object Rf_protect(Object x) {
-        getContext().rffiContextState.protectStack.add(guaranteeInstanceOf(x, RBaseObject.class));
-        return x;
+        throw implementedAsNode();
     }
 
     @Override
     public void Rf_unprotect(int x) {
-        RFFIContext context = getContext();
-        Collections.ArrayListObj<RBaseObject> stack = context.rffiContextState.protectStack;
-        try {
-            for (int i = 0; i < x; i++) {
-                context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
-            }
-        } catch (IndexOutOfBoundsException e) {
-            debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
-        }
-    }
-
-    private static boolean debugWarning(String message) {
-        CompilerDirectives.transferToInterpreter();
-        RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
-        return true;
+        throw implementedAsNode();
     }
 
     @Override
     public int R_ProtectWithIndex(Object x) {
-        Collections.ArrayListObj<RBaseObject> stack = getContext().rffiContextState.protectStack;
-        stack.add(guaranteeInstanceOf(x, RBaseObject.class));
-        return stack.size() - 1;
+        throw implementedAsNode();
     }
 
     @Override
     public void R_Reprotect(Object x, int y) {
-        Collections.ArrayListObj<RBaseObject> stack = getContext().rffiContextState.protectStack;
-        stack.set(y, guaranteeInstanceOf(x, RBaseObject.class));
+        throw implementedAsNode();
     }
 
     @Override
     public void Rf_unprotect_ptr(Object x) {
-        RFFIContext context = getContext();
-        Collections.ArrayListObj<RBaseObject> stack = context.rffiContextState.protectStack;
-        for (int i = stack.size() - 1; i >= 0; i--) {
-            if (stack.get(i) == x) {
-                context.registerReferenceUsedInNative(stack.remove(i));
-                return;
-            }
-        }
+        throw implementedAsNode();
     }
 
     @Override
@@ -2384,10 +2331,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object Rf_asCharacterFactor(Object x) {
         throw implementedAsNode();
-    }
-
-    private static RFFIContext getContext() {
-        return RContext.getInstance().getStateRFFI();
     }
 
     @Override

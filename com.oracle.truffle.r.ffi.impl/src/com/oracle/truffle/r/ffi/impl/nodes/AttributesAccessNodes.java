@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -42,16 +43,15 @@ import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.CopyMost
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.RfSetAttribNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.SetAttribNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.TAGNodeGen;
+import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.GetHiddenAttrsProperty;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetHiddenAttrsProperty;
 import com.oracle.truffle.r.nodes.attributes.SetPropertyNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.InternStringNode;
@@ -64,15 +64,15 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 
 /**
@@ -174,15 +174,20 @@ public final class AttributesAccessNodes {
         }
     }
 
+    @ReportPolymorphism
     public abstract static class ATTRIB extends FFIUpCallNode.Arg1 {
         @Specialization
         public Object doAttributable(RAttributable obj,
-                        @Cached("create()") InternStringNode internStringNode,
+                        @Cached InternStringNode internStringNode,
+                        @Cached BranchProfile rowNamesProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile noAttrsProfile1,
+                        @Cached("createBinaryProfile()") ConditionProfile noAttrsProfile2,
+                        @Cached("createBinaryProfile()") ConditionProfile existingCellProfile,
                         @Cached GetHiddenAttrsProperty getHiddenAttrsProperty,
                         @Cached SetHiddenAttrsProperty setHiddenAttrsProperty,
-                        @Cached("createWithCompactRowNames()") GetAttributesNode getAttributesNode) {
+                        @Cached ArrayAttributeNode getAttributesNode) {
             DynamicObject attrsDynamicObj = obj.getAttributes();
-            if (attrsDynamicObj == null) {
+            if (noAttrsProfile1.profile(attrsDynamicObj == null)) {
                 return RNull.instance;
             }
 
@@ -191,24 +196,21 @@ public final class AttributesAccessNodes {
             RPairList existingPL = getHiddenAttrsProperty.execute(attrsDynamicObj);
             RPairList[] existingCells = RPairList.getCells(existingPL);
 
-            Object resultObj = getAttributesNode.execute(obj);
-            if (resultObj == RNull.instance) {
+            final RAttribute[] attrs = getAttributesNode.execute(obj);
+            if (noAttrsProfile2.profile(attrs.length == 0)) {
                 setHiddenAttrsProperty.execute(obj, RNull.instance);
-                return resultObj;
+                return RNull.instance;
             }
-            assert resultObj instanceof RList : "GetAttributesNode should return RList or RNull";
-            RList list = (RList) resultObj;
             Object result = RNull.instance;
-            RStringVector names = list.getNames();
-            assert names != null && names.getLength() == list.getLength();
-            for (int i = list.getLength() - 1; i >= 0; i--) {
-                Object item = list.getDataAt(i);
-                String name = names.getDataAt(i);
+            for (int i = attrs.length - 1; i >= 0; i--) {
+                Object item = attrs[i].getValue();
+                String name = attrs[i].getName();
                 if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+                    rowNamesProfile.enter();
                     item = GetRowNamesAttributeNode.ensureRowNamesCompactFormat(item);
                 }
                 RSymbol symbol = RDataFactory.createSymbol(internStringNode.execute(name));
-                if (i < existingCells.length) {
+                if (existingCellProfile.profile(i < existingCells.length)) {
                     // if we have cell from pre-existing pair-list for this position, re-use it
                     RPairList existing = existingCells[i];
                     existing.setCar(item);

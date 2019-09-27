@@ -20,39 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.upcalls;
+package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.upcalls.GetRContextFactory.CachedGetRContextNodeGen;
-import com.oracle.truffle.r.runtime.ContextReferenceAccess;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.r.runtime.Collections.StackLibrary;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 
-public abstract class GetRContext extends Node {
+@GenerateUncached
+public abstract class ProtectNode extends FFIUpCallNode.Arg1 {
 
-    static GetRContext create() {
-        return CachedGetRContextNodeGen.create();
+    public static ProtectNode create() {
+        return ProtectNodeGen.create();
     }
 
-    static GetRContext getUncached() {
-        return new UncachedGetRContext();
+    public static ProtectNode getUncached() {
+        return ProtectNodeGen.getUncached();
     }
 
-    abstract RContext execute();
-
-    protected abstract static class CachedGetRContext extends GetRContext {
-        @Child private ContextReferenceAccess.ContextReferenceNode contextReferenceNode = RContext.getContextReferenceAccess().createContextReferenceNode();
-
-        @Specialization
-        public RContext exec() {
-            return contextReferenceNode.execute().get();
-        }
-    }
-
-    protected static final class UncachedGetRContext extends GetRContext {
-        @Override
-        public RContext execute() {
-            return RContext.getInstance();
-        }
+    @Specialization
+    Object protect(RBaseObject x,
+                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
+                    @CachedLibrary(limit = "1") StackLibrary stacks) {
+        RContext ctx = ctxRef.get();
+        stacks.push(ctx.getStateRFFI().rffiContextState.protectStack, x);
+        return x;
     }
 }

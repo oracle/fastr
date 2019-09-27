@@ -22,7 +22,15 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
+import com.oracle.truffle.r.ffi.impl.nodes.PreserveObjectNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ProtectNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ProtectWithIndexNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ReleaseObjectNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ReprotectNode;
+import com.oracle.truffle.r.ffi.impl.nodes.UnprotectNode;
+import com.oracle.truffle.r.ffi.impl.nodes.UnprotectPtrNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
+import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 
 public interface MemoryUpCallsRFFI {
     // Checkstyle: stop method name check
@@ -35,18 +43,25 @@ public interface MemoryUpCallsRFFI {
 
     Object R_WeakRefValue(Object w);
 
+    @RFFIUpCallNode(PreserveObjectNode.class)
     void R_PreserveObject(Object obj);
 
+    @RFFIUpCallNode(ReleaseObjectNode.class)
     void R_ReleaseObject(Object obj);
 
+    @RFFIUpCallNode(ProtectNode.class)
     Object Rf_protect(Object x);
 
+    @RFFIUpCallNode(UnprotectNode.class)
     void Rf_unprotect(int x);
 
+    @RFFIUpCallNode(ProtectWithIndexNode.class)
     int R_ProtectWithIndex(Object x);
 
+    @RFFIUpCallNode(ReprotectNode.class)
     void R_Reprotect(Object x, int y);
 
+    @RFFIUpCallNode(UnprotectPtrNode.class)
     void Rf_unprotect_ptr(Object x);
 
     @RFFICpointer

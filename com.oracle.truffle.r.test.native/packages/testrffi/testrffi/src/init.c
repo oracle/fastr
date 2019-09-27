@@ -105,6 +105,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_sort_complex, 1),
         CALLDEF(get_dataptr, 1),
         CALLDEF(benchMultipleUpcalls, 1),
+        CALLDEF(benchProtect, 2),
         CALLDEF(test_lapplyWithForceAndCall, 4),
         #include "init_api.h"
         {NULL, NULL, 0}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,13 @@
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.ffi.impl.nodes.R_BaseEnvNode;
+import com.oracle.truffle.r.ffi.impl.nodes.R_BaseNamespaceNode;
+import com.oracle.truffle.r.ffi.impl.nodes.R_GlobalEnvNode;
+import com.oracle.truffle.r.ffi.impl.nodes.R_InteractiveNode;
+import com.oracle.truffle.r.ffi.impl.nodes.R_NamespaceRegistryNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
+import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 
 /**
  * This exists because {@link TruffleObject} instances may not always be storable in memory, in all
@@ -34,14 +40,19 @@ public interface VariableUpCallsRFFI {
 
     // The first five are context dependent and so are always implemented as callbacks.
 
+    @RFFIUpCallNode(R_GlobalEnvNode.class)
     Object R_GlobalEnv();
 
+    @RFFIUpCallNode(R_BaseEnvNode.class)
     Object R_BaseEnv();
 
+    @RFFIUpCallNode(R_BaseNamespaceNode.class)
     Object R_BaseNamespace();
 
+    @RFFIUpCallNode(R_NamespaceRegistryNode.class)
     Object R_NamespaceRegistry();
 
+    @RFFIUpCallNode(R_InteractiveNode.class)
     int R_Interactive();
 
     // These may need to be upcalled in some implementations.

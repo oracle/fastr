@@ -25,6 +25,13 @@ package com.oracle.truffle.r.runtime;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.GenerateLibrary;
+import com.oracle.truffle.api.library.Library;
+import com.oracle.truffle.api.library.LibraryFactory;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.data.RComplex;
 
 public final class Collections {
@@ -498,6 +505,7 @@ public final class Collections {
         }
     }
 
+    @ExportLibrary(StackLibrary.class)
     public static final class ArrayListObj<T> {
         private Object[] data;
         private int size;
@@ -512,6 +520,14 @@ public final class Collections {
 
         public void add(T value) {
             if (size == data.length) {
+                data = Arrays.copyOf(data, size * 2);
+            }
+            data[size++] = value;
+        }
+
+        public void add(T value, BranchProfile profile) {
+            if (size == data.length) {
+                profile.enter();
                 data = Arrays.copyOf(data, size * 2);
             }
             data[size++] = value;
@@ -533,7 +549,7 @@ public final class Collections {
             checkIndex(index);
             T result = (T) data[index];
             int shuffleLen = size - 1 - index;
-            if (shuffleLen >= 0) {
+            if (shuffleLen > 0) {
                 System.arraycopy(data, index + 1, data, index, shuffleLen);
             }
             data[size - 1] = null;
@@ -544,12 +560,16 @@ public final class Collections {
         /**
          * Removes the last element.
          */
-        public void pop() {
+        @ExportMessage
+        public Object pop() {
             if (size <= 0) {
                 CompilerDirectives.transferToInterpreter();
                 throw new IllegalStateException("cannot pop from empty list");
             }
             size--;
+            Object removed = data[size];
+            data[size] = null;
+            return removed;
         }
 
         public int size() {
@@ -572,5 +592,30 @@ public final class Collections {
                 throw new IndexOutOfBoundsException();
             }
         }
+
+        @SuppressWarnings("unchecked")
+        @ExportMessage
+        public void push(Object value, @Cached BranchProfile profile) {
+            add((T) value, profile);
+        }
     }
+
+    @GenerateLibrary
+    public abstract static class StackLibrary extends Library {
+
+        private static final LibraryFactory<StackLibrary> FACTORY = LibraryFactory.resolve(StackLibrary.class);
+
+        public static LibraryFactory<StackLibrary> getFactory() {
+            return FACTORY;
+        }
+
+        public static StackLibrary getUncached() {
+            return FACTORY.getUncached();
+        }
+
+        public abstract void push(Object stack, Object value);
+
+        public abstract Object pop(Object stack);
+    }
+
 }

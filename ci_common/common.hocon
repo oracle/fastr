@@ -1,7 +1,7 @@
 # java 7 is needed by Truffle (for now)
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
-java8 : {name : oraclejdk, version : "8u212-jvmci-19.2-b01", platformspecific: true}
+java8 : {name : oraclejdk, version : "8u221-jvmci-19.3-b02", platformspecific: true}
 #java9 : {name : oraclejdk, version : "9.0.4+11", platformspecific: true}
 
 java8Downloads : {
@@ -44,6 +44,7 @@ logfiles : [
     "**/com.oracle.truffle.r.test.native/embedded/*.output"
     "**/com.oracle.truffle.r.test.native/embedded/src/*.output"
     "test.gnur/**/*.fail"
+    "test.fastr/**/*.fail"
     # Uncomment to debug the event loop hanging issue. It must be accompanied by enabling
     # the logging by setting the TRACE_EVENT_LOOP env var to true.
     # "traceEventLoop.log"

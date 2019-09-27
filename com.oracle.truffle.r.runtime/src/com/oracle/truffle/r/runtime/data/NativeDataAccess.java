@@ -371,6 +371,12 @@ public final class NativeDataAccess {
      */
     static long asPointer(RBaseObject obj) {
         NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+
+        RContext rContext = RContext.getInstance();
+        if (rContext.getStateRFFI().getCallDepth() > 0) {
+            rContext.getStateRFFI().registerReferenceUsedInNative(obj);
+        }
+
         return mirror.id;
     }
 
@@ -395,6 +401,7 @@ public final class NativeDataAccess {
                 assert ((NativeMirror) obj.getNativeMirror()).id != 0;
             }
         }
+
     }
 
     private static long getPointer(RBaseObject obj) {
