@@ -229,7 +229,7 @@ pkg.cache.create.version.dir <- function(pkg.cache.env, version.dir) {
 
 pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
     pkgname <- as.character(pkg["Package"])
-    if (pkgname %in% ignored.packages) {
+    if (pkgname %in% pkg.cache.get.ignored.packages(pkg.cache.env)) {
         log.message("reject to insert ignored package '", pkgname, "'", level=1)
         return (FALSE)
     }
@@ -632,11 +632,22 @@ recommended.base.packages <- c("boot", "class", "cluster", "codetools", "foreign
 base.packages <- c("base", "compiler", "datasets", "grDevices", "graphics", "grid", "methods", "parallel", "splines", "stats", "stats4", "tools", "utils")
 
 # the list of packages that will be excluded in the transitive dependecies
-ignored.packages <- if (is.fastr()) recommended.base.packages else base.packages
+default.ignored.packages <- if (is.fastr()) recommended.base.packages else base.packages
+
+pkg.cache.get.ignored.packages <- function(pkg.cache.env) {
+    ignore.mode <- tolower(pkg.cache.env$ignore)
+    if (ignore.mode == "base") {
+        base.packages
+    } else if (ignore.mode == "none") {
+        character(0)
+    } else {
+        default.ignored.packages
+    }
+}
 
 # Computes the direct dependencies of a package.
 # Returns a data frame containing the with rows c("Package", "Version")
-package.dependencies <- function(pkg, lib, dependencies = c("Depends", "Imports", "LinkingTo"), pl = as.data.frame(available.packages(), stringAsFactors=FALSE)) {
+package.dependencies <- function(pkg.cache.env, pkg, lib, dependencies = c("Depends", "Imports", "LinkingTo"), pl = as.data.frame(available.packages(), stringAsFactors=FALSE)) {
     if (!(pkg %in% rownames(pl))) {
         log.message("Package", as.character(pkg), "not on CRAN\n", level=1)
         return (NULL)
@@ -659,7 +670,7 @@ package.dependencies <- function(pkg, lib, dependencies = c("Depends", "Imports"
         data.frame(Package=character(0), Version=character(0))
     })
     # Remove ignored packages from dependencies vector
-    non.ignored.names <- setdiff(deps, c("R", ignored.packages))
+    non.ignored.names <- setdiff(deps, c("R", pkg.cache.get.ignored.packages(pkg.cache.env)))
 
     # Convert vector to data frame (query from package list data frame)
     non.ignored.deps <- pl[pl$Package %in% non.ignored.names,]
@@ -668,16 +679,16 @@ package.dependencies <- function(pkg, lib, dependencies = c("Depends", "Imports"
     non.ignored.deps[!(non.ignored.deps$Package %in% installed.pkgs.table$Package & non.ignored.deps$Version %in% installed.pkgs.table$Version),c("Package", "Version")]
 }
 
-# Computes the transitive dependencies of a package by ignoring installed packages and 'ignored.packages'.
+# Computes the transitive dependencies of a package by ignoring installed packages and 'pkg.cache.get.ignored.packages()'.
 # The result is a data frame with columns named "Package" and "Version".
 # Every row represents a package by the name and its version.
-transitive.dependencies <- function(pkg, lib, pl = as.data.frame(available.packages(), stringAsFactors=FALSE), deptype=c("Depends", "Imports", "LinkingTo"), suggests=FALSE) {
+transitive.dependencies <- function(pkg.cache.env, pkg, lib, pl = as.data.frame(available.packages(), stringAsFactors=FALSE), deptype=c("Depends", "Imports", "LinkingTo"), suggests=FALSE) {
     deps <- data.frame(Package=character(0), Version=character(0))
     more <- pkg
 
     # Also add "Suggests" to dependencies but do not recurse
     if (suggests) {
-        this.suggests <- package.dependencies(pkg, dependencies = "Suggests", pl = pl)
+        this.suggests <- package.dependencies(pkg.cache.env, pkg, dependencies = "Suggests", pl = pl)
         if (!is.null(this.suggests)) {
             more <- c(more, as.character(this.suggests$Package))
         }
@@ -698,7 +709,7 @@ transitive.dependencies <- function(pkg, lib, pl = as.data.frame(available.packa
 
         if (!(this %in% processed)) {
             processed <- unique(c(processed, this))
-            this.deps <- package.dependencies(this, lib, dependencies = deptype, pl = pl)
+            this.deps <- package.dependencies(pkg.cache.env, this, lib, dependencies = deptype, pl = pl)
             if (!is.null(this.deps)) {
                 deps <- rbind(deps, this.deps)
                 more <- c(more, as.character(this.deps[!(this.deps$Package %in% processed), "Package"]))
@@ -738,7 +749,7 @@ pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.i
 
         # compute transitive dependencies of the package to install
         log.message("Computing transitive package dependencies for ", paste0(pkgname, "_", as.character(pkg$Version)), level=1)
-        transitive.pkg.list <- rbind(transitive.dependencies(pkgname, lib=lib.install, pl=pkg.list), pkg)
+        transitive.pkg.list <- rbind(transitive.dependencies(pkg.cache.env, pkgname, lib=lib.install, pl=pkg.list), pkg)
         log.message("transitive deps: ", as.character(transitive.pkg.list$Package), level=1)
 
         if (pkg.cache.is.enabled(pkg.cache.env)) {
