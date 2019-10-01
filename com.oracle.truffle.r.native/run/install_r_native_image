@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -104,9 +104,14 @@ if [[ $verbose -eq 1 ]]; then
   fastr_launcher_ni_args+=('--verbose')
 fi
 
-log "Running: ../../../../bin/native-image" "${fastr_launcher_ni_args[@]}" -H:Name=RMain
 graalvm_home="../../../../bin"
 native_image=$graalvm_home/native-image
+if [ ! -f "$native_image" ]; then
+    graalvm_home="../../../bin"
+    native_image=$graalvm_home/native-image
+fi
+log "Running: $graalvm_home/native-image" "${fastr_launcher_ni_args[@]}" -H:Name=RMain
+
 if [ ! -f "$native_image" ]; then
     echo "native-image was not found. It can be installed executing \`$graalvm_home/gu install native-image\`"
     exit
