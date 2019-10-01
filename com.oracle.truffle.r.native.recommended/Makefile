@@ -30,6 +30,7 @@
 FASTR_R_HOME := $(abspath $(CURDIR)/..)
 NATIVE_PROJECT_DIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native
 TOPDIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native.recommended
+PKGS_REPO_DIR := repo/src/contrib
 
 # The package tar balls are copied from $(GNUR_HOME_BINARY)/src/library/Recommended
 ifndef GNUR_HOME_BINARY
@@ -61,14 +62,19 @@ else
 GNUR_RECOMMENDED_PKGNAMES := codetools
 endif # FASTR_RELEASE
 
-GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME_BINARY)/src/library/Recommended/$(pkg).tgz)
+GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME_BINARY)/src/library/Recommended/$(pkg)*.tar.gz)
 
 all: install.recommended
 
 $(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
 
 ifneq ($(FASTR_RFFI),managed)
-install.recommended:
+$(PKGS_REPO_DIR):
+	mkdir -p $(PKGS_REPO_DIR)
+	cp $(GNUR_RECOMMENDED_TARS) $(PKGS_REPO_DIR)
+	(cd $(PKGS_REPO_DIR); $(GNUR_HOME_BINARY)/bin/R --vanilla --slave -e "tools::write_PACKAGES('.', type='source')")
+
+install.recommended: $(PKGS_REPO_DIR)
 	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
 		$(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
 	done
@@ -92,3 +98,4 @@ clean:
 		rm -rf $(FASTR_R_HOME)/library/$$pkgname; \
 	done
 	rm -f install.recommended
+	rm -rf $(PKGS_REPO_DIR)
