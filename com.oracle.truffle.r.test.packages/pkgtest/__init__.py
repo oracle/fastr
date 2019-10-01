@@ -40,7 +40,6 @@ from .output_filter import select_filters_for_package
 from .fuzzy_compare import fuzzy_compare
 from .util import *
 
-
 def _create_libinstall(rvm, test_installed):
     '''
     Create lib.install.packages.<rvm>/install.tmp.<rvm>/test.<rvm> for <rvm>: fastr or gnur
@@ -110,10 +109,10 @@ def commit_fastr_builtins():
     return pkgtest_run(cmd_line)
 
 
-def _installpkgs(args, **kwargs):
-    '''
-    Runs the R script that does package/installation and testing.
-    '''
+def _run_install_packages_script(rscript_path, args, kwargs):
+    """
+    Runs 'install.packages.R' script with the provided 'Rscript' binary.
+    """
     if 'env' in kwargs:
         env = kwargs['env']
     else:
@@ -123,13 +122,26 @@ def _installpkgs(args, **kwargs):
     out = kwargs.get('out', None)
     err = kwargs.get('err', None)
 
+    _ensure_R_on_PATH(env, os.path.dirname(rscript_path))
+    cmd_line = [rscript_path, _installpkgs_script()] + args
+    logging.debug("Running {!s} with cmd line: {!s}".format(rscript_path, cmd_line))
+    return pkgtest_run(cmd_line, nonZeroIsFatal=kwargs.get("nonZeroIsFatal", True), out=out, err=err, env=env)
+
+
+def _fastr_installpkgs(args, **kwargs):
+    """
+    Runs 'install.packages.R' script with GnuR.
+    """
     if "FASTR_WORKING_DIR" in os.environ:
         env["TMPDIR"] = os.environ["FASTR_WORKING_DIR"]
+    return _run_install_packages_script(get_fastr_rscript(), args, kwargs)
 
-    _ensure_R_on_PATH(env, os.path.dirname(get_fastr_rscript()))
-    cmd_line = [get_fastr_rscript(), _installpkgs_script()] + args
-    logging.debug("Running FastR with cmd line: " + str(cmd_line))
-    return pkgtest_run(cmd_line, out=out, err=err, env=env)
+
+def _gnur_installpkgs(args, **kwargs):
+    """
+    Runs 'install.packages.R' script with GnuR.
+    """
+    return _run_install_packages_script(get_gnur_rscript(), args, kwargs)
 
 
 def prepare_r_install_arguments(args):
@@ -139,13 +151,6 @@ def prepare_r_install_arguments(args):
         args += ["--verbose"]
     elif verbosity_level > 1:
         args += ["--very-verbose"]
-
-    # install and test the packages, unless just listing versions
-    if not '--list-versions' in args:
-        args += ['--run-tests']
-        args += ['--testdir', get_opts().fastr_testdir]
-        if not '--print-install-status' in args:
-            args += ['--print-install-status']
 
     # get default CRAN mirror from our FastR home
     default_cran_mirror_url = "CRAN=" + get_default_cran_mirror()
@@ -164,6 +169,17 @@ def prepare_r_install_arguments(args):
     else:
         logging.info("No '--repos' specified, using default CRAN mirror: " + default_cran_mirror_url)
         args += [ "--repos", default_cran_mirror_url]
+    return args
+
+
+def prepare_r_install_and_test_arguments(args):
+    args = prepare_r_install_arguments(args)
+    # install and test the packages, unless just listing versions
+    if not '--list-versions' in args:
+        args += ['--run-tests']
+        args += ['--testdir', get_opts().fastr_testdir]
+        if not '--print-install-status' in args:
+            args += ['--print-install-status']
     return args
 
 
@@ -190,7 +206,7 @@ def pkgtest(args):
         3: install & test fail
     '''
     unknown_args = parse_arguments(args)
-    install_args = prepare_r_install_arguments(unknown_args)
+    install_args = prepare_r_install_and_test_arguments(unknown_args)
 
     test_installed = '--no-install' in install_args
     fastr_libinstall, fastr_install_tmp = _create_libinstall('fastr', test_installed)
@@ -213,7 +229,7 @@ def pkgtest(args):
     log_step('BEGIN', 'install/test', 'FastR')
     # Currently installpkgs does not set a return code (in install.packages.R)
     out = OutputCapture()
-    rc = _installpkgs(install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    rc = _fastr_installpkgs(install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
     if rc == 100:
         # fatal error connecting to package repo
         abort(status=rc)
@@ -482,18 +498,14 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     env["TZDIR"] = "/usr/share/zoneinfo/"
 
     # forward any explicit args to pkgtest
-    args = [_installpkgs_script()]
-    args += forwarded_args
+    args = list(forwarded_args)
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
     args += ['--ignore-blacklist']
     args += ['--testdir', get_opts().gnur_testdir]
     log_step('BEGIN', 'install/test', 'GnuR')
 
-    _ensure_R_on_PATH(env, os.path.dirname(get_gnur_rscript()))
-    cmd_line = [get_gnur_rscript()] + args
-    logging.debug("Running GnuR with cmd line: " + str(cmd_line))
-    pkgtest_run(cmd_line, env=env)
+    _gnur_installpkgs(args, env=env)
 
     log_step('END', 'install/test', 'GnuR')
 
@@ -758,7 +770,7 @@ def _parse_runit_result(lines):
 
 def installpkgs(args, **kwargs):
     rargs = util.parse_arguments(args)
-    return _installpkgs(rargs)
+    return _fastr_installpkgs(rargs)
 
 
 def pkgtest_check(args):
@@ -851,7 +863,118 @@ def find_top(args):
     if not os.path.exists(libinstall):
         os.mkdir(libinstall)
     os.environ['R_LIBS_USER'] = libinstall
-    _installpkgs(rargs)
+    _fastr_installpkgs(rargs)
+
+
+def pkgcache(args):
+    '''
+    Explicitly install and cache packages without running tests.
+
+    Options:
+        --quiet                         Reduce output during testing.
+        --cache-dir DIR                 Use package cache in directory DIR (will be created if not existing).
+        --pkg-pattern PATTERN           A regular expression to match packages.
+        --fastr                         Install and cache with FastR.
+        --gnur                          Install and cache with GnuR.
+        --repos REPO_NAME[=URL][,...]   Repos to use
+        --verbose, -v                   Verbose output.
+        --very-verbose, -V              Very verbose output.
+        --pkg-filelist                  A file containing a list of packages (cannot be combined with '--pkg-pattern').
+        --pkg-pattern                   A pattern for packages to cache (cannot be combined with '--pkg-filelist').
+
+    Return codes:
+        0: success
+        1: fail
+    '''
+    unknown_args = parse_arguments(args)
+
+    parser = argparse.ArgumentParser(prog="pkgcache")
+    parser.add_argument('--cache-dir', metavar='DIR', dest="cache_dir", type=str, default=None,
+                        required=True, help='The package cache directory.')
+    parser.add_argument('--vm', help='fastr|gnur', default=None)
+    parser.add_argument('--repos', metavar='REPO_NAME=URL', dest="repos", type=str, default=None,
+                        help='Repos to install packages from.')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--pkg-filelist', metavar='FILE', dest="filelist", type=str, default=None,
+                        help='File contaning a list of files to install and cache.')
+    group.add_argument('--pkg-pattern', metavar='PATTERN', dest="pattern", type=str, default=None,
+                        help='Pattern of packages to install and cache.')
+
+    from . import util
+    _opts = parser.parse_args(args=unknown_args, namespace=util.get_opts())
+
+    install_args = ["--cache-pkgs", "dir={},ignore=base".format(_opts.cache_dir)]
+    if _opts.filelist:
+        install_args += ["--pkg-filelist", _opts.filelist]
+    if _opts.pattern:
+        install_args += ["--pkg-pattern", _opts.pattern]
+
+    # also propagate verbosity flag
+    verbosity_level = get_opts().verbose
+    if verbosity_level == 1:
+        install_args += ["--verbose"]
+    elif verbosity_level > 1:
+        install_args += ["--very-verbose"]
+
+    # get default CRAN mirror from our FastR home
+    default_cran_mirror_url = "CRAN=" + get_default_cran_mirror()
+
+    # We intercept '--repos SNAPSHOT' since in GraalVM mode, we do not necessarily have a 'etc/DEFAULT_CRAN_MIRROR' for
+    # GnuR in an accessible location.
+    if _opts.repos == 'SNAPSHOT':
+        logging.info("Overwriting '--repos SNAPSHOT' with '--repos %s'" % default_cran_mirror_url)
+        install_args += ["--repos", default_cran_mirror_url]
+    elif _opts.repos == 'FASTR':
+        logging.info("Overwriting '--repos FASTR' with '--repos FASTR,%s'" % default_cran_mirror_url)
+        install_args += ["--repos", "FASTR," + default_cran_mirror_url]
+    else:
+        logging.info("No '--repos' specified, using default CRAN mirror: " + default_cran_mirror_url)
+        install_args += ["--repos", default_cran_mirror_url]
+
+    rc_gnur = 0
+    rc_fastr = 0
+    if "fastr" in _opts.vm:
+        fastr_libinstall, fastr_install_tmp = _create_libinstall('fastr', False)
+
+        env = os.environ.copy()
+        env["TMPDIR"] = fastr_install_tmp
+        env['R_LIBS_USER'] = fastr_libinstall
+        env['FASTR_OPTION_PrintErrorStacktracesToFile'] = 'false'
+        env['FASTR_OPTION_PrintErrorStacktraces'] = 'true'
+
+        # transfer required FastR functions to GnuR
+        commit_fastr_builtins()
+
+        fastr_args = list(install_args)
+
+        # If '--cache-pkgs' is set, then also set the native API version value
+        _set_pkg_cache_api_version(fastr_args, get_fastr_include_path())
+
+        log_step('BEGIN', 'install/cache', 'FastR')
+        # Currently installpkgs does not set a return code (in install.packages.R)
+        rc_fastr = _fastr_installpkgs(fastr_args, nonZeroIsFatal=False, env=env)
+        log_step('END', 'install/cache', 'FastR')
+
+        shutil.rmtree(fastr_install_tmp, ignore_errors=True)
+
+    if "gnur" in _opts.vm:
+        gnur_libinstall, gnur_install_tmp = _create_libinstall('gnur', False)
+
+        env = os.environ.copy()
+        env["TMPDIR"] = gnur_install_tmp
+        env['R_LIBS_USER'] = gnur_libinstall
+        env["TZDIR"] = "/usr/share/zoneinfo/"
+
+        gnur_args = list(install_args)
+
+        # If '--cache-pkgs' is set, then also set the native API version value
+        _set_pkg_cache_api_version(gnur_args, get_gnur_include_path())
+
+        log_step('BEGIN', 'install/cache', 'GnuR')
+        gnur_rc = _gnur_installpkgs(gnur_args, nonZeroIsFatal=False, env=env)
+        log_step('END', 'install/cache', 'GnuR')
+
+    return max(rc_fastr, rc_gnur)
 
 
 class TestFrameworkResultException(BaseException):
