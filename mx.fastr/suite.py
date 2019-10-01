@@ -215,6 +215,7 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.launcher",
         "truffle:TRUFFLE_API",
+        "sulong:SULONG_API",
         "XZ-1.8",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -402,6 +403,7 @@ suite = {
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
+        "sulong:SULONG_API",
       ],
     },
 
@@ -416,6 +418,12 @@ suite = {
         "truffle:ANTLR4",
         "GNUR",
         "XZ-1.8",
+      ],
+      "distDependencies" : [
+        "truffle:TRUFFLE_API",
+        "truffle:TRUFFLE_NFI",
+        "truffle:TRUFFLE_NFI_NATIVE",
+        "sulong:SULONG_API",
       ],
     },
 

@@ -308,6 +308,12 @@ public abstract class RFFIContext extends RFFI {
         return code;
     }
 
+    public Object getSulongArrayType(@SuppressWarnings("unused") Object arrayElement) {
+        // TODO: this is here because TruffleLLVM_Context is not visible from "runtime" project
+        // where we implement VectorRFFIWrapper which needs this
+        throw RInternalError.shouldNotReachHere("getSulongArrayType");
+    }
+
     public abstract RFFIFactory.Type getDefaultRFFIType();
 
     private RFunctionChildren getFunctionChildrenHolder(RFunction parent) {

@@ -77,12 +77,32 @@ public final class TruffleLLVM_Call implements CallRFFI {
         private TruffleObject setCallbacksAddress;
         private TruffleObject callbacks;
 
+        public Object doubleArrayType;
+        public Object intArrayType;
+        public Object longArrayType;
+        public Object byteArrayType;
+
         @Override
         public ContextState initialize(RContext contextA) {
             this.context = contextA;
             RFFIFactory.getCallRFFI();
             initCallbacks();
+
+            try {
+                InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+                LLVM_Handle rdllInfo = (LLVM_Handle) DLL.getRdllInfo().handle;
+                doubleArrayType = findAndExecute(interop, rdllInfo.handle, "get_double_array_sulong_type");
+                intArrayType = findAndExecute(interop, rdllInfo.handle, "get_i32_array_sulong_type");
+                longArrayType = findAndExecute(interop, rdllInfo.handle, "get_i64_array_sulong_type");
+                byteArrayType = findAndExecute(interop, rdllInfo.handle, "get_byte_array_sulong_type");
+            } catch (InteropException ex) {
+                throw RInternalError.shouldNotReachHere(ex);
+            }
             return this;
+        }
+
+        private static Object findAndExecute(InteropLibrary interop, Object handle, String name) throws InteropException {
+            return interop.execute(interop.readMember(handle, name));
         }
 
         public void initializeVariables() {

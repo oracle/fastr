@@ -284,15 +284,19 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         return result;
     }
 
+    public void wrapStrings() {
+        wrapStrings(ConditionProfile.getUncached(), ConditionProfile.getUncached());
+    }
+
     /**
      * Converts the data to {@link CharSXPWrapper} instances. Does nothing if the data are already
      * wrapped.
      */
     @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
-    public void wrapStrings() {
-        if (!isNativized()) {
+    public void wrapStrings(ConditionProfile isNativized, ConditionProfile needsWrapping) {
+        if (isNativized.profile(!isNativized())) {
             Object[] oldData = data;
-            if (oldData instanceof CharSXPWrapper[]) {
+            if (needsWrapping.profile(oldData instanceof CharSXPWrapper[])) {
                 return;
             }
             noWrappedStrings.invalidate();

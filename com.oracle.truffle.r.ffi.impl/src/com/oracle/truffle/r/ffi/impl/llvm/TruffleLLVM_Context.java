@@ -114,6 +114,21 @@ public class TruffleLLVM_Context extends RFFIContext {
     }
 
     @Override
+    public Object getSulongArrayType(Object arrayElem) {
+        if (arrayElem instanceof Double) {
+            return callState.doubleArrayType;
+        } else if (arrayElem instanceof Integer) {
+            return callState.intArrayType;
+        } else if (arrayElem instanceof Byte) {
+            return callState.byteArrayType;
+        } else if (arrayElem instanceof Long) {
+            return callState.longArrayType;
+        }
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere("No array type for " + arrayElem);
+    }
+
+    @Override
     public void beforeDispose(RContext context) {
         callState.beforeDispose(context);
     }

@@ -22,57 +22,55 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ArityException;
-import com.oracle.truffle.api.interop.CanResolve;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.ForeignAccess.StandardFactory;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.Resolve;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.AtomicVectorGetterNodeGen;
-import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.AtomicVectorSetterNodeGen;
-import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.NumberToIntNodeGen;
-import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.VectorRFFIWrapperNativePointerFactory.DispatchAllocateNodeGen;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+@ExportLibrary(InteropLibrary.class)
+@ExportLibrary(NativeTypeLibrary.class)
 public final class VectorRFFIWrapper implements TruffleObject {
 
-    private final TruffleObject vector;
+    protected final TruffleObject vector;
+    protected long pointer;
 
     private VectorRFFIWrapper(TruffleObject vector) {
         assert vector instanceof RBaseObject;
         this.vector = vector;
         NativeDataAccess.setNativeWrapper((RBaseObject) vector, this);
+        pointer = NativeDataAccess.getNativeDataAddress((RBaseObject) vector);
     }
 
     public static VectorRFFIWrapper get(TruffleObject x) {
@@ -82,6 +80,8 @@ public final class VectorRFFIWrapper implements TruffleObject {
             assert wrapper instanceof VectorRFFIWrapper;
             return (VectorRFFIWrapper) wrapper;
         } else {
+            // TODO: create subclasses of VectorRFFIWrapper specialized for concrete vector types
+            // and use directly the vector methods (possibly via VectorAccess) not interop library
             wrapper = new VectorRFFIWrapper(x);
             // Establish the 1-1 relationship between the object and its native wrapper
             NativeDataAccess.setNativeWrapper((RBaseObject) x, wrapper);
@@ -93,9 +93,90 @@ public final class VectorRFFIWrapper implements TruffleObject {
         return vector;
     }
 
-    @Override
-    public ForeignAccess getForeignAccess() {
-        return VectorRFFIWrapperMRForeign.ACCESS;
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean hasNativeType() {
+        return true;
+    }
+
+    @ExportMessage
+    public Object getNativeType(@CachedContext(TruffleRLanguage.class) RContext ctx, @Cached GetNativeTypeDispatcher getNativeType) {
+        return getNativeType.execute(vector, ctx.getRFFI());
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    public long getArraySize(@CachedLibrary("this.vector") InteropLibrary interop, @Exclusive @Cached("createBinaryProfile()") ConditionProfile isComplex) throws UnsupportedMessageException {
+        if (isComplex.profile(vector instanceof RComplexVector)) {
+            return ((RComplexVector) vector).getLength() << 1;
+        } else {
+            return interop.getArraySize(this.vector);
+        }
+    }
+
+    @ExportMessage
+    public boolean isArrayElementReadable(long index, @CachedLibrary("this.vector") InteropLibrary interop) {
+        return interop.isArrayElementReadable(this.vector, index);
+    }
+
+    @ExportMessage
+    public Object readArrayElement(long index,
+                    @Cached ReadElementDispatcher readElement) throws InvalidArrayIndexException {
+        return readElement.execute(vector, (int) index);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isArrayElementInsertable(@SuppressWarnings("unused") long index) {
+        return false;
+    }
+
+    @ExportMessage
+    public boolean isArrayElementModifiable(long index, @CachedLibrary("this.vector") InteropLibrary interop) {
+        try {
+            return index > 0 && index < interop.getArraySize(vector);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @ExportMessage
+    public void writeArrayElement(long index, Object value, @Cached AtomicVectorSetterNode setterNode) {
+        setterNode.execute(vector, (int) index, value);
+    }
+
+    @ExportMessage
+    public boolean isPointer() {
+        return this.pointer != 0;
+    }
+
+    @ExportMessage
+    public long asPointer() {
+        assert pointer != 0;
+        return this.pointer;
+    }
+
+    @ExportMessage
+    public void toNative(@Cached DispatchAllocate dispatchAllocate) {
+        pointer = dispatchAllocate.execute(vector);
+    }
+
+    // Following two messages are used in our Sulong specific C code
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean isString() {
+        return vector instanceof CharSXPWrapper;
+    }
+
+    @ExportMessage
+    public String asString() {
+        return ((CharSXPWrapper) vector).getContents();
     }
 
     @Override
@@ -103,350 +184,164 @@ public final class VectorRFFIWrapper implements TruffleObject {
         return vector.hashCode();
     }
 
-    public static class VectorRFFIWrapperNativePointer implements TruffleObject {
-
-        public static final ForeignAccess ACCESS = ForeignAccess.create(VectorRFFIWrapperNativePointer.class, new StandardFactory() {
-            @Override
-            public CallTarget accessIsNull() {
-                return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-                    @Override
-                    public Object execute(VirtualFrame frame) {
-                        return false;
-                    }
-                });
-            }
-
-            @Override
-            public CallTarget accessIsPointer() {
-                return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-                    @Override
-                    public Object execute(VirtualFrame frame) {
-                        return true;
-                    }
-                });
-            }
-
-            @Override
-            public CallTarget accessAsPointer() {
-                return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-                    @Child private DispatchAllocate dispatch = DispatchAllocateNodeGen.create();
-
-                    @Override
-                    public Object execute(VirtualFrame frame) {
-                        VectorRFFIWrapperNativePointer receiver = (VectorRFFIWrapperNativePointer) ForeignAccess.getReceiver(frame);
-                        return dispatch.execute(receiver.vector);
-                    }
-                });
-            }
-
-            @Override
-            public CallTarget accessToNative() {
-                return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-                    @Override
-                    public Object execute(VirtualFrame frame) {
-                        return ForeignAccess.getReceiver(frame);
-                    }
-                });
-            }
-        });
-
-        private final TruffleObject vector;
-
-        VectorRFFIWrapperNativePointer(TruffleObject vector) {
-            this.vector = vector;
-            assert vector instanceof RBaseObject;
-            // initialize the native mirror in the vector
-            NativeDataAccess.toNative((RBaseObject) vector);
-        }
-
-        abstract static class InteropRootNode extends RootNode {
-            InteropRootNode() {
-                super(/* TruffleRLanguageImpl.getCurrentLanguage() */null);
-            }
-
-            @Override
-            public final SourceSection getSourceSection() {
-                return RSyntaxNode.INTERNAL;
-            }
-        }
-
-        // TODO: with separate version of this for the different types, it would be more efficient
-        // and not need the dispatch
-        public abstract static class DispatchAllocate extends Node {
-            private static final long EMPTY_DATA_ADDRESS = 0x1BAD;
-
-            public abstract long execute(Object vector);
-
-            @Specialization
-            @TruffleBoundary
-            protected static long get(RList list) {
-                return list.allocateNativeContents();
-            }
-
-            @Specialization
-            @TruffleBoundary
-            protected static long get(RIntVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            @TruffleBoundary
-            protected static long get(RLogicalVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            @TruffleBoundary
-            protected static long get(RRawVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            @TruffleBoundary
-            protected static long get(RDoubleVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            @TruffleBoundary
-            protected static long get(RComplexVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            @TruffleBoundary
-            protected static long get(RStringVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            @TruffleBoundary
-            protected static long get(CharSXPWrapper vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            protected static long get(@SuppressWarnings("unused") RNull nullValue) {
-                // Note: GnuR is OK with, e.g., INTEGER(NULL), but it's illegal to read from or
-                // write to the resulting address.
-                return EMPTY_DATA_ADDRESS;
-            }
-
-            @Fallback
-            protected static long get(Object vector) {
-                throw RInternalError.shouldNotReachHere("invalid wrapped object " + vector.getClass().getSimpleName());
-            }
-        }
-
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return ACCESS;
-        }
-    }
-
-    @MessageResolution(receiverType = VectorRFFIWrapper.class)
-    public static class VectorRFFIWrapperMR {
-
-        @Resolve(message = "IS_POINTER")
-        public abstract static class IntVectorWrapperNativeIsPointerNode extends Node {
-            protected Object access(@SuppressWarnings("unused") VectorRFFIWrapper receiver) {
-                return false;
-            }
-        }
-
-        @Resolve(message = "TO_NATIVE")
-        public abstract static class IntVectorWrapperNativeAsPointerNode extends Node {
-            protected Object access(VectorRFFIWrapper receiver) {
-                return new VectorRFFIWrapperNativePointer(receiver.vector);
-            }
-        }
-
-        @Resolve(message = "IS_POINTER")
-        public abstract static class IsPointerNode extends Node {
-            protected boolean access(@SuppressWarnings("unused") VectorRFFIWrapper receiver) {
-                return true;
-            }
-        }
-
-        @Resolve(message = "AS_POINTER")
-        public abstract static class AsPointerNode extends Node {
-            @Child private VectorRFFIWrapperNativePointer.DispatchAllocate dispatch = DispatchAllocateNodeGen.create();
-
-            protected Object access(VectorRFFIWrapper receiver) {
-                return dispatch.execute(receiver.vector);
-            }
-        }
-
-        @Resolve(message = "HAS_SIZE")
-        public abstract static class VectorWrapperHasSizeNode extends Node {
-            protected Object access(@SuppressWarnings("unused") VectorRFFIWrapper receiver) {
-                return true;
-            }
-        }
-
-        @Resolve(message = "GET_SIZE")
-        public abstract static class VectorWrapperGetSizeNode extends Node {
-            @Child private Node getSizeMsg = Message.GET_SIZE.createNode();
-
-            protected Object access(VectorRFFIWrapper receiver) {
-                try {
-                    return ForeignAccess.sendGetSize(getSizeMsg, receiver.vector);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
-            }
-        }
-
-        @Resolve(message = "READ")
-        abstract static class VectorWrapperReadNode extends Node {
-            @Child private Node readMsg = Message.READ.createNode();
-            @Child private NumberToInt getIndexNode = NumberToIntNodeGen.create();
-            @Child private AtomicVectorGetterNode getElemNode = AtomicVectorGetterNodeGen.create();
-
-            public Object access(VectorRFFIWrapper receiver, Object index) {
-                int i = getIndexNode.executeInteger(index);
-                return getElemNode.execute(receiver.vector, i);
-            }
-        }
-
-        @Resolve(message = "WRITE")
-        abstract static class VectorWrapperWriteNode extends Node {
-            @Child private Node writeMsg = Message.WRITE.createNode();
-            @Child private NumberToInt getIndexNode = NumberToIntNodeGen.create();
-            @Child private AtomicVectorSetterNode setElemNode = AtomicVectorSetterNodeGen.create();
-
-            public Object access(VectorRFFIWrapper receiver, Object index, Object value) {
-                int ind = getIndexNode.executeInteger(index);
-                return setElemNode.execute(receiver.vector, ind, value);
-            }
-        }
-
-        @Resolve(message = "IS_EXECUTABLE")
-        abstract static class VectorWrapperIsExecutableNode extends Node {
-            @Child private Node isExecMsg = Message.IS_EXECUTABLE.createNode();
-
-            public Object access(VectorRFFIWrapper receiver) {
-                return ForeignAccess.sendIsExecutable(isExecMsg, receiver.vector);
-            }
-        }
-
-        @Resolve(message = "EXECUTE")
-        abstract static class VectorWrapperExecuteNode extends Node {
-            @Child private Node execMsg = Message.EXECUTE.createNode();
-
-            protected Object access(VectorRFFIWrapper receiver, Object[] arguments) {
-                try {
-                    // Currently, there is only one "executable" object, which is
-                    // CharSXPWrapper.
-                    // See CharSXPWrapperMR for the EXECUTABLE message handler.
-                    assert arguments.length == 0 && receiver.vector instanceof CharSXPWrapper;
-                    return ForeignAccess.sendExecute(execMsg, receiver.vector);
-                } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
-            }
-        }
-
-        @CanResolve
-        public abstract static class VectorWrapperCheck extends Node {
-            protected static boolean test(TruffleObject receiver) {
-                return receiver instanceof VectorRFFIWrapper;
-            }
-        }
-    }
-
-    public abstract static class NumberToInt extends Node {
-
-        public abstract int executeInteger(Object value);
+    @GenerateUncached
+    @ImportStatic(DSLConfig.class)
+    public abstract static class ReadElementDispatcher extends Node {
+        public abstract Object execute(Object vector, int index) throws InvalidArrayIndexException;
 
         @Specialization
-        protected int doInt(int x) {
-            return x;
+        protected static Object doString(RStringVector vec, int index,
+                        @Cached("createBinaryProfile()") ConditionProfile isNativized,
+                        @Cached("createBinaryProfile()") ConditionProfile needsWrapping) {
+            vec.wrapStrings(isNativized, needsWrapping);
+            return vec.getWrappedDataAt(index);
         }
 
         @Specialization
-        protected int doLong(long x) {
-            return (int) x;
+        protected static double doComplex(RComplexVector vec, int index) {
+            return vec.getRawDataAt(index);
         }
 
-        @Specialization
-        protected int doDouble(double x) {
-            return (int) x;
-        }
-    }
-
-    public abstract static class AtomicVectorGetterNode extends Node {
-        @Child private Node readMsgNode;
-
-        public abstract Object execute(Object vector, int index);
-
-        @Specialization
-        protected Object doStringVector(RStringVector vector, int index) {
-            vector.wrapStrings();
-            // TODO: for now character vector shouldn't return plain java.lang.String,
-            // otherwise we'd need to make sure that all the places that expect CharSXP
-            // can also deal with java.lang.String
-            return vector.getWrappedDataAt(index);
+        protected static boolean isNotStringOrComplex(Object value) {
+            return !(value instanceof RStringVector || value instanceof RComplexVector);
         }
 
-        @Specialization
-        protected Object doIntVector(RIntVector vector, int index) {
-            return vector.getDataAt(index);
-        }
-
-        @Specialization
-        protected Object doDoubleVector(RDoubleVector vector, int index) {
-            return vector.getDataAt(index);
-        }
-
-        @Specialization
-        protected Object doComplexVector(RComplexVector vector, int index) {
-            return vector.getComplexPartAt(index);
-        }
-
-        @Specialization
-        protected Object doRawVector(RRawVector vector, int index) {
-            return vector.getRawDataAt(index);
-        }
-
-        @Specialization
-        protected Object doLogicalVector(RLogicalVector vector, int index,
-                        @Cached("create()") BranchProfile naProfile) {
-            byte ret = vector.getDataAt(index);
-            if (ret == RRuntime.LOGICAL_NA) {
-                naProfile.enter();
-                return RRuntime.INT_NA;
-            }
-            return ret;
-        }
-
-        @Specialization
-        protected Object doList(RList vector, int index) {
-            return vector.getDataAt(index);
-        }
-
-        @Fallback
-        protected Object doOther(Object target, int index) {
-            assert target instanceof TruffleObject;
+        @Specialization(guards = "isNotStringOrComplex(value)", limit = "getInteropLibraryCacheSize()")
+        protected static Object others(Object value, int index,
+                        @CachedLibrary("value") InteropLibrary interop) throws InvalidArrayIndexException {
             try {
-                if (readMsgNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    readMsgNode = insert(Message.READ.createNode());
-                }
-                return ForeignAccess.sendRead(readMsgNode, (TruffleObject) target, index);
-            } catch (InteropException e) {
+                return interop.readArrayElement(value, index);
+            } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
         }
-
     }
 
+    @GenerateUncached
+    public abstract static class GetNativeTypeDispatcher extends Node {
+        public abstract Object execute(Object vector, RFFIContext ctx);
+
+        @Specialization
+        protected static Object doInt(@SuppressWarnings("unused") RIntVector vec, RFFIContext ctx) {
+            return ctx.getSulongArrayType(42);
+        }
+
+        @Specialization
+        protected static Object doLogical(@SuppressWarnings("unused") RLogicalVector vec, RFFIContext ctx) {
+            return ctx.getSulongArrayType(42);
+        }
+
+        @Specialization
+        protected static Object doDouble(@SuppressWarnings("unused") RDoubleVector vec, RFFIContext ctx) {
+            return ctx.getSulongArrayType(42.42);
+        }
+
+        @Specialization
+        protected static Object doComplex(@SuppressWarnings("unused") RComplexVector vec, RFFIContext ctx) {
+            return ctx.getSulongArrayType(42.42);
+        }
+
+        @Specialization
+        protected static Object doRaw(@SuppressWarnings("unused") RRawVector vec, RFFIContext ctx) {
+            return ctx.getSulongArrayType((byte) 42);
+        }
+
+        @Specialization
+        protected static Object doCharSXP(@SuppressWarnings("unused") CharSXPWrapper vec, RFFIContext ctx) {
+            return ctx.getSulongArrayType((byte) 42);
+        }
+
+        @Specialization
+        protected static Object doString(@SuppressWarnings("unused") RStringVector vec, RFFIContext ctx) {
+            return ctx.getSulongArrayType(42L);
+        }
+
+        @Specialization
+        protected static Object doList(@SuppressWarnings("unused") RList vec, RFFIContext ctx) {
+            return ctx.getSulongArrayType(42L);
+        }
+
+        @Fallback
+        protected static Object others(@SuppressWarnings("unused") Object vec, @SuppressWarnings("unused") RFFIContext ctx) {
+            CompilerDirectives.transferToInterpreter();
+            throw RInternalError.shouldNotReachHere(vec.toString());
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class DispatchAllocate extends Node {
+        private static final long EMPTY_DATA_ADDRESS = 0x1BAD;
+
+        public abstract long execute(Object vector);
+
+        @Specialization
+        @TruffleBoundary
+        protected static long get(RList list) {
+            return list.allocateNativeContents();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected static long get(RIntVector vector) {
+            return vector.allocateNativeContents();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected static long get(RLogicalVector vector) {
+            return vector.allocateNativeContents();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected static long get(RRawVector vector) {
+            return vector.allocateNativeContents();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected static long get(RDoubleVector vector) {
+            return vector.allocateNativeContents();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected static long get(RComplexVector vector) {
+            return vector.allocateNativeContents();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected static long get(RStringVector vector) {
+            return vector.allocateNativeContents();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected static long get(CharSXPWrapper vector) {
+            return vector.allocateNativeContents();
+        }
+
+        @Specialization
+        protected static long get(@SuppressWarnings("unused") RNull nullValue) {
+            // Note: GnuR is OK with, e.g., INTEGER(NULL), but it's illegal to read from or
+            // write to the resulting address.
+            return EMPTY_DATA_ADDRESS;
+        }
+
+        @Fallback
+        protected static long get(Object vector) {
+            throw RInternalError.shouldNotReachHere("invalid wrapped object " + vector.getClass().getSimpleName());
+        }
+    }
+
+    @GenerateUncached
     public abstract static class AtomicVectorSetterNode extends Node {
 
         public abstract Object execute(Object vector, int index, Object value);
 
         @Specialization
-        protected Object doIntVector(RIntVector vector, int index, int value, @Cached("create()") BranchProfile naProfile) {
+        protected static Object doIntVector(RIntVector vector, int index, int value, @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value)) {
                 naProfile.enter();
                 vector.setComplete(false);
@@ -456,7 +351,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doDoubleVector(RDoubleVector vector, int index, double value, @Cached("create()") BranchProfile naProfile) {
+        protected static Object doDoubleVector(RDoubleVector vector, int index, double value, @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value)) {
                 naProfile.enter();
                 vector.setComplete(false);
@@ -466,7 +361,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doDoubleVector(RDoubleVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
+        protected static Object doDoubleVector(RDoubleVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value)) {
                 naProfile.enter();
                 vector.setComplete(false);
@@ -476,7 +371,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doDoubleVector(RDoubleVector vector, int index, int value, @Cached("create()") BranchProfile naProfile) {
+        protected static Object doDoubleVector(RDoubleVector vector, int index, int value, @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value)) {
                 naProfile.enter();
                 vector.setComplete(false);
@@ -486,13 +381,39 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doRawVector(RRawVector vector, int index, byte value) {
+        protected static Object doDoubleVector(RDoubleVector vector, int index, float value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setDataAt(vector.getInternalStore(), index, value);
+            return vector;
+        }
+
+        @Specialization
+        protected static Object doDoubleVector(@SuppressWarnings("unused") RDoubleVector vector, @SuppressWarnings("unused") int index, @SuppressWarnings("unused") byte value) {
+            // TODO: called from memcpy
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Specialization
+        protected static Object doDoubleVector(RDoubleVector vector, int index, short value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setDataAt(vector.getInternalStore(), index, value);
+            return vector;
+        }
+
+        @Specialization
+        protected static Object doRawVector(RRawVector vector, int index, byte value) {
             vector.setRawDataAt(vector.getInternalStore(), index, value);
             return vector;
         }
 
         @Specialization
-        protected Object doLogicalVector(RLogicalVector vector, int index, int value,
+        protected static Object doLogicalVector(RLogicalVector vector, int index, int value,
                         @Cached("createBinaryProfile()") ConditionProfile booleanProfile,
                         @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value)) {
@@ -506,7 +427,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doList(RList vector, int index, Object value,
+        protected static Object doList(RList vector, int index, Object value,
                         @Cached("createBinaryProfile()") ConditionProfile lookupProfile) {
             Object usedValue = value;
             if (lookupProfile.profile(value instanceof Long)) {
@@ -517,7 +438,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doStringVector(RStringVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
+        protected static Object doStringVector(RStringVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
             Object usedValue = value;
             usedValue = NativeDataAccess.lookup(value);
             assert usedValue instanceof CharSXPWrapper;
@@ -530,7 +451,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doStringVector(RStringVector vector, int index, CharSXPWrapper value, @Cached("create()") BranchProfile naProfile) {
+        protected static Object doStringVector(RStringVector vector, int index, CharSXPWrapper value, @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value.getContents())) {
                 naProfile.enter();
                 vector.setComplete(false);
@@ -540,7 +461,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doComplexVector(RComplexVector vector, int index, double value, @Cached("create()") BranchProfile naProfile) {
+        protected static Object doComplexVector(RComplexVector vector, int index, double value, @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value)) {
                 naProfile.enter();
                 vector.setComplete(false);
@@ -550,7 +471,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doComplexVector(RComplexVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
+        protected static Object doComplexVector(RComplexVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value)) {
                 naProfile.enter();
                 vector.setComplete(false);
@@ -560,7 +481,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doComplexVector(RComplexVector vector, int index, int value, @Cached("create()") BranchProfile naProfile) {
+        protected static Object doComplexVector(RComplexVector vector, int index, int value, @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value)) {
                 naProfile.enter();
                 vector.setComplete(false);
@@ -570,11 +491,11 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Fallback
-        @TruffleBoundary
-        @SuppressWarnings("unused")
         protected Object doOther(Object target, int index, Object value) {
-            throw RInternalError.shouldNotReachHere("target=" + target + ", index=" + index + ", value=" + value);
+            CompilerDirectives.transferToInterpreter();
+            String targetName = target == null ? "null" : target.getClass().getSimpleName();
+            String valueName = value == null ? "null" : value.getClass().getSimpleName();
+            throw RInternalError.shouldNotReachHere("target=" + targetName + ", index=" + index + "value=" + valueName + " " + value);
         }
     }
-
 }
