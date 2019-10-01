@@ -133,6 +133,13 @@ def _installpkgs(args, **kwargs):
 
 
 def prepare_r_install_arguments(args):
+    # also propagate verbosity flag
+    verbosity_level = get_opts().verbose
+    if verbosity_level == 1:
+        args += ["--verbose"]
+    elif verbosity_level > 1:
+        args += ["--very-verbose"]
+
     # install and test the packages, unless just listing versions
     if not '--list-versions' in args:
         args += ['--run-tests']
