@@ -720,7 +720,7 @@ public class FileFunctions {
                      * Annoyingly "." and ".." are never visited by Files.find, so we have to
                      * process them manually.
                      */
-                    if (!noDotDot) {
+                    if (!recursive && allFiles && !noDotDot) {
                         if (pattern == null || pattern.matcher(DOT).find()) {
                             files.add(fullNames ? FileSystemUtils.getSafeTruffleFile(env, vecPathString).resolve(DOT).getPath() : DOT);
                         }
@@ -738,8 +738,28 @@ public class FileFunctions {
             } else {
                 String[] data = new String[files.size()];
                 files.toArray(data);
-                Arrays.sort(data);
+                /*
+                 * During sorting, GNU-R ignores the dot prefix in hidden files ie. we have to
+                 * consider every hidden file without the dot at the beginning.
+                 */
+                Arrays.sort(data, (filePath1, filePath2) -> {
+                    String filename1WithoutDot = skipLeadingDotInFilename(filePath1);
+                    String filename2WithoutDot = skipLeadingDotInFilename(filePath2);
+                    return filename1WithoutDot.compareTo(filename2WithoutDot);
+                });
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+            }
+        }
+
+        private static String skipLeadingDotInFilename(String filePath) {
+            String[] items = filePath.split(Pattern.quote(File.separator));
+            String baseName = items[items.length - 1];
+            String baseNameWithoutDot = baseName.charAt(0) == '.' ? baseName.substring(1) : baseName;
+            if (!baseNameWithoutDot.equals(baseName)) {
+                items[items.length - 1] = baseNameWithoutDot;
+                return String.join(File.separator, items);
+            } else {
+                return filePath;
             }
         }
 
