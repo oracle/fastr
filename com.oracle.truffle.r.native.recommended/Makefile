@@ -63,10 +63,16 @@ GNUR_RECOMMENDED_PKGNAMES := codetools
 endif # FASTR_RELEASE
 
 GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME_BINARY)/src/library/Recommended/$(pkg)*.tar.gz)
+e :=
+c := )|(
+clist = $(subst $e $e,$c,$(strip $1))
+# This will create a string like "^((codetools)|(MASS)|...)$"
+GNUR_RECOMMENDED_PATTERN := "^(($(call clist,$(GNUR_RECOMMENDED_PKGNAMES))))$$"
 
 all: install.recommended
 
 $(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
+$(info GNUR_RECOMMENDED_PATTERN=$(GNUR_RECOMMENDED_PATTERN))
 
 ifneq ($(FASTR_RFFI),managed)
 $(PKGS_REPO_DIR):
@@ -75,9 +81,13 @@ $(PKGS_REPO_DIR):
 	(cd $(PKGS_REPO_DIR); $(GNUR_HOME_BINARY)/bin/R --vanilla --slave -e "tools::write_PACKAGES('.', type='source')")
 
 install.recommended: $(PKGS_REPO_DIR)
-	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
-		$(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
+ifdef R_RECOMMENDED_PKGS_CACHE_DIR
+	mx r-pkgcache --vm fastr --library fastr=$(FASTR_R_HOME)/library --repos RECOMMENDED=$(PKGS_REPO_DIR) --cache-dir $(R_RECOMMENDED_PKGS_CACHE_DIR) --pkg-pattern $(GNUR_RECOMMENDED_PATTERN)
+else
+    for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
+	    $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
 	done
+endif
 ifeq ($(OS_NAME),Darwin)
 	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \
 	    if [ -e $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so ] ; then \
