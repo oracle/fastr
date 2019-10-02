@@ -145,7 +145,7 @@ def check_r_versions():
     fastr_version = get_r_version(get_fastr_rscript())
     logging.info("Using FastR version = %s ; GnuR version = %s: " % (fastr_version, gnur_version))
     if gnur_version != fastr_version:
-        abort(1, 'GraalVM R version does not match GnuR version: %s (FastR) vs. %s (GnuR)' % (fastr_version, gnur_version))
+        abort(1, 'GraalVM R version does not match GnuR version: "%s" (FastR) vs. "%s" (GnuR)' % (fastr_version, gnur_version))
 
 
 VERY_VERBOSE = logging.DEBUG - 5

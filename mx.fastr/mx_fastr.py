@@ -498,8 +498,7 @@ def rbdiag(args):
 
 
 def _gnur_path():
-    gnurHome = os.environ.get('GNUR_HOME_BINARY', join(_fastr_suite.dir, 'libdownloads'))
-    return join(gnurHome, r_version())
+    return os.environ.get('GNUR_HOME_BINARY', join(_fastr_suite.dir, 'libdownloads', r_version()))
 
 def gnu_r(args):
     '''
@@ -630,7 +629,7 @@ _pkgtest_module = None
 def pkgtest_load():
     global _pkgtest_module
     if not _pkgtest_module:
-        sys.path.append(_pkgtest_project)
+        sys.path.append(join(_fastr_suite.dir, _pkgtest_project))
         import pkgtest
         _pkgtest_module = pkgtest
     return _pkgtest_module
