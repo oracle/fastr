@@ -32,6 +32,10 @@ NATIVE_PROJECT_DIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native
 TOPDIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native.recommended
 PKGS_REPO_DIR := repo/src/contrib
 
+ifdef MX_VERBOSE
+VERBOSE=--verbose
+endif
+
 # The package tar balls are copied from $(GNUR_HOME_BINARY)/src/library/Recommended
 ifndef GNUR_HOME_BINARY
 FASTR_R_HOME = $(abspath $(TOPDIR)/..)
@@ -82,7 +86,7 @@ $(PKGS_REPO_DIR):
 
 install.recommended: $(PKGS_REPO_DIR)
 ifdef R_RECOMMENDED_PKGS_CACHE_DIR
-	mx r-pkgcache --vm fastr --library fastr=$(FASTR_R_HOME)/library --repos RECOMMENDED=$(PKGS_REPO_DIR) --cache-dir $(R_RECOMMENDED_PKGS_CACHE_DIR) --pkg-pattern $(GNUR_RECOMMENDED_PATTERN)
+	mx r-pkgcache $(VERBOSE) --vm fastr --library fastr=$(FASTR_R_HOME)/library --repos RECOMMENDED=$(PKGS_REPO_DIR) --cache-dir $(R_RECOMMENDED_PKGS_CACHE_DIR) --pkg-pattern $(GNUR_RECOMMENDED_PATTERN)
 else
     for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
 	    $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
