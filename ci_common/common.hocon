@@ -74,6 +74,7 @@ environmentLinux: {
 	FASTR_LIBGCC_S_VER = "1"
     TZDIR: "/usr/share/zoneinfo"
     MX_PYTHON_VERSION: "3"
+    R_RECOMMENDED_PKGS_CACHE_DIR: "${SLAVE_LOCAL_CACHE}/r_recommended_package_cache"
   }
 }
 
