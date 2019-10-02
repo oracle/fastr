@@ -118,7 +118,7 @@ public final class GridContext {
 
     @TruffleBoundary
     public GridState getGridState() {
-        gridState.setDeviceState(devices.get(currentDeviceIdx).state);
+        gridState.setDeviceState(getDeviceAndState(currentDeviceIdx).state);
         return gridState;
     }
 
@@ -132,7 +132,7 @@ public final class GridContext {
 
     public GridDevice getCurrentDevice() {
         assert currentDeviceIdx >= 0 : "accessing devices before they were initialized";
-        return devices.get(currentDeviceIdx).device;
+        return getDeviceAndState(currentDeviceIdx).device;
     }
 
     public void setCurrentDevice(String name, GridDevice currentDevice) {
@@ -153,8 +153,13 @@ public final class GridContext {
     public void setCurrentDevice(int deviceIdx) {
         assert deviceIdx > 0 && deviceIdx < this.devices.size();
         RContext rCtx = RContext.getInstance();
-        RGridGraphicsAdapter.setCurrentDevice(rCtx, this.devices.get(deviceIdx).name);
+        RGridGraphicsAdapter.setCurrentDevice(rCtx, getDeviceAndState(deviceIdx).name);
         currentDeviceIdx = deviceIdx;
+    }
+
+    @TruffleBoundary
+    private DeviceAndState getDeviceAndState(int deviceIdx) {
+        return this.devices.get(deviceIdx);
     }
 
     public void openDefaultDevice(RContext context) {
@@ -182,7 +187,7 @@ public final class GridContext {
 
     public void closeDevice(RContext rCtx, int which) throws DeviceCloseException {
         assert which >= 0 && which < devices.size();
-        devices.get(which).device.close();
+        getDeviceAndState(which).device.close();
         removeDevice(rCtx, which);
     }
 
@@ -195,7 +200,7 @@ public final class GridContext {
     }
 
     public GridDevice getDevice(int index) {
-        return devices.get(index).device;
+        return getDeviceAndState(index).device;
     }
 
     /**

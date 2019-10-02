@@ -573,7 +573,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         @TruffleBoundary
         @SuppressWarnings("unused")
         protected Object doOther(Object target, int index, Object value) {
-            throw RInternalError.shouldNotReachHere("target=" + target + ", index=" + index + "value=" + value);
+            throw RInternalError.shouldNotReachHere("target=" + target + ", index=" + index + ", value=" + value);
         }
     }
 
