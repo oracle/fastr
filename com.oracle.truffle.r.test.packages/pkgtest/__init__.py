@@ -40,6 +40,13 @@ from .output_filter import select_filters_for_package
 from .fuzzy_compare import fuzzy_compare
 from .util import *
 
+def _create_tmpdir(rvm):
+    install_tmp = join(get_fastr_repo_dir(), "install.tmp." + rvm)
+    shutil.rmtree(install_tmp, ignore_errors=True)
+    os.mkdir(install_tmp)
+    return install_tmp
+
+
 def _create_libinstall(rvm, test_installed):
     '''
     Create lib.install.packages.<rvm>/install.tmp.<rvm>/test.<rvm> for <rvm>: fastr or gnur
@@ -53,9 +60,7 @@ def _create_libinstall(rvm, test_installed):
             logging.warning("could not clean temporary library dir %s" % libinstall)
         else:
             os.mkdir(libinstall)
-    install_tmp = join(get_fastr_repo_dir(), "install.tmp." + rvm)
-    shutil.rmtree(install_tmp, ignore_errors=True)
-    os.mkdir(install_tmp)
+    install_tmp = _create_tmpdir(rvm)
     _create_testdot(rvm)
     return libinstall, install_tmp
 
@@ -871,16 +876,15 @@ def pkgcache(args):
     Explicitly install and cache packages without running tests.
 
     Options:
-        --quiet                         Reduce output during testing.
-        --cache-dir DIR                 Use package cache in directory DIR (will be created if not existing).
-        --pkg-pattern PATTERN           A regular expression to match packages.
-        --fastr                         Install and cache with FastR.
-        --gnur                          Install and cache with GnuR.
-        --repos REPO_NAME[=URL][,...]   Repos to use
-        --verbose, -v                   Verbose output.
-        --very-verbose, -V              Very verbose output.
-        --pkg-filelist                  A file containing a list of packages (cannot be combined with '--pkg-pattern').
-        --pkg-pattern                   A pattern for packages to cache (cannot be combined with '--pkg-filelist').
+        --cache-dir DIR                     Use package cache in directory DIR (will be created if not existing).
+        --library [fastr=DIR][[,]gnur=DIR]  The library folders to install to.
+        --pkg-filelist FILE                 A file containing a list of packages (cannot be combined with '--pkg-pattern').
+        --pkg-pattern PATTERN               A pattern for packages to cache (cannot be combined with '--pkg-filelist').
+        --repos REPO_NAME[=URL][,...]       Repos to install from (default: SNAPSHOT).
+        --verbose, -v                       Verbose output.
+        --very-verbose, -V                  Very verbose output.
+        --vm [fastr[,gnur]]                 Install and cache with FastR and/or GnuR.
+        --quiet                             Reduce output during testing.
 
     Return codes:
         0: success
@@ -894,6 +898,8 @@ def pkgcache(args):
     parser.add_argument('--vm', help='fastr|gnur', default=None)
     parser.add_argument('--repos', metavar='REPO_NAME=URL', dest="repos", type=str, default=None,
                         help='Repos to install packages from.')
+    parser.add_argument('--library', metavar='SPEC', type=str, default="",
+                        help='The library folders to install to (must be specified for each used VM in form "<vm_name>=<dir>").')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--pkg-filelist', metavar='FILE', dest="filelist", type=str, default=None,
                         help='File contaning a list of files to install and cache.')
@@ -931,10 +937,21 @@ def pkgcache(args):
         logging.info("No '--repos' specified, using default CRAN mirror: " + default_cran_mirror_url)
         install_args += ["--repos", default_cran_mirror_url]
 
-    rc_gnur = 0
-    rc_fastr = 0
-    if "fastr" in _opts.vm:
-        fastr_libinstall, fastr_install_tmp = _create_libinstall('fastr', False)
+    library_spec = {}
+    if _opts.library:
+        for part in _opts.library.split(","):
+            vm, lib = part.split("=")
+            library_spec[vm] = lib
+    print(repr(library_spec))
+
+    gnur_rc = 0
+    fastr_rc = 0
+    if 'fastr' in _opts.vm:
+        if 'fastr' in library_spec:
+            fastr_libinstall = ensure_dir(library_spec['fastr'])
+            fastr_install_tmp = _create_tmpdir('fastr')
+        else:
+            fastr_libinstall, fastr_install_tmp = _create_libinstall('fastr', False)
 
         env = os.environ.copy()
         env["TMPDIR"] = fastr_install_tmp
@@ -952,13 +969,17 @@ def pkgcache(args):
 
         log_step('BEGIN', 'install/cache', 'FastR')
         # Currently installpkgs does not set a return code (in install.packages.R)
-        rc_fastr = _fastr_installpkgs(fastr_args, nonZeroIsFatal=False, env=env)
+        fastr_rc = _fastr_installpkgs(fastr_args, nonZeroIsFatal=False, env=env)
         log_step('END', 'install/cache', 'FastR')
 
         shutil.rmtree(fastr_install_tmp, ignore_errors=True)
 
-    if "gnur" in _opts.vm:
-        gnur_libinstall, gnur_install_tmp = _create_libinstall('gnur', False)
+    if 'gnur' in _opts.vm:
+        if 'gnur' in library_spec:
+            gnur_libinstall = ensure_dir(library_spec['gnur'])
+            gnur_install_tmp = _create_tmpdir('gnur')
+        else:
+            gnur_libinstall, gnur_install_tmp = _create_libinstall('gnur', False)
 
         env = os.environ.copy()
         env["TMPDIR"] = gnur_install_tmp
@@ -974,7 +995,7 @@ def pkgcache(args):
         gnur_rc = _gnur_installpkgs(gnur_args, nonZeroIsFatal=False, env=env)
         log_step('END', 'install/cache', 'GnuR')
 
-    return max(rc_fastr, rc_gnur)
+    return max(fastr_rc, gnur_rc)
 
 
 class TestFrameworkResultException(BaseException):

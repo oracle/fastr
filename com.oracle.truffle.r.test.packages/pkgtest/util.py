@@ -242,3 +242,9 @@ def computeApiChecksum(includeDir):
     hxdigest = m.hexdigest()
     logging.debug("Computed API version checksum {0}".format(hxdigest))
     return hxdigest
+
+
+def ensure_dir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
