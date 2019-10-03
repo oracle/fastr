@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.Iterator;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -36,6 +38,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -47,7 +50,6 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.RCallNode.ExplicitArgs;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodesFactory.FunctionInfoFactoryNodeGen;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodesFactory.FunctionInfoNodeGen;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -63,13 +65,10 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
-import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -87,71 +86,50 @@ public class RFunctionEvalNodes {
         public final RPairList argList;
         public final REnvironment env;
         public final boolean noArgs;
+        public final int argsLen;
 
-        FunctionInfo(RFunction function, String name, RPairList argList, REnvironment env) {
+        FunctionInfo(RFunction function, String name, RPairList argList, REnvironment env, RPairListLibrary plLib) {
             this.function = function;
             this.name = name;
             this.argList = argList != null ? argList : RDataFactory.createPairList();
             this.env = env;
             this.noArgs = argList == null;
+
+            int len = 0;
+            if (!noArgs) {
+                for (@SuppressWarnings("unused")
+                RPairList item : plLib.iterable(argList)) {
+                    len++;
+                }
+            }
+            this.argsLen = len;
         }
 
-        public RArgsValuesAndNames prepareArguments(MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame, BranchProfile symbolArgProfile, BranchProfile pairListArgProfile,
-                        RPairListLibrary plLib, PromiseHelperNode promiseHelper, ShareObjectNode sharedObjectNode) {
+        public boolean isCompatible(FunctionInfo other) {
+            return other.env.getFrame().getFrameDescriptor() == this.env.getFrame().getFrameDescriptor() && other.argsLen == this.argsLen;
+        }
+
+        @ExplodeLoop
+        public RArgsValuesAndNames prepareArguments(MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame, RPairListLibrary plLib,
+                        PromiseHelperNode promiseHelper, ArgBuilderNode[] argBuilderNodes) {
             if (noArgs) {
                 return new RArgsValuesAndNames(new Object[0], ArgumentsSignature.empty(0));
             }
 
-            int len = 0;
-            for (@SuppressWarnings("unused")
-            RPairList item : argList) {
-                len++;
-            }
-
-            Object[] args = new Object[len];
-            Object[] names = new Object[len];
-            int i = 0;
+            Object[] args = new Object[argsLen];
+            Object[] names = new Object[argsLen];
             RBuiltinDescriptor rBuiltin = function.getRBuiltin();
-            boolean isFieldAccess = rBuiltin != null ? rBuiltin.isFieldAccess() : false;
-            RArgsValuesAndNames varArgs = null;
-            for (RPairList plt : argList) {
+            FunctionInfo.ArgumentBuilderState argBuilderState = new FunctionInfo.ArgumentBuilderState(rBuiltin != null ? rBuiltin.isFieldAccess() : false);
+            Iterator<RPairList> iterator = plLib.iterable(argList).iterator();
+            for (int i = 0; i < argBuilderNodes.length && i < argsLen; i++) {
+                RPairList plt = iterator.next();
                 Object a = plLib.car(plt);
-
-                if (a instanceof RSymbol) {
-                    symbolArgProfile.enter();
-
-                    String symName = ((RSymbol) a).getName();
-
-                    if (isFieldAccess && i > 0) {
-                        args[i] = symName;
-                        isFieldAccess = false;
-                    } else {
-                        RSyntaxNode lookupSyntaxNode = createLookupNode(a);
-                        Closure closure = Closure.createPromiseClosure(wrapArgNode(i, lookupSyntaxNode));
-                        if (ArgumentsSignature.VARARG_NAME.equals(symName)) {
-                            if (varArgs == null) {
-                                RPromise promise = RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
-                                varArgs = (RArgsValuesAndNames) promiseHelper.evaluate(currentFrame, promise);
-                            }
-                            args[i] = varArgs;
-                        } else {
-                            args[i] = RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
-                        }
-
-                    }
-
-                } else if (a instanceof RPairList) {
-                    pairListArgProfile.enter();
-                    RPairList aPL = (RPairList) a;
-                    aPL = RDataFactory.createPairList(plLib.car(aPL), plLib.cdr(aPL), plLib.getTag(aPL), SEXPTYPE.LANGSXP);
-                    args[i] = createPromise(promiseEvalFrame, aPL, ((RAttributable) a).getAttributes(), i);
-                } else {
-                    args[i] = sharedObjectNode.execute(a);
-                }
+                ArgBuilderNode argBuilderNode = argBuilderNodes[i];
+                args[i] = argBuilderNode.execute(a, argBuilderState, currentFrame, promiseEvalFrame, promiseHelper);
 
                 Object ptag = plLib.getTag(plt);
-                if (args[i] == varArgs && varArgs != null) {
-                    names[i] = varArgs.getSignature();
+                if (args[i] == argBuilderState.varArgs && argBuilderState.varArgs != null) {
+                    names[i] = argBuilderState.varArgs.getSignature();
                 } else if (RRuntime.isNull(ptag)) {
                     names[i] = null;
                 } else if (ptag instanceof RSymbol) {
@@ -160,11 +138,19 @@ public class RFunctionEvalNodes {
                     names[i] = RRuntime.asString(ptag);
                     assert names[i] != null : "unexpected type of tag in RPairList";
                 }
-                i++;
             }
 
-            Object[] flattenedArgs = flattenArgs(args);
-            return new RArgsValuesAndNames(flattenedArgs, ArgumentsSignature.get(flattenNames(names, flattenedArgs.length)));
+            Object[] flattenedArgs = FunctionInfo.flattenArgs(args);
+            return new RArgsValuesAndNames(flattenedArgs, ArgumentsSignature.get(FunctionInfo.flattenNames(names, flattenedArgs.length)));
+        }
+
+        public static final class ArgumentBuilderState {
+            public RArgsValuesAndNames varArgs;
+            final boolean isFieldAccess;
+
+            public ArgumentBuilderState(boolean isFieldAccess) {
+                this.isFieldAccess = isFieldAccess;
+            }
         }
 
         @TruffleBoundary
@@ -174,7 +160,7 @@ public class RFunctionEvalNodes {
             return closure;
         }
 
-        private static Object[] flattenArgs(Object[] args) {
+        public static Object[] flattenArgs(Object[] args) {
             int len = 0;
             for (Object arg : args) {
                 if (arg instanceof RArgsValuesAndNames) {
@@ -200,7 +186,7 @@ public class RFunctionEvalNodes {
             return flattened;
         }
 
-        private static String[] flattenNames(Object[] names, int len) {
+        public static String[] flattenNames(Object[] names, int len) {
             String[] flattened = new String[len];
             int i = 0;
             for (Object name : names) {
@@ -218,23 +204,17 @@ public class RFunctionEvalNodes {
         }
 
         @TruffleBoundary
-        private static RNode wrapArgNode(int i, RSyntaxNode syntaxNode) {
+        static RNode wrapArgNode(int i, RSyntaxNode syntaxNode) {
             return WrapArgumentNode.create(syntaxNode.asRNode(), i);
         }
 
         @TruffleBoundary
-        private static RPromise createPromise(MaterializedFrame promiseEvalFrame, RPairList aPL, DynamicObject attributes, int i) {
+        static Closure createPromiseClosure(RPairList aPL, DynamicObject attributes, int i) {
             if (attributes != null) {
                 RAttributable.copyAttributes(aPL, attributes);
             }
             Closure closure = createClosure(i, aPL);
-            return RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
-        }
-
-        @TruffleBoundary
-        private static RSyntaxNode createLookupNode(Object a) {
-            RSyntaxNode lookupSyntaxNode = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) a).getName(), false);
-            return lookupSyntaxNode;
+            return closure;
         }
 
     }
@@ -246,7 +226,6 @@ public class RFunctionEvalNodes {
     public abstract static class FunctionInfoFactoryNode extends Node {
 
         protected static final int CACHE_SIZE = DSLConfig.getCacheSize(100);
-        protected static final int SYM_CACHE_SIZE = DSLConfig.getCacheSize(3);
 
         static FunctionInfoFactoryNode create() {
             return FunctionInfoFactoryNodeGen.create();
@@ -254,45 +233,49 @@ public class RFunctionEvalNodes {
 
         abstract FunctionInfo execute(Object fun, Object argList, REnvironment env);
 
-        @Specialization(limit = "SYM_CACHE_SIZE", guards = {"cachedFunName.equals(funSym.getName())", "env.getFrame().getFrameDescriptor() == cachedFrameDesc"})
+        @Specialization(limit = "CACHE_SIZE", guards = {"cachedFunName.equals(funSym.getName())", "env.getFrame(frameAccessProfile).getFrameDescriptor() == cachedFrameDesc"})
         FunctionInfo createFunctionInfoFromSymbolCached(@SuppressWarnings("unused") RSymbol funSym, RPairList argList, REnvironment env,
                         @SuppressWarnings("unused") @Cached("funSym.getName()") String cachedFunName,
                         @SuppressWarnings("unused") @Cached("env.getFrame().getFrameDescriptor()") FrameDescriptor cachedFrameDesc,
                         @Cached("createFunctionLookup(cachedFunName)") ReadVariableNode readFunNode,
                         @Cached("createClassProfile()") ValueProfile frameProfile,
                         @Cached("createClassProfile()") ValueProfile frameAccessProfile,
-                        @Cached("create()") BranchProfile ignoredProfile) {
+                        @Cached("create()") BranchProfile ignoredProfile,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             Object fun = readFunNode.execute(frameProfile.profile(env.getFrame(frameAccessProfile)));
             if (!(fun instanceof RFunction) || ((RFunction) fun).isBuiltin()) {
                 // if (true) {
                 ignoredProfile.enter();
                 return null; // TODO: Try to handle builtins too
             }
-            return new FunctionInfo((RFunction) fun, funSym.getName(), argList, env);
+            return new FunctionInfo((RFunction) fun, funSym.getName(), argList, env, plLib);
         }
 
         @Specialization(replaces = "createFunctionInfoFromSymbolCached")
         FunctionInfo createFunctionInfoFromSymbolUncached(RSymbol funSym, RPairList argList, REnvironment env,
                         @Cached("createClassProfile()") ValueProfile frameProfile,
                         @Cached("createClassProfile()") ValueProfile frameAccessProfile,
-                        @Cached("create()") BranchProfile ignoredProfile) {
+                        @Cached("create()") BranchProfile ignoredProfile,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             Object fun = ReadVariableNode.lookupFunction(funSym.getName(), frameProfile.profile(env.getFrame(frameAccessProfile)));
             if (!(fun instanceof RFunction) || ((RFunction) fun).isBuiltin()) {
                 // if (true) {
                 ignoredProfile.enter();
                 return null; // TODO: Try to handle builtins too
             }
-            return new FunctionInfo((RFunction) fun, funSym.getName(), argList, env);
+            return new FunctionInfo((RFunction) fun, funSym.getName(), argList, env, plLib);
         }
 
         @Specialization
-        FunctionInfo createFunctionInfo(RFunction fun, @SuppressWarnings("unused") RNull argList, REnvironment env) {
-            return new FunctionInfo(fun, fun.getName(), null, env);
+        FunctionInfo createFunctionInfo(RFunction fun, @SuppressWarnings("unused") RNull argList, REnvironment env,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+            return new FunctionInfo(fun, fun.getName(), null, env, plLib);
         }
 
         @Specialization
-        FunctionInfo createFunctionInfo(RFunction fun, RPairList argList, REnvironment env) {
-            return new FunctionInfo(fun, fun.getName(), argList, env);
+        FunctionInfo createFunctionInfo(RFunction fun, RPairList argList, REnvironment env,
+                        @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+            return new FunctionInfo(fun, fun.getName(), argList, env, plLib);
         }
 
         @SuppressWarnings("unused")
@@ -415,14 +398,19 @@ public class RFunctionEvalNodes {
         @Child private DirectCallNode directCallNode = DirectCallNode.create(funEvalRootNode.getCallTarget());
 
         public Object execute(VirtualFrame evalFrame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame) {
-            if (argsFrameSlot == null || funFrameSlot == null) {
-                assert funFrameSlot == null;
+            if (argsFrameSlot == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                synchronized (FrameSlotChangeMonitor.class) {
-                    argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), RFrameSlot.FunctionEvalNodeArgsIdentifier, FrameSlotKind.Object);
-                    funFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), RFrameSlot.FunctionEvalNodeFunIdentifier, FrameSlotKind.Object);
-                }
+                argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), RFrameSlot.FunctionEvalNodeArgsIdentifier, FrameSlotKind.Object);
             }
+            if (funFrameSlot == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                funFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(evalFrame.getFrameDescriptor(), RFrameSlot.FunctionEvalNodeFunIdentifier, FrameSlotKind.Object);
+            }
+            // This assertion should verify that the descriptor of the current frame is the same as
+            // the first descriptor for which this node created. See the guard at
+            // RfEvalNode.FunctionEvalNode (FunctionInfo.isCompatible()).
+            assert evalFrame.getFrameDescriptor().findFrameSlot(RFrameSlot.FunctionEvalNodeArgsIdentifier) != null &&
+                            evalFrame.getFrameDescriptor().findFrameSlot(RFrameSlot.FunctionEvalNodeFunIdentifier) != null;
             try {
                 // the two slots are used to pass the explicit args and the called function to the
                 // FunctionEvalRootNode
@@ -446,5 +434,4 @@ public class RFunctionEvalNodes {
             return slowPathCallNode.execute(evalFrame, func, args, caller, callerFrame);
         }
     }
-
 }

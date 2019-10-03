@@ -26,37 +26,45 @@ import static com.oracle.truffle.r.runtime.RError.Message.ARGUMENT_NOT_ENVIRONME
 import static com.oracle.truffle.r.runtime.RError.Message.ARGUMENT_NOT_FUNCTION;
 import static com.oracle.truffle.r.runtime.RError.Message.UNKNOWN_OBJECT;
 
+import java.util.Iterator;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNodeGen.FunctionEvalNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.function.ArgBuilderNode;
+import com.oracle.truffle.r.nodes.function.ArgBuilderNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionEvalCallNode;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfo;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfoNode;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.SlowPathFunctionEvalCallNode;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -83,8 +91,8 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     }
 
     @TruffleBoundary
-    private static RCaller createCall(REnvironment env) {
-        Frame frame = getCurrentRFrameFastPath();
+    private static RCaller createCall(REnvironment env, RContext rCtx) {
+        Frame frame = getCurrentRFrameFastPath(rCtx);
         if (frame == null) {
             // Is it necessary?
             // Warning: Utils.getActualCurrentFrame causes deopt
@@ -109,8 +117,9 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     }
 
     @Specialization
-    Object handlePromise(RPromise expr, @SuppressWarnings("unused") RNull nulLEnv) {
-        return getPromiseHelper().visibleEvaluate(getCurrentRFrame(), expr);
+    Object handlePromise(RPromise expr, @SuppressWarnings("unused") RNull nulLEnv,
+                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+        return getPromiseHelper().visibleEvaluate(getCurrentRFrame(ctxRef.get()), expr);
     }
 
     @Specialization
@@ -130,9 +139,10 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    Object handleExpression(RExpression expr, Object envArg) {
+    Object handleExpression(RExpression expr, Object envArg,
+                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
         REnvironment env = getEnv(envArg);
-        return RContext.getEngine().eval(expr, env, createCall(env));
+        return RContext.getEngine().eval(expr, env, createCall(env, ctxRef.get()));
     }
 
     /**
@@ -141,47 +151,66 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     abstract static class FunctionEvalNode extends Node {
 
         protected static final int CACHE_SIZE = DSLConfig.getCacheSize(100);
+        protected static final int MAX_ARITY = 50;
 
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
         private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
 
         abstract Object execute(Object downcallFrame, FunctionInfo functionInfo);
 
-        @Specialization(limit = "CACHE_SIZE", guards = {"functionInfo.env.getFrame().getFrameDescriptor() == cachedDesc"})
+        ArgBuilderNode[] createArgBuilderNodes(int argLength, boolean cached) {
+            ArgBuilderNode[] argBuilderNodes = new ArgBuilderNode[argLength];
+            for (int i = 0; i < argLength; i++) {
+                argBuilderNodes[i] = ArgBuilderNodeGen.create(i, cached);
+            }
+            return argBuilderNodes;
+        }
+
+        ArgBuilderNode[] createGenericArgBuilderNodes(int argLength) {
+            ArgBuilderNode[] argBuilderNodes = new ArgBuilderNode[argLength];
+            for (int i = 0; i < argLength; i++) {
+                argBuilderNodes[i] = ArgBuilderNodeGen.create(i, false);
+            }
+            return argBuilderNodes;
+        }
+
+        @Specialization(limit = "CACHE_SIZE", guards = {"cachedFunctionInfo.isCompatible(functionInfo)"})
         Object evalFastPath(Object downcallFrame, FunctionInfo functionInfo,
-                        @SuppressWarnings("unused") @Cached("functionInfo.env.getFrame().getFrameDescriptor()") FrameDescriptor cachedDesc,
+                        @SuppressWarnings("unused") @Cached("functionInfo") FunctionInfo cachedFunctionInfo,
                         @Cached("new()") FunctionEvalCallNode callNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
-                        @Cached("create()") BranchProfile symbolArgProfile,
-                        @Cached("create()") BranchProfile pairListArgProfile,
                         @Cached("new()") PromiseHelperNode promiseHelper,
-                        @Cached("create()") ShareObjectNode sharedObjectNode) {
+                        @Cached("createArgBuilderNodes(functionInfo.argsLen, true)") ArgBuilderNode[] argBuilderNodes) {
             MaterializedFrame materializedFrame = (MaterializedFrame) downcallFrame;
             MaterializedFrame promiseFrame = frameProfile.profile(functionInfo.env.getFrame(frameAccessProfile)).materialize();
-            RCaller promiseCaller = RCallerHelper.getPromiseCallerForExplicitCaller(materializedFrame, promiseFrame, functionInfo.env);
+            RCaller promiseCaller = RCallerHelper.getPromiseCallerForExplicitCaller(materializedFrame,
+                            promiseFrame, functionInfo.env);
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, promiseCaller);
-            RArgsValuesAndNames args = functionInfo.prepareArguments(materializedFrame, evalFrame, symbolArgProfile, pairListArgProfile, plLib, promiseHelper, sharedObjectNode);
+            RArgsValuesAndNames args = functionInfo.prepareArguments(materializedFrame, evalFrame, plLib, promiseHelper, argBuilderNodes);
+            RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, functionInfo.name,
+                            functionInfo.function, args, promiseCaller);
 
-            RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, functionInfo.name, functionInfo.function, args, promiseCaller);
-
-            Object resultValue = callNode.execute(evalFrame, functionInfo.function, args, caller, materializedFrame);
+            Object resultValue = callNode.execute(evalFrame, functionInfo.function, args, caller,
+                            materializedFrame);
             // setVisibility ???
             return resultValue;
         }
 
+        /*
+         * The cache limit is set to a number far higher than the expected maximum arity of a
+         * function.
+         */
         @Specialization(replaces = "evalFastPath")
         Object evalSlowPath(Object downcallFrame, FunctionInfo functionInfo,
                         @Cached("new()") SlowPathFunctionEvalCallNode slowPathCallNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
-                        @Cached("create()") BranchProfile symbolArgProfile,
-                        @Cached("create()") BranchProfile pairListArgProfile,
                         @Cached("new()") PromiseHelperNode promiseHelper,
-                        @Cached("create()") ShareObjectNode sharedObjectNode) {
+                        @Cached("createGenericArgBuilderNodes(MAX_ARITY)") ArgBuilderNode[] argBuilderNodes) {
             MaterializedFrame materializedFrame = (MaterializedFrame) downcallFrame;
             MaterializedFrame promiseFrame = frameProfile.profile(functionInfo.env.getFrame(frameAccessProfile)).materialize();
             RCaller promiseCaller = RCallerHelper.getPromiseCallerForExplicitCaller(materializedFrame, promiseFrame, functionInfo.env);
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, promiseCaller);
-            RArgsValuesAndNames args = functionInfo.prepareArguments(materializedFrame, evalFrame, symbolArgProfile, pairListArgProfile, plLib, promiseHelper, sharedObjectNode);
+            RArgsValuesAndNames args = functionInfo.prepareArguments(materializedFrame, evalFrame, plLib, promiseHelper, argBuilderNodes);
 
             RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, functionInfo.name, functionInfo.function, args, promiseCaller);
 
@@ -208,18 +237,20 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     Object handleLanguage(RPairList expr, Object envArg,
                     @Cached("create()") BranchProfile noDowncallFrameFunProfile,
                     @Cached("create()") BranchProfile nullFunProfile,
-                    @Cached("create()") FunctionInfoNode funInfoNode) {
-        MaterializedFrame downcallFrame = getCurrentRFrameFastPath();
+                    @Cached("create()") FunctionInfoNode funInfoNode,
+                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+        RContext rContext = ctxRef.get();
+        MaterializedFrame downcallFrame = getCurrentRFrameFastPath(rContext);
         if (downcallFrame == null) {
             noDowncallFrameFunProfile.enter();
-            return handleLanguageDefault(expr, envArg);
+            return handleLanguageDefault(expr, envArg, rContext);
         }
 
         REnvironment env = getEnv(envArg);
         FunctionInfo functionInfo = funInfoNode.execute(expr, env);
         if (functionInfo == null) {
             nullFunProfile.enter();
-            return handleLanguageDefault(expr, envArg);
+            return handleLanguageDefault(expr, envArg, rContext);
         }
 
         if (functionEvalNode == null) {
@@ -234,8 +265,8 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         }
     }
 
-    private static MaterializedFrame getCurrentRFrameFastPath() {
-        RFFIContext context = RContext.getInstance().getStateRFFI();
+    private static MaterializedFrame getCurrentRFrameFastPath(RContext rCtx) {
+        RFFIContext context = rCtx.getStateRFFI();
         return context.rffiContextState.currentDowncallFrame;
     }
 
@@ -244,15 +275,15 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         return Utils.getActualCurrentFrame().materialize();
     }
 
-    private static MaterializedFrame getCurrentRFrame() {
-        MaterializedFrame frame = getCurrentRFrameFastPath();
+    private static MaterializedFrame getCurrentRFrame(RContext rCtx) {
+        MaterializedFrame frame = getCurrentRFrameFastPath(rCtx);
         return frame != null ? frame : getCurrentRFrameSlowPath();
     }
 
     @TruffleBoundary
-    private Object handleLanguageDefault(RPairList expr, Object envArg) {
+    private Object handleLanguageDefault(RPairList expr, Object envArg, RContext rCtx) {
         REnvironment env = getEnv(envArg);
-        return RContext.getEngine().eval(expr, env, createCall(env));
+        return RContext.getEngine().eval(expr, env, createCall(env, rCtx));
     }
 
     @Specialization
@@ -273,7 +304,8 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     Object handlePairList(RPairList l, Object envArg,
                     @Cached("createBinaryProfile()") ConditionProfile isPromiseProfile,
                     @Cached("createBinaryProfile()") ConditionProfile noArgsProfile,
-                    @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+                    @CachedLibrary(limit = "1") RPairListLibrary plLib,
+                    @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
         REnvironment env = getEnv(envArg);
         Object car = plLib.car(l);
         RFunction f = null;
@@ -293,16 +325,16 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
         Object args = plLib.cdr(l);
         if (noArgsProfile.profile(args == RNull.instance)) {
-            return evalFunction(f, env, null);
+            return evalFunction(f, env, null, ctxRef.get());
         } else {
             RList argsList = ((RPairList) args).toRList();
-            return evalFunction(f, env, ArgumentsSignature.fromNamesAttribute(argsList.getNames()), argsList.getDataTemp());
+            return evalFunction(f, env, ArgumentsSignature.fromNamesAttribute(argsList.getNames()), ctxRef.get(), argsList.getDataTemp());
         }
     }
 
     @TruffleBoundary
-    private static Object evalFunction(RFunction f, REnvironment env, ArgumentsSignature argsNames, Object... args) {
-        return RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : env.getFrame(), createCall(env), true, argsNames, args);
+    private static Object evalFunction(RFunction f, REnvironment env, ArgumentsSignature argsNames, RContext rCtx, Object... args) {
+        return RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : env.getFrame(), createCall(env, rCtx), true, argsNames, args);
     }
 
     @Fallback

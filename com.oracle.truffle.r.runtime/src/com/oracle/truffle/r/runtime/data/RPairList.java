@@ -32,6 +32,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
@@ -769,23 +770,46 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
 
     @Override
     public Iterator<RPairList> iterator() {
-        ensurePairList();
-        return new Iterator<RPairList>() {
-            private Object plt = RPairList.this;
+        return RPairListLibrary.getUncached().iterable(this).iterator();
+    }
 
-            @Override
-            public boolean hasNext() {
-                return !RRuntime.isNull(plt);
-            }
+    @Ignore
+    public java.lang.Iterable<RPairList> iterable() {
+        return RPairListLibrary.getUncached().iterable(this);
+    }
 
-            @Override
-            public RPairList next() {
-                assert plt instanceof RPairList;
-                RPairList curr = (RPairList) plt;
-                plt = curr.cdr();
-                return curr;
-            }
-        };
+    @ExportMessage
+    static class Iterable {
+
+        @Specialization
+        static java.lang.Iterable<RPairList> iterable(RPairList pl, @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+            pl.ensurePairList();
+
+            return new java.lang.Iterable<RPairList>() {
+
+                @Override
+                public Iterator<RPairList> iterator() {
+                    return new Iterator<RPairList>() {
+                        private Object plt = pl;
+
+                        @Override
+                        public boolean hasNext() {
+                            return !RRuntime.isNull(plt);
+                        }
+
+                        @Override
+                        public RPairList next() {
+                            assert plt instanceof RPairList;
+                            RPairList curr = (RPairList) plt;
+                            plt = plLib.cdr(curr);
+                            return curr;
+                        }
+                    };
+                }
+
+            };
+
+        }
     }
 
     @TruffleBoundary
@@ -1151,5 +1175,52 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
             cells[cellIdx++] = cell;
         }
         return cells;
+    }
+
+    public static final class RPairListSnapshot {
+        private final Object root;
+        private final RPairListSnapshot car;
+        private final RPairListSnapshot cdr;
+
+        public RPairListSnapshot(Object root) {
+            this.root = root;
+            if (root instanceof RPairList) {
+                this.car = new RPairListSnapshot(((RPairList) root).car);
+                this.cdr = new RPairListSnapshot(((RPairList) root).cdr);
+            } else {
+                this.car = null;
+                this.cdr = null;
+            }
+        }
+
+        public boolean isSame(Object otherRoot) {
+            return checkStructure(otherRoot);
+        }
+
+        private boolean checkStructure(Object otherRoot) {
+            if (this.root instanceof RPairList) {
+                if (otherRoot instanceof RPairList) {
+                    if (((RPairList) root).hasClosure() && ((RPairList) otherRoot).hasClosure()) {
+                        return ((RPairList) root).getClosure() == ((RPairList) otherRoot).getClosure();
+                    } else {
+                        return recursiveCheck((RPairList) otherRoot);
+                    }
+                } else {
+                    return false;
+                }
+            } else {
+                // scalars
+                return this.root == otherRoot;
+            }
+        }
+
+        @TruffleBoundary
+        private boolean recursiveCheck(RPairList otherRoot) {
+            return this.car.checkStructure(otherRoot.car) && this.cdr.checkStructure(otherRoot.cdr);
+        }
+
+        public static RPairListSnapshot create(Object root) {
+            return new RPairListSnapshot(root);
+        }
     }
 }

@@ -259,8 +259,8 @@ public final class ListAccessNodes {
         }
 
         @Specialization
-        protected Object doRPairList(RPairList x, Object y) {
-            x.setCar(y);
+        protected Object doRPairList(RPairList x, Object y, @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+            plLib.setCar(x, y);
             return y;
         }
 

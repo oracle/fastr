@@ -93,6 +93,11 @@ public final class Closure {
         cacheLock = RContext.getInstance().getOption(FastROptions.EnableClosureCallTargetsCache) ? new Object() : null;
     }
 
+    @Override
+    public Closure clone() {
+        return new Closure(closureName, (RNode) RContext.getASTBuilder().process(expr.asRSyntaxNode()), syntaxLHSName);
+    }
+
     public static Closure createPromiseClosure(RBaseNode expr) {
         return new Closure(PROMISE_CLOSURE_WRAPPER_NAME, expr, null);
     }

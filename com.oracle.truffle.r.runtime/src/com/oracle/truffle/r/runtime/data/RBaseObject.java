@@ -28,6 +28,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.AsPointerNode;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.ToNativeNode;
 
 /**
@@ -64,8 +65,8 @@ public abstract class RBaseObject implements RTruffleObject {
     }
 
     @ExportMessage
-    public final long asPointer() {
-        return NativeDataAccess.asPointer(this);
+    public final long asPointer(@Cached() AsPointerNode asPointer) {
+        return asPointer.execute(this);
     }
 
     @ExportMessage

@@ -40,7 +40,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -56,6 +55,8 @@ import com.oracle.truffle.r.nodes.builtin.base.EvalNodeGen.FunctionEvalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysFrame;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
+import com.oracle.truffle.r.nodes.function.ArgBuilderNode;
+import com.oracle.truffle.r.nodes.function.ArgBuilderNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
@@ -63,7 +64,6 @@ import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionEvalCallNo
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfo;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfoNode;
 import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.SlowPathFunctionEvalCallNode;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -345,6 +345,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
     abstract static class FunctionEvalNode extends Node {
 
         protected static final int CACHE_SIZE = DSLConfig.getCacheSize(100);
+        protected static final int MAX_ARITY = 50;
 
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
         private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
@@ -357,25 +358,40 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
         abstract Object execute(VirtualFrame frame, FunctionInfo functionInfo, RCaller rCaller);
 
-        @Specialization(limit = "CACHE_SIZE", guards = {"functionInfo.env.getFrame().getFrameDescriptor() == cachedDesc"})
+        ArgBuilderNode[] createArgBuilderNodes(int argLength, boolean cached) {
+            ArgBuilderNode[] argBuilderNodes = new ArgBuilderNode[argLength];
+            for (int i = 0; i < argLength; i++) {
+                argBuilderNodes[i] = ArgBuilderNodeGen.create(i, cached);
+            }
+            return argBuilderNodes;
+        }
+
+        ArgBuilderNode[] createGenericArgBuilderNodes(int argLength) {
+            ArgBuilderNode[] argBuilderNodes = new ArgBuilderNode[argLength];
+            for (int i = 0; i < argLength; i++) {
+                argBuilderNodes[i] = ArgBuilderNodeGen.create(i, false);
+            }
+            return argBuilderNodes;
+        }
+
+        @Specialization(limit = "CACHE_SIZE", guards = {"cachedFunctionInfo.isCompatible(functionInfo)"})
         Object evalFastPath(VirtualFrame frame, FunctionInfo functionInfo, RCaller evalCaller,
-                        @SuppressWarnings("unused") @Cached("functionInfo.env.getFrame().getFrameDescriptor()") FrameDescriptor cachedDesc,
+                        @SuppressWarnings("unused") @Cached("functionInfo") FunctionInfo cachedFunctionInfo,
                         @Cached("new()") FunctionEvalCallNode callNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
-                        @Cached("create()") BranchProfile symbolArgProfile,
-                        @Cached("create()") BranchProfile pairListArgProfile,
+                        @Cached("createArgBuilderNodes(functionInfo.argsLen, true)") ArgBuilderNode[] argBuilderNodes,
                         @Cached("create()") GetVisibilityNode getVisibilityNode,
                         @Cached("create()") SetVisibilityNode setVisibilityNode,
-                        @Cached("new()") PromiseHelperNode promiseHelper,
-                        @Cached("create()") ShareObjectNode sharedObjectNode) {
+                        @Cached("new()") PromiseHelperNode promiseHelper) {
             MaterializedFrame materializedFrame = frame.materialize();
             MaterializedFrame promiseFrame = frameProfile.profile(functionInfo.env.getFrame(frameAccessProfile)).materialize();
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, evalCaller);
-            RArgsValuesAndNames args = functionInfo.prepareArguments(materializedFrame, evalFrame, symbolArgProfile, pairListArgProfile, plLib, promiseHelper, sharedObjectNode);
+            RArgsValuesAndNames args = functionInfo.prepareArguments(materializedFrame, evalFrame, plLib, promiseHelper, argBuilderNodes);
 
             RCaller caller = createCaller(functionInfo, evalCaller, evalFrame, args);
 
-            Object resultValue = callNode.execute(evalFrame, functionInfo.function, args, caller, materializedFrame);
+            Object resultValue = callNode.execute(evalFrame, functionInfo.function, args, caller,
+                            materializedFrame);
 
             boolean isResultVisible = getVisibilityNode.execute(evalFrame);
             setVisibilityNode.execute(frame, isResultVisible);
@@ -387,14 +403,12 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         Object evalSlowPath(VirtualFrame frame, FunctionInfo functionInfo, RCaller evalCaller,
                         @Cached("new()") SlowPathFunctionEvalCallNode slowPathCallNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
-                        @Cached("create()") BranchProfile symbolArgProfile,
-                        @Cached("create()") BranchProfile pairListArgProfile,
                         @Cached("new()") PromiseHelperNode promiseHelper,
-                        @Cached("create()") ShareObjectNode sharedObjectNode) {
+                        @Cached("createGenericArgBuilderNodes(MAX_ARITY)") ArgBuilderNode[] argBuilderNodes) {
             MaterializedFrame materializedFrame = frame.materialize();
             MaterializedFrame promiseFrame = frameProfile.profile(functionInfo.env.getFrame(frameAccessProfile)).materialize();
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, evalCaller);
-            RArgsValuesAndNames args = functionInfo.prepareArguments(materializedFrame, evalFrame, symbolArgProfile, pairListArgProfile, plLib, promiseHelper, sharedObjectNode);
+            RArgsValuesAndNames args = functionInfo.prepareArguments(materializedFrame, evalFrame, plLib, promiseHelper, argBuilderNodes);
 
             RCaller caller = createCaller(functionInfo, evalCaller, evalFrame, args);
 
@@ -403,6 +417,12 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             setVisibilitySlowPath(materializedFrame, evalFrame);
 
             return resultValue;
+        }
+
+        @TruffleBoundary
+        private static RArgsValuesAndNames prepareArgsSlowPath(FunctionInfo functionInfo, RPairListLibrary plLib, PromiseHelperNode promiseHelper, ArgBuilderNode[] argBuilderNodes,
+                        MaterializedFrame materializedFrame, MaterializedFrame evalFrame) {
+            return functionInfo.prepareArguments(materializedFrame, evalFrame, plLib, promiseHelper, argBuilderNodes);
         }
 
         @TruffleBoundary
