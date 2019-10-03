@@ -263,6 +263,15 @@ public class TestBuiltin_matrix extends TestBase {
     }
 
     @Test
+    public void testMatrixCharIndexing() {
+        assertEval("m <- matrix(1:6, ncol=3, dimnames = list(letters[1:2], LETTERS[1:3])); indalpha <- matrix(c('a', 'B'), ncol=2, byrow=TRUE); m[indalpha]");
+        assertEval("m <- matrix(1:6, ncol=3, dimnames = list(letters[1:2], LETTERS[1:3])); indalpha <- matrix(c('a', 'A', 'b', 'B'), ncol=2, byrow=TRUE); indalphaNA <- indalpha; indalphaNA[1,2] <- NA; m[indalphaNA]");
+        // This is mostly for checking whether the method PositionCheckNode.isSupported is
+        // implemented correctly.
+        assertEval("foo <- function(a, b) a[b]; m <- matrix(1:6, ncol=3, byrow=T, dimnames=list(letters[1:2], LETTERS[1:3])); foo(m, matrix(c(1,1, 1,2), ncol=2, byrow=T)); foo(m, c(1,1));");
+    }
+
+    @Test
     public void testMatrixFastPath() {
         assertEval("matrix(1:9,,3)");
         assertEval("matrix(1,ncol=NULL, nrow=NULL)");
