@@ -88,13 +88,13 @@ install.recommended: $(PKGS_REPO_DIR)
 ifdef R_RECOMMENDED_PKGS_CACHE_DIR
 	mx r-pkgcache $(VERBOSE) --vm fastr --library fastr=$(FASTR_R_HOME)/library --repos RECOMMENDED=$(PKGS_REPO_DIR) --cache-dir $(R_RECOMMENDED_PKGS_CACHE_DIR) --pkg-pattern $(GNUR_RECOMMENDED_PATTERN)
 else
-    for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
-	    $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
+	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
+		$(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
 	done
 endif
 ifeq ($(OS_NAME),Darwin)
 	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \
-	    if [ -e $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so ] ; then \
+		if [ -e $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so ] ; then \
 			install_name_tool -id @rpath/../library/$$pkgname/libs/$$pkgname.so $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
 			install_name_tool -add_rpath @loader_path/../../../lib/ $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
 			mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_R_HOME)/library/$$pkgname/libs; \
