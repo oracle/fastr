@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -264,7 +264,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     private RAbstractVector doIntegerProfiled(PositionProfile profile, int dimensionLength, RAbstractIntVector intPosition, int positionLength, boolean hasSeenPositive, boolean hasSeenNegative,
                     boolean hasSeenNA, int outOfBoundsCount, int zeroCount, int maxOutOfBoundsIndex) {
         if (hasSeenPositive || hasSeenNA) {
-            if (numDimensions > 1 && outOfBoundsCount > 0) {
+            if (numPositions > 1 && outOfBoundsCount > 0) {
                 error.enter();
                 throw error(RError.Message.SUBSCRIPT_BOUNDS);
             }

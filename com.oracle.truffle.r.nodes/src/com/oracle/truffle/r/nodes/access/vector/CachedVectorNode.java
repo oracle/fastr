@@ -51,7 +51,7 @@ abstract class CachedVectorNode extends RBaseNodeWithWarnings {
      */
     protected final boolean recursive;
 
-    protected final int numberOfDimensions;
+    protected final int numberOfPositions;
     private final int filteredPositionsLength;
 
     @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
@@ -62,9 +62,9 @@ abstract class CachedVectorNode extends RBaseNodeWithWarnings {
         this.recursive = recursive;
         this.filteredPositionsLength = initializeFilteredPositionsCount(positions);
         if (filteredPositionsLength == -1) {
-            this.numberOfDimensions = positions.length;
+            this.numberOfPositions = positions.length;
         } else {
-            this.numberOfDimensions = filteredPositionsLength;
+            this.numberOfPositions = filteredPositionsLength;
         }
     }
 
@@ -141,7 +141,7 @@ abstract class CachedVectorNode extends RBaseNodeWithWarnings {
     }
 
     protected String tryCastSingleString(PositionsCheckNode check, Object[] positions) {
-        if (numberOfDimensions > 1) {
+        if (numberOfPositions > 1) {
             return null;
         }
 

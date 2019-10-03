@@ -103,7 +103,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     @CompilationFinal private AlwaysOnBranchProfile metadataApplied;
 
     private final ConditionProfile extractedLengthGTZeroProfile;
-    private final ConditionProfile oneDimensionProfile;
+    private final ConditionProfile onePositionProfile;
 
     CachedExtractVectorNode(ElementAccessMode mode, RAbstractContainer vector, Object[] positions, RBaseObject exact, RBaseObject dropDimensions, boolean recursive) {
         super(mode, vector, positions, recursive);
@@ -120,7 +120,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, false, false);
         this.droppedDimensionProfile = this.dropDimensions ? ConditionProfile.createBinaryProfile() : null;
         this.extractedLengthGTZeroProfile = mode.isSubset() ? ConditionProfile.createBinaryProfile() : null;
-        this.oneDimensionProfile = mode.isSubset() ? ConditionProfile.createBinaryProfile() : null;
+        this.onePositionProfile = mode.isSubset() ? ConditionProfile.createBinaryProfile() : null;
     }
 
     public boolean isSupported(Object target, Object[] positions, Object exactValue, Object dropDimensionsValue) {
@@ -171,7 +171,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 writeVectorNode.execute(extractedVector, positions, vector, dimensions);
                 RBaseNode.reportWork(this, extractedVectorLength);
             }
-            if (oneDimensionProfile.profile(numberOfDimensions == 1)) {
+            if (onePositionProfile.profile(numberOfPositions == 1)) {
                 // names and srcref only need to be considered for single dimensional accesses
                 if (getNamesNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -189,7 +189,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     setSrcref(extractedVector, extractSrcref(((RList) srcref), positions, positionProfiles, originalExact, originalDropDimensions));
                 }
             } else {
-                assert numberOfDimensions > 1;
+                assert numberOfPositions > 1;
                 applyDimensions(vector, extractedVector, extractedVectorLength, positionProfiles, positions);
             }
 
@@ -210,7 +210,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     private int[] getDimensions(final RAbstractContainer vector) {
         int[] dimensions;
-        if (numberOfDimensions == 1) {
+        if (numberOfPositions == 1) {
             dimensions = null;
         } else {
             dimensions = loadVectorDimensions(vector);
@@ -234,13 +234,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     }
 
     private boolean isMissingSingleDimension() {
-        return numberOfDimensions == 1 && positionsCheckNode.isMissing();
+        return numberOfPositions == 1 && positionsCheckNode.isMissing();
     }
 
     private Object extract(int dimensionIndex, RAbstractStringVector vector, Object pos, PositionProfile profile) {
         if (extractDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            extractDimNames = insert(ExtractDimNamesNodeGen.create(numberOfDimensions));
+            extractDimNames = insert(ExtractDimNamesNodeGen.create(numberOfPositions));
         }
         return extractDimNames.extract(dimensionIndex, vector, pos, profile);
     }
@@ -253,15 +253,15 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     @ExplodeLoop
     private void applyDimensions(RAbstractContainer originalTarget, RAbstractVector extractedTarget, int extractedTargetLength, PositionProfile[] positionProfile, Object[] positions) {
-        // TODO speculate on the number of counted dimensions
-        int dimCount = countDimensions(positionProfile);
+        // TODO speculate on the number of counted positions
+        int positionCount = countPositions(positionProfile);
 
         if (getDimNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getDimNamesNode = insert(GetDimNamesAttributeNode.create());
         }
 
-        int[] newDimensions = new int[dimCount];
+        int[] newDimensions = new int[positionCount];
         RList originalDimNames = getDimNamesNode.getDimNames(originalTarget);
         RStringVector originalDimNamesNames;
         Object[] newDimNames;
@@ -275,13 +275,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNamesFromDimNamesNode = insert(GetNamesAttributeNode.create());
             }
-            newDimNames = new Object[dimCount];
+            newDimNames = new Object[positionCount];
             originalDimNamesNames = getNamesFromDimNamesNode.getNames(originalDimNames);
-            newDimNamesNames = originalDimNamesNames == null ? null : new String[dimCount];
+            newDimNamesNames = originalDimNamesNames == null ? null : new String[positionCount];
         }
 
         int dimIndex = -1;
-        for (int i = 0; i < numberOfDimensions; i++) {
+        for (int i = 0; i < numberOfPositions; i++) {
             int selectedPositionsCount = positionProfile[i].selectedPositionsCount;
             if (!dropDimensions || selectPositionsProfile.profile(selectedPositionsCount != 1)) {
                 dimIndex++;
@@ -320,7 +320,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             resultHasDimensions = ConditionProfile.createBinaryProfile();
         }
-        if (resultHasDimensions.profile(dimCount > 1)) {
+        if (resultHasDimensions.profile(positionCount > 1)) {
             getMetadataApplied().enter();
 
             if (setDimNode == null) {
@@ -350,18 +350,18 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     }
 
     @ExplodeLoop
-    private int countDimensions(PositionProfile[] boundsProfile) {
+    private int countPositions(PositionProfile[] boundsProfile) {
         if (dropDimensions) {
-            int dimCount = numberOfDimensions;
-            for (int i = 0; i < numberOfDimensions; i++) {
+            int positionCount = numberOfPositions;
+            for (int i = 0; i < numberOfPositions; i++) {
                 int selectedPositionsCount = boundsProfile[i].selectedPositionsCount;
                 if (droppedDimensionProfile.profile(selectedPositionsCount == 1)) {
-                    dimCount--;
+                    positionCount--;
                 }
             }
-            return dimCount;
+            return positionCount;
         } else {
-            return numberOfDimensions;
+            return numberOfPositions;
         }
     }
 
@@ -372,8 +372,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     @ExplodeLoop
     private RAbstractStringVector translateDimNamesToNames(PositionProfile[] positionProfile, RList originalDimNames, int newVectorLength, Object[] positions) {
         RAbstractStringVector foundNames = null;
-        for (int currentDimIndex = numberOfDimensions - 1; currentDimIndex >= 0; currentDimIndex--) {
-            PositionProfile profile = positionProfile[currentDimIndex];
+        for (int currentPositionIndex = numberOfPositions - 1; currentPositionIndex >= 0; currentPositionIndex--) {
+            PositionProfile profile = positionProfile[currentPositionIndex];
             if (profile.selectedPositionsCount != newVectorLength) {
                 continue;
             }
@@ -387,11 +387,11 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 srcNamesValueProfile = ValueProfile.createClassProfile();
             }
 
-            Object srcNames = srcNamesValueProfile.profile(originalDimNames.getDataAt(currentDimIndex));
+            Object srcNames = srcNamesValueProfile.profile(originalDimNames.getDataAt(currentPositionIndex));
             if (srcNamesProfile.profile(srcNames != RNull.instance)) {
-                Object position = positions[currentDimIndex];
+                Object position = positions[currentPositionIndex];
 
-                Object newNames = extractNames((RAbstractStringVector) RRuntime.asAbstractVector(srcNames), new Object[]{position}, new PositionProfile[]{profile}, currentDimIndex,
+                Object newNames = extractNames((RAbstractStringVector) RRuntime.asAbstractVector(srcNames), new Object[]{position}, new PositionProfile[]{profile}, currentPositionIndex,
                                 RLogical.valueOf(true), RLogical.valueOf(dropDimensions));
                 if (newNames != RNull.instance) {
                     if (newNamesProfile == null) {
@@ -421,22 +421,23 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return foundNames;
     }
 
-    private Object extractNames(RAbstractStringVector originalNames, Object[] positions, PositionProfile[] profiles, int dimension, Object originalExact, Object originalDropDimensions) {
-        if (extractNames[dimension] == null) {
+    private Object extractNames(RAbstractStringVector originalNames, Object[] positions, PositionProfile[] profiles, int positionIdx, Object originalExact, Object originalDropDimensions) {
+        if (extractNames[positionIdx] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            extractNames[dimension] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RBaseObject) originalExact, (RBaseObject) originalDropDimensions, recursive));
+            extractNames[positionIdx] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RBaseObject) originalExact, (RBaseObject) originalDropDimensions, recursive));
         }
 
-        if (extractNames[dimension].isSupported(originalNames, positions, originalExact, originalDropDimensions)) {
-            return extractNames[dimension].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
+        if (extractNames[positionIdx].isSupported(originalNames, positions, originalExact, originalDropDimensions)) {
+            return extractNames[positionIdx].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
         } else {
             // necessary because the positions might change to logical in case of negative indices
-            if (extractNamesAlternative[dimension] == null) {
+            if (extractNamesAlternative[positionIdx] == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                extractNamesAlternative[dimension] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RBaseObject) originalExact, (RBaseObject) originalDropDimensions, recursive));
+                extractNamesAlternative[positionIdx] = insert(
+                                new CachedExtractVectorNode(mode, originalNames, positions, (RBaseObject) originalExact, (RBaseObject) originalDropDimensions, recursive));
             }
-            assert extractNamesAlternative[dimension].isSupported(originalNames, positions, originalExact, originalDropDimensions);
-            return extractNamesAlternative[dimension].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
+            assert extractNamesAlternative[positionIdx].isSupported(originalNames, positions, originalExact, originalDropDimensions);
+            return extractNamesAlternative[positionIdx].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
         }
     }
 

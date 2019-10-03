@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,8 +49,8 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
 
     private final boolean recursive;
 
-    PositionCheckSubscriptNode(ElementAccessMode mode, RType containerType, Object positionValue, int dimensionIndex, int numDimensions, boolean exact, boolean assignment, boolean recursive) {
-        super(mode, containerType, positionValue, dimensionIndex, numDimensions, exact, assignment);
+    PositionCheckSubscriptNode(ElementAccessMode mode, RType containerType, Object positionValue, int dimensionIndex, int numPositions, boolean exact, boolean assignment, boolean recursive) {
+        super(mode, containerType, positionValue, dimensionIndex, numPositions, exact, assignment);
         this.recursive = recursive;
     }
 
@@ -177,7 +177,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
             }
             throw error(message);
         } else {
-            if (numDimensions == 1 && isListLike(containerType) && !recursive) {
+            if (numPositions == 1 && isListLike(containerType) && !recursive) {
                 // lists pass on the NA value
             } else {
                 error.enter();
