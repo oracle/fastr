@@ -27,7 +27,7 @@
 # N.B. As this takes quite a while the building is conditional on the
 # FASTR_RELEASE environment variable
 
-FASTR_R_HOME := $(abspath $(CURDIR)/..)
+FASTR_R_HOME := $(abspath $(VPATH)/..)
 NATIVE_PROJECT_DIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native
 TOPDIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native.recommended
 PKGS_REPO_DIR := repo/src/contrib

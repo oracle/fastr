@@ -343,6 +343,7 @@ suite = {
       ],
       "max_jobs" : "8",
       "native" : True,
+      "vpath": True,
       "workingSets" : "FastR",
       "buildDependencies" : ["FASTR"],
     },
