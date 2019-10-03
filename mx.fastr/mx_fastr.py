@@ -498,8 +498,7 @@ def rbdiag(args):
 
 
 def _gnur_path():
-    gnurHome = os.environ.get('GNUR_HOME_BINARY', join(_fastr_suite.dir, 'libdownloads'))
-    return join(gnurHome, r_version())
+    return os.environ.get('GNUR_HOME_BINARY', join(_fastr_suite.dir, 'libdownloads', r_version()))
 
 def gnu_r(args):
     '''
@@ -630,7 +629,7 @@ _pkgtest_module = None
 def pkgtest_load():
     global _pkgtest_module
     if not _pkgtest_module:
-        sys.path.append(_pkgtest_project)
+        sys.path.append(join(_fastr_suite.dir, _pkgtest_project))
         import pkgtest
         _pkgtest_module = pkgtest
     return _pkgtest_module
@@ -695,6 +694,12 @@ def r_pkgtest_analyze(args, **kwargs):
     mx.run_java(vmArgs + args)
 
 
+def pkgcache(args, **kwargs):
+    full_args = _pkgtest_args(args)
+    mx.logv(["r-pkgcache"] + full_args)
+    return pkgtest_load().pkgcache(full_args)
+
+
 mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents  # pylint: disable=C0103
 
 
@@ -724,6 +729,7 @@ _commands = {
     'r-pkgtest-analyze' : [r_pkgtest_analyze, ['options']],
     'r-findtop100' : [find_top100, ['options']],
     'r-findtop' : [find_top, ['options']],
+    'r-pkgcache' : [pkgcache, ['options']],
     'installpkgs' : [installpkgs, '[options]'],
     'rcopylib' : [mx_copylib.copylib, '[]'],
     'rupdatelib' : [mx_copylib.updatelib, '[]'],
