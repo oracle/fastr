@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,7 @@ import com.oracle.truffle.r.test.IgnoreOS;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.TestBase.Context;
 import com.oracle.truffle.r.test.TestBase.Ignored;
+import com.oracle.truffle.r.test.TestBase.IgnoredJdk;
 import com.oracle.truffle.r.test.TestBase.Output;
 import com.oracle.truffle.r.test.TestTrait;
 import com.oracle.truffle.r.test.WhiteList;
@@ -275,6 +276,9 @@ public class TestOutputManager {
                                 break;
                             case "IgnoreOS":
                                 trait = IgnoreOS.valueOf(traitParts[1]);
+                                break;
+                            case "IgnoredJdk":
+                                trait = IgnoredJdk.valueOf(traitParts[1]);
                                 break;
                             default:
                                 System.err.println("unrecognized TestTrait: " + traitClass);
