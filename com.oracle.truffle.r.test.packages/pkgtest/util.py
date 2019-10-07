@@ -110,11 +110,12 @@ def get_default_cran_mirror():
 
 
 def get_r_version(rscript_binary):
-    args = [rscript_binary, "--silent", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], sep='')"]
+    args = [rscript_binary, "--verbose", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], sep='')"]
     if not os.path.exists(rscript_binary):
         abort(1, "Rscript binary '%s' does not exist.", rscript_binary)
     logging.debug("Running command: %s", args)
-    return subprocess.check_output(args, stderr=subprocess.STDOUT).rstrip()
+    output = subprocess.check_output(args, stderr=subprocess.STDOUT, universal_newlines=True)
+    return output.splitlines()[-1].strip()
 
 
 def get_graalvm_home():
@@ -143,9 +144,9 @@ def check_r_versions():
     '''
     gnur_version = get_r_version(get_gnur_rscript())
     fastr_version = get_r_version(get_fastr_rscript())
-    logging.info("Using FastR version = %s ; GnuR version = %s: " % (fastr_version, gnur_version))
+    logging.info("Using FastR version = %r ; GnuR version = %r: " % (fastr_version, gnur_version))
     if gnur_version != fastr_version:
-        abort(1, 'GraalVM R version does not match GnuR version: "%s" (FastR) vs. "%s" (GnuR)' % (fastr_version, gnur_version))
+        abort(1, 'GraalVM R version does not match GnuR version: %r (FastR) vs. %r (GnuR)' % (fastr_version, gnur_version))
 
 
 VERY_VERBOSE = logging.DEBUG - 5
