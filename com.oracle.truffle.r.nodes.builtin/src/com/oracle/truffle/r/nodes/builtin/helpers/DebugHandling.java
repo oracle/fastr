@@ -146,7 +146,7 @@ public class DebugHandling {
     }
 
     private static FunctionStatementsEventListener getFunctionStatementsEventListener(FunctionDefinitionNode fdn) {
-        return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(fdn.getSourceSection());
+        return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(getInstrumentedNodeSourceSection(fdn));
     }
 
     private static void attachDebugHandler(RFunction func, Object text, Object condition, boolean once, boolean implicit) {
@@ -378,7 +378,7 @@ public class DebugHandling {
 
         FunctionStatementsEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once, boolean implicit) {
             super(functionDefinitionNode, text, condition);
-            RContext.getInstance().stateInstrumentation.putDebugListener(functionDefinitionNode.getSourceSection(), this);
+            RContext.getInstance().stateInstrumentation.putDebugListener(getInstrumentedNodeSourceSection(functionDefinitionNode), this);
             statementListener = new StatementEventListener(functionDefinitionNode, text, condition);
             this.once = once;
             this.implicit = implicit;
@@ -740,7 +740,8 @@ public class DebugHandling {
         }
 
         private boolean isEnabled(EventContext ctx) {
-            return !disabled() && loopSourceSection != null && Utils.equals(loopSourceSection, ctx.getInstrumentedNode().getSourceSection());
+            Node instrumentedNode = ctx.getInstrumentedNode();
+            return !disabled() && loopSourceSection != null && instrumentedNode != null && Utils.equals(loopSourceSection, getInstrumentedNodeSourceSection(instrumentedNode));
         }
 
         private void returnCleanup() {
@@ -749,6 +750,11 @@ public class DebugHandling {
                 fser.endFinishing();
             }
         }
+    }
+
+    @TruffleBoundary
+    private static SourceSection getInstrumentedNodeSourceSection(Node instrumentedNode) {
+        return instrumentedNode.getSourceSection();
     }
 
     private static AbstractLoopNode inLoop(final Node nodeArg) {
