@@ -125,7 +125,7 @@ public class TruffleLLVM_Context extends RFFIContext {
         int index = function.ordinal();
         if (nativeFunctions[index] == null) {
             // one-off event:
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             Object lookupObject;
             if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
                 lookupObject = ((LLVM_Handle) DLL.getRdllInfo().handle).handle;
@@ -146,7 +146,7 @@ public class TruffleLLVM_Context extends RFFIContext {
             try {
                 target = (TruffleObject) InteropLibrary.getFactory().getUncached().readMember(lookupObject, function.getCallName());
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                RInternalError.shouldNotReachHere();
+                throw RInternalError.shouldNotReachHere(e);
             }
             nativeFunctions[index] = target;
         }

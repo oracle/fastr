@@ -172,7 +172,7 @@ public final class FastRSession implements RSession {
             RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{Client.R.argumentName(), "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
             ChildContextInfo info = ChildContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
             RContext.childInfo = info;
-            mainEngine = Engine.newBuilder().in(input).out(output).err(output).build();
+            mainEngine = Engine.newBuilder().allowExperimentalOptions(true).option("engine.UseConservativeContextReferences", "true").in(input).out(output).err(output).build();
             mainContext = getContextBuilder("R", "llvm").engine(mainEngine).build();
             mainRContext = mainContext.eval(GET_CONTEXT).asHostObject();
         } finally {

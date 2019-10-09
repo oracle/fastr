@@ -151,7 +151,7 @@ public class TruffleNFI_Context extends RFFIContext {
         int index = function.ordinal();
         if (nativeFunctions[index] == null) {
             // The look-up is one-off thing
-            CompilerDirectives.transferToInterpreter();
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             TruffleObject dllInfo;
             if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
                 dllInfo = TruffleNFI_Context.getInstance().defaultLibrary;
