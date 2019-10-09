@@ -130,6 +130,35 @@
 #' @keywords internal
 "_PACKAGE"
 
+services <- list2env(list(
+    psockClusterFactory = parallel::makePSOCKcluster,
+    runSystemCommand = base::system2,
+    downloadFile = utils::download.file,
+    validateGraalVMInstallation = F
+))
+
+#' Allows to override functions that access external services.
+#'
+#' This is unexported function intended for the purposes of testing this package.
+#'
+#' @param newPsockClusterFactory Replacement for parallel::makePSOCKcluster.
+#' @param newRunSystemCommand Replacement for base::sytem2.
+#' @param newDownloadFile Replacement for utils::download.file.
+#' @return invisible NULL
+#' @examples
+#' # to avoid downloading GraalVM when testing the function installFastR
+#' fastRCluster:::mockServices(newDownloadFile = function(file,target)
+#'     file.copy('local/copy/of/graalvm.tar.gz', target))
+mockServices <- function(newPsockClusterFactory = parallel::makePSOCKcluster,
+                         newRunSystemCommand = base::system2,
+                         newDownloadFile = utils::download.file,
+                         validateGraalVMInstallation=T) {
+    services$psockClusterFactory <- newPsockClusterFactory
+    services$runSystemCommand <- newRunSystemCommand
+    services$downloadFile <- newDownloadFile
+    services$validateGraalVMInstallation <- validateGraalVMInstallation
+}
+
 #' Default GraalVM installation path
 #'
 #' Gives the path to the default location of GraalVM installation that includes FastR.
@@ -197,7 +226,7 @@ installFastR <- function(path = defaultGraalVMHome()) {
             'https://github.com/oracle/graal/releases/download/vm-19.2.0/graalvm-ce-darwin-amd64-19.2.0.tar.gz' else
             'https://github.com/oracle/graal/releases/download/vm-19.2.0/graalvm-ce-linux-amd64-19.2.0.tar.gz';
         toRemove <- tarFile
-        utils::download.file(url, tarFile)
+        services$downloadFile(url, tarFile)
         workDir <- dirname(path)
         origFiles <- list.files(workDir)
         untarRes <- utils::untar(tarFile, exdir = workDir)
@@ -210,7 +239,7 @@ installFastR <- function(path = defaultGraalVMHome()) {
             stop(sprintf("An error occurred when moving GraalVM files to '%s'. Is this directory writeable? Error code: %d.", path, renRes))
         }
     }
-    guRes <- system2(file.path(path, 'bin', 'gu'), args=c('install', 'R'))
+    guRes <- services$runSystemCommand(file.path(path, 'bin', 'gu'), args=c('install', 'R'))
     if (guRes != 0) {
         stop("An error occurred during installation of FastR. Please report at https://github.com/oracle/fastr.")
     }
@@ -261,7 +290,7 @@ makeFastRCluster <- function (nnodes = 1L, graalVMHome = getGraalVMHome(), mode 
         stop("'nnodes' must be >= 1")
     }
 
-    if (!dir.exists(graalVMHome)) {
+    if (services$validateGraalVMInstallation && !dir.exists(graalVMHome)) {
         if (graalVMHome == defaultGraalVMHome()) {
             stop(sprintf(paste0("It seems that FastR was not installed yet. ",
                 "Use installFastR() to install GraalVM and FastR to the default location '%s', ",
@@ -273,10 +302,10 @@ makeFastRCluster <- function (nnodes = 1L, graalVMHome = getGraalVMHome(), mode 
                 graalVMHome, graalVMHome))
         }
     }
-    if (!file.exists(file.path(graalVMHome, 'bin', 'gu'))) {
+    if (services$validateGraalVMInstallation && !file.exists(file.path(graalVMHome, 'bin', 'gu'))) {
         stop(sprintf("The GraalVM directory '%s' appears to be corrupt. You can remove it and use installFastR('%s') to re-install GraalVM and FastR.", graalVMHome, graalVMHome))
     }
-    if (!file.exists(file.path(graalVMHome, 'bin', 'Rscript'))) {
+    if (services$validateGraalVMInstallation && !file.exists(file.path(graalVMHome, 'bin', 'Rscript'))) {
         stop(sprintf("The GraalVM installation '%s' does not contain FastR. Use installFastR('%s') to install FastR.", graalVMHome, graalVMHome))
     }
     if (any(c('--jvm', '--native') %in% fastROptions)) {
@@ -287,9 +316,9 @@ makeFastRCluster <- function (nnodes = 1L, graalVMHome = getGraalVMHome(), mode 
     }
 
     mode <- match.arg(mode)
-    options <- fastROptions[grep('--jvm', fastROptions)]
-    options <- options[grep('--native', fastROptions)]
-    options <- options[grep('--polyglot', fastROptions)]
+    options <- fastROptions[grep('--jvm', invert = T, fastROptions)]
+    options <- options[grep('--native', invert = T, fastROptions)]
+    options <- options[grep('--polyglot', invert = T, fastROptions)]
     if (polyglot) {
         if (mode != 'jvm') {
             stop("polyglot is only available when mode = 'jvm'")
@@ -300,7 +329,7 @@ makeFastRCluster <- function (nnodes = 1L, graalVMHome = getGraalVMHome(), mode 
         jvm = c('--jvm', options),
         native = c('--native', options))
     
-    result <- parallel::makePSOCKcluster(nnodes, rscript=file.path(graalVMHome, 'bin', 'Rscript'), rscript_args = options, ...)
+    result <- services$psockClusterFactory(nnodes, rscript=file.path(graalVMHome, 'bin', 'Rscript'), rscript_args = options, ...)
     class(result) <- c("fastRCluster", class(result))
     result
 }
