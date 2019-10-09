@@ -36,7 +36,9 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -49,6 +51,7 @@ import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory.BaseVectorFactory;
+import com.oracle.truffle.r.runtime.data.RPairListFactory.RPairListSnapshotNodeGen;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
@@ -567,21 +570,32 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
     }
 
     @Override
-    @TruffleBoundary
+    @Ignore
     public int getLength() {
-        if (closure != null) {
-            RSyntaxElement s = closure.getSyntaxElement();
+        return RPairListLibrary.getUncached().getLength(this);
+    }
+
+    @ExportMessage
+    static class GetLength {
+
+        @Specialization(guards = "pl.hasClosure()")
+        // @TruffleBoundary - is it necessary?
+        static int getLengthWithClosure(RPairList pl, @Cached BranchProfile profile) {
+            RSyntaxElement s = pl.closure.getSyntaxElement();
             if (s instanceof RSyntaxCall) {
+                profile.enter();
                 return ((RSyntaxCall) s).getSyntaxSignature().getLength() + 1;
-            } else {
-                assert s instanceof RSyntaxFunction : "unexpected type: " + s.getClass();
-                return 4;
             }
-        } else {
+            assert s instanceof RSyntaxFunction : "unexpected type: " + s.getClass();
+            return 4;
+        }
+
+        @Specialization(guards = "!pl.hasClosure()")
+        static int getLengthWithoutClosure(RPairList pl, @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             int result = 1;
-            Object tcdr = cdr();
+            Object tcdr = plLib.cdr(pl);
             while (!RRuntime.isNull(tcdr) && tcdr instanceof RPairList) {
-                tcdr = ((RPairList) tcdr).cdr();
+                tcdr = plLib.cdr(tcdr);
                 result++;
             }
             return result;
@@ -1178,9 +1192,9 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
     }
 
     public static final class RPairListSnapshot {
-        private final Object root;
-        private final RPairListSnapshot car;
-        private final RPairListSnapshot cdr;
+        final Object root;
+        final RPairListSnapshot car;
+        final RPairListSnapshot cdr;
 
         public RPairListSnapshot(Object root) {
             this.root = root;
@@ -1222,5 +1236,55 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
         public static RPairListSnapshot create(Object root) {
             return new RPairListSnapshot(root);
         }
+    }
+
+    public abstract static class RPairListSnapshotNode extends Node {
+
+        final RPairListSnapshot snapshot;
+        final boolean isRootPairList;
+        final boolean hasRootClosure;
+
+        public RPairListSnapshotNode(RPairListSnapshot snapshot) {
+            this.snapshot = snapshot;
+            this.isRootPairList = snapshot.root instanceof RPairList;
+            this.hasRootClosure = this.isRootPairList && ((RPairList) snapshot.root).hasClosure();
+        }
+
+        public static RPairListSnapshotNode create(Object root) {
+            return RPairListSnapshotNodeGen.create(RPairListSnapshot.create(root));
+        }
+
+        public abstract boolean execute(Object otherRoot);
+
+        static boolean isPairList(Object x) {
+            return x instanceof RPairList;
+        }
+
+        static boolean hasClosure(Object x) {
+            return ((RPairList) x).hasClosure();
+        }
+
+        @Specialization(guards = {"isRootPairList", "isPairList(otherRoot)", "hasRootClosure", "hasClosure(otherRoot)"})
+        boolean isSame1(RPairList otherRoot) {
+            return ((RPairList) snapshot.root).getClosure() == otherRoot.getClosure();
+        }
+
+        @Specialization(guards = {"isRootPairList", "isPairList(otherRoot)", "!hasRootClosure || !hasClosure(otherRoot)"})
+        boolean isSame2(RPairList otherRoot) {
+            return snapshot.recursiveCheck(otherRoot);
+        }
+
+        @Specialization(guards = {"isRootPairList", "!isPairList(otherRoot)"})
+        @SuppressWarnings("unused")
+        boolean isSame3(RPairList otherRoot) {
+            return false;
+        }
+
+        @Specialization(guards = {"!isRootPairList"})
+        boolean isSame4(Object other) {
+            // scalars
+            return snapshot.root == other;
+        }
+
     }
 }

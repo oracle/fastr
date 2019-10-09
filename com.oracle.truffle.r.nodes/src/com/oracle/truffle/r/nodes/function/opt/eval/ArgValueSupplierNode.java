@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function;
+package com.oracle.truffle.r.nodes.function.opt.eval;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -31,7 +31,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.function.RFunctionEvalNodes.FunctionInfo;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RPairList.RPairListSnapshot;
+import com.oracle.truffle.r.runtime.data.RPairList.RPairListSnapshotNode;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
@@ -48,46 +48,44 @@ import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public abstract class ArgBuilderNode extends Node {
-
-    private final int i;
+public abstract class ArgValueSupplierNode extends Node {
 
     @Child private ShareObjectNode sharedObjectNode;
 
     protected final int monoCacheSize;
 
-    protected ArgBuilderNode(int i, boolean cached) {
-        this.i = i;
+    protected ArgValueSupplierNode(boolean cached) {
         monoCacheSize = cached ? DSLConfig.getCacheSize(1) : 0;
     }
 
-    public abstract Object execute(Object a, FunctionInfo.ArgumentBuilderState argBuilderState, MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame, PromiseHelperNode promiseHelper);
+    public abstract Object execute(Object a, int i, CallInfo.ArgumentBuilderState argBuilderState, MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame,
+                    PromiseHelperNode promiseHelper);
 
-    boolean isFieldAccessor(FunctionInfo.ArgumentBuilderState argBuilderState) {
+    boolean isFieldAccessor(CallInfo.ArgumentBuilderState argBuilderState, int i) {
         return argBuilderState.isFieldAccess && i == 1;
     }
 
-    @Specialization(guards = {"isFieldAccessor(argBuilderState)"})
-    Object buildArgFieldAccess(RSymbol sym, @SuppressWarnings("unused") FunctionInfo.ArgumentBuilderState argBuilderState, @SuppressWarnings("unused") MaterializedFrame currentFrame,
+    @Specialization(guards = {"isFieldAccessor(argBuilderState, i)"})
+    Object buildArgFieldAccess(RSymbol sym, @SuppressWarnings("unused") int i, @SuppressWarnings("unused") CallInfo.ArgumentBuilderState argBuilderState,
+                    @SuppressWarnings("unused") MaterializedFrame currentFrame,
                     @SuppressWarnings("unused") MaterializedFrame promiseEvalFrame, @SuppressWarnings("unused") PromiseHelperNode promiseHelper) {
         return sym.getName();
     }
 
     @TruffleBoundary
-    Closure createSymbolClosure(RSymbol sym) {
+    Closure createSymbolClosure(RSymbol sym, int i) {
         RSyntaxNode lookupSyntaxNode = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, sym.getName(), false);
-        return Closure.createPromiseClosure(FunctionInfo.wrapArgNode(i, lookupSyntaxNode));
+        return Closure.createPromiseClosure(CallInfo.wrapArgNode(i, lookupSyntaxNode));
     }
 
-    @Specialization(guards = {"sym.getName() == cachedSymName", "!isFieldAccessor(argBuilderState)"}, limit = "monoCacheSize")
-    Object buildSymbolArgCached(RSymbol sym, FunctionInfo.ArgumentBuilderState argBuilderState, MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame,
+    @Specialization(guards = {"sym.getName() == cachedSymName", "!isFieldAccessor(argBuilderState, i)"}, limit = "monoCacheSize")
+    Object buildSymbolArgCached(@SuppressWarnings("unused") RSymbol sym, @SuppressWarnings("unused") int i, CallInfo.ArgumentBuilderState argBuilderState, MaterializedFrame currentFrame,
+                    MaterializedFrame promiseEvalFrame,
                     PromiseHelperNode promiseHelper,
                     @SuppressWarnings("unused") @Cached("sym.getName()") String cachedSymName,
-                    @Cached("createSymbolClosure(sym)") Closure cachedClosure) {
-        String symName = sym.getName();
-
+                    @Cached("createSymbolClosure(sym, i)") Closure cachedClosure) {
         Object arg;
-        if (ArgumentsSignature.VARARG_NAME.equals(symName)) {
+        if (ArgumentsSignature.VARARG_NAME.equals(cachedSymName)) {
             if (argBuilderState.varArgs == null) {
                 RPromise promise = RDataFactory.createPromise(PromiseState.Supplied, cachedClosure,
                                 promiseEvalFrame);
@@ -102,68 +100,53 @@ public abstract class ArgBuilderNode extends Node {
         return arg;
     }
 
-    @Specialization(replaces = "buildSymbolArgCached", guards = "!isFieldAccessor(argBuilderState)")
-    Object buildSymbolArg(RSymbol sym, FunctionInfo.ArgumentBuilderState argBuilderState, MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame,
+    @Specialization(replaces = "buildSymbolArgCached", guards = "!isFieldAccessor(argBuilderState, i)")
+    Object buildSymbolArg(RSymbol sym, int i, CallInfo.ArgumentBuilderState argBuilderState, MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame,
                     PromiseHelperNode promiseHelper) {
-        String symName = sym.getName();
-
-        Object arg;
-        Closure closure = createSymbolClosure(sym);
-        if (ArgumentsSignature.VARARG_NAME.equals(symName)) {
-            if (argBuilderState.varArgs == null) {
-                RPromise promise = RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
-                argBuilderState.varArgs = (RArgsValuesAndNames) promiseHelper.evaluate(currentFrame, promise);
-
-            }
-            arg = argBuilderState.varArgs;
-        } else {
-            arg = RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
-        }
-
-        return arg;
+        return buildSymbolArgCached(sym, i, argBuilderState, currentFrame, promiseEvalFrame, promiseHelper, sym.getName(), createSymbolClosure(sym, i));
     }
 
-    Closure createClosure(RPairList a, RPairListLibrary plLib) {
+    Closure createClosure(RPairList a, int i, RPairListLibrary plLib) {
         RPairList pl = RDataFactory.createPairList(plLib.car(a), plLib.cdr(a), plLib.getTag(a), SEXPTYPE.LANGSXP);
-        Closure closure = FunctionInfo.createPromiseClosure(pl, a.getAttributes(), i);
+        Closure closure = CallInfo.createPromiseClosure(pl, a.getAttributes(), i);
         return closure;
     }
 
-    @Specialization(guards = {"a.hasClosure()", "cachedFrameDescriptor == promiseEvalFrame.getFrameDescriptor()", "plSnaphost.isSame(a)"}, limit = "monoCacheSize")
-    Object buildPromiseUsingExistingClosure(@SuppressWarnings("unused") RPairList a,
-                    @SuppressWarnings("unused") FunctionInfo.ArgumentBuilderState argBuilderState,
+    @Specialization(guards = {"a.hasClosure()", "cachedFrameDescriptor == promiseEvalFrame.getFrameDescriptor()", "plSnapshotNode.execute(a)"}, limit = "monoCacheSize")
+    Object buildPromiseUsingExistingClosure(@SuppressWarnings("unused") RPairList a, @SuppressWarnings("unused") int i,
+                    @SuppressWarnings("unused") CallInfo.ArgumentBuilderState argBuilderState,
                     @SuppressWarnings("unused") MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame,
                     @SuppressWarnings("unused") PromiseHelperNode promiseHelper,
                     @SuppressWarnings("unused") @CachedLibrary(limit = "1") RPairListLibrary plLib,
-                    @SuppressWarnings("unused") @Cached("create(a)") RPairListSnapshot plSnaphost,
+                    @SuppressWarnings("unused") @Cached("create(a)") RPairListSnapshotNode plSnapshotNode,
                     @Cached("plLib.getClosure(a).clone()") Closure cachedClosure,
                     @SuppressWarnings("unused") @Cached("promiseEvalFrame.getFrameDescriptor()") FrameDescriptor cachedFrameDescriptor) {
         return RDataFactory.createPromise(PromiseState.Supplied, cachedClosure, promiseEvalFrame);
     }
 
-    @Specialization(guards = {"!a.hasClosure()", "cachedFrameDescriptor == promiseEvalFrame.getFrameDescriptor()", "plSnaphost.isSame(a)"}, limit = "monoCacheSize")
-    Object buildPromiseUsingCachedClosure(@SuppressWarnings("unused") RPairList a,
-                    @SuppressWarnings("unused") FunctionInfo.ArgumentBuilderState argBuilderState,
+    @Specialization(guards = {"!a.hasClosure()", "cachedFrameDescriptor == promiseEvalFrame.getFrameDescriptor()", "plSnapshotNode.execute(a)"}, limit = "monoCacheSize")
+    Object buildPromiseUsingCachedClosure(@SuppressWarnings("unused") RPairList a, @SuppressWarnings("unused") int i,
+                    @SuppressWarnings("unused") CallInfo.ArgumentBuilderState argBuilderState,
                     @SuppressWarnings("unused") MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame,
                     @SuppressWarnings("unused") PromiseHelperNode promiseHelper,
                     @SuppressWarnings("unused") @CachedLibrary(limit = "1") RPairListLibrary plLib,
-                    @SuppressWarnings("unused") @Cached("create(a)") RPairListSnapshot plSnaphost,
-                    @Cached("createClosure(a, plLib)") Closure cachedClosure,
+                    @SuppressWarnings("unused") @Cached("create(a)") RPairListSnapshotNode plSnapshotNode,
+                    @Cached("createClosure(a, i, plLib)") Closure cachedClosure,
                     @SuppressWarnings("unused") @Cached("promiseEvalFrame.getFrameDescriptor()") FrameDescriptor cachedFrameDescriptor) {
         return RDataFactory.createPromise(PromiseState.Supplied, cachedClosure, promiseEvalFrame);
     }
 
-    // @Specialization(replaces = "buildPromiseUsingCachedClosure")
     @Specialization(replaces = {"buildPromiseUsingCachedClosure", "buildPromiseUsingExistingClosure"})
-    Object buildPromise(RPairList a, @SuppressWarnings("unused") FunctionInfo.ArgumentBuilderState argBuilderState, @SuppressWarnings("unused") MaterializedFrame currentFrame,
+    Object buildPromise(RPairList a, int i, @SuppressWarnings("unused") CallInfo.ArgumentBuilderState argBuilderState, @SuppressWarnings("unused") MaterializedFrame currentFrame,
                     MaterializedFrame promiseEvalFrame, @SuppressWarnings("unused") PromiseHelperNode promiseHelper,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
-        Closure closure = createClosure(a, plLib);
+        Closure closure = createClosure(a, i, plLib);
         return RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
     }
 
     @Fallback
-    Object buildOther(Object a, @SuppressWarnings("unused") FunctionInfo.ArgumentBuilderState argBuilderState, @SuppressWarnings("unused") MaterializedFrame currentFrame,
+    Object buildOther(Object a, @SuppressWarnings("unused") int i, @SuppressWarnings("unused") CallInfo.ArgumentBuilderState argBuilderState,
+                    @SuppressWarnings("unused") MaterializedFrame currentFrame,
                     @SuppressWarnings("unused") MaterializedFrame promiseEvalFrame, @SuppressWarnings("unused") PromiseHelperNode promiseHelper) {
         if (sharedObjectNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -171,4 +154,5 @@ public abstract class ArgBuilderNode extends Node {
         }
         return sharedObjectNode.execute(a);
     }
+
 }

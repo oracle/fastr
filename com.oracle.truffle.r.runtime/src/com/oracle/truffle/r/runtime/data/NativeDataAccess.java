@@ -41,9 +41,11 @@ import javax.management.ObjectName;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -58,6 +60,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.AsPointerNodeGen;
 import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.ToNativeNodeGen;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -407,10 +410,11 @@ public final class NativeDataAccess {
         @Specialization
         long asPointer(RBaseObject obj,
                         @Cached("createBinaryProfile()") ConditionProfile isInNative,
-                        @Cached BranchProfile refRegProfile) {
+                        @Cached BranchProfile refRegProfile,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
 
-            RContext rContext = RContext.getInstance();
+            RContext rContext = ctxRef.get();
             if (isInNative.profile(rContext.getStateRFFI().getCallDepth() > 0)) {
                 rContext.getStateRFFI().registerReferenceUsedInNative(obj, refRegProfile);
             }

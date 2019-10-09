@@ -53,4 +53,5 @@ public abstract class RPairListLibrary extends Library {
 
     public abstract Iterable<RPairList> iterable(Object target);
 
+    public abstract int getLength(Object target);
 }

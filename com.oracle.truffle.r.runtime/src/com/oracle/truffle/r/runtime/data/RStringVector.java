@@ -308,26 +308,8 @@ public final class RStringVector extends RAbstractStringVector implements RMater
             fence = 42; // make sure the array is really initialized before we set it to this.data
             this.data = newData;
         }
-    }
-
-    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
-    public void wrapStrings(ConditionProfile profile) {
-        if (profile.profile(!isNativized())) {
-            Object[] oldData = data;
-            if (oldData instanceof CharSXPWrapper[]) {
-                return;
-            }
-            noWrappedStrings.invalidate();
-            String[] oldStrings = (String[]) oldData;
-            CharSXPWrapper[] newData = new CharSXPWrapper[oldStrings.length];
-            for (int i = 0; i < oldData.length; i++) {
-                newData[i] = CharSXPWrapper.create(oldStrings[i]);
-            }
-            fence = 42; // make sure the array is really initialized before we set it to this.data
-            this.data = newData;
-        }
-    }
-
+	}
+	
     public CharSXPWrapper getWrappedDataAt(int index) {
         if (!isNativized()) {
             assert data instanceof CharSXPWrapper[] : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
