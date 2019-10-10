@@ -393,3 +393,8 @@ rffi.test_sort_complex(x)
 # we need to force the materialization to native memory via rffi.get_dataptr,
 # which returns NULL in case of an error
 stopifnot(!is.null(rffi.get_dataptr(api.Rf_allocVector(14, 268435457))))
+
+vec <- double(268435457)
+vec[[268435457]] <- 4.2
+stopifnot(!is.null(rffi.get_dataptr(vec)))
+stopifnot(vec[[268435457]] == 4.2)
