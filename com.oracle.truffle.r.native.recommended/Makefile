@@ -89,10 +89,11 @@ ifdef R_RECOMMENDED_PKGS_CACHE_DIR
 	mx r-pkgcache $(VERBOSE) --vm fastr --library fastr=$(FASTR_R_HOME)/library --repos RECOMMENDED=$(PKGS_REPO_DIR) --cache-dir $(R_RECOMMENDED_PKGS_CACHE_DIR) --pkg-pattern $(GNUR_RECOMMENDED_PATTERN)
 else
 	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
-		$(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
+		($(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar) || (echo "ERROR: during installation of $$pkgtar"; exit 1); \
 	done
 endif
 ifeq ($(OS_NAME),Darwin)
+	set -e; \
 	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \
 		if [ -e $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so ] ; then \
 			install_name_tool -id @rpath/../library/$$pkgname/libs/$$pkgname.so $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
