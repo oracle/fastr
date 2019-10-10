@@ -283,7 +283,7 @@ suite = {
         "LIBF2C",
         "truffle:TRUFFLE_NFI_NATIVE",
         "sulong:SULONG_BOOTSTRAP_TOOLCHAIN",
-        "sulong:SULONG_LIBS",
+        "sulong:SULONG_HOME",
         "sulong:SULONG_LEGACY",
       ],
       "native" : True,
@@ -291,8 +291,8 @@ suite = {
       "workingSets" : "FastR",
       "buildEnv" : {
         "NFI_INCLUDES" : "-I<path:truffle:TRUFFLE_NFI_NATIVE>/include",
-        "LLVM_INCLUDES" : "-I<path:sulong:SULONG_LEGACY>/include -I<path:sulong:SULONG_LIBS>/include",
-        "LLVM_LIBS_DIR" : "<path:sulong:SULONG_LIBS>",
+        "LLVM_INCLUDES" : "-I<path:sulong:SULONG_LEGACY>/include -I<path:sulong:SULONG_HOME>/include",
+        "LLVM_LIBS_DIR" : "<path:sulong:SULONG_HOME>",
         # If FASTR_RFFI=='llvm', then this is set as CC/CXX in c.o.t.r.native/Makefile
         "LABS_LLVM_CC": "<toolchainGetToolPath:native,CC>",
         "LABS_LLVM_CXX": "<toolchainGetToolPath:native,CXX>",
