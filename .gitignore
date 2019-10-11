@@ -39,6 +39,10 @@
 /com.oracle.truffle.r.test.native/packages/recommended
 /com.oracle.truffle.r.test.native/packages/*/lib/*
 /com.oracle.truffle.r.test.native/urand/lib/liburand.so
+/com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/data/*
+com.oracle.truffle.r.native/fficall/common.done
+com.oracle.truffle.r.native/fficall/fficallllvm.done
+com.oracle.truffle.r.native/run/Makeconf.etc-e
 /tmptest/
 /com.oracle.truffle.r.release/lib/
 /com.oracle.truffle.r.release/library/

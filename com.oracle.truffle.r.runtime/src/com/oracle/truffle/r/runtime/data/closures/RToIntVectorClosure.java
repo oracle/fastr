@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-class RToIntVectorClosure extends RAbstractIntVector {
+public class RToIntVectorClosure extends RAbstractIntVector {
 
     protected final boolean keepAttributes;
     private final RAbstractVector vector;

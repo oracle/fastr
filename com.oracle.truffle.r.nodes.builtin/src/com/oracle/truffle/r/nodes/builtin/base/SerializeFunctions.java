@@ -72,7 +72,7 @@ public class SerializeFunctions {
     }
 
     @TruffleBoundary
-    protected static Object doSerializeToConnBase(RBaseNode node, Object object, int connIndex, int type) {
+    protected static Object doSerializeToConnBase(RBaseNode node, Object object, int connIndex, int type, int version) {
         // xdr is only relevant if ascii is false
         try (RConnection openConn = RConnection.fromIndex(connIndex).forceOpen(type != RSerialize.XDR ? "wt" : "wb")) {
             if (!openConn.canWrite()) {
@@ -81,7 +81,7 @@ public class SerializeFunctions {
             if (type == RSerialize.XDR && openConn.isTextMode()) {
                 throw node.error(RError.Message.BINARY_CONNECTION_REQUIRED);
             }
-            RSerialize.serialize(RContext.getInstance(), openConn, object, type, RSerialize.DEFAULT_VERSION, null);
+            RSerialize.serialize(RContext.getInstance(), openConn, object, type, version, null);
             return RNull.instance;
         } catch (IOException ex) {
             throw node.error(RError.Message.GENERIC, ex.getMessage());
@@ -93,9 +93,8 @@ public class SerializeFunctions {
     }
 
     private static void version(Casts casts) {
-        // This just validates the value. It must be either default NULL or 2. Specializations
-        // should use 'Object'
-        casts.arg("version").allowNull().asIntegerVector().findFirst().mustBe(eq(2), Message.VERSION_N_NOT_SUPPORTED, (Function<Object, Object>) n -> n);
+        // must be either default NULL or 2 or 3
+        casts.arg("version").allowNull().asIntegerVector().findFirst().mustBe(eq(2).or(eq(3)), Message.VERSION_N_NOT_SUPPORTED, (Function<Object, Object>) n -> n);
     }
 
     @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"con", "refhook"}, behavior = IO)
@@ -131,7 +130,16 @@ public class SerializeFunctions {
         }
 
         @Specialization
-        protected Object doSerializeToConn(Object object, int conn, byte asciiLogical, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
+        protected Object doSerializeToConn(Object object, int conn, byte asciiLogical, int version, @SuppressWarnings("unused") RNull refhook) {
+            return serialize(asciiLogical, object, conn, version);
+        }
+
+        @Specialization
+        protected Object doSerializeToConn(Object object, int conn, byte asciiLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
+            return serialize(asciiLogical, object, conn, RSerialize.DEFAULT_VERSION);
+        }
+
+        private Object serialize(byte asciiLogical, Object object, int conn, int version) {
             int type;
             if (asciiLogical == RRuntime.LOGICAL_NA) {
                 type = RSerialize.ASCII_HEX;
@@ -140,7 +148,7 @@ public class SerializeFunctions {
             } else {
                 type = RSerialize.XDR;
             }
-            return doSerializeToConnBase(this, object, conn, type);
+            return doSerializeToConnBase(this, object, conn, type, version);
         }
     }
 
@@ -175,13 +183,27 @@ public class SerializeFunctions {
         }
 
         @Specialization
-        protected Object serialize(Object object, int conn, int type, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
-            return doSerializeToConnBase(this, object, conn, type);
+        protected Object serialize(Object object, int conn, int type, @SuppressWarnings("unused") int version, @SuppressWarnings("unused") RNull refhook) {
+            return doSerializeToConnBase(this, object, conn, type, version);
         }
 
         @Specialization
-        protected Object serialize(Object object, @SuppressWarnings("unused") RNull conn, int type, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
-            byte[] data = RSerialize.serialize(RContext.getInstance(), object, type, RSerialize.DEFAULT_VERSION, null);
+        protected Object serialize(Object object, int conn, int type, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
+            return doSerializeToConnBase(this, object, conn, type, RSerialize.DEFAULT_VERSION);
+        }
+
+        @Specialization
+        protected Object serialize(Object object, @SuppressWarnings("unused") RNull conn, int type, int version, @SuppressWarnings("unused") RNull refhook) {
+            return serialize(object, type, version);
+        }
+
+        @Specialization
+        protected Object serialize(Object object, @SuppressWarnings("unused") RNull conn, int type, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
+            return serialize(object, type, RSerialize.DEFAULT_VERSION);
+        }
+
+        private static Object serialize(Object object, int type, int version) {
+            byte[] data = RSerialize.serialize(RContext.getInstance(), object, type, version, null);
             return RDataFactory.createRawVector(data);
         }
     }
@@ -197,11 +219,20 @@ public class SerializeFunctions {
         }
 
         @Specialization
-        protected Object serializeB(Object object, int conn, byte xdrLogical, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
+        protected Object serializeB(Object object, int conn, byte xdrLogical, int version, @SuppressWarnings("unused") RNull refhook) {
+            return serialize(xdrLogical, object, conn, version);
+        }
+
+        @Specialization
+        protected Object serializeB(Object object, int conn, byte xdrLogical, @SuppressWarnings("unused") RNull version, @SuppressWarnings("unused") RNull refhook) {
+            return serialize(xdrLogical, object, conn, RSerialize.DEFAULT_VERSION);
+        }
+
+        private Object serialize(byte xdrLogical, Object object, int conn, int version) throws RError {
             if (!RRuntime.fromLogical(xdrLogical)) {
                 throw RError.nyi(this, "xdr==FALSE");
             }
-            return doSerializeToConnBase(this, object, conn, RRuntime.LOGICAL_FALSE);
+            return doSerializeToConnBase(this, object, conn, RRuntime.LOGICAL_FALSE, version);
         }
     }
 }

@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromComplexAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-class RToComplexVectorClosure extends RAbstractComplexVector {
+public class RToComplexVectorClosure extends RAbstractComplexVector {
 
     protected final boolean keepAttributes;
     private final RAbstractVector vector;
