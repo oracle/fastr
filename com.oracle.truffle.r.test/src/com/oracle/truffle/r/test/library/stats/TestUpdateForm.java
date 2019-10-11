@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,8 @@ import com.oracle.truffle.r.test.TestBase;
  * consider adding them to modelTests.R too.
  */
 public class TestUpdateForm extends TestBase {
-    private static final String[] OLD_FORMULAE = new String[]{"x ~ y", ". ~ u+v", "x ~ u+v"};
-    private static final String[] NEW_FORMULAE = new String[]{"~ . + x2", "log(.) ~ .:q", "x + . ~ y:. + log(.)"};
+    private static final String[] OLD_FORMULAE = new String[]{"x ~ y", ". ~ u+v", "x ~ u+v", "z ~ x + y "};
+    private static final String[] NEW_FORMULAE = new String[]{"~ . + x2", "log(.) ~ .:q", "x + . ~ y:. + log(.)", "NULL ~ ."};
 
     @Test
     public void basicTests() {
