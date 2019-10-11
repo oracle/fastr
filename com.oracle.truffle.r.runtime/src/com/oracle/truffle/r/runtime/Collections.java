@@ -564,7 +564,7 @@ public final class Collections {
         public Object pop() {
             if (size <= 0) {
                 CompilerDirectives.transferToInterpreter();
-                throw new IllegalStateException("cannot pop from empty list");
+                throw new ArrayIndexOutOfBoundsException("cannot pop from empty list");
             }
             size--;
             Object removed = data[size];

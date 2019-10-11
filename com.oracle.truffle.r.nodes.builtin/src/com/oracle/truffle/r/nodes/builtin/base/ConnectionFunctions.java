@@ -62,6 +62,7 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
@@ -368,6 +369,7 @@ public abstract class ConnectionFunctions {
                 base.setCompressionType(GZIP);
                 base.updateConnectionClass(GZCon);
             } catch (IOException ex) {
+                CompilerDirectives.transferToInterpreter();
                 throw error(RError.Message.GENERIC, ex.getMessage());
             }
             return base.asVector();
@@ -1138,6 +1140,7 @@ public abstract class ConnectionFunctions {
                 ByteBuffer buffer;
                 switch (objectAccess.getType()) {
                     case Integer:
+                    case Logical:
                         buffer = allocate(4 * length, swap);
                         while (objectAccess.next(iter)) {
                             buffer.putInt(objectAccess.getInt(iter));
@@ -1172,12 +1175,7 @@ public abstract class ConnectionFunctions {
                             buffer.put((byte) 0);
                         }
                         return buffer;
-                    case Logical:
-                        buffer = allocate(4 * length, swap);
-                        while (objectAccess.next(iter)) {
-                            buffer.putInt(objectAccess.getInt(iter)); // converted to int
-                        }
-                        return buffer;
+                    // converted to int
                     case Raw:
                         buffer = allocate(length, swap);
                         while (objectAccess.next(iter)) {
@@ -1464,6 +1462,7 @@ public abstract class ConnectionFunctions {
                 byte[] selected = RSocketConnection.select(socketConnections, write, timeout * 1000L);
                 return RDataFactory.createLogicalVector(selected, true);
             } catch (IOException e) {
+                CompilerDirectives.transferToInterpreter();
                 throw error(RError.Message.GENERIC, e.getMessage());
             }
         }

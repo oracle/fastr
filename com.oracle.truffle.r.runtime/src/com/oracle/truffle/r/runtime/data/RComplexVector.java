@@ -131,6 +131,14 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
         return NativeDataAccess.getData(this, data, index);
     }
 
+    /**
+     * Returns the double value under specified index assuming a representation where the complex
+     * numbers are flattened to an array: real part followed by the imaginary part.
+     */
+    public double getRawDataAt(int index) {
+        return NativeDataAccess.getRawComplexData(this, data, index);
+    }
+
     @Override
     public double getComplexPartAt(int index) {
         return NativeDataAccess.getComplexPart(this, data, index);

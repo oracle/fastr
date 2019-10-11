@@ -880,6 +880,14 @@ public final class NativeDataAccess {
         }
     }
 
+    static double getRawComplexData(RComplexVector vector, double[] data, int index) {
+        if (noComplexNative.isValid() || data != null) {
+            return data[index];
+        } else {
+            return getDoubleNativeMirrorData(vector.getNativeMirror(), index);
+        }
+    }
+
     static double getDataR(RComplexVector vector, double[] data, int index) {
         if (noComplexNative.isValid() || data != null) {
             return data[index * 2];
@@ -1121,6 +1129,11 @@ public final class NativeDataAccess {
         if (!noStringNative.isValid() && vector.isNativized()) {
             NativeDataAccess.setNativeMirrorStringData(vector.getNativeMirror(), index, value);
         }
+    }
+
+    public static long getNativeDataAddress(RBaseObject obj) {
+        NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+        return mirror == null ? 0 : mirror.dataAddress;
     }
 
     static boolean isAllocated(RStringVector obj) {

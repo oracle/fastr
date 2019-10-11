@@ -45,6 +45,10 @@ def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, cu
     fastr_start = _find_start(fastr_content)
     fastr_len = len(fastr_content)
     if not gnur_start or not gnur_end or not fastr_start:
+        if not gnur_start or not gnur_end:
+            logging.info("malformed GnuR output file {0}: ########\n{1}########".format(gnur_filename, gnur_content))
+        if not fastr_start:
+            logging.info("malformed FastR output file {0}: ########\n{1}########".format(fastr_filename, fastr_content))
         return -1, 0, 0
     gnur_i = gnur_start
     fastr_i = fastr_start

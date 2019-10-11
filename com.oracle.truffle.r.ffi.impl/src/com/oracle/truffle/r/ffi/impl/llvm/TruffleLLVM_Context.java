@@ -22,9 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import java.util.EnumMap;
-
-import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -115,16 +114,33 @@ public class TruffleLLVM_Context extends RFFIContext {
     }
 
     @Override
+    public Object getSulongArrayType(Object arrayElem) {
+        if (arrayElem instanceof Double) {
+            return callState.doubleArrayType;
+        } else if (arrayElem instanceof Integer) {
+            return callState.intArrayType;
+        } else if (arrayElem instanceof Byte) {
+            return callState.byteArrayType;
+        } else if (arrayElem instanceof Long) {
+            return callState.longArrayType;
+        }
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere("No array type for " + arrayElem);
+    }
+
+    @Override
     public void beforeDispose(RContext context) {
         callState.beforeDispose(context);
     }
 
-    private final EnumMap<NativeFunction, TruffleObject> nativeFunctions = new EnumMap<>(NativeFunction.class);
+    @CompilationFinal(dimensions = 1) private final TruffleObject[] nativeFunctions = new TruffleObject[NativeFunction.values().length];
 
     @Override
     public TruffleObject lookupNativeFunction(NativeFunction function) {
-        CompilerAsserts.neverPartOfCompilation();
-        if (!nativeFunctions.containsKey(function)) {
+        int index = function.ordinal();
+        if (nativeFunctions[index] == null) {
+            // one-off event:
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             Object lookupObject;
             if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
                 lookupObject = ((LLVM_Handle) DLL.getRdllInfo().handle).handle;
@@ -145,11 +161,11 @@ public class TruffleLLVM_Context extends RFFIContext {
             try {
                 target = (TruffleObject) InteropLibrary.getFactory().getUncached().readMember(lookupObject, function.getCallName());
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                RInternalError.shouldNotReachHere();
+                throw RInternalError.shouldNotReachHere(e);
             }
-            nativeFunctions.put(function, target);
+            nativeFunctions[index] = target;
         }
-        return nativeFunctions.get(function);
+        return nativeFunctions[index];
     }
 
     @Override

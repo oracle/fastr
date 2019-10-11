@@ -7,7 +7,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "9e85d7febbad33912af8b21f35ef5debcf525b0c",
+               "version" : "70de30a4aa25a202af8ad2e4530aa8eb05ce7712",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -17,7 +17,7 @@ suite = {
                "name" : "sulong",
                "subdir" : True,
                # The version must be the same as the version of Truffle
-               "version" : "9e85d7febbad33912af8b21f35ef5debcf525b0c",
+               "version" : "70de30a4aa25a202af8ad2e4530aa8eb05ce7712",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -215,6 +215,7 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.launcher",
         "truffle:TRUFFLE_API",
+        "sulong:SULONG_API",
         "XZ-1.8",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -282,7 +283,7 @@ suite = {
         "LIBF2C",
         "truffle:TRUFFLE_NFI_NATIVE",
         "sulong:SULONG_BOOTSTRAP_TOOLCHAIN",
-        "sulong:SULONG_LIBS",
+        "sulong:SULONG_HOME",
         "sulong:SULONG_LEGACY",
       ],
       "native" : True,
@@ -290,8 +291,8 @@ suite = {
       "workingSets" : "FastR",
       "buildEnv" : {
         "NFI_INCLUDES" : "-I<path:truffle:TRUFFLE_NFI_NATIVE>/include",
-        "LLVM_INCLUDES" : "-I<path:sulong:SULONG_LEGACY>/include -I<path:sulong:SULONG_LIBS>/include",
-        "LLVM_LIBS_DIR" : "<path:sulong:SULONG_LIBS>",
+        "LLVM_INCLUDES" : "-I<path:sulong:SULONG_LEGACY>/include -I<path:sulong:SULONG_HOME>/include",
+        "LLVM_LIBS_DIR" : "<path:sulong:SULONG_HOME>",
         # If FASTR_RFFI=='llvm', then this is set as CC/CXX in c.o.t.r.native/Makefile
         "LABS_LLVM_CC": "<toolchainGetToolPath:native,CC>",
         "LABS_LLVM_CXX": "<toolchainGetToolPath:native,CXX>",
@@ -402,6 +403,7 @@ suite = {
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
+        "sulong:SULONG_API",
       ],
     },
 
@@ -416,6 +418,12 @@ suite = {
         "truffle:ANTLR4",
         "GNUR",
         "XZ-1.8",
+      ],
+      "distDependencies" : [
+        "truffle:TRUFFLE_API",
+        "truffle:TRUFFLE_NFI",
+        "truffle:TRUFFLE_NFI_NATIVE",
+        "sulong:SULONG_API",
       ],
     },
 
