@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,98 +28,117 @@ import com.oracle.truffle.r.test.TestBase;
 
 public class TestBuiltin_serialize extends TestBase {
 
+    private static final String[] VERSIONS = new String[]{"2", "3"};
+
     @Test
     public void testserialize() {
-        assertEval("options(keep.source=FALSE); serialize(quote(x), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(TRUE), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(FALSE), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote('asdf'), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(NA_character_), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(NA_complex_), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(NA_integer_), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(NA_real_), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(NA_character_ + NA_complex_ + NA_integer_ + NA_real_), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(111L), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(111+8i), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(111+11), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(a+b), connection=NULL)");
+        assertEval(template("options(keep.source=FALSE); serialize(quote(x), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(TRUE), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(FALSE), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote('asdf'), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(NA_character_), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(NA_complex_), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(NA_integer_), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(NA_real_), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(NA_character_ + NA_complex_ + NA_integer_ + NA_real_), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(111L), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(111+8i), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(111+11), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(a+b), connection=NULL, version=%0)", VERSIONS));
 
-        assertEval("options(keep.source=FALSE); serialize(TRUE, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(FALSE, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(c(TRUE, FALSE, TRUE, NA, TRUE), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize('asdf', connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(NA_character_, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(NA_complex_, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(NA_integer_, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(NA_real_, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(111L, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(c(111L, 11L, 990000L, NA_integer_), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(111+8i, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(c(111+8i, 55+9i, NA), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(111, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(c(111, 99, NA, 44), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(as.raw(10), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(as.raw(210), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(as.raw(c(1, 55, 210)), connection=NULL)");
+        assertEval(template("options(keep.source=FALSE); serialize(TRUE, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(FALSE, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(c(TRUE, FALSE, TRUE, NA, TRUE), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize('asdf', connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(NA_character_, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(NA_complex_, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(NA_integer_, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(NA_real_, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(111L, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(c(111L, 11L, 990000L, NA_integer_), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(111+8i, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(c(111+8i, 55+9i, NA), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(111, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(c(111, 99, NA, 44), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(as.raw(10), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(as.raw(210), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(as.raw(c(1, 55, 210)), connection=NULL, version=%0)", VERSIONS));
 
-        assertEval("options(keep.source=FALSE); serialize(quote((a+b)), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote((a %asdf% b)), connection=NULL)");
+        // sequences
+        assertEval(template("serialize(1L:10L, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("serialize(1:10, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("serialize(1.1:10.1, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("s <- 1L:10L; attr(s, 'testattr') <- 'attrvalue'; serialize(s, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("s <- 1:10; attr(s, 'testattr') <- 'attrvalue'; serialize(s, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("s <- 1.1:10.1; attr(s, 'testattr') <- 'attrvalue'; serialize(s, connection=NULL, version=%0)", VERSIONS));
 
-        assertEval("options(keep.source=FALSE); serialize(quote(foo(a,b,c)), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote({ foo(a,b,c) }), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(if (a) b else c), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(if (a) {b} else {c}), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(if ({a}) {b} else {c}), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(while (a) b), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(repeat {b; if (c) next else break}), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(xxxx(yyyy=1)), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(b + xxxx(yyyy=1)), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(if (a * 2 < 199) b + foo(x,y,foo=z+1,bar=)), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(\"bar\"), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote('baz'), connection=NULL)");
-        assertEval("setClass('foo', slots = c(x='numeric', y='numeric')); t1 <- new('foo', x=4, y=c(77,88)); options(keep.source=FALSE); serialize(t1, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(a(b(c(d(function (e, ...) { f(g)$h.i}))))), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(f(g)$h.i), connection=NULL)");
-        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); serialize(val, connection=NULL)");
-        assertEval("options(keep.source=FALSE); val <- list(enclos = new.env(hash=FALSE)); serialize(val, connection=NULL)");
-        assertEval("options(keep.source=FALSE); val <- defaultPrototype(); serialize(val, connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function() new(\"foo\", x)), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x) { new(\"BAR\", x) }), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x, ...) { new(\"BAR\", x) }), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x,y) { new(\"BAR\", x) }), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x,y) { TRUE }), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x,y,...) { 1 }), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x,y=1,...) { NA }), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x={1 + a},y,...) { NA }), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x={1 + a},y,...) { !!NA }), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x={1 + a},y,...) { !1+5i }), connection=NULL)");
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x={1 + a},y=c(1,2,3),z=\"foo\",...) { !1+5i }), connection=NULL)");
+        // FastR can't create such long sequences
+        assertEval(Ignored.Unimplemented, "serialize(1:2147483649, connection=NULL, version=3)");
+        // also fails in gnur - Error: vector memory exhausted (limit reached?)
+        // assertEval(Ignored.Unimplemented, "options(keep.source=FALSE); s <- 1:2147483649; attr(s,
+        // 'testattr') <- 'attrvalue'; serialize(s, connection=NULL, version=3)");
 
-        assertEval("options(keep.source=FALSE); serialize(quote(function(x) { `+`(`(`(\"BAR\"), x) }), connection=NULL)");
+        assertEval(template("options(keep.source=FALSE); serialize(quote((a+b)), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote((a %asdf% b)), connection=NULL, version=%0)", VERSIONS));
 
-        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$a <- 'foo'; serialize(val, connection=NULL)");
-        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$b <- 123; serialize(val, connection=NULL)");
-        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$c <- 1233L; serialize(val, connection=NULL)");
-        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$d <- TRUE; serialize(val, connection=NULL)");
-        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$e <- 5+9i; serialize(val, connection=NULL)");
-        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$f <- NA; serialize(val, connection=NULL)");
+        assertEval(template("options(keep.source=FALSE); serialize(quote(foo(a,b,c)), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote({ foo(a,b,c) }), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(if (a) b else c), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(if (a) {b} else {c}), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(if ({a}) {b} else {c}), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(while (a) b), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(repeat {b; if (c) next else break}), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(xxxx(yyyy=1)), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(b + xxxx(yyyy=1)), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(if (a * 2 < 199) b + foo(x,y,foo=z+1,bar=)), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(\"bar\"), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote('baz'), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("setClass('foo', slots = c(x='numeric', y='numeric')); t1 <- new('foo', x=4, y=c(77,88)); options(keep.source=FALSE); serialize(t1, connection=NULL, version=%0)",
+                        VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(a(b(c(d(function (e, ...) { f(g)$h.i}))))), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(f(g)$h.i), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); val <- new.env(hash=FALSE); serialize(val, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); val <- list(enclos = new.env(hash=FALSE)); serialize(val, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); val <- defaultPrototype(); serialize(val, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function() new(\"foo\", x)), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x) { new(\"BAR\", x) }), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x, ...) { new(\"BAR\", x) }), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x,y) { new(\"BAR\", x) }), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x,y) { TRUE }), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x,y,...) { 1 }), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x,y=1,...) { NA }), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x={1 + a},y,...) { NA }), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x={1 + a},y,...) { !!NA }), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x={1 + a},y,...) { !1+5i }), connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x={1 + a},y=c(1,2,3),z=\"foo\",...) { !1+5i }), connection=NULL, version=%0)", VERSIONS));
+
+        assertEval(template("options(keep.source=FALSE); serialize(quote(function(x) { `+`(`(`(\"BAR\"), x) }), connection=NULL, version=%0)", VERSIONS));
+
+        assertEval(template("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$a <- 'foo'; serialize(val, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$b <- 123; serialize(val, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$c <- 1233L; serialize(val, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$d <- TRUE; serialize(val, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$e <- 5+9i; serialize(val, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template("options(keep.source=FALSE); val <- new.env(hash=FALSE); val$f <- NA; serialize(val, connection=NULL, version=%0)", VERSIONS));
 
         // active bindings
-        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); makeActiveBinding('a', function(x) print('hello'), val); serialize(val, connection=NULL)");
-        assertEval("options(keep.source=FALSE); val <- new.env(hash=FALSE); makeActiveBinding('a', function(x) print('hello'), val); data <- serialize(val, connection=NULL); newenv <- unserialize(rawConnection(data)); newenv$a");
+        assertEval(template("options(keep.source=FALSE); val <- new.env(hash=FALSE); makeActiveBinding('a', function(x) print('hello'), val); serialize(val, connection=NULL, version=%0)", VERSIONS));
+        assertEval(template(
+                        "options(keep.source=FALSE); val <- new.env(hash=FALSE); makeActiveBinding('a', function(x) print('hello'), val); data <- serialize(val, connection=NULL, version=%0); newenv <- unserialize(rawConnection(data)); newenv$a",
+                        VERSIONS));
 
-        assertEval("options(keep.source=FALSE); mc <- setClass('FooSerial0', representation(a = 'call')); obj <- new('FooSerial0'); serialize(obj, connection=NULL)");
-        assertEval(Ignored.ImplementationError, "options(keep.source=FALSE); fc <- setClass('FooSerial1', representation(a = 'call')); serialize(fc, connection=NULL)");
+        assertEval(template("options(keep.source=FALSE); mc <- setClass('FooSerial0', representation(a = 'call')); obj <- new('FooSerial0'); serialize(obj, connection=NULL, version=%0)", VERSIONS));
+        assertEval(Ignored.ImplementationError, template("options(keep.source=FALSE); fc <- setClass('FooSerial1', representation(a = 'call')); serialize(fc, connection=NULL, version=%0)", VERSIONS));
 
-        assertEval("{ options(keep.source=FALSE); f <- function() NULL; attributes(f) <- list(skeleton=quote(`<undef>`())); data <- serialize(f, conn=NULL); unserialize(conn=data) }");
-        assertEval("serialize('foo', NULL, version=2)");
-        // TODO implement version=3 serialization support
-        assertEval(Ignored.ImplementationError, "serialize('foo', NULL, version=3)");
+        assertEval(template(
+                        "{ options(keep.source=FALSE); f <- function() NULL; attributes(f) <- list(skeleton=quote(`<undef>`())); data <- serialize(f, conn=NULL, version=%0); unserialize(conn=data) }",
+                        VERSIONS));
+        assertEval(template("serialize('foo', NULL, version=%0)", VERSIONS));
     }
 
     @Test
     public void testSerializeWithPromises() {
-        assertEval("{ f <- function(...) serialize(mget('...'),NULL); length(unserialize(f(a=3,b=2,c=1))[[1]]); }");
-        assertEval("{ f <- function(...) serialize(environment()[['...']],NULL); x <- unserialize(f(a=3,b=2,c=1)); typeof(x) }");
+        assertEval(template("{ f <- function(...) serialize(mget('...'), NULL, version=%0); length(unserialize(f(a=3,b=2,c=1))[[1]]); }", VERSIONS));
+        assertEval(template("{ f <- function(...) serialize(environment()[['...']], NULL, version=%0); x <- unserialize(f(a=3,b=2,c=1)); typeof(x) }", VERSIONS));
     }
 }

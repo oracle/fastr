@@ -653,8 +653,7 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testMatrix() {
         assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; matrix(ja, c(3, 2))", "matrix(1:6, c(3, 2))");
-        assertEvalFastR(Ignored.ImplementationError, "ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; .fastr.inspect(matrix(ja, c(3, 2)))",
-                        "'com.oracle.truffle.r.runtime.data.RIntVector'");
+        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; .fastr.inspect(matrix(ja, c(3, 2)))", "cat('com.oracle.truffle.r.runtime.data.RIntVector\n')");
         assertEvalFastR(CREATE_TEST_ARRAYS + "matrix(ta$integerArray2, c(3, 2))", "v <- c(1, 1, 2, 2, 3, 3); dim(v) <- c(2, 3); matrix(v, c(3, 2))");
         assertEvalFastR(CREATE_TEST_ARRAYS + "matrix(ta$integerArray3, c(3, 2, 2))", "v <- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3); dim(v) <- c(2, 2, 3); matrix(v, c(3, 2, 2))");
     }
@@ -662,8 +661,7 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testArray() {
         assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; array(ja, c(3, 2))", "matrix(1:6, c(3, 2))");
-        assertEvalFastR(Ignored.ImplementationError, "ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; .fastr.inspect(array(ja, c(3, 2)))",
-                        "'com.oracle.truffle.r.runtime.data.RIntVector'");
+        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; .fastr.inspect(array(ja, c(3, 2)))", "cat('com.oracle.truffle.r.runtime.data.RIntVector\n')");
         assertEvalFastR(CREATE_TEST_ARRAYS + "array(ta$integerArray2, c(3, 2))", "v <- c(1, 1, 2, 2, 3, 3); dim(v) <- c(2, 3); array(v, c(3, 2))");
         assertEvalFastR(CREATE_TEST_ARRAYS + "array(ta$integerArray3, c(3, 2, 2))", "v <- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3); dim(v) <- c(2, 2, 3); array(v, c(3, 2, 2))");
     }
@@ -1234,6 +1232,40 @@ public class TestJavaInterop extends TestBase {
                             ".fastr.inspect(as.vector(as." + type + "(to$" + field + "), '" + type + "'));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
 
         }
+    }
+
+    @Test
+    public void testSerialize() {
+        String[] versions = {"2", "3"};
+        // missig "floatArray"
+        String[] fields = {"byteArray", "booleanArray", "charArray", "doubleArray", "integerArray", "longArray", "shortArray", "stringArray"};
+        String[] values = {"c(1L, 2L, 3L)", "c(T, F, T)", "c('a', 'b', 'c')", "c(1.1, 1.2, 1.3)", "c(1L, 2L, 3L)", "c(1, 2, 3)", "c(1L, 2L, 3L)", "c('a', 'b', 'c')"};
+
+        // test serialization of RForeignXXXWrapper
+        for (int i = 0; i < fields.length; i++) {
+            String field = fields[i];
+            String value = values[i];
+            for (String version : versions) {
+                assertEvalFastR(CREATE_TEST_ARRAYS + "v <- as.vector(ta$" + field + "); serialize(v, NULL, version=" + version + ")", "serialize(" + value + ", NULL, version=" + version + ")");
+                assertEvalFastR(CREATE_TEST_ARRAYS + "v <- as.vector(ta$" + field + "); unserialize(serialize(v, NULL, version=" + version + "))", value);
+            }
+        }
+
+        // test serialization of RToXXXVectorClosure
+        for (String version : versions) {
+            testSerializeRToXXXVectorClosure("integer", "doubleArray", "c(1L, 1L, 1L)", version);
+            // as.character(c(1.1, 1.2, 1.3)) creates a deferred_string ALTREP vector,
+            // its serialized form has to be the same as as.character(doubleArray)
+            testSerializeRToXXXVectorClosure("character", "doubleArray", "as.character(c(1.1, 1.2, 1.3))", version);
+            testSerializeRToXXXVectorClosure("double", "integerArray", "c(1, 2, 3)", version);
+            testSerializeRToXXXVectorClosure("complex", "integerArray", "c(1+0i, 2+0i, 3+0i)", version);
+        }
+    }
+
+    private void testSerializeRToXXXVectorClosure(String type, String field, String value, String version) {
+        assertEvalFastR(CREATE_TEST_ARRAYS + "v <- as." + type + "(as.vector(ta$" + field + ")); serialize(v, NULL, version=" + version + ")",
+                        "serialize(" + value + ", NULL, version=" + version + ")");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "v <- as." + type + "(as.vector(ta$" + field + ")); unserialize(serialize(v, NULL, version=" + version + "))", value);
     }
 
     @Test

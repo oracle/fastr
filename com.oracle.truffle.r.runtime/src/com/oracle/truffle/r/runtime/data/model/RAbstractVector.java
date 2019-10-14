@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.RFFIAccess;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
@@ -945,7 +946,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         } else if (access.getType() == RType.List) {
             assert !vector.isComplete();
         }
-        if (vector.isComplete()) {
+        if (vector.isComplete() && !(vector instanceof RSequence)) {
             // check all vectors for completeness
             access.na.enable(true);
             try (SequentialIterator iter = access.access(vector)) {

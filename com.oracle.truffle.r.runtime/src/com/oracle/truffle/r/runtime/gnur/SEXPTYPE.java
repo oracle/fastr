@@ -29,7 +29,11 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -47,6 +51,10 @@ import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.data.closures.RToComplexVectorClosure;
+import com.oracle.truffle.r.runtime.data.closures.RToDoubleVectorClosure;
+import com.oracle.truffle.r.runtime.data.closures.RToIntVectorClosure;
+import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 // Transcribed from GnuR src/include/Rinternals.h and src/main/serialize.c
@@ -63,11 +71,16 @@ public enum SEXPTYPE {
     SPECIALSXP(7), /* special forms */
     BUILTINSXP(8), /* builtin non-special forms */
     CHARSXP(9), /* "scalar" string type (GnuR internal only) */
-    LGLSXP(10, RLogicalVector.class, Byte.class), /* logical vectors */
-    INTSXP(13, RIntVector.class, RIntSequence.class, Integer.class), /* integer vectors */
-    REALSXP(14, RDoubleVector.class, RDoubleSequence.class, Double.class), /* real variables */
-    CPLXSXP(15, RComplexVector.class, RComplex.class), /* complex variables */
-    STRSXP(16, RStringVector.class, RStringSequence.class, String.class), /* string vectors */
+    /* logical vectors */
+    LGLSXP(10, RLogicalVector.class, Byte.class, RForeignBooleanWrapper.class),
+    /* integer vectors */
+    INTSXP(13, RIntVector.class, RIntSequence.class, Integer.class, RForeignIntWrapper.class, RToIntVectorClosure.class),
+    /* real vectors */
+    REALSXP(14, RDoubleVector.class, RDoubleSequence.class, Double.class, RForeignDoubleWrapper.class, RToDoubleVectorClosure.class),
+    /* complex vectors */
+    CPLXSXP(15, RComplexVector.class, RComplex.class, RToComplexVectorClosure.class),
+    /* string vectors */
+    STRSXP(16, RStringVector.class, RStringSequence.class, String.class, RForeignStringWrapper.class, RToStringVectorClosure.class),
     DOTSXP(17, RArgsValuesAndNames.class), /* dot-dot-dot object */
     ANYSXP(18), /* make "any" args work */
     VECSXP(19, RList.class), /* generic vectors */
@@ -99,6 +112,8 @@ public enum SEXPTYPE {
     BASEENV_SXP(241),
     ATTRLANGSXP(240),
     ATTRLISTSXP(239),
+
+    ALTREP_SXP(238),
 
     EMPTYARG_SXP(500, REmpty.class);
 
