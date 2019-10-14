@@ -257,7 +257,7 @@ public class RRNG {
         return getContextState().currentSampleKind.ordinal();
     }
 
-    private static Kind currentKind() {
+    public static Kind currentKind() {
         return getContextState().currentGenerator.getKind();
     }
 

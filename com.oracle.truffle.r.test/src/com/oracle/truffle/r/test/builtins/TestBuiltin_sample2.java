@@ -30,11 +30,11 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_sample2 extends TestBase {
     @Test
     public void testSample2() {
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42);  .Internal(sample2(10, 2))");
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42);  .Internal(sample2(10L, 3L))");
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42);  x <- .Internal(sample2(10L, 3L)); y <- .Internal(sample2(10L, 3L)); list(x, y); ");
+        assertEval("set.seed(42);  .Internal(sample2(10, 2))");
+        assertEval("set.seed(42);  .Internal(sample2(10L, 3L))");
+        assertEval("set.seed(42);  x <- .Internal(sample2(10L, 3L)); y <- .Internal(sample2(10L, 3L)); list(x, y); ");
         // test with n > MAX_INT
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42);  .Internal(sample2(4147483647, 10))");
+        assertEval("set.seed(42);  .Internal(sample2(4147483647, 10))");
         assertEval("set.seed(42);  .Internal(sample2(NULL,3))");
     }
 
@@ -47,6 +47,6 @@ public class TestBuiltin_sample2 extends TestBase {
 
         assertEval("set.seed(42); .Internal(sample2(10, 8))");
         assertEval("set.seed(42); .Internal(sample2(10, -2))");
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42); .Internal(sample2(10, 2.99))");
+        assertEval("set.seed(42); .Internal(sample2(10, 2.99))");
     }
 }
