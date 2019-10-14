@@ -728,13 +728,22 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
     public void setNames(RStringVector newNames) {
         ensurePairList();
         Object p = this;
-        for (int i = 0; i < newNames.getLength() && !RRuntime.isNull(p); i++) {
-            RPairList pList = (RPairList) p;
-            String newNameVal = newNames.getDataAt(i);
-            Object newTag = newNameVal.isEmpty() ? RNull.instance : RDataFactory.createSymbolInterned(newNameVal);
-            pList.setTag(newTag);
-            p = pList.cdr();
+        if (newNames != null) {
+            for (int i = 0; i < newNames.getLength() && !RRuntime.isNull(p); i++) {
+                RPairList pList = (RPairList) p;
+                String newNameVal = newNames.getDataAt(i);
+                Object newTag = newNameVal.isEmpty() ? RNull.instance : RDataFactory.createSymbolInterned(newNameVal);
+                pList.setTag(newTag);
+                p = pList.cdr();
+            }
+        } else {
+            while (!RRuntime.isNull(p)) {
+                RPairList pList = (RPairList) p;
+                pList.setTag(RNull.instance);
+                p = pList.cdr();
+            }
         }
+
     }
 
     @Override

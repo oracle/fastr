@@ -81,6 +81,12 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
         return (RStringVector) getAttr(RRuntime.NAMES_ATTR_KEY);
     }
 
+    /**
+     * Sets names for the container, or removes them in case that <code>newNames</code> is
+     * <code>null</code>.
+     * 
+     * @param newNames
+     */
     public void setNames(RStringVector newNames) {
         CompilerAsserts.neverPartOfCompilation();
         setAttr(RRuntime.NAMES_ATTR_KEY, newNames);
