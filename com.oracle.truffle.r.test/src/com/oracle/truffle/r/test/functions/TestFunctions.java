@@ -344,7 +344,7 @@ public class TestFunctions extends TestBase {
         // Checkstyle: resume line length check
 
         assertEval(Output.IgnoreErrorContext, "{ f <- function(x) { ..1 } ;  f(10) }");
-        assertEval(Ignored.NewRVersionMigration, "{ f <- function(...) { ..1 } ;  f() }");
+        assertEval("{ f <- function(...) { ..1 } ;  f() }");
 
         assertEval("{ fn1 <- function (a, b) a + b; fn2 <- function (a, b, ...) fn1(a, b, ...); fn2(1, 1) }");
         assertEval("{ asdf <- function(x,...) UseMethod(\"asdf\",x); asdf.numeric <- function(x, ...) print(paste(\"num:\", x, ...)); asdf(1) }");
@@ -366,7 +366,7 @@ public class TestFunctions extends TestBase {
         assertEval("{ g <- function(a,b,aa,bb) { a ; x <<- 10 ; aa ; c(a, aa) } ; f <- function(...) {  g(..., ...) } ; x <- 1; y <- 2; f(x, y) }");
         assertEval("{ f <- function(a, b) { a - b } ; g <- function(...) { f(1, ...) } ; g(a = 2) }");
 
-        assertEval(Ignored.NewRVersionMigration, /* Output.IgnoreErrorContext, */"{ f <- function(...) { ..3 } ; f(1,2) }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function(...) { ..3 } ; f(1,2) }");
 
         assertEval(Output.IgnoreErrorContext, "{ f <- function() { dummy() } ; f() }");
         assertEval(Output.IgnoreErrorContext, "{ f <- function() { if (FALSE) { dummy <- 2 } ; dummy() } ; f() }");
