@@ -46,13 +46,17 @@ public class TestRRNG extends TestBase {
     @Test
     public void testDirectReadingSeed() {
         assertEval("invisible(runif(1)); length(.Random.seed)");
-        assertEval(Ignored.NewRVersionMigration, "set.seed(42); .Random.seed");
+        assertEval("set.seed(42); .Random.seed");
     }
 
     @Test
     public void testRemoveSeed() {
-        assertEval(Ignored.NewRVersionMigration, "{ rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(1); .Random.seed }");
+        assertEval("{ rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(1); .Random.seed }");
         assertEval(Output.IgnoreErrorContext, "{ rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); .Random.seed }");
-        assertEval(Ignored.NewRVersionMigration, "{ set.seed(1); rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(2); .Random.seed }");
+        assertEval("{ set.seed(1); rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(2); .Random.seed }");
+
+        assertEval(Ignored.ImplementationError, "{ set.seed(1); rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(2, sample.kind='Rounding'); sample(1:10, 3); .Random.seed }");
+        assertEval(Ignored.ImplementationError, "{ set.seed(1); rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(2, sample.kind='Rejection'); sample(1:10, 3); .Random.seed }");
+        // TODO test norm.kind as well
     }
 }

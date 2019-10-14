@@ -675,6 +675,7 @@ public final class RError extends RuntimeException implements TruffleException {
         SINGULAR_SOLVE("singular matrix '%s' in solve"),
         SEED_TYPE("'.Random.seed' is not an integer vector but of type '%s', so ignored"),
         INVALID_NORMAL_TYPE_IN_RGNKIND("invalid Normal type in 'RNGkind'"),
+        INVALID_SAMPLE_TYPE_IN_RGNKIND("invalid sample type in 'RNGkind'"),
         INVALID_USE("invalid use of '%s'"),
         FORMAL_MATCHED_MULTIPLE("formal argument \"%s\" matched by multiple actual arguments"),
         ARGUMENT_MATCHES_MULTIPLE("argument %d matches multiple formal arguments"),

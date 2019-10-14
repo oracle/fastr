@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import static com.oracle.truffle.r.runtime.rng.RRNG.SampleKind.REJECTION;
 import com.oracle.truffle.r.runtime.rng.mm.MarsagliaMulticarry;
 import com.oracle.truffle.r.runtime.rng.mt.MersenneTwister;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
@@ -108,11 +109,19 @@ public class RRNG {
         @CompilationFinal(dimensions = 1) static final NormKind[] VALUES = values();
     }
 
+    public enum SampleKind {
+        ROUNDING,
+        REJECTION;
+
+        @CompilationFinal(dimensions = 1) static final SampleKind[] VALUES = values();
+    }
+
     public static final int NO_KIND_CHANGE = -2; // internal value
     public static final int DEFAULT_KIND_CHANGE = -1; // comes from RNG.R
     public static final Integer SAME_SEED = null;
     private static final Kind DEFAULT_KIND = Kind.MERSENNE_TWISTER;
     private static final NormKind DEFAULT_NORM_KIND = NormKind.INVERSION;
+    private static final SampleKind DEFAULT_SAMPLE_KIND = SampleKind.REJECTION;
     public static final String RANDOM_SEED = ".Random.seed";
     private static final double UINT_MAX = (double) Integer.MAX_VALUE * 2;
 
@@ -120,6 +129,7 @@ public class RRNG {
         private RandomNumberGenerator currentGenerator;
         private final RandomNumberGenerator[] allGenerators;
         private NormKind currentNormKind;
+        private SampleKind currentSampleKind;
         private WeakReference<ActiveBinding> dotRandomSeedBinding;
 
         /**
@@ -131,6 +141,7 @@ public class RRNG {
 
         private ContextStateImpl() {
             this.currentNormKind = DEFAULT_NORM_KIND;
+            this.currentSampleKind = REJECTION;
             this.allGenerators = new RandomNumberGenerator[Kind.VALUES.length];
         }
 
@@ -191,6 +202,17 @@ public class RRNG {
             }
         }
 
+        /*
+         * Similar to GNUR's Sample_kind function.
+         */
+        @TruffleBoundary
+        void updateCurrentSampleKind(SampleKind sampleKind, boolean saveState) {
+            currentSampleKind = sampleKind;
+            if (saveState) {
+                putRNGState();
+            }
+        }
+
         public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
         }
@@ -243,6 +265,10 @@ public class RRNG {
         return getContextState().currentNormKind;
     }
 
+    public static SampleKind currentSampleKind() {
+        return getContextState().currentSampleKind;
+    }
+
     /**
      * Ask the current generator for a random double. (cf. {@code unif_rand} in RNG.c.
      */
@@ -293,9 +319,9 @@ public class RRNG {
      *            {@link NormKind}.
      */
     @TruffleBoundary
-    public static void doSetSeed(int seed, int kindAsInt, int normKindAsInt) {
+    public static void doSetSeed(int seed, int kindAsInt, int normKindAsInt, int sampleKindAsInt) {
         getRNGKind(RNull.instance);
-        changeKindsAndInitGenerator(seed, kindAsInt, normKindAsInt);
+        changeKindsAndInitGenerator(seed, kindAsInt, normKindAsInt, sampleKindAsInt);
         putRNGState();
     }
 
@@ -303,13 +329,13 @@ public class RRNG {
      * Set the kind and optionally the norm kind, called from R builtin {@code RNGkind}. GnuR
      * chooses the new seed from the previous RNG.
      */
-    public static void doRNGKind(int kindAsInt, int normKindAsInt) {
+    public static void doRNGKind(int kindAsInt, int normKindAsInt, int sampleKindAsInt) {
         getRNGKind(RNull.instance);
-        changeKindsAndInitGenerator(SAME_SEED, kindAsInt, normKindAsInt);
+        changeKindsAndInitGenerator(SAME_SEED, kindAsInt, normKindAsInt, sampleKindAsInt);
     }
 
     @TruffleBoundary
-    private static void changeKindsAndInitGenerator(Integer newSeed, int kindAsInt, int normKindAsInt) {
+    private static void changeKindsAndInitGenerator(Integer newSeed, int kindAsInt, int normKindAsInt, int sampleKindAsInt) {
         RandomNumberGenerator rng;
         if (kindAsInt != NO_KIND_CHANGE) {
             if (kindAsInt == DEFAULT_KIND_CHANGE) {
@@ -334,6 +360,14 @@ public class RRNG {
                 getContextState().updateCurrentNormKind(intToNormKind(normKindAsInt), true);
             }
         } // otherwise the current one stays
+
+        if (sampleKindAsInt != NO_KIND_CHANGE) {
+            if (sampleKindAsInt == DEFAULT_KIND_CHANGE) {
+                getContextState().updateCurrentSampleKind(DEFAULT_SAMPLE_KIND, true);
+            } else {
+                getContextState().updateCurrentSampleKind(intToSampleKind(sampleKindAsInt), true);
+            }
+        } // otherwise the current one stays
     }
 
     private static Kind intToKind(int kindAsInt) {
@@ -346,6 +380,10 @@ public class RRNG {
 
     private static NormKind intToNormKind(int normKindAsInt) {
         return NormKind.VALUES[normKindAsInt];
+    }
+
+    private static SampleKind intToSampleKind(int sampleKindAsInt) {
+        return SampleKind.VALUES[sampleKindAsInt];
     }
 
     private static void initGenerator(RandomNumberGenerator generator, int aSeed) {
@@ -380,6 +418,7 @@ public class RRNG {
     private static void handleInvalidSeed() {
         randomize(DEFAULT_KIND);
         getContextState().updateCurrentNormKind(DEFAULT_NORM_KIND, false);
+        getContextState().updateCurrentSampleKind(DEFAULT_SAMPLE_KIND, false);
     }
 
     /**
@@ -411,21 +450,13 @@ public class RRNG {
             handleInvalidSeed();
             return;
         }
-        if (tmp == RRuntime.INT_NA || tmp < 0 || tmp > 1000) {
+        if (tmp == RRuntime.INT_NA || tmp < 0 || tmp > 11000) {
             assert seeds != RMissing.instance;
             String type = seeds instanceof RBaseObject ? ((RBaseObject) seeds).getRType().getName() : "unknown";
             RError.warning(RError.NO_CALLER, RError.Message.SEED_TYPE, type);
             handleInvalidSeed();
             return;
         }
-
-        int normKindIntValue = tmp / 100;
-        if (normKindIntValue >= NormKind.VALUES.length) {
-            RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "'.Random.seed[1]' is not a valid Normal type, so ignored");
-            handleInvalidSeed();
-            return;
-        }
-        NormKind newNormKind = intToNormKind(normKindIntValue);
 
         int kindIntValue = tmp % 100;
         if (kindIntValue >= Kind.VALUES.length) {
@@ -435,11 +466,22 @@ public class RRNG {
         }
         Kind newKind = intToKind(kindIntValue);
 
+        int normKindIntValue = (tmp % 10000) / 100;
+        int sampleKindIntValue = (tmp / 10000);
+        if (normKindIntValue >= NormKind.VALUES.length || sampleKindIntValue > REJECTION.ordinal()) {
+            RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "'.Random.seed[1]' is not a valid Normal type, so ignored");
+            handleInvalidSeed();
+            return;
+        }
+        NormKind newNormKind = intToNormKind(normKindIntValue);
+        SampleKind newSampleKind = intToSampleKind(sampleKindIntValue);
+
         // TODO: GNU R checks if user-supplied generator is available, but it seems like we would
         // not be able to initialize the user RNG at all if it wasn't
 
         getContextState().switchCurrentGenerator(newKind);
         getContextState().updateCurrentNormKind(newNormKind, false);
+        getContextState().updateCurrentSampleKind(newSampleKind, false);
     }
 
     /**
@@ -497,7 +539,7 @@ public class RRNG {
     @TruffleBoundary
     public static void putRNGState() {
         int[] seeds = currentGenerator().getSeeds();
-        seeds[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal();
+        seeds[0] = currentKind().ordinal() + 100 * currentNormKind().ordinal() + 10000 * currentSampleKind().ordinal();
         RContext.getInstance().stateRNG.setCurrentSeeds(seeds);
     }
 }
