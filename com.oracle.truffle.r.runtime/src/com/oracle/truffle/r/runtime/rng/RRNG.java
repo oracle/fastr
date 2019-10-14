@@ -253,6 +253,10 @@ public class RRNG {
         return getContextState().currentNormKind.ordinal();
     }
 
+    public static int currentSampleKindAsInt() {
+        return getContextState().currentSampleKind.ordinal();
+    }
+
     private static Kind currentKind() {
         return getContextState().currentGenerator.getKind();
     }

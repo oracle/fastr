@@ -29,8 +29,8 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_RNGkind extends TestBase {
     @Test
     public void testArgsCast() {
-        assertEval(Ignored.NewRVersionMigration, ".Internal(RNGkind(1L, 1L, NULL))");
-        assertEval(Ignored.NewRVersionMigration, ".Internal(RNGkind(NULL, NULL, NULL))");
+        assertEval(".Internal(RNGkind(1L, 1L, NULL))");
+        assertEval(".Internal(RNGkind(NULL, NULL, NULL))");
         // Note: GnuR casts 'abc' to int and then fails to find it, we do proper args validation in
         // this case
         assertEval(Output.IgnoreErrorMessage, ".Internal(RNGkind('abc', NULL, NULL))");

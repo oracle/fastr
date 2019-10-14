@@ -102,7 +102,6 @@ public class RNGFunctions {
             Casts casts = new Casts(RNGkind.class);
             CastsHelper.kindInteger(casts, "kind", INVALID_ARGUMENT, "kind");
             CastsHelper.kindInteger(casts, "normkind", INVALID_NORMAL_TYPE_IN_RGNKIND);
-            // XXX
             CastsHelper.kindInteger(casts, "sample.kind", INVALID_SAMPLE_TYPE_IN_RGNKIND);
         }
 
@@ -116,7 +115,7 @@ public class RNGFunctions {
         }
 
         private static RIntVector getCurrent() {
-            return RDataFactory.createIntVector(new int[]{RRNG.currentKindAsInt(), RRNG.currentNormKindAsInt()}, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createIntVector(new int[]{RRNG.currentKindAsInt(), RRNG.currentNormKindAsInt(), RRNG.currentSampleKindAsInt()}, RDataFactory.COMPLETE_VECTOR);
         }
     }
 
