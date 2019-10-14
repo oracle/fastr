@@ -44,6 +44,6 @@ public class TestBuiltin_row extends TestBase {
 
     @Test
     public void testArgsCasts() {
-        assertEval(Ignored.NewRVersionMigration, ".Internal(row('str'))");
+        assertEval(".Internal(row('str'))");
     }
 }
