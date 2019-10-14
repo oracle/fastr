@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 /**
  * A closure for creating promises and languages.
  */
-public final class Closure {
+public final class Closure implements Cloneable {
     private final Object cacheLock;
     private CallTargetCacheImpl callTargetCache;
 

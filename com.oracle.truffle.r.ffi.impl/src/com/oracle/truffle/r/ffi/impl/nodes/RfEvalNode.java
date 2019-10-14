@@ -203,7 +203,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
             return resultValue;
         }
 
-        @Specialization(replaces = "evalFastPath", guards = "callInfo.argsLen > MAX_ARITY")
+        @Specialization(replaces = "evalFastPath")
         Object evalSlowPath(Object downcallFrame, CallInfo callInfo,
                         @Cached("new()") SlowPathDirectCallerNode slowPathCallNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,

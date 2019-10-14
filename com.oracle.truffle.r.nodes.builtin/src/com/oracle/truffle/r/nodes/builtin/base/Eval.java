@@ -397,7 +397,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             return resultValue;
         }
 
-        @Specialization(replaces = "evalFastPath", guards = "callInfo.argsLen > MAX_ARITY")
+        @Specialization(replaces = "evalFastPath")
         Object evalSlowPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller,
                         @Cached("new()") SlowPathDirectCallerNode slowPathCallNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,

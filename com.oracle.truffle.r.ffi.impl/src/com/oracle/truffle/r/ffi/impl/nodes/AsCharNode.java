@@ -53,7 +53,7 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     protected CharSXPWrapper asChar(RStringVector obj, @Cached("createBinaryProfile()") ConditionProfile profile, @Cached("createBinaryProfile()") ConditionProfile naProfile,
-				    @Cached("createBinaryProfile()") ConditionProfile isNativized, 
+                    @Cached("createBinaryProfile()") ConditionProfile isNativized,
                     @Cached("createBinaryProfile()") ConditionProfile wrapProfile) {
         if (profile.profile(obj.getLength() == 0)) {
             return CharSXPWrapper_NA;

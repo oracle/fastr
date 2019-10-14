@@ -308,8 +308,8 @@ public final class RStringVector extends RAbstractStringVector implements RMater
             fence = 42; // make sure the array is really initialized before we set it to this.data
             this.data = newData;
         }
-	}
-	
+    }
+
     public CharSXPWrapper getWrappedDataAt(int index) {
         if (!isNativized()) {
             assert data instanceof CharSXPWrapper[] : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
