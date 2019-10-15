@@ -37,9 +37,6 @@ export DEFAULT_CRAN_MIRROR = "https://mran.microsoft.com/snapshot/2019-02-13"
 export GNUR_HOME = $(TOPDIR)/gnur/patch-build
 export F2C_HOME= $(FASTR_R_HOME)/f2c
 
-export R_DEFAULT_SAVE_VERSION=2
-export R_DEFAULT_SERIALIZE_VERSION=2
-
 $(info R_VERSION: $(R_VERSION))
 $(info GNUR_HOME: $(GNUR_HOME))
 

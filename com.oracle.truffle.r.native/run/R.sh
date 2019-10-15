@@ -46,7 +46,4 @@ else
     mx=`which mx`
 fi
 
-export R_DEFAULT_SAVE_VERSION=2
-export R_DEFAULT_SERIALIZE_VERSION=2
-
 exec $mx --no-warning --primary-suite-path $PRIMARY_PATH $MX_R_GLOBAL_ARGS R $FASTR_INTERNAL_ARGS $MX_R_CMD_ARGS "$@"

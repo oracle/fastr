@@ -297,7 +297,15 @@ public class RSerialize {
         }
     }
 
-    public static final int DEFAULT_VERSION = 2;
+    public static final int DEFAULT_VERSION;
+    static {
+        String defVersion = System.getenv("R_DEFAULT_SERIALIZE_VERSION");
+        if ("2".equals(defVersion) || "3".equals(defVersion)) {
+            DEFAULT_VERSION = Integer.parseInt(defVersion);
+        } else {
+            DEFAULT_VERSION = 3;
+        }
+    }
 
     /**
      * Lazily read in case set during execution for debugging purposes. This is necessary because

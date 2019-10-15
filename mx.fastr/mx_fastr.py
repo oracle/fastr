@@ -194,10 +194,6 @@ def setREnvironment(env=None):
     # Make sure that native code formats numbers consistently
     env['LC_NUMERIC'] = 'C'
 
-    # Use serialization version 2 for now
-    env['R_DEFAULT_SAVE_VERSION'] = '2'
-    env['R_DEFAULT_SERIALIZE_VERSION'] = '2'
-
     osname = platform.system()
     if osname != 'Darwin':
         lib_env = 'LD_LIBRARY_PATH'

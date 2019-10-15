@@ -115,9 +115,6 @@ cp="$JAVA_HOME/jre/languages/R/fastr-launcher.jar:$cp"
 
 ## REMOVE FOR NATIVE IMAGE: END
 
-export R_DEFAULT_SAVE_VERSION=2
-export R_DEFAULT_SERIALIZE_VERSION=2
-
 # we can invoke FastR directly, but we do have to set R_HOME
 export R_HOME="$JRE/languages/R"
 
