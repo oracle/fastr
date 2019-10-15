@@ -41,14 +41,17 @@ import javax.management.ObjectName;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -57,6 +60,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.AsPointerNodeGen;
 import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.ToNativeNodeGen;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
@@ -370,14 +375,7 @@ public final class NativeDataAccess {
      * Pointer existence has to be first ensured via {@link #isPointer} and {@link #toNative}.
      */
     static long asPointer(RBaseObject obj) {
-        NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
-
-        RContext rContext = RContext.getInstance();
-        if (rContext.getStateRFFI().getCallDepth() > 0) {
-            rContext.getStateRFFI().registerReferenceUsedInNative(obj);
-        }
-
-        return mirror.id;
+        return AsPointerNodeGen.getUncached().execute(obj);
     }
 
     /**
@@ -400,6 +398,28 @@ public final class NativeDataAccess {
                 putMirrorObject(obj, mirror);
                 assert ((NativeMirror) obj.getNativeMirror()).id != 0;
             }
+        }
+
+    }
+
+    @ImportStatic(NativeDataAccess.class)
+    @GenerateUncached
+    public abstract static class AsPointerNode extends Node {
+        abstract long execute(RBaseObject obj);
+
+        @Specialization
+        long asPointer(RBaseObject obj,
+                        @Cached("createBinaryProfile()") ConditionProfile isInNative,
+                        @Cached BranchProfile refRegProfile,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+            NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+
+            RContext rContext = ctxRef.get();
+            if (isInNative.profile(rContext.getStateRFFI().getCallDepth() > 0)) {
+                rContext.getStateRFFI().registerReferenceUsedInNative(obj, refRegProfile);
+            }
+
+            return mirror.id;
         }
 
     }
