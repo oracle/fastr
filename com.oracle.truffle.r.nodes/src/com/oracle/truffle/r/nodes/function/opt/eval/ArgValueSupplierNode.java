@@ -48,6 +48,11 @@ import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+/**
+ * TODO: There are several specializations caching {@link Closure}, which should be done otherwise,
+ * as no runtime object should be stored in an AST to allow sharing that AST among different
+ * contexts.
+ */
 public abstract class ArgValueSupplierNode extends Node {
 
     @Child private ShareObjectNode sharedObjectNode;
