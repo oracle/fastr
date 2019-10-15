@@ -86,7 +86,7 @@ $(PKGS_REPO_DIR):
 
 install.recommended: $(PKGS_REPO_DIR)
 ifdef R_RECOMMENDED_PKGS_CACHE_DIR
-	mx r-pkgcache $(VERBOSE) --vm fastr --library fastr=$(FASTR_R_HOME)/library --repos RECOMMENDED=$(PKGS_REPO_DIR) --cache-dir $(R_RECOMMENDED_PKGS_CACHE_DIR) --pkg-pattern $(GNUR_RECOMMENDED_PATTERN)
+	mx -p $(FASTR_R_HOME) r-pkgcache $(VERBOSE) --vm fastr --library fastr=$(FASTR_R_HOME)/library --repos RECOMMENDED=$(PKGS_REPO_DIR) --cache-dir $(R_RECOMMENDED_PKGS_CACHE_DIR) --pkg-pattern $(GNUR_RECOMMENDED_PATTERN)
 else
 	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
 		($(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar) || (echo "ERROR: during installation of $$pkgtar"; exit 1); \
