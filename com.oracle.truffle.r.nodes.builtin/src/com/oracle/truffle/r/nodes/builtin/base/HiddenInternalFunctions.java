@@ -82,6 +82,8 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxUtils;
+
 import java.nio.file.StandardOpenOption;
 
 /**
@@ -123,6 +125,7 @@ public class HiddenInternalFunctions {
         @TruffleBoundary
         protected RNull doMakeLazy(RAbstractStringVector names, RList values, RPairList expr, REnvironment eenv, REnvironment aenv) {
             initEval();
+            RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
             for (int i = 0; i < names.getLength(); i++) {
                 String name = names.getDataAt(i);
                 RIntVector intVec = (RIntVector) values.getDataAt(i);
@@ -134,13 +137,9 @@ public class HiddenInternalFunctions {
                 RSyntaxElement[] arguments = element.getSyntaxArguments();
                 ArgumentsSignature signature = element.getSyntaxSignature();
 
-                RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
                 ArrayList<Argument<RSyntaxNode>> args = new ArrayList<>(arguments.length);
                 args.add(RCodeBuilder.argument(RSyntaxNode.INTERNAL, signature.getName(i), builder.constant(RSyntaxNode.INTERNAL, intVec)));
-                for (int j = 1; j < arguments.length; j++) {
-                    args.add(RCodeBuilder.argument(arguments[j] == null ? null : arguments[j].getLazySourceSection(), signature.getName(j),
-                                    arguments[j] == null ? null : builder.process(arguments[j])));
-                }
+                RSyntaxUtils.createArgumentsList(1, arguments, signature, args);
                 RCallNode expr0 = (RCallNode) builder.call(element.getLazySourceSection(), builder.process(element.getSyntaxLHS()), args).asRNode();
                 try {
                     // We want this call to have a SourceSection
@@ -158,6 +157,7 @@ public class HiddenInternalFunctions {
             }
             return RNull.instance;
         }
+
     }
 
     /**
