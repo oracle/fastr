@@ -36,6 +36,6 @@ public class TestBuiltin_weekdaysDate extends TestBase {
         // due to JDK bug 8130845.
         Locale.setDefault(Locale.ENGLISH);
 
-        assertEval(Ignored.NewRVersionMigration, "argv <- structure(list(x = structure(16352, class = 'Date')),     .Names = 'x');do.call('weekdays.Date', argv)");
+        assertEval("argv <- structure(list(x = structure(16352, class = 'Date')), .Names = 'x');do.call('weekdays.Date', argv)");
     }
 }
