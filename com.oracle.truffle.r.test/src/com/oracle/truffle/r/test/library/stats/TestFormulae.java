@@ -83,7 +83,13 @@ public class TestFormulae extends TestBase {
 
     @Test
     public void testModelMatrix() {
-        assertEval(Ignored.NewRVersionMigration, template("{%0; model.matrix(model.frame(terms.formula(%1))) }", INITS, FORMULAE));
+        for (String f : FORMULAE) {
+            if ("~1".equals(f)) {
+                assertEval(Ignored.NewRVersionMigration, template("{%0; model.matrix(model.frame(terms.formula(" + f + "))) }", INITS));
+            } else {
+                assertEval(template("{%0; model.matrix(model.frame(terms.formula(" + f + "))) }", INITS));
+            }
+        }
     }
 
     @Test
