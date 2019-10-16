@@ -122,7 +122,7 @@ public abstract class RSyntaxUtils {
         RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
         for (int j = offset; j < arguments.length; j++) {
             result.add(RCodeBuilder.argument(arguments[j] == null ? null : arguments[j].getLazySourceSection(), signature.getName(j),
-                    arguments[j] == null ? null : builder.process(arguments[j])));
+                            arguments[j] == null ? null : builder.process(arguments[j])));
         }
     }
 }
