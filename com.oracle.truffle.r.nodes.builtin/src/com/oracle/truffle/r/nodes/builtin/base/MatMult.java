@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.binary.BinaryMapArithmeticFunctionNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -117,21 +118,47 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
         return result;
     }
 
-    @Specialization(guards = "hasZeroDim(a, getADimsNode)")
+    protected static boolean isEmpty(RAbstractVector vec, RLengthNode lenNode) {
+        return lenNode.executeInteger(vec) == 0;
+    }
+
+    @Specialization(guards = {"hasZeroDim(a, getADimsNode)", "!isEmpty(b, getLength)"}, limit = "1")
     protected RAbstractVector left0Dim(RAbstractVector a, RAbstractVector b,
+                    @Cached RLengthNode getLength,
                     @Cached() SetDimAttributeNode setDims) {
         int[] aDim = getADimsNode.getDimensions(a);
-        int[] dim = aDim[0] == 0 ? new int[]{0, getBDimsNode.getDimensions(b)[1]} : new int[]{getBDimsNode.getDimensions(b)[0], 0};
+        assert aDim != null; // implied by hasZeroDim returning true
+        int[] bDim = getBDimsNode.getDimensions(b);
+        if (!isMatrix(bDim)) {
+            int bLen = getLength.executeInteger(b);
+            if (bLen == aDim[1]) {
+                bDim = new int[]{bLen, 1};
+            } else {
+                bDim = new int[]{1, bLen};
+            }
+        }
+        int[] dim = aDim[0] == 0 ? new int[]{0, bDim[1]} : new int[]{bDim[0], 0};
         RAbstractVector result = a.copyDropAttributes();
         setDims.setDimensions(result, dim);
         return result;
     }
 
-    @Specialization(guards = "hasZeroDim(b, getBDimsNode)")
+    @Specialization(guards = {"hasZeroDim(b, getBDimsNode)", "!isEmpty(a, getLength)"}, limit = "1")
     protected RAbstractVector right0Dim(RAbstractVector a, RAbstractVector b,
+                    @Cached RLengthNode getLength,
                     @Cached() SetDimAttributeNode setDims) {
         int[] bDim = getBDimsNode.getDimensions(b);
-        int[] dim = bDim[0] == 0 ? new int[]{0, getADimsNode.getDimensions(a)[1]} : new int[]{getADimsNode.getDimensions(a)[0], 0};
+        assert bDim != null; // implied by hasZeroDim returning true
+        int[] aDim = getADimsNode.getDimensions(a);
+        if (!isMatrix(aDim)) {
+            int aLen = getLength.executeInteger(a);
+            if (aLen == bDim[0]) {
+                aDim = new int[]{1, aLen};
+            } else {
+                aDim = new int[]{aLen, 1};
+            }
+        }
+        int[] dim = bDim[0] == 0 ? new int[]{0, aDim[1]} : new int[]{aDim[0], 0};
         RAbstractVector result = b.copyDropAttributes();
         setDims.setDimensions(result, dim);
         return result;

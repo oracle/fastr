@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.launcher;
 
+import com.oracle.truffle.r.launcher.RMain.PrintHelp;
+import com.oracle.truffle.r.launcher.RMain.PrintVersion;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -43,6 +46,21 @@ public final class RCmdOptions {
             public String argumentName() {
                 return "R";
             }
+
+            @Override
+            public String[] processOptions(RCmdOptions options) {
+                return preprocessROptions(options);
+            }
+
+            @Override
+            public String getHelpMessage() {
+                return "R version " + RVersionNumber.FULL + " (FastR)\n" +
+                                RVersionNumber.COPYRIGHT +
+                                "\n" +
+                                "FastR is free software and comes with ABSOLUTELY NO WARRANTY.\n" +
+                                "You are welcome to redistribute it under certain conditions.\n";
+                // note: extra new-line at the end matches GNU-R's formatting
+            }
         },
 
         RSCRIPT {
@@ -54,6 +72,16 @@ public final class RCmdOptions {
             @Override
             public String argumentName() {
                 return "Rscript";
+            }
+
+            @Override
+            public String[] processOptions(RCmdOptions options) {
+                return preprocessRScriptOptions(options);
+            }
+
+            @Override
+            public String getHelpMessage() {
+                return String.format("R scripting front-end version %s%s", RVersionNumber.FULL, RVersionNumber.RELEASE_DATE);
             }
         },
 
@@ -67,11 +95,25 @@ public final class RCmdOptions {
             public String argumentName() {
                 return "either";
             }
+
+            @Override
+            public String[] processOptions(RCmdOptions options) {
+                return options.getArguments();
+            }
+
+            @Override
+            public String getHelpMessage() {
+                return R.getHelpMessage();
+            }
         };
 
         public abstract String usage();
 
         public abstract String argumentName();
+
+        public abstract String[] processOptions(RCmdOptions options);
+
+        public abstract String getHelpMessage();
     }
 
     private enum RCmdOptionType {
@@ -295,9 +337,9 @@ public final class RCmdOptions {
     /**
      * Parse the arguments from the standard R/Rscript command line syntax, setting the
      * corresponding values.
-     *
+     * <p>
      * R supports {@code --arg=value} or {@code -arg value} for string-valued options.
-     *
+     * <p>
      * The spec for {@code commandArgs()} states that it returns the executable by which R was
      * invoked in element 0, which is consistent with the C {@code main} function, but defines the
      * exact form to be platform independent. Java does not provide the executable (for obvious
@@ -434,7 +476,64 @@ public final class RCmdOptions {
         System.out.println("\nFILE may contain spaces but not shell metacharacters.\n");
     }
 
-    static void printVersion() {
-        System.out.printf("R scripting front-end version %s%s\n", RVersionNumber.FULL, RVersionNumber.RELEASE_DATE);
+    private static String[] preprocessROptions(RCmdOptions options) {
+        if (options.getBoolean(RCmdOption.VERSION)) {
+            throw new PrintVersion();
+        }
+        return options.getArguments();
+    }
+
+    // CheckStyle: stop system..print check
+
+    private static String[] preprocessRScriptOptions(RCmdOptions options) {
+        if (options.getBoolean(RCmdOption.VERSION)) {
+            throw new PrintVersion();
+        }
+
+        String[] arguments = options.getArguments();
+        int resultArgsLength = arguments.length;
+        int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
+        // Now reformat the args, setting --slave and --no-restore as per the spec
+        ArrayList<String> adjArgs = new ArrayList<>(resultArgsLength + 1);
+        adjArgs.add(arguments[0]);
+        adjArgs.add("--slave");
+        options.setValue(RCmdOption.SLAVE, true);
+        adjArgs.add("--no-restore");
+        options.setValue(RCmdOption.NO_RESTORE, true);
+        // Either -e options are set or first non-option arg is a file
+        if (options.getStringList(RCmdOption.EXPR) == null) {
+            if (firstNonOptionArgIndex == resultArgsLength) {
+                throw new PrintHelp();
+            } else {
+                options.setValue(RCmdOption.FILE, arguments[firstNonOptionArgIndex]);
+            }
+        }
+        String defaultPackagesArg = options.getString(RCmdOption.DEFAULT_PACKAGES);
+        String defaultPackagesEnv = System.getenv("R_DEFAULT_PACKAGES");
+        if (defaultPackagesArg == null && defaultPackagesEnv == null) {
+            defaultPackagesArg = "datasets,utils,grDevices,graphics,stats";
+        }
+        if (defaultPackagesEnv == null) {
+            options.setValue(RCmdOption.DEFAULT_PACKAGES, defaultPackagesArg);
+        }
+        // copy up to non-option args
+        int rx = 1;
+        while (rx < firstNonOptionArgIndex) {
+            adjArgs.add(arguments[rx]);
+            rx++;
+        }
+        if (options.getString(RCmdOption.FILE) != null) {
+            adjArgs.add("--file=" + options.getString(RCmdOption.FILE));
+            rx++; // skip over file arg
+            firstNonOptionArgIndex++;
+        }
+
+        if (firstNonOptionArgIndex < resultArgsLength) {
+            adjArgs.add("--args");
+            while (rx < resultArgsLength) {
+                adjArgs.add(arguments[rx++]);
+            }
+        }
+        return adjArgs.toArray(new String[adjArgs.size()]);
     }
 }

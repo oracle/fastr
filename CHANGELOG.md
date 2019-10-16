@@ -18,6 +18,7 @@ Added missing R builtins and C APIs
 
 Bug fixes:
 
+* multiplication of a vector and matrix that has one of the dimensions equal to `0` #104
 * `tibble` does not print properly when using `knitr` #68
 * `type.convert` uses locale #88
 * promise with the empty value is handled correctly in 'missing' #87
@@ -26,6 +27,8 @@ Bug fixes:
 * bug in `DATAPTR` for vectors of size in bytes larger than 2^31
 * provide correct daylight saving time info in `as.POSIXlt` #98
 * `list.files` handles `no..` and `all` arguments correctly
+* `R --version` does not enter the interactive mode #89
+* `update.formula` with RHS that contains `NULL` #92
 
 
 # 19.2.0
