@@ -42,8 +42,7 @@ public class TestBuiltin_setS4Object extends TestBase {
 
     @Test
     public void testsetS4Object3() {
-        assertEval(Ignored.NewRVersionMigration, /* Output.IgnoreWhitespace, */
-                        "argv <- list(structure(character(0), package = character(0), class = structure('ObjectsWithPackage', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(character(0), package = character(0), class = structure('ObjectsWithPackage', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -55,8 +54,7 @@ public class TestBuiltin_setS4Object extends TestBase {
 
     @Test
     public void testsetS4Object5() {
-        assertEval(Ignored.NewRVersionMigration,
-                        "argv <- list(structure(c('nonStructure', 'ANY', 'ANY', 'ANY'), .Names = c(NA_character_, NA_character_, NA_character_, NA_character_), package = character(0), class = structure('signature', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(structure(c('nonStructure', 'ANY', 'ANY', 'ANY'), .Names = c(NA_character_, NA_character_, NA_character_, NA_character_), package = character(0), class = structure('signature', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -88,7 +86,7 @@ public class TestBuiltin_setS4Object extends TestBase {
 
     @Test
     public void testsetS4Object9() {
-        assertEval(Ignored.NewRVersionMigration, "argv <- list(numeric(0), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(numeric(0), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -135,12 +133,12 @@ public class TestBuiltin_setS4Object extends TestBase {
 
     @Test
     public void testSetS4Object() {
-        assertEval(Ignored.NewRVersionMigration, "{ x<-42; asS4(x, \"TRUE\") }");
+        assertEval("{ x<-42; asS4(x, \"TRUE\") }");
         assertEval("{ x<-42; asS4(x, logical()) }");
         assertEval("{ x<-42; asS4(x, c(TRUE, FALSE)) }");
-        assertEval(Ignored.NewRVersionMigration, "{ x<-42; asS4(x, TRUE, \"1\") }");
+        assertEval("{ x<-42; asS4(x, TRUE, \"1\") }");
         assertEval("{ x<-42; asS4(x, TRUE, logical()) }");
-        assertEval(Ignored.NewRVersionMigration, "{ x<-42; asS4(x, TRUE, c(1,2)) }");
+        assertEval("{ x<-42; asS4(x, TRUE, c(1,2)) }");
         assertEval("{ x<-42; asS4(, TRUE, 1)) }");
     }
 }
