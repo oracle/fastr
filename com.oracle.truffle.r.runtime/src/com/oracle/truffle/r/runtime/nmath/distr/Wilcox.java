@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 import com.oracle.truffle.r.runtime.nmath.distr.WilcoxFactory.RWilcoxNodeGen;
+import com.oracle.truffle.r.runtime.rng.RRNG;
 
 public final class Wilcox {
     /**
@@ -391,7 +392,7 @@ public final class Wilcox {
                 x[i] = i;
             }
             for (int i = 0; i < n; i++) {
-                int j = (int) Math.floor(k * rand.unifRand());
+                int j = (int) RRNG.unifIndex(rand, k);
                 r += x[j];
                 x[j] = x[--k];
             }
