@@ -22,14 +22,14 @@
  */
 package com.oracle.truffle.r.nodes.function.opt.eval;
 
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Evaluates the function call defined in {@code FunctionInfo} in the fast path.
  */
-public abstract class AbstractCallInfoEvalNode extends Node {
+public abstract class AbstractCallInfoEvalNode extends RBaseNode {
     protected static final int CACHE_SIZE = DSLConfig.getCacheSize(10);
     protected static final int MAX_ARITY = 10;
 
