@@ -107,12 +107,12 @@ def copylib(args):
     If PKG_LDFLAGS_OVERRIDE is unset, we assume the libraries are located in the system directories
     and do nothing.
     '''
-    if os.environ.has_key('PKG_LDFLAGS_OVERRIDE'):
+    if 'PKG_LDFLAGS_OVERRIDE' in os.environ:
         parts = os.environ['PKG_LDFLAGS_OVERRIDE'].split(' ')
         ext = 'dylib' if platform.system() == 'Darwin' else 'so'
         lib_prefix = 'lib' + args[0] + '.'
         ver_env_key = 'FASTR_LIB' + args[0].upper() + '_VER'
-        if os.environ.has_key(ver_env_key):
+        if ver_env_key in os.environ:
             lib_prefix += os.environ[ver_env_key] + '.'
         plain_libpath_base = lib_prefix + ext
         for part in parts:
