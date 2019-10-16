@@ -183,7 +183,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         boolean isLLVMBackEnd = false;
         boolean debugLLVMLibs = false;
         for (String rArg : this.rArguments) {
-            if (rArg.startsWith("--R.BackEndLLVM")) {
+            if (rArg.startsWith("--R.BackEnd=llvm") || rArg.startsWith("--R.BackEndLLVM=")) {
                 isLLVMBackEnd = true;
                 continue;
             }
