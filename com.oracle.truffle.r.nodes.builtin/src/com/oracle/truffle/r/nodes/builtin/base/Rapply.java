@@ -78,7 +78,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
 
     static {
         Casts casts = new Casts(Rapply.class);
-        casts.arg("object").mustBe(RAbstractListVector.class, Message.GENERIC, "'object' must be a list");
+        casts.arg("object").mustBe(RAbstractListVector.class, Message.GENERIC, "'object' must be a list or expression");
         casts.arg("f").mustBe(RFunction.class);
         casts.arg("classes").mapNull(constant("ANY")).mapMissing(constant("ANY")).mustBe(stringValue()).asStringVector().findFirst().mustNotBeNA();
         casts.arg("deflt").allowNull().mapMissing(nullConstant()).mustBe(anyValue());

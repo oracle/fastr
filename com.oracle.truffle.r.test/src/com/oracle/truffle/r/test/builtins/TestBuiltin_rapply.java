@@ -29,7 +29,7 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_rapply extends TestBase {
 
     @Test
-    public void testLapply() {
+    public void testLapplyList() {
         assertEval("{rapply(list(1:3), function(x) { 2*x })}");
         assertEval("{rapply(list(list(1:3),4,5,6), function(x) { 2*x })}");
         assertEval("{rapply(list(1:3), function(x) { 2*x }, how = \"replace\")}");
@@ -51,11 +51,17 @@ public class TestBuiltin_rapply extends TestBase {
         assertEval("l2 = list(a = 1:10, b = 11:20,c=c('d','a','t','a')); rapply(l2, mean, how = \"list\", classes = \"integer\")");
         assertEval("l2 = list(a = 1:10, b = 11:20,c=c('d','a','t','a')); rapply(l2, mean, how = \"unlist\", classes = \"integer\")");
         assertEval("l2 = list(a = 1:10, b = 11:20,c=c('d','a','t','a')); rapply(l2, mean, how = \"replace\", classes = \"integer\")");
-        assertEval(Ignored.NewRVersionMigration, "rapply(NULL, function(x) {2*x})");
-        assertEval(Ignored.NewRVersionMigration, "rapply(NA, function(x) {2*x})");
+        assertEval("rapply(NULL, function(x) {2*x})");
+        assertEval("rapply(NA, function(x) {2*x})");
         assertEval("rapply(list(NULL), function(x) {2*x})");
         assertEval("rapply(list(NA), function(x) {2*x})");
         assertEval("rapply(list(NULL), function(x) {2*x}, how=\"list\")");
         assertEval("rapply(list(NULL), function(x) {2*x}, how=\"replace\")");
+    }
+
+    @Test
+    public void testLapplyExpression() {
+        assertEval(Ignored.Unimplemented, "{rapply(expression('a+b'), function(x) { x })}");
+        // TODO more tests
     }
 }
