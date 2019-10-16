@@ -802,6 +802,7 @@ public final class RError extends RuntimeException implements TruffleException {
         NO_SUCH_INTERNAL("there is no .Internal function '%s'"),
         NO_SUCH_PRIMITIVE("no such primitive function"),
         INVALID_VALUE_FOR("invalid value for '%s'"),
+        OPTION_CANNOT_BE_DELETED("option '%s' cannot be deleted"),
         IMP_EXP_NAMES_MATCH("length of import and export names must match"),
         ENV_ADD_BINDINGS("cannot add bindings to a locked environment"),
         ENV_REMOVE_BINDINGS("cannot remove bindings from a locked environment"),
