@@ -181,4 +181,9 @@ public class TestBuiltin_printdefault extends TestBase {
     public void testprintdefault32() {
         assertEval("argv <- list(structure(c(495L, 515L, 535L, 555L, 575L, 595L, 615L, 635L, 655L, 675L, 695L, 715L), .Dim = 3:4, .Dimnames = list(c('a', 'b', 'c'), NULL)), NULL, TRUE, NULL, NULL, FALSE, NULL, TRUE, TRUE); .Internal(print.default(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]]))");
     }
+
+    @Test
+    public void testprintdefault() {
+        assertEval("print('Work dir: ', c(1,2,3))");
+    }
 }

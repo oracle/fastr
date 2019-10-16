@@ -68,7 +68,8 @@ public class PrintFunctions {
 
         static {
             Casts casts = new Casts(OldPrintDefault.class);
-            casts.arg(1).mapMissing(nullConstant()).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(Format.R_MIN_DIGITS_OPT).and(lte(Format.R_MAX_DIGITS_OPT)));
+            casts.arg(1).mapMissing(nullConstant()).allowNull().defaultError(RError.Message.INVALID_ARGUMENT, "digits").asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(
+                            gte(Format.R_MIN_DIGITS_OPT).and(lte(Format.R_MAX_DIGITS_OPT)));
             casts.arg(2).mapMissing(constant(RRuntime.LOGICAL_TRUE)).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
             casts.arg(3).mapMissing(nullConstant()).defaultError(RError.Message.INVALID_NA_PRINT_SPEC).allowNull().mustBe(stringValue()).asStringVector().findFirst();
             casts.arg(4).mapMissing(nullConstant()).defaultError(RError.Message.GAP_MUST_BE_NON_NEGATIVE).allowNull().asIntegerVector().findFirst().mustBe(notIntNA()).mustBe(gte(0));
