@@ -2,7 +2,8 @@
 ###
 ### Process this file with autoconf to produce a configure script.
 ###
-### Copyright (C) 1998-2018 R Core Team
+### Copyright (C) 1998-2019 R Core Team
+### Copyright (C) 2018-2019 Oracle
 ###
 ### This file is part of R.
 ###
@@ -207,7 +208,8 @@ case "${host_os}" in
     ## Allow for ppc64le (Debian calls ppc64el), powerpc64le ...
     case "${host_cpu}" in
       x86_64|mips64|ppc64*|powerpc64*|sparc64|s390x)
-        if test -d /usr/lib64; then
+        ## Debian/Ubuntu has "lib64", but the primary location is "lib"
+        if test -d /usr/lib64 && test ! -f /etc/debian_version; then
           libnn=lib64
 	fi
       ;;
@@ -261,283 +263,293 @@ AC_SUBST([rsharedir])
 config_opts="${ac_configure_args}"
 AC_SUBST(config_opts)
 
-### ** Optional features.
+### FASTR BEGINE optional features are disabled
+# ### ** Optional features.
 
-## Allow the user to specify support for R profiling.
-AC_ARG_ENABLE([R-profiling],
-[AS_HELP_STRING([--enable-R-profiling],[attempt to compile support for Rprof() @<:@yes@:>@])],
-[if test "${enableval}" = no; then
-  want_R_profiling=no
-elif test "${enableval}" = yes; then
-  want_R_profiling=yes
-else
-  want_R_profiling=yes
-fi],
-[want_R_profiling=yes])
+# ## Allow the user to specify support for R profiling.
+# AC_ARG_ENABLE([R-profiling],
+# [AS_HELP_STRING([--enable-R-profiling],[attempt to compile support for Rprof() @<:@yes@:>@])],
+# [if test "${enableval}" = no; then
+#   want_R_profiling=no
+# elif test "${enableval}" = yes; then
+#   want_R_profiling=yes
+# else
+#   want_R_profiling=yes
+# fi],
+# [want_R_profiling=yes])
 
-## Allow the user to specify support for memory profiling.
-AC_ARG_ENABLE([memory-profiling],
-[AS_HELP_STRING([--enable-memory-profiling],[attempt to compile support for Rprofmem(), tracemem() @<:@no@:>@])],
-[if test "${enableval}" = no; then
-  want_memory_profiling=no
-elif test "${enableval}" = yes; then
-  want_memory_profiling=yes
-else
-  want_memory_profiling=no
-fi],
-[want_memory_profiling=no])
+# ## Allow the user to specify support for memory profiling.
+# AC_ARG_ENABLE([memory-profiling],
+# [AS_HELP_STRING([--enable-memory-profiling],[attempt to compile support for Rprofmem(), tracemem() @<:@no@:>@])],
+# [if test "${enableval}" = no; then
+#   want_memory_profiling=no
+# elif test "${enableval}" = yes; then
+#   want_memory_profiling=yes
+# else
+#   want_memory_profiling=no
+# fi],
+# [want_memory_profiling=no])
 
-## Allow the user to specify building an R framework (Darwin).
-AC_ARG_ENABLE([R-framework],
-[AS_HELP_STRING([--enable-R-framework@<:@=DIR@:>@],[macOS only: build R framework (if possible), and specify
-                 its installation prefix @<:@no, /Library/Frameworks@:>@])],
-[want_R_framework="${enableval}"],
-[want_R_framework=no])
-## Can only build frameworks on Darwin.
-if test "${want_R_framework}" != no; then
-  case "${host_os}" in
-    darwin*)
-      if test "${want_R_framework}" = yes; then
-        ## If we build a framework and 'prefix' was not given, we need
-        ## to set it to '/Library/Frameworks' rather than '/usr/local'.
-        ## Note that Autoconf sets things up so that by default, prefix
-        ## and exec_prefix are set to 'NONE'.  Let's hope for no change.
-	if test "x${prefix}" = xNONE; then
-          prefix="/Library/Frameworks"
-        fi
-      else
-	prefix="${want_R_framework}"
-	want_R_framework=yes
-      fi
-      ## FW_VERSION is the sub-directory name used in R.framework/Version
-      ## By default it's the a.b form of the full a.b.c version to simplify
-      ## binary updates.
-      : ${FW_VERSION=`echo "${PACKAGE_VERSION}" | sed -e "s/[[\.]][[0-9]]$//"`}
-      ;;
-    *)
-      want_R_framework=no
-      ;;
-  esac
-fi
-AM_CONDITIONAL(WANT_R_FRAMEWORK, [test "x${want_R_framework}" = xyes])
+# ## Allow the user to specify building an R framework (Darwin).
+# AC_ARG_ENABLE([R-framework],
+# [AS_HELP_STRING([--enable-R-framework@<:@=DIR@:>@],[macOS only: build R framework (if possible), and specify
+#                  its installation prefix @<:@no, /Library/Frameworks@:>@])],
+# [want_R_framework="${enableval}"],
+# [want_R_framework=no])
+# ## Can only build frameworks on Darwin.
+# if test "${want_R_framework}" != no; then
+#   case "${host_os}" in
+#     darwin*)
+#       if test "${want_R_framework}" = yes; then
+#         ## If we build a framework and 'prefix' was not given, we need
+#         ## to set it to '/Library/Frameworks' rather than '/usr/local'.
+#         ## Note that Autoconf sets things up so that by default, prefix
+#         ## and exec_prefix are set to 'NONE'.  Let's hope for no change.
+# 	if test "x${prefix}" = xNONE; then
+#           prefix="/Library/Frameworks"
+#         fi
+#       else
+# 	prefix="${want_R_framework}"
+# 	want_R_framework=yes
+#       fi
+#       ## FW_VERSION is the sub-directory name used in R.framework/Version
+#       ## By default it's the a.b form of the full a.b.c version to simplify
+#       ## binary updates.
+#       : ${FW_VERSION=`echo "${PACKAGE_VERSION}" | sed -e "s/[[\.]][[0-9]]$//"`}
+#       ;;
+#     *)
+#       want_R_framework=no
+#       ;;
+#   esac
+# fi
+# AM_CONDITIONAL(WANT_R_FRAMEWORK, [test "x${want_R_framework}" = xyes])
 
-## Allow the user to specify building R as a shared library.
-## (but a 'dynamic library' in the terminology of macOS).
-## <NOTE>
-## Building a framework implies building R shared libraries, hence the
-## strange default.
-## We might want to warn about the case where '--disable-R-shlib' was
-## given explicitly ...
-## </NOTE>
-AC_ARG_ENABLE([R-shlib],
-[AS_HELP_STRING([--enable-R-shlib],[build the shared/dynamic library 'libR' @<:@no@:>@])],
-[want_R_shlib="${enableval}"],
-[want_R_shlib="${want_R_framework}"])
-AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
+# ## Allow the user to specify building R as a shared library.
+# ## (but a 'dynamic library' in the terminology of macOS).
+# ## <NOTE>
+# ## Building a framework implies building R shared libraries, hence the
+# ## strange default.
+# ## We might want to warn about the case where '--disable-R-shlib' was
+# ## given explicitly ...
+# ## </NOTE>
+# AC_ARG_ENABLE([R-shlib],
+# [AS_HELP_STRING([--enable-R-shlib],[build the shared/dynamic library 'libR' @<:@no@:>@])],
+# [want_R_shlib="${enableval}"],
+# [want_R_shlib="${want_R_framework}"])
+# AM_CONDITIONAL(WANT_R_SHLIB, [test "x${want_R_shlib}" = xyes])
 
-AC_ARG_ENABLE([R-static-lib],
-[AS_HELP_STRING([--enable-R-static-lib],[build the static library 'libR.a' @<:@no@:>@])],
-[want_R_static="${enableval}"],
-[want_R_static="no"])
-if test "x${want_R_static}" = xyes; then
-  if test "x${want_R_shlib}" = xyes; then
-    AC_MSG_WARN([--enable-R-static-lib conflicts with --enable-R-shlib and will be ignored])
-    want_R_static=no
-  fi
-fi
-AM_CONDITIONAL(WANT_R_STATIC, [test "x${want_R_static}" = xyes])
+# AC_ARG_ENABLE([R-static-lib],
+# [AS_HELP_STRING([--enable-R-static-lib],[build the static library 'libR.a' @<:@no@:>@])],
+# [want_R_static="${enableval}"],
+# [want_R_static="no"])
+# if test "x${want_R_static}" = xyes; then
+#   if test "x${want_R_shlib}" = xyes; then
+#     AC_MSG_WARN([--enable-R-static-lib conflicts with --enable-R-shlib and will be ignored])
+#     want_R_static=no
+#   fi
+# fi
+# AM_CONDITIONAL(WANT_R_STATIC, [test "x${want_R_static}" = xyes])
 
-## Build separate shared/dynamic library containing R's BLAS if desired 
-AC_ARG_ENABLE([BLAS-shlib],
-[AS_HELP_STRING([--enable-BLAS-shlib],[build BLAS into a shared/dynamic library @<:@perhaps@:>@])],
-[use_blas_shlib="${enableval}"],
-[use_blas_shlib="unset"])
+# ## Build separate shared/dynamic library containing R's BLAS if desired 
+# AC_ARG_ENABLE([BLAS-shlib],
+# [AS_HELP_STRING([--enable-BLAS-shlib],[build BLAS into a shared/dynamic library @<:@perhaps@:>@])],
+# [use_blas_shlib="${enableval}"],
+# [use_blas_shlib="unset"])
 
-## As from R 3.2.0 split up -L... and -lR
-if test "${want_R_shlib}" = yes; then
-  LIBR0="-L\"\$(R_HOME)/lib\$(R_ARCH)\""
-  LIBR1=-lR
-else
-  LIBR0=
-  LIBR1=
-fi
+# ## As from R 3.2.0 split up -L... and -lR
+# if test "${want_R_shlib}" = yes; then
+#   LIBR0="-L\"\$(R_HOME)/lib\$(R_ARCH)\""
+#   LIBR1=-lR
+# else
+#   LIBR0=
+#   LIBR1=
+# fi
 
-## Enable maintainer-specific portions of Makefiles.
-AC_ARG_ENABLE([maintainer-mode],
-[AS_HELP_STRING([--enable-maintainer-mode],[enable make rules and dependencies not useful (and
-                 maybe confusing) to the casual installer @<:@no@:>@])],
-[use_maintainer_mode="${enableval}"],
-[use_maintainer_mode=no])
-AM_CONDITIONAL(MAINTAINER_MODE, [test "x${use_maintainer_mode}" = xyes])
+# ## Enable maintainer-specific portions of Makefiles.
+# AC_ARG_ENABLE([maintainer-mode],
+# [AS_HELP_STRING([--enable-maintainer-mode],[enable make rules and dependencies not useful (and
+#                  maybe confusing) to the casual installer @<:@no@:>@])],
+# [use_maintainer_mode="${enableval}"],
+# [use_maintainer_mode=no])
+# AM_CONDITIONAL(MAINTAINER_MODE, [test "x${use_maintainer_mode}" = xyes])
 
-## Enable testing the write barrier.
-AC_ARG_ENABLE([strict-barrier],
-[AS_HELP_STRING([--enable-strict-barrier],[provoke compile error on write barrier violation
-                 @<:@no@:>@])],
-[use_strict_barrier="${enableval}"],
-[use_strict_barrier=no])
-if test x"${use_strict_barrier}" = xyes; then
-  AC_DEFINE(TESTING_WRITE_BARRIER, 1,
-            [Define to enable provoking compile errors on write barrier
-             violation.])
-fi
+# ## Enable testing the write barrier.
+# AC_ARG_ENABLE([strict-barrier],
+# [AS_HELP_STRING([--enable-strict-barrier],[provoke compile error on write barrier violation
+#                  @<:@no@:>@])],
+# [use_strict_barrier="${enableval}"],
+# [use_strict_barrier=no])
+# if test x"${use_strict_barrier}" = xyes; then
+#   AC_DEFINE(TESTING_WRITE_BARRIER, 1,
+#             [Define to enable provoking compile errors on write barrier
+#              violation.])
+# fi
 
-AC_ARG_ENABLE([prebuilt-html],
-[AS_HELP_STRING([--enable-prebuilt-html],[build static HTML help pages @<:@no@:>@])],
-[want_prebuilt_html="${enableval}"],
-[want_prebuilt_html=no])
-AM_CONDITIONAL(BUILD_HTML, [test "x${want_prebuilt_html}" = xyes])
+# AC_ARG_ENABLE([prebuilt-html],
+# [AS_HELP_STRING([--enable-prebuilt-html],[build static HTML help pages @<:@no@:>@])],
+# [want_prebuilt_html="${enableval}"],
+# [want_prebuilt_html=no])
+# AM_CONDITIONAL(BUILD_HTML, [test "x${want_prebuilt_html}" = xyes])
 
-AC_ARG_ENABLE([lto],
-[AS_HELP_STRING([--enable-lto],[enable link-time optimization @<:@no@:>@])],
-[want_lto="${enableval}"], [want_lto=no])
-## FIXME: add a test for gcc >= 4.5.0
-if test "x${want_lto}" != xno; then
-  LTO=-flto
-fi
-if test "x${want_lto}" = xyes; then
-  LTOALL=-flto
-fi
-AC_SUBST(LTO)
-AC_SUBST(LTOALL)
-AM_CONDITIONAL(BUILD_LTO, [test "x${want_lto}" != xno])
+# AC_ARG_ENABLE([lto],
+# [AS_HELP_STRING([--enable-lto],[enable link-time optimization @<:@no@:>@])],
+# [want_lto="${enableval}"], [want_lto=no])
+# ## TODO: add a test for gcc >= 4.5.0 and/or clang/flang
+# if test "x${want_lto}" = xyes; then
+#   ## used in Makeconf
+#   LTO=-flto
+#   ## used in etc/Makeconf
+#   LTOALL=-flto
+# elif  test "x${want_lto}" = xR; then
+#   LTO=-flto
+# elif  test "x${want_lto}" != xno; then
+#   AC_MSG_WARN([Unknown value --enable-lto=${enableval}])
+# fi
+# AC_SUBST(LTO)
+# AC_SUBST(LTOALL)
+# ## used in src/main/Makefile
+# AM_CONDITIONAL(BUILD_LTO, [test "x${want_lto}" != xno])
 
-AC_ARG_ENABLE([java],
-[AS_HELP_STRING([--enable-java],[enable Java @<:@yes@:>@])],
-[want_java="${enableval}"],
-[want_java=yes])
-AM_CONDITIONAL(WANT_JAVA, [test "x${want_java}" = xyes])
+# AC_ARG_ENABLE([java],
+# [AS_HELP_STRING([--enable-java],[enable Java @<:@yes@:>@])],
+# [want_java="${enableval}"],
+# [want_java=yes])
+# AM_CONDITIONAL(WANT_JAVA, [test "x${want_java}" = xyes])
 
+### FASTR END
+### FASTR BEGIN not necessary for already built
 ### ** Optional packages.
 
-## BLAS.
-AC_ARG_WITH([blas],
-[AS_HELP_STRING([--with-blas],[use system BLAS library (if available), or specify it @<:@no@:>@])],
-[R_ARG_USE(blas)],
-[use_blas=unset])
-# default is "no" except on macOS
+# ## BLAS.
+# AC_ARG_WITH([blas],
+# [AS_HELP_STRING([--with-blas],[use system BLAS library (if available), or specify it @<:@no@:>@])],
+# [R_ARG_USE(blas)],
+# [use_blas=unset])
+# # default is "no" except on macOS
 
-## LAPACK.
-AC_ARG_WITH([lapack],
-[AS_HELP_STRING([--with-lapack],[use system LAPACK library (if available), or specify it @<:@no@:>@])],
-[R_ARG_USE(lapack)],
-[use_lapack=unset])
-# default is "no" except on macOS
+# ## LAPACK.
+# AC_ARG_WITH([lapack],
+# [AS_HELP_STRING([--with-lapack],[use system LAPACK library (if available), or specify it @<:@no@:>@])],
+# [R_ARG_USE(lapack)],
+# [use_lapack=unset])
+# # default is "no" except on macOS
 
-## Readline.
-AC_ARG_WITH([readline],
-[AS_HELP_STRING([--with-readline],[use readline library @<:@yes@:>@])],
-[R_ARG_USE(readline)],
-[use_readline=yes])
+# ## Readline.
+# AC_ARG_WITH([readline],
+# [AS_HELP_STRING([--with-readline],[use readline library @<:@yes@:>@])],
+# [R_ARG_USE(readline)],
+# [use_readline=yes])
 
-## Aqua.
-AC_ARG_WITH([aqua],
-[AS_HELP_STRING([--with-aqua],[macOS only: use Aqua (if available) @<:@yes@:>@])],
-[if test "${withval}" = no; then
-  want_aqua=no
-else
-  want_aqua=yes
-fi],
-[want_aqua=yes])
+# ## Aqua.
+# AC_ARG_WITH([aqua],
+# [AS_HELP_STRING([--with-aqua],[macOS only: use Aqua (if available) @<:@yes@:>@])],
+# [if test "${withval}" = no; then
+#   want_aqua=no
+# else
+#   want_aqua=yes
+# fi],
+# [want_aqua=yes])
 
-## Tcl/Tk.
-AC_ARG_WITH([tcltk],
-[AS_HELP_STRING([--with-tcltk],[use Tcl/Tk (if available), or specify its library dir @<:@yes@:>@])],
-[if test "${withval}" = no; then
-  want_tcltk=no
-elif test "${withval}" = yes; then
-  want_tcltk=yes
-else
-  want_tcltk=yes
-  LDFLAGS="${LDFLAGS} -L${withval}"
-  tcltk_prefix="${withval}"
-fi],
-[want_tcltk=yes])
-AC_ARG_WITH([tcl-config],
-[AS_HELP_STRING([--with-tcl-config=TCL_CONFIG],[specify location of tclConfig.sh @<:@@:>@])],
-[TCL_CONFIG="${withval}"],
-[TCL_CONFIG=""])
-AC_ARG_WITH([tk-config],
-[AS_HELP_STRING([--with-tk-config=TK_CONFIG],[specify location of tkConfig.sh @<:@@:>@])],
-[TK_CONFIG="${withval}"],
-[TK_CONFIG=""])
+# ## Tcl/Tk.
+# AC_ARG_WITH([tcltk],
+# [AS_HELP_STRING([--with-tcltk],[use Tcl/Tk (if available), or specify its library dir @<:@yes@:>@])],
+# [if test "${withval}" = no; then
+#   want_tcltk=no
+# elif test "${withval}" = yes; then
+#   want_tcltk=yes
+# else
+#   want_tcltk=yes
+#   LDFLAGS="${LDFLAGS} -L${withval}"
+#   tcltk_prefix="${withval}"
+# fi],
+# [want_tcltk=yes])
+# AC_ARG_WITH([tcl-config],
+# [AS_HELP_STRING([--with-tcl-config=TCL_CONFIG],[specify location of tclConfig.sh @<:@@:>@])],
+# [TCL_CONFIG="${withval}"],
+# [TCL_CONFIG=""])
+# AC_ARG_WITH([tk-config],
+# [AS_HELP_STRING([--with-tk-config=TK_CONFIG],[specify location of tkConfig.sh @<:@@:>@])],
+# [TK_CONFIG="${withval}"],
+# [TK_CONFIG=""])
 
-## cairographics etc
-AC_ARG_WITH([cairo],
-[AS_HELP_STRING([--with-cairo],[use cairo (and pango) if available @<:@yes@:>@])],
-[if test "${withval}" = no; then
-  want_cairo=no
-else
-  want_cairo=yes
-fi], [want_cairo=yes])
+# ## cairographics etc
+# AC_ARG_WITH([cairo],
+# [AS_HELP_STRING([--with-cairo],[use cairo (and pango) if available @<:@yes@:>@])],
+# [if test "${withval}" = no; then
+#   want_cairo=no
+# else
+#   want_cairo=yes
+# fi], [want_cairo=yes])
 
-## other libraries
-AC_ARG_WITH([libpng],
-[AS_HELP_STRING([--with-libpng],[use libpng library (if available) @<:@yes@:>@])],
-[R_ARG_USE(libpng)],
-[use_libpng=yes])
-AC_ARG_WITH([jpeglib],
-[AS_HELP_STRING([--with-jpeglib],[use jpeglib library (if available) @<:@yes@:>@])],
-[R_ARG_USE(jpeglib)],
-[use_jpeglib=yes])
-AC_ARG_WITH([libtiff],
-[AS_HELP_STRING([--with-libtiff],[use libtiff library (if available) @<:@yes@:>@])],
-[R_ARG_USE(libtiff)],
-[use_libtiff=yes])
-AC_ARG_WITH([system-tre],
-[AS_HELP_STRING([--with-system-tre],[use system tre library (if available) @<:@no@:>@])],
-[R_ARG_USE_SYSTEM(tre)],
-[use_system_tre=no])
+# ## other libraries
+# AC_ARG_WITH([libpng],
+# [AS_HELP_STRING([--with-libpng],[use libpng library (if available) @<:@yes@:>@])],
+# [R_ARG_USE(libpng)],
+# [use_libpng=yes])
+# AC_ARG_WITH([jpeglib],
+# [AS_HELP_STRING([--with-jpeglib],[use jpeglib library (if available) @<:@yes@:>@])],
+# [R_ARG_USE(jpeglib)],
+# [use_jpeglib=yes])
+# AC_ARG_WITH([libtiff],
+# [AS_HELP_STRING([--with-libtiff],[use libtiff library (if available) @<:@yes@:>@])],
+# [R_ARG_USE(libtiff)],
+# [use_libtiff=yes])
+# AC_ARG_WITH([system-tre],
+# [AS_HELP_STRING([--with-system-tre],[use system tre library (if available) @<:@no@:>@])],
+# [R_ARG_USE_SYSTEM(tre)],
+# [use_system_tre=no])
 
-## Valgrind instrumentation
-AC_ARG_WITH([valgrind-instrumentation],
-[AS_HELP_STRING([--with-valgrind-instrumentation],[Level of additional instrumentation for Valgrind (0/1/2) @<:@0@:>@])],
-[valgrind_level=${withval}],
-[valgrind_level=0])
+# ## Valgrind instrumentation
+# AC_ARG_WITH([valgrind-instrumentation],
+# [AS_HELP_STRING([--with-valgrind-instrumentation],[Level of additional instrumentation for Valgrind (0/1/2) @<:@0@:>@])],
+# [valgrind_level=${withval}],
+# [valgrind_level=0])
 
-AC_ARG_WITH([system-valgrind-headers],
-[AS_HELP_STRING([--with-system-valgrind-headers],[use system valgrind headers (if available) @<:@no@:>@])],
-[R_ARG_USE_SYSTEM(valgrind)],
-[use_system_valgrind=no])
+# AC_ARG_WITH([system-valgrind-headers],
+# [AS_HELP_STRING([--with-system-valgrind-headers],[use system valgrind headers (if available) @<:@no@:>@])],
+# [R_ARG_USE_SYSTEM(valgrind)],
+# [use_system_valgrind=no])
 
-AC_ARG_WITH([internal-tzcode],
-[AS_HELP_STRING([--with-internal-tzcode],[use internal time-zone code @<:@no, yes on macOS@:>@])],
-[use_internal_tzcode=${withval}],
-[use_internal_tzcode=default])
+# AC_ARG_WITH([internal-tzcode],
+# [AS_HELP_STRING([--with-internal-tzcode],[use internal time-zone code @<:@no, yes on macOS@:>@])],
+# [use_internal_tzcode=${withval}],
+# [use_internal_tzcode=default])
 
 
-## <FIXME>
-## Completely disable using libtool for building shlibs until libtool
-## fully supports Fortran and C++.
-## AC_ARG_WITH([libtool],
-## [AS_HELP_STRING([--with-libtool],[use libtool for building shared libraries @<:@yes@:>@])],
-## [use_libtool="${withval}"],
-## [use_libtool=yes])
-## AM_CONDITIONAL(USE_LIBTOOL, [test "x${use_libtool}" = xyes])
-## </FIXME>
+# ## <FIXME>
+# ## Completely disable using libtool for building shlibs until libtool
+# ## fully supports Fortran and C++.
+# ## AC_ARG_WITH([libtool],
+# ## [AS_HELP_STRING([--with-libtool],[use libtool for building shared libraries @<:@yes@:>@])],
+# ## [use_libtool="${withval}"],
+# ## [use_libtool=yes])
+# ## AM_CONDITIONAL(USE_LIBTOOL, [test "x${use_libtool}" = xyes])
+# ## </FIXME>
 
-### FASTR BEGIN
-## Recommended R packages.
-#AC_ARG_WITH([recommended-packages],
-#[AS_HELP_STRING([--with-recommended-packages],[use/install recommended R packages @<:@yes@:>@])],
-#[R_ARG_USE(recommended_packages)],
-#[use_recommended_packages=yes])
+# ### FASTR BEGIN
+# ## Recommended R packages.
+# #AC_ARG_WITH([recommended-packages],
+# #[AS_HELP_STRING([--with-recommended-packages],[use/install recommended R packages @<:@yes@:>@])],
+# #[R_ARG_USE(recommended_packages)],
+# #[use_recommended_packages=yes])
+# ### FASTR END
+
+# ## ICU
+# AC_ARG_WITH([ICU],
+# [AS_HELP_STRING([--with-ICU],[use ICU library (if available) @<:@yes@:>@])],
+# [R_ARG_USE(ICU)],
+# [use_ICU=yes])
+
+# ## Byte-compilation of packages.
+# AC_ARG_ENABLE([byte-compiled-packages],
+# [AS_HELP_STRING([--enable-byte-compiled-packages],
+#                 [byte-compile base and recommended packages @<:@yes@:>@])],
+# [want_byte_compiled_packages="${enableval}"],
+# [want_byte_compiled_packages=yes])
+# AM_CONDITIONAL(BYTE_COMPILE_PACKAGES,
+#                [test "x${want_byte_compiled_packages}" = xyes])
+
 ### FASTR END
-
-## ICU
-AC_ARG_WITH([ICU],
-[AS_HELP_STRING([--with-ICU],[use ICU library (if available) @<:@yes@:>@])],
-[R_ARG_USE(ICU)],
-[use_ICU=yes])
-
-## Byte-compilation of packages.
-AC_ARG_ENABLE([byte-compiled-packages],
-[AS_HELP_STRING([--enable-byte-compiled-packages],
-                [byte-compile base and recommended packages @<:@yes@:>@])],
-[want_byte_compiled_packages="${enableval}"],
-[want_byte_compiled_packages=yes])
-AM_CONDITIONAL(BYTE_COMPILE_PACKAGES,
-               [test "x${want_byte_compiled_packages}" = xyes])
 
 ### ** Precious variables.
 
@@ -547,16 +559,19 @@ AC_ARG_VAR([R_PAPERSIZE],
            [paper size for the local (PostScript) printer])
 AC_ARG_VAR([R_BATCHSAVE],
            [set default behavior of R when ending a session])
-AC_ARG_VAR([MAIN_CFLAGS],
-           [additional CFLAGS used when compiling the main binary])
+### FASTR PATCH
+# AC_ARG_VAR([MAIN_CFLAGS],
+#            [additional CFLAGS used when compiling the main binary])
 AC_ARG_VAR([SHLIB_CFLAGS],
            [additional CFLAGS used when building shared objects])
-AC_ARG_VAR([MAIN_FFLAGS],
-           [additional FFLAGS used when compiling the main binary])
+### FASTR PATCH
+# AC_ARG_VAR([MAIN_FFLAGS],
+#            [additional FFLAGS used when compiling the main binary])
 AC_ARG_VAR([SHLIB_FFLAGS],
            [additional FFLAGS used when building shared objects])
-AC_ARG_VAR([MAIN_LD],
-           [command used to link the main binary])
+### FASTR PATCH
+# AC_ARG_VAR([MAIN_LD],
+#            [command used to link the main binary])
 AC_ARG_VAR([MAIN_LDFLAGS],
            [flags which are necessary for loading a main program which
             will load shared objects (DLLs) at runtime])
@@ -564,11 +579,8 @@ AC_ARG_VAR([CPICFLAGS],
            [special flags for compiling C code to be turned into a
             shared object.])
 AC_ARG_VAR([FPICFLAGS],
-           [special flags for compiling Fortran code to be turned into a
-            shared object.])
-AC_ARG_VAR([FCPICFLAGS],
-           [special flags for compiling Fortran 95 code to be turned into a
-            shared object.])
+           [special flags for compiling Fortran code to be 
+	    turned into a shared object.])
 AC_ARG_VAR([SHLIB_LD],
            [command for linking shared objects which contain object
             files from a C or Fortran compiler only])
@@ -587,15 +599,11 @@ AC_ARG_VAR([SHLIB_CXXLD],
             files from the C++ compiler])
 AC_ARG_VAR([SHLIB_CXXLDFLAGS],
            [special flags used by SHLIB_CXXLD])
-AC_ARG_VAR([SHLIB_FCLD],
-           [command for linking shared objects which contain object
-            files from the Fortran 95 compiler])
-AC_ARG_VAR([SHLIB_FCLDFLAGS],
-           [special flags used by SHLIB_FCLD])
-AC_ARG_VAR([TCLTK_LIBS],
-           [flags needed for linking against the Tcl and Tk libraries])
-AC_ARG_VAR([TCLTK_CPPFLAGS],
-           [flags needed for finding the tcl.h and tk.h headers])
+### FASTR PATCH:
+# AC_ARG_VAR([TCLTK_LIBS],
+#            [flags needed for linking against the Tcl and Tk libraries])
+# AC_ARG_VAR([TCLTK_CPPFLAGS],
+#            [flags needed for finding the tcl.h and tk.h headers])
 AC_ARG_VAR([MAKE], [make command])
 AC_ARG_VAR([TAR], [tar command])
 AC_ARG_VAR([R_BROWSER], [default browser])
@@ -606,7 +614,7 @@ AC_ARG_VAR([LAPACK_LIBS],
            [flags needed for linking against external LAPACK libraries])
 AC_ARG_VAR([LIBnn], ['lib' or 'lib64' for dynamic libraries])
 AC_ARG_VAR([SAFE_FFLAGS],
-	   [Safe Fortran 77 compiler flags for e.g. dlamc.f])
+	   [Safe Fortran fixed-form compiler flags for e.g. dlamc.f])
 AC_ARG_VAR([r_arch],
            [Use architecture-dependent subdirs with this name])
 AC_ARG_VAR([DEFS], [C defines for use when compiling R])
@@ -617,15 +625,15 @@ AC_ARG_VAR([R_SHELL],
 
 if test -z "${r_arch}"; then
   R_ARCH=
-  R_XTRA_CPPFLAGS2="-I\"\$(R_INCLUDE_DIR)\""
+  R_INCLUDES="-I\"\$(R_INCLUDE_DIR)\""
 else
   R_ARCH="/${r_arch}"
-  R_XTRA_CPPFLAGS2="-I\"\$(R_INCLUDE_DIR)\" -I\"\$(R_INCLUDE_DIR)/${r_arch}\""
+  R_INCLUDES="-I\"\$(R_INCLUDE_DIR)\" -I\"\$(R_INCLUDE_DIR)/${r_arch}\""
 fi
 AC_DEFINE_UNQUOTED(R_ARCH, "${r_arch}",
 [Define this to use architecture-dependent subdirectories of this name.])
 AC_SUBST([R_ARCH])
-AC_SUBST([R_XTRA_CPPFLAGS2])
+AC_SUBST([R_INCLUDES])
 
 ### ** Check whether we build in srcdir.
 
@@ -670,39 +678,55 @@ R_PROG_BROWSER
 R_PROG_PDFVIEWER
 ## Noweb (notangle), aclocal, autoconf, autoheader - maintainer mode only
 
-R_MISSING_PROG(ACLOCAL, aclocal,
-  R_MNT_WARN([[aclocal is missing - aclocal.m4 cannot be updated!]])
-)
-R_MISSING_PROG(AUTOCONF, autoconf,
-  R_MNT_WARN([[autoconf is missing - configure cannot be updated!]])
-)
-R_MISSING_PROG(AUTOHEADER, autoheader,
-  R_MNT_WARN([[autoheader is missing - header file templates like config.h.in cannot be updated!]])
-)
-AC_PROG_YACC
-if test "${YACC}" = yacc ; then
-  ## yacc is the default value even when yacc is not found
-  AC_CHECK_PROG(JUSTYACC, yacc, yes)
-  if test "x${JUSTYACC}" != xyes ; then
-    R_MNT_WARN([[yacc is missing - parsers cannot be updated!]])
-  fi
-fi
-AC_PATH_PROG(NOTANGLE, notangle, false)
-if test "${NOTANGLE}" = false ; then
-  R_MNT_WARN([[notangle is missing - byte-code compiler source cannot be updated!]])
-  NOTANGLE=notangle    
-fi
-## javareconf needs this
-AC_PATH_PROG(REALPATH, realpath, false)
+### FASTR BEGIN programs necessary only for building R
+
+# R_MISSING_PROG(ACLOCAL, aclocal,
+#   R_MNT_WARN([[aclocal is missing - aclocal.m4 cannot be updated!]])
+# )
+# R_MISSING_PROG(AUTOCONF, autoconf,
+#   R_MNT_WARN([[autoconf is missing - configure cannot be updated!]])
+# )
+# R_MISSING_PROG(AUTOHEADER, autoheader,
+#   R_MNT_WARN([[autoheader is missing - header file templates like config.h.in cannot be updated!]])
+# )
+# AC_PROG_YACC
+# if test "${YACC}" = yacc ; then
+#   ## yacc is the default value even when yacc is not found
+#   AC_CHECK_PROG(JUSTYACC, yacc, yes)
+#   if test "x${JUSTYACC}" != xyes ; then
+#     R_MNT_WARN([[yacc is missing - parsers cannot be updated!]])
+#   fi
+# fi
+# AC_PATH_PROG(NOTANGLE, notangle, false)
+# if test "${NOTANGLE}" = false ; then
+#   R_MNT_WARN([[notangle is missing - byte-code compiler source cannot be updated!]])
+#   NOTANGLE=notangle    
+# fi
+# ## javareconf needs this
+# AC_PATH_PROG(REALPATH, realpath, false)
 
 
-## Search for cairographics needs pkg-config, 
-## helps find jpeg, libpng and libtiff.
-AC_PATH_PROG(PKGCONF, pkg-config , [], 
-	     [$PATH:/usr/local/bin:/ext/bin:/ext:/sw/bin:/opt/bin])
-AC_ARG_VAR([PKGCONF], [path to pkg-config utility])
-AC_ARG_VAR([PKG_CONFIG_PATH], [directories to add to pkg-config's search path])
-AC_ARG_VAR([PKG_CONFIG_LIBDIR], [path overriding pkg-config's default search path])
+# ## Search for cairographics needs pkg-config, 
+# ## helps find jpeg, libpng and libtiff.
+# AC_PATH_TOOL(PKG_CONFIG, pkg-config , [], 
+# 	     [$PATH:/usr/local/bin:/ext/bin:/ext:/sw/bin:/opt/bin])
+# AC_ARG_VAR([PKG_CONFIG], [path to pkg-config utility])
+# AC_ARG_VAR([PKG_CONFIG_PATH], [directories to add to pkg-config's search path])
+# AC_ARG_VAR([PKG_CONFIG_LIBDIR], [path overriding pkg-config's default search path])
+### FASTR END
+
+### FASTR BEGIN additional option for FastR that enables re-generation of the Makeconf
+AC_ARG_ENABLE([native-compilers-toolchain],
+[AS_HELP_STRING([--enable-native-compilers-toolchain],[Regenrate the Makeconf file to use the native compilers @<:@no@:>@])],
+[if test "${enableval}" = no; then
+   want_native_toolchain=no
+ elif test "${enableval}" = yes; then
+   want_native_toolchain=yes
+ else
+   want_native_toolchain=yes
+ fi],
+[want_native_toolchain=no])
+### FASTR END
 
 AC_PROG_CC
 AC_PROG_GCC_TRADITIONAL
@@ -711,15 +735,25 @@ AC_GNU_SOURCE ## see note above
 AC_PROG_CPP
 R_PROG_CPP_CPPFLAGS
 
-## see if the user set FFLAGS: used for Intel compilers below
-userFFLAGS=${FFLAGS}
-R_PROG_F77
+## As from R 3.6.0, use the modern Fortran compiler for .f files
+echo "looking for a modern Fortran compiler"
+## if user set FFLAGS but not FCFLAGS, default to former
+if test "${FFLAGS+set}" = set -a "${FCFLAGS+set}" != set; then
+  FCFLAGS=${FFLAGS}
+fi
+AC_PROG_FC
+if test -z "${FC}"; then
+  AC_MSG_ERROR([No Fortran compiler found])
+fi
+F77=${FC}
+## see if the user set FFLAGS, otherwise use what AC_PROG_FC chose
+if test "${FFLAGS+set}" != set; then
+  FFLAGS=${FCFLAGS}
+fi
 
 AC_PROG_CXX
 ## check this actually compiles
 R_PROG_CXX
-
-### R_PROG_CXX98FLAG
 
 AC_PROG_CXXCPP
 if test "${CXXCPP}" = "${CXX} -E"; then
@@ -745,17 +779,13 @@ R_DEFS=${DEFS}
 AC_SUBST(R_DEFS)
 
 ## Libtool.
-## (Run this after R_PROG_F77, as AC_PROG_LIBTOOL checks for a
-## Fortran 77 compiler and sets F77 accordingly.)
+## (Run this after selecting the Fortan compiler as AC_PROG_LIBTOOL
+## checks for a Fortran 77 compiler and sets F77 accordingly.)
 AC_DISABLE_STATIC
 LT_INIT
+
 AC_SUBST(LIBTOOL_DEPS)
 
-## cross-compiling: added May 2007, not actually used
-R_CROSS_COMPILING
-AC_SUBST(BUILD_CC)
-AC_SUBST(BUILD_R)
-AM_CONDITIONAL(CROSS_COMPILING, [test "${cross_compiling}" = yes])
 
 ### * Checks for libraries.
 
@@ -815,77 +845,64 @@ eval "export ${Rshlibpath_var}"
 AC_SUBST(Rshlibpath_var)
 
 ## record how to strip shared/dynamic libraries.
-AC_SUBST(striplib)
+: ${STRIP_SHARED_LIB="${striplib}"}
 ## record how to strip static libraries.
-stripstaticlib=${old_striplib}
-AC_SUBST(stripstaticlib)
+: ${STRIP_STATIC_LIB="${old_striplib}"}
+AC_SUBST(STRIP_SHARED_LIB)
+AC_SUBST(STRIP_STATIC_LIB)
 
-## <NOTE>
-## This actually comes from libtool.m4.
-AC_CHECK_LIBM
-AC_SUBST(LIBM)
-## </NOTE>
-## AC_CHECK_LIBM computes LIBM but does not add to LIBS, hence we do
-## the following as well.
-AC_CHECK_LIB(m, sin)
-case "${host_os}" in
-  darwin*)
-    ## macOS >= 10.3 include dlcompat in libSystem
-    ## This is ancient history
-    ## SI says we want '-lcc_dynamic' on Darwin, although currently
-    ## https://developer.apple.com/documentation/MacOSX/ has nothing
-    ## official.  Bill Northcott <w.northcott@unsw.edu.au> points out
-    ## that it is only needed for GCC 3.x (and earlier) ...
-    if test "${GCC}" = yes; then
-      case "${CC_VERSION}" in
-        2.*|3.*)
-	  AC_MSG_ERROR([Your gcc is too old.])
-      esac
-    fi
-    ;;
-  *)
-    AC_CHECK_LIB(dl, dlopen)
-    ;;
-esac
+### FASTR BEGIN FastR distribution doesn't need to know this (?):
+# ## <NOTE>
+# ## This actually comes from libtool.m4.
+# AC_CHECK_LIBM
+# AC_SUBST(LIBM)
+# ## </NOTE>
+# ## AC_CHECK_LIBM computes LIBM but does not add to LIBS, hence we do
+# ## the following as well.
+# AC_CHECK_LIB(m, sin)
+# AC_CHECK_LIB(dl, dlopen)
+### FASTR END
 
-## Readline.
-if test "${use_readline}" = yes; then
-  AC_CHECK_HEADERS(readline/history.h readline/readline.h)
-  r_save_LIBS="${LIBS}"
-  LIBS=
-  ## don't use the cached value as we need to rebuild LIBS
-  unset ac_cv_lib_readline_rl_callback_read_char
-  AC_CHECK_LIB(readline, rl_callback_read_char)
-  use_readline="${ac_cv_lib_readline_rl_callback_read_char}"
-  if test "${use_readline}" = no; then
-    ## only need ncurses if libreadline is not statically linked against it
-    unset ac_cv_lib_readline_rl_callback_read_char
-    AC_CHECK_LIB(ncurses, main, [],
-                 AC_CHECK_LIB(termcap, main, [],
-                              AC_CHECK_LIB(termlib, main)))
-    AC_CHECK_LIB(readline, rl_callback_read_char)
-    use_readline="${ac_cv_lib_readline_rl_callback_read_char}"
-    if test "${use_readline}" = yes; then
-      use_readline="${ac_cv_header_readline_readline_h}"
-    fi
-  fi
-  if test "${use_readline}" = no; then
-    AC_MSG_ERROR([--with-readline=yes (default) and headers/libs are not available])
-  else
-    ## the NetBSD emulation supplied by macOS does not have this
-    AC_CHECK_FUNCS(history_truncate_file)
-    ## rl_completion_matches is >= 4.2.
-    ## rl_resize_terminal is >= 4.0 ane we use it only for >= 6.3.
-    ## rl_callback_sigcleanup is in pre-releases for 7.0, not yet used.
-    R_CHECK_FUNCS([rl_callback_sigcleanup rl_completion_matches rl_resize_terminal rl_sort_completion_matches], 
-[#include <stdio.h>
-#include <readline/readline.h>]
-                 )
-  fi
-  READLINE_LIBS="${LIBS}"
-  LIBS="${r_save_LIBS}"
-fi
-AC_SUBST(READLINE_LIBS)
+### FASTR BEGIN not necessary for FastR
+# ## Readline.
+# if test "${use_readline}" = yes; then
+#   AC_CHECK_HEADERS(readline/history.h readline/readline.h)
+#   r_save_LIBS="${LIBS}"
+#   LIBS=
+#   ## don't use the cached value as we need to rebuild LIBS
+#   unset ac_cv_lib_readline_rl_callback_read_char
+#   AC_CHECK_LIB(readline, rl_callback_read_char)
+#   use_readline="${ac_cv_lib_readline_rl_callback_read_char}"
+#   if test "${use_readline}" = no; then
+#     ## only need ncurses if libreadline is not statically linked against it
+#     unset ac_cv_lib_readline_rl_callback_read_char
+#     AC_CHECK_LIB(ncurses, main, [],
+#                  AC_CHECK_LIB(termcap, main, [],
+#                               AC_CHECK_LIB(termlib, main)))
+#     AC_CHECK_LIB(readline, rl_callback_read_char)
+#     use_readline="${ac_cv_lib_readline_rl_callback_read_char}"
+#     if test "${use_readline}" = yes; then
+#       use_readline="${ac_cv_header_readline_readline_h}"
+#     fi
+#   fi
+#   if test "${use_readline}" = no; then
+#     AC_MSG_ERROR([--with-readline=yes (default) and headers/libs are not available])
+#   else
+#     ## the NetBSD emulation supplied by macOS does not have these
+#     AC_CHECK_FUNCS(history_truncate_file tilde_expand_word)
+#     ## rl_completion_matches is >= 4.2.
+#     ## rl_resize_terminal is >= 4.0 ane we use it only for >= 6.3.
+#     ## rl_callback_sigcleanup is in pre-releases for 7.0, not yet used.
+#     R_CHECK_FUNCS([rl_callback_sigcleanup rl_completion_matches rl_resize_terminal rl_sort_completion_matches], 
+# [#include <stdio.h>
+# #include <readline/readline.h>]
+#                  )
+#   fi
+#   READLINE_LIBS="${LIBS}"
+#   LIBS="${r_save_LIBS}"
+# fi
+# AC_SUBST(READLINE_LIBS)
+### FASTR END -- FASTR TODO continue?
 
 ### * Checks for header files.
 
@@ -905,11 +922,11 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(dlfcn.h fcntl.h glob.h grp.h pwd.h sched.h strings.h \
   sys/resource.h sys/select.h sys/socket.h sys/stat.h sys/time.h \
   sys/times.h sys/utsname.h unistd.h utime.h)
-## dl.h is used in src/unix/hpdlfcn.c included from src/unix/dynload.c on HP-UX
-## features.h is used by date-time code on Linux.
+## features.h is used by date-time code on Linux and in extra/tzone
 ## floatingpoint.h is used for fpsetmask on FreeBSD.
 ## sys/param.h is one way to get PATH_MAX.
-AC_CHECK_HEADERS(arpa/inet.h dl.h elf.h features.h floatingpoint.h \
+## elf.h is used for fallback for HAVE_NO_SYMBOL_UNDERSCORE
+AC_CHECK_HEADERS(arpa/inet.h elf.h features.h floatingpoint.h \
   langinfo.h netdb.h netinet/in.h sys/param.h)
 ## stdalign.h is C11.
 AC_CHECK_HEADERS(stdalign.h)
@@ -955,7 +972,7 @@ AC_CHECK_TYPES([intptr_t, uintptr_t], , , [#ifdef HAVE_INTTYPES_H
 
 ### * Checks for compiler characteristics.
 
-### ** Generic tests for the C, Fortran 77 and C++ compilers.
+### ** Generic tests for the C, fixed-form Fortran and C++ compilers.
 
 ### *** C compiler.
 
@@ -994,35 +1011,34 @@ fi
 R_PROG_CC_MAKEFRAG
 R_PROG_CC_LO_MAKEFRAG
 
+## for C compiler
 R_OPENMP
 
-### *** Fortran 77 compiler.
+### *** Fortran compiler.
 
-R_PROG_F77_FLIBS
+R_PROG_FC_FLIBS
 if test -z "$FLIBS_IN_SO"; then
   FLIBS_IN_SO=${FLIBS}
 fi
 AC_SUBST(FLIBS_IN_SO)
-R_PROG_F77_APPEND_UNDERSCORE
-R_PROG_F77_CAN_RUN
-R_PROG_F77_CC_COMPAT
-R_PROG_F77_CC_COMPAT_COMPLEX
+R_PROG_FC_APPEND_UNDERSCORE
+R_PROG_FC_CAN_RUN
+R_PROG_FC_CC_COMPAT
+R_PROG_FC_CC_COMPAT_COMPLEX
 
 AM_CONDITIONAL(COMPILE_FORTRAN_DOUBLE_COMPLEX,
                [test "x${HAVE_FORTRAN_DOUBLE_COMPLEX}" != x])
 
-AC_LANG_PUSH(Fortran 77)
+AC_LANG_PUSH(Fortran)
 R_OPENMP
-AC_LANG_POP(Fortran 77)
+AC_LANG_POP(Fortran)
 
 
-### *** C++ compiler.
+### *** C++ compiler
 
 R_PROG_CXX_MAKEFRAG
 
-AC_LANG_PUSH(C++)
-R_OPENMP
-AC_LANG_POP(C++)
+## OpenMP selection has to come after dialect is chosen.
 
 ### *** ObjC compiler
 
@@ -1042,16 +1058,26 @@ case "${host_os}" in
   ;;
 esac
 
-### ** Platform-specific overrides for the C, Fortran 77 and C++ compilers.
+### ** Platform-specific overrides for the C, fixed-form Fortran and C++ compilers.
 
-case "${host_cpu}" in
-  i*86|x86_64)
-    R_PROG_CC_FLAG_D__NO_MATH_INLINES
-    ## We used to add -mieee-fp here, but it seems it is really a
-    ## linker flag for old Linuxen adding -lieee to a non-shared link.
-    ;;
-esac
+## Ensure we do not pick up values from outside configure
+R_XTRA_CFLAGS=
+R_XTRA_CPPFLAGS=
+R_XTRA_CXXFLAGS=
+R_XTRA_FFLAGS=
+R_XTRA_LIBS=
 
+dnl This was for glibc 2.1
+dnl case "${host_cpu}" in
+dnl   i*86|x86_64)
+dnl     ## This sets R_XTRA_CFLAGS
+dnl     R_PROG_CC_FLAG_D__NO_MATH_INLINES
+dnl     ## We used to add -mieee-fp here, but it seems it is really a
+dnl     ## linker flag for old Linuxen adding -lieee to a non-shared link.
+dnl     ;;
+dnl esac
+
+dnl This is set for elf platforms in Rdynload.c
 AH_TEMPLATE([HAVE_NO_SYMBOL_UNDERSCORE],
             [Define if module-loading does not need an underscore to
              be prepended to external names.])
@@ -1073,103 +1099,22 @@ case "${host_os}" in
     ## which these days mean macOS
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
     ;;
-  hpux*)
-    AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
-    case "${CC}" in
-      cc|c89)
-	## Luke Tierney says we also need '-Wp,-H16000' which tells the
-	## pre-processor to increase the size of an internal table.  It
-	## seems that src/main/vfonts/g_her_glyph.c contains a line
-	## that is too long for the pre-processor without this flag.
-	R_SH_VAR_ADD(R_XTRA_CPPFLAGS, [-Wp,-H16000])
-	;;
-    esac
-    AC_CHECK_LIB(dld, shl_load, [R_XTRA_LIBS="-ldld ${R_XTRA_LIBS}"])
-    ;;
-  linux*)
-    case  "${CC}" in
-      ## Intel compiler
-      *icc*)
-	## icc declares __GNUC__, so it picks up CFLAGS intended for gcc.
-	if test "$ac_test_CFLAGS" != set; then
-          if test $ac_cv_prog_cc_g = yes; then
-	    case "${host_cpu}" in
-	      x86_64)
-	        CFLAGS="-g -O2 -std=c99"
-		;;
-	      *)
-	        ## on ix86 optimization fails
-                CFLAGS="-g -std=c99"
-		;;
-	    esac
-          else
-	    case "${host_cpu}" in
-	      x86_64)
-	        CFLAGS="-O2 -std=c99"
-		;;
-	      *)
-                CFLAGS="-std=c99"
-		;;
-	    esac
-          fi
-        fi
-	## used to set IEEE flag, but this is version-dependent.
-        ;;
-    esac
-    case  "${F77}" in
-      ## Intel compilers
-      *ifc|*ifort)
-	if test "x$userFFLAGS" = x; then
-          if test $ac_cv_prog_f77_g = yes; then
-	    case "${host_cpu}" in
-	      x86_64)
-	        FFLAGS="-g -O2"
-		;;
-	      *)
-                FFLAGS="-g"
-		;;
-	    esac
-          else
-	    case "${host_cpu}" in
-	      x86_64)
-	        FFLAGS="-O2"
-		;;
-	      *)
-	        ## on ix86 optimization of dlamc.f fails
-                FFLAGS=
-		;;
-	    esac
-          fi
-        fi
-        ;;
-    esac
-    case  "${CXX}" in
-      ## Intel compilers
-      *icpc|*icc)
-	if test "$ac_test_CXXFLAGS" != set; then
-          if test $ac_cv_prog_cxx_g = yes; then
-	    case "${host_cpu}" in
-	      x86_64)
-	        CXXFLAGS="-g -O2"
-		;;
-	      *)
-                CXXFLAGS="-g"
-		;;
-	    esac
-          else
-	    case "${host_cpu}" in
-	      x86_64)
-	        CXXFLAGS="-O2"
-		;;
-	      *)
-                CXXFLAGS=
-		;;
-	    esac
-          fi
-        fi
-        ;;
-    esac
-    ;;
+   hpux*)
+dnl leave this in as not easily overridden by userx
+     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
+dnl     case "${CC}" in
+dnl       cc|c89)
+dnl 	## Luke Tierney says we also need '-Wp,-H16000' which tells the
+dnl 	## pre-processor to increase the size of an internal table.  It
+dnl 	## seems that src/main/vfonts/g_her_glyph.c contains a line
+dnl 	## that is too long for the pre-processor without this flag.
+dnl 	R_SH_VAR_ADD(R_XTRA_CPPFLAGS, [-Wp,-H16000])
+dnl 	;;
+dnl     esac
+dnl     AC_CHECK_LIB(dld, shl_load, [R_XTRA_LIBS="-ldld ${R_XTRA_LIBS}"])
+     ;;
+  ## We no longer special-case Intel compilers on Linux:
+  ## what we had dated from Nov 2005.
   mingw*|windows*|winnt)
     AC_DEFINE(HAVE_NO_SYMBOL_UNDERSCORE)
     ;;
@@ -1180,11 +1125,11 @@ case "${host_os}" in
     ;;
 esac
 
-## This was -ffloat-store on all gfortran/g77 platforms prior to 3.5.0
+## This was -ffloat-store on all gfortran/g77 platforms prior to R 3.5.0
 ## Suggestion adopted from https://gcc.gnu.org/wiki/FloatingPointMath
 ## It was already the default on 32-bit macOS
 if test "${SAFE_FFLAGS+set}" != set; then
-  if test "x${ac_cv_f77_compiler_gnu}" = xyes; then
+  if test "x${ac_cv_fc_compiler_gnu}" = xyes; then
     case "${host_cpu}" in
       i*86|x86_64)
       SAFE_FFLAGS="${FFLAGS} -msse2 -mfpmath=sse"
@@ -1198,6 +1143,26 @@ if test "${SAFE_FFLAGS+set}" != set; then
   fi
 fi
 
+## If the Fortran compiler is gfortran >= 7, add
+## -fno-optimize-sibling-calls to avoid recent gfortran optimizations
+## that break with LAPACK/BLAS-style passing of length-1 strings
+## (without hidden arguments giving their lengths).
+AC_MSG_CHECKING([if need -fno-optimize-sibling-calls for gfortran])
+AC_CACHE_VAL([r_cv_have_gfortran7],
+[r_cv_have_gfortran7=no
+if test "x${GFC}" = xyes; then
+  gfortran_version_maj=`echo "__GNUC__" | ${FC} -E -P - | ${SED} 's/ //g'`
+  if test ${gfortran_version_maj} -ge 7; then
+    r_cv_have_gfortran7=yes
+  fi
+fi])
+
+if test "x${r_cv_have_gfortran7}" = xyes; then
+  AC_MSG_RESULT([yes])
+  R_XTRA_FFLAGS="-fno-optimize-sibling-calls"
+else
+  AC_MSG_RESULT([no])
+fi
 
 AC_SUBST(CFLAGS)
 AC_SUBST(MAIN_CFLAGS)
@@ -1209,10 +1174,15 @@ AC_SUBST(FFLAGS)
 AC_SUBST(SAFE_FFLAGS)
 AC_SUBST(MAIN_FFLAGS)
 AC_SUBST(SHLIB_FFLAGS)
+## used on AIX and formerly on glibc 2.1
 AC_SUBST(R_XTRA_CFLAGS)
+## formerly used on HP-UX
 AC_SUBST(R_XTRA_CPPFLAGS)
+## unused
 AC_SUBST(R_XTRA_CXXFLAGS)
+## used for gfortran >= 7
 AC_SUBST(R_XTRA_FFLAGS)
+## formerly used on HP-UX
 AC_SUBST(R_XTRA_LIBS)
 AC_SUBST(OBJC_LIBS)
 AC_SUBST(OBJCFLAGS)
@@ -1227,7 +1197,7 @@ R_ABI
 ## MAIN_LD, MAIN_LDFLAGS
 ##   command and flags for loading the main binary so that it will load
 ##   shared objects (DLLs) at runtime, also for profiling.
-## CPICFLAGS, CXXPICFLAGS, FPICFLAGS, FCPICFLAGS
+## CPICFLAGS, CXXPICFLAGS, FPICFLAGS
 ##   flags for compiling C, C++, and Fortran library code.
 ## SHLIB_LD, SHLIB_LDFLAGS
 ##   command and flags for creating DLLs (which contain object files
@@ -1265,15 +1235,12 @@ R_ABI
 main_ld="${CC}"
 shlib_ld="${CC}"
 shlib_cxxld="${CXX}"
-SHLIB_EXT=".so"
+## Allow user to override this, e.g. HP-UX uses .sl
+: ${SHLIB_EXT=".so"}
 SHLIB_LIBADD=
 use_exportfiles=no
 
 ## Step 1.  Ask imake.
-## <NOTE>
-## Earlier versions had fpicflags=${cpicflags}.  As this really amounts
-## to hoping rather than knowing, we no longer do this.
-## </NOTE>
 r_xtra_path="${PATH}"
 for dir in /usr/bin/X11 /usr/X11R6/bin /usr/openwin/bin; do
   r_xtra_path="${r_xtra_path}${PATH_SEPARATOR}${dir}"
@@ -1321,8 +1288,7 @@ if test "${GCC}" = yes; then
   esac
   shlib_ldflags="-shared"
 fi
-## G77 includes gfortran
-if test "${G77}" = yes; then
+if test "${ac_cv_fc_compiler_gnu}" = yes; then
   case "${host_cpu}" in
     sparc*|ppc64*|powerpc64*|s390*)
       fpicflags="-fPIC"
@@ -1333,8 +1299,8 @@ if test "${G77}" = yes; then
   esac
 fi
 ## Assume flang is the same as clang (it is a modified front end)
-case "${F77}" in
-  *flang)
+case "${FC}" in
+  *flang|flang-*)
     fpicflags=${cpicflags}
     ;;
 esac
@@ -1430,7 +1396,8 @@ rm -f libconftest${DYLIB_EXT} conftest.c
     ## * libRblas must be 2-level, dyn lookup because of xerbla which is undefined
     cpicflags="${darwin_pic}"
     cxxpicflags="${darwin_pic}"
-    ## macOS does not have a Fortran compiler, so this is speculative
+    ## macOS does not have a Fortran compiler, so this is speculative,
+    ## but works for clang/gfortran combination
     fpicflags="${darwin_pic}"
     shlib_cxxldflags="${shlib_ldflags}"
     ;;
@@ -1445,37 +1412,37 @@ rm -f libconftest${DYLIB_EXT} conftest.c
   gnu*)				# GNU Hurd, see FreeBSD comment
     main_ldflags="-Wl,--export-dynamic"
     ;;
-  hpux*)
-    SHLIB_EXT=".sl"
-    case "${CC}" in
-      cc|c89)
-        cpicflags="+Z"
-        ;;
-    esac
-    case "${F77}" in
-      f77|fort77|f90)
-        fpicflags="+Z"
-        ;;
-    esac
-    main_ldflags="-Wl,-E"
-    if test "${GCC}" = yes; then
-      shlib_ldflags="-shared -fPIC -Wl,-Bsymbolic"
-    else
-      ## <NOTE>
-      ## Native cc insists on tacking on crt0.o when it calls ld, and
-      ## crt0.o is not built with PIC.  As there seems to be no obvious
-      ## way to tell cc not to do this, we use ld for linking shlibs.
-      shlib_ld=ld
-      shlib_ldflags="-b -Bsymbolic"
-      ## </NOTE>
-    fi
-    if test "${GXX}" = yes; then
-      shlib_cxxldflags="-shared -fPIC"
-    fi
-    ;;
-  linux*aout)			# GNU Linux/aout
-    sed '/HAVE_ELF_H/d' confdefs.h > tmp.h ; mv tmp.h confdefs.h
-    ;;
+dnl   hpux*)
+dnl     SHLIB_EXT=".sl"
+dnl     case "${CC}" in
+dnl       cc|c89)
+dnl         cpicflags="+Z"
+dnl         ;;
+dnl     esac
+dnl     case "${FC}" in
+dnl       f77|fort77|f90)
+dnl         fpicflags="+Z"
+dnl         ;;
+dnl     esac
+dnl     main_ldflags="-Wl,-E"
+dnl     if test "${GCC}" = yes; then
+dnl       shlib_ldflags="-shared -fPIC -Wl,-Bsymbolic"
+dnl     else
+dnl       ## <NOTE>
+dnl       ## Native cc insists on tacking on crt0.o when it calls ld, and
+dnl       ## crt0.o is not built with PIC.  As there seems to be no obvious
+dnl       ## way to tell cc not to do this, we use ld for linking shlibs.
+dnl       shlib_ld=ld
+dnl       shlib_ldflags="-b -Bsymbolic"
+dnl       ## </NOTE>
+dnl     fi
+dnl     if test "${GXX}" = yes; then
+dnl       shlib_cxxldflags="-shared -fPIC"
+dnl     fi
+dnl     ;;
+dnl   linux*aout)			# GNU Linux/aout
+dnl     sed '/HAVE_ELF_H/d' confdefs.h > tmp.h ; mv tmp.h confdefs.h
+dnl     ;;
   linux*)			# GNU Linux/ELF
     case  "${CC}" in
       ## Intel compiler: note that -c99 may have been appended
@@ -1487,7 +1454,7 @@ rm -f libconftest${DYLIB_EXT} conftest.c
         cpicflags="-fpic"
 	;;
     esac
-    case  "${F77}" in
+    case  "${FC}" in
       ## Intel compilers
       *ifc|*ifort)
         fpicflags="-fpic"
@@ -1547,8 +1514,7 @@ rm -f libconftest${DYLIB_EXT} conftest.c
         if test "${GCC}" = yes; then
           cpicflags="-fPIC"
         fi  
-	## G77 includes gfortran
-        if test "${G77}" = yes; then
+	if test "${ac_cv_fc_compiler_gnu}" = yes; then
           fpicflags="-fPIC"
         fi
         if test "${GXX}" = yes; then
@@ -1585,8 +1551,8 @@ rm -f libconftest${DYLIB_EXT} conftest.c
         fi
       fi
     fi
-    ## G77 includes gfortran
-    if test "${G77}" != yes; then
+    if test "${ac_cv_fc_compiler_gnu}" != yes; then
+      ## Oracle compiler
       fpicflags="-PIC"
     else
       fpicflags="-fPIC"
@@ -1703,11 +1669,11 @@ RLAPACK_LDFLAGS=""
 RBLAS_LDFLAGS=""
 R_DYLIB_VERSION_SUFFIX=""
 case "${host_os}" in
-  aix*)
-    ## Not needed for -brtl linking
-    # RLAPACK_LDFLAGS="${wl}-bE:\$(top_builddir)/etc/Rlapack.exp"
-    # LAPACK_LDFLAGS="${wl}-bI:\$(R_HOME)/etc/Rlapack.exp"
-    ;;
+dnl   aix*)
+dnl     ## Not needed for -brtl linking
+dnl     # RLAPACK_LDFLAGS="${wl}-bE:\$(top_builddir)/etc/Rlapack.exp"
+dnl     # LAPACK_LDFLAGS="${wl}-bI:\$(R_HOME)/etc/Rlapack.exp"
+dnl     ;;
   darwin*)
     DYLIB_EXT=".dylib"
     dylib_ldflags="${darwin_dylib_ldflags}"
@@ -1717,16 +1683,16 @@ case "${host_os}" in
     ## don't use version in libRblas so we can replace it with any BLAS implementation
     RBLAS_LDFLAGS="-install_name libRblas.dylib -headerpad_max_install_names"
     ;;
-  hpux*)
-    ## Needs to avoid embedding a relative path ../../../bin.
-    ## See the above code for shlib_ldflags for reasons why we currently
-    ## cannot always use '-Wl,+s'.
-    if test "${GCC}" = yes; then
-      LAPACK_LDFLAGS="-Wl,+s"
-    else
-      LAPACK_LDFLAGS="+s"
-    fi
-    ;;
+dnl   hpux*)
+dnl     ## Needs to avoid embedding a relative path ../../../bin.
+dnl     ## See the above code for shlib_ldflags for reasons why we currently
+dnl     ## cannot always use '-Wl,+s'.
+dnl     if test "${GCC}" = yes; then
+dnl       LAPACK_LDFLAGS="-Wl,+s"
+dnl     else
+dnl       LAPACK_LDFLAGS="+s"
+dnl     fi
+dnl     ;;
   openbsd*)
     if test -z "${R_DYLIB_VERSION}"; then
       PACKAGE_VERSION_MAJOR=`echo "${PACKAGE_VERSION}" | \
@@ -1763,7 +1729,6 @@ AC_SUBST(CPICFLAGS)
 AC_SUBST(CXXPICFLAGS)
 AC_SUBST(DYLIB_LD)
 AC_SUBST(DYLIB_LDFLAGS)
-AC_SUBST(FCPICFLAGS)
 AC_SUBST(FPICFLAGS)
 AC_SUBST(SHLIB_CXXLD)
 AC_SUBST(SHLIB_CXXLDFLAGS)
@@ -1790,11 +1755,34 @@ R_STDCXX([11], [CXX11], [CXX])
 R_STDCXX([14], [CXX14], [CXX11])
 R_STDCXX([17], [CXX17], [CXX14])
 
+## Set default compiler to C++11 if available; otherwise C++98
+if test -n "${CXX}" && test -z "${CXXSTD}"; then
+  if test -n "${CXX11}"; then
+    CXX=${CXX11}
+    CXXSTD=${CXX11STD}
+    CXXFLAGS=${CXX11FLAGS}
+    CXXPICFLAGS=${CXX11PICFLAGS}
+  elif test -n "${CXX98}"; then
+    CXX=${CXX98}
+    CXXSTD=${CXX98STD}
+    CXXFLAGS=${CXX98FLAGS}
+    CXXPICFLAGS=${CXX98PICFLAGS}
+  fi
+fi
+
+## Only now can we look for the OpenMP flag
+AC_LANG_PUSH(C++)
+CXX_SAVE=${CXX}
+CXX="${CXX} ${CXXSTD}"
+R_OPENMP
+CXX=${CXX_SAVE}
+AC_LANG_POP(C++)
+
 ### OpenMP.
 
 ## The basic checking is performed via AC_OPENMP added in Autoconf 2.62,
 ## which we already called for determining the appropriate flags for the
-## C, C++, Fortran 77, Fortran compiler/linker.  Note that this gives
+## C, C++, Fortran compiler/linker.  Note that this gives
 ## variables OPENMP_CFLAGS etc., which are meant to be used for *both*
 ## compiling and linking.  So we can really only used them provided that
 ## we use the respective compilers for linking as well (or we need a
@@ -1806,10 +1794,10 @@ R_STDCXX([17], [CXX17], [CXX14])
 ##    If both MAIN_LD and DYLIB_LD were not specified by the user and
 ##    equal CC and this was determined to support OpenMP, then we (try
 ##    to) provide OpenMP support by adding OPENMP_CFLAGS to the linker
-##    flags and OPENMP_CFLAGS and OPENMP_FFLAGS to the C and Fortran 77
+##    flags and OPENMP_CFLAGS and OPENMP_FFLAGS to the C and Fortran
 ##    compiler flags, and defining HAVE_OPENMP.
 ##
-## (The Fortran 77 compiler is never used for linking by default.)
+## (The fixed-form Fortran compiler is never used for linking by default.)
 
 if test -n "${R_OPENMP_CFLAGS+set}"; then
   if test -n "${R_OPENMP_CFLAGS}"; then
@@ -1829,15 +1817,15 @@ else
 fi
 ## Currently unused: see comment in Makeconf.in
 if test -z "${R_OPENMP_FFLAGS+set}" -a \
-        "x${ac_cv_prog_f77_openmp}" != "xunsupported"; then
-  R_OPENMP_FFLAGS="${OPENMP_FFLAGS}"
+        "x${ac_cv_prog_fc_openmp}" != "xunsupported"; then
+  R_OPENMP_FFLAGS="${OPENMP_FCFLAGS}"
 fi
 AC_SUBST(R_OPENMP_CFLAGS)
 AC_SUBST(R_OPENMP_FFLAGS)
 
 ## For compiling package code, we use SHLIB_FCLD, SHLIB_CXXLD or
 ## SHLIB_LD for linking, depending on whether the package contains
-## Fortran (90/95) code, C++ (or ObjC) code, or "just" C and Fortran 77.
+## free-form Fortran code, C++ (or ObjC) code, or "just" C and fixed-form Fortran.
 ## However, we (currently) do not conditionalize compilation flags.  So
 ## the only "safe" thing we can do for now is:
 ##
@@ -1846,12 +1834,9 @@ AC_SUBST(R_OPENMP_FFLAGS)
 ##    determined to support OpenMP, the we try to provide OpenMP support
 ##    for packages by adding OPENMP_FCFLAGS, OPENMP_CXXFLAGS and
 ##    OPENMP_CFLAGS to the respective linker flags, and add the OPENMP
-##    flags to all (C, C++, Fortran and Fortran 77) compiler flags.
+##    flags to all (C, C++ and Fortran) compiler flags.
 
-## <FIXME>
-## Need to do this after configuring Fortran 90/95 support, which comes
-## way below: should this be moved up to the compiler section?
-## </FIXME>
+R_PTHREAD
 
 ### Now we have found all the flags, we need to use them to test appropriately.
 ### We don't currently have any C++ tests, but future-proof.
@@ -1863,13 +1848,13 @@ FFLAGS_KEEP=${FFLAGS}
 CXXFLAGS_KEEP=${CXXFLAGS}
 CPPFLAGS="${CPPFLAGS} ${R_XTRA_CPPFLAGS}"
 if test "${want_R_shlib}" = yes; then
-  CFLAGS="${CFLAGS} ${CPICFLAGS} ${R_XTRA_CFLAGS}"
-  FFLAGS="${FFLAGS} ${FPICFLAGS} ${R_XTRA_FFLAGS}"
-  CXXFLAGS="${CXXFLAGS} ${CXXPICFLAGS} ${R_XTRA_CXXFLAGS}"
+  CFLAGS="${R_XTRA_CFLAGS} ${CFLAGS} ${CPICFLAGS}"
+  FFLAGS="${R_XTRA_FFLAGS} ${FFLAGS} ${FPICFLAGS}"
+  CXXFLAGS="${R_XTRA_CXXFLAGS} ${CXXFLAGS} ${CXXPICFLAGS}}"
 else
-  CFLAGS="${CFLAGS} ${R_XTRA_CFLAGS}"
-  FFLAGS="${FFLAGS} ${R_XTRA_FFLAGS}"
-  CXXFLAGS="${CXXFLAGS} ${R_XTRA_CXXFLAGS}"
+  CFLAGS="${R_XTRA_CFLAGS} ${CFLAGS}"
+  FFLAGS="${R_XTRA_FFLAGS} ${FFLAGS}"
+  CXXFLAGS="${R_XTRA_CXXFLAGS} ${CXXFLAGS}"
 fi
 
 ### * Checks for library functions.
@@ -2164,7 +2149,7 @@ fi
 
 ## BLAS.
 ## <NOTE>
-## This has to come *after* checking for Fortran 77 compiler/converter
+## This has to come *after* checking for (fixed-form) Fortran compiler/converter
 ## characteristics (notably name mangling and FLIBS).
 ## </NOTE>
 
@@ -2402,7 +2387,7 @@ R_LIBCURL
 
 
 ## Bitmap headers and libraries.
-if test -n "${PKGCONF}"; then
+if test -n "${PKG_CONFIG}"; then
 R_BITMAPS2
 else
 R_BITMAPS
@@ -2478,7 +2463,7 @@ esac
 
 ## Printing.
 ## We look to see whether we have 'lpr' or 'lp'.  Some platforms
-## provide both (SunOS and HPUX), and in those cases we choose lpr.
+## provide both (SunOS and HP-UX), and in those cases we choose lpr.
 if test -z "${R_PRINTCMD}"; then
   AC_CHECK_PROGS(R_PRINTCMD, [lpr lp])
 fi
@@ -2528,13 +2513,19 @@ AC_SUBST(JAVA_CPPFLAGS0)
 AC_SUBST(R_JAVA_LD_LIBRARY_PATH)
 
 
-## F90/F95 support
-AC_PROG_FC()
+## Free-form Fortran support (compiler chosen way above).
 AC_LANG_PUSH(Fortran)
+## The next two are needed to get IBM's xlf* and Intel's ifc
+## to accept these extensions (but neither are current).
+## They set FCFLAGS_F9x used in etc/Makeconf.in
 AC_FC_SRCEXT(f90, [dummy=1], [dummy=0])
 AC_FC_SRCEXT(f95, [dummy=1], [dummy=0])
+## We probably should be calling AC_FC_FREEFORM: adds to FCFLAGS
+## We could call AC_FC_FIXEDFORM: adds to FCFLAGS
 R_OPENMP
 AC_LANG_POP()
+
+## SHLIB_FCLD and {SHLIB_FCLDFLAGS are legacy
 if test -z "${SHLIB_FCLD}"; then
   shlib_fcld_was_given=no
   SHLIB_FCLD="\$(FC)"
@@ -2542,9 +2533,10 @@ fi
 : ${SHLIB_FCLDFLAGS="${SHLIB_LDFLAGS}"}
 AC_SUBST(SHLIB_FCLD)
 AC_SUBST(SHLIB_FCLDFLAGS)
+
 ## x86 Solaris' f95 needs additional libs when building a DSO
-FCLIBS=${FCLIBS}
-AC_SUBST(FCLIBS)
+FCLIBS_XTRA=${FCLIBS_XTRA}
+AC_SUBST(FCLIBS_XTRA)
 
 ## OpenMP package stuff (needs to come *after* configuration of all
 ## compilers).
@@ -2563,7 +2555,7 @@ if test "x${shlib_ld_was_given}" = xno -a \
   AC_DEFINE(SUPPORT_OPENMP, 1,
             [Define if you have C/C++/Fortran OpenMP support for package code.])
 fi
-## This assumes that OpenMP support in the C compiler includes compilation by F77
+## This assumes that OpenMP support in the C compiler includes compilation by FC
 if test -z "${SHLIB_OPENMP_CFLAGS+set}" -a \
         "x${shlib_ld_was_given}" = xno -a \
         "${SHLIB_LD}" = "\$(CC)" -a \
@@ -2571,8 +2563,8 @@ if test -z "${SHLIB_OPENMP_CFLAGS+set}" -a \
         "x${ac_cv_prog_c_openmp}" != "x"; then
   SHLIB_OPENMP_CFLAGS="${OPENMP_CFLAGS}"
   if test -z "${SHLIB_OPENMP_FFLAGS+set}" -a \
-          "x${ac_cv_prog_f77_openmp}" != "xunsupported"; then
-    SHLIB_OPENMP_FFLAGS="${OPENMP_FFLAGS}"
+          "x${ac_cv_prog_fc_openmp}" != "xunsupported"; then
+    SHLIB_OPENMP_FFLAGS="${OPENMP_FCFLAGS}"
   fi
 fi
 if test -z "${SHLIB_OPENMP_CXXFLAGS+set}" -a \
@@ -2581,77 +2573,10 @@ if test -z "${SHLIB_OPENMP_CXXFLAGS+set}" -a \
         "x${ac_cv_prog_cxx_openmp}" != "xunsupported"; then
   SHLIB_OPENMP_CXXFLAGS="${OPENMP_CXXFLAGS}"
 fi
-if test -z "${SHLIB_OPENMP_FCFLAGS+set}" -a \
-        "x${shlib_fcld_was_given}" = xno -a \
-        "${SHLIB_FCLD}" = "\$(FC)" -a \
-        "x${ac_cv_prog_fc_openmp}" != "xunsupported"; then
-  SHLIB_OPENMP_FCFLAGS="${OPENMP_FCFLAGS}"
-fi
 
 AC_SUBST(SHLIB_OPENMP_CFLAGS)
 AC_SUBST(SHLIB_OPENMP_CXXFLAGS)
-AC_SUBST(SHLIB_OPENMP_FCFLAGS)
 AC_SUBST(SHLIB_OPENMP_FFLAGS)
-
-
-## Look for FCPICFLAGS
-## Debian in their wisdom have f95 as a link to gfortran, so
-## use this to pick out gfortran (even though it is unreliable).
-if test "${ac_cv_fc_compiler_gnu}" = yes; then
-  case "${host_cpu}" in
-    sparc*|ppc64*|powerpc64*|s390*)
-      fcpicflags="-fPIC"
-      ;;
-    *)
-      fcpicflags="-fpic"
-      ;;
-  esac
-fi
-case "${host_os}" in
-  darwin*)
-     ## macOS does not have a Fortran compiler, so this is speculative
-    fcpicflags="${darwin_pic}"
-    ;;
-  hpux*)
-    case "${FC}" in
-      f90)
-        fcpicflags="+Z"
-        ;;
-    esac
-    ;;
-  linux*)
-    case  "${FC}" in
-      ## Intel compilers: probably get identified as GNU, but make sure.
-      *ifc|*ifort)
-        fcpicflags="-fpic"
-        ;;
-      ## Portland Group
-      *pgf95|*pgf90)
-        fcpicflags="-fpic"
-        ;;
-      *flang)
-        fcpicflags=${cpicflags}
-        ;;
-    esac
-    ;;
-  solaris*)
-    if test "${ac_cv_fc_compiler_gnu}" = yes; then
-      fcpicflags="-fPIC"
-    else
-      fcpicflags="-PIC"
-    fi
-    ;;
-esac
-: ${FCPICFLAGS="${fcpicflags}"}
-if test -z "${FCPICFLAGS}"; then
-  case "${host_os}" in
-    aix*|mingw*)
-      ;;
-    *)
-      AC_MSG_WARN([I could not determine FCPICFLAGS.])
-      ;;
-  esac
-fi
 
 
 ## Make sure -L terms come first in LIBS.
@@ -2791,10 +2716,12 @@ esac
 ### Moreover, the resulting configure script will be run the in etc directory so we strip that from the path
 AC_CONFIG_HEADERS([src/include/config.h])
 AC_CONFIG_FILES(
-[Makeconf
-  Renviron
+[Renviron
   ldpaths
 ])
+if test "${want_native_toolchain}" = yes; then
+  AC_CONFIG_FILES([Makeconf])
+fi
 
 #AC_CONFIG_COMMANDS([stamp-h],
 #[test -f src/include/stamp-h || echo timestamp > src/include/stamp-h])
@@ -2815,13 +2742,14 @@ AC_OUTPUT
 ## configure variables to config.status.
 ## </NOTE>
 r_c_compiler="${CC} ${R_XTRA_CFLAGS} ${CFLAGS}"
+## R_XTRA_CXXFLAGS is currently unused, but if it were applies to all dialects
 r_cxx_compiler="${CXX} ${CXXSTD} ${R_XTRA_CXXFLAGS} ${CXXFLAGS}"
-r_cxx98_compiler="${CXX98} ${CXX98STD} ${CXX98FLAGS}"
-r_cxx11_compiler="${CXX11} ${CXX11STD} ${CXX11FLAGS}"
-r_cxx14_compiler="${CXX14} ${CXX14STD} ${CXX14FLAGS}"
-r_cxx17_compiler="${CXX17} ${CXX17STD} ${CXX17FLAGS}"
-r_f77_compiler="${F77} ${R_XTRA_FFLAGS} ${FFLAGS}"
-r_f95_compiler="${FC} ${FCFLAGS}"
+r_cxx98_compiler="${CXX98} ${CXX98STD} ${R_XTRA_CXXFLAGS} ${CXX98FLAGS}"
+r_cxx11_compiler="${CXX11} ${CXX11STD} ${R_XTRA_CXXFLAGS} ${CXX11FLAGS}"
+r_cxx14_compiler="${CXX14} ${CXX14STD} ${R_XTRA_CXXFLAGS} ${CXX14FLAGS}"
+r_cxx17_compiler="${CXX17} ${CXX17STD} ${R_XTRA_CXXFLAGS} ${CXX17FLAGS}"
+r_f77_compiler="${FC} ${R_XTRA_FFLAGS} ${FFLAGS}"
+r_f95_compiler="${FC} ${R_XTRA_FFLAGS} ${FCFLAGS}"
 r_objc_compiler="${OBJC} ${OBJCFLAGS}"
 r_interfaces=
 ## we will not have tested for X11 under some configure options, so
@@ -2939,29 +2867,29 @@ AC_MSG_RESULT(
 [
 R is now configured for ${host}
 
-  Source directory:          ${srcdir}
-  Installation directory:    ${prefix}
+  Source directory:            ${srcdir}
+  Installation directory:      ${prefix}
 
-  C compiler:                ${r_c_compiler}
-  Fortran 77 compiler:       ${r_f77_compiler}
+  C compiler:                  ${r_c_compiler}
+  Fortran fixed-form compiler: ${r_f77_compiler}
 
-  Default C++ compiler:      ${r_cxx_compiler}
-  C++98 compiler:            ${r_cxx98_compiler}
-  C++11 compiler:            ${r_cxx11_compiler}
-  C++14 compiler:            ${r_cxx14_compiler}
-  C++17 compiler:            ${r_cxx17_compiler}
-  Fortran 90/95 compiler:    ${r_f95_compiler}
-  Obj-C compiler:	     ${r_objc_compiler}
+  Default C++ compiler:        ${r_cxx_compiler}
+  C++98 compiler:              ${r_cxx98_compiler}
+  C++11 compiler:              ${r_cxx11_compiler}
+  C++14 compiler:              ${r_cxx14_compiler}
+  C++17 compiler:              ${r_cxx17_compiler}
+  Fortran free-form compiler:  ${r_f95_compiler}
+  Obj-C compiler:	       ${r_objc_compiler}
 
-  Interfaces supported:      ${r_interfaces}
-  External libraries:        ${r_external_libs}
-  Additional capabilities:   ${r_capabilities}
-  Options enabled:           ${r_options}
+  Interfaces supported:        ${r_interfaces}
+  External libraries:          ${r_external_libs}
+  Additional capabilities:     ${r_capabilities}
+  Options enabled:             ${r_options}
 
-  Capabilities skipped:      ${r_no_capabilities}
-  Options not enabled:       ${r_no_options}
+  Capabilities skipped:        ${r_no_capabilities}
+  Options not enabled:         ${r_no_options}
 
-  Recommended packages:      ${use_recommended_packages} 
+  Recommended packages:        ${use_recommended_packages} 
 ])
 if test -n "${warn_f77_cc_double_complex}"; then
   AC_MSG_WARN([${warn_f77_cc_double_complex}])
