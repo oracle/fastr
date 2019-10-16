@@ -62,8 +62,12 @@ public class FastROptions {
     public static final OptionKey<Boolean> PrintErrorStacktracesToFile = new OptionKey<>(false);
     @Option(category = OptionCategory.EXPERT, stability = OptionStability.STABLE, help = "Activates LLVM debugging of shared libraries.") //
     public static final OptionKey<String> DebugLLVMLibs = new OptionKey<>("");
-    @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "BackEndLLVM=([-]pkg(,pkg)*)?; Specifies for which packages LLVM version will be used or will not, if the dash is present. Empty list stands for all packages.") //
+    @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "BackEnd=[llvm|native]; Specifies the RFFI backend.") //
+    public static final OptionKey<String> BackEnd = new OptionKey<>("native");
+    @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "BackEndLLVM=pkg1,...; Native code of specified packages will be executed by LLVM backend.") //
     public static final OptionKey<String> BackEndLLVM = new OptionKey<>("");
+    @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "BackEndNative=pkg1,...; Native code of specified packages will be executed by native (NFI) backend.") //
+    public static final OptionKey<String> BackEndNative = new OptionKey<>("");
 
     @Option(category = OptionCategory.EXPERT, stability = OptionStability.EXPERIMENTAL, help = "Enable or disable cache of AST instances specialized for given R environment.") //
     public static final OptionKey<Boolean> EnableClosureCallTargetsCache = new OptionKey<>(true);
@@ -215,6 +219,15 @@ public class FastROptions {
         }
         if (context.getOption(EnableExplicitGC)) {
             sb.append("--R.EnableExplicitGC=true ");
+        }
+        if ("llvm".equals(context.getOption(BackEnd))) {
+            sb.append("--R.BackEnd=llvm ");
+        }
+        if (context.getOption(BackEndLLVM) != null) {
+            sb.append("--R.BackEndLLVM=").append(context.getOption(BackEndLLVM)).append(" ");
+        }
+        if (context.getOption(BackEndNative) != null) {
+            sb.append("--R.BackEndNative=").append(context.getOption(BackEndNative)).append(" ");
         }
         return sb.toString();
     }

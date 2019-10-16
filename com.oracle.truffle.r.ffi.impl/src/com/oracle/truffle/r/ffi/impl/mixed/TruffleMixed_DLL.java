@@ -49,48 +49,48 @@ public class TruffleMixed_DLL implements DLLRFFI {
     private final TruffleLLVM_DLL llvmDllRFFI = new TruffleLLVM_DLL();
     private final TruffleNFI_DLL nfiDllRFFI = new TruffleNFI_DLL();
 
-    private final Set<String> llvmPackages;
-    private final boolean includePackages;
+    private final Set<String> explicitPackages;
+    private final boolean isLLVMDefault;
 
     TruffleMixed_DLL() {
         if ("llvm".equals(System.getenv().get("FASTR_RFFI"))) {
-            llvmPackages = java.util.Collections.emptySet();
-            includePackages = true;
+            isLLVMDefault = true;
+            explicitPackages = java.util.Collections.emptySet();
         } else {
-            String llvmPkgsOpt = RContext.getInstance().getOption(FastROptions.BackEndLLVM);
-            if (llvmPkgsOpt != null && llvmPkgsOpt.startsWith("-")) {
-                includePackages = false;
-                llvmPkgsOpt = llvmPkgsOpt.substring(1);
+            String backendOpt = RContext.getInstance().getOption(FastROptions.BackEnd);
+            String explicitPkgsOpt;
+            if ("native".equals(backendOpt)) {
+                isLLVMDefault = false;
+                explicitPkgsOpt = RContext.getInstance().getOption(FastROptions.BackEndLLVM);
             } else {
-                includePackages = true;
+                // llvm
+                isLLVMDefault = true;
+                explicitPkgsOpt = RContext.getInstance().getOption(FastROptions.BackEndNative);
             }
-            String[] llvmPkgs = llvmPkgsOpt == null ? null : llvmPkgsOpt.split(",");
-            if (llvmPkgs == null) {
-                llvmPackages = null;
-            } else if ("".equals(llvmPkgsOpt) || llvmPkgs.length == 1 && "true".equals(llvmPkgs[0])) {
-                llvmPackages = java.util.Collections.emptySet();
+
+            String[] explicitPkgsOptSplit = explicitPkgsOpt == null ? null : explicitPkgsOpt.split(",");
+            if (explicitPkgsOptSplit == null || explicitPkgsOptSplit.length == 0) {
+                explicitPackages = java.util.Collections.emptySet();
             } else {
-                llvmPackages = new HashSet<>();
-                for (String llvmPkg : llvmPkgs) {
-                    llvmPackages.add(llvmPkg);
+                explicitPackages = new HashSet<>();
+                for (String pkg : explicitPkgsOptSplit) {
+                    explicitPackages.add(pkg);
                 }
             }
         }
     }
 
     boolean isLLVMPackage(Path libPath) {
-        if (llvmPackages == null) {
-            return !includePackages;
+        if (explicitPackages.isEmpty()) {
+            return isLLVMDefault;
         }
-        if (llvmPackages.isEmpty()) {
-            return includePackages;
-        } else {
-            Path libFileName = libPath.getFileName();
-            assert libFileName != null;
-            String libName = libFileName.toString();
-            libName = libName.substring(0, libName.lastIndexOf('.'));
-            return !(llvmPackages.contains(libName) ^ includePackages);
-        }
+
+        Path libFileName = libPath.getFileName();
+        assert libFileName != null;
+        String libName = libFileName.toString();
+        libName = libName.substring(0, libName.lastIndexOf('.'));
+        boolean isExplicitPkg = explicitPackages.contains(libName);
+        return isExplicitPkg ^ isLLVMDefault;
     }
 
     @Override
