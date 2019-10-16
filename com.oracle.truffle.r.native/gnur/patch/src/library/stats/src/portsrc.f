@@ -1,5 +1,5 @@
-C     Minimally modernized in 2018-09, so is fixed-form F90, not F77
-
+C THIS SOURCE WAS CONVERTED TO MODERN FORTRAN IN R-3.6.1
+C BUT FASTR DELIBERATELY KEEPS THE OLD VERSION THAT IS COMPILABLE BY F2C
       SUBROUTINE  DRN2G(D, DR, IV, LIV, LV, N, ND, N1, N2, P, R,
      1                  RD, V, X)
 C
@@ -187,18 +187,7 @@ C
          NN = N2 - N1 + 1
          IV(RESTOR) = 0
          I = IV1 + 4
-c         IF (IV(TOOBIG) .EQ. 0) GO TO (150, 130, 150, 120, 120, 150), I
-         IF (IV(TOOBIG) .EQ. 0) THEN
-            select case(I)
-         case(1,3,6)
-            goto 150
-         case(2)
-            goto 130
-         case(4,5)
-            goto 120
-            end select
-         END IF
-
+         IF (IV(TOOBIG) .EQ. 0) GO TO (150, 130, 150, 120, 120, 150), I
          IF (I .NE. 5) IV(1) = 2
          GO TO 40
 C
@@ -381,7 +370,7 @@ C
 C     ***  BAD N, ND, OR P  ***
 C
  210  IV(1) = 66
-      GO TO 290
+      GO TO 300
 C
 C  ***  CONVERGENCE OBTAINED -- SEE WHETHER TO COMPUTE COVARIANCE  ***
 C
@@ -647,23 +636,10 @@ C
       I = IV(1) - 2
       IF (I .GT. 12) GO TO 999
       NN1O2 = N * (N + 1) / 2
-      IF (LH .GE. NN1O2) THEN
-c         GO TO (250,250,250,250,250,250,190,150,190, 20,20,30), I
-         select case(I)
-      case(1:6)
-         goto 250
-      case(7,9)
-         goto 190
-      case(8)
-         goto 150
-      case(10,11)
-         goto 20
-      case(12)
-         goto 30
-      end select
-      END IF
-      IV(1) = 81
-      GO TO 440
+      IF (LH .GE. NN1O2) GO TO (250,250,250,250,250,250,190,150,190,
+     1                          20,20,30), I
+         IV(1) = 81
+         GO TO 440
 C
 C  ***  STORAGE ALLOCATION  ***
 C
@@ -905,17 +881,7 @@ C
       STEP1 = IV(STEP)
       LSTGST = STEP1 + 2*N
       I = IV(RESTOR) + 1
-c      GO TO (300, 270, 280, 290), I
-      select case(I)
-      case(1)
-         goto 300
-      case(2)
-         goto 270
-      case(3)
-         goto 280
-      case(4)
-         goto 290
-      end select
+      GO TO (300, 270, 280, 290), I
  270  CALL DV7CPY(N, X, V(X01))
       GO TO 300
  280   CALL DV7CPY(N, V(LSTGST), X)
@@ -926,23 +892,7 @@ c      GO TO (300, 270, 280, 290), I
          IV(RESTOR) = RSTRST
 C
  300  K = IV(IRC)
-c      GO TO (310,340,340,340,310,320,330,330,330,330,330,330,410,380), K
-      select case(K)
-      case(1)
-         goto 310
-      case(2:4)
-         goto 340
-      case(5)
-         goto 310
-      case(6)
-         goto 320
-      case(7:12)
-         goto 330
-      case(13)
-         goto 410
-      case(14)
-         goto 380
-      end select
+      GO TO (310,340,340,340,310,320,330,330,330,330,330,330,410,380), K
 C
 C     ***  RECOMPUTE STEP WITH NEW RADIUS  ***
 C
@@ -1197,23 +1147,10 @@ C
       I = IV(1) - 2
       IF (I .GT. 12) GO TO 999
       NN1O2 = N * (N + 1) / 2
-      IF (LH .GE. NN1O2) THEN
-c         GO TO (220,220,220,220,220,220,160,120,160, 10,10,20), I
-         select case(I)
-      case(1:6)
-         goto 220
-      case(7,9)
-         goto 160
-      case(8)
-         goto 120
-      case(10,11)
-         goto 10
-      case(12)
-         goto 20
-      end select
-      END IF
-      IV(1) = 66
-      GO TO 400
+      IF (LH .GE. NN1O2) GO TO (220,220,220,220,220,220,160,120,160,
+     1                          10,10,20), I
+         IV(1) = 66
+         GO TO 400
 C
 C  ***  STORAGE ALLOCATION  ***
 C
@@ -1408,17 +1345,7 @@ C
       STEP1 = IV(STEP)
       LSTGST = IV(STLSTG)
       I = IV(RESTOR) + 1
-c      GO TO (270, 240, 250, 260), I
-      select case(I)
-      case(1)
-         goto 270
-      case(2)
-         goto 240
-      case(3)
-         goto 250
-      case(4)
-         goto 260
-      end select
+      GO TO (270, 240, 250, 260), I
  240  CALL DV7CPY(N, X, V(X01))
       GO TO 270
  250   CALL DV7CPY(N, V(LSTGST), V(STEP1))
@@ -1429,23 +1356,7 @@ c      GO TO (270, 240, 250, 260), I
          IV(RESTOR) = RSTRST
 C
  270  K = IV(IRC)
-c      GO TO (280,310,310,310,280,290,300,300,300,300,300,300,380,350), K
-      select case(K)
-      case(1)
-         goto 280
-      case(2:4)
-         goto 310
-      case(5)
-         goto 280
-      case(6)
-         goto 290
-      case(7:12)
-         goto 300
-      case(13)
-         goto 380
-      case(14)
-         goto 350
-      end select
+      GO TO (280,310,310,310,280,290,300,300,300,300,300,300,380,350), K
 C
 C     ***  RECOMPUTE STEP WITH NEW RADIUS  ***
 C
@@ -2009,27 +1920,10 @@ C
       RFAC1 = ONE
       GOODX = .TRUE.
       I = IV(IRC)
-      IF (I .GE. 1 .AND. I .LE. 12) THEN
-c         GO TO (20,30,10,10,40,280,220,220,220,220,220,170), I
-         select case(I)
-      case(1)
-         goto 20
-      case(2)
-         goto 30
-      case(3,4)
-         goto 10
-      case(5)
-         goto 40
-      case(6)
-         goto 280
-      case(7:11)
-         goto 220
-      case(12)
-         goto 170
-      end select
-      END IF
-      IV(IRC) = 13
-      GO TO 999
+      IF (I .GE. 1 .AND. I .LE. 12)
+     1             GO TO (20,30,10,10,40,280,220,220,220,220,220,170), I
+         IV(IRC) = 13
+         GO TO 999
 C
 C  ***  INITIALIZE FOR NEW ITERATION  ***
 C
@@ -2068,17 +1962,7 @@ C        ***  RESTORE IV(STAGE) AND PICK UP WHERE WE LEFT OFF.  ***
 C
          IV(STAGE) = -IV(STAGE)
          I = IV(XIRC)
-c         GO TO (20, 30, 110, 110, 70), I
-         select case(I)
-      case(1)
-         goto 20
-      case(2)
-         goto 30
-      case(3,4)
-         goto 110
-      case(5)
-         goto 70
-      end select
+         GO TO (20, 30, 110, 110, 70), I
 C
  50   IF (IV(TOOBIG) .EQ. 0) GO TO 70
 C
@@ -2316,8 +2200,7 @@ C
       NM1 = N - 1
       T = X(K)
       DO 10 I = K, NM1
-         X(I) = X(I+1)
- 10      CONTINUE
+ 10      X(I) = X(I+1)
       X(N) = T
       GO TO 999
 C
@@ -2333,10 +2216,9 @@ C
  999  RETURN
 C  ***  LAST LINE OF I7SHFT FOLLOWS  ***
       END
-      SUBROUTINE S7ETR(M,N,NPAIRS,INDROW,JPNTR,INDCOL,IPNTR,IWA)
+      SUBROUTINE S7ETR(M,N,INDROW,JPNTR,INDCOL,IPNTR,IWA)
       INTEGER M,N
-      INTEGER INDROW(NPAIRS),JPNTR(N+1),INDCOL(NPAIRS),IPNTR(M+1),
-     *  IWA(M)
+      INTEGER INDROW(1),JPNTR(1),INDCOL(1),IPNTR(1),IWA(M)
 C     **********
 C
 C     SUBROUTINE S7ETR
@@ -2653,8 +2535,7 @@ C
       IF (T .LE. ZERO) GO TO 80
       T = ONE / T
       DO 50 I = 1, P
-         X(I) = T*X(I)
- 50      CONTINUE
+ 50      X(I) = T*X(I)
 C
 C  ***  COMPUTE L*X = Y AND RETURN SVMAX = TWONORM(Y)  ***
 C
@@ -2728,7 +2609,7 @@ C  ***  LAST CARD OF DD7DUP FOLLOWS  ***
       END
       SUBROUTINE S7RTDT(N,NNZ,INDROW,INDCOL,JPNTR,IWA)
       INTEGER N,NNZ
-      INTEGER INDROW(NNZ),INDCOL(NNZ),JPNTR(N+1),IWA(N)
+      INTEGER INDROW(NNZ),INDCOL(NNZ),JPNTR(1),IWA(N)
 C     **********
 C
 C     SUBROUTINE S7RTDT
@@ -3061,8 +2942,7 @@ C  ***  NORMALIZE X  ***
 C
  60   T = ONE/DV2NRM(P, X)
       DO 70 I = 1, P
-         X(I) = T*X(I)
- 70      CONTINUE
+ 70      X(I) = T*X(I)
 C
 C  ***  SOLVE L*Y = X AND RETURN DL7SVN = 1/TWONORM(Y)  ***
 C
@@ -3334,8 +3214,7 @@ C
          V(PREDUC) = V(NREDUC)
          V(NWTFAC) = -ONE
          DO 20 I = 1, N
-              STEP(I) = -NWTSTP(I)
- 20           CONTINUE
+ 20           STEP(I) = -NWTSTP(I)
          GO TO 999
 C
  30   V(DSTNRM) = V(RADIUS)
@@ -3353,8 +3232,7 @@ C
          V(PREDUC) = RLAMBD * (ONE - HALF*RLAMBD) * GHINVG
          V(NWTFAC) = T
          DO 40 I = 1, N
-              STEP(I) = T * NWTSTP(I)
- 40           CONTINUE
+ 40           STEP(I) = T * NWTSTP(I)
          GO TO 999
 C
  50   IF (CNORM .LT. V(RADIUS)) GO TO 70
@@ -3368,8 +3246,7 @@ C
          V(GTSTEP) = -V(RADIUS) * GNORM
       V(PREDUC) = V(RADIUS)*(GNORM - HALF*V(RADIUS)*(V(GTHG)/GNORM)**2)
          DO 60 I = 1, N
-              STEP(I) = T * DIG(I)
- 60           CONTINUE
+ 60           STEP(I) = T * DIG(I)
          GO TO 999
 C
 C     ***  COMPUTE DOGLEG STEP BETWEEN CAUCHY AND RELAXED NEWTON  ***
@@ -3397,8 +3274,7 @@ C     ***  DOGLEG STEP  =  CAUCHY STEP  +  T * FEMUR.
      1                 - T2 * (ONE + HALF*T2)*GHINVG
      2                  - HALF * (V(GTHG)*T1)**2
       DO 80 I = 1, N
-         STEP(I) = T1*DIG(I) + T2*NWTSTP(I)
- 80      CONTINUE
+ 80      STEP(I) = T1*DIG(I) + T2*NWTSTP(I)
 C
  999  RETURN
 C  ***  LAST LINE OF DD7DOG FOLLOWS  ***
@@ -3515,7 +3391,7 @@ C
       INTEGER ALG1, I, II, IV1, J, K, L, M, MIV1, MIV2, NDFALT, PARSV1,
      1        PU
       INTEGER IJMP, JLIM(4), MINIV(4), NDFLT(4)
-      CHARACTER(4) CNGD(3), DFLT(3), WHICH(3)
+      CHARACTER*4 CNGD(3), DFLT(3), WHICH(3)
       DOUBLE PRECISION BIG, MACHEP, TINY, VK, VM(34), VX(34), ZERO
 C
 C  ***  IV AND V SUBSCRIPTS  ***
@@ -3951,21 +3827,7 @@ C
 C
 C-------------------------------  BODY  --------------------------------
 C
-c      GO TO (10, 20, 30, 40, 50, 60), K
-      select case(K)
-      case(1)
-         goto 10
-      case(2)
-         goto 20
-      case(3)
-         goto 30
-      case(4)
-         goto 40
-      case(5)
-         goto 50
-      case(6)
-         goto 60
-      end select
+      GO TO (10, 20, 30, 40, 50, 60), K
 C
  10   DR7MDC = ETA
       GO TO 999
@@ -4215,19 +4077,7 @@ C
  10   CALL DPARCK(1, D, IV, LIV, LV, P, V)
       I = IV(1) - 2
       IF (I .GT. 12) GO TO 999
-c      GO TO (360, 360, 360, 360, 360, 360, 240, 190, 240, 20, 20, 30), I
-      select case(I)
-      case(1:6)
-         goto 360
-      case(7,9)
-         goto 240
-      case(8)
-         goto 190
-      case(10,11)
-         goto 20
-      case(12)
-         goto 30
-      end select
+      GO TO (360, 360, 360, 360, 360, 360, 240, 190, 240, 20, 20, 30), I
 C
 C  ***  STORAGE ALLOCATION  ***
 C
@@ -4577,17 +4427,7 @@ C
       STEP1 = IV(STEP)
       LSTGST = X01 + P
       I = IV(RESTOR) + 1
-c      GO TO (410, 380, 390, 400), I
-      select case(I)
-      case(1)
-         goto 410
-      case(2)
-         goto 380
-      case(3)
-         goto 390
-      case(4)
-         goto 400
-      end select
+      GO TO (410, 380, 390, 400), I
  380  CALL DV7CPY(P, X, V(X01))
       GO TO 410
  390   CALL DV7CPY(P, V(LSTGST), V(STEP1))
@@ -4606,21 +4446,7 @@ C
          CALL DV7CPY(NVSAVE, V, V(L))
  420  L = IV(IRC) - 4
       STPMOD = IV(MODEL)
-      IF (L .GT. 0) THEN
-c         GO TO (440,450,460,460,460,460,460,460,570,510), L
-         select case(L)
-      case(1)
-         goto 440
-      case(2)
-         goto 450
-      case(3:8)
-         goto 460
-      case(9)
-         goto 570
-      case(10)
-         goto 510
-      end select
-      END IF
+      IF (L .GT. 0) GO TO (440,450,460,460,460,460,460,460,570,510), L
 C
 C  ***  DECIDE WHETHER TO CHANGE MODELS  ***
 C
@@ -4794,15 +4620,7 @@ C  ***  COMPUTE FINITE-DIFFERENCE HESSIAN FOR COMPUTING COVARIANCE  ***
 C
  590  IV(RESTOR) = 0
  600  CALL DF7DHB(B, D, G, I, IV, LIV, LV, P, V, X)
-c      GO TO (610, 620, 630), I
-      select case(I)
-      case(1)
-         goto 610
-      case(2)
-         goto 620
-      case(3)
-         goto 630
-      end select
+      GO TO (610, 620, 630), I
  610  IV(NFCOV) = IV(NFCOV) + 1
       IV(NFCALL) = IV(NFCALL) + 1
       IV(1) = 1
@@ -5119,8 +4937,7 @@ C  ***  RESIDUAL COMPUTATION FOR F.D. HESSIAN  ***
 C
  120  IF (L .LE. 0) GO TO 140
       DO 130 I = 1, L
-         CALL DV2AXY(N, V(R1), -C(I), A(1,I), V(R1))
- 130     CONTINUE
+ 130     CALL DV2AXY(N, V(R1), -C(I), A(1,I), V(R1))
  140  IF (IV(1) .GT. 0) GO TO 30
          IV(1) = 2
          GO TO 160
@@ -5219,13 +5036,11 @@ C
       T = ZERO
       IF (SDOTWM .NE. ZERO) T = WSCALE / SDOTWM
       DO 10 I = 1, P
-         W(I) = T * WCHMTD(I)
- 10      CONTINUE
+ 10      W(I) = T * WCHMTD(I)
       CALL DS7LVM(P, U, A, STEP)
       T = HALF * (SIZE * DD7TPR(P, STEP, U)  -  DD7TPR(P, STEP, Y))
       DO 20 I = 1, P
-         U(I) = T*W(I) + Y(I) - SIZE*U(I)
- 20      CONTINUE
+ 20      U(I) = T*W(I) + Y(I) - SIZE*U(I)
 C
 C  ***  SET  A = A + U*(W**T) + W*(U**T)  ***
 C
@@ -5492,8 +5307,7 @@ C
 C  ***  COMPUTE U0  ***
 C
  90   DO 100 I = 1, P
-         W(I) = G(I)/D(I)
- 100     CONTINUE
+ 100     W(I) = G(I)/D(I)
       V(DGNORM) = DV2NRM(P, W)
       UK = V(DGNORM)/RAD
       IF (UK .LE. ZERO) GO TO 390
@@ -5518,8 +5332,7 @@ C
       IF (ALPHAK .LE. ZERO) ALPHAK = HALF * UK
       SQRTAK = DSQRT(ALPHAK)
       DO 120 I = 1, P
-         W(I) = ONE
- 120     CONTINUE
+ 120     W(I) = ONE
 C
 C  ***  ADD ALPHAK*D AND UPDATE QR DECOMP. USING FAST GIVENS TRANS.  ***
 C
@@ -5623,8 +5436,7 @@ C
  240          IF (D2 .GE. DTOL) GO TO 260
                    D2 = D2*DFACSQ
                    DO 250 K = I1, P
-                        STEP(K) = STEP(K)/DFAC
- 250                    CONTINUE
+ 250                    STEP(K) = STEP(K)/DFAC
  260          CONTINUE
  270     CONTINUE
 C
@@ -5666,8 +5478,7 @@ C
  330     CONTINUE
       CALL DL7IVM(P, STEP, W(RMAT), STEP)
       DO 340 I = 1, P
-         STEP(I) = STEP(I) / DSQRT(W(I))
- 340     CONTINUE
+ 340     STEP(I) = STEP(I) / DSQRT(W(I))
       T = ONE / DV2NRM(P, STEP)
       ALPHAK = ALPHAK + T*PHI*T/RAD
       LK = DMAX1(LK, ALPHAK)
@@ -5706,8 +5517,7 @@ C
       V(GTSTEP) = ZERO
       V(PREDUC) = ZERO
       DO 400 I = 1, P
-         STEP(I) = ZERO
- 400     CONTINUE
+ 400     STEP(I) = ZERO
       GO TO 450
 C
 C  ***  ACCEPTABLE GAUSS-NEWTON STEP -- RECOVER STEP FROM W  ***
@@ -5882,11 +5692,9 @@ C
  999  RETURN
 C  ***  LAST CARD OF DRMNFB FOLLOWS  ***
       END
-      SUBROUTINE D7EGR(M,N,NPAIRS,INDROW,JPNTR,INDCOL,IPNTR,NDEG,
-     *  IWA,BWA)
-      INTEGER M,N,NPAIRS
-      INTEGER INDROW(NPAIRS),JPNTR(N+1),INDCOL(NPAIRS),IPNTR(M+1),
-     *  NDEG(N),IWA(N)
+      SUBROUTINE D7EGR(N,INDROW,JPNTR,INDCOL,IPNTR,NDEG,IWA,BWA)
+      INTEGER N
+      INTEGER INDROW(1),JPNTR(1),INDCOL(1),IPNTR(1),NDEG(N),IWA(N)
       LOGICAL BWA(N)
 C     **********
 C
@@ -6163,19 +5971,7 @@ C
       CALL DPARCK(2, D, IV, LIV, LV, N, V)
       I = IV(1) - 2
       IF (I .GT. 12) GO TO 999
-c      GO TO (190, 190, 190, 190, 190, 190, 120, 90, 120, 10, 10, 20), I
-      select case(I)
-      case(1:6)
-         goto 190
-      case(7,9)
-         goto 120
-      case(8)
-         goto 90
-      case(10,11)
-         goto 10
-      case(12)
-         goto 20
-      end select
+      GO TO (190, 190, 190, 190, 190, 190, 120, 90, 120, 10, 10, 20), I
 C
 C  ***  STORAGE ALLOCATION  ***
 C
@@ -6355,17 +6151,7 @@ C
       STEP1 = IV(STEP)
       LSTGST = IV(STLSTG)
       I = IV(RESTOR) + 1
-c      GO TO (240, 210, 220, 230), I
-      select case(I)
-      case(1)
-         goto 240
-      case(2)
-         goto 210
-      case(3)
-         goto 220
-      case(4)
-         goto 230
-       end select
+      GO TO (240, 210, 220, 230), I
  210  CALL DV7CPY(N, X, V(X01))
       GO TO 240
  220   CALL DV7CPY(N, V(LSTGST), V(STEP1))
@@ -6376,21 +6162,7 @@ c      GO TO (240, 210, 220, 230), I
          IV(RESTOR) = RSTRST
 C
  240  K = IV(IRC)
-c      GO TO (250,280,280,280,250,260,270,270,270,270,270,270,330,300), K
-      select case(K)
-      case(1,5)
-         goto 250
-      case(2:4)
-         goto 280
-      case(6)
-         goto 260
-      case(7:12)
-         goto 270
-      case(13)
-         goto 330
-      case(14)
-         goto 300
-      end select
+      GO TO (250,280,280,280,250,260,270,270,270,270,270,270,330,300), K
 C
 C     ***  RECOMPUTE STEP WITH CHANGED RADIUS  ***
 C
@@ -6479,11 +6251,11 @@ C
 C
 C  ***  LAST LINE OF DRMNG FOLLOWS  ***
       END
-      SUBROUTINE I7DO(M,N,NPAIRS,INDROW,JPNTR,INDCOL,IPNTR,NDEG,LIST,
+      SUBROUTINE I7DO(M,N,INDROW,JPNTR,INDCOL,IPNTR,NDEG,LIST,
      *               MAXCLQ,IWA1,IWA2,IWA3,IWA4,BWA)
-      INTEGER M,N,MAXCLQ,NPAIRS
-      INTEGER INDROW(NPAIRS),JPNTR(N+1),INDCOL(NPAIRS),IPNTR(M+1),
-     *        NDEG(N),LIST(N),IWA1(N),IWA2(N),IWA3(N),IWA4(N)
+      INTEGER M,N,MAXCLQ
+      INTEGER INDROW(1),JPNTR(1),INDCOL(1),IPNTR(1),NDEG(N),LIST(N),
+     *        IWA1(N),IWA2(N),IWA3(N),IWA4(N)
       LOGICAL BWA(N)
 C     **********
 C
@@ -7077,8 +6849,7 @@ C
          IPIV2(I) = I
  10      CONTINUE
       DO 20 I = 1, P1
-         W(I) = -STEP(I) * TD(I)
- 20      CONTINUE
+ 20      W(I) = -STEP(I) * TD(I)
       ALPHA = DABS(V(STPPAR))
       V(PREDUC) = ZERO
       GTS = -V(GTSTEP)
@@ -7126,8 +6897,7 @@ C
       CALL DV7CPY(P1, DST, STEP)
       T1 = ONE - T
       DO 90 I = 1, P1
-         TG(I) = T1 * TG(I)
- 90      CONTINUE
+ 90      TG(I) = T1 * TG(I)
       IF (ALPHA .GT. ZERO) CALL DV2AXY(P1, TG, T*ALPHA, W, TG)
       V(PREDUC) = V(PREDUC) + T*((ONE - HALF*T)*GTS +
      1                        HALF*ALPHA*T*DD7TPR(P1,W,W))
@@ -7498,19 +7268,7 @@ C
       CALL DPARCK(1, D, IV, LIV, LV, P, V)
       I = IV(1) - 2
       IF (I .GT. 12) GO TO 999
-c      GO TO (290, 290, 290, 290, 290, 290, 170, 120, 170, 10, 10, 20), I
-      select case(I)
-      case(1:6)
-         goto 290
-      case(7,9)
-         goto 170
-      case(8)
-         goto 120
-      case(10,11)
-         goto 10
-      case(12)
-         goto 20
-      end select
+      GO TO (290, 290, 290, 290, 290, 290, 170, 120, 170, 10, 10, 20), I
 C
 C  ***  STORAGE ALLOCATION  ***
 C
@@ -7786,17 +7544,7 @@ C
       STEP1 = IV(STEP)
       LSTGST = IV(STLSTG)
       I = IV(RESTOR) + 1
-c      GO TO (340, 310, 320, 330), I
-      select case(I)
-      case(1)
-         goto 340
-      case(2)
-         goto 310
-      case(3)
-         goto 320
-      case(4)
-         goto 330
-      end select
+      GO TO (340, 310, 320, 330), I
  310  CALL DV7CPY(P, X, V(X01))
       GO TO 340
  320   CALL DV7CPY(P, V(LSTGST), V(STEP1))
@@ -7815,21 +7563,7 @@ C
          CALL DV7CPY(NVSAVE, V, V(L))
  350  L = IV(IRC) - 4
       STPMOD = IV(MODEL)
-      IF (L .GT. 0) THEN
-c        GO TO (370,380,390,390,390,390,390,390,500,440), L
-         select case(L)
-      case(1)
-         goto 370
-      case(2)
-         goto 380
-      case(3:8)
-         goto 390
-      case(9)
-         goto 500
-      case(10)
-         goto 440
-      end select
-      END IF
+      IF (L .GT. 0) GO TO (370,380,390,390,390,390,390,390,500,440), L
 C
 C  ***  DECIDE WHETHER TO CHANGE MODELS  ***
 C
@@ -7991,15 +7725,7 @@ C  ***  COMPUTE FINITE-DIFFERENCE HESSIAN FOR COMPUTING COVARIANCE  ***
 C
  520  IV(RESTOR) = 0
  530  CALL DF7HES(D, G, I, IV, LIV, LV, P, V, X)
-c      GO TO (540, 550, 580), I
-      select case(I)
-      case(1)
-         goto 540
-      case(2)
-         goto 550
-      case(3)
-         goto 580
-      end select
+      GO TO (540, 550, 580), I
  540  IV(NFCOV) = IV(NFCOV) + 1
       IV(NFCALL) = IV(NFCALL) + 1
       IV(1) = 1
@@ -8124,8 +7850,7 @@ C
       V(RADIUS) = RAD - V(DSTNRM)
       CALL DV7VMP(P1, TG, TG, TD, 1)
       DO 50 I = 1, P1
-         IPIV1(I) = I
- 50      CONTINUE
+ 50      IPIV1(I) = I
       K0 = MAX0(0, K)
       CALL DL7MST(TD, TG, IERR, IPIV1, K, P1, STEP(1,3), RMAT, STEP,
      1            V, WLM)
@@ -8936,8 +8661,7 @@ C  ***  RESIDUAL COMPUTATION FOR F.D. HESSIAN  ***
 C
  120  IF (L .LE. 0) GO TO 140
       DO 130 I = 1, L
-         CALL DV2AXY(N, V(R1), -C(I), A(1,I), V(R1))
- 130     CONTINUE
+ 130     CALL DV2AXY(N, V(R1), -C(I), A(1,I), V(R1))
  140  IF (IV(1) .GT. 0) GO TO 30
          IV(1) = 2
          GO TO 160
@@ -9142,8 +8866,7 @@ C
       PARAMETER (ZERO=0.D+0)
 C
       DO 10 I = 1, N
-         X(I) = Y(I)
- 10      CONTINUE
+ 10      X(I) = Y(I)
       NP1 = N + 1
       I0 = N*(N+1)/2
       DO 30 II = 1, N
@@ -9314,19 +9037,7 @@ C
  10   CALL DPARCK(2, D, IV, LIV, LV, N, V)
       I = IV(1) - 2
       IF (I .GT. 12) GO TO 999
-c      GO TO (250, 250, 250, 250, 250, 250, 190, 150, 190, 20, 20, 30), I
-      select case(I)
-      case(1:6)
-         goto 250
-      case(7,9)
-         goto 190
-      case(8)
-         goto 150
-      case(10,11)
-         goto 20
-      case(12)
-         goto 30
-      end select
+      GO TO (250, 250, 250, 250, 250, 250, 190, 150, 190, 20, 20, 30), I
 C
 C  ***  STORAGE ALLOCATION  ***
 C
@@ -9543,17 +9254,7 @@ C
       STEP1 = IV(STEP)
       LSTGST = IV(STLSTG)
       I = IV(RESTOR) + 1
-c      GO TO (300, 270, 280, 290), I
-       select case(I)
-      case(1)
-         goto 300
-      case(2)
-         goto 270
-      case(3)
-         goto 280
-      case(4)
-         goto 290
-      end select
+      GO TO (300, 270, 280, 290), I
  270  CALL DV7CPY(N, X, V(X01))
       GO TO 300
  280   CALL DV7CPY(N, V(LSTGST), X)
@@ -9564,21 +9265,7 @@ c      GO TO (300, 270, 280, 290), I
          IV(RESTOR) = RSTRST
 C
  300  K = IV(IRC)
-c      GO TO (310,340,340,340,310,320,330,330,330,330,330,330,400,370), K
-      select case(K)
-      case(1,5)
-         goto 310
-      case(2:4)
-         goto 340
-      case(6)
-         goto 320
-      case(7:12)
-         goto 330
-      case(13)
-         goto 400
-      case(14)
-         goto 370
-      end select
+      GO TO (310,340,340,340,310,320,330,330,330,330,330,330,400,370), K
 C
 C     ***  RECOMPUTE STEP WITH CHANGED RADIUS  ***
 C
@@ -10189,8 +9876,7 @@ C        ***  ESTIMATE TO INITIALIZE LOWER BOUND LK ON ALPHA.
          T = L(J)
          L(J) = ONE
          DO 40 I = 1, IRC
-              W(I) = ZERO
- 40           CONTINUE
+ 40           W(I) = ZERO
          W(IRC) = ONE
          CALL DL7ITV(IRC, W, L, W)
          T1 = DV2NRM(IRC, W)
@@ -10344,8 +10030,7 @@ C
       T = L(J)
       L(J) = ONE
       DO 230 I = 1, IRC
-         W(I) = ZERO
- 230     CONTINUE
+ 230     W(I) = ZERO
       W(IRC) = ONE
       CALL DL7ITV(IRC, W, L, W)
       T1 = DV2NRM(IRC, W)
@@ -10475,14 +10160,12 @@ C
 C
 C     ***  NORMALIZE W  ***
       DO 350 I = 1, P
-         W(I) = T*W(I)
- 350     CONTINUE
+ 350     W(I) = T*W(I)
 C     ***  COMPLETE CURRENT INV. POWER ITER. -- REPLACE W BY (L**-T)*W.
       CALL DL7ITV(P, W, L, W)
       T2 = ONE/DV2NRM(P, W)
       DO 360 I = 1, P
-         W(I) = T2*W(I)
- 360     CONTINUE
+ 360     W(I) = T2*W(I)
       T = T2 * T
 C
 C  ***  NOW W IS THE DESIRED APPROXIMATE (UNIT) EIGENVECTOR AND
@@ -10631,8 +10314,7 @@ C
       CS = ONE / SHS
  20   CALL DL7IVM(N, Z, L, Y)
       DO 30 I = 1, N
-         Z(I) = CY * Z(I)  -  CS * W(I)
- 30      CONTINUE
+ 30      Z(I) = CY * Z(I)  -  CS * W(I)
 C
       RETURN
 C  ***  LAST CARD OF DW7ZBF FOLLOWS  ***
@@ -10799,8 +10481,7 @@ C
          JCNI = JCN0 + I
          T  = V(JCNI)
          DO 20 K = 1, NN
-              T = DMAX1(T, DABS(DR(K,I)))
- 20           CONTINUE
+ 20           T = DMAX1(T, DABS(DR(K,I)))
          V(JCNI) = T
  30      CONTINUE
       IF (N2 .LT. N) GO TO 999
@@ -10836,8 +10517,7 @@ C
       NM1 = N - 1
       T = X(K)
       DO 10 I = K, NM1
-         X(I) = X(I+1)
- 10      CONTINUE
+ 10      X(I) = X(I+1)
       X(N) = T
  999  RETURN
       END
@@ -11291,13 +10971,11 @@ C
 C
       IF (K .GE. 0) GO TO 20
       DO 10 I = 1, N
-         X(I) = Y(I) / Z(I)
- 10     CONTINUE
+ 10      X(I) = Y(I) / Z(I)
       GO TO 999
 C
  20   DO 30 I = 1, N
-         X(I) = Y(I) * Z(I)
- 30      CONTINUE
+ 30      X(I) = Y(I) * Z(I)
  999  RETURN
 C  ***  LAST CARD OF DV7VMP FOLLOWS  ***
       END
@@ -11305,7 +10983,7 @@ C  ***  LAST CARD OF DV7VMP FOLLOWS  ***
      *               INFO,IPNTR,JPNTR,IWA,LIWA,BWA)
       INTEGER M,N,NPAIRS,MAXGRP,MINGRP,INFO,LIWA
       INTEGER INDROW(NPAIRS),INDCOL(NPAIRS),NGRP(N),
-     *        IPNTR(M+1),JPNTR(N+1),IWA(LIWA)
+     *        IPNTR(1),JPNTR(1),IWA(LIWA)
       LOGICAL BWA(N)
 C     **********
 C
@@ -11462,7 +11140,7 @@ C
 C
 C     EXTEND THE DATA STRUCTURE TO ROWS.
 C
-      CALL S7ETR(M,N,NPAIRS,INDROW,JPNTR,INDCOL,IPNTR,IWA(1))
+      CALL S7ETR(M,N,INDROW,JPNTR,INDCOL,IPNTR,IWA(1))
 C
 C     DETERMINE A LOWER BOUND FOR THE NUMBER OF GROUPS.
 C
@@ -11474,8 +11152,7 @@ C
 C     DETERMINE THE DEGREE SEQUENCE FOR THE INTERSECTION
 C     GRAPH OF THE COLUMNS OF A.
 C
-      CALL D7EGR(M,N,NPAIRS,INDROW,JPNTR,INDCOL,IPNTR,IWA(5*N+1),
-     * IWA(N+1),BWA)
+      CALL D7EGR(N,INDROW,JPNTR,INDCOL,IPNTR,IWA(5*N+1),IWA(N+1),BWA)
 C
 C     COLOR THE INTERSECTION GRAPH OF THE COLUMNS OF A
 C     WITH THE SMALLEST-LAST (SL) ORDERING.
@@ -11490,8 +11167,7 @@ C
 C     COLOR THE INTERSECTION GRAPH OF THE COLUMNS OF A
 C     WITH THE INCIDENCE-DEGREE (ID) ORDERING.
 C
-      CALL I7DO(M,N,NPAIRS,INDROW,JPNTR,INDCOL,IPNTR,IWA(5*N+1),
-     *         IWA(4*N+1),
+      CALL I7DO(M,N,INDROW,JPNTR,INDCOL,IPNTR,IWA(5*N+1),IWA(4*N+1),
      *         MAXCLQ,IWA(1),IWA(N+1),IWA(2*N+1),IWA(3*N+1),BWA)
       CALL M7SEQ(N,INDROW,JPNTR,INDCOL,IPNTR,IWA(4*N+1),IWA(1),NUMGRP,
      *         IWA(N+1),BWA)
@@ -11717,8 +11393,7 @@ C
  20           CONTINUE
  30      LII = L(II)
          DO 40 J = I1, II
-              A(J) = LII * L(J)
- 40           CONTINUE
+ 40           A(J) = LII * L(J)
  50      CONTINUE
 C
       RETURN
@@ -11847,19 +11522,9 @@ C
          NN = N2 - N1 + 1
          IV(RESTOR) = 0
          I = IV1 + 4
-         IF (IV(TOOBIG) .EQ. 0) THEN
-C           GO TO (150, 130, 150, 120, 120, 150), I
-            select case(I)
-         case(1,3,6)
-            goto 150
-         case(2)
-            goto 130
-         case(4,5)
-            goto 120
-         end select
-      END IF
-      IF (I .NE. 5) IV(1) = 2
-      GO TO 40
+         IF (IV(TOOBIG) .EQ. 0) GO TO (150, 130, 150, 120, 120, 150), I
+         IF (I .NE. 5) IV(1) = 2
+         GO TO 40
 C
 C  ***  FRESH START OR RESTART -- CHECK INPUT INTEGERS  ***
 C
@@ -12051,7 +11716,7 @@ C
 C     ***  BAD N, ND, OR P  ***
 C
  220  IV(1) = 66
-      GO TO 260
+      GO TO 270
 C
 C  ***  RECORD EXTRA EVALUATIONS FOR FINITE-DIFFERENCE HESSIAN  ***
 C
@@ -12192,8 +11857,7 @@ C
       CALL DL7VML(P1, W, L, W)
       T2 = ONE - T2
       DO 80 I = 1, P1
-         TG(I) = T2*TG(I) - T1*W(I)
- 80      CONTINUE
+ 80      TG(I) = T2*TG(I) - T1*W(I)
 C
 C     ***  PERMUTE L, ETC. IF NECESSARY  ***
 C
@@ -12686,16 +12350,7 @@ C
  290  IF (XM .GE. ZERO) GO TO 310
       XM1 = XM - DEL
  300  DEL = -DEL
-c 310  GO TO (160, 220, 320), NEWM1
- 310  continue
-      select case(NEWM1)
-      case(1)
-         goto 160
-      case(2)
-         goto 220
-      case(3)
-         goto 320
-      end select
+ 310  GO TO (160, 220, 320), NEWM1
  320  X(M) = XM1
       STPM = STP0 + M
       V(STPM) = DEL
