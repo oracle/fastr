@@ -303,10 +303,10 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
 "You can either create the directory manually or edit file ${graalvm_home}/jre/languages/R/etc/Renviron to change it to any desired location. " +
 "Without user specific library directory, users will need write permission for the GraalVM home directory in order to install R packages. " +
 "\n\n" +
-"Some R packages need a system-dependent configuration before they can be installed. " +
-"A generic configuration that works out of the box in most cases is provided by default. " +
-"If you wish to fine-tune the configuration to your system or should you encounter any " +
-"issues during R package installation, try running the following script that adjusts " +
+"FastR needs a system-dependent configuration because it links with some system libraries. " +
+"A generic configuration that works out of the box on most Linux distributions with GCC installed is provided by default. " +
+"If you are on another system, wish to fine-tune the configuration to your system, or should you encounter any " +
+"issues when running FastR or during R packages installation, try running the following script that adjusts " +
 "the configuration to your system: \n" +
 "    ${graalvm_home}/jre/languages/R/bin/configure_fastr\n\n" +
 "The R component comes without native image by default. If you wish to build the native image, " +

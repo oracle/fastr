@@ -37,12 +37,73 @@ while [ -h "$source" ] ; do
 done
 
 (
-  export GRAALVM_VERSION=`grep -o 'GRAALVM_VERSION=.*' "$( dirname "$source" )/../../../../release" | cut -d= -f2`
-  cd -P "$( dirname "$source" )/../etc"
-  ./configure --with-x=no --with-aqua=no --enable-memory-profiling FFLAGS=-O2 $@
-  ed Makeconf < edMakeconf.etc
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    echo "int main(){}" | gcc -x c -Wl,--no-as-needed -lgfortran -lgcc_s -lquadmath -o /dev/null - > /dev/null 2>/dev/null
+    res=$?
+    if [[ $res != 0 ]]; then
+      echo "Cannot build simple C program linking with libgfortran, libgcc_s, and libquadmath."
+      echo "Please install GCC using:"
+      echo "    On Debian based systems: apt-get install build-essential"
+      echo "    On CentOS/RHEL: yum groupinstall \"Developent Tools\""
+    fi
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    cd -P "$( dirname "$source" )/../lib"
+    # correct paths on Mac OSX
+    GFORTRAN_LIBRARIES="libgfortran.3.dylib libquadmath.0.dylib libgomp.1.dylib libgcc_s.1.dylib"
+    GFORTRAN_LOCATIONS="$* /opt/local/lib /opt/local/lib/libgcc /usr/local/gfortran/lib none"
+    TARGET_LIBRARIES="`find ../library/* | grep "\(\.dylib\|\.so\)$"` `find * | grep "\(\.dylib\|\.so\)$"`"
+    for GFORTRAN_LIB in $GFORTRAN_LIBRARIES
+    do
+      for LOCATION in $GFORTRAN_LOCATIONS
+      do
+        if test -f "${LOCATION}/${GFORTRAN_LIB}"; then
+          LIB_LOCATION="${LOCATION}/${GFORTRAN_LIB}"
+          break
+        elif [ "$LOCATION" = "none" ] ; then
+          echo "${GFORTRAN_LIB} not found"
+          echo "Please ensure that you have gfortran installed on your system, e.g., using homebrew or MacPorts."
+          echo "If ${GFORTRAN_LIB} is installed in a non-standard location, you can supply additional locations"
+          echo "as parameters to the configure_fastr tool as command line arguments."
+          exit 1
+        fi
+      done
+      echo "${GFORTRAN_LIB} found at ${LIB_LOCATION}"
+      for TARGET_LIB in $TARGET_LIBRARIES
+      do
+        # don't look at symlinks
+        if [ ! -L "${TARGET_LIB}" ] ; then
+          # grep for the current path of this gfortran library in this library's linking info
+          CURRENT_LIB_NAME=`otool -L ${TARGET_LIB} | grep -o "\t.*${GFORTRAN_LIB}"`
+          if [ ! -z "$CURRENT_LIB_NAME" ] ; then
+            if [ $CURRENT_LIB_NAME != $LIB_LOCATION ] ; then
+              # change to the new location
+              echo "changing path to ${GFORTRAN_LIB} in ${TARGET_LIB} to $LIB_LOCATION"
+              install_name_tool -change $CURRENT_LIB_NAME $LIB_LOCATION ${TARGET_LIB}
+            fi
+          fi
+        fi
+      done
+    done
+  else
+    echo "Unknown operating system."
+    echo "FastR may still work."
+    echo "Make sure that GCC including gfortran and OpenMP is installed on your system."
+  fi
+
+  export GRAALVM_VERSION=`grep -o 'GRAALVM_VERSION=.*' "../../../../release" | cut -d= -f2`
+  cd ../etc
+  echo "Running the configure script..."
+  ./configure --with-x=no --with-aqua=no --enable-memory-profiling FFLAGS=-O2 $@ > configure.log 2>&1
+  res=$?
+  if [[ $res != 0 ]]; then
+    echo "The configuration step failed."
+    echo "The log was saved into ${PWD}/configure.log"
+    echo "FastR may still work, but compilation of some R packages may fail"
+    exit 1
+  fi
+  ed Makeconf < edMakeconf.etc > /dev/null 2>/dev/null
   export R_DEFAULT_PACKAGES=base
-  R_LIBS_USER=`../bin/R --slave -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'`
+  R_LIBS_USER=`"../bin/R" --slave -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'`
   echo "Creating user specific library directory: $R_LIBS_USER"
   mkdir -p "$R_LIBS_USER"
   echo "DONE"
