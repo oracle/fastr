@@ -26,6 +26,8 @@ import com.oracle.truffle.r.test.TestBase;
 
 public class TestBuiltin_syscalls extends TestBase {
 
+    // Issues ignored with NewRVersionMigration: GR-18931
+
     @Test
     public void testSysCalls() {
         assertEval("sys.calls()");

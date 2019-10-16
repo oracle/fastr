@@ -29,6 +29,12 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_syscall extends TestBase {
     @Test
     public void testSysCall() {
+        // GR-18929
+        assertEval(Ignored.NewRVersionMigration, "{ bar.default<-function(a)sys.call(); bar<-function(a)UseMethod('bar'); bar(a=42); }");
+        assertEval(Ignored.NewRVersionMigration, "{ bar.default<-function(a,...,b)sys.call(); bar<-function(a,x,...)UseMethod('bar'); bar(1,x=2,b=3,c=4); }");
+
+        // Remaining issues ignored with NewRVersionMigration: GR-18931
+
         assertEval("{ f <- function() sys.call() ; f() }");
         assertEval("{ f <- function(x) sys.call() ; f(x = 2) }");
         assertEval("{ f <- function() sys.call(1) ; g <- function() f() ; g() }");
@@ -56,8 +62,6 @@ public class TestBuiltin_syscall extends TestBase {
 
         assertEval("{ foo<-function(x, z) UseMethod(\"foo\"); foo.baz<-function(x, z) NextMethod(); y<-1; class(y)<-c(\"baz\", \"bar\"); foo.bar<-function(x, z) sys.call(0); foo(y, 42) }");
         assertEval("{ foo<-function(x, ...) UseMethod(\"foo\"); foo.baz<-function(x, ...) NextMethod(); y<-1; class(y)<-c(\"baz\", \"bar\"); foo.bar<-function(x, ...) sys.call(0); foo(y, 42) }");
-        assertEval(Ignored.NewRVersionMigration, "{ bar.default<-function(a)sys.call(); bar<-function(a)UseMethod('bar'); bar(a=42); }");
-        assertEval(Ignored.NewRVersionMigration, "{ bar.default<-function(a,...,b)sys.call(); bar<-function(a,x,...)UseMethod('bar'); bar(1,x=2,b=3,c=4); }");
 
         // these tests look a little weird as we seem to have some printing problems with language
         // objects (we should be able to simply print x, but the outputs don't quite match)
@@ -65,6 +69,8 @@ public class TestBuiltin_syscall extends TestBase {
 
         // whitespace in formatting of deparsed function
         assertEval(Output.IgnoreWhitespace, "{ x<-(function(f) f())(function() sys.call(1)); list(x[[1]], x[[2]][[1]], x[[2]][[2]], x[[2]][[3]]) }");
+
+        assertEval(Ignored.NewRVersionMigration, "{ f <- function() sys.call() ; g <- function(a=1,b=3,...) f() ; h <- function(q=33) g() ; h() }");
     }
 
     @Test

@@ -32,7 +32,7 @@ public class TestBuiltin_sysparent extends TestBase {
      */
     public static final String SYS_PARENT_SETUP = "bar <- function(ba) do.call(foo, list(ba));" +
                     "boo <- function(bo) bar(bo);" +
-                    "callboo <- function(cb) do.call('boo', list(cb));" +
+                    "callboo <- function(cb) do.call(\"boo\", list(cb));" +
                     "fun <- function(f) callboo(f);" +
                     "fun(42);";
 
