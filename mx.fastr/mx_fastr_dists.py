@@ -301,18 +301,18 @@ if mx.get_env('FASTR_RELEASE') == 'true' and mx.get_env('FASTR_RFFI') in (None, 
         include_in_polyglot=False,
         post_install_msg="NOTES:\n---------------\n" +
              "The user specific library directory was not created automatically. " +
-             "You can either create the directory manually or edit file ${graalvm_home}/jre/languages/R/etc/Renviron to change it to any desired location. " +
+             "You can either create the directory manually or edit file ${graalvm_languages_dir}/R/etc/Renviron to change it to any desired location. " +
              "Without user specific library directory, users will need write permission for the GraalVM home directory in order to install R packages. " +
              "\n\n" +
              "FastR needs a system-dependent configuration because it links with some system libraries. " +
-             "A generic configuration that works out of the box on most Linux distributions with GCC installed is provided by default. " +
-             "If you are on another system, wish to fine-tune the configuration to your system, or should you encounter any " +
+             "A generic configuration that works out of the box on most Linux distributions with GCC and gfortran installed is provided by default. " +
+             "If you are on another system (e.g., MacOS), wish to fine-tune the configuration to your system, or should you encounter any " +
              "issues when running FastR or during R packages installation, try running the following script that adjusts " +
              "the configuration to your system: \n" +
-             "    ${graalvm_home}/jre/languages/R/bin/configure_fastr\n\n" +
+             "    ${graalvm_languages_dir}/R/bin/configure_fastr\n\n" +
              "The R component comes without native image by default. If you wish to build the native image, " +
              "which provides faster startup, but slightly slower peak performance, then run the following:\n" +
-             "   ${graalvm_home}/jre/languages/R/bin/install_r_native_image\n\n" +
+             "    ${graalvm_languages_dir}/R/bin/install_r_native_image\n\n" +
              "The native image is then used by default. Pass '--jvm' flag to the R or Rscript launcher to " +
              "use JVM instead of the native image. Note that the native image is not stable yet and is intended for evaluation " +
              "purposes and experiments. Some features may not work in the native image mode, most notably some Rcpp based packages. " +

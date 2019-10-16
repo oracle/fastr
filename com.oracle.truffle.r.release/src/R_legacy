@@ -22,28 +22,22 @@
 # questions.
 #
 
-# This script is a modified graal/vm/mx.vm/launcher_template.sh
-# and deployed as jre/languages/R/bin/exec/R
+# This script is a modified graal/vm/mx.vm/launcher_template.sh and deployed as
+# jre/languages/R/bin/exec/R in JDK8
+# languages/R/bin/exec/R in JDK11
 
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ] ; do
-  prev_source="$source"
-  source="$(readlink "$source")";
-  if [[ "$source" != /* ]]; then
-    # if the link was relative, it was relative to where it came from
-    dir="$( cd -P "$( dirname "$prev_source" )" && pwd )"
-    source="$dir/$source"
-  fi
+    prev_source="$source"
+    source="$(readlink "$source")";
+    if [[ "$source" != /* ]]; then
+        # if the link was relative, it was relative to where it came from
+        dir="$( cd -P "$( dirname "$prev_source" )" && pwd )"
+        source="$dir/$source"
+    fi
 done
-EXEC="$( cd -P "$( dirname "$source" )" && pwd )"
-
-exec_location=jre/languages/R/bin/exec
-slashes=${exec_location//[^\/]/}
-dir_count=${#slashes}
-JRE="$EXEC"
-for i in $(seq 1 ${dir_count}); do
-  JRE="$( dirname "$JRE" )"
-done
+location="$( cd -P "$( dirname "$source" )" && pwd )"
+fastr_home="$( dirname "$( dirname "${location}" )" )"
 
 ## REMOVE FOR NATIVE IMAGE: BEGIN
 absolute_cp=()
@@ -51,21 +45,24 @@ jvm_args=()
 launcher_args=()
 
 # Unfortunately, parsing of `--jvm.*` arguments has to be done blind:
-# Maybe some of those arguments where not really intended for the launcher but where application arguments
+# Maybe some of those arguments where not really intended for the launcher but were application arguments
 
 for o in "$@"; do
     if [[ "$o" == "--jvm.help" ]]; then
+      # TODO This condition should be removed when the Launcher handles --jvm.help correctly.
+      launcher_args+=("$o")
+    elif [[ "$o" == "--vm.help" ]]; then
       # TODO This condition should be removed when the Launcher handles --jvm.help correctly.
       launcher_args+=("$o")
     elif [[ "$o" == --jvm.* ]]; then
         >&2 echo "'--jvm.*' options are deprecated, use '--vm.*' instead."
         jvm_arg="${o#--jvm.}"
         if [[ "$jvm_arg" == "cp" ]]; then
-            >&2 echo "'--jvm.cp' argument must be of the form '--jvm.cp=<classpath>', not two separate arguments"
+            >&2 echo "'--jvm.cp' argument must be of the form '--jvm.cp=../../../lib/graalvm/sulong-launcher.jar:../../../lib/graalvm/launcher-common.jar', not two separate arguments"
             exit 1
         fi
         if [[ "$jvm_arg" == "classpath" ]]; then
-            >&2 echo "'--jvm.classpath' argument must be of the form '--jvm.classpath=<classpath>', not two separate arguments"
+            >&2 echo "'--jvm.classpath' argument must be of the form '--jvm.classpath=../../../lib/graalvm/sulong-launcher.jar:../../../lib/graalvm/launcher-common.jar', not two separate arguments"
             exit 1
         fi
         if [[ "$jvm_arg" == "cp="* ]]; then
@@ -84,11 +81,11 @@ for o in "$@"; do
     elif [[ "$o" == --vm.* ]]; then
         vm_arg="${o#--vm.}"
         if [[ "$vm_arg" == "cp" ]]; then
-            >&2 echo "'--vm.cp' argument must be of the form '--vm.cp=<classpath>', not two separate arguments"
+            >&2 echo "'--vm.cp' argument must be of the form '--vm.cp=../../../lib/graalvm/sulong-launcher.jar:../../../lib/graalvm/launcher-common.jar', not two separate arguments"
             exit 1
         fi
         if [[ "$vm_arg" == "classpath" ]]; then
-            >&2 echo "'--vm.classpath' argument must be of the form '--vm.classpath=<classpath>', not two separate arguments"
+            >&2 echo "'--vm.classpath' argument must be of the form '--vm.classpath=../../../lib/graalvm/sulong-launcher.jar:../../../lib/graalvm/launcher-common.jar', not two separate arguments"
             exit 1
         fi
         if [[ "$vm_arg" == "cp="* ]]; then
@@ -109,13 +106,15 @@ for o in "$@"; do
     fi
 done
 
-JAVA_HOME="$( dirname "$JRE" )"
 cp="$(IFS=: ; echo "${absolute_cp[*]}")"
-cp="$JAVA_HOME/jre/languages/R/fastr-launcher.jar:$cp"
+cp="${fastr_home}/fastr-launcher.jar:$cp"
 
 ## REMOVE FOR NATIVE IMAGE: END
+if [[ "${VERBOSE_GRAALVM_LAUNCHERS}" == "true" ]]; then
+    set -x
+fi
 
 # we can invoke FastR directly, but we do have to set R_HOME
-export R_HOME="$JRE/languages/R"
+export R_HOME="${fastr_home}"
 
-exec "$JAVA_HOME/bin/java" -cp "$cp" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx8g "${jvm_args[@]}" com.oracle.truffle.r.launcher.RMain R ${FASTR_INTERNAL_ARGS[@]} "${launcher_args[@]}"
+exec "${fastr_home}/../../bin/java" -cp "$cp" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${jvm_args[@]}" com.oracle.truffle.r.launcher.RMain R ${FASTR_INTERNAL_ARGS[@]} "${launcher_args[@]}"
