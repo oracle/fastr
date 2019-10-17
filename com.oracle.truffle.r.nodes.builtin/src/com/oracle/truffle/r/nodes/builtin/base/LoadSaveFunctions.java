@@ -61,6 +61,13 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class LoadSaveFunctions {
 
+    private static final String ASCII_HEADER2 = "RDA2\n";
+    private static final String BINARY_HEADER2 = "RDB2\n";
+    private static final String XDR_HEADER2 = "RDX2\n";
+    private static final String ASCII_HEADER3 = "RDA3\n";
+    private static final String BINARY_HEADER3 = "RDB3\n";
+    private static final String XDR_HEADER3 = "RDX3\n";
+
     private static final int DEFAULT_SAVE_VERSION;
     static {
         String defVersion = System.getenv("R_DEFAULT_SAVE_VERSION");
@@ -89,7 +96,9 @@ public class LoadSaveFunctions {
             RConnection con = RConnection.fromIndex(conIndex);
             try (RConnection openConn = con.forceOpen("r")) {
                 String s = openConn.readChar(5, true);
-                if (s.equals("RDA2\n") || s.equals("RDB2\n") || s.equals("RDX2\n")) {
+                if (s.equals(ASCII_HEADER2) || s.equals(ASCII_HEADER3) ||
+                                s.equals(XDR_HEADER2) || s.equals(XDR_HEADER3) ||
+                                s.equals(BINARY_HEADER2) || s.equals(BINARY_HEADER3)) {
                     Object o = RSerialize.unserialize(con);
                     if (o == RNull.instance) {
                         return RDataFactory.createEmptyStringVector();
@@ -119,7 +128,7 @@ public class LoadSaveFunctions {
                     return RDataFactory.createStringVector(data, naCheck.neverSeenNA());
 
                 } else {
-                    throw error(RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection");
+                    throw error(RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection: " + s);
                 }
             } catch (IOException iox) {
                 throw error(RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
@@ -215,10 +224,6 @@ public class LoadSaveFunctions {
 
     @RBuiltin(name = "saveToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"list", "con", "ascii", "version", "environment", "eval.promises"}, behavior = IO)
     public abstract static class SaveToConn extends RBuiltinNode.Arg6 {
-        private static final String ASCII_HEADER2 = "RDA2\n";
-        private static final String XDR_HEADER2 = "RDX2\n";
-        private static final String ASCII_HEADER3 = "RDA3\n";
-        private static final String XDR_HEADER3 = "RDX3\n";
 
         private final ConditionProfile valueNullProfile = ConditionProfile.createBinaryProfile();
 
