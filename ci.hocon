@@ -7,26 +7,24 @@ include "ci_common/common.hocon"
 
 # The standard set of gate builds. N.B. the style/builtin checks are only run on Linux as they are not OS-dependent.
 
-# TODO: re-enable the JDK11 builds
-
 # in case you do not want to enforce a specific overlay commit, comment:
-overlay = "00167393535527db3d7235da288740b6c7f54241"
+overlay = "7966b19455333be78567600488c23982f5e4e984"
 builds = [
   ${gateTestLinux}            {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64"}
-  #${gateTestLinuxJdk11}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-jdk11-amd64"}
+  ${gateTestLinuxJdk11}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-jdk11-amd64"}
   ${gateTestNoDSLCacheLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-no-dsl-cache"}
   ${gateTestNoSpecialsLinux}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-nospecials"}
-  #${gateTestNoSpecialsLinuxJdk11}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-jdk11-amd64-nospecials"}
+  ${gateTestNoSpecialsLinuxJdk11}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-jdk11-amd64-nospecials"}
   ${gateTestNoDSLCacheNoSpecialsLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-nospecials-no-dsl-cache"}
-  #${gateTestNoDSLCacheNoSpecialsLinuxJdk11} {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-jdk11-amd64-nospecials-no-dsl-cache"}
+  ${gateTestNoDSLCacheNoSpecialsLinuxJdk11} {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-jdk11-amd64-nospecials-no-dsl-cache"}
   ${gateTestDarwin}           {capabilities : [darwin, amd64], targets : [gate], name: "gate-test-darwin-amd64"}
-  #${gateTestDarwinJdk11}           {capabilities : [darwin, amd64], targets : [gate], name: "gate-test-darwin-jdk11-amd64"}
+  ${gateTestDarwinJdk11}           {capabilities : [darwin, amd64], targets : [gate], name: "gate-test-darwin-jdk11-amd64"}
   ${gateStyle}                {capabilities : [linux, amd64],  targets : [gate], name: "gate-style-linux-amd64"}
   ${gateBuildWithEcj}         {capabilities : [linux, amd64],  targets : [gate], name: "gate-ecj-linux-amd64"}
   # GR-11799
   # ${rbcheck}                  {capabilities : [linux, amd64],  targets : [gate], name: "gate-rbcheck-linux-amd64"}
   ${internalPkgtest}          {capabilities : [linux, amd64],  targets : [gate], name: "gate-internal-pkgtest-linux-amd64"}
-  #${internalPkgtestJdk11}     {capabilities : [linux, amd64],  targets : [gate], name: "gate-internal-pkgtest-linux-jdk11-amd64"}
+  ${internalPkgtestJdk11}     {capabilities : [linux, amd64],  targets : [gate], name: "gate-internal-pkgtest-linux-jdk11-amd64"}
 
   ${coverageLinux}            {capabilities : [linux, amd64],  targets : [weekly], name: "coverage-r-linux-amd64"}
 ]

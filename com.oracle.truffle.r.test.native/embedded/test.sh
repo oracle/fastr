@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,10 @@ if ! diff -q $dir/main.actual.output $dir/src/main.expected.output > /dev/null 2
     echo "'main' embedding test failed"
     echo "for details see $dir/main.actual.output $dir/src/main.expected.output"
     echo "to run this test: mx rembedtest"
+    echo "Contents of $dir/main.actual.output: "
+    echo "**********"
+    cat $dir/main.actual.output
+    echo "**********"
     exit 1
 fi
 
@@ -60,6 +64,10 @@ if ! diff -q $dir/embedded.actual.output $dir/src/embedded.expected.output > /de
     echo "'embedded' embedding test failed"
     echo "for details see $dir/embedded.actual.output $dir/src/embedded.expected.output"
     echo "to run this test: mx rembedtest"
+    echo "Contents of $dir/embedded.actual.output: "
+    echo "**********"
+    cat $dir/embedded.actual.output
+    echo "**********"
     exit 2
 fi
 
