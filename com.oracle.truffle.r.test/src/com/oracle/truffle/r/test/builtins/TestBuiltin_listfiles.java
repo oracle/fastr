@@ -40,7 +40,7 @@ public class TestBuiltin_listfiles extends TestBase {
     @Test
     public void testlistfiles3() {
         // FastR bug; not recursing in to "."
-        assertEval("argv <- list('" + dirPath +
+        assertEval(Ignored.OutputFormatting, "argv <- list('" + dirPath +
                         "', '^.*dummy.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); sort(.Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]])))");
     }
 
@@ -68,14 +68,14 @@ public class TestBuiltin_listfiles extends TestBase {
 
     @Test
     public void testFileListingIncludesDotDot() {
-        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE)) }");
-        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, no..=TRUE)) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE)) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, no..=TRUE)) }");
 
         // Recursive searches should not includes . and .. files.
-        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=TRUE)) }");
-        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE)) }");
-        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, full.names=TRUE)) }");
-        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, include.dirs=TRUE)) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=TRUE)) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE)) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, full.names=TRUE)) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, include.dirs=TRUE)) }");
     }
 
     @Test
