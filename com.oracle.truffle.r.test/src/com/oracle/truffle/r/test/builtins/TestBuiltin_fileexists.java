@@ -41,4 +41,24 @@ public class TestBuiltin_fileexists extends TestBase {
     public void testfileexists3() {
         assertEval("argv <- list(character(0)); .Internal(file.exists(argv[[1]]))");
     }
+
+    private static String dirPath = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/data/tree1";
+
+    @Test
+    public void testFileExist() {
+    }
+
+    @Test
+    public void testFileDoesNotExist() {
+        // make sure dirPath exists
+        assertEvalFastR(" file.exists('" + dirPath + "')", "TRUE");
+
+        assertEval(" file.exists('" + dirPath + "/filedoesnotexist')");
+        // TODO: ignored tests GR-18968
+        assertEval(Ignored.ImplementationError," file.exists('" + dirPath + "/filedoesnotexist/..')");
+        assertEval(" file.exists('" + dirPath + "/filedoesnotexist/../aa')");
+        assertEval(Ignored.ImplementationError," file.exists('" + dirPath + "/filedoesnotexist/../aa/..')");
+
+        assertEval(Ignored.ImplementationError," file.exists('" + dirPath + "/filedoesnotexist/../dummy.txt')");
+    }
 }
