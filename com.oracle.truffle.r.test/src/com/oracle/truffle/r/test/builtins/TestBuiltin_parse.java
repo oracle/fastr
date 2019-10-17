@@ -99,6 +99,7 @@ public class TestBuiltin_parse extends TestBase {
                         "tmp$parent <- match(tmp$parent, tmp$id, nomatch=0); " +
                         "tmp$id <- 1:nrow(tmp); " +
                         "rownames(tmp) <- 1:nrow(tmp); tmp }";
-        assertEval(Ignored.NewRVersionMigration, template(testTemplate, PARSE_DATA_TESTS));
+        // TODO: remove IgnoreWhitespace (GR-18943)
+        assertEval(Output.IgnoreWhitespace, template(testTemplate, PARSE_DATA_TESTS));
     }
 }

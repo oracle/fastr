@@ -28,6 +28,8 @@ import com.oracle.truffle.r.test.TestBase;
 
 public class TestStackBuiltins extends TestBase {
 
+    // TODO: re-check the NewRVersionMigration ignored tests after GR-18931 is fixed
+
     private static final String[] FRAME_FUNCTIONS = {
                     "sys.nframe()",
                     "sys.parent()", "sys.parent(2)", "sys.parent(4)",
