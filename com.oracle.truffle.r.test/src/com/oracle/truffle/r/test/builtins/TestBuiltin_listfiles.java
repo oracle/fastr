@@ -40,7 +40,8 @@ public class TestBuiltin_listfiles extends TestBase {
     @Test
     public void testlistfiles3() {
         // FastR bug; not recursing in to "."
-        assertEval("argv <- list('.', '^CITATION.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); sort(.Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]])))");
+        assertEval("argv <- list('" + dirPath +
+                        "', '^.*dummy.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); sort(.Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]])))");
     }
 
     @Test
@@ -65,4 +66,32 @@ public class TestBuiltin_listfiles extends TestBase {
         assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\"$$$.txt\") }");
     }
 
+    @Test
+    public void testFileListingIncludesDotDot() {
+        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE)) }");
+        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, no..=TRUE)) }");
+
+        // Recursive searches should not includes . and .. files.
+        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=TRUE)) }");
+        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE)) }");
+        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, full.names=TRUE)) }");
+        assertEval("{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, include.dirs=TRUE)) }");
+    }
+
+    @Test
+    public void testListNonExistingDir() {
+        assertEval("{ list.files(\"/tmp/some_crazy_directory_name\", all.files=TRUE) }");
+    }
+
+    @Test
+    public void testEmptyDir() {
+        String emptyDirPath = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/empty_dir";
+        File emptyDir = new File(emptyDirPath);
+        emptyDir.mkdir();
+
+        assertEval("{ list.files(\"" + emptyDirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE) }");
+        assertEval("{ list.files(\"" + emptyDirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, full.names=TRUE) }");
+
+        emptyDir.delete();
+    }
 }
