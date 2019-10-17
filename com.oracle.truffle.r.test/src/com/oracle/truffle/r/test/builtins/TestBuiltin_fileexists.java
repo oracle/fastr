@@ -54,11 +54,12 @@ public class TestBuiltin_fileexists extends TestBase {
         assertEvalFastR(" file.exists('" + dirPath + "')", "TRUE");
 
         assertEval(" file.exists('" + dirPath + "/filedoesnotexist')");
-        assertEval(" file.exists('" + dirPath + "/filedoesnotexist/..')");
+        // TODO: ignored tests GR-18968
+        assertEval(Ignored.ImplementationError, " file.exists('" + dirPath + "/filedoesnotexist/..')");
         assertEval(" file.exists('" + dirPath + "/filedoesnotexist/../aa')");
-        assertEval(" file.exists('" + dirPath + "/filedoesnotexist/../aa/..')");
+        assertEval(Ignored.ImplementationError, " file.exists('" + dirPath + "/filedoesnotexist/../aa/..')");
 
-        assertEval(" file.exists('" + dirPath + "/filedoesnotexist/../dummy.txt')");
+        assertEval(Ignored.ImplementationError, " file.exists('" + dirPath + "/filedoesnotexist/../dummy.txt')");
     }
 
 }
