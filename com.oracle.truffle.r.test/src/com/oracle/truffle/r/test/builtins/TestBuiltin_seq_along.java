@@ -147,12 +147,11 @@ public class TestBuiltin_seq_along extends TestBase {
         assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) 42; seq_along(x) }");
         assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) c(100, 200); seq_along(x) }");
         assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) '48'; seq_along(x) }");
-        // TODO: regenerate the expected output for the two tests below
-        // assertEval(Ignored.NewRVersionMigration /*Output.IgnoreErrorContext*/, "{ x <- c(1,2,3);
-        // class(x) <- 'myclass'; length.myclass <- function(w) numeric(0); seq_along(x) }");
-        // assertEval(Ignored.NewRVersionMigration /*Output.IgnoreWarningContext,
-        // Output.IgnoreErrorContext*/, "{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <-
-        // function(w) 'hello world'; seq_along(x) }");
+        // GNU-R does not check if "length.myclass" given any sensible answer and goes ahead to
+        // generate 1:MAX_INT vector
+        // FastR shows error saying the the length is not a number
+        assertEval(Ignored.ReferenceError, "{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) { cat('was called'); numeric(0); }; seq_along(x) }");
+        assertEval(Ignored.ReferenceError, "{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) 'hello world'; seq_along(x) }");
         assertEval("{ length <- function(x) 42; seq_along(c(1,2,3)) }");
         assertEval("{ assign('length.myclass', function(...) 42, envir=.__S3MethodsTable__.); x <- 1; class(x) <- 'myclass'; res <- seq_along(x); rm('length.myclass', envir=.__S3MethodsTable__.); res }");
         assertEval("seq_along()");
