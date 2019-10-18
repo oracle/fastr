@@ -292,6 +292,7 @@ if mx.get_env('FASTR_RELEASE') == 'true' and mx.get_env('FASTR_RFFI') in (None, 
         short_name='R',
         license_files=['LICENSE_FASTR'],
         third_party_license_files=['3rd_party_licenses_fastr.txt'],
+        dependencies=['Truffle', 'Sulong', 'LLVM.org toolchain'],
         truffle_jars=['fastr:FASTR'],
         support_distributions=['fastr:FASTR_GRAALVM_SUPPORT'],
         provided_executables=[
