@@ -307,7 +307,7 @@ public class RSerialize {
         if ("2".equals(defVersion) || "3".equals(defVersion)) {
             DEFAULT_VERSION = Integer.parseInt(defVersion);
         } else {
-            DEFAULT_VERSION = 2;
+            DEFAULT_VERSION = 3;
         }
     }
 
@@ -431,6 +431,7 @@ public class RSerialize {
             int writerVersion = stream.readInt();
             @SuppressWarnings("unused")
             int releaseVersion = stream.readInt();
+
             if (version != 3 && version != 2) {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unsupported serialization version " + version);
             }
@@ -439,6 +440,7 @@ public class RSerialize {
                 int nelen = stream.readInt();
                 stream.readString(nelen);
             }
+
             Object result = readItem();
             return result;
         }
@@ -2934,7 +2936,15 @@ public class RSerialize {
     private static void handleSrcrefAttr(RAttributable func, RSyntaxCall elem) {
         Object srcref = func.getAttr(RRuntime.R_SRCREF);
         if (srcref instanceof RAbstractIntVector) {
-            SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) srcref, null);
+            Object srcfile = func.getAttr(RRuntime.R_SRCFILE);
+            assert srcfile instanceof REnvironment;
+            Source source;
+            try {
+                source = RSource.fromSrcfile((REnvironment) srcfile);
+            } catch (IOException e) {
+                source = null;
+            }
+            SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) srcref, source);
             elem.setSourceSection(ss);
         } else if (srcref instanceof RList) {
             try {

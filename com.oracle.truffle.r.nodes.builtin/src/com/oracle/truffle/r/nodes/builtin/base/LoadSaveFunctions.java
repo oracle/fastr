@@ -42,6 +42,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -61,6 +62,23 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class LoadSaveFunctions {
 
+    private static final String ASCII_HEADER2 = "RDA2\n";
+    private static final String BINARY_HEADER2 = "RDB2\n";
+    private static final String XDR_HEADER2 = "RDX2\n";
+    private static final String ASCII_HEADER3 = "RDA3\n";
+    private static final String BINARY_HEADER3 = "RDB3\n";
+    private static final String XDR_HEADER3 = "RDX3\n";
+
+    private static final int DEFAULT_SAVE_VERSION;
+    static {
+        String defVersion = System.getenv("R_DEFAULT_SAVE_VERSION");
+        if ("2".equals(defVersion) || "3".equals(defVersion)) {
+            DEFAULT_SAVE_VERSION = Integer.parseInt(defVersion);
+        } else {
+            DEFAULT_SAVE_VERSION = 3;
+        }
+    }
+
     @RBuiltin(name = "loadFromConn2", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "envir", "verbose"}, behavior = IO)
     public abstract static class LoadFromConn2 extends RBuiltinNode.Arg3 {
 
@@ -79,7 +97,9 @@ public class LoadSaveFunctions {
             RConnection con = RConnection.fromIndex(conIndex);
             try (RConnection openConn = con.forceOpen("r")) {
                 String s = openConn.readChar(5, true);
-                if (s.equals("RDA2\n") || s.equals("RDB2\n") || s.equals("RDX2\n")) {
+                if (s.equals(ASCII_HEADER2) || s.equals(ASCII_HEADER3) ||
+                                s.equals(XDR_HEADER2) || s.equals(XDR_HEADER3) ||
+                                s.equals(BINARY_HEADER2) || s.equals(BINARY_HEADER3)) {
                     Object o = RSerialize.unserialize(con);
                     if (o == RNull.instance) {
                         return RDataFactory.createEmptyStringVector();
@@ -109,7 +129,7 @@ public class LoadSaveFunctions {
                     return RDataFactory.createStringVector(data, naCheck.neverSeenNA());
 
                 } else {
-                    throw error(RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection");
+                    throw error(RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection: " + s);
                 }
             } catch (IOException iox) {
                 throw error(RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
@@ -138,6 +158,9 @@ public class LoadSaveFunctions {
         private static final int R_MAGIC_ASCII_V2 = 2001;
         private static final int R_MAGIC_BINARY_V2 = 2002;
         private static final int R_MAGIC_XDR_V2 = 2003;
+        private static final int R_MAGIC_ASCII_V3 = 3001;
+        private static final int R_MAGIC_BINARY_V3 = 3002;
+        private static final int R_MAGIC_XDR_V3 = 3003;
 
         @Specialization
         @TruffleBoundary
@@ -184,6 +207,12 @@ public class LoadSaveFunctions {
                     return R_MAGIC_BINARY_V2;
                 case "RDX2\n":
                     return R_MAGIC_XDR_V2;
+                case "RDA3\n":
+                    return R_MAGIC_ASCII_V3;
+                case "RDB3\n":
+                    return R_MAGIC_BINARY_V3;
+                case "RDX3\n":
+                    return R_MAGIC_XDR_V3;
                 default:
                     if (buf[0] == 'R' && buf[1] == 'D') {
                         return R_MAGIC_TOONEW;
@@ -196,8 +225,6 @@ public class LoadSaveFunctions {
 
     @RBuiltin(name = "saveToConn", visibility = OFF, kind = INTERNAL, parameterNames = {"list", "con", "ascii", "version", "environment", "eval.promises"}, behavior = IO)
     public abstract static class SaveToConn extends RBuiltinNode.Arg6 {
-        private static final String ASCII_HEADER = "RDA2\n";
-        private static final String XDR_HEADER = "RDX2\n";
 
         private final ConditionProfile valueNullProfile = ConditionProfile.createBinaryProfile();
 
@@ -214,6 +241,18 @@ public class LoadSaveFunctions {
         @Specialization
         protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, @SuppressWarnings("unused") RNull version, REnvironment envir, boolean evalPromises,
                         @Cached("new()") PromiseHelperNode promiseHelper) {
+            return saveToConn(list, envir, evalPromises, promiseHelper, frame, con, ascii, DEFAULT_SAVE_VERSION);
+        }
+
+        @SuppressWarnings("unused")
+        @Specialization
+        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, int version, REnvironment envir, boolean evalPromises,
+                        @Cached("new()") PromiseHelperNode promiseHelper) {
+            return saveToConn(list, envir, evalPromises, promiseHelper, frame, con, ascii, version);
+        }
+
+        private Object saveToConn(RAbstractStringVector list, REnvironment envir, boolean evalPromises, PromiseHelperNode promiseHelper, VirtualFrame frame, int con, boolean ascii, int version)
+                        throws RError {
             RPairList prev = null;
             Object toSave = RNull.instance;
             for (int i = 0; i < list.getLength(); i++) {
@@ -244,12 +283,12 @@ public class LoadSaveFunctions {
                 }
                 prev = pl;
             }
-            doSaveConn(toSave, RConnection.fromIndex(con), ascii);
+            doSaveConn(toSave, RConnection.fromIndex(con), ascii, version);
             return RNull.instance;
         }
 
         @TruffleBoundary
-        private void doSaveConn(Object toSave, RConnection conn, boolean ascii) {
+        private void doSaveConn(Object toSave, RConnection conn, boolean ascii, int version) {
             try (RConnection openConn = conn.forceOpen(ascii ? "wt" : "wb")) {
                 if (!openConn.canWrite()) {
                     throw error(RError.Message.CONNECTION_NOT_OPEN_WRITE);
@@ -257,17 +296,23 @@ public class LoadSaveFunctions {
                 if (!ascii && openConn.isTextMode()) {
                     throw error(RError.Message.CONN_XDR);
                 }
-                openConn.writeChar(ascii ? ASCII_HEADER : XDR_HEADER, 0, null, false);
-                RSerialize.serialize(RContext.getInstance(), openConn, toSave, ascii ? RSerialize.ASCII : RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
+
+                String header;
+                switch (version) {
+                    case 2:
+                        header = ascii ? ASCII_HEADER2 : XDR_HEADER2;
+                        break;
+                    case 3:
+                        header = ascii ? ASCII_HEADER3 : XDR_HEADER3;
+                        break;
+                    default:
+                        throw RInternalError.unimplemented("save version " + version);
+                }
+                openConn.writeChar(header, 0, null, false);
+                RSerialize.serialize(RContext.getInstance(), openConn, toSave, ascii ? RSerialize.ASCII : RSerialize.XDR, version, null);
             } catch (IOException ex) {
                 throw error(RError.Message.GENERIC, ex.getMessage());
             }
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, int version, REnvironment envir, boolean evalPromises) {
-            throw error(RError.Message.INVALID_ARG_TYPE, 5); // [TODO] implement "version" support
         }
     }
 }

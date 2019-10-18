@@ -50,7 +50,7 @@ public class TestBuiltin_stopifnot extends TestBase {
         assertEval("stopifnot(4 < 5, 7 < 10, T)");
         assertEval("stopifnot(4 < 5, 7 > 10, T)");
         assertEval("stopifnot(exprs = { 4 < 5; 7 < 10; T })");
-        assertEval("stopifnot(exprs = { 4 < 5; 7 > 10; T })");
+        assertEval(Output.IgnoreErrorContext, "stopifnot(exprs = { 4 < 5; 7 > 10; T })");
         assertEval("stopifnot(1 == 1, all.equal(pi, 3.14159265), 1 < 2)");
     }
 }

@@ -163,8 +163,8 @@ final class ParseDataBuilder {
      * Record the parse data of the expression and adopt orphan tokens/terminals that are inside the
      * given expression.
      */
-    void expr(SourceSection ss) {
-        int parentId = record(ss, false, 77, "expr", "");
+    void expr(SourceSection ss, String tokenName) {
+        int parentId = record(ss, false, 77, tokenName, "");
         int i = 0;
         while (i < orphansParentIdIdx.size()) {
             if (isParent(ss, i)) {
@@ -178,9 +178,14 @@ final class ParseDataBuilder {
         orphansSections.add(ss);
     }
 
+    void expr(SourceSection ss) {
+        expr(ss, "expr");
+    }
+
     void lookupCall(SourceSection source, String symbol) {
-        if (!symbol.equals("=")) {
-            // looks like a bug in GNU-R, they do not record the parser data for EQ_ASSIGN
+        if (symbol.equals("=")) {
+            expr(source, "equal_assign");
+        } else {
             expr(source);
         }
     }

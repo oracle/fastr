@@ -1028,6 +1028,7 @@ public class TestBase {
     private static final Pattern warningPattern5 = Pattern.compile("^(?<pre>.*)Warning message:(?<msg0>.*)$", Pattern.DOTALL);
 
     private static final Pattern warningMessagePattern = Pattern.compile("^\n? ? ?(?:In .* :[ \n])?[ \n]*(?<m>[^\n]*)\n?$", Pattern.DOTALL);
+    private static final Pattern hiddenMessagePattern = Pattern.compile("^(?<pre>.*)(?<msg>There were [0-9]+ warnings \\(use warnings\\(\\) to see them\\)).*$", Pattern.DOTALL);
 
     private static final Pattern[] warningPatterns = new Pattern[]{warningPattern1, warningPattern2, warningPattern3, warningPattern4, warningPattern5};
 
@@ -1038,6 +1039,10 @@ public class TestBase {
                 return matcher;
             }
         }
+        Matcher matcher = hiddenMessagePattern.matcher(output);
+        if (matcher.matches()) {
+            return matcher;
+        }
         return null;
     }
 
@@ -1046,6 +1051,10 @@ public class TestBase {
         if (matcher == null) {
             return "";
         }
+        if (matcher.pattern() == hiddenMessagePattern) {
+            return matcher.group("msg");
+        }
+
         StringBuilder str = new StringBuilder();
         for (int i = 0; i < warningPatterns.length; i++) {
             try {

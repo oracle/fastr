@@ -294,7 +294,6 @@ public abstract class GammaFunctions {
         }
 
         if (x <= 0 && x == (long) x) { /* Negative integer argument */
-            RMathError.error(MLError.RANGE, "lgamma");
             return Double.POSITIVE_INFINITY; /* +Inf, since lgamma(x) = log|gamma(x)| */
         }
 
@@ -311,7 +310,6 @@ public abstract class GammaFunctions {
          */
 
         if (y > gfn_sign_xmax) {
-            RMathError.error(MLError.RANGE, "lgamma");
             return Double.POSITIVE_INFINITY;
         }
 

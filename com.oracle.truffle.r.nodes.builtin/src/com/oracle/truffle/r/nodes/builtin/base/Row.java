@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -38,7 +37,7 @@ public abstract class Row extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(Row.class);
-        casts.arg("dims").defaultError(RError.Message.MATRIX_LIKE_REQUIRED, "row").mustBe(integerValue()).asIntegerVector().mustBe(size(2));
+        casts.arg("dims").defaultError(RError.Message.MATRIX_LIKE_REQUIRED, "row").asIntegerVector().mustBe(size(2));
     }
 
     @Specialization

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import com.oracle.truffle.r.test.TestBase;
  * we can get from the {@code fastr.test.native} system property.
  */
 public class TestUserRNG extends TestBase {
+
     @Test
     public void testUserRNG() {
         Path dir = createTestDir("userrng");

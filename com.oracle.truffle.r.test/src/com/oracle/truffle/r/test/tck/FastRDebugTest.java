@@ -75,7 +75,7 @@ public class FastRDebugTest {
     public void before() {
         suspendedEvent = null;
 
-        context = FastRSession.getContextBuilder("R").in(System.in).out(out).err(err).build();
+        context = FastRSession.getContextBuilder("R", "llvm").in(System.in).out(out).err(err).build();
         debugger = context.getEngine().getInstruments().get("debugger").lookup(Debugger.class);
         debuggerSession = debugger.startSession(event -> {
             suspendedEvent = event;

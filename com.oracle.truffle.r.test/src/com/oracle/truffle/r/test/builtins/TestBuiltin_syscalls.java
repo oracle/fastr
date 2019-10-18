@@ -26,10 +26,12 @@ import com.oracle.truffle.r.test.TestBase;
 
 public class TestBuiltin_syscalls extends TestBase {
 
+    // Issues ignored with NewRVersionMigration: GR-18931
+
     @Test
     public void testSysCalls() {
         assertEval("sys.calls()");
-        assertEval("{ f <- function(x) sys.calls(); g <- function() f(x); g() }");
+        assertEval(Ignored.NewRVersionMigration, "{ f <- function(x) sys.calls(); g <- function() f(x); g() }");
         // Avoid deparse issues in the output of the try code by comparing length
         assertEval("{ f <- function(x) sys.calls(); g <- function() f(x); length(try(g())) }");
     }
@@ -38,12 +40,12 @@ public class TestBuiltin_syscalls extends TestBase {
     public void testSysCallsPromises() {
         assertEval("{ f <- function(x) x; g <- function() f(sys.calls()); g() }");
         assertEval("{ f <- function(x) x; g <- function() f(sys.calls()); length(try(g())) }");
-        assertEval("{ v <- function() sys.calls() ; u<- function() v(); f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+        assertEval(Ignored.NewRVersionMigration, "{ v <- function() sys.calls() ; u<- function() v(); f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
 
     @Test
     public void testSysCallsWithEval() {
-        assertEval("{ foo <- function() sys.calls(); bar <- function() eval(parse(text='foo()'), envir=new.env()); bar(); }");
-        assertEval("{ foo <- function() sys.calls(); bar <- function() eval(parse(text='foo()')); bar(); }");
+        assertEval(Ignored.NewRVersionMigration, "{ foo <- function() sys.calls(); bar <- function() eval(parse(text='foo()'), envir=new.env()); bar(); }");
+        assertEval(Ignored.NewRVersionMigration, "{ foo <- function() sys.calls(); bar <- function() eval(parse(text='foo()')); bar(); }");
     }
 }

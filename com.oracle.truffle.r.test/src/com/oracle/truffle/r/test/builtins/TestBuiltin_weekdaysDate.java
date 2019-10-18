@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -36,6 +36,6 @@ public class TestBuiltin_weekdaysDate extends TestBase {
         // due to JDK bug 8130845.
         Locale.setDefault(Locale.ENGLISH);
 
-        assertEval("argv <- structure(list(x = structure(16352, class = 'Date')),     .Names = 'x');do.call('weekdays.Date', argv)");
+        assertEval("argv <- structure(list(x = structure(16352, class = 'Date')), .Names = 'x');do.call('weekdays.Date', argv)");
     }
 }

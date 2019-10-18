@@ -26,6 +26,10 @@ import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RLogger;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
+
+import java.util.ArrayList;
 
 public abstract class RSyntaxUtils {
 
@@ -106,5 +110,19 @@ public abstract class RSyntaxUtils {
         }
         logger.info("==== body");
         logger.info(visitor.accept(body));
+    }
+
+    public static ArrayList<Argument<RSyntaxNode>> createArgumentsList(RSyntaxElement[] arguments, ArgumentsSignature signature) {
+        ArrayList<Argument<RSyntaxNode>> result = new ArrayList<>(arguments.length);
+        createArgumentsList(0, arguments, signature, result);
+        return result;
+    }
+
+    public static void createArgumentsList(int offset, RSyntaxElement[] arguments, ArgumentsSignature signature, ArrayList<Argument<RSyntaxNode>> result) {
+        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
+        for (int j = offset; j < arguments.length; j++) {
+            result.add(RCodeBuilder.argument(arguments[j] == null ? null : arguments[j].getLazySourceSection(), signature.getName(j),
+                            arguments[j] == null ? null : builder.process(arguments[j])));
+        }
     }
 }

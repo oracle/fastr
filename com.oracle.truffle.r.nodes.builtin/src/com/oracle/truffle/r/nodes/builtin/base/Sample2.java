@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2015,  The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  */
 @RBuiltin(name = "sample2", kind = INTERNAL, parameterNames = {"x", "size"}, behavior = MODIFIES_STATE)
 public abstract class Sample2 extends RBuiltinNode.Arg2 {
-    private static final double U = 33554432.0;
     static final double MAX_INT = Integer.MAX_VALUE;
 
     static {
@@ -66,7 +65,7 @@ public abstract class Sample2 extends RBuiltinNode.Arg2 {
         NonRecursiveHashSetDouble used = new NonRecursiveHashSetDouble((int) (size * 1.2));
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < 100; j++) {
-                double value = Math.floor(x * ru() + 1);
+                double value = Math.floor(RRNG.unifIndex(x) + 1);
                 if (!used.add(value)) {
                     result[i] = value;
                     break;
@@ -87,7 +86,7 @@ public abstract class Sample2 extends RBuiltinNode.Arg2 {
         NonRecursiveHashSetInt used = new NonRecursiveHashSetInt((int) (size * 1.2));
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < 100; j++) {
-                int value = (int) (x * RRNG.unifRand() + 1);
+                int value = (int) (RRNG.unifIndex(x) + 1);
                 if (!used.add(value)) {
                     result[i] = value;
                     break;
@@ -105,7 +104,4 @@ public abstract class Sample2 extends RBuiltinNode.Arg2 {
         }
     }
 
-    private static double ru() {
-        return (Math.floor(U * RRNG.unifRand()) + RRNG.unifRand()) / U;
-    }
 }

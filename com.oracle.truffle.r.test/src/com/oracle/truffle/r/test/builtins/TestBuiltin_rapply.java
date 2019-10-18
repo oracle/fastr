@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_rapply extends TestBase {
 
     @Test
-    public void testLapply() {
+    public void testLapplyList() {
         assertEval("{rapply(list(1:3), function(x) { 2*x })}");
         assertEval("{rapply(list(list(1:3),4,5,6), function(x) { 2*x })}");
         assertEval("{rapply(list(1:3), function(x) { 2*x }, how = \"replace\")}");
@@ -57,5 +57,11 @@ public class TestBuiltin_rapply extends TestBase {
         assertEval("rapply(list(NA), function(x) {2*x})");
         assertEval("rapply(list(NULL), function(x) {2*x}, how=\"list\")");
         assertEval("rapply(list(NULL), function(x) {2*x}, how=\"replace\")");
+    }
+
+    @Test
+    public void testLapplyExpression() {
+        assertEval(Ignored.Unimplemented, "{rapply(expression('a+b'), function(x) { x })}");
+        // TODO more tests
     }
 }

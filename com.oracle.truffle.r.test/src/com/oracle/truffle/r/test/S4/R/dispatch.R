@@ -18,6 +18,7 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
+#Ignored.NewRVersionMigration
 foo.bar <- function(x, y, z) { print(x); print(y); print(z) }
 
 setClass("A", representation(a = "numeric"))

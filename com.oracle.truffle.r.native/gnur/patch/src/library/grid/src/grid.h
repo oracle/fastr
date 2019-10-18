@@ -305,6 +305,8 @@ SEXP L_pretty(SEXP scale);
 SEXP L_locator();
 SEXP L_convert(SEXP x, SEXP whatfrom,
 	       SEXP whatto, SEXP unitto);
+SEXP L_devLoc(SEXP x, SEXP y);
+SEXP L_devDim(SEXP x, SEXP y);
 SEXP L_layoutRegion(SEXP layoutPosRow, SEXP layoutPosCol);
 
 SEXP L_stringMetric(SEXP label);
@@ -497,6 +499,10 @@ SEXP gpFontSizeSXP(SEXP gp);
 SEXP gpLineHeightSXP(SEXP gp);
 
 void gcontextFromgpar(SEXP gp, int i, const pGEcontext gc, pGEDevDesc dd);
+void initGContext(SEXP gp, const pGEcontext gc, pGEDevDesc dd, int* gpIsScalar, 
+                  const pGEcontext gcCache);
+void updateGContext(SEXP gp, int i, const pGEcontext gc, pGEDevDesc dd, 
+                    int* gpIsScalar, const pGEcontext gcCache);
 
 void initGPar(pGEDevDesc dd);
 

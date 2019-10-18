@@ -718,7 +718,6 @@ public class BasePackage extends RBuiltinPackage {
         add(Pretty.class, PrettyNodeGen::create);
         add(Primitive.class, PrimitiveNodeGen::create);
         add(PrintFunctions.PrintDefault.class, PrintFunctionsFactory.PrintDefaultNodeGen::create);
-        add(PrintFunctions.PrintFunction.class, PrintFunctionsFactory.PrintFunctionNodeGen::create);
         add(ProcTime.class, ProcTimeNodeGen::create);
         add(Prod.class, ProdNodeGen::create);
         add(Quit.class, QuitNodeGen::create);

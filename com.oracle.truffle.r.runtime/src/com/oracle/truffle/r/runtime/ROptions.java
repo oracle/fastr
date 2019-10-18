@@ -95,6 +95,9 @@ public class ROptions {
         @TruffleBoundary
         public Object setValue(String name, Object value) throws OptionsException {
             Object coercedValue = value;
+            if (MANDATORY_OPTIONS_SET.contains(name)) {
+                checkMandatory(name, value);
+            }
             if (CHECKED_OPTIONS_SET.contains(name)) {
                 coercedValue = check(name, value);
             }
@@ -155,6 +158,10 @@ public class ROptions {
         private static OptionsException createInvalid(String name) {
             return new OptionsException(RError.Message.INVALID_VALUE_FOR, name);
         }
+
+        private static OptionsException createCannotDelete(String name) {
+            return new OptionsException(RError.Message.OPTION_CANNOT_BE_DELETED, name);
+        }
     }
 
     /**
@@ -166,6 +173,10 @@ public class ROptions {
                     "check.bounds", "warn", "warning.length", "warning.expression", "max.print", "nwarnings", "error", "show.error.messages", "echo", "OutDec", "max.contour.segments",
                     "rl_word_breaks", "warnPartialMatchDollar", "warnPartialMatchArgs", "warnPartialMatchAttr", "showWarnCalls", "showErrorCalls", "showNCalls", "par.ask.default",
                     "browserNLdisabled", "CBoundsCheck"));
+
+    public static final Set<String> MANDATORY_OPTIONS_SET = new HashSet<>(Arrays.asList("prompt", "continue", "expressions", "width", "deparse.cutoff", "digits", "echo", "verbose", "check.bounds",
+                    "keep.source", "keep.source.pkgs", "keep.parse.data", "keep.parse.data.pkgs", "warning.length", "nwarnings", "OutDec", "browserNLdisabled", "CBoundsCheck", "matprod", "PCRE_study",
+                    "PCRE_use_JIT", "PCRE_limit_recursion", "rl_word_breaks", "warn", "max.print", "show.error.messages"));
 
     private static void applyDefaults(HashMap<String, Object> map, RStartParams startParams, REnvVars envVars) {
         putOption(map, "add.smooth", RDataFactory.createSharedLogicalVectorFromScalar(true));
@@ -179,6 +190,16 @@ public class ROptions {
         boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars);
         putOption(map, "keep.source", RDataFactory.createSharedLogicalVectorFromScalar(keepPkgSource));
         putOption(map, "keep.source.pkgs", RDataFactory.createSharedLogicalVectorFromScalar(keepPkgSource));
+        putOption(map, "keep.parse.data", RDataFactory.createSharedLogicalVectorFromScalar(true));
+        putOption(map, "keep.parse.data.pkgs", RDataFactory.createSharedLogicalVectorFromScalar(false));
+        putOption(map, "matprod", RDataFactory.createSharedStringVectorFromScalar("default"));
+        putOption(map, "PCRE_study", RDataFactory.createSharedIntVectorFromScalar(10));
+        putOption(map, "PCRE_use_JIT", RDataFactory.createSharedLogicalVectorFromScalar(true));
+        putOption(map, "PCRE_limit_recursion", RDataFactory.createSharedLogicalVectorFromScalar(RRuntime.LOGICAL_NA));
+        putOption(map, "rl_word_breaks", RDataFactory.createSharedStringVectorFromScalar(" \t\n\"\\'`><=%;,|&{()}"));
+        putOption(map, "warn", RDataFactory.createSharedDoubleVectorFromScalar(0));
+        putOption(map, "max.print", RDataFactory.createSharedIntVectorFromScalar(99999));
+        putOption(map, "show.error.messages", RDataFactory.createSharedLogicalVectorFromScalar(true));
         putOption(map, "OutDec", RDataFactory.createSharedStringVectorFromScalar("."));
         putOption(map, "prompt", RDataFactory.createSharedStringVectorFromScalar("> "));
         putOption(map, "verbose", RDataFactory.createSharedLogicalVectorFromScalar(false));
@@ -229,6 +250,12 @@ public class ROptions {
 
     private static boolean optionFromEnvVar(String envVar, REnvVars envVars) {
         return "yes".equals(envVars.get(envVar));
+    }
+
+    private static void checkMandatory(String name, Object value) throws OptionsException {
+        if (value == RNull.instance) {
+            throw OptionsException.createCannotDelete(name);
+        }
     }
 
     private static Object check(String name, Object value) throws OptionsException {

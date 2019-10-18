@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,7 +83,13 @@ public class TestFormulae extends TestBase {
 
     @Test
     public void testModelMatrix() {
-        assertEval(template("{%0; model.matrix(model.frame(terms.formula(%1))) }", INITS, FORMULAE));
+        for (String f : FORMULAE) {
+            if ("~1".equals(f)) {
+                assertEval(Ignored.NewRVersionMigration, template("{%0; model.matrix(model.frame(terms.formula(" + f + "))) }", INITS));
+            } else {
+                assertEval(template("{%0; model.matrix(model.frame(terms.formula(" + f + "))) }", INITS));
+            }
+        }
     }
 
     @Test

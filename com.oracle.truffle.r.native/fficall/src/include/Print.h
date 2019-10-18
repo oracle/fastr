@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,5 +21,25 @@
 
 // This is a version of src/include/Print.h that is a safe replacement for use with FastR
 // Currently simply redirects to the GnuR version
+
+// pulled from Defn.h
+/* ../../main/print.c : */
+typedef struct {
+    int width;
+    int na_width;
+    int na_width_noquote;
+    int digits;
+    int scipen;
+    int gap;
+    int quote;
+    int right;
+    int max;
+    SEXP na_string;
+    SEXP na_string_noquote;
+    int useSource;
+    int cutoff; // for deparsed language objects
+    SEXP env;
+    SEXP callArgs;
+} R_PrintData;
 
 #include GNUR_PRINT_H

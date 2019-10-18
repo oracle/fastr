@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,5 +54,9 @@ public class TestRRNG extends TestBase {
         assertEval("{ rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(1); .Random.seed }");
         assertEval(Output.IgnoreErrorContext, "{ rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); .Random.seed }");
         assertEval("{ set.seed(1); rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(2); .Random.seed }");
+
+        assertEval(Ignored.ImplementationError, "{ set.seed(1); rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(2, sample.kind='Rounding'); sample(1:10, 3); .Random.seed }");
+        assertEval(Ignored.ImplementationError, "{ set.seed(1); rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(2, sample.kind='Rejection'); sample(1:10, 3); .Random.seed }");
+        // TODO test norm.kind as well
     }
 }

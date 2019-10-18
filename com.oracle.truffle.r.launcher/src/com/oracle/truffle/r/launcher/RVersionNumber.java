@@ -32,19 +32,19 @@ package com.oracle.truffle.r.launcher;
  */
 public class RVersionNumber {
     public static final String MAJOR = "3";
-    public static final String MINOR = "5";
+    public static final String MINOR = "6";
     public static final String PATCH = "1";
 
-    public static final int R_VERSION = (3 << 16) + (5 << 8) + 1;
+    public static final int R_VERSION = (3 << 16) + (6 << 8) + 1;
 
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
     public static final String MINOR_PATCH = MINOR + "." + PATCH;
     public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
     public static final String R_HYPHEN_FULL = "R-" + FULL;
 
-    public static final String RELEASE_YEAR = "2018";
+    public static final String RELEASE_YEAR = "2019";
     public static final String RELEASE_MONTH = "07";
-    public static final String RELEASE_DAY = "02";
+    public static final String RELEASE_DAY = "05";
 
     public static final String RELEASE_DATE = " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
 

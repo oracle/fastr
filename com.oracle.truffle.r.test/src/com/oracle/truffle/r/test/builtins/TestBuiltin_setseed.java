@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -31,42 +31,42 @@ public class TestBuiltin_setseed extends TestBase {
 
     @Test
     public void testsetseed1() {
-        assertEval(Ignored.Unimplemented, "argv <- list(1000, 0L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(1000, 0L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]], NULL))");
     }
 
     @Test
     public void testsetseed2() {
-        assertEval(Ignored.Unimplemented, "argv <- list(77, 2L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(77, 2L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]], NULL))");
     }
 
     @Test
     public void testsetseed3() {
-        assertEval(Ignored.Unimplemented, "argv <- list(123, 6L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(123, 6L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]], NULL))");
     }
 
     @Test
     public void testsetseed4() {
-        assertEval(Ignored.Unimplemented, "argv <- list(77, 4L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(77, 4L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]], NULL))");
     }
 
     @Test
     public void testsetseed5() {
-        assertEval("argv <- list(1000, 1L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(1000, 1L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]], NULL))");
     }
 
     @Test
     public void testsetseed6() {
-        assertEval("argv <- list(0, NULL, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(0, NULL, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]], NULL))");
     }
 
     @Test
     public void testsetseed7() {
-        assertEval(Ignored.Unimplemented, "argv <- list(123, 7L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.Unimplemented, "argv <- list(123, 7L, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]], NULL))");
     }
 
     @Test
     public void testsetseed8() {
-        assertEval("argv <- list(NULL, NULL, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(NULL, NULL, NULL); .Internal(set.seed(argv[[1]], argv[[2]], argv[[3]], NULL))");
     }
 
     @Test

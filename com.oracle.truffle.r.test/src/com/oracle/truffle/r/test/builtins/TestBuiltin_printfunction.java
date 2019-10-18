@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -32,14 +32,14 @@ public class TestBuiltin_printfunction extends TestBase {
         // FIXME maybe we could show arg names
         // Expected output: function (e1, e2) .Primitive("+")
         // FastR output: function (null, null) .Primitive("+")
-        assertEval(Ignored.OutputFormatting, "argv <- list(.Primitive('+'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.OutputFormatting, "argv <- list(.Primitive('+'), TRUE); print.function(argv[[1]], argv[[2]])");
     }
 
     @Test
     public void testprintfunction2() {
         // Expected output: .Primitive("if")
         // FastR output: function(x).Primitive("if")
-        assertEval(Ignored.OutputFormatting, "argv <- list(.Primitive('if'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.OutputFormatting, "argv <- list(.Primitive('if'), TRUE); print.function(argv[[1]], argv[[2]])");
     }
 
     @Test
@@ -47,12 +47,12 @@ public class TestBuiltin_printfunction extends TestBase {
         // ?c shows 'recursive' arg so marked as ReferenceError
         // Expected output: function (...) .Primitive("c")
         // FastR output: function (..., recursive) .Primitive("c")
-        assertEval(Ignored.ReferenceError, "argv <- list(.Primitive('c'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.ReferenceError, "argv <- list(.Primitive('c'), TRUE); print.function(argv[[1]], argv[[2]])");
     }
 
     @Test
     public void testprintfunction4() {
-        assertEval("argv <- list(.Primitive('.Internal'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(.Primitive('.Internal'), TRUE); print.function(argv[[1]], argv[[2]])");
     }
 
     @Test
@@ -60,6 +60,6 @@ public class TestBuiltin_printfunction extends TestBase {
         // FIXME exp(1) sligthly better than 2.718282 but definitely a minor issue
         // Expected output: function (x, base = exp(1)) .Primitive("log")
         // FastR output: function (x, base = 2.718282) .Primitive("log")
-        assertEval(Ignored.OutputFormatting, "argv <- list(.Primitive('log'), TRUE); .Internal(print.function(argv[[1]], argv[[2]]))");
+        assertEval(Ignored.OutputFormatting, "argv <- list(.Primitive('log'), TRUE); print.function(argv[[1]], argv[[2]])");
     }
 }

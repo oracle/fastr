@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,6 +74,7 @@ public abstract class Influence extends RExternalBuiltinNode.Arg4 {
         RAbstractDoubleVector qraux = getDoubleField(mqr, accessQrauxField, "qraux");
         int n = getDimAttribute.nrows(qr);
         int k = (int) scalarIntCast.doCast(accessRankField.execute(mqr, "rank"));
+        int q = getDimAttribute.ncols(resid);
         double[] hat = new double[n];
         double[] coefficients = doCoef ? new double[n * k] : new double[0];
         double[] sigma = new double[n];
@@ -81,7 +82,7 @@ public abstract class Influence extends RExternalBuiltinNode.Arg4 {
         double[] qrData = getReadonlyData.execute(qr.materialize());
         double[] qrauxData = getReadonlyData.execute(qraux.materialize());
         // Note: it is OK to override data in "e" regardless of its sharing status, GNUR does it too
-        lminflNode.execute(qrData, n, n, k, doCoef ? 1 : 0, qrauxData, residData, hat, coefficients, sigma, tol);
+        lminflNode.execute(qrData, n, n, k, q, doCoef ? 1 : 0, qrauxData, residData, hat, coefficients, sigma, tol);
         for (int i = 0; i < n; i++) {
             if (hat[i] > 1. - tol) {
                 hat[i] = 1.;

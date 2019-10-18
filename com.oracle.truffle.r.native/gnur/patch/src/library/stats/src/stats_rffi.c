@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,11 @@
 
 /* This file includes FastR specific wrappers for fortran functions from the stats package */
 
-
-void lminfl_(double *x, int *ldx, int *n, int *k, int *docoef, double *qraux, double *resid, 
+void lminfl_(double *x, int *ldx, int *n, int *k, int *q, int *docoef, double *qraux, double *resid, 
     double *hat, double *coef, double *sigma, double *tol);
 
-void call_stats_lminfl(double *x, int ldx, int n, int k, int docoef, double *qraux, double *resid, 
+void call_stats_lminfl(double *x, int ldx, int n, int k, int q, int docoef, double *qraux, double *resid, 
     double *hat, double *coef, double *sigma, double tol) {
-    lminfl_(x, &ldx, &n, &k, &docoef, qraux, resid, hat, coef, sigma, &tol);
+    lminfl_(x, &ldx, &n, &k, &q, &docoef, qraux, resid, hat, coef, sigma, &tol);
 }
 

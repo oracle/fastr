@@ -1024,7 +1024,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             wrapSeen = new boolean[formals.getLength()];
 
             RBehavior behavior = builtinDescriptor.getBehavior();
-            pure = behavior != null ? behavior.isPure() : false;
+            pure = behavior != null && behavior.isPure();
         }
 
         @Override

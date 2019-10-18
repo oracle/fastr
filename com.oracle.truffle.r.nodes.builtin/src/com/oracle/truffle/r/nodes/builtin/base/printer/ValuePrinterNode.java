@@ -120,9 +120,9 @@ public final class ValuePrinterNode extends RBaseNode {
         return null;
     }
 
-    public String execute(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource, boolean noOpt) {
+    public String execute(Object o, Object digits, boolean quote, Object naPrint, Object printGap, boolean right, Object max, boolean useSource) {
         try {
-            PrintParameters printParams = new PrintParameters(digits, quote, naPrint, printGap, right, max, useSource, noOpt);
+            PrintParameters printParams = new PrintParameters(digits, quote, naPrint, printGap, right, max, useSource);
 
             PrintContext printCtx = PrintContext.enter(this, printParams, RWriter::new);
             try {

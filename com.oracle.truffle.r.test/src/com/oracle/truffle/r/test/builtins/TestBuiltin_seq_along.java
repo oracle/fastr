@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -147,8 +147,15 @@ public class TestBuiltin_seq_along extends TestBase {
         assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) 42; seq_along(x) }");
         assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) c(100, 200); seq_along(x) }");
         assertEval("{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) '48'; seq_along(x) }");
-        assertEval(Output.IgnoreErrorContext, "{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) numeric(0); seq_along(x) }");
-        assertEval(Output.IgnoreWarningContext, Output.IgnoreErrorContext, "{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) 'hello world'; seq_along(x) }");
+        // GNU-R does not check if "length.myclass" given any sensible answer and goes ahead to
+        // generate 1:MAX_INT vector
+        // FastR shows error saying the the length is not a number
+        // CAUTION: we need to comment these out because GNU-R chokes on them when generating
+        // expected output
+        // assertEval(Ignored.ReferenceError, "{ x <- c(1,2,3); class(x) <- 'myclass';
+        // length.myclass <- function(w) { cat('was called'); numeric(0); }; seq_along(x) }");
+        // assertEval(Ignored.ReferenceError, "{ x <- c(1,2,3); class(x) <- 'myclass';
+        // length.myclass <- function(w) 'hello world'; seq_along(x) }");
         assertEval("{ length <- function(x) 42; seq_along(c(1,2,3)) }");
         assertEval("{ assign('length.myclass', function(...) 42, envir=.__S3MethodsTable__.); x <- 1; class(x) <- 'myclass'; res <- seq_along(x); rm('length.myclass', envir=.__S3MethodsTable__.); res }");
         assertEval("seq_along()");

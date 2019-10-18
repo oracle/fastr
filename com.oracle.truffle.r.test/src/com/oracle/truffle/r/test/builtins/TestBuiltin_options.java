@@ -14,12 +14,13 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.test.builtins;
 
+import com.oracle.truffle.r.runtime.ROptions;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -79,13 +80,23 @@ public class TestBuiltin_options extends TestBase {
 
     @Test
     public void testPrompt() {
-        assertEval("{ options(prompt=NULL) }");
         assertEval("{ options(prompt=\"abc\"); identical(getOption(\"prompt\"), \"abc\") }");
     }
 
     @Test
     public void testContinue() {
-        assertEval("{ options(continue=NULL) }");
         assertEval("{ options(continue=\"abc\"); identical(getOption(\"continue\"), \"abc\") }");
+    }
+
+    @Test
+    public void testMandatory() {
+        for (String option : ROptions.MANDATORY_OPTIONS_SET) {
+            assertEval("{ options(" + option + "=NULL) }");
+            if ("keep.source".equals(option) || "warn".equals(option)) {
+                assertEval(Ignored.Unknown, "{ options('" + option + "') }");
+            } else {
+                assertEval("{ options('" + option + "') }");
+            }
+        }
     }
 }

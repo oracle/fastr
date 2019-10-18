@@ -42,8 +42,8 @@ public class TestBuiltin_listfiles extends TestBase {
     @Test
     public void testlistfiles3() {
         // FastR bug; not recursing in to "."
-        assertEval(Output.IgnoreWhitespace,
-                        "print('Work dir: ', getwd()); argv <- list('.', '^CITATION.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); sort(.Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]])))");
+        assertEval(Ignored.OutputFormatting, "argv <- list('" + dirPath +
+                        "', '^.*dummy.*', FALSE, FALSE, TRUE, FALSE, FALSE, FALSE); sort(.Internal(list.files(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]], argv[[8]])))");
     }
 
     @Test
@@ -72,14 +72,14 @@ public class TestBuiltin_listfiles extends TestBase {
 
     @Test
     public void testFileListingIncludesDotDot() {
-        assertEval("{ list.files(\"" + dirPath + "\", all.files=TRUE) }");
-        assertEval("{ list.files(\"" + dirPath + "\", all.files=TRUE, no..=TRUE) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE)) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, no..=TRUE)) }");
 
         // Recursive searches should not includes . and .. files.
-        assertEval("{ list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=TRUE) }");
-        assertEval("{ list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE) }");
-        assertEval("{ list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, full.names=TRUE) }");
-        assertEval("{ list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, include.dirs=TRUE) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=TRUE)) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE)) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, full.names=TRUE)) }");
+        assertEval(Ignored.OutputFormatting, "{ sort(list.files(\"" + dirPath + "\", all.files=TRUE, recursive=TRUE, no..=FALSE, include.dirs=TRUE)) }");
     }
 
     @Test

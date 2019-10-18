@@ -36,75 +36,164 @@ while [ -h "$source" ] ; do
   fi
 done
 
+function printHelp {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+	echo "usage: configure_fastr [--help] [--configure-etc [--enable-native-compilers-toolchain]] [--gcc-lib-path <path>]"
+    else
+	echo "usage: configure_fastr [--help] [--configure-etc [--enable-native-compilers-toolchain]]"
+	fi    
+    
+	echo ""
+	echo "optional arguments:"
+	echo "  --configure-etc                             Configure the files in the 'etc' folder. Unless '--enable-native-compilers-toolchain' is specified, the configuration will not affect the 'etc/Makeconf' file to preserve the original compilers toolchain configuration."
+	echo "  --enable-native-compilers-toolchain         Include the 'etc/Makefile' file into the configuration. It will replace the original compiler toolchain configuration in 'etc/Makefile' with the native compilers toolchain."
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "  --gcc-lib-path <path>                       Use the <path> to locate the required gfortran libraries."
+	fi
+
+	echo ""	
+	echo "examples:"
+	echo "  * Basic FastR configuration:"
+	echo ""
+	echo "    configure_fastr"
+	echo ""
+	echo "  * An advanced FastR configuration with an additional configuration of the 'etc' folder except 'etc/Makefile':"
+	echo ""
+	echo "    configure_fastr --configure-etc"
+	echo ""
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+	echo "  * The most advanced FastR configuration with the complete configuration of the 'etc' folder. It also specifies the GCC path to locate the required libraries:"
+	echo ""
+	echo "    configure_fastr --configure-etc --enable-native-compilers-toolchain --gcc-lib-path /usr/local/Cellar/gcc\@4.9/4.9.4_1/lib/gcc/4.9/"
+    else
+	echo "  * The most advanced FastR configuration with the complete configuration of the 'etc' folder:"
+	echo ""
+	echo "    configure_fastr --configure-etc --enable-native-compilers-toolchain"
+	fi    
+	echo ""
+}
+           
+GCC_LIB_PATH=""
+CONFIGURE_ARGS=""
+CONFIGURE_ETC=0
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --help)
+	    printHelp
+    	exit 0
+    ;;
+    --gcc-lib-path)
+      shift
+      GCC_LIB_PATH=$1
+    ;;
+    --configure-etc)
+      CONFIGURE_ETC=1
+    ;;  
+    *)
+      CONFIGURE_ARGS="$CONFIGURE_ARGS $1"
+    ;;
+  esac
+  shift
+done  
+
 (
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
     echo "int main(){}" | gcc -x c -Wl,--no-as-needed -lgfortran -lgcc_s -lquadmath -o /dev/null - > /dev/null 2>/dev/null
     res=$?
     if [[ $res != 0 ]]; then
-      echo "Cannot build simple C program linking with libgfortran, libgcc_s, and libquadmath."
+      echo "Cannot build a simple C program linking with libgfortran, libgcc_s, and libquadmath."
       echo "Please install GCC using:"
       echo "    On Debian based systems: apt-get install build-essential"
       echo "    On CentOS/RHEL: yum groupinstall \"Developent Tools\""
+	  echo ""	
+      printHelp
+      exit 1
     fi
   elif [[ "$OSTYPE" == "darwin"* ]]; then
     cd -P "$( dirname "$source" )/../lib"
     # correct paths on Mac OSX
-    GFORTRAN_LIBRARIES="libgfortran.3.dylib libquadmath.0.dylib libgomp.1.dylib libgcc_s.1.dylib"
-    GFORTRAN_LOCATIONS="$* /opt/local/lib /opt/local/lib/libgcc /usr/local/gfortran/lib none"
+    GFORTRAN_LIBRARIES="libgfortran.3.dylib libgfortran.5.dylib libquadmath.0.dylib libgomp.1.dylib libgcc_s.1.dylib"
+    # This allows determining if all libraries were found after the main loop
+    GFORTRAN_LIBRARIES_CHECK="libgfortran libquadmath libgomp libgcc_s"
+    GFORTRAN_LOCATIONS="$GCC_LIB_PATH /opt/local/lib /opt/local/lib/libgcc /usr/local/gfortran/lib"
     TARGET_LIBRARIES="`find ../library/* | grep "\(\.dylib\|\.so\)$"` `find * | grep "\(\.dylib\|\.so\)$"`"
+    FOUND=""
+    LAST_FOUND=""
     for GFORTRAN_LIB in $GFORTRAN_LIBRARIES
     do
+      # Remove the 'dylib' extension	
+	  GFORTRAN_LIB_BASE=${GFORTRAN_LIB%.*}
+      # Remove the number extension
+	  GFORTRAN_LIB_BASE=${GFORTRAN_LIB_BASE%.*}
+	  if [ "$LAST_FOUND" = "$GFORTRAN_LIB_BASE" ] ; then
+	  	# A previous version of the current library has already been found
+	  	echo "skipping $GFORTRAN_LIB"
+	  	continue;
+	  fi
+	  
       for LOCATION in $GFORTRAN_LOCATIONS
       do
         if test -f "${LOCATION}/${GFORTRAN_LIB}"; then
           LIB_LOCATION="${LOCATION}/${GFORTRAN_LIB}"
+          FOUND="$FOUND $GFORTRAN_LIB_BASE"
+          LAST_FOUND=$GFORTRAN_LIB_BASE
+          
+		  echo "${GFORTRAN_LIB} found at ${LIB_LOCATION}"
+		  for TARGET_LIB in $TARGET_LIBRARIES
+		  do
+			# don't look at symlinks
+			if [ ! -L "${TARGET_LIB}" ] ; then
+			  # grep for the current path of this gfortran library in this library's linking info
+			  CURRENT_LIB_NAME=`otool -L ${TARGET_LIB} | grep -o "\t.*${GFORTRAN_LIB_BASE}"`
+			  if [ ! -z "$CURRENT_LIB_NAME" ] ; then
+				if [ "$CURRENT_LIB_NAME" != "$LIB_LOCATION" ] ; then
+				  # change to the new location
+				  echo "changing path to ${GFORTRAN_LIB} in ${TARGET_LIB} to $LIB_LOCATION"
+				  install_name_tool -change $CURRENT_LIB_NAME $LIB_LOCATION ${TARGET_LIB}
+				fi
+			  fi
+			fi
+		  done
+
           break
-        elif [ "$LOCATION" = "none" ] ; then
-          echo "${GFORTRAN_LIB} not found"
-          echo "Please ensure that you have gfortran installed on your system, e.g., using homebrew or MacPorts."
-          echo "If ${GFORTRAN_LIB} is installed in a non-standard location, you can supply additional locations"
-          echo "as parameters to the configure_fastr tool as command line arguments."
-          exit 1
-        fi
-      done
-      echo "${GFORTRAN_LIB} found at ${LIB_LOCATION}"
-      for TARGET_LIB in $TARGET_LIBRARIES
-      do
-        # don't look at symlinks
-        if [ ! -L "${TARGET_LIB}" ] ; then
-          # grep for the current path of this gfortran library in this library's linking info
-          CURRENT_LIB_NAME=`otool -L ${TARGET_LIB} | grep -o "\t.*${GFORTRAN_LIB}"`
-          if [ ! -z "$CURRENT_LIB_NAME" ] ; then
-            if [ $CURRENT_LIB_NAME != $LIB_LOCATION ] ; then
-              # change to the new location
-              echo "changing path to ${GFORTRAN_LIB} in ${TARGET_LIB} to $LIB_LOCATION"
-              install_name_tool -change $CURRENT_LIB_NAME $LIB_LOCATION ${TARGET_LIB}
-            fi
-          fi
+          
         fi
       done
     done
+    
+    if [ "$FOUND" != " $GFORTRAN_LIBRARIES_CHECK" ] ; then
+	  echo "From expected libraries '$GFORTRAN_LIBRARIES_CHECK' found only '$FOUND'."
+	  echo "Please ensure that you have gcc installed on your system, e.g., using homebrew or MacPorts (brew install gcc)."
+	  echo "If it is installed in a non-standard location, you can specify its location using the '--gcc-lib-path' parameter."
+	  echo ""	
+      printHelp
+	  exit 1
+     fi
+    
   else
     echo "Unknown operating system."
     echo "FastR may still work."
     echo "Make sure that GCC including gfortran and OpenMP is installed on your system."
   fi
 
-  export GRAALVM_VERSION=`grep -o 'GRAALVM_VERSION=.*' "../../../../release" | cut -d= -f2`
-  cd ../etc
-  echo "Running the configure script..."
-  ./configure --with-x=no --with-aqua=no --enable-memory-profiling FFLAGS=-O2 $@ > configure.log 2>&1
-  res=$?
-  if [[ $res != 0 ]]; then
-    echo "The configuration step failed."
-    echo "The log was saved into ${PWD}/configure.log"
-    echo "FastR may still work, but compilation of some R packages may fail"
-    exit 1
+  if [[ $CONFIGURE_ETC = 1 ]]; then
+    export GRAALVM_VERSION=`grep -o 'GRAALVM_VERSION=.*' "../../../../release" | cut -d= -f2`
+    cd ../etc
+    echo "Running the configure script..."
+    ./configure --with-x=no --with-aqua=no --enable-memory-profiling FFLAGS=-O2 $CONFIGURE_ARGS > configure.log 2>&1
+    res=$?
+    if [[ $res != 0 ]]; then
+      echo "The configuration step failed."
+	  echo "The log was saved into ${PWD}/configure.log"
+	  echo "FastR may still work, but compilation of some R packages may fail"
+	  exit 1
+	fi
+	ed Makeconf < edMakeconf.etc > /dev/null 2>/dev/null
+	export R_DEFAULT_PACKAGES=base
+	R_LIBS_USER=`"../bin/R" --slave -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'`
+	echo "Creating user specific library directory: $R_LIBS_USER"
+	mkdir -p "$R_LIBS_USER"
+	echo "DONE"
   fi
-  ed Makeconf < edMakeconf.etc > /dev/null 2>/dev/null
-  export R_DEFAULT_PACKAGES=base
-  R_LIBS_USER=`"../bin/R" --slave -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'`
-  echo "Creating user specific library directory: $R_LIBS_USER"
-  mkdir -p "$R_LIBS_USER"
-  echo "DONE"
+
 )

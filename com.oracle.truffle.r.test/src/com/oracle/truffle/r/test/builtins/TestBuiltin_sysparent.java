@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -32,7 +32,7 @@ public class TestBuiltin_sysparent extends TestBase {
      */
     public static final String SYS_PARENT_SETUP = "bar <- function(ba) do.call(foo, list(ba));" +
                     "boo <- function(bo) bar(bo);" +
-                    "callboo <- function(cb) do.call('boo', list(cb));" +
+                    "callboo <- function(cb) do.call(\"boo\", list(cb));" +
                     "fun <- function(f) callboo(f);" +
                     "fun(42);";
 

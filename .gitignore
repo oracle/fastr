@@ -31,8 +31,7 @@
 /com.oracle.truffle.r.native/include/*.h
 /com.oracle.truffle.r.native/include/R_ext/*.h
 /com.oracle.truffle.r.native/include/linked
-/com.oracle.truffle.r.native/fficall/fficall.done
-/com.oracle.truffle.r.native/fficall/jniboot.done
+/com.oracle.truffle.r.native/fficall/*.done
 /com.oracle.truffle.r.native.recommended/install.recommended
 /com.oracle.truffle.r.test.native/packages/copy_recommended
 /com.oracle.truffle.r.test.native/packages/repo/*

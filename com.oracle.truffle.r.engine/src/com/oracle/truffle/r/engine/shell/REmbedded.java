@@ -83,7 +83,7 @@ public class REmbedded {
         boolean useEmbedded = consoleHandler == embeddedConsoleHandler;
         OutputStream stdOut = useEmbedded ? embeddedConsoleHandler.createStdOutputStream(System.out) : System.out;
         OutputStream stdErr = useEmbedded ? embeddedConsoleHandler.createErrOutputStream(System.err) : System.err;
-        context = Context.newBuilder().allowAllAccess(true).arguments("R", options.getArguments()).in(input).out(stdOut).err(stdErr).build();
+        context = Context.newBuilder("R", "llvm").allowAllAccess(true).arguments("R", options.getArguments()).in(input).out(stdOut).err(stdErr).build();
         consoleHandler.setContext(context);
         context.eval(INIT);
 

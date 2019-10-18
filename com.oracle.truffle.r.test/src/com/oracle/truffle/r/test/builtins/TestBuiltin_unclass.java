@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -225,6 +225,5 @@ public class TestBuiltin_unclass extends TestBase {
         assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); x<-new(\"foo\", j=42); unclass(x) }");
         // before S4 objects became shareable, the test below was merging two class representations
         assertEval("{ setClass(\"foo\", representation(j=\"numeric\")); setClass(\"foo\", representation(d=\"numeric\")); x<-new(\"foo\", d=42); unclass(x) }");
-
     }
 }

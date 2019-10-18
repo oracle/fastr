@@ -3,7 +3,7 @@
  * Copyright (c) 1997-2012, The R Core Team
  * Copyright (c) 2003-2008, The R Foundation
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -145,7 +145,7 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
         /* avoid allocation for a single sample */
         if (sampleSizeProfile.profile(isRepeatable || size < 2)) {
             for (int i = 0; i < size; i++) {
-                result[i] = (int) (x * RRNG.unifRand() + 1);
+                result[i] = (int) (RRNG.unifIndex(x) + 1);
             }
         } else {
             int n = x;
@@ -154,7 +154,7 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
                 ix[i] = i;
             }
             for (int i = 0; i < size; i++) {
-                int j = (int) (n * RRNG.unifRand());
+                int j = (int) RRNG.unifIndex(n);
                 result[i] = ix[j] + 1;
                 ix[j] = ix[--n];
             }

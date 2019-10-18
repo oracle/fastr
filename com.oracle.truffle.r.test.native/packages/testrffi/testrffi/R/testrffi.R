@@ -302,6 +302,10 @@ rffi.test_sort_complex <- function(complexVec) {
     .Call('test_sort_complex', complexVec)
 }
 
+rffi.testMultiSetProtection <- function() {
+    .Call('testMultiSetProtection')
+}
+
 rffi.get_dataptr <- function(x) .Call('get_dataptr', x)
 
 rffi.benchRf_isNull <- function(n) {

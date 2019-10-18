@@ -122,7 +122,7 @@ $(OBJ)/%.o: $(SRC)/%.c $(H_SOURCES)
 	$(CC) $(CFLAGS) $(INCLUDES) $(XTRA_C_OPTS) -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.f
-	$(F77) $(FFLAGS) $(FPICFLAGS) $(XTRA_F_OPTS) -c $< -o $@
+	$(FC) $(FFLAGS) $(FPICFLAGS) $(XTRA_F_OPTS) -c $< -o $@
 
 clean: $(CLEAN_PKG)
 	rm -rf $(LIBDIR)/*

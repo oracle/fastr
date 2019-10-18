@@ -26,7 +26,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.graalvm.polyglot.PolyglotAccess;
 import org.graalvm.polyglot.PolyglotException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -90,7 +89,7 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testPolyglotAccessWhenPolyglotBindingsAreDisabled() {
-        try (org.graalvm.polyglot.Context context = FastRSession.getContextBuilder("R").allowPolyglotAccess(PolyglotAccess.NONE).build()) {
+        try (org.graalvm.polyglot.Context context = FastRSession.getContextBuilder("R", "llvm").build()) {
             context.eval("R", "eval.polyglot('js', '1+3')");
             Assert.fail("no PolyglotException exception occurred");
         } catch (PolyglotException ex) {

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
+ *  Copyright (C) 1997--2018  The R Core Team
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2016  The R Core Team
  *  Copyright (C) 2002--2011  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -397,6 +397,16 @@ static double yLinetoDev(double y, pGEDevDesc dd)
     return yNDCtoDev(y*gpptr(dd)->yNDCPerLine, dd);
 }
 
+static double xChartoDev(double x, pGEDevDesc dd)
+{
+    return xNDCtoDev(x*gpptr(dd)->cex*gpptr(dd)->xNDCPerChar, dd);
+}
+
+static double yChartoDev(double y, pGEDevDesc dd)
+{
+    return yNDCtoDev(y*gpptr(dd)->cex*gpptr(dd)->yNDCPerChar, dd);
+}
+
 static double xNICtoDev(double x, pGEDevDesc dd)
 {
     return gpptr(dd)->inner2dev.ax + x*gpptr(dd)->inner2dev.bx;
@@ -566,6 +576,16 @@ static double xDevtoLine(double x, pGEDevDesc dd)
 static double yDevtoLine(double y, pGEDevDesc dd)
 {
     return yDevtoNDC(y, dd)/gpptr(dd)->yNDCPerLine;
+}
+
+static double xDevtoChar(double x, pGEDevDesc dd)
+{
+    return xDevtoNDC(x, dd)/(gpptr(dd)->cex * gpptr(dd)->xNDCPerChar);
+}
+
+static double yDevtoChar(double y, pGEDevDesc dd)
+{
+    return yDevtoNDC(y, dd)/(gpptr(dd)->cex * gpptr(dd)->yNDCPerChar);
 }
 
 static double xDevtoNIC(double x, pGEDevDesc dd)
@@ -813,6 +833,9 @@ void GConvert(double *x, double *y, GUnit from, GUnit to, pGEDevDesc dd)
 	*x = xDevtoLine(devx, dd);
 	*y = yDevtoLine(devy, dd);
 	break;
+    case CHARS:
+	*x = xDevtoChar(devx, dd);
+	*y = yDevtoChar(devy, dd);
     case NIC:
 	*x = xDevtoNIC(devx, dd);
 	*y = yDevtoNIC(devy, dd);
@@ -874,6 +897,7 @@ double GConvertX(double x, GUnit from, GUnit to, pGEDevDesc dd)
     case NDC:	devx = xNDCtoDev(x, dd);	break;
     case INCHES:devx = xInchtoDev(x, dd);	break;
     case LINES: devx = xLinetoDev(x, dd);       break;
+    case CHARS: devx = xChartoDev(x, dd);       break;
     case OMA1:	devx = xOMA1toDev(x, dd);	break;
     /*case OMA2:	x <--> y */
     case OMA3:	devx = xOMA3toDev(x, dd);	break;
@@ -894,6 +918,7 @@ double GConvertX(double x, GUnit from, GUnit to, pGEDevDesc dd)
     case NDC:	x = xDevtoNDC(devx, dd);	break;
     case INCHES:x = xDevtoInch(devx, dd);	break;
     case LINES:	x = xDevtoLine(devx, dd);	break;
+    case CHARS:	x = xDevtoChar(devx, dd);	break;
     case NIC:	x = xDevtoNIC(devx, dd);	break;
     case OMA1:	x = xDevtoOMA1(devx, dd);	break;
     /*case OMA2:	x <--> y */
@@ -919,6 +944,7 @@ double GConvertY(double y, GUnit from, GUnit to, pGEDevDesc dd)
     case NDC:	devy = yNDCtoDev(y, dd);	break;
     case INCHES:devy = yInchtoDev(y, dd);	break;
     case LINES: devy = yLinetoDev(y, dd);       break;
+    case CHARS: devy = yChartoDev(y, dd);       break;
     case OMA1:	devy = yOMA1toDev(y, dd);	break;
     /*case OMA2:	x <--> y */
     case OMA3:	devy = yOMA3toDev(y, dd);	break;
@@ -939,6 +965,7 @@ double GConvertY(double y, GUnit from, GUnit to, pGEDevDesc dd)
     case NDC:	y = yDevtoNDC(devy, dd);	break;
     case INCHES:y = yDevtoInch(devy, dd);	break;
     case LINES:	y = yDevtoLine(devy, dd);	break;
+    case CHARS:	y = yDevtoChar(devy, dd);	break;
     case NIC:	y = yDevtoNIC(devy, dd);	break;
     case OMA1:	y = yDevtoOMA1(devy, dd);	break;
     /*case OMA2:	x <--> y */
@@ -1864,56 +1891,13 @@ pGEDevDesc GNewPlot(Rboolean recording)
 }
 #undef G_ERR_MSG
 
-#if 0
-/* in src/main/graphics.c */
-// (usr, log, n_inp) |--> (axp, n_out) :
+/*
+// (usr, log, n_inp) |--> (axp = (min, max), n_out) :
+
 void GAxisPars(double *min, double *max, int *n, Rboolean log, int axis)
-{
-#define EPS_FAC_2 100
-    Rboolean swap = *min > *max;
-    double t_, min_o, max_o;
 
-    if(swap) { /* Feature: in R, something like  xlim = c(100,0)  just works */
-	t_ = *min; *min = *max; *max = t_;
-    }
-    /* save only for the extreme case (EPS_FAC_2): */
-    min_o = *min; max_o = *max;
-
-    if(log) {
-	/* Avoid infinities */
-	if(*max > 308) *max = 308;
-	if(*min < -307) *min = -307;
-	*min = Rexp10(*min);
-	*max = Rexp10(*max);
-	GLPretty(min, max, n);
-    }
-    else GEPretty(min, max, n);
-
-    double tmp2 = EPS_FAC_2 * DBL_EPSILON;/* << prevent overflow in product below */
-    if(fabs(*max - *min) < (t_ = fmax2(fabs(*max), fabs(*min)))* tmp2) {
-	/* Treat this case somewhat similar to the (min ~= max) case above */
-	/* Too much accuracy here just shows machine differences */
-	warning(_("relative range of values (%4.0f * EPS) is small (axis %d)")
-		/*"to compute accurately"*/,
-		fabs(*max - *min) / (t_*DBL_EPSILON), axis);
-
-	/* No pretty()ing anymore */
-	*min = min_o;
-	*max = max_o;
-	double eps = .005 * fabs(*max - *min);/* .005: not to go to DBL_MIN/MAX */
-	*min += eps;
-	*max -= eps;
-	if(log) {
-	    *min = Rexp10(*min);
-	    *max = Rexp10(*max);
-	}
-	*n = 1;
-    }
-    if(swap) {
-	t_ = *min; *min = *max; *max = t_;
-    }
-}
-#endif
+* ----> in src/main/graphics.c (as used in grDevices too)
+*          ------------------- */
 
 void GScale(double min, double max, int axis, pGEDevDesc dd)
 {
@@ -2543,21 +2527,21 @@ void GLine(double x1, double y1, double x2, double y2, int coords, pGEDevDesc dd
    when inside a call to locator (it should raise
    an error and return).  PR#15253
 
-   This assume that locator is running on only one device at a time, 
+   This assume that locator is running on only one device at a time,
    which is currently safe.
 */
 static void (*old_close)(pDevDesc) = NULL;
 
-static void 
+static void
 #ifndef WIN32
-NORET 
+NORET
 #endif
 locator_close(pDevDesc dd)
 {
     if(old_close) old_close(dd);
     dd->close = old_close;
     old_close = NULL;
-    /* It's not safe to call error() in a Windows event handler, so 
+    /* It's not safe to call error() in a Windows event handler, so
        the GA_Close method records the close event separately.
     */
 #ifndef WIN32
@@ -2575,7 +2559,7 @@ Rboolean GLocator(double *x, double *y, int coords, pGEDevDesc dd)
   */
   old_close = (dd->dev)->close;
   dd->dev->close = &locator_close;
-  
+
   if(dd->dev->locator && dd->dev->locator(x, y, dd->dev)) {
       GConvert(x, y, DEVICE, coords, dd);
       ret =  TRUE;
@@ -2584,7 +2568,7 @@ Rboolean GLocator(double *x, double *y, int coords, pGEDevDesc dd)
   dd->dev->close = old_close;
   old_close = NULL;
   return ret;
-  
+
 }
 
 /* Access character font metric information.  */
@@ -3010,7 +2994,6 @@ double GStrWidth(const char *str, cetype_t enc, GUnit units, pGEDevDesc dd)
 
 
 /* Compute string height. */
-
 double GStrHeight(const char *str, cetype_t enc, GUnit units, pGEDevDesc dd)
 {
     double h;
@@ -3172,53 +3155,15 @@ void GBox(int which, pGEDevDesc dd)
     }
 }
 
-#if 0
-/* in src/main/graphics.c */
-#define LPR_SMALL  2
-#define LPR_MEDIUM 3
 
+/*
 void GLPretty(double *ul, double *uh, int *n)
-{
-/* Generate pretty tick values --	LOGARITHMIC scale
- * __ ul < uh __
- * This only does a very simple setup.
- * The real work happens when the axis is drawn. */
-    int p1, p2;
-    double dl = *ul, dh = *uh;
-    p1 = (int) ceil(log10(dl));
-    p2 = (int) floor(log10(dh));
-    if(p2 <= p1 &&  dh/dl > 10.0) {
-	p1 = (int) ceil(log10(dl) - 0.5);
-	p2 = (int) floor(log10(dh) + 0.5);
-    }
-
-    if (p2 <= p1) { /* floor(log10(uh)) <= ceil(log10(ul))
-			 * <==>	 log10(uh) - log10(ul) < 2
-			 * <==>		uh / ul	       < 100 */
-	/* Very small range : Use tickmarks from a LINEAR scale
-	 *		      Splus uses n = 9 here, but that is dumb */
-	GPretty(ul, uh, n);
-	*n = -*n;
-    }
-    else { /* extra tickmarks --> CreateAtVector() in ./plot.c */
-	/* round to nice "1e<N>" */
-	*ul = Rexp10((double)p1);
-	*uh = Rexp10((double)p2);
-	if (p2 - p1 <= LPR_SMALL)
-	    *n = 3; /* Small range :	Use 1,2,5,10 times 10^k tickmarks */
-	else if (p2 - p1 <= LPR_MEDIUM)
-	    *n = 2; /* Medium range :	Use 1,5 times 10^k tickmarks */
-	else
-	    *n = 1; /* Large range :	Use 10^k tickmarks
-		     *			But decimate, when there are too many*/
-    }
-}
 
 void GPretty(double *lo, double *up, int *ndiv)
-{
-    GEPretty(lo, up, ndiv);
-}
-#endif
+
+* ----> in src/main/graphics.c (as used in grDevices too)
+*          ------------------- */
+
 
 #define SMALL	0.25
 #define RADIUS	0.375

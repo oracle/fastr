@@ -45,9 +45,9 @@ suite = {
   # libraries that we depend on
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-3.5.1.tar.gz", # keep in sync with the GraalVM support distribution
-        "urls" : ["https://cran.rstudio.com/src/base/R-3/R-3.5.1.tar.gz"],
-        "sha1" : "9314d3d372b05546a33791fbc8dd579c92ebd16b",
+        "path" : "libdownloads/R-3.6.1.tar.gz", # keep in sync with the GraalVM support distribution
+        "urls" : ["https://cran.rstudio.com/src/base/R-3/R-3.6.1.tar.gz"],
+        "sha1" : "0041c025561b5622e3dc88cdedf82334620cd3c2",
         "resource" : "true"
     },
 

@@ -61,5 +61,4 @@ public class TestBuiltin_fileexists extends TestBase {
 
         assertEval(Ignored.ImplementationError, " file.exists('" + dirPath + "/filedoesnotexist/../dummy.txt')");
     }
-
 }

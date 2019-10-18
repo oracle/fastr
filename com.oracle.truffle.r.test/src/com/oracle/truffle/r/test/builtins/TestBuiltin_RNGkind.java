@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,12 +29,12 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_RNGkind extends TestBase {
     @Test
     public void testArgsCast() {
-        assertEval(".Internal(RNGkind(1L, 1L))");
-        assertEval(".Internal(RNGkind(NULL, NULL))");
+        assertEval(".Internal(RNGkind(1L, 1L, NULL))");
+        assertEval(".Internal(RNGkind(NULL, NULL, NULL))");
         // Note: GnuR casts 'abc' to int and then fails to find it, we do proper args validation in
         // this case
-        assertEval(Output.IgnoreErrorMessage, ".Internal(RNGkind('abc', NULL))");
+        assertEval(Output.IgnoreErrorMessage, ".Internal(RNGkind('abc', NULL, NULL))");
         // Note: GnuR also prints warning about NAs
-        assertEval(Output.IgnoreErrorMessage, ".Internal(RNGkind(NULL, 'abc'))");
+        assertEval(Output.IgnoreErrorMessage, ".Internal(RNGkind(NULL, 'abc', NULL))");
     }
 }

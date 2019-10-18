@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -241,6 +241,8 @@ public class TestConnections extends TestRBase {
         assertEval("{ rc <- rawConnection(raw(0), \"w\"); writeChar(\"Hello\", rc); writeChar(\", World\", rc); res <- rawConnectionValue(rc); close(rc); res }");
     }
 
+    private static final String[] SAVE_VERSIONS = {"2", "3"};
+
     @Test
     public void testRawWriteBinary() {
 
@@ -248,10 +250,10 @@ public class TestConnections extends TestRBase {
         assertEval(Ignored.ImplementationError, "{ s <- \"äöüß\"; rc <- rawConnection(raw(0), \"wb\"); write(charToRaw(s), rc); res <- rawConnectionValue(rc); close(rc); res }");
         assertEval("{ zz <- rawConnection(raw(0), \"wb\"); x <- c(\"a\", \"this will be truncated\", \"abc\"); nc <- c(3, 10, 3); writeChar(x, zz, nc, eos = NULL); writeChar(x, zz, eos = \"\\r\\n\"); res <- rawConnectionValue(zz); close(zz); res }");
 
-        assertEval("conn <- rawConnection(raw(0), \"wb\"); value <- list(a=c(1,2,3), b='foo'); save(value, file=conn); rawConnectionValue(conn)");
+        assertEval(template("conn <- rawConnection(raw(0), 'wb'); value <- list(a=c(1,2,3), b='foo'); save(value, file=conn, version=%0); rawConnectionValue(conn)", SAVE_VERSIONS));
         // ignored because save refuses to write to a rawConnection that is not configured to binary
-        assertEval(Ignored.ImplementationError, "conn <- rawConnection(raw(0), \"w\"); value <- c(1,2,3); save(value, file=conn); rawConnectionValue(conn)");
-        assertEval("f <- tempfile(); unlink(f); x <- 1:10; save(x, file=f); con <- file(f, 'rb'); dput(class(con))");
+        assertEval(template("conn <- rawConnection(raw(0), 'w'); value <- c(1,2,3); save(value, file=conn, version=%0); rawConnectionValue(conn)", SAVE_VERSIONS));
+        assertEval(template("f <- tempfile(); unlink(f); x <- 1:10; save(x, file=f, version=%0); con <- file(f, 'rb'); dput(class(con))", SAVE_VERSIONS));
     }
 
     @Test

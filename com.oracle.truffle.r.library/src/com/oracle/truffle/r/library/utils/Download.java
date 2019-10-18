@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
  * Support for the "internal"method of "utils::download.file". TODO take note of "quiet", "mode" and
  * "cacheOK".
  */
-public abstract class Download extends RExternalBuiltinNode.Arg5 {
+public abstract class Download extends RExternalBuiltinNode.Arg6 {
 
     static {
         Casts casts = new Casts(Download.class);
@@ -63,7 +63,8 @@ public abstract class Download extends RExternalBuiltinNode.Arg5 {
 
     @Specialization
     @TruffleBoundary
-    protected int download(String urlString, String destFile, boolean quiet, @SuppressWarnings("unused") String mode, @SuppressWarnings("unused") boolean cacheOK) {
+    protected int download(String urlString, String destFile, boolean quiet, @SuppressWarnings("unused") String mode, @SuppressWarnings("unused") boolean cacheOK,
+                    @SuppressWarnings("unused") Object headers) {
         try {
             String urlStr = urlString;
             URLConnection con;
@@ -136,8 +137,8 @@ public abstract class Download extends RExternalBuiltinNode.Arg5 {
      * This builtin is a tentative implementation of the <code>curlDownload</code> internal builtin.
      * It just delegates invocations to the {@link Download} builtin.
      */
-    @RBuiltin(name = "curlDownload", visibility = OFF, kind = INTERNAL, parameterNames = {"url", "destfile", "quite", "mode", "cacheOK"}, behavior = IO)
-    public abstract static class CurlDownload extends RBuiltinNode.Arg5 {
+    @RBuiltin(name = "curlDownload", visibility = OFF, kind = INTERNAL, parameterNames = {"url", "destfile", "quite", "mode", "cacheOK", "headers"}, behavior = IO)
+    public abstract static class CurlDownload extends RBuiltinNode.Arg6 {
 
         static {
             Casts casts = new Casts(CurlDownload.class);
@@ -152,8 +153,8 @@ public abstract class Download extends RExternalBuiltinNode.Arg5 {
         @Child private Download downloadBuiltin = DownloadNodeGen.create();
 
         @Specialization
-        protected int download(String urlString, String destFile, boolean quiet, String mode, boolean cacheOK) {
-            return downloadBuiltin.download(urlString, destFile, quiet, mode, cacheOK);
+        protected int download(String urlString, String destFile, boolean quiet, String mode, boolean cacheOK, Object headers) {
+            return downloadBuiltin.download(urlString, destFile, quiet, mode, cacheOK, headers);
         }
 
     }

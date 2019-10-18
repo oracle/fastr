@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -517,7 +517,7 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ 1:4 %*% 1:3 }");
         assertEval("{ 1:3 %*% as.raw(c(1,2,3)) }");
         assertEval("{ 1:3 %*% c(TRUE,FALSE,TRUE) }");
-        assertEval("{ as.raw(1:3) %o% 1:3 }");
+        assertEval(Output.IgnoreErrorContext, "{ as.raw(1:3) %o% 1:3 }");
     }
 
     @Test
