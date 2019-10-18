@@ -61,7 +61,13 @@ public class TestBuiltin_rapply extends TestBase {
 
     @Test
     public void testLapplyExpression() {
-        assertEval(Ignored.Unimplemented, "{rapply(expression('a+b'), function(x) { x })}");
-        // TODO more tests
+        assertEval("{rapply(expression('a+b'), function(x) { x })}");
+        assertEval("{rapply(expression('a+b'), function(x)x)}");
+        assertEval("{rapply(expression(list(1,2,3)), function(x)x)}");
+        assertEval("{rapply(expression(a=1, 2, b=3), function(x)x)}");
+        assertEval("{rapply(expression(a=1, 2, b=list(1,2,3)), function(x)x)}");
+        assertEval("{rapply(expression(a=1, 2, b=list(1,2,3), c=expression('a+b')), function(x)x)}");
+        assertEval("{rapply(expression(a=1, 2, b=list(1,2,3), list(1,2,3), c=expression('a+b')), function(x)x)}");
+        assertEval("{rapply(expression(a=1, 2, b=list(1,2,3), list(1,2,3), c=expression('a+b'), expression('a+b')), function(x)x)}");
     }
 }

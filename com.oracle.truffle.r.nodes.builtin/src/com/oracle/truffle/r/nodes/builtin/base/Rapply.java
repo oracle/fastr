@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
@@ -78,7 +79,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
 
     static {
         Casts casts = new Casts(Rapply.class);
-        casts.arg("object").mustBe(RAbstractListVector.class, Message.GENERIC, "'object' must be a list or expression");
+        casts.arg("object").mustBe(RAbstractListBaseVector.class, Message.GENERIC, "'object' must be a list or expression");
         casts.arg("f").mustBe(RFunction.class);
         casts.arg("classes").mapNull(constant("ANY")).mapMissing(constant("ANY")).mustBe(stringValue()).asStringVector().findFirst().mustNotBeNA();
         casts.arg("deflt").allowNull().mapMissing(nullConstant()).mustBe(anyValue());
@@ -86,14 +87,24 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
     }
 
     @Specialization(guards = "!isReplace(how)")
-    protected Object rapplyReplace(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how, @Cached("create()") UnaryCopyAttributesNode attri) {
-
+    protected Object rapplyReplace(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how,
+                    @Cached("create()") UnaryCopyAttributesNode attri) {
         return attri.execute(RDataFactory.createList((Object[]) rapply.execute(frame, object, f, classes, deflt, how)), object);
     }
 
     @Specialization(guards = "isReplace(how)")
     protected Object rapply(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how) {
+        return rapply.execute(frame, object, f, classes, deflt, how);
+    }
 
+    @Specialization(guards = "!isReplace(how)")
+    protected Object rapplyReplace(VirtualFrame frame, RExpression object, RFunction f, String classes, Object deflt, String how,
+                    @Cached("create()") UnaryCopyAttributesNode attri) {
+        return attri.execute(RDataFactory.createList((Object[]) rapply.execute(frame, object, f, classes, deflt, how)), object);
+    }
+
+    @Specialization(guards = "isReplace(how)")
+    protected Object rapply(VirtualFrame frame, RExpression object, RFunction f, String classes, Object deflt, String how) {
         return rapply.execute(frame, object, f, classes, deflt, how);
     }
 
@@ -148,7 +159,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
         protected static final String VECTOR_NAME = "object";
         protected static final String INDEX_NAME = "i";
 
-        public abstract Object execute(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how);
+        public abstract Object execute(VirtualFrame frame, RAbstractListBaseVector object, RFunction f, String classes, Object deflt, String how);
 
         protected static FrameSlot createIndexSlot(Frame frame) {
             return FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), INDEX_NAME, FrameSlotKind.Int);
@@ -159,7 +170,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
         }
 
         @Specialization(guards = "isReplace(how)")
-        protected RAbstractListBaseVector cachedLapplyReplace(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how,
+        protected RAbstractListBaseVector cachedRapplyReplace(VirtualFrame frame, RAbstractListBaseVector object, RFunction f, String classes, Object deflt, String how,
                         @Cached("createIndexSlot(frame)") FrameSlot indexSlot,
                         @Cached("createVectorSlot(frame)") FrameSlot vectorSlot,
                         @Cached("create()") RLengthNode lengthNode,
@@ -201,7 +212,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
         }
 
         @Specialization(guards = "!isReplace(how)")
-        protected Object[] cachedLapply(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how,
+        protected Object[] cachedRapply(VirtualFrame frame, RAbstractListBaseVector object, RFunction f, String classes, Object deflt, String how,
                         @Cached("createIndexSlot(frame)") FrameSlot indexSlot,
                         @Cached("createVectorSlot(frame)") FrameSlot vectorSlot,
                         @Cached("create()") RLengthNode lengthNode,
