@@ -158,3 +158,4 @@ extern SEXP benchMultipleUpcalls(SEXP x);
 extern SEXP test_lapplyWithForceAndCall(SEXP list, SEXP fn, SEXP fa, SEXP rho);
 
 extern SEXP benchProtect(SEXP x, SEXP nn);
+

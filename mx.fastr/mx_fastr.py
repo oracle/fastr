@@ -115,7 +115,7 @@ def run_grid_server(args, **kwargs):
     return mx.run_java(vmArgs + args, jdk=get_default_jdk(), **kwargs)
 
 def r_classpath(args):
-    print mx.classpath('FASTR', jdk=mx.get_jdk()) + ":" + mx.classpath('SULONG', jdk=mx.get_jdk())  # pylint: disable=superfluous-parens
+    print(mx.classpath('FASTR', jdk=mx.get_jdk()) + ":" + mx.classpath('SULONG', jdk=mx.get_jdk()))  # pylint: disable=superfluous-parens
 
 def _sanitize_vmArgs(jdk, vmArgs):
     '''

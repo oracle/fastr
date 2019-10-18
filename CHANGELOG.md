@@ -6,7 +6,6 @@ New features:
   * this is intended only for testing purposes and it is not recommended to run GC explicitly in FastR.
   * `gc` is not invoking Java GC by default because GNU-R GC and Java GC are fundamentally
     different and this may lead to unintended behavior.
-* Option `--R.BackEndLLVM` activates the LLVM native code backend loading the LLVM bitcode bundled with package libraries
 * Option `--R.BackEnd` specifies an RFFI backend. `--R.BackEnd=native`, the default, activates the JNI based backend, while `--R.BackEnd=llvm` activates the LLVM backend loading the LLVM bitcode bundled with package libraries. Note: All ``--R.BackEnd*` options are passed to R subprocesses.
 * Option `--R.BackEndNative` enumerates packages whose native code will be executed by the native backend (JNI based)
 * Option `--R.BackEndLLVM` enumerates packages whose native code will be executed by the LLVM backend

@@ -307,7 +307,7 @@ public class RSerialize {
         if ("2".equals(defVersion) || "3".equals(defVersion)) {
             DEFAULT_VERSION = Integer.parseInt(defVersion);
         } else {
-            DEFAULT_VERSION = 2;
+            DEFAULT_VERSION = 3;
         }
     }
 
@@ -431,6 +431,7 @@ public class RSerialize {
             int writerVersion = stream.readInt();
             @SuppressWarnings("unused")
             int releaseVersion = stream.readInt();
+
             if (version != 3 && version != 2) {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unsupported serialization version " + version);
             }
@@ -439,6 +440,7 @@ public class RSerialize {
                 int nelen = stream.readInt();
                 stream.readString(nelen);
             }
+
             Object result = readItem();
             return result;
         }
