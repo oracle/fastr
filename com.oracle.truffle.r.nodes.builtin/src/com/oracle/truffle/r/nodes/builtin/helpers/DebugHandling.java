@@ -44,8 +44,6 @@ import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -57,6 +55,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
+import com.oracle.truffle.r.runtime.instrument.RSyntaxTags;
+import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -146,7 +146,7 @@ public class DebugHandling {
     }
 
     private static FunctionStatementsEventListener getFunctionStatementsEventListener(FunctionDefinitionNode fdn) {
-        return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(fdn.getSourceSection());
+        return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(getInstrumentedNodeSourceSection(fdn));
     }
 
     private static void attachDebugHandler(RFunction func, Object text, Object condition, boolean once, boolean implicit) {
@@ -266,8 +266,6 @@ public class DebugHandling {
         protected final FunctionDefinitionNode functionDefinitionNode;
         protected EventBinding<StepIntoInstrumentListener> stepIntoInstrument;
 
-        private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
-
         protected InteractingDebugEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition) {
             this.text = text;
             this.condition = condition;
@@ -279,7 +277,7 @@ public class DebugHandling {
         }
 
         protected void browserInteract(Node node, VirtualFrame frame) {
-            int exitMode = browserInteractNode.execute(frame, RArguments.getCall(frame));
+            int exitMode = BrowserInteractNodeGen.getUncached().execute(frame.materialize(), RArguments.getCall(frame));
             switch (exitMode) {
                 case BrowserInteractNode.NEXT:
                     break;
@@ -380,7 +378,7 @@ public class DebugHandling {
 
         FunctionStatementsEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, boolean once, boolean implicit) {
             super(functionDefinitionNode, text, condition);
-            RContext.getInstance().stateInstrumentation.putDebugListener(functionDefinitionNode.getSourceSection(), this);
+            RContext.getInstance().stateInstrumentation.putDebugListener(getInstrumentedNodeSourceSection(functionDefinitionNode), this);
             statementListener = new StatementEventListener(functionDefinitionNode, text, condition);
             this.once = once;
             this.implicit = implicit;
@@ -742,7 +740,8 @@ public class DebugHandling {
         }
 
         private boolean isEnabled(EventContext ctx) {
-            return !disabled() && loopSourceSection != null && Utils.equals(loopSourceSection, ctx.getInstrumentedNode().getSourceSection());
+            Node instrumentedNode = ctx.getInstrumentedNode();
+            return !disabled() && loopSourceSection != null && instrumentedNode != null && Utils.equals(loopSourceSection, getInstrumentedNodeSourceSection(instrumentedNode));
         }
 
         private void returnCleanup() {
@@ -751,6 +750,11 @@ public class DebugHandling {
                 fser.endFinishing();
             }
         }
+    }
+
+    @TruffleBoundary
+    private static SourceSection getInstrumentedNodeSourceSection(Node instrumentedNode) {
+        return instrumentedNode.getSourceSection();
     }
 
     private static AbstractLoopNode inLoop(final Node nodeArg) {

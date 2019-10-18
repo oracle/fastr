@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -102,14 +103,14 @@ public class ToolsText {
             byte[] data = new byte[n2];
             if (!RRuntime.isNA(file1)) {
                 Env env = RContext.getInstance().getEnv();
-                TruffleFile tFile1 = env.getTruffleFile(file1);
+                TruffleFile tFile1 = FileSystemUtils.getSafeTruffleFile(env, file1);
                 try (BufferedOutputStream out = new BufferedOutputStream(tFile1.newOutputStream(StandardOpenOption.APPEND))) {
                     for (int i = 0; i < file2.getLength(); i++) {
                         String file2e = file2.getDataAt(i);
                         if (RRuntime.isNA(file2e)) {
                             continue;
                         }
-                        TruffleFile tFile2 = env.getTruffleFile(file2e);
+                        TruffleFile tFile2 = FileSystemUtils.getSafeTruffleFile(env, file2e);
                         try {
                             byte[] path2Data = tFile2.readAllBytes();
                             byte[] header = ("#line 1 \"" + file2e + "\"\n").getBytes();

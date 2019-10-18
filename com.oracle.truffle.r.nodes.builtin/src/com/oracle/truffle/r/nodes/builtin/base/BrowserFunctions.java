@@ -110,7 +110,7 @@ public class BrowserFunctions {
                         caller = caller.getPrevious();
                     }
                     doPrint(caller);
-                    browserInteractNode.execute(actualFrame, caller);
+                    browserInteractNode.execute(actualFrame.materialize(), caller);
                 } finally {
                     browserState.pop();
                 }

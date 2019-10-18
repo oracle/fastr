@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,5 +40,17 @@ public class TestBuiltin_matmul extends TestBase {
         assertEval("3L %*% c(3L,4L,5L,6L)");
         assertEval("c(NA+2i) %*% c(3,4,5,6)");
         assertEval("c(1+2i) %*% c(3,4,5,6)");
+    }
+
+    @Test
+    public void testMatmulCornerCases() {
+        assertEval("matrix(0, nrow=0, ncol=1) %*% c(1,2,3)");
+        assertEval("matrix(0, nrow=1, ncol=0) %*% c(1,2,3)");
+        assertEval("c(1,2,3) %*% matrix(0, nrow=0, ncol=1)");
+        assertEval("c(1,2,3) %*% matrix(0, nrow=1, ncol=0)");
+        assertEval("matrix(0, nrow=1, ncol=0) %*% numeric()");
+        assertEval("matrix(0, nrow=0, ncol=1) %*% numeric()");
+        assertEval("numeric() %*% matrix(0, nrow=1, ncol=0)");
+        assertEval("numeric() %*% matrix(0, nrow=0, ncol=1)");
     }
 }

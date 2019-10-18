@@ -22,82 +22,143 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
+import com.oracle.truffle.r.nodes.function.opt.eval.AbstractCallInfoEvalNode;
+import com.oracle.truffle.r.nodes.function.opt.eval.ArgValueSupplierNode;
+import com.oracle.truffle.r.nodes.function.opt.eval.CallInfo.ArgumentBuilderState;
+import com.oracle.truffle.r.nodes.function.opt.eval.CallInfoEvalRootNode.FastPathDirectCallerNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-public abstract class RForceAndCallNode extends RBaseNode {
+public abstract class RForceAndCallNode extends AbstractCallInfoEvalNode {
 
     public static RForceAndCallNode create() {
         return RForceAndCallNodeGen.create();
     }
 
-    @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
-
     public abstract Object executeObject(Object e, Object f, int n, Object env);
 
-    @Specialization
-    Object forceAndCall(Object e, RFunction fun, int n, REnvironment env,
+    static final class CachedFunctionCall {
+        final WeakReference<RootNode> rootRef;
+        final WeakReference<FrameDescriptor> fdRef;
+
+        CachedFunctionCall(RFunction fun, REnvironment env, ValueProfile accessProfile) {
+            this.rootRef = new WeakReference<>(fun.getRootNode());
+            this.fdRef = new WeakReference<>(env.getFrame(accessProfile).getFrameDescriptor());
+        }
+
+        boolean isCompatible(RFunction fun, REnvironment env, ValueProfile accessProfile) {
+            return rootRef != null && fdRef != null && this.rootRef.get() == fun.getRootNode() && fdRef.get() == env.getFrame(accessProfile).getFrameDescriptor();
+        }
+    }
+
+    @Specialization(guards = "cachedFunCall.isCompatible(fun, env, accessProfile)", limit = "CACHE_SIZE")
+    @ExplodeLoop
+    Object forceAndCallCached(Object e, RFunction fun, int n, REnvironment env,
                     @Cached("createClassProfile()") ValueProfile accessProfile,
-                    @CachedLibrary(limit = "1") RPairListLibrary plLib) {
+                    @SuppressWarnings("unused") @Cached("new(fun, env, accessProfile)") CachedFunctionCall cachedFunCall,
+                    @CachedLibrary(limit = "1") RPairListLibrary plLib,
+                    @Cached("new()") PromiseHelperNode promiseHelper,
+                    @Cached("createArgValueSupplierNodes(MAX_ARITY, true)") ArgValueSupplierNode[] argValueSupplierNodes,
+                    @Cached("new()") FastPathDirectCallerNode callNode,
+                    @Cached("createBinaryProfile()") ConditionProfile varArgsProfile,
+                    @Cached BranchProfile isBuiltinProfile) {
         Object el = plLib.cdr(e);
         List<Object> argValues = new LinkedList<>();
-        RArgsValuesAndNames dotArgs = null;
-        while (el != RNull.instance) {
+        RBuiltinDescriptor rBuiltin = fun.getRBuiltin();
+        final ArgumentBuilderState argBuilderState = new ArgumentBuilderState(rBuiltin != null ? rBuiltin.isFieldAccess() : false);
+        MaterializedFrame promiseEvalFrame = env.getFrame(accessProfile);
+        for (int i = 0; i < argValueSupplierNodes.length; i++) {
             assert el instanceof RPairList;
             Object arg = plLib.car(el);
-            Object argVal = arg;
-            if (arg instanceof RSymbol) {
-                Object a = ReadVariableNode.lookupAny(((RSymbol) arg).getName(), env.getFrame(accessProfile), false);
-                if (a instanceof RArgsValuesAndNames) {
-                    dotArgs = (RArgsValuesAndNames) a;
-                } else {
-                    argVal = a;
-                }
 
-            } else if (arg instanceof RPairList) {
-                RPairList argPL = (RPairList) arg;
-                argPL = RDataFactory.createPairList(plLib.car(argPL), plLib.cdr(argPL), plLib.getTag(argPL), SEXPTYPE.LANGSXP);
-                argVal = RDataFactory.createPromise(PromiseState.Supplied, plLib.getClosure(argPL), env.getFrame());
-            }
+            Object argVal = argValueSupplierNodes[i].execute(arg, i, argBuilderState, promiseEvalFrame, promiseEvalFrame, promiseHelper);
+
             argValues.add(argVal);
             el = plLib.cdr(el);
+            if (el == RNull.instance) {
+                break;
+            }
         }
 
         final RArgsValuesAndNames argsAndNames;
-        if (dotArgs == null) {
+        if (varArgsProfile.profile(argBuilderState.varArgs == null)) {
             argsAndNames = new RArgsValuesAndNames(argValues.toArray(), ArgumentsSignature.empty(argValues.size()));
         } else {
-            argsAndNames = createArgsAndNames(argValues, dotArgs);
+            argsAndNames = createArgsAndNames(argValues, argBuilderState.varArgs);
         }
 
         if (!fun.isBuiltin()) {
-            flattenFirstArgs(env.getFrame(), n, argsAndNames);
+            isBuiltinProfile.enter();
+            flattenFirstArgs(env.getFrame(), n, argsAndNames, promiseHelper);
+        }
+
+        RCaller rCaller = RCaller.create(env.getFrame(), RCallerHelper.createFromArguments(fun, argsAndNames));
+        return callNode.execute(promiseEvalFrame, fun, argsAndNames, rCaller, promiseEvalFrame);
+    }
+
+    @Specialization(replaces = "forceAndCallCached")
+    Object forceAndCall(Object e, RFunction fun, int n, REnvironment env,
+                    @Cached("createClassProfile()") ValueProfile accessProfile,
+                    @CachedLibrary(limit = "1") RPairListLibrary plLib,
+                    @Cached("new()") PromiseHelperNode promiseHelper,
+                    @Cached("create(false)") ArgValueSupplierNode argValueSupplier,
+                    @Cached("createBinaryProfile()") ConditionProfile varArgsProfile,
+                    @Cached BranchProfile isBuiltinProfile) {
+        Object el = plLib.cdr(e);
+        List<Object> argValues = new LinkedList<>();
+        int i = 0;
+        RBuiltinDescriptor rBuiltin = fun.getRBuiltin();
+        final ArgumentBuilderState argBuilderState = new ArgumentBuilderState(rBuiltin != null ? rBuiltin.isFieldAccess() : false);
+        MaterializedFrame promiseEvalFrame = env.getFrame(accessProfile);
+        while (el != RNull.instance) {
+            assert el instanceof RPairList;
+            Object arg = plLib.car(el);
+
+            Object argVal = argValueSupplier.execute(arg, i, argBuilderState, promiseEvalFrame, promiseEvalFrame, promiseHelper);
+
+            argValues.add(argVal);
+            el = plLib.cdr(el);
+            i++;
+        }
+
+        final RArgsValuesAndNames argsAndNames;
+        if (varArgsProfile.profile(argBuilderState.varArgs == null)) {
+            argsAndNames = new RArgsValuesAndNames(argValues.toArray(), ArgumentsSignature.empty(argValues.size()));
+        } else {
+            argsAndNames = createArgsAndNames(argValues, argBuilderState.varArgs);
+        }
+
+        if (!fun.isBuiltin()) {
+            isBuiltinProfile.enter();
+            flattenFirstArgs(env.getFrame(), n, argsAndNames, promiseHelper);
         }
 
         RCaller rCaller = RCaller.create(env.getFrame(), RCallerHelper.createFromArguments(fun, argsAndNames));
@@ -118,12 +179,7 @@ public abstract class RForceAndCallNode extends RBaseNode {
         return argsAndNames;
     }
 
-    private void flattenFirstArgs(VirtualFrame frame, int n, RArgsValuesAndNames args) {
-        if (promiseHelper == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            promiseHelper = insert(new PromiseHelperNode());
-        }
-        // In GnuR there appears to be no error checks on n > args.length
+    private void flattenFirstArgs(VirtualFrame frame, int n, RArgsValuesAndNames args, PromiseHelperNode promiseHelper) {
         if (args.getLength() < n) {
             CompilerDirectives.transferToInterpreter();
             throw RError.nyi(this, "forceAndCall with insufficient arguments");
@@ -139,5 +195,4 @@ public abstract class RForceAndCallNode extends RBaseNode {
             }
         }
     }
-
 }

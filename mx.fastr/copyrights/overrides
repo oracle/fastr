@@ -494,7 +494,6 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_for
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_g.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_gamma.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_gcinfo.java,purdue.copyright
-com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_gctorture2.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_get.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_getConnection.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_getconst.java,purdue.copyright

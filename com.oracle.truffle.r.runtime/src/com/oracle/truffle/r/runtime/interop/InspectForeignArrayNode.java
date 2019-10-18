@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.interop;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -166,12 +167,17 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
             if (dims.size() == depth) {
                 dims.add(size);
             } else if (depth < dims.size()) {
-                if (dims.get(depth) != size) {
+                if (getDim(depth) != size) {
                     // had previously on the same depth an array with different length
                     // -> not rectangular, skip the dimensions
                     canUseDims = false;
                 }
             }
+        }
+
+        @TruffleBoundary
+        private int getDim(int depth) {
+            return dims.get(depth);
         }
     }
 

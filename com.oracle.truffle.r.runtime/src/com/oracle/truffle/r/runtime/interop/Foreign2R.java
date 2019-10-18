@@ -176,6 +176,14 @@ public abstract class Foreign2R extends Node {
         return obj;
     }
 
+    /**
+     * Unboxes a foreign object.
+     * 
+     * @param obj
+     * @param interop
+     * @return the unboxed value or <code>null</code> if the passed in TruffleObject wasn't boxed
+     * @throws UnsupportedMessageException
+     */
     public static Object unbox(Object obj, InteropLibrary interop) throws UnsupportedMessageException {
         if (interop.isBoolean(obj)) {
             return interop.asBoolean(obj);

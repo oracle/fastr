@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,6 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -210,7 +209,7 @@ public class TestUtilities {
         @Child private T node;
 
         TestRoot(T node, NodeAdapter<T> invoke) {
-            this(node, invoke, TruffleRLanguageImpl.getCurrentLanguage());
+            this(node, invoke, TruffleRLanguage.getCurrentLanguage());
         }
 
         TestRoot(T node, NodeAdapter<T> invoke, TruffleRLanguage language) {

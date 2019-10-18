@@ -203,7 +203,6 @@ public final class FFIProcessor extends AbstractProcessor {
         StringBuilder arguments = new StringBuilder();
         StringBuilder unwrapNodes = new StringBuilder();
         StringBuilder unwrappedArgs = new StringBuilder();
-        CharSequence resultOwnerRHS = null;
         boolean needsUnwrapImport = false;
 
         if (!needsCallTarget && needsFunction) {
@@ -217,7 +216,6 @@ public final class FFIProcessor extends AbstractProcessor {
 
             RFFICpointer[] pointerAnnotations = params.get(i).getAnnotationsByType(RFFICpointer.class);
             RFFICstring[] stringAnnotations = params.get(i).getAnnotationsByType(RFFICstring.class);
-            RFFIResultOwner[] resultOwnerAnnotations = params.get(i).getAnnotationsByType(RFFIResultOwner.class);
 
             String paramName = params.get(i).getSimpleName().toString();
             String paramTypeName = getTypeName(paramType);
@@ -241,10 +239,6 @@ public final class FFIProcessor extends AbstractProcessor {
                 unwrappedArgs.append(')');
             }
             unwrappedArgs.append(";\n");
-
-            if (resultOwnerAnnotations.length > 0) {
-                resultOwnerRHS = new StringBuilder(paramName).append("Unwrapped");
-            }
         }
 
         TypeKind returnKind = m.getReturnType().getKind();
@@ -268,15 +262,17 @@ public final class FFIProcessor extends AbstractProcessor {
         if (!returnKind.isPrimitive() && returnKind != TypeKind.VOID) {
             w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
         }
+        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallBase;");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFILog;\n");
-        w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
         w.append("import com.oracle.truffle.api.interop.InteropLibrary;\n");
         w.append("import com.oracle.truffle.api.library.ExportLibrary;\n");
         w.append("import com.oracle.truffle.api.library.ExportMessage;\n");
+        w.append("import com.oracle.truffle.api.nodes.ControlFlowException;\n");
         w.append("import com.oracle.truffle.api.dsl.Cached;\n");
         w.append("import com.oracle.truffle.api.profiles.ValueProfile;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI.HandleUpCallExceptionNode;\n");
+        w.append("import com.oracle.truffle.r.runtime.RError;\n");
         w.append("import com.oracle.truffle.r.runtime.context.RContext;\n");
         if (needsNode) {
             w.append("import ").append(nodeQualifiedClassName).append(";\n");
@@ -284,6 +280,7 @@ public final class FFIProcessor extends AbstractProcessor {
         if (needsFunction) {
             w.append("import ").append(functionQualifiedClassName).append(";\n");
         }
+        w.append("import com.oracle.truffle.api.profiles.BranchProfile;\n");
         if (needsCallTarget) {
             w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
             w.append("import com.oracle.truffle.api.frame.VirtualFrame;\n");
@@ -298,11 +295,15 @@ public final class FFIProcessor extends AbstractProcessor {
         if (needsReturnWrap) {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrapNode;\n");
         }
+        w.append("import com.oracle.truffle.api.TruffleLanguage.ContextReference;\n");
+        w.append("import com.oracle.truffle.api.dsl.CachedContext;\n");
+        w.append("import com.oracle.truffle.r.runtime.context.TruffleRLanguage;\n");
+
         w.append("\n");
 
         w.append("// Checkstyle: stop method name check\n");
         w.append("@ExportLibrary(InteropLibrary.class)\n");
-        w.append("final class ").append(callName).append(" implements RTruffleObject {\n");
+        w.append("final class ").append(callName).append(" extends UpCallBase {\n");
         w.append('\n');
         w.append("    protected final UpCallsRFFI upCallsImpl;\n");
         w.append("    ").append(callName).append("(UpCallsRFFI upCallsImpl) {\n");
@@ -322,10 +323,10 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append(unwrapNodes);
         }
 
-        w.append("                @Cached() GetRContext getRContext,\n");
+        w.append("                @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,\n");
         if (needsCallTarget) {
             w.append("                @Cached() IndirectCallNode callNode,\n");
-            w.append("                @Cached(value = \"createCallTarget(getRContext.execute())\", allowUncached = true) CallTarget callTarget,\n");
+            w.append("                @Cached(value = \"createCallTarget(ctxRef.get())\", allowUncached = true) CallTarget callTarget,\n");
         } else if (needsNode) {
             if (nodeClass.getModifiers().contains(Modifier.ABSTRACT)) {
                 w.append("                @Cached() " + nodeClassName + " node,\n");
@@ -343,6 +344,8 @@ public final class FFIProcessor extends AbstractProcessor {
 
         w.append("                @Cached(\"createClassProfile()\") ValueProfile upCallProfile,\n");
         w.append("                @Cached(\"createClassProfile()\") ValueProfile ctxProfile,\n");
+        w.append("                @Cached BranchProfile controlFlowExBranch,\n");
+        w.append("                @Cached BranchProfile errorExBranch,\n");
         w.append("                @Cached(value = \"this.upCallsImpl.createHandleUpCallExceptionNode()\", uncached = \"this.upCallsImpl.getUncachedHandleUpCallExceptionNode()\") HandleUpCallExceptionNode handleExceptionNode");
         w.append(") {\n");
         w.append("\n");
@@ -350,7 +353,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("        if (RFFILog.logEnabled()) {\n");
         w.append("            RFFILog.logUpCall(\"" + name + "\", arguments);\n");
         w.append("        }\n");
-        w.append("        RContext ctx = getRContext.execute();\n");
+        w.append("        RContext ctx = ctxRef.get();\n");
         w.append("        RFFIContext rffiCtx = ctxProfile.profile(ctx.getStateRFFI());\n");
 
         if (returnKind != TypeKind.VOID) {
@@ -360,10 +363,6 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("        UpCallsRFFI impl = upCallProfile.profile(upCallsImpl);\n");
         w.append("        rffiCtx.beforeUpcall(ctx, " + canRunGc + ", impl.getRFFIType());\n");
         w.append(unwrappedArgs);
-        if (resultOwnerRHS != null) {
-            StringBuilder resultOwner = new StringBuilder("        Object resultOwner = ").append(resultOwnerRHS).append(";\n");
-            w.append(resultOwner);
-        }
         w.append("        try {\n");
 
         w.append("            ");
@@ -400,24 +399,20 @@ public final class FFIProcessor extends AbstractProcessor {
                 w.append(";\n");
             }
         }
-        if (resultOwnerRHS != null) {
-            w.append("            rffiCtx.protectChild(resultOwner, resultRObj, impl.getRFFIType());\n");
-        } else {
-            if (returnKind != TypeKind.VOID && needsReturnWrap) {
-                w.append("            if (resultRObj0 != resultRObj) {\n");
-                w.append("                rffiCtx.protectChild(resultRObj0, resultRObj, impl.getRFFIType());\n");
-                w.append("            }\n");
-            }
-        }
+        w.append("        } catch (ControlFlowException ex) {\n");
+        w.append("            controlFlowExBranch.enter();\n");
+        w.append("            handleExceptionNode.execute(ex);\n");
+        appendCreateDummyResultObj(returnKind, w);
+        w.append("        } catch (RError ex) {\n");
+        w.append("            errorExBranch.enter();\n");
+        w.append("            handleExceptionNode.execute(ex);\n");
+        appendCreateDummyResultObj(returnKind, w);
         w.append("        } catch (Throwable ex) {\n");
         w.append("            CompilerDirectives.transferToInterpreter();\n");
+        w.append("            assert reportException(ex);\n");
         w.append("            RFFILog.logException(ex);\n");
         w.append("            handleExceptionNode.execute(ex);\n");
-        if (returnKind.isPrimitive()) {
-            w.append("            resultRObj = -1;\n");
-        } else if (returnKind != TypeKind.VOID) {
-            w.append("            resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
-        }
+        appendCreateDummyResultObj(returnKind, w);
         w.append("        }\n");
         w.append("        rffiCtx.afterUpcall(" + canRunGc + ", impl.getRFFIType());\n");
         if (returnKind == TypeKind.VOID) {
@@ -426,11 +421,6 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("        }\n");
             w.append("        return 0; // void return type\n");
         } else {
-            if (!returnKind.isPrimitive() && m.getAnnotationsByType(RFFICpointer.class).length == 0) {
-                w.append("        if (impl.getRFFIType() == com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type.NFI) {\n");
-                w.append("            rffiCtx.registerReferenceUsedInNative(resultRObj); \n");
-                w.append("        }\n");
-            }
             w.append("        if (RFFILog.logEnabled()) {\n");
             w.append("            RFFILog.logUpCallReturn(\"" + name + "\", resultRObj);\n");
             w.append("        }\n");
@@ -512,6 +502,14 @@ public final class FFIProcessor extends AbstractProcessor {
         }
         w.append("}\n");
         w.close();
+    }
+
+    private static void appendCreateDummyResultObj(TypeKind returnKind, Writer w) throws IOException {
+        if (returnKind.isPrimitive()) {
+            w.append("            resultRObj = -1;\n");
+        } else if (returnKind != TypeKind.VOID) {
+            w.append("            resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
+        }
     }
 
     private void generateCallbacks(ExecutableElement[] methods) throws IOException {

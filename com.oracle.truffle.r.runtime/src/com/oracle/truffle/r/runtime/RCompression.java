@@ -83,7 +83,7 @@ public class RCompression {
     }
 
     public static Type getCompressionType(String path) throws IOException {
-        try (InputStream is = RContext.getInstance().getEnv().getTruffleFile(path).newInputStream()) {
+        try (InputStream is = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path).newInputStream()) {
             byte[] buf = new byte[5];
             int count = is.read(buf);
             if (count == 5) {
@@ -238,7 +238,7 @@ public class RCompression {
                 readThread.join();
                 byte[] cData = Arrays.copyOf(readThread.getData(), readThread.getTotalRead());
                 OpenOption[] openOptions = append ? new OpenOption[]{StandardOpenOption.APPEND} : new OpenOption[0];
-                RContext.getInstance().getEnv().getTruffleFile(path).newOutputStream(openOptions).write(cData);
+                FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path).newOutputStream(openOptions).write(cData);
                 return;
             } else {
                 throw new IOException("bzip2 error code: " + rc);

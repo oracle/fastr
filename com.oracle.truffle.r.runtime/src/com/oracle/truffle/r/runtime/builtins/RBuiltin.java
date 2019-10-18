@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,7 +96,7 @@ public @interface RBuiltin {
     RBehavior behavior();
 
     /**
-     * Field accesses must have at leas two arguments. The call dispatching mechanism will change
+     * Field accesses must have at least two arguments. The call dispatching mechanism will change
      * the second argument accordingly: if it is symbol lookup, the symbol name will be used as
      * String constant instead, if it already is a String constant it will be used as is, otherwise
      * error is raised. This special handling for field accessed is necessary, because they are also

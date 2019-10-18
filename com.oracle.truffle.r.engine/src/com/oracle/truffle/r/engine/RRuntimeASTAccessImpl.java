@@ -62,9 +62,8 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.LoopTag;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -87,6 +86,8 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
+import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.LoopTag;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
@@ -448,7 +449,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "redirect missing");
                 }
                 try {
-                    in = RContext.getInstance().getEnv().getTruffleFile(file).newInputStream();
+                    in = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), file).newInputStream();
                 } catch (IOException ex) {
                     throw RError.error(RError.NO_CALLER, RError.Message.NO_SUCH_FILE, file);
                 }
@@ -507,7 +508,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public Class<? extends TruffleRLanguage> getTruffleRLanguage() {
-        return TruffleRLanguageImpl.class;
+        return TruffleRLanguage.class;
     }
 
     @Override
@@ -517,7 +518,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public RContext getCurrentContext() {
-        return TruffleRLanguageImpl.getCurrentContext();
+        return TruffleRLanguage.getCurrentContext();
     }
 
     private static Closure getOrCreateLanguageClosure(RNode expr) {

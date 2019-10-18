@@ -79,7 +79,8 @@ public abstract class FFIUnwrapNode extends Node {
     public Object unwrapForeign(TruffleObject x,
                     @CachedLibrary("x") InteropLibrary interop) {
         try {
-            return Foreign2R.unbox(x, interop);
+            Object res = Foreign2R.unbox(x, interop);
+            return res != null ? res : x;
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere();
         }

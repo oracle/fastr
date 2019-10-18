@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -26,17 +26,17 @@
 set -e
 
 source="${BASH_SOURCE[0]}"
-# "un-link" the source path
 while [ -h "$source" ] ; do
-  prev_source="$source"
-  source="$(readlink "$source")";
-  if [[ "$source" != /* ]]; then
-    # if the link was relative, it was relative to where it came from
-    dir="$( cd -P "$( dirname "$prev_source" )" && pwd )"
-    source="$dir/$source"
-  fi
+    prev_source="$source"
+    source="$(readlink "$source")";
+    if [[ "$source" != /* ]]; then
+        # if the link was relative, it was relative to where it came from
+        dir="$( cd -P "$( dirname "$prev_source" )" && pwd )"
+        source="$dir/$source"
+    fi
 done
-fastr_home="$(dirname "$source")/.."
+location="$( cd -P "$( dirname "$source" )" && pwd )"
+fastr_home="$( dirname "$location" )"
 
 silent=0
 uninstall=0
@@ -54,6 +54,7 @@ for arg in "$@"; do
         echo "When 'uninstall' argument is present: uninstalls previously installed native image of the R runtime."
         echo "Use the --silent option to turn off the confirmation when installing."
         echo "Use the --verbose option to turn on detailed logging."
+	exit 0
     fi
 done
 
@@ -65,6 +66,8 @@ function log {
 
 if [[ $uninstall -eq 1 ]]; then
     echo "Uninstalling native image of R runtime..."
+    log "current working directory: ${PWD}"
+    log "relative FastR home: ${fastr_home}"
     mv "$fastr_home/bin/exec_R.backup" "$fastr_home/bin/exec/R"
     mv "$fastr_home/bin/Rscript.backup" "$fastr_home/bin/Rscript"
     rm -f "$fastr_home/bin/RorRscriptDispatcher"
@@ -86,26 +89,45 @@ fi
 log "Changing directory to: $fastr_home/bin"
 cd "$fastr_home/bin"
 
+graalvm_home_bin="../../../../bin"
+native_image=$graalvm_home_bin/native-image
+launcher_relative_home="jre/languages/R/bin/RMain"
+if [ ! -f "$native_image" ]; then
+    graalvm_home_bin="../../../bin"
+    launcher_relative_home="languages/R/bin/RMain"
+    native_image=$graalvm_home_bin/native-image
+fi
+if [ ! -f "$native_image" ]; then
+    echo "native-image was not found. It can be installed executing \`$graalvm_home_bin/gu install native-image\`"
+    exit
+fi
+graalvm_home="$( dirname "${graalvm_home_bin}" )"
+log "current working directory: ${PWD}"
+log "relative graalvm_home: ${graalvm_home}"
+log "launcher relative home: ${launcher_relative_home}"
+log "relative FastR home: ${fastr_home}"
+
 fastr_launcher_ni_args=(
     --no-fallback
     --initialize-at-build-time
     -H:+ReportExceptionStackTraces
-    --no-server
-    -cp "$fastr_home/fastr-launcher.jar:$fastr_home/../../lib/graalvm/launcher-common.jar"
+    -cp "${fastr_home}/fastr-launcher.jar:${fastr_home}/../../lib/graalvm/launcher-common.jar"
     --language:R
+    --language:llvm
     --tool:all
-    -Dorg.graalvm.version=20.0.0-beta.01-dev
+    -Dorg.graalvm.version=19.0.3
     -H:-ParseRuntimeOptions
     -Dorg.graalvm.launcher.relative.language.home=bin/RMain
-    -Dorg.graalvm.launcher.classpath=jre/lib/graalvm/launcher-common.jar:jre/languages/R/fastr-launcher.jar
+    -Dorg.graalvm.launcher.classpath=${fastr_home}/../../lib/graalvm/launcher-common.jar:${fastr_home}/fastr-launcher.jar
+    -Dorg.graalvm.launcher.relative.home=${launcher_relative_home}
     -H:Class=com.oracle.truffle.r.launcher.RMain
 )
 if [[ $verbose -eq 1 ]]; then
   fastr_launcher_ni_args+=('--verbose')
 fi
 
-log "Running: ../../../../bin/native-image" "${fastr_launcher_ni_args[@]}" -H:Name=RMain
-../../../../bin/native-image "${fastr_launcher_ni_args[@]}" -H:Name=RMain
+log "Running:" $native_image "${fastr_launcher_ni_args[@]}" -H:Name=RMain
+$native_image "${fastr_launcher_ni_args[@]}" -H:Name=RMain
 
 log "Creating backup of the R and Rscript launchers"
 cp "exec/R" "exec_R.backup"
@@ -113,6 +135,18 @@ cp "Rscript" "Rscript.backup"
 
 log "Patching the R and Rscript launchers to dispatch to the generated native image"
 sed -e '/^## REMOVE FOR NATIVE IMAGE: BEGIN/,/^## REMOVE FOR NATIVE IMAGE: END/d;' "exec_R.backup" | \
-    sed -e 's|^exec "$JAVA_HOME/bin/java" .*|exec "$R_HOME/bin/RMain" R ${FASTR_INTERNAL_ARGS[@]} "$@"|' > "exec/R"
+sed -e 's|^exec "${fastr_home}/../../bin/java" .*|exec "$R_HOME/bin/RMain" R ${FASTR_INTERNAL_ARGS[@]} "$@"|' > "exec/R"
 sed -e '/^## REMOVE FOR NATIVE IMAGE: BEGIN/,/^## REMOVE FOR NATIVE IMAGE: END/d;' "Rscript.backup" | \
-    sed -e 's|^exec "$JAVA_HOME/bin/java" .*|exec "$R_HOME/bin/RMain" Rscript ${FASTR_INTERNAL_ARGS[@]} "$@"|' > "Rscript"
+sed -e 's|^exec "${fastr_home}/../../bin/java" .*|exec "$R_HOME/bin/RMain" Rscript ${FASTR_INTERNAL_ARGS[@]} "$@"|' > "Rscript"
+
+if [ "$R_INSTALL_NATIVE_IMAGE_VERY_VERBOSE" = "true" ]; then
+  echo "${PWD}exec/R contents:"
+  echo "*****************\n"
+  cat exec/R
+  echo "*****************\n"
+  echo "${PWD}/Rscript contents:"
+  cat Rscript
+  echo "*****************\n"
+  echo "ls -la ${PWD}"
+  ls -la ${PWD}
+fi

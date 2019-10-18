@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function.opt;
+package com.oracle.truffle.r.runtime.data.nodes;
 
 import static com.oracle.truffle.api.nodes.NodeCost.NONE;
 
@@ -46,6 +46,10 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 public abstract class ShareObjectNode extends Node {
 
     public abstract Object execute(Object obj);
+
+    public static Object executeUncached(Object obj) {
+        return ShareObjectNodeGen.getUncached().execute(obj);
+    }
 
     public static ShareObjectNode create() {
         return ShareObjectNodeGen.create();

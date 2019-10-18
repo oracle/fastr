@@ -38,6 +38,7 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -71,7 +72,7 @@ public abstract class NormalizePath extends RBuiltinNode.Arg3 {
             String expandPath = Utils.tildeExpand(path);
             String normPath = expandPath;
             try {
-                normPath = env.getTruffleFile(normPath).getCanonicalFile().toString();
+                normPath = FileSystemUtils.getSafeTruffleFile(env, normPath).getCanonicalFile().toString();
             } catch (IOException e) {
                 if (doesNotNeedToWork.profile(mustWork == RRuntime.LOGICAL_FALSE)) {
                     // no error or warning

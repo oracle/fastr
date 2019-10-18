@@ -37,6 +37,8 @@ rffi.dotExternalAccessArgs(1L, 3, c(1,2,3), c('a', 'b'), 'b', TRUE, as.raw(12))
 rffi.dotExternalAccessArgs(x=1L, 3, c(1,2,3), y=c('a', 'b'), 'b', TRUE, as.raw(12))
 rffi.invoke12()
 rffi.TYPEOF(3L)
+rffi.TYPEOF(1:3)
+rffi.TYPEOF(1.1:3.1)
 rffi.isRString("hello")
 rffi.isRString(NULL)
 rffi.interactive()
@@ -388,3 +390,13 @@ print(dim(v))
 # Complex vectors
 x <- c(4+3i,2+1i)
 rffi.test_sort_complex(x)
+
+# allocate large vector: checks integer overflow bug in allocation via Unsafe
+# we need to force the materialization to native memory via rffi.get_dataptr,
+# which returns NULL in case of an error
+stopifnot(!is.null(rffi.get_dataptr(api.Rf_allocVector(14, 268435457))))
+
+vec <- double(268435457)
+vec[[268435457]] <- 4.2
+stopifnot(!is.null(rffi.get_dataptr(vec)))
+stopifnot(vec[[268435457]] == 4.2)

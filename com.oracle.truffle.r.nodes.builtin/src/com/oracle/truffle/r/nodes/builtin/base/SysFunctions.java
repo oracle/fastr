@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
@@ -309,12 +310,13 @@ public class SysFunctions {
         @TruffleBoundary
         protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") boolean useUmask) {
             byte[] data = new byte[pathVec.getLength()];
+            TruffleLanguage.Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < data.length; i++) {
                 String path = Utils.tildeExpand(pathVec.getDataAt(i));
                 if (path.length() == 0 || RRuntime.isNA(path)) {
                     continue;
                 }
-                int result = FileSystemUtils.chmod(RContext.getInstance().getEnv().getTruffleFile(path), octmode.getDataAt(i % octmode.getLength()));
+                int result = FileSystemUtils.chmod(FileSystemUtils.getSafeTruffleFile(env, path), octmode.getDataAt(i % octmode.getLength()));
                 data[i] = RRuntime.asLogical(result == 0);
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);

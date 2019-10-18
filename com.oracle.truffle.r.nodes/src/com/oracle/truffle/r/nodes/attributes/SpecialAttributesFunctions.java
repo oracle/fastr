@@ -40,7 +40,7 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.IsSpecialAttributeNodeGen;
-import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -296,7 +296,7 @@ public final class SpecialAttributesFunctions {
 
         private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
         @Child private CastNode castValue = newCastBuilder().allowNull().boxPrimitive().asStringVector(true, true, true).buildCastNode();
-        @Child private MaterializeNode materializeNode = MaterializeNode.create(false);
+        @Child private MaterializeNode materializeNode = MaterializeNode.create();
 
         protected SetNamesAttributeNode() {
             super(RRuntime.NAMES_ATTR_KEY);

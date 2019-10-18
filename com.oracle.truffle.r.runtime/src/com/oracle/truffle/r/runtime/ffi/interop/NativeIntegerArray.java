@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter.UNSAFE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -33,15 +34,31 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
 import com.oracle.truffle.r.runtime.RRuntime;
 
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import sun.misc.Unsafe;
 
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(NativeTypeLibrary.class)
 public final class NativeIntegerArray extends NativeArray<int[]> {
 
     public NativeIntegerArray(int[] value) {
         super(value);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean hasNativeType() {
+        return true;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public Object getNativeType(@CachedContext(TruffleRLanguage.class) RContext ctx) {
+        return ctx.getRFFI().getSulongArrayType(42);
     }
 
     @SuppressWarnings("static-method")

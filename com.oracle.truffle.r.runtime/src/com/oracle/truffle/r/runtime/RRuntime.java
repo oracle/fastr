@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -75,12 +76,7 @@ public class RRuntime {
     // Parts of the welcome message originate from GNU R.
     public static final String WELCOME_MESSAGE =
         "R version " + RVersionNumber.FULL + " (FastR)\n" +
-        "Copyright (c) 2013-19, Oracle and/or its affiliates\n" +
-        "Copyright (c) 1995-2018, The R Core Team\n" +
-        "Copyright (c) 2018 The R Foundation for Statistical Computing\n" +
-        "Copyright (c) 2012-4 Purdue University\n" +
-        "Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura\n" +
-        "All rights reserved.\n" +
+        RVersionNumber.COPYRIGHT +
         "\n" +
         "FastR is free software and comes with ABSOLUTELY NO WARRANTY.\n" +
         "You are welcome to redistribute it under certain conditions.\n" +
@@ -1074,11 +1070,11 @@ public class RRuntime {
     }
 
     public static boolean isForeignObject(TruffleObject obj) {
-        return !(obj instanceof RBaseObject);
+        return !(obj instanceof RTruffleObject);
     }
 
     public static boolean isForeignObject(Object obj) {
-        return obj instanceof TruffleObject && !(obj instanceof RBaseObject);
+        return obj instanceof TruffleObject && !(obj instanceof RTruffleObject);
     }
 
     public static int getForeignArraySize(Object object, InteropLibrary interop) {

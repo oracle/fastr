@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.Utils;
@@ -100,18 +101,18 @@ public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
         }
 
         Env env = RContext.getInstance().getEnv();
-        TruffleFile targetDir = env.getTruffleFile(exdir);
-        if (!targetDir.exists() || !targetDir.isDirectory()) {
+        TruffleFile targetDir = FileSystemUtils.getSafeTruffleFile(env, exdir);
+        if (targetDir == null || !targetDir.isDirectory()) {
             throw error(Message.GENERIC, "invalid target directory");
         }
-        TruffleFile tZipFile = env.getTruffleFile(Utils.tildeExpand(zipfile));
+        TruffleFile tZipFile = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(zipfile));
         try (ZipInputStream stream = new ZipInputStream(tZipFile.newInputStream())) {
             ZipEntry entry;
             ArrayList<String> extracted = new ArrayList<>();
             byte[] buffer = new byte[2048];
             while ((entry = stream.getNextEntry()) != null) {
                 if (filter.test(entry.getName())) {
-                    TruffleFile target = targetDir.resolve(junkpaths ? env.getTruffleFile(entry.getName()).getName() : entry.getName());
+                    TruffleFile target = targetDir.resolve(junkpaths ? FileSystemUtils.getSafeTruffleFile(env, entry.getName()).getName() : entry.getName());
                     if (!target.exists() || overwrite) {
                         try (OutputStream output = target.newOutputStream()) {
                             extracted.add(target.getPath());
@@ -144,7 +145,7 @@ public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
 
     @SuppressWarnings("deprecation")
     private Object list(String zipfile) {
-        try (ZipInputStream stream = new ZipInputStream(RContext.getInstance().getEnv().getTruffleFile(Utils.tildeExpand(zipfile)).newInputStream())) {
+        try (ZipInputStream stream = new ZipInputStream(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), Utils.tildeExpand(zipfile)).newInputStream())) {
             ArrayList<ZipEntry> entryList = new ArrayList<>();
             ZipEntry entry;
             while ((entry = stream.getNextEntry()) != null) {

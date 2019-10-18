@@ -22,22 +22,36 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+
+import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RScalar;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Holds per RContext specific state of the RFFI. RFFI implementation agnostic data and methods are
@@ -55,6 +69,12 @@ public abstract class RFFIContext extends RFFI {
         // forward constructor
     }
 
+    // Used to protect the children from GC
+    private static final class RFunctionChildren {
+        @SuppressWarnings("unused") private Object body;
+        @SuppressWarnings("unused") private Object args;
+    }
+
     public static final class RFFIContextState {
 
         private int callDepth = 0;
@@ -68,15 +88,23 @@ public abstract class RFFIContext extends RFFI {
          * FastR equivalent of GNUR's special dedicated global list that is GC root and so any
          * vectors added to it will be guaranteed to be preserved.
          */
-        public final IdentityHashMap<RBaseObject, AtomicInteger> preserveList = new IdentityHashMap<>();
+        public final EconomicMap<RBaseObject, AtomicInteger> preserveList = EconomicMap.create();
 
-        public final WeakHashMap<Object, Set<Object>> protectedChildren = new WeakHashMap<>();
+        public final WeakHashMap<RScalar, RAbstractVector> protectedMaterializedScalarVectors = new WeakHashMap<>();
+
+        public final WeakHashMap<Object, RForeignObjectWrapper> protectedForeignWrappers = new WeakHashMap<>();
+
+        public final WeakHashMap<RFunction, RFunctionChildren> protectedFunctionChildren = new WeakHashMap<>();
+
+        public final WeakHashMap<RPromise, Object> protectedPromiseCode = new WeakHashMap<>();
+
         /**
          * Stack used by RFFI to implement the PROTECT/UNPROTECT functions. Objects registered on
-         * this stack do necessarily not have to be {@linke #registerReferenceUsedInNative}, but
-         * once popped off, they must be put into that list.
+         * this stack do necessarily not have to be {@link #registerReferenceUsedInNative}, but once
+         * popped off, they must be put into that list. The initial size should "reasonably" big.
+         * (Should a special FastR configuration property be introduced to control the size?)
          */
-        public final Collections.ArrayListObj<RBaseObject> protectStack = new Collections.ArrayListObj<>(32);
+        public final Collections.ArrayListObj<RBaseObject> protectStack = new Collections.ArrayListObj<>(1000);
 
         public MaterializedFrame currentDowncallFrame = null;
     }
@@ -97,6 +125,13 @@ public abstract class RFFIContext extends RFFI {
         // RSymbols are cached and never freed anyway -- dictated by GNU-R
         if (!(obj instanceof RSymbol)) {
             rffiContextState.protectedNativeReferences.add(obj);
+        }
+    }
+
+    public final void registerReferenceUsedInNative(Object obj, BranchProfile profile) {
+        // RSymbols are cached and never freed anyway -- dictated by GNU-R
+        if (!(obj instanceof RSymbol)) {
+            rffiContextState.protectedNativeReferences.add(obj, profile);
         }
     }
 
@@ -176,28 +211,153 @@ public abstract class RFFIContext extends RFFI {
     }
 
     /**
-     * Establish a weak relationship between an object and its owner to prevent a premature garbage
-     * collecting of the object. See <code>com.oracle.truffle.r.ffi.processor.RFFIResultOwner</code>
-     * for more commentary.
-     *
-     * Note: It is meant to be applied only on certain return values from upcalls.
-     *
-     * @param parent
-     * @param child
-     * @param rffiType the type of the RFFI backend from which the child protection is requested
-     * @return the child
-     *
+     * Maintains a weak-reference 1:1 relationship between the foreign object and its wrapper.
      */
     @TruffleBoundary
-    public Object protectChild(Object parent, Object child, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
-        Set<Object> children = rffiContextState.protectedChildren.get(parent);
-        if (children == null) {
-            children = new HashSet<>();
-            rffiContextState.protectedChildren.put(parent, children);
+    final RForeignObjectWrapper getOrCreateForeignObjectWrapper(TruffleObject foreignObj) {
+        // If parent instanceof RForeignObjectWrapper, we could have a reference cycle
+        assert !(foreignObj instanceof RForeignObjectWrapper) : foreignObj;
+        RForeignObjectWrapper result = rffiContextState.protectedForeignWrappers.get(foreignObj);
+        if (result == null) {
+            result = new RForeignObjectWrapper(foreignObj);
+            rffiContextState.protectedForeignWrappers.put(foreignObj, result);
         }
-        children.add(child);
-        return child;
+        return result;
+    }
+
+    /**
+     * Maintains a weak-reference 1:1 relationship between the function object and its formal
+     * arguments materialized as a pair-list.
+     */
+    @TruffleBoundary
+    public final Object getOrCreateFunctionFormals(RFunction fun, Function<RFunction, Object> factory) {
+        RFunctionChildren entry = getFunctionChildrenHolder(fun);
+        if (entry.args == null) {
+            Object args = factory.apply(fun);
+            // assert checks reference cycle that could cause memory leak
+            assert !contains(args, fun) : fun;
+            assert args instanceof RPairList || args == RNull.instance : "not a pairlist: " + args;
+            entry.args = args;
+        }
+        return entry.args;
+    }
+
+    /**
+     * Maintains a weak-reference 1:1 relationship between the function object and its body
+     * materialized as a language object.
+     */
+    @TruffleBoundary
+    public final Object getOrCreateFunctionBody(RFunction fun, Function<RFunction, Object> factory) {
+        RFunctionChildren entry = getFunctionChildrenHolder(fun);
+        if (entry.body == null) {
+            Object body = factory.apply(fun);
+            // assert checks reference cycle that could cause memory leak
+            assert !contains(body, fun) : fun;
+            entry.body = body;
+        }
+        return entry.body;
+    }
+
+    /**
+     * Removes existing mapping from function to its formals materialized as a pair-list.
+     */
+    public final void removeFunctionFormals(RFunction fun) {
+        RFunctionChildren entry = rffiContextState.protectedFunctionChildren.get(fun);
+        if (entry != null) {
+            entry.args = null;
+        }
+    }
+
+    /**
+     * Removes existing mapping from function to its formals materialized as a language object.
+     */
+    public final void removeFunctionBody(RFunction fun) {
+        RFunctionChildren entry = rffiContextState.protectedFunctionChildren.get(fun);
+        if (entry != null) {
+            entry.body = null;
+        }
+    }
+
+    /**
+     * Maintains a weak-reference 1:1 relationship between the scalar vector and its materialized
+     * counterpart.
+     */
+    @TruffleBoundary
+    public final <T extends RScalar> RAbstractVector getOrCreateMaterialized(T scalar, Function<T, RAbstractVector> factory) {
+        RAbstractVector result = rffiContextState.protectedMaterializedScalarVectors.get(scalar);
+        if (result == null) {
+            result = (RAbstractVector) factory.apply(scalar).makeSharedPermanent();
+            rffiContextState.protectedMaterializedScalarVectors.put(scalar, result);
+        }
+        return result;
+    }
+
+    /**
+     * Maintains a weak-reference 1:1 relationship between the promise and its closure presented as
+     * pair-list to the native code.
+     */
+    @TruffleBoundary
+    public final Object getOrCreateCode(RPromise promise, Function<RPromise, Object> factory) {
+        Object code = rffiContextState.protectedPromiseCode.get(promise);
+        if (code == null) {
+            code = factory.apply(promise);
+            // this can in theory introduce reference cycle
+            assert !contains(code, promise) : code;
+            rffiContextState.protectedPromiseCode.put(promise, code);
+        }
+        return code;
+    }
+
+    public Object getSulongArrayType(@SuppressWarnings("unused") Object arrayElement) {
+        // TODO: this is here because TruffleLLVM_Context is not visible from "runtime" project
+        // where we implement VectorRFFIWrapper which needs this
+        throw RInternalError.shouldNotReachHere("getSulongArrayType");
     }
 
     public abstract RFFIFactory.Type getDefaultRFFIType();
+
+    private RFunctionChildren getFunctionChildrenHolder(RFunction parent) {
+        RFunctionChildren children = rffiContextState.protectedFunctionChildren.get(parent);
+        if (children == null) {
+            children = new RFunctionChildren();
+            rffiContextState.protectedFunctionChildren.put(parent, children);
+        }
+        return children;
+    }
+
+    // Basic check for reference cycles that would lead to memory leaks
+    private static boolean contains(Object child, Object parent) {
+        if (child instanceof RPairList) {
+            for (RPairList attr : (RPairList) child) {
+                if (attr.car() == parent || attr.getTag() == parent) {
+                    return true;
+                }
+            }
+        } else if (child instanceof RList) {
+            RList list = (RList) child;
+            for (int i = 0; i < list.getLength(); i++) {
+                if (list.getDataAt(i) == parent) {
+                    return true;
+                }
+            }
+        } else if (child instanceof REnvironment) {
+            Frame frame = ((REnvironment) child).getFrame();
+            for (FrameSlot slot : frame.getFrameDescriptor().getSlots()) {
+                if (frame.getValue(slot) == parent) {
+                    return true;
+                }
+            }
+        }
+        if (child instanceof RAttributable) {
+            DynamicObject attrs = ((RAttributable) child).getAttributes();
+            if (attrs != null) {
+                for (Object key : attrs.getShape().getKeys()) {
+                    if (attrs.get(key, null) == parent) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }

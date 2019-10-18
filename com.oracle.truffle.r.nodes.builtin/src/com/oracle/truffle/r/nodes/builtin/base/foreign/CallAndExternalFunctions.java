@@ -249,7 +249,7 @@ public class CallAndExternalFunctions {
     @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCall extends Dot {
 
-        @Child private MaterializeNode materializeNode = MaterializeNode.create(true);
+        @Child private MaterializeNode materializeNode = MaterializeNode.create();
 
         static {
             Casts.noCasts(DotCall.class);

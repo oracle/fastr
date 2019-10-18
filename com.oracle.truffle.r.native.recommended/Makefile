@@ -27,9 +27,14 @@
 # N.B. As this takes quite a while the building is conditional on the
 # FASTR_RELEASE environment variable
 
-FASTR_R_HOME := $(abspath $(CURDIR)/..)
+FASTR_R_HOME := $(abspath $(VPATH)/..)
 NATIVE_PROJECT_DIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native
 TOPDIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native.recommended
+PKGS_REPO_DIR := repo/src/contrib
+
+ifdef MX_VERBOSE
+VERBOSE=--verbose
+endif
 
 # The package tar balls are copied from $(GNUR_HOME_BINARY)/src/library/Recommended
 ifndef GNUR_HOME_BINARY
@@ -61,20 +66,36 @@ else
 GNUR_RECOMMENDED_PKGNAMES := codetools
 endif # FASTR_RELEASE
 
-GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME_BINARY)/src/library/Recommended/$(pkg).tgz)
+GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME_BINARY)/src/library/Recommended/$(pkg)*.tar.gz)
+e :=
+c := )|(
+clist = $(subst $e $e,$c,$(strip $1))
+# This will create a string like "^((codetools)|(MASS)|...)$"
+GNUR_RECOMMENDED_PATTERN := "^(($(call clist,$(GNUR_RECOMMENDED_PKGNAMES))))$$"
 
 all: install.recommended
 
 $(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
+$(info GNUR_RECOMMENDED_PATTERN=$(GNUR_RECOMMENDED_PATTERN))
 
 ifneq ($(FASTR_RFFI),managed)
-install.recommended:
+$(PKGS_REPO_DIR):
+	mkdir -p $(PKGS_REPO_DIR)
+	cp $(GNUR_RECOMMENDED_TARS) $(PKGS_REPO_DIR)
+	(cd $(PKGS_REPO_DIR); $(GNUR_HOME_BINARY)/bin/R --vanilla --slave -e "tools::write_PACKAGES('.', type='source')")
+
+install.recommended: $(PKGS_REPO_DIR)
+ifdef R_RECOMMENDED_PKGS_CACHE_DIR
+	mx -p $(FASTR_R_HOME) r-pkgcache $(VERBOSE) --vm fastr --library fastr=$(FASTR_R_HOME)/library --repos RECOMMENDED=$(PKGS_REPO_DIR) --cache-dir $(R_RECOMMENDED_PKGS_CACHE_DIR) --pkg-pattern $(GNUR_RECOMMENDED_PATTERN)
+else
 	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
-		$(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
+		($(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar) || (echo "ERROR: during installation of $$pkgtar"; exit 1); \
 	done
+endif
 ifeq ($(OS_NAME),Darwin)
+	set -e; \
 	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \
-	    if [ -e $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so ] ; then \
+		if [ -e $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so ] ; then \
 			install_name_tool -id @rpath/../library/$$pkgname/libs/$$pkgname.so $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
 			install_name_tool -add_rpath @loader_path/../../../lib/ $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
 			mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_R_HOME)/library/$$pkgname/libs; \
@@ -92,3 +113,4 @@ clean:
 		rm -rf $(FASTR_R_HOME)/library/$$pkgname; \
 	done
 	rm -f install.recommended
+	rm -rf $(PKGS_REPO_DIR)

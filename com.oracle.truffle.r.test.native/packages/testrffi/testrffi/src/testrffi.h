@@ -148,3 +148,13 @@ extern SEXP shareListElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex);
 extern SEXP test_sort_complex(SEXP complexVec);
 
 extern SEXP testMultiSetProtection();
+
+extern SEXP get_dataptr(SEXP vec);
+
+extern void benchRf_isNull(int* n);
+
+extern SEXP benchMultipleUpcalls(SEXP x);
+
+extern SEXP test_lapplyWithForceAndCall(SEXP list, SEXP fn, SEXP fa, SEXP rho);
+
+extern SEXP benchProtect(SEXP x, SEXP nn);

@@ -251,6 +251,7 @@ public abstract class REnvironment extends RAttributable {
             return list.size();
         }
 
+        @TruffleBoundary
         REnvironment get(int index) {
             return list.get(index);
         }

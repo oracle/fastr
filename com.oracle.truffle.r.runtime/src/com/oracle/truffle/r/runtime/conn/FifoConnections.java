@@ -37,6 +37,7 @@ import java.util.HashSet;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
@@ -129,7 +130,7 @@ public class FifoConnections {
 
         protected FifoReadRConnection(Env env, BaseRConnection base, String path) throws IOException {
             super(base);
-            channel = env.getTruffleFile(path).newByteChannel(Collections.singleton(StandardOpenOption.READ));
+            channel = FileSystemUtils.getSafeTruffleFile(env, path).newByteChannel(Collections.singleton(StandardOpenOption.READ));
         }
 
         @Override
@@ -192,7 +193,7 @@ public class FifoConnections {
 
         protected FifoReadNonBlockingRConnection(Env env, BaseRConnection base, String path) throws IOException {
             super(base);
-            channel = env.getTruffleFile(path).newByteChannel(Collections.singleton(StandardOpenOption.READ));
+            channel = FileSystemUtils.getSafeTruffleFile(env, path).newByteChannel(Collections.singleton(StandardOpenOption.READ));
         }
 
         @Override
@@ -247,7 +248,7 @@ public class FifoConnections {
     private static final String MKFIFO_ERROR_FILE_EXISTS = "File exists";
 
     private static SeekableByteChannel createAndOpenFifo(Env env, String path) throws IOException {
-        TruffleFile truffleFile = env.getTruffleFile(path);
+        TruffleFile truffleFile = FileSystemUtils.getSafeTruffleFile(env, path);
         if (!truffleFile.exists()) {
             // try to create fifo on demand
             createNamedPipe(path);
@@ -256,7 +257,7 @@ public class FifoConnections {
     }
 
     private static SeekableByteChannel createAndOpenNonBlockingFifo(Env env, String path, OpenOption... openOptions) throws IOException {
-        TruffleFile truffleFile = env.getTruffleFile(path);
+        TruffleFile truffleFile = FileSystemUtils.getSafeTruffleFile(env, path);
         if (!truffleFile.exists()) {
             // try to create fifo on demand
             createNamedPipe(path);

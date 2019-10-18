@@ -157,16 +157,12 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             // preprocessArguments did not set the value
             return;
         }
-        if (client == Client.RSCRIPT) {
-            try {
-                rArguments = preprocessRScriptOptions(options);
-            } catch (PrintHelp e) {
-                printHelp(OptionCategory.USER);
-            } catch (PrintVersion e) {
-                RCmdOptions.printVersion();
-            }
-        } else {
-            rArguments = this.options.getArguments();
+        try {
+            rArguments = client.processOptions(options);
+        } catch (PrintHelp e) {
+            printHelp(OptionCategory.USER);
+        } catch (PrintVersion e) {
+            System.out.println(client.getHelpMessage());
         }
     }
 
@@ -187,7 +183,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         boolean isLLVMBackEnd = false;
         boolean debugLLVMLibs = false;
         for (String rArg : this.rArguments) {
-            if (rArg.startsWith("--R.BackEndLLVM")) {
+            if (rArg.startsWith("--R.BackEnd=llvm") || rArg.startsWith("--R.BackEndLLVM=")) {
                 isLLVMBackEnd = true;
                 continue;
             }
@@ -318,60 +314,6 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         System.out.println("FATAL: " + String.format(message, args));
         System.exit(-1);
         return null;
-    }
-
-    // CheckStyle: stop system..print check
-
-    private static String[] preprocessRScriptOptions(RCmdOptions options) {
-        if (options.getBoolean(RCmdOption.VERSION)) {
-            throw new PrintVersion();
-        }
-
-        String[] arguments = options.getArguments();
-        int resultArgsLength = arguments.length;
-        int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
-        // Now reformat the args, setting --slave and --no-restore as per the spec
-        ArrayList<String> adjArgs = new ArrayList<>(resultArgsLength + 1);
-        adjArgs.add(arguments[0]);
-        adjArgs.add("--slave");
-        options.setValue(RCmdOption.SLAVE, true);
-        adjArgs.add("--no-restore");
-        options.setValue(RCmdOption.NO_RESTORE, true);
-        // Either -e options are set or first non-option arg is a file
-        if (options.getStringList(RCmdOption.EXPR) == null) {
-            if (firstNonOptionArgIndex == resultArgsLength) {
-                throw new PrintHelp();
-            } else {
-                options.setValue(RCmdOption.FILE, arguments[firstNonOptionArgIndex]);
-            }
-        }
-        String defaultPackagesArg = options.getString(RCmdOption.DEFAULT_PACKAGES);
-        String defaultPackagesEnv = System.getenv("R_DEFAULT_PACKAGES");
-        if (defaultPackagesArg == null && defaultPackagesEnv == null) {
-            defaultPackagesArg = "datasets,utils,grDevices,graphics,stats";
-        }
-        if (defaultPackagesEnv == null) {
-            options.setValue(RCmdOption.DEFAULT_PACKAGES, defaultPackagesArg);
-        }
-        // copy up to non-option args
-        int rx = 1;
-        while (rx < firstNonOptionArgIndex) {
-            adjArgs.add(arguments[rx]);
-            rx++;
-        }
-        if (options.getString(RCmdOption.FILE) != null) {
-            adjArgs.add("--file=" + options.getString(RCmdOption.FILE));
-            rx++; // skip over file arg
-            firstNonOptionArgIndex++;
-        }
-
-        if (firstNonOptionArgIndex < resultArgsLength) {
-            adjArgs.add("--args");
-            while (rx < resultArgsLength) {
-                adjArgs.add(arguments[rx++]);
-            }
-        }
-        return adjArgs.toArray(new String[adjArgs.size()]);
     }
 
     @SuppressWarnings("serial")

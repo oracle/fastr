@@ -56,7 +56,6 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
 
     public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame);
 
-    private final RFrameSlot argsIdentifier = RFrameSlot.createTemp("RExplicitCall-argsIdentifier", true);
     @CompilationFinal private FrameSlot argsFrameSlot;
 
     @Specialization
@@ -64,7 +63,7 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
                     @Cached("createExplicitCall()") RCallBaseNode call) {
         if (argsFrameSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), argsIdentifier, FrameSlotKind.Object);
+            argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.ExplicitCallArgs, FrameSlotKind.Object);
         }
         try {
             FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, new ExplicitArgs(args, caller, callerFrame));
@@ -75,6 +74,6 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
     }
 
     protected RCallBaseNode createExplicitCall() {
-        return RCallNode.createExplicitCall(argsIdentifier);
+        return RCallNode.createExplicitCall(RFrameSlot.ExplicitCallArgs);
     }
 }

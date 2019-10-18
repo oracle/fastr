@@ -33,11 +33,14 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public final class RIntSequence extends RAbstractIntVector implements RSequence {
 
     private final int start;
     private final int stride;
     private final int length;
+    private AtomicReference<RIntVector> materialized = new AtomicReference<>();
 
     RIntSequence(int start, int stride, int length) {
         super(RDataFactory.COMPLETE_VECTOR);
@@ -45,6 +48,14 @@ public final class RIntSequence extends RAbstractIntVector implements RSequence 
         this.start = start;
         this.stride = stride;
         this.length = length;
+    }
+
+    @Override
+    public RIntVector cachedMaterialize() {
+        if (materialized.get() == null) {
+            materialized.compareAndSet(null, materialize());
+        }
+        return materialized.get();
     }
 
     @Override

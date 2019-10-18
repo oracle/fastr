@@ -33,17 +33,19 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
 import java.util.Set;
 
-import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.ffi.impl.managed.Managed_DownCallNodeFactoryFactory.Managed_DownCallNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
@@ -68,14 +70,13 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Specialization
-        protected Object call(NativeFunction f, Object[] args,
-                        @Cached(value = "createTarget(f)", allowUncached = true) TruffleObject target,
-                        @CachedLibrary("target") InteropLibrary interop) {
-            return callInternal(f, args, target, interop);
+        protected Object doCall(NativeFunction f, Object[] args,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+            return doCallImpl(f, args, ctxRef);
         }
 
         @Override
-        protected TruffleObject createTarget(NativeFunction function) {
+        protected TruffleObject createTarget(ContextReference<RContext> ctxRef, NativeFunction function) {
             if (function == NativeFunction.getpid) {
                 return new GetPID();
             } else if (function == NativeFunction.mkdtemp) {

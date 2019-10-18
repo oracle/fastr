@@ -34,6 +34,7 @@ import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalExpress
 import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalVariables;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;

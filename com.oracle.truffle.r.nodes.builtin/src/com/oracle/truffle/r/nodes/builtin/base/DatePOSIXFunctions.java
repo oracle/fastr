@@ -24,6 +24,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringV
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
@@ -57,6 +58,7 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalField;
 import java.time.temporal.ValueRange;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -204,7 +206,8 @@ public class DatePOSIXFunctions {
                     int day = (int) Math.floor(d);
                     Instant instant = Instant.ofEpochSecond(day * 3600L * 24L);
                     ZonedDateTime date = ZonedDateTime.ofInstant(instant, builder.getRealZone().toZoneId());
-                    builder.setEntry(i, 0, 0, 0, date.getDayOfMonth(), date.getMonthValue() - 1, date.getYear() - 1900, date.getDayOfWeek().ordinal(), date.getDayOfYear(), 0);
+                    boolean dst = builder.getRealZone().inDaylightTime(Date.from(instant));
+                    builder.setEntry(i, 0, 0, 0, date.getDayOfMonth(), date.getMonthValue() - 1, date.getYear() - 1900, date.getDayOfWeek().ordinal(), date.getDayOfYear(), dst ? 1 : 0);
                 } else {
                     builder.setIncompleteEntry(i);
                 }
@@ -240,9 +243,10 @@ public class DatePOSIXFunctions {
                     Instant instant = Instant.ofEpochSecond((long) second);
                     double miliseconds = second - Math.floor(second);
                     ZonedDateTime date = ZonedDateTime.ofInstant(instant, builder.getRealZone().toZoneId());
+                    boolean dst = builder.getRealZone().inDaylightTime(Date.from(instant));
                     builder.setEntry(i, date.getSecond() + miliseconds, date.getMinute(), date.getHour(), date.getDayOfMonth(), date.getMonthValue() - 1, date.getYear() - 1900,
                                     date.getDayOfWeek().ordinal(),
-                                    date.getDayOfYear(), 0);
+                                    date.getDayOfYear(), dst ? 1 : 0);
                 } else {
                     builder.setIncompleteEntry(i);
                 }
@@ -438,7 +442,7 @@ public class DatePOSIXFunctions {
             Casts casts = new Casts(StrPTime.class);
             casts.arg("x").mapNull(emptyStringVector()).mustBe(missingValue().not()).asStringVector();
             casts.arg("format").mapNull(emptyStringVector()).mustBe(missingValue().not()).asStringVector();
-            casts.arg("tz").mapNull(emptyStringVector()).mustBe(missingValue().not()).asStringVector();
+            casts.arg("tz").mapNull(emptyStringVector()).mustBe(missingValue().not()).asStringVector().mustBe(size(1).or(size(0)));
         }
 
         @Specialization
@@ -446,6 +450,10 @@ public class DatePOSIXFunctions {
         protected RList strptime(RAbstractStringVector x, RAbstractStringVector format, RAbstractStringVector tz) {
             String zoneString = RRuntime.asString(tz);
             int length = x.getLength();
+            TimeZone timeZone = TimeZone.getDefault();
+            if (tz.getLength() > 0) {
+                timeZone = TimeZone.getTimeZone(tz.getDataAt(0));
+            }
             POSIXltBuilder builder = new POSIXltBuilder(length, zoneString);
             DateTimeFormatterBuilder[] builders = createFormatters(format, true);
             DateTimeFormatter[] formatters = new DateTimeFormatter[builders.length];
@@ -471,16 +479,19 @@ public class DatePOSIXFunctions {
                         LocalTime tm = LocalTime.from(parse);
                         time = LocalDateTime.of(LocalDate.now(), tm);
                     }
-                    double ms = (time.toInstant(ZoneOffset.UTC).toEpochMilli() % 1000) / 1000.0;
+                    ZoneOffset zoneOffset = timeZone.toZoneId().getRules().getOffset(time);
+                    double ms = (time.toInstant(zoneOffset).toEpochMilli() % 1000) / 1000.0;
+                    boolean dst = builder.getRealZone().inDaylightTime(java.util.Date.from(time.toLocalDate().atStartOfDay(timeZone.toZoneId()).toInstant()));
                     builder.setEntry(i, time.getSecond() + ms, time.getMinute(), time.getHour(), time.getDayOfMonth(), time.getMonthValue() - 1, time.getYear() - 1900, time.getDayOfWeek().ordinal(),
-                                    time.getDayOfYear(), 0);
+                                    time.getDayOfYear(), dst ? 1 : 0);
                     continue;
                 } catch (DateTimeException e) {
                     // try without time
                 }
                 try {
                     LocalDate date = LocalDate.from(parse);
-                    builder.setEntry(i, 0, 0, 0, date.getDayOfMonth(), date.getMonthValue() - 1, date.getYear() - 1900, date.getDayOfWeek().ordinal(), date.getDayOfYear(), 0);
+                    boolean dst = builder.getRealZone().inDaylightTime(java.util.Date.from(date.atStartOfDay(timeZone.toZoneId()).toInstant()));
+                    builder.setEntry(i, 0, 0, 0, date.getDayOfMonth(), date.getMonthValue() - 1, date.getYear() - 1900, date.getDayOfWeek().ordinal(), date.getDayOfYear(), dst ? 1 : 0);
                 } catch (DateTimeException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }

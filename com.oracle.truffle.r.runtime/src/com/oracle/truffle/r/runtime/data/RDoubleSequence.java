@@ -33,11 +33,14 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public final class RDoubleSequence extends RAbstractDoubleVector implements RSequence {
 
     private final double start;
     private final double stride;
     private final int length;
+    private AtomicReference<RDoubleVector> materialized = new AtomicReference<>();
 
     RDoubleSequence(double start, double stride, int length) {
         super(RDataFactory.COMPLETE_VECTOR);
@@ -45,6 +48,14 @@ public final class RDoubleSequence extends RAbstractDoubleVector implements RSeq
         this.start = start;
         this.stride = stride;
         this.length = length;
+    }
+
+    @Override
+    public RDoubleVector cachedMaterialize() {
+        if (materialized.get() == null) {
+            materialized.compareAndSet(null, materialize());
+        }
+        return materialized.get();
     }
 
     @Override

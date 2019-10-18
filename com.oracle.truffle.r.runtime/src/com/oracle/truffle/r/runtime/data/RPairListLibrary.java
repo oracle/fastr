@@ -39,6 +39,10 @@ public abstract class RPairListLibrary extends Library {
         return FACTORY.getUncached();
     }
 
+    public abstract void setCar(Object target, Object value);
+
+    public abstract void setTag(Object target, Object value);
+
     public abstract Object car(Object target);
 
     public abstract Object cdr(Object target);
@@ -47,4 +51,7 @@ public abstract class RPairListLibrary extends Library {
 
     public abstract Closure getClosure(Object target);
 
+    public abstract Iterable<RPairList> iterable(Object target);
+
+    public abstract int getLength(Object target);
 }

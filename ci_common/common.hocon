@@ -1,8 +1,8 @@
 # java 7 is needed by Truffle (for now)
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
-java8 : {name : oraclejdk, version : "8u212-jvmci-19.2-b01", platformspecific: true}
-#java9 : {name : oraclejdk, version : "9.0.4+11", platformspecific: true}
+java8 : {name : oraclejdk, version : "8u221-jvmci-19.3-b02", platformspecific: true}
+java11 : {name : labsjdk, version : "ce-11.0.5+9-jvmci-19.3-b03", platformspecific: true}
 
 java8Downloads : {
   downloads : {
@@ -11,6 +11,15 @@ java8Downloads : {
 #      ${java9}
     ]}
     JAVA_HOME : ${java8}
+  }
+}
+
+java11Downloads : {
+  downloads : {
+    EXTRA_JAVA_HOMES : { pathlist :[
+      ${java7}
+    ]}
+    JAVA_HOME : ${java11}
   }
 }
 
@@ -44,6 +53,7 @@ logfiles : [
     "**/com.oracle.truffle.r.test.native/embedded/*.output"
     "**/com.oracle.truffle.r.test.native/embedded/src/*.output"
     "test.gnur/**/*.fail"
+    "test.fastr/**/*.fail"
     # Uncomment to debug the event loop hanging issue. It must be accompanied by enabling
     # the logging by setting the TRACE_EVENT_LOOP env var to true.
     # "traceEventLoop.log"
@@ -55,9 +65,15 @@ logfiles : [
 
 environmentLinux: {
   environment : {
-    PKG_INCLUDE_FLAGS_OVERRIDE : "-I/cm/shared/apps/zlib/1.2.11/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.42/include -I/cm/shared/apps/curl/7.50.1/include"
-    PKG_LDFLAGS_OVERRIDE : "-L/cm/shared/apps/zlib/1.2.11/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.42/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.2/lib64"
+    PKG_INCLUDE_FLAGS_OVERRIDE : "-I/cm/shared/apps/zlib/1.2.8/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/curl/7.50.1/include"
+    PKG_INCLUDE_FLAGS_GCC : "-I/cm/shared/apps/gcc/8.3.0/include"
+    PKG_LDFLAGS_OVERRIDE : "-L/cm/shared/apps/zlib/1.2.8/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib"
+    PKG_LDFLAGS_GCC : "-L/cm/shared/apps/gcc/8.3.0/lib"
+	FASTR_LIBGFORTRAN_VER : "5.0.0"
+	FASTR_LIBGCC_S_VER = "1"
     TZDIR: "/usr/share/zoneinfo"
+    MX_PYTHON_VERSION: "3"
+    # R_RECOMMENDED_PKGS_CACHE_DIR: "${SLAVE_LOCAL_CACHE}/r_recommended_package_cache"
   }
 }
 
@@ -68,6 +84,7 @@ environmentDarwin : {
     PATH : "/usr/local/bin:$JAVA_HOME/bin:$PATH"
     TZDIR: "/usr/share/zoneinfo"
     FASTR_LIBZ_VER: "1.2.11"
+	MX_PYTHON_VERSION: "3"
   }
 }
 
@@ -75,11 +92,11 @@ packagesLinux : {
   packages : {
     git : ">=1.8.3"
     mercurial : ">=2.2"
-    "pip:astroid" : "==1.1.0"
-    "pip:pylint" : "==1.1.0"
+    "pip:astroid" : "==1.6.6"
+    "pip:pylint" : "==1.9.3"
     "pip:ninja_syntax" : "==1.7.2"
     make : ">=3.83"
-    gcc : "==4.9.2"
+    gcc : "==8.3.0"
     binutils: ">=2.30"
     pcre : "==8.42"
     zlib : "==1.2.11"
@@ -92,8 +109,8 @@ packagesLinux : {
 
 packagesDarwin : {
   packages : {
-    "pip:astroid" : "==1.1.0"
-    "pip:pylint" : "==1.1.0"
+    "pip:astroid" : "==1.6.6"
+    "pip:pylint" : "==1.9.3"
     "pip:ninja_syntax" : "==1.7.2"
     "pcre" : "==8.42"
     "homebrew/gcc" : "==4.9"
@@ -116,7 +133,25 @@ common : ${java8Downloads} {
     PKG_TEST_ENV_miniUI : "LC_ALL=C"
     PKG_TEST_ENV_compare : "LC_ALL=C"
     FASTR_OPTION_PrintErrorStacktracesToFile: "true"
-    GRAALVM_CHECK_EXPERIMENTAL_OPTIONS : "true"    
+    GRAALVM_CHECK_EXPERIMENTAL_OPTIONS : "true"
+    VERBOSE_GRAALVM_LAUNCHERS: "true"
+  }
+}
+
+commonJdk11 : ${java11Downloads} {
+  logs: ${logfiles}
+  catch_files : [
+    "Graal diagnostic output saved in (?P<filename>.+\.zip)",
+    "output mismatch file: (?P<filename>.+\.Rout)",
+    "test had .fail outputs: \['(?P<filename>.+)'\]"
+  ]
+  timelimit : "1:00:00"
+  environment : {
+    FASTR_TEST_trace_tests : "true"
+    PKG_TEST_ENV_miniUI : "LC_ALL=C"
+    PKG_TEST_ENV_compare : "LC_ALL=C"
+    FASTR_OPTION_PrintErrorStacktracesToFile: "true"
+    GRAALVM_CHECK_EXPERIMENTAL_OPTIONS : "true"
   }
 }
 
@@ -127,7 +162,16 @@ commonLinux: ${common} ${packagesLinux} ${environmentLinux} {
   ]
 }
 
+commonLinuxJdk11: ${commonJdk11} ${packagesLinux} ${environmentLinux} {
+  setup: [
+	[set-export, LD_LIBRARY_PATH, [echo, "${PWD}/lib:${LD_LIBRARY_PATH}"]]
+    ["mx", "sforceimports"]
+  ]
+}
+
 commonDarwin: ${common} ${packagesDarwin} ${environmentDarwin}
+
+commonDarwinJdk11: ${commonJdk11} ${packagesDarwin} ${environmentDarwin}
 
 # Every "pull request" (PR) is subject to a series of "gate" commands that must pass
 # for the PR to be accepted into the master branch. The gate commands are run under
@@ -149,7 +193,17 @@ gateTestCommon : {
 
 gateTestLinux : ${gateTestCommon} ${commonLinux}
 
+gateTestLinuxJdk11 : ${gateTestCommon} ${commonLinuxJdk11}
+
 gateTestDarwin : ${gateTestCommon} ${commonDarwin} {
+  setup : [
+    [set-export, PKG_INCLUDE_FLAGS_OVERRIDE, "-I/cm/shared/apps/pcre/8.42/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/curl/7.50.1/include"]
+    [set-export, MOD_LIB_PATH, [echo, "${LD_LIBRARY_PATH}", |, tr, "\:", "\\n", |, grep, lib/gcc, |, tail, "-1"]]
+    [set-export, PKG_LDFLAGS_OVERRIDE, "-L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.42/lib -L/cm/shared/apps/curl/7.50.1/lib -L${MOD_LIB_PATH} -L/usr/lib"]
+  ]
+}
+
+gateTestDarwinJdk11 : ${gateTestCommon} ${commonDarwinJdk11} {
   setup : [
     [set-export, PKG_INCLUDE_FLAGS_OVERRIDE, "-I/cm/shared/apps/pcre/8.42/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/curl/7.50.1/include"]
     [set-export, MOD_LIB_PATH, [echo, "${LD_LIBRARY_PATH}", |, tr, "\:", "\\n", |, grep, lib/gcc, |, tail, "-1"]]
@@ -176,7 +230,26 @@ gateTestNoSpecialsLinux : ${commonLinux}  {
   ]
 }
 
+gateTestNoSpecialsLinuxJdk11 : ${commonLinuxJdk11}  {
+  timelimit : "2:00:00"
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials"]
+  ]
+}
+
 gateTestNoDSLCacheNoSpecialsLinux : ${commonLinux} {
+  environment : ${common.environment} ${environmentLinux.environment} {
+    FASTR_RELEASE: "true", # release build so that we also tests recommended pkgs installation
+    FASTR_OPTION_DSLCacheSizeFactor: "0"
+  }
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials"]
+    # to verify that we run with the desired configuration
+    ["mx", "r", "-e", "print(list(.fastr.option(as.character(quote(DSLCacheSizeFactor))),.fastr.option(as.character(quote(UseSpecials)))))"]
+  ]
+}
+
+gateTestNoDSLCacheNoSpecialsLinuxJdk11 : ${commonLinuxJdk11} {
   environment : ${common.environment} ${environmentLinux.environment} {
     FASTR_RELEASE: "true", # release build so that we also tests recommended pkgs installation
     FASTR_OPTION_DSLCacheSizeFactor: "0"
@@ -249,6 +322,14 @@ rbcheck : ${commonLinux} {
 }
 
 internalPkgtest: ${commonLinux} {
+  run : [
+    ["mx", "build"]
+    ["mx", "pkgtest", "--verbose", "--repos", "FASTR", "--pkg-filelist", "com.oracle.truffle.r.test.native/packages/pkg-filelist"]
+  ]
+  logs: ${common.logs}
+}
+
+internalPkgtestJdk11: ${commonLinuxJdk11} {
   run : [
     ["mx", "build"]
     ["mx", "pkgtest", "--verbose", "--repos", "FASTR", "--pkg-filelist", "com.oracle.truffle.r.test.native/packages/pkg-filelist"]

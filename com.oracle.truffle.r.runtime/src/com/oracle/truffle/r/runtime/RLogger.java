@@ -68,8 +68,7 @@ public class RLogger {
      * </ul>
      * 
      * WARNING: stdout is problematic for embedded mode when using this logger. Always specify a log
-     * file e.g. mx r --log.R.com.oracle.truffle.r.traceNativeCalls.level=FINE
-     * --log.file=&lt;yourfile&gt;
+     * file e.g. mx r --log.R.com.oracle.truffle.r.rffi.level=FINE --log.file=&lt;yourfile&gt;
      */
     public static final String LOGGER_RFFI = "com.oracle.truffle.r.rffi";
 
@@ -87,6 +86,11 @@ public class RLogger {
      * Log performance warnings.
      */
     public static final String LOGGER_PERFORMANCE_WARNINGS = "com.oracle.truffle.r.performanceWarnings";
+
+    /**
+     * Log file access.
+     */
+    public static final String LOGGER_FILE_ACCEESS = "com.oracle.truffle.r.fileAccess";
 
     public static TruffleLogger getLogger(String name) {
         return TruffleLogger.getLogger(R_LANGUAGE_ID, name);

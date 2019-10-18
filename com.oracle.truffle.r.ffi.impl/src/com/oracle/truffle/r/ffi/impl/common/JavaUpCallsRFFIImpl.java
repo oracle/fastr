@@ -30,8 +30,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.IdentityHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -47,7 +45,6 @@ import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
@@ -98,6 +95,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -108,7 +106,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
@@ -287,24 +285,30 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 if (value instanceof RPromise && ((RPromise) value).isOptimized()) {
                     // From the point of view of RFFI, optimized promises (i.e. promises with null
                     // env) should not show up
-                    return ((RPromise) value).getRawValue();
+                    RPromise promise = (RPromise) value;
+                    Object result = promise.getRawValue();
+                    Object wrapped = FFIMaterializeNode.executeUncached(result);
+                    if (wrapped != result) {
+                        promise.updateValue(wrapped);
+                    }
+                    return wrapped;
                 }
                 if (value instanceof RArgsValuesAndNames) {
                     RArgsValuesAndNames argsValsNames = (RArgsValuesAndNames) value;
-                    return argsValsNames.isEmpty() ? RSymbol.MISSING : argsValsNames.toPairlist();
+                    if (argsValsNames.isEmpty()) {
+                        return RSymbol.MISSING;
+                    } else {
+                        return argsValsNames.toPairlist();
+                    }
                 }
                 if (value == RMissing.instance || value == REmpty.instance) {
                     return RSymbol.MISSING;
                 }
-                Object v = RRuntime.asAbstractVector(value);
-                if (v instanceof RAbstractVector) {
-                    v = ((RAbstractVector) v).materialize();
+                Object res = FFIMaterializeNode.executeUncached(value);
+                if (res != value) {
+                    env.putOverrideLock(nameKey, res);
                 }
-                if (v != value) {
-                    env.putOverrideLock(nameKey, v);
-                    value = v;
-                }
-                return value;
+                return res;
             }
             if (!inherits) {
                 // simgle frame lookup
@@ -645,11 +649,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int TYPEOF(Object x) {
-        if (x instanceof CharSXPWrapper) {
-            return SEXPTYPE.CHARSXP.code;
-        } else {
-            return SEXPTYPE.gnuRCodeForObject(x);
-        }
+        throw implementedAsNode();
     }
 
     @Override
@@ -793,14 +793,20 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object SYMVALUE(Object x) {
         if (!(x instanceof RSymbol)) {
-            throw RInternalError.shouldNotReachHere();
+            throw RInternalError.shouldNotReachHere(Utils.getTypeName(x));
         }
-        Object res = REnvironment.baseEnv().get(((RSymbol) x).getName());
+        REnvironment baseEnv = REnvironment.baseEnv();
+        String name = ((RSymbol) x).getName();
+        Object res = baseEnv.get(name);
         if (res == null) {
             return RUnboundValue.instance;
-        } else {
-            return res;
         }
+        Object materialized = FFIMaterializeNode.executeUncached(res);
+        if (materialized != res) {
+            ShareObjectNode.executeUncached(res);
+            baseEnv.putOverrideLock(name, materialized);
+        }
+        return materialized;
     }
 
     @Override
@@ -833,7 +839,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object R_FindNamespace(Object name) {
-        return RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
+        REnvironment registry = RContext.getInstance().stateREnvironment.getNamespaceRegistry();
+        Object result = registry.get(RRuntime.asString(name));
+        // otherwise we would have to FFIWrap and write-back
+        assert result instanceof REnvironment : result;
+        return result;
     }
 
     @Override
@@ -1038,7 +1048,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object PRVALUE(Object x) {
         RPromise p = guaranteeInstanceOf(x, RPromise.class);
-        return p.isEvaluated() ? p.getValue() : RUnboundValue.instance;
+        if (!p.isEvaluated()) {
+            return RUnboundValue.instance;
+        }
+        Object val = p.getValue();
+        Object materialized = FFIMaterializeNode.executeUncached(val);
+        if (materialized != val) {
+            ShareObjectNode.executeUncached(materialized);
+            p.updateValue(materialized);
+        }
+        return materialized;
     }
 
     private enum ParseStatus {
@@ -1077,6 +1096,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object R_lsInternal3(Object envArg, int allArg, int sortedArg) {
+        // Even in GNU-R the result is a fresh vector not owned by the environment
         boolean sorted = sortedArg != 0;
         boolean all = allArg != 0;
         REnvironment env = guaranteeInstanceOf(envArg, REnvironment.class);
@@ -1086,6 +1106,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public String R_HomeDir() {
+        // This should actually return char* on the native side and there is no documentation
+        // regarding the ownership of the result. So far there has not been any issues with this
         return REnvVars.rHome();
     }
 
@@ -1112,27 +1134,27 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object R_GlobalEnv() {
-        return RContext.getInstance().stateREnvironment.getGlobalEnv();
+        throw implementedAsNode();
     }
 
     @Override
     public Object R_BaseEnv() {
-        return RContext.getInstance().stateREnvironment.getBaseEnv();
+        throw implementedAsNode();
     }
 
     @Override
     public Object R_BaseNamespace() {
-        return RContext.getInstance().stateREnvironment.getBaseNamespace();
+        throw implementedAsNode();
     }
 
     @Override
     public Object R_NamespaceRegistry() {
-        return RContext.getInstance().stateREnvironment.getNamespaceRegistry();
+        throw implementedAsNode();
     }
 
     @Override
     public int R_Interactive() {
-        return RContext.getInstance().isInteractive() ? 1 : 0;
+        throw implementedAsNode();
     }
 
     @Override
@@ -1223,6 +1245,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object R_getContextEnv(Object c) {
+        // Note: frame holds its environment in the arguments array
         RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
         if (rCaller == RCaller.topLevel) {
             return RContext.getInstance().stateREnvironment.getGlobalEnv();
@@ -1279,12 +1302,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         if (rCaller == RCaller.topLevel) {
             return RNull.instance;
         }
+        Utils.warn("Potential memory leak (pair-list constructed from RCaller)");
         return RContext.getRRuntimeASTAccess().getSyntaxCaller(rCaller);
     }
 
     @Override
     @TruffleBoundary
     public Object R_getContextSrcRef(Object c) {
+        // TODO: fix ownership, used in IDE integration
         Object o = R_getContextFun(c);
         if (!(o instanceof RFunction)) {
             return RNull.instance;
@@ -1306,7 +1331,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public int R_isGlobal(Object c) {
         RCaller rCaller = guaranteeInstanceOf(c, RCaller.class);
-
         return rCaller == RCaller.topLevel ? 1 : 0;
     }
 
@@ -1337,13 +1361,25 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object R_ExternalPtrTag(Object x) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
-        return p.getTag();
+        Object result = p.getTag();
+        Object materialized = FFIMaterializeNode.executeUncached(result);
+        if (result != materialized) {
+            ShareObjectNode.executeUncached(materialized);
+            p.setTag(materialized);
+        }
+        return materialized;
     }
 
     @Override
     public Object R_ExternalPtrProtected(Object x) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
-        return p.getProt();
+        Object result = p.getProt();
+        Object materialized = FFIMaterializeNode.executeUncached(result);
+        if (result != materialized) {
+            ShareObjectNode.executeUncached(materialized);
+            p.setProt(materialized);
+        }
+        return materialized;
     }
 
     @Override
@@ -1399,8 +1435,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object PRCODE(Object x) {
         RPromise promise = RFFIUtils.guaranteeInstanceOf(x, RPromise.class);
-        RSyntaxNode expr = RASTUtils.unwrap(promise.getRep()).asRSyntaxNode();
-        return RASTUtils.createLanguageElement(expr);
+        return RContext.getInstance().getRFFI().getOrCreateCode(promise, p -> {
+            RSyntaxNode expr = RASTUtils.unwrap(p.getRep()).asRSyntaxNode();
+            return RASTUtils.createLanguageElement(expr);
+        });
     }
 
     @Override
@@ -1454,6 +1492,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object getSummaryDescription(Object x) {
+        // FastR internal up-call: the caller makes no assumption about the ownership
         BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
         return wrapString(conn.getSummaryDescription());
     }
@@ -1461,6 +1500,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object getConnectionClassString(Object x) {
+        // FastR internal up-call: the caller makes no assumption about the ownership
         BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
         return wrapString(conn.getConnectionClassName());
     }
@@ -1468,6 +1508,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object getOpenModeString(Object x) {
+        // FastR internal up-call: the caller makes no assumption about the ownership
         BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
         return wrapString(conn.getOpenMode().toString());
     }
@@ -1522,83 +1563,38 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public void R_PreserveObject(Object obj) {
-        guaranteeInstanceOf(obj, RBaseObject.class);
-        IdentityHashMap<RBaseObject, AtomicInteger> preserveList = getContext().rffiContextState.preserveList;
-        AtomicInteger prevCnt = preserveList.putIfAbsent((RBaseObject) obj, new AtomicInteger(1));
-        if (prevCnt != null) {
-            prevCnt.incrementAndGet();
-        }
+        throw implementedAsNode();
     }
 
     @Override
-    @TruffleBoundary
     public void R_ReleaseObject(Object obj) {
-        guaranteeInstanceOf(obj, RBaseObject.class);
-        RFFIContext context = getContext();
-        IdentityHashMap<RBaseObject, AtomicInteger> preserveList = context.rffiContextState.preserveList;
-        AtomicInteger atomicInteger = preserveList.get(obj);
-        if (atomicInteger != null) {
-            int decrementAndGet = atomicInteger.decrementAndGet();
-            if (decrementAndGet == 0) {
-                // remove from "list"
-                preserveList.remove(obj);
-                context.registerReferenceUsedInNative(obj);
-            }
-        } else {
-            // TODO report ?
-        }
+        throw implementedAsNode();
     }
 
     @Override
     public Object Rf_protect(Object x) {
-        getContext().rffiContextState.protectStack.add(guaranteeInstanceOf(x, RBaseObject.class));
-        return x;
+        throw implementedAsNode();
     }
 
     @Override
     public void Rf_unprotect(int x) {
-        RFFIContext context = getContext();
-        Collections.ArrayListObj<RBaseObject> stack = context.rffiContextState.protectStack;
-        try {
-            for (int i = 0; i < x; i++) {
-                context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
-            }
-        } catch (IndexOutOfBoundsException e) {
-            debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
-        }
-    }
-
-    private static boolean debugWarning(String message) {
-        CompilerDirectives.transferToInterpreter();
-        RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
-        return true;
+        throw implementedAsNode();
     }
 
     @Override
     public int R_ProtectWithIndex(Object x) {
-        Collections.ArrayListObj<RBaseObject> stack = getContext().rffiContextState.protectStack;
-        stack.add(guaranteeInstanceOf(x, RBaseObject.class));
-        return stack.size() - 1;
+        throw implementedAsNode();
     }
 
     @Override
     public void R_Reprotect(Object x, int y) {
-        Collections.ArrayListObj<RBaseObject> stack = getContext().rffiContextState.protectStack;
-        stack.set(y, guaranteeInstanceOf(x, RBaseObject.class));
+        throw implementedAsNode();
     }
 
     @Override
     public void Rf_unprotect_ptr(Object x) {
-        RFFIContext context = getContext();
-        Collections.ArrayListObj<RBaseObject> stack = context.rffiContextState.protectStack;
-        for (int i = stack.size() - 1; i >= 0; i--) {
-            if (stack.get(i) == x) {
-                context.registerReferenceUsedInNative(stack.remove(i));
-                return;
-            }
-        }
+        throw implementedAsNode();
     }
 
     @Override
@@ -2335,10 +2331,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object Rf_asCharacterFactor(Object x) {
         throw implementedAsNode();
-    }
-
-    private static RFFIContext getContext() {
-        return RContext.getInstance().getStateRFFI();
     }
 
     @Override

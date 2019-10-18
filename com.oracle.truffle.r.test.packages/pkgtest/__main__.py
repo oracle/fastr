@@ -21,7 +21,7 @@
 # questions.
 #
 import sys
-from . import pkgtest, pkgtest_cmp, pkgtest_check
+from . import pkgtest, pkgtest_cmp, pkgtest_check, pkgcache
 
 rc = 1
 if sys.argv:
@@ -32,6 +32,8 @@ if sys.argv:
         rc = pkgtest_cmp(sys.argv[2:])
     elif command == "check":
         rc = pkgtest_check(sys.argv[2:])
+    elif command == "pkgcache":
+        rc = pkgcache(sys.argv[2:])
     else:
         rc = pkgtest(sys.argv)
 

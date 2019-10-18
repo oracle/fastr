@@ -39,6 +39,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -69,12 +70,12 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     static LibHandle dlOpen(RContext context, String path) {
         final Env env = context.getEnv();
         RFFIContext stateRFFI = context.getStateRFFI();
-        TruffleFile file = env.getTruffleFile(path);
+        TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, path);
         String libName = DLL.libName(file.getPath());
         boolean isLibR = libName.equals("libR");
         if (isLibR) {
-            file = env.getTruffleFile(path + "l"); // TODO: make it generic, if +"l" file exists,
-                                                   // use that instead
+            // TODO: make it generic, if +"l" file exists, use that instead
+            file = FileSystemUtils.getSafeTruffleFile(env, path + "l");
         }
         boolean isInitialization = isLibR;
         Object before = null;

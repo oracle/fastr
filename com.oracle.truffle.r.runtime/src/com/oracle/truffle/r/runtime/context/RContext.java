@@ -73,7 +73,6 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RStartParams;
-import com.oracle.truffle.r.runtime.ContextReferenceAccess;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -308,7 +307,6 @@ public final class RContext {
      */
     @CompilationFinal private static RCodeBuilder<RSyntaxNode> astBuilder;
     @CompilationFinal private static RRuntimeASTAccess runtimeASTAccess;
-    @CompilationFinal private static ContextReferenceAccess contextReferenceAccess;
     @CompilationFinal private static RBuiltinLookup builtinLookup;
     @CompilationFinal private static boolean initialContextInitialized;
     @CompilationFinal private static int initialPid;
@@ -320,11 +318,9 @@ public final class RContext {
     /**
      * Initialize VM-wide static values.
      */
-    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, ContextReferenceAccess rContextReferenceAccess,
-                    RBuiltinLookup rBuiltinLookup) {
+    public static void initializeGlobalState(RCodeBuilder<RSyntaxNode> rAstBuilder, RRuntimeASTAccess rRuntimeASTAccess, RBuiltinLookup rBuiltinLookup) {
         RContext.astBuilder = rAstBuilder;
         RContext.runtimeASTAccess = rRuntimeASTAccess;
-        RContext.contextReferenceAccess = rContextReferenceAccess;
         RContext.builtinLookup = rBuiltinLookup;
     }
 
@@ -857,10 +853,6 @@ public final class RContext {
      */
     public static RRuntimeASTAccess getRRuntimeASTAccess() {
         return runtimeASTAccess;
-    }
-
-    public static ContextReferenceAccess getContextReferenceAccess() {
-        return contextReferenceAccess;
     }
 
     /**

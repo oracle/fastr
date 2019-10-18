@@ -20,31 +20,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.engine;
+package com.oracle.truffle.r.runtime.context;
 
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.dsl.CachedContext;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.engine.ContextReferenceAccessImplFactory.ContextReferenceNodeImplNodeGen;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ContextReferenceAccess;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 
-public class ContextReferenceAccessImpl implements ContextReferenceAccess {
+public interface TruffleRLanguageAccess {
 
-    @Override
-    public ContextReferenceNode createContextReferenceNode() {
-        return ContextReferenceNodeImplNodeGen.create();
-    }
+    void onInitializeContext(Env env);
 
-    protected abstract static class ContextReferenceNodeImpl extends Node implements ContextReferenceNode {
-        @Override
-        public abstract ContextReference<RContext> execute();
-
-        @Specialization
-        ContextReference<RContext> get(@CachedContext(TruffleRLanguageImpl.class) ContextReference<RContext> ref) {
-            return ref;
-        }
-    }
+    String toString(RContext context, Object value);
 
 }

@@ -34,6 +34,8 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public final class RStringSequence extends RAbstractStringVector implements RSequence {
 
     private final int start;
@@ -41,6 +43,7 @@ public final class RStringSequence extends RAbstractStringVector implements RSeq
     private final String prefix;
     private final String suffix;
     private final int length;
+    private AtomicReference<RStringVector> materialized = new AtomicReference<>();
 
     protected RStringSequence(String prefix, String suffix, int start, int stride, int length) {
         super(RDataFactory.COMPLETE_VECTOR);
@@ -49,6 +52,14 @@ public final class RStringSequence extends RAbstractStringVector implements RSeq
         this.prefix = prefix != null ? prefix : "";
         this.suffix = suffix != null ? suffix : "";
         this.length = length;
+    }
+
+    @Override
+    public RStringVector cachedMaterialize() {
+        if (materialized.get() == null) {
+            materialized.compareAndSet(null, materialize());
+        }
+        return materialized.get();
     }
 
     @Override

@@ -34,21 +34,13 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
 public final class TemporarySlotNode extends Node {
-
-    private static final RFrameSlot[] defaultTempIdentifiers = new RFrameSlot[]{
-                    RFrameSlot.createTemp("TemporarySlotNode0", true),
-                    RFrameSlot.createTemp("TemporarySlotNode1", true),
-                    RFrameSlot.createTemp("TemporarySlotNode2", true),
-                    RFrameSlot.createTemp("TemporarySlotNode3", true)
-    };
-
     @CompilationFinal private FrameSlot tempSlot;
     private int tempIdentifier;
 
     public FrameSlot initialize(VirtualFrame frame, Object value) {
         if (tempSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            tempSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), defaultTempIdentifiers[0], FrameSlotKind.Object);
+            tempSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.getTemp(tempIdentifier), FrameSlotKind.Object);
         }
         FrameSlot slot = tempSlot;
         try {
@@ -57,7 +49,7 @@ public final class TemporarySlotNode extends Node {
                 // keep the complete loop in the slow path
                 do {
                     tempIdentifier++;
-                    RFrameSlot identifier = tempIdentifier < defaultTempIdentifiers.length ? defaultTempIdentifiers[tempIdentifier] : RFrameSlot.createTemp("TemporarySlotNode" + tempIdentifier, true);
+                    RFrameSlot identifier = RFrameSlot.getTemp(tempIdentifier);
                     tempSlot = slot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), identifier, FrameSlotKind.Object);
                     if (frame.getObject(slot) == null) {
                         break;

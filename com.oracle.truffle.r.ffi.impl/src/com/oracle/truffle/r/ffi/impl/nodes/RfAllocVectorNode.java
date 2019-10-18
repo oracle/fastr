@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -53,15 +54,24 @@ public abstract class RfAllocVectorNode extends FFIUpCallNode.Arg2 {
     }
 
     @Specialization(guards = "mode == type.code", limit = "SEXPTYPE_COUNT")
-    public Object doIt(@SuppressWarnings("unused") int mode, long n,
+    protected static Object doIt(@SuppressWarnings("unused") int mode, long n,
                     @Cached(value = "getType(mode)", allowUncached = true) SEXPTYPE type) {
         CompilerAsserts.compilationConstant(type);
         if (n > Integer.MAX_VALUE) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(RError.SHOW_CALLER, RError.Message.LONG_VECTORS_NOT_SUPPORTED);
-            // TODO check long vector
         }
         int ni = (int) n;
+        try {
+            return allocate(type, ni);
+        } catch (OutOfMemoryError ex) {
+            CompilerDirectives.transferToInterpreter();
+            String msg = String.format("Cannot allocate new vector of type %s and size %d: not enough memory.", type.toString(), n);
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, msg);
+        }
+    }
+
+    private static Object allocate(@Cached(value = "getType(mode)", allowUncached = true) SEXPTYPE type, int ni) {
         switch (type) {
             case INTSXP:
                 return RDataFactory.createIntVector(new int[ni], RDataFactory.COMPLETE_VECTOR);

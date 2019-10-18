@@ -22,12 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 /**
  * Factory for RFFI implementation specific {@link DownCallNode} which is responsible for
@@ -60,11 +65,16 @@ public abstract class DownCallNodeFactory {
             return execute(f, args);
         }
 
-        protected final Object callInternal(NativeFunction f, Object[] args, TruffleObject target, InteropLibrary interop) {
+        /**
+         * The implementations should declare one specialization that forwards to this method.
+         */
+        protected Object doCallImpl(NativeFunction f, Object[] args, @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+            CompilerAsserts.partialEvaluationConstant(f);
+            TruffleObject target = createTarget(ctxRef, f);
             Object before = -1;
             try {
                 before = beforeCall(f, target, args);
-                return interop.execute(target, args);
+                return InteropLibrary.getFactory().getUncached().execute(target, args);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             } finally {
@@ -76,17 +86,17 @@ public abstract class DownCallNodeFactory {
          * Should return a {@link TruffleObject} that will invoke the given function upon the
          * {@code EXECUTE} message.
          */
-        protected abstract TruffleObject createTarget(NativeFunction f);
+        protected abstract TruffleObject createTarget(ContextReference<RContext> ctxRef, NativeFunction f);
 
         /**
          * Allows to transform the arguments before the execute message is sent to the result of
-         * {@link #createTarget(NativeFunction)}.
+         * {@link #createTarget(ContextReference, NativeFunction)}.
          */
         protected abstract Object beforeCall(NativeFunction nativeFunction, TruffleObject f, Object[] args);
 
         /**
          * Allows to post-process the arguments after the execute message was sent to the result of
-         * {@link #createTarget(NativeFunction)}. If the call to
+         * {@link #createTarget(ContextReference, NativeFunction)}. If the call to
          * {@link #beforeCall(NativeFunction, TruffleObject, Object[])} was not successful, the
          * {@code before} parameter will have value {@code -1}.
          */

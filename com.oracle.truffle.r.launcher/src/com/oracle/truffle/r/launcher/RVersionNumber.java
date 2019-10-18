@@ -26,7 +26,7 @@ package com.oracle.truffle.r.launcher;
  * Defines the R version number and it's release date. Separate from {code RVersionInfo} to allow
  * use in {@code static final} fields and to finesse the fact that such fields cannot precede the
  * {@code enum} elements.
- *
+ * <p>
  * N.B. Since packages check against the version number, we have to have a GnuR version number and,
  * for consistency, we set the date to that of the corresponding GnuR release.
  */
@@ -49,6 +49,13 @@ public class RVersionNumber {
     public static final String RELEASE_DATE = " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
 
     public static final String VERSION_STRING = "FastR version " + FULL + RELEASE_DATE;
+
+    public static final String COPYRIGHT = "Copyright (c) 2013-19, Oracle and/or its affiliates\n" +
+                    "Copyright (c) 1995-2018, The R Core Team\n" +
+                    "Copyright (c) 2018 The R Foundation for Statistical Computing\n" +
+                    "Copyright (c) 2012-4 Purdue University\n" +
+                    "Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura\n" +
+                    "All rights reserved.\n";
 
     /**
      * From {@code Rinternals.h} and {@code library.R}.

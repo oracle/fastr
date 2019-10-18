@@ -35,6 +35,11 @@ import java.nio.file.StandardCopyOption;
 
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import java.io.IOException;
+import java.nio.file.StandardCopyOption;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -54,10 +59,11 @@ public abstract class FastRUseDebugMakevars extends RBuiltinNode.Arg1 {
     @TruffleBoundary
     @Specialization
     protected RNull useDebugMakevars(boolean use) {
-        TruffleFile dst = RContext.getInstance().getEnv().getInternalTruffleFile("etc").resolve("Makevars.site");
+        TruffleFile rHome = REnvVars.getRHomeTruffleFile(RContext.getInstance().getEnv());
+        TruffleFile dst = rHome.resolve("etc").resolve("Makevars.site");
         try {
             if (use) {
-                TruffleFile src = RContext.getInstance().getEnv().getInternalTruffleFile("etc").resolve("Makevars.site.debug");
+                TruffleFile src = rHome.resolve("etc").resolve("Makevars.site.debug");
                 src.copy(dst, StandardCopyOption.REPLACE_EXISTING);
             } else {
                 if (dst.exists()) {

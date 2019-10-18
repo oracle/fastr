@@ -7,6 +7,9 @@ New features:
   * `gc` is not invoking Java GC by default because GNU-R GC and Java GC are fundamentally
     different and this may lead to unintended behavior.
 * Option `--R.BackEndLLVM` activates the LLVM native code backend loading the LLVM bitcode bundled with package libraries
+* Option `--R.BackEnd` specifies an RFFI backend. `--R.BackEnd=native`, the default, activates the JNI based backend, while `--R.BackEnd=llvm` activates the LLVM backend loading the LLVM bitcode bundled with package libraries. Note: All ``--R.BackEnd*` options are passed to R subprocesses.
+* Option `--R.BackEndNative` enumerates packages whose native code will be executed by the native backend (JNI based)
+* Option `--R.BackEndLLVM` enumerates packages whose native code will be executed by the LLVM backend
 * Option `--R.DebugLLVMLibs` activates debugging of native code using the bundled LLVM bitcode
 * Builtin `fastr.useDebugMakevars(use)` activates/deactivates a special `etc/Makevars.site` for debugging native code
 * Builtin `fastr.setToolchain(name)` (`name` can be `llvm` or `native`) sets the compiler toolchain used for package building
@@ -18,14 +21,19 @@ Added missing R builtins and C APIs
 
 Bug fixes:
 
+* multiplication of a vector and matrix that has one of the dimensions equal to `0` #104
 * `tibble` does not print properly when using `knitr` #68
 * `type.convert` uses locale #88
 * promise with the empty value is handled correctly in 'missing' #87
 * `scan` handles non-default value of `nmax` argument
+* `Rf_allocVector` fails gracefully when FastR runs out of memory
+* bug in `DATAPTR` for vectors of size in bytes larger than 2^31
+* provide correct daylight saving time info in `as.POSIXlt` #98
+* `list.files` handles `no..` and `all` arguments correctly
+* `R --version` does not enter the interactive mode #89
+* `update.formula` with RHS that contains `NULL` #92
+* failures when working with large vectors (>1GB)
 
-Added missing R builtins and C API:
-
-* `grepRaw` (only for `fixed=T`)
 
 
 # 19.2.0

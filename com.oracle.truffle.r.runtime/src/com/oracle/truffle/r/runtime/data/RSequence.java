@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
 /**
  * An {@link RSequence} only records the "length", "start" and "stride" (the latter two fields in
@@ -31,6 +32,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * computed and not stored.
  */
 public interface RSequence {
+
+    /**
+     * Materializes the vector and remembers the materialized value for later use. The result should
+     * be shared permanent vector.
+     */
+    RMaterializedVector cachedMaterialize();
 
     Object getStartObject();
 

@@ -75,6 +75,11 @@ public final class TruffleMixed_Context extends RFFIContext {
 
     }
 
+    @Override
+    public Object getSulongArrayType(Object arrayElement) {
+        return llvmContext.getSulongArrayType(arrayElement);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public <C extends RFFIContext> C as(Class<C> rffiCtxClass) {

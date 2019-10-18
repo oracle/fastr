@@ -32,7 +32,7 @@ def _darwin_extract_realpath(lib, libpath):
     If libpath has a dependency on lib, return the path in the library, else None
     '''
     try:
-        output = subprocess.check_output(['otool', '-L', libpath])
+        output = subprocess.check_output(['otool', '-L', libpath], universal_newlines=True)
         lines = output.split('\n')
         for line in lines[1:]:
             if lib in line:
@@ -54,9 +54,9 @@ def _copylib(lib, libpath, plain_libpath_base, target):
     else:
         try:
             if platform.system() == 'Linux':
-                output = subprocess.check_output(['objdump', '-p', libpath])
+                output = subprocess.check_output(['objdump', '-p', libpath], universal_newlines=True)
             elif platform.system() == 'SunOS':
-                output = subprocess.check_output(['elfdump', '-d', libpath])
+                output = subprocess.check_output(['elfdump', '-d', libpath], universal_newlines=True)
             lines = output.split('\n')
             for line in lines:
                 if 'SONAME' in line:
@@ -115,6 +115,9 @@ def copylib(args):
         if ver_env_key in os.environ:
             lib_prefix += os.environ[ver_env_key] + '.'
         plain_libpath_base = lib_prefix + ext
+        ver_env_key = 'FASTR_LIB' + args[0].upper() + '_VER'
+        if ver_env_key in os.environ:
+            plain_libpath_base += '.' + os.environ[ver_env_key]
         for part in parts:
             path = part.strip('"').lstrip('-L')
             if os.path.exists(path):
@@ -135,7 +138,7 @@ def copylib(args):
                             _copylib(args[0], target, plain_libpath_base, args[1])
                         return 0
 
-    if os.environ.has_key('FASTR_RELEASE'):
+    if 'FASTR_RELEASE' in os.environ:
         # if args[0] == 'quadmath' and (mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris'):
         if mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris':
             return 0

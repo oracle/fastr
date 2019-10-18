@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -58,8 +59,10 @@ public abstract class FastRSetToolchain extends RBuiltinNode.Arg1 {
         } else {
             throw error(RError.Message.GENERIC, "Only 'native' or 'llvm' argument values accepted");
         }
-        TruffleFile src = RContext.getInstance().getEnv().getInternalTruffleFile("etc").resolve(srcConf);
-        TruffleFile dst = RContext.getInstance().getEnv().getInternalTruffleFile("etc").resolve("Makeconf");
+        TruffleFile rHome = REnvVars.getRHomeTruffleFile(RContext.getInstance().getEnv());
+        TruffleFile etc = rHome.resolve("etc");
+        TruffleFile src = etc.resolve(srcConf);
+        TruffleFile dst = etc.resolve("Makeconf");
         try {
             src.copy(dst, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {

@@ -77,6 +77,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.RfAllocVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfFindFun;
 import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
+import com.oracle.truffle.r.ffi.impl.nodes.TYPEOFNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.VectorElementGetterNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
@@ -318,6 +319,7 @@ public interface StdUpCallsRFFI {
 
     void SET_TYPEOF(Object x, int v);
 
+    @RFFIUpCallNode(TYPEOFNode.class)
     int TYPEOF(Object x);
 
     int OBJECT(Object x);

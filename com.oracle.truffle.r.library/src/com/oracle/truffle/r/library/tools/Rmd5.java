@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -63,7 +64,7 @@ public abstract class Rmd5 extends RExternalBuiltinNode.Arg1 {
         Env env = RContext.getInstance().getEnv();
         String[] data = new String[files.getLength()];
         for (int i = 0; i < data.length; i++) {
-            TruffleFile file = env.getTruffleFile(files.getDataAt(i));
+            TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, files.getDataAt(i));
             String dataValue = RRuntime.STRING_NA;
             if (!(file.exists() && file.isReadable())) {
                 complete = false;

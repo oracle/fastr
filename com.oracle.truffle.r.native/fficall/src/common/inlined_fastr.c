@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,54 +40,12 @@ int Rf_envlength(SEXP rho);
 */
 INLINE_FUN R_len_t length(SEXP s)
 {
-    int i;
-    switch (TYPEOF(s)) {
-    case NILSXP:
-        return 0;
-    case LGLSXP:
-    case INTSXP:
-    case REALSXP:
-    case CPLXSXP:
-    case STRSXP:
-    case CHARSXP:
-    case VECSXP:
-    case EXPRSXP:
-    case RAWSXP:
-    case DOTSXP:
-    case ENVSXP:
-    case LISTSXP:
-    case LANGSXP:
-        // Note: all these types should have specialization in MiscNodes$LENGTHNode
-        return LENGTH(s);
-    default:
-        // e.g. SYMSXP (symbol), CLOSXP (closure)
-        return 1;
-    }
+    return LENGTH(s);
 }
 
 INLINE_FUN R_xlen_t xlength(SEXP s)
 {
-    int i;
-    switch (TYPEOF(s)) {
-    case NILSXP:
-        return 0;
-    case LGLSXP:
-    case INTSXP:
-    case REALSXP:
-    case CPLXSXP:
-    case STRSXP:
-    case CHARSXP:
-    case VECSXP:
-    case EXPRSXP:
-    case RAWSXP:
-    case DOTSXP:
-    case ENVSXP:
-    case LISTSXP:
-    case LANGSXP:
-        return XLENGTH(s);
-    default:
-        return 1;
-    }
+	return XLENGTH(s);
 }
 
 /* regular allocVector() as a special case of allocVector3() with no custom allocator */

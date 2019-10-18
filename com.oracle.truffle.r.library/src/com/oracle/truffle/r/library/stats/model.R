@@ -1318,15 +1318,22 @@ updateform <- function(old, new) {
             new[[2L]] <- lhs
             new[[3L]] <- tmp
         }
-        # Note: we are probably getting away with not parenthesizing thanks to R
-        new[[2L]] <- replaceDots(new[[2L]], lhs)
-        new[[3L]] <- replaceDots(new[[3L]], rhs)
+        if (!is.null(new[[2L]])) {
+            new[[2L]] <- replaceDots(new[[2L]], lhs)
+        }
+        if (!is.null(new[[3L]])) {
+            new[[3L]] <- replaceDots(new[[3L]], rhs)
+        }
     } else {
         # the old formula has no lhs, we only expand rhs
         if (length(new) == 3) {
-            new[[3L]] <- replaceDots(new[[3L]], old[[2L]])
+            if (!is.null(new[[3L]])) {
+                new[[3L]] <- replaceDots(new[[3L]], old[[2L]])
+            }
         } else {
-            new[[2L]] <- replaceDots(new[[2L]], old[[2L]])
+            if (!is.null(new[[2L]])) {
+                new[[2L]] <- replaceDots(new[[2L]], old[[2L]])
+            }
         }
     }
 

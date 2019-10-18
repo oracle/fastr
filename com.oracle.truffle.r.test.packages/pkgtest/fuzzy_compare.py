@@ -45,6 +45,10 @@ def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, cu
     fastr_start = _find_start(fastr_content)
     fastr_len = len(fastr_content)
     if not gnur_start or not gnur_end or not fastr_start:
+        if not gnur_start or not gnur_end:
+            logging.info("malformed GnuR output file {0}: ########\n{1}########".format(gnur_filename, gnur_content))
+        if not fastr_start:
+            logging.info("malformed FastR output file {0}: ########\n{1}########".format(fastr_filename, fastr_content))
         return -1, 0, 0
     gnur_i = gnur_start
     fastr_i = fastr_start
@@ -195,7 +199,8 @@ def _get_next_line(prompt, content, content_len, line_idx):
 
 
 def _ignore_whitespace(gnur_line, fastr_line):
-    return gnur_line.translate(None, ' \t') == fastr_line.translate(None, ' \t')
+    translate_table = {ord(' '): None, ord('\t'): None}
+    return gnur_line.translate(translate_table) == fastr_line.translate(translate_table)
 
 
 def _capture_prompt(lines, idx):

@@ -22,16 +22,20 @@
  */
 package com.oracle.truffle.r.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleRuntime;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -51,65 +55,61 @@ public abstract class InlineCacheNode extends RBaseNode {
         this.maxPicDepth = maxPicDepth;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(limit = "maxPicDepth", guards = "value == cachedValue")
-    protected Object doCached(Frame frame, Object value,
-                    @Cached("value") Object cachedValue,
-                    @Cached("createBinaryProfile()") ConditionProfile isVirtualFrameProfile,
-                    @Cached("cache(cachedValue)") RNode reified,
-                    @Cached("new(reified)") NodeInsertedClosure nodeInsertedClosure) {
-        VirtualFrame vf;
-        if (isVirtualFrameProfile.profile(frame instanceof VirtualFrame)) {
-            vf = (VirtualFrame) frame;
-        } else {
-            vf = frame.materialize();
-        }
-
-        // Use a closure to notify the root node that a new node has just been inserted. The
-        // closure is necessary to do the notification just once.
-        nodeInsertedClosure.notifyNodeInserted();
-
-        return reified.visibleExecute(vf);
-    }
-
-    @Specialization(replaces = "doCached")
-    protected Object doGeneric(Frame frame, Object value) {
-        return evalPromise(frame, (Closure) value);
-    }
-
-    protected RNode cache(Object value) {
-        return RASTUtils.cloneNode((RNode) ((Closure) value).getExpr());
-    }
-
     /**
-     * Creates an inline cache that will execute promises closures by using a PIC and falling back
-     * to {@link InlineCacheNode#evalPromise(Frame, Closure)}.
+     * Creates an inline cache that will execute promises closures by using a polymorphic inline
+     * cache (PIC) and falling back to
+     * {@link InlineCacheNode#evalPromise(MaterializedFrame, Closure)}.
      *
-     * @param maxPicDepth maximum number of entries in the polymorphic inline cache
+     * @param maxPicDepth maximum number of entries in the PIC
      */
     public static InlineCacheNode create(int maxPicDepth) {
         return InlineCacheNodeGen.create(maxPicDepth);
     }
 
-    @TruffleBoundary
-    protected static Object evalPromise(Frame frame, Closure closure) {
-        return closure.eval(frame.materialize());
+    // Cached case: create a root node and direct call node
+    // This should allow Truffle PE to inline the promise code if it deems it is beneficial
+
+    protected DirectCallNode createInlinableCall(Closure value) {
+        InlineCacheRootNode rootNode = new InlineCacheRootNode(RContext.getInstance().getLanguage(), RASTUtils.cloneNode((RNode) value.getExpr()));
+        TruffleRuntime runtime = Truffle.getRuntime();
+        runtime.createCallTarget(rootNode);
+        return runtime.createDirectCallNode(rootNode.getCallTarget());
     }
 
-    protected class NodeInsertedClosure {
-        private final Node n;
-        @CompilationFinal boolean notified;
+    private static final class InlineCacheRootNode extends RootNode {
+        @Child private RNode node;
 
-        public NodeInsertedClosure(Node n) {
-            this.n = n;
+        protected InlineCacheRootNode(TruffleLanguage<?> language, RNode node) {
+            super(language);
+            this.node = node;
         }
 
-        void notifyNodeInserted() {
-            if (!notified) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                InlineCacheNode.this.notifyInserted(n);
-                notified = true;
-            }
+        @Override
+        public Object execute(VirtualFrame frame) {
+            VirtualFrame execFrame = (VirtualFrame) frame.getArguments()[0];
+            return node.visibleExecute(execFrame);
         }
+    }
+
+    @Specialization(limit = "maxPicDepth", guards = "value == cachedValue")
+    protected Object doCached(Frame frame, @SuppressWarnings("unused") Closure value,
+                    @SuppressWarnings("unused") @Cached("value") Closure cachedValue,
+                    @Cached("createClassProfile()") ValueProfile frameClassProfile,
+                    @Cached("createInlinableCall(value)") DirectCallNode callNode) {
+        return callNode.call(frameClassProfile.profile(frame).materialize());
+    }
+
+    // Generic case: execute call target cached in the Closure
+    // We do not go though call node, so not Truffle inlining can take place,
+    // but nothing is inserted into this AST, so it doesn't grow without limits
+
+    @Specialization(replaces = "doCached")
+    protected Object doGeneric(Frame frame, Closure value) {
+        return evalPromise(frame.materialize(), value);
+    }
+
+    @TruffleBoundary
+    protected static Object evalPromise(MaterializedFrame frame, Closure closure) {
+        return closure.eval(frame);
     }
 }

@@ -30,10 +30,8 @@ import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -48,6 +46,7 @@ import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -130,7 +129,7 @@ public class TruffleNFI_Context extends RFFIContext {
         return lastException;
     }
 
-    private final EnumMap<NativeFunction, TruffleObject> nativeFunctions = new EnumMap<>(NativeFunction.class);
+    @CompilationFinal(dimensions = 1) private final TruffleObject[] nativeFunctions = new TruffleObject[NativeFunction.values().length];
 
     @SuppressWarnings("unchecked")
     @Override
@@ -149,8 +148,10 @@ public class TruffleNFI_Context extends RFFIContext {
      */
     @Override
     public TruffleObject lookupNativeFunction(NativeFunction function) {
-        CompilerAsserts.neverPartOfCompilation();
-        if (!nativeFunctions.containsKey(function)) {
+        int index = function.ordinal();
+        if (nativeFunctions[index] == null) {
+            // The look-up is one-off thing
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             TruffleObject dllInfo;
             if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
                 dllInfo = TruffleNFI_Context.getInstance().defaultLibrary;
@@ -171,12 +172,12 @@ public class TruffleNFI_Context extends RFFIContext {
                 InteropLibrary interop = InteropLibrary.getFactory().getUncached();
                 TruffleObject symbol = ((TruffleObject) interop.readMember(dllInfo, function.getCallName()));
                 TruffleObject target = (TruffleObject) interop.invokeMember(symbol, "bind", function.getSignature());
-                nativeFunctions.put(function, target);
+                nativeFunctions[index] = target;
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
         }
-        return nativeFunctions.get(function);
+        return nativeFunctions[index];
     }
 
     private static boolean variablesInitialized;
@@ -329,7 +330,7 @@ public class TruffleNFI_Context extends RFFIContext {
     public ContextState initialize(RContext context) {
         if (RContext.getInstance().getOption(TraceNativeCalls)) {
             System.out.println("WARNING: The TraceNativeCalls option was discontinued!\n" +
-                            "You can rerun FastR with --log.R.com.oracle.truffle.r.nativeCalls.level=FINE --log.file=<yourfile>.\n" +
+                            "You can rerun FastR with --log.R." + RLogger.LOGGER_RFFI + ".level=FINE --log.file=<yourfile>.\n" +
                             "NOTE that stdout is problematic for embedded mode, when using this logger, also always specify a log file");
         }
         initializeLock();

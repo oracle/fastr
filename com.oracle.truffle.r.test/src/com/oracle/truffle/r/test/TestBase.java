@@ -166,6 +166,35 @@ public class TestBase {
         }
     }
 
+    public enum IgnoredJdk implements TestTrait {
+        LaterThanJdk8("tests that fail if jdk later then java 8", System.getProperty("java.specification.version").compareTo("1.8") > 0);
+
+        private final String description;
+        private final boolean isIgnoring;
+
+        IgnoredJdk(String description, boolean isIgnoring) {
+            this.description = description;
+            this.isIgnoring = isIgnoring;
+        }
+
+        @Override
+        public String getName() {
+            return name();
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public static boolean containsIgnoring(TestTrait[] traits) {
+            return Arrays.stream(TestTrait.collect(traits, IgnoredJdk.class)).anyMatch(t -> t.isIgnoring());
+        }
+
+        private boolean isIgnoring() {
+            return isIgnoring;
+        }
+    }
+
     public enum Context implements TestTrait {
         NonShared, // Test requires a new non-shared {@link RContext}.
         NoJavaInterop; // Test requires a {@link RContext} with disabled host access.
@@ -666,7 +695,7 @@ public class TestBase {
             output.addAll(Arrays.asList(TestTrait.collect(traits, Output.class)));
             context.addAll(Arrays.asList(TestTrait.collect(traits, Context.class)));
             containsError = (!FULL_COMPARE_ERRORS && (output.contains(Output.IgnoreErrorContext) || output.contains(Output.ImprovedErrorContext) || output.contains(Output.IgnoreErrorMessage)));
-            isIgnored = (ignored.size() > 0 || IgnoreOS.containsIgnoring(traits)) ^
+            isIgnored = (ignored.size() > 0 || IgnoreOS.containsIgnoring(traits) || IgnoredJdk.containsIgnoring(traits)) ^
                             (ProcessFailedTests && (!IgnoredUnknownOnlyTests || (IgnoredUnknownOnlyTests && ignored.contains(Ignored.Unknown))) &&
                                             !(ignored.contains(Ignored.Unstable) || ignored.contains(Ignored.SideEffects)));
             assert !output.contains(Output.IgnoreWhitespace) || output.size() == 1 : "IgnoreWhitespace trait does not work with any other Output trait";

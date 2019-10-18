@@ -45,7 +45,8 @@ public enum RVersionInfo {
     VersionString("version.string", RVersionNumber.VERSION_STRING);
     // @formatter:on
 
-    public static final int SERIALIZE_VERSION = (2 << 16) + (3 << 8) + 0;
+    public static final int SERIALIZE_VERSION_3 = (3 << 16) + (5 << 8) + 0;
+    public static final int SERIALIZE_VERSION_2 = (2 << 16) + (3 << 8) + 0;
 
     @CompilationFinal(dimensions = 1) private static final RVersionInfo[] VALUES = RVersionInfo.values();
     @CompilationFinal(dimensions = 1) private static Object[] ListValues;

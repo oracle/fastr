@@ -29,6 +29,7 @@
 
 static const R_CMethodDef CEntries[]  = {
     {"dotCModifiedArguments", (DL_FUNC) &dotCModifiedArguments, 5},
+    {"benchRf_isNull", (DL_FUNC) &benchRf_isNull, 1},
     {NULL, NULL, 0}
 };
 
@@ -66,10 +67,10 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(preserve_object, 1),
         CALLDEF(release_object, 1),
         CALLDEF(findvar, 2),
-		CALLDEF(shareIntElement, 4),
-		CALLDEF(shareDoubleElement, 4),
-		CALLDEF(shareListElement, 4),
-		CALLDEF(shareStringElement, 4),
+	CALLDEF(shareIntElement, 4),
+	CALLDEF(shareDoubleElement, 4),
+	CALLDEF(shareListElement, 4),
+	CALLDEF(shareStringElement, 4),
         CALLDEF(test_asReal, 1),
         CALLDEF(test_asChar, 1),
         CALLDEF(test_asInteger, 1),
@@ -103,6 +104,10 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_constant_types, 0),
         CALLDEF(test_sort_complex, 1),
         CALLDEF(testMultiSetProtection, 0),
+        CALLDEF(get_dataptr, 1),
+        CALLDEF(benchMultipleUpcalls, 1),
+        CALLDEF(benchProtect, 2),
+        CALLDEF(test_lapplyWithForceAndCall, 4),
         #include "init_api.h"
         {NULL, NULL, 0}
 };

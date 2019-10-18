@@ -180,17 +180,31 @@ static int initializeFastR(int argc, char *argv[], int setupRmainloop) {
         strcpy(jvmlib_path_copy, jvmlib_path);
         strcat(jvmlib_path, "/jre/lib/amd64/server/libjvm.so");
         if (access(jvmlib_path, F_OK) == -1) {
-            // with Java 9 the location does not contain arch name
+            // with Java >=9 the location does not contain arch name
             strcpy(jvmlib_path, jvmlib_path_copy);
             strcat(jvmlib_path, "/lib/server/libjvm.so");
         }
     } else if (strcmp(utsname.sysname, "Darwin") == 0) {
+        char jvmlib_path_copy[PATH_BUF_LEN];
+        strcpy(jvmlib_path_copy, jvmlib_path);
         strcat(jvmlib_path, "/jre/lib/server/libjvm.dylib");
+        if (access(jvmlib_path, F_OK) == -1) {
+            // with Java >=9 the location does not contain arch name
+            strcpy(jvmlib_path, jvmlib_path_copy);
+            strcat(jvmlib_path, "/lib/server/libjvm.dylib");            
+        }
         // Must also load libjli to avoid going through framework
         // and failing to find our JAVA_HOME runtime
-        char jlilib_path[256];
+        char jlilib_path[PATH_BUF_LEN];
+        char jlilib_path_copy[PATH_BUF_LEN];
         strcpy(jlilib_path, java_home);
+        strcpy(jlilib_path_copy, jlilib_path);
         strcat(jlilib_path, "/jre/lib/jli/libjli.dylib");
+        if (access(jlilib_path, F_OK) == -1) {
+            // with Java >=9 the location does not contain arch name
+            strcpy(jlilib_path, jlilib_path_copy);
+            strcat(jlilib_path, "/lib/jli/libjli.dylib");            
+        }
         dlopen_jvmlib(jlilib_path);
     } else {
         fprintf(stderr, "unsupported OS: %s\n", utsname.sysname);

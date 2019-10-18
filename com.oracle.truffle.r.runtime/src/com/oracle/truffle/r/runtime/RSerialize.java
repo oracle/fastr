@@ -57,6 +57,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.launcher.RVersionNumber;
@@ -72,6 +73,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
@@ -84,6 +86,7 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -100,6 +103,7 @@ import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import static com.oracle.truffle.r.runtime.gnur.SEXPTYPE.ALTREP_SXP;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -303,7 +307,7 @@ public class RSerialize {
         if ("2".equals(defVersion) || "3".equals(defVersion)) {
             DEFAULT_VERSION = Integer.parseInt(defVersion);
         } else {
-            DEFAULT_VERSION = 3;
+            DEFAULT_VERSION = 2;
         }
     }
 
@@ -427,8 +431,13 @@ public class RSerialize {
             int writerVersion = stream.readInt();
             @SuppressWarnings("unused")
             int releaseVersion = stream.readInt();
-            if (version != DEFAULT_VERSION) {
+            if (version != 3 && version != 2) {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unsupported serialization version " + version);
+            }
+            if (version == 3) {
+                // skip native encoding info
+                int nelen = stream.readInt();
+                stream.readString(nelen);
             }
             Object result = readItem();
             return result;
@@ -517,6 +526,35 @@ public class RSerialize {
                     RStringVector sv = inStringVec(false);
                     result = persistentRestore(sv);
                     return checkResult(addReadRef(result));
+                }
+
+                case ALTREP_SXP: {
+                    RPairList info = (RPairList) readItem();
+                    Object state = readItem();
+                    Object attr = readItem();
+
+                    RSymbol sym = (RSymbol) info.getDataAtAsObject(0);
+                    String altrepClass = sym.getName();
+                    if (altrepClass.equals("compact_intseq")) {
+                        result = readCompactIntSeq(state);
+                    } else if (altrepClass.equals("compact_realseq")) {
+                        result = readCompactRealSeq(state);
+                    } else if (altrepClass.equals("deferred_string")) {
+                        RPairList l = (RPairList) state;
+                        RAbstractVector vec = (RAbstractVector) l.car();
+                        result = vec.castSafe(RType.Character, ConditionProfile.getUncached());
+                    } else if (altrepClass.equals("wrap_real") || altrepClass.equals("wrap_integer") || altrepClass.equals("wrap_string")) {
+                        RPairList l = (RPairList) state;
+                        result = l.car();
+                    } else {
+                        throw RInternalError.unimplemented(sym.getName());
+                    }
+
+                    if (attr != RNull.instance) {
+                        result = setAttributes(result, attr);
+                    }
+                    ((RBaseObject) result).setGPBits(levs);
+                    return checkResult(result);
                 }
 
                 case ENVSXP: {
@@ -879,7 +917,7 @@ public class RSerialize {
                 }
 
                 default:
-                    throw RInternalError.unimplemented();
+                    throw RInternalError.unimplemented(" " + type);
             }
             if (type == SEXPTYPE.CHARSXP) {
                 /*
@@ -895,11 +933,48 @@ public class RSerialize {
                 if (Flags.hasAttr(flags)) {
                     Object attr = readItem();
                     result = setAttributes(result, attr);
-                    ((RBaseObject) result).setGPBits(levs);
                 }
+                ((RBaseObject) result).setGPBits(levs);
             }
 
             return checkResult(result);
+        }
+
+        private static Object readCompactIntSeq(Object state) throws RuntimeException {
+            RAbstractVector result;
+            if (state instanceof RAbstractIntVector) {
+                RAbstractIntVector vec = (RAbstractIntVector) state;
+                int length = vec.getDataAt(0);
+                int first = vec.getDataAt(1);
+                int stride = vec.getDataAt(2);
+                result = RDataFactory.createIntSequence(first, stride, length);
+            } else if (state instanceof RAbstractDoubleVector) {
+                RAbstractDoubleVector vec = (RAbstractDoubleVector) state;
+                int length = (int) vec.getDataAt(0);
+                int first = (int) vec.getDataAt(1);
+                int stride = (int) vec.getDataAt(2);
+                result = RDataFactory.createIntSequence(first, stride, length);
+            } else {
+                throw RInternalError.unimplemented(state.getClass().getSimpleName());
+            }
+            return result;
+        }
+
+        private static Object readCompactRealSeq(Object state) throws RuntimeException {
+            RAbstractVector result;
+            if (state instanceof RAbstractDoubleVector) {
+                RAbstractDoubleVector vec = (RAbstractDoubleVector) state;
+                double length = (int) vec.getDataAt(0);
+                double first = vec.getDataAt(1);
+                double stride = vec.getDataAt(2);
+                if (length > Integer.MAX_VALUE) {
+                    throw RError.error(RError.NO_CALLER, RError.Message.TOO_LONG_VECTOR);
+                }
+                result = RDataFactory.createDoubleSequence(first, stride, (int) length);
+            } else {
+                throw RInternalError.unimplemented(state.getClass().getSimpleName());
+            }
+            return result;
         }
 
         private static void safePutToEnv(REnvironment env, RPairList pl) {
@@ -1295,6 +1370,12 @@ public class RSerialize {
                 sb.append(result);
                 sb.append("\"");
             }
+            if (type == SEXPTYPE.SYMSXP) {
+                sb.append(result);
+            }
+            if (type == SEXPTYPE.ALTREP_SXP) {
+                sb.append(result);
+            }
             nesting--;
             LOGGER.log(Level.INFO, sb.toString());
             return result;
@@ -1444,11 +1525,16 @@ public class RSerialize {
         }
 
         private void serialize(Object obj) throws IOException {
+            stream.writeInt(version);
+            stream.writeInt(RVersionNumber.R_VERSION);
             switch (version) {
-                case DEFAULT_VERSION:
-                    stream.writeInt(version);
-                    stream.writeInt(RVersionNumber.R_VERSION);
-                    stream.writeInt(RVersionInfo.SERIALIZE_VERSION);
+                case 2:
+                    stream.writeInt(RVersionInfo.SERIALIZE_VERSION_2);
+                    break;
+                case 3:
+                    stream.writeInt(RVersionInfo.SERIALIZE_VERSION_3);
+                    // native encoding
+                    stream.writeString("UTF-8");
                     break;
 
                 default:
@@ -1530,6 +1616,40 @@ public class RSerialize {
                 }
                 SEXPTYPE type = SEXPTYPE.typeForClass(obj);
                 SEXPTYPE gnuRType = SEXPTYPE.gnuRType(type, obj);
+
+                if (isALTREP(obj) && version >= 3) {
+                    RPairList info = null;
+                    Object data = null;
+                    String cls = null;
+                    if (obj instanceof RIntSequence) {
+                        info = RDataFactory.createPairList(RDataFactory.createIntVectorFromScalar(SEXPTYPE.INTSXP.code));
+                        RIntSequence vec = (RIntSequence) obj;
+                        data = RDataFactory.createDoubleVector(new double[]{vec.getLength(), vec.getStart(), vec.getStride()}, RDataFactory.COMPLETE_VECTOR);
+                        cls = "compact_intseq";
+                    } else if (obj instanceof RToStringVectorClosure) {
+                        info = RDataFactory.createPairList(RDataFactory.createIntVectorFromScalar(SEXPTYPE.STRSXP.code));
+                        data = RDataFactory.createPairList(((RToStringVectorClosure) obj).getDelegate(), RDataFactory.createIntVectorFromScalar(0));
+                        cls = "deferred_string";
+                    }
+                    assert info != null && data != null & cls != null;
+
+                    info = RDataFactory.createPairList(RDataFactory.createSymbol("base"), info);
+                    info = RDataFactory.createPairList(RDataFactory.createSymbol(cls), info);
+
+                    OutAttributes attributes = new OutAttributes(obj, ALTREP_SXP, ALTREP_SXP);
+                    int flags = Flags.packFlags(ALTREP_SXP, getGPBits(obj), isObject(obj), attributes.hasAttributes(), false);
+
+                    stream.writeInt(flags);
+                    writeItem(info);
+                    writeItem(data);
+                    if (attributes.hasAttributes()) {
+                        writeAttributes(attributes);
+                    } else {
+                        writeItem(RNull.instance);
+                    }
+                    return;
+                } /* else fall through to standard processing */
+
                 int refIndex;
                 if ((refIndex = getRefIndex(obj)) != -1) {
                     outRefIndex(refIndex);
@@ -1842,8 +1962,7 @@ public class RSerialize {
                     String path = RSource.getPathInternal(ss.getSource());
                     if (path != null) {
                         // do this only for packages
-                        Env env = context.getEnv();
-                        TruffleFile relPath = relativizeLibPath(env, env.getTruffleFile(path));
+                        TruffleFile relPath = relativizeLibPath(context.getEnv(), FileSystemUtils.getSafeTruffleFile(context.getEnv(), path));
                         if (relPath != null) {
                             REnvironment createSrcfile = RSrcref.createSrcfile(context, relPath, state.envRefHolder);
                             Object createLloc = RSrcref.createLloc(ss, createSrcfile);
@@ -1905,6 +2024,10 @@ public class RSerialize {
             } else {
                 stream.writeInt(packRefIndex(index));
             }
+        }
+
+        private static boolean isALTREP(Object obj) {
+            return obj instanceof RIntSequence || obj instanceof RToStringVectorClosure;
         }
     }
 
@@ -2567,7 +2690,7 @@ public class RSerialize {
             // do this only for packages
             RContext ctx = state.getContext();
             Env env = ctx.getEnv();
-            TruffleFile relPath = relativizeLibPath(env, env.getTruffleFile(pathInternal));
+            TruffleFile relPath = relativizeLibPath(env, FileSystemUtils.getSafeTruffleFile(env, pathInternal));
             if (relPath != null) {
                 RAttributable attributable = (RAttributable) serObj;
                 attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(ctx, relPath, state.envRefHolder));
@@ -2591,7 +2714,7 @@ public class RSerialize {
     private static TruffleFile relativizeLibPath(Env env, TruffleFile sourcePath) {
         for (String libPath : RContext.getInstance().libraryPaths) {
             if (sourcePath.startsWith(libPath)) {
-                return env.getTruffleFile(libPath).relativize(sourcePath);
+                return FileSystemUtils.getSafeTruffleFile(env, libPath).relativize(sourcePath);
             }
         }
         return null;

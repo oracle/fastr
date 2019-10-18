@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-class RToDoubleVectorClosure extends RAbstractDoubleVector {
+public class RToDoubleVectorClosure extends RAbstractDoubleVector {
 
     protected final boolean keepAttributes;
     private final RAbstractVector vector;
