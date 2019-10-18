@@ -54,7 +54,8 @@ import com.oracle.truffle.r.runtime.instrument.RSyntaxTags;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@TruffleLanguage.Registration(name = "R", id = "R", version = "3.5.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true, fileTypeDetectors = RFileTypeDetector.class)
+@TruffleLanguage.Registration(name = "R", id = "R", version = "3.5.1", mimeType = {RRuntime.R_APP_MIME,
+                RRuntime.R_TEXT_MIME}, interactive = true, fileTypeDetectors = RFileTypeDetector.class, dependentLanguages = "llvm")
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
