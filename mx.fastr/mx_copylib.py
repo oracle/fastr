@@ -115,9 +115,6 @@ def copylib(args):
         if ver_env_key in os.environ:
             lib_prefix += os.environ[ver_env_key] + '.'
         plain_libpath_base = lib_prefix + ext
-        ver_env_key = 'FASTR_LIB' + args[0].upper() + '_VER'
-        if ver_env_key in os.environ:
-            plain_libpath_base += '.' + os.environ[ver_env_key]
         for part in parts:
             path = part.strip('"').lstrip('-L')
             if os.path.exists(path):
