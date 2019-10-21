@@ -57,7 +57,7 @@ which can be installed with `install.fastr.packages(c("rJava", "data.table"))`.
 Packages that use the [R extensions C API](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) in hot paths,
 especially via `Rcpp`, may exhibit slower performance on FastR due to the high cost of transitions between the native and managed code.
 This will be mitigated by using the Graal LLVM interpreter. The support is available in the development version via
-the `--R.BackEndLLVM` option. Note that most of the times FastR running R code equivalent to given `Rcpp` code is as
+the `--R.BackEnd=llvm` option. Note that most of the times FastR running R code equivalent to given `Rcpp` code is as
 fast as GNU-R and sometimes even faster because the GraalVM dynamic compiler can optimize the program as a whole.
 
 ## Stay connected with the community
