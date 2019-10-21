@@ -3,7 +3,7 @@
 ## Index
 
 * [Project Structure](structure.md)
-* [Building from Source](build.md)
+* [Building from Source](building.md)
 * [Building Process](build-process.md)
 * [Testing](testing.md)
 * [R FFI Implementation](ffi.md)
