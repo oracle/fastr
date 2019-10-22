@@ -42,6 +42,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -66,6 +67,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -78,6 +80,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -286,7 +289,27 @@ public class FrameFunctions {
             if (call == null || !call.isValidCaller()) {
                 return RNull.instance;
             }
-            return RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
+            RPairList syntaxCall = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
+            return keepSource() ? attachSrcRef(syntaxCall, call) : syntaxCall;
+        }
+
+        private static boolean keepSource() {
+            Object keepSourceOpt = RContext.getInstance().stateROptions.getValue("keep.source");
+            boolean keepSource = false;
+            if (keepSourceOpt != RNull.instance) {
+                assert keepSourceOpt instanceof RAbstractLogicalVector;
+                keepSource = RRuntime.fromLogical(((RAbstractLogicalVector) keepSourceOpt).getDataAt(0));
+            }
+            return keepSource;
+        }
+
+        private static RPairList attachSrcRef(RPairList syntaxCall, RCaller call) {
+            SourceSection ssec = call.getSyntaxNode().getSourceSection();
+            if (ssec != null) {
+                Object lloc = RSrcref.createLloc(RContext.getInstance(), ssec);
+                syntaxCall.setAttr(RRuntime.R_SRCREF, lloc);
+            }
+            return syntaxCall;
         }
     }
 
