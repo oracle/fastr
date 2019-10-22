@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElemen
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -35,6 +34,8 @@ import java.util.HashMap;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -48,13 +49,16 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -64,6 +68,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import java.nio.file.StandardOpenOption;
 
 /**
  * Implements the {@code Rprof} external.
@@ -97,9 +102,13 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
 
     @Specialization
     @TruffleBoundary
+    @SuppressFBWarnings(value = "NP_NULL_ON_SOME_PATH", justification = "RprofState.get never returns null")
     public Object doRprof(String filename, boolean append, double intervalD, boolean memProfiling, boolean gcProfiling, boolean lineProfiling, @SuppressWarnings("unused") int numFiles,
-                    @SuppressWarnings("unused") int bufSize) {
+                    @SuppressWarnings("unused") int bufSize,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+
         RprofState profState = RprofState.get();
+
         if (filename.length() == 0) {
             // disable
             endProfiling();
@@ -109,7 +118,8 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
                 endProfiling();
             }
             try {
-                PrintStream out = new PrintStream(new FileOutputStream(filename, append));
+                PrintStream out = new PrintStream(
+                                FileSystemUtils.getSafeTruffleFile(ctxRef.get().getEnv(), filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.TRUNCATE_EXISTING));
                 if (gcProfiling) {
                     warning(RError.Message.GENERIC, "Rprof: gc profiling not supported");
                 }
