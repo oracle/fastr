@@ -2,16 +2,25 @@
 
 New features:
 
+* new Graal LLVM based back-end for running packages native code.
+  * The default {FASTR_HOME}/etc/Makeconf is configured to use the Graal LLVM toolchain to build the native code of R packages.
+    * The toolchain builds standard native binaries for a given plarform and also embeds the corresponding LLVM bitcode in them.
+    * R builtin `fastr.setToolchain(name)` (`name` can be `llvm` or `native`) sets the compiler toolchain used for package building (modifies etc/Makeconf).
+    * To switch back to the previous toolchain configuration that used `GCC`, execute `fastr.setToolchain("native")`.
+  * Option `--R.BackEnd` specifies the default backend used to execute packages native code.
+    * Different R packages can be run via different backends in one FastR context.
+    * `--R.BackEnd=native`, the default, is JNI based backend that runs directly the actual native code.
+    * `--R.BackEnd=llvm` is the new LLVM backend that loads the LLVM bitcode embedded in package libraries and runs it via Graal LLVM.
+    * `--R.BackEndNative=pkg1,pkg2,...` enumerates packages whose native code will be executed by the native backend.
+    * `--R.BackEndLLVM=pkg1,pkg2,...` enumerates packages whose native code will be executed by the LLVM backend.
+    * Note: All `--R.BackEnd*` options are passed to R subprocesses.
+  * Debugging of packages native code with LLVM backend.
+    * Option `--R.DebugLLVMLibs` activates debugging of native code using the bundled LLVM bitcode.
+    * Builtin `fastr.useDebugMakevars(use)` activates/deactivates a special `etc/Makevars.site` tailored for building the packages native code for debugging.
 * `gc` attempts to invoke Java GC when FastR is run with `--R.EnableExplicitGC=true`
   * this is intended only for testing purposes and it is not recommended to run GC explicitly in FastR.
   * `gc` is not invoking Java GC by default because GNU-R GC and Java GC are fundamentally
     different and this may lead to unintended behavior.
-* Option `--R.BackEnd` specifies an RFFI backend. `--R.BackEnd=native`, the default, activates the JNI based backend, while `--R.BackEnd=llvm` activates the LLVM backend loading the LLVM bitcode bundled with package libraries. Note: All ``--R.BackEnd*` options are passed to R subprocesses.
-* Option `--R.BackEndNative` enumerates packages whose native code will be executed by the native backend (JNI based)
-* Option `--R.BackEndLLVM` enumerates packages whose native code will be executed by the LLVM backend
-* Option `--R.DebugLLVMLibs` activates debugging of native code using the bundled LLVM bitcode
-* Builtin `fastr.useDebugMakevars(use)` activates/deactivates a special `etc/Makevars.site` for debugging native code
-* Builtin `fastr.setToolchain(name)` (`name` can be `llvm` or `native`) sets the compiler toolchain used for package building
 
 Added missing R builtins and C APIs
 
@@ -32,7 +41,6 @@ Bug fixes:
 * `R --version` does not enter the interactive mode #89
 * `update.formula` with RHS that contains `NULL` #92
 * failures when working with large vectors (>1GB)
-
 
 
 # 19.2.0
