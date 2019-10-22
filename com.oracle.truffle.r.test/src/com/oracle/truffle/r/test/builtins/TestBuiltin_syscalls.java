@@ -20,18 +20,28 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
+import org.junit.After;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
+import static com.oracle.truffle.r.test.builtins.TestStackBuiltins.DONT_KEEP_SOURCE;
+import static com.oracle.truffle.r.test.builtins.TestStackBuiltins.KEEP_SOURCE;
+
 public class TestBuiltin_syscalls extends TestBase {
 
-    // Issues ignored with NewRVersionMigration: GR-18931
+    @Override
+    @After
+    public void afterTest() {
+        // Restore the keep.source option
+        assertEval(KEEP_SOURCE);
+        super.afterTest();
+    }
 
     @Test
     public void testSysCalls() {
         assertEval("sys.calls()");
-        assertEval(Ignored.NewRVersionMigration, "{ f <- function(x) sys.calls(); g <- function() f(x); g() }");
+        assertEval(DONT_KEEP_SOURCE + "{ f <- function(x) sys.calls(); g <- function() f(x); g() }");
         // Avoid deparse issues in the output of the try code by comparing length
         assertEval("{ f <- function(x) sys.calls(); g <- function() f(x); length(try(g())) }");
     }
@@ -40,12 +50,12 @@ public class TestBuiltin_syscalls extends TestBase {
     public void testSysCallsPromises() {
         assertEval("{ f <- function(x) x; g <- function() f(sys.calls()); g() }");
         assertEval("{ f <- function(x) x; g <- function() f(sys.calls()); length(try(g())) }");
-        assertEval(Ignored.NewRVersionMigration, "{ v <- function() sys.calls() ; u<- function() v(); f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+        assertEval(DONT_KEEP_SOURCE + "{ v <- function() sys.calls(); u<- function() v(); f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
 
     @Test
     public void testSysCallsWithEval() {
-        assertEval(Ignored.NewRVersionMigration, "{ foo <- function() sys.calls(); bar <- function() eval(parse(text='foo()'), envir=new.env()); bar(); }");
-        assertEval(Ignored.NewRVersionMigration, "{ foo <- function() sys.calls(); bar <- function() eval(parse(text='foo()')); bar(); }");
+        assertEval(DONT_KEEP_SOURCE + "{ foo <- function() sys.calls(); bar <- function() eval(parse(text='foo()'), envir=new.env()); bar(); }");
+        assertEval(DONT_KEEP_SOURCE + "{ foo <- function() sys.calls(); bar <- function() eval(parse(text='foo()')); bar(); }");
     }
 }
