@@ -19,10 +19,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import java.io.File;
-
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -39,9 +38,9 @@ public class BaseVariables {
     };
     // @formatter:on
 
-    public static void initialize(REnvironment baseEnv) {
+    public static void initialize(REnvironment baseEnv, RContext context) {
         // .Platform TODO be more accurate
-        Object[] platformData = new Object[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
+        Object[] platformData = new Object[]{"unix", context.getEnv().getFileNameSeparator(), ".so", "unknown", "little", "source", context.getEnv().getPathSeparator(), ""};
         Object value = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
         baseEnv.safePut(".Platform", value);
         REnvironment baseNamespaceEnv = REnvironment.baseNamespaceEnv();

@@ -35,7 +35,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
@@ -62,7 +61,9 @@ import java.util.stream.Stream;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -77,6 +78,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -649,15 +651,16 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector doListFiles(RAbstractStringVector vec, RNull patternVec, boolean allFiles, boolean fullNames, boolean recursive, boolean ignoreCase, boolean includeDirs,
-                        boolean noDotDot) {
-            return doListFilesBody(vec, null, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
+                        boolean noDotDot,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return doListFilesBody(vec, null, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot, ctxRef.get());
         }
 
         @Specialization
         @TruffleBoundary
         protected RStringVector doListFiles(RAbstractStringVector vec, RAbstractStringVector patternVec, boolean allFiles, boolean fullNames, boolean recursive, boolean ignoreCase,
-                        boolean includeDirs,
-                        boolean noDotDot) {
+                        boolean includeDirs, boolean noDotDot,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             /*
              * Pattern in first element of vector, remaining elements are ignored (as per GnuR).
              * N.B. The pattern matches file names not paths, which means we cannot just use the
@@ -673,11 +676,11 @@ public class FileFunctions {
                 }
             }
 
-            return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
+            return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot, ctxRef.get());
         }
 
         private static RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, boolean allFiles, boolean fullNames, boolean recursive,
-                        boolean ignoreCase, boolean includeDirsIn, boolean noDotDot) {
+                        boolean ignoreCase, boolean includeDirsIn, boolean noDotDot, RContext context) {
             boolean includeDirs = !recursive || includeDirsIn;
             int flags = ignoreCase ? Pattern.CASE_INSENSITIVE : 0;
             Pattern pattern = null;
@@ -736,6 +739,7 @@ public class FileFunctions {
                 // The manual says "" but GnuR returns an empty vector
                 return RDataFactory.createEmptyStringVector();
             } else {
+                String fileSeparator = context.getEnv().getFileNameSeparator();
                 String[] data = new String[files.size()];
                 files.toArray(data);
                 /*
@@ -743,21 +747,21 @@ public class FileFunctions {
                  * consider every hidden file without the dot at the beginning.
                  */
                 Arrays.sort(data, (filePath1, filePath2) -> {
-                    String filename1WithoutDot = skipLeadingDotInFilename(filePath1);
-                    String filename2WithoutDot = skipLeadingDotInFilename(filePath2);
+                    String filename1WithoutDot = skipLeadingDotInFilename(filePath1, fileSeparator);
+                    String filename2WithoutDot = skipLeadingDotInFilename(filePath2, fileSeparator);
                     return filename1WithoutDot.compareTo(filename2WithoutDot);
                 });
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             }
         }
 
-        private static String skipLeadingDotInFilename(String filePath) {
-            String[] items = filePath.split(Pattern.quote(File.separator));
+        private static String skipLeadingDotInFilename(String filePath, String fileSeparator) {
+            String[] items = filePath.split(Pattern.quote(fileSeparator));
             String baseName = items[items.length - 1];
             String baseNameWithoutDot = baseName.charAt(0) == '.' ? baseName.substring(1) : baseName;
             if (!baseNameWithoutDot.equals(baseName)) {
                 items[items.length - 1] = baseNameWithoutDot;
-                return String.join(File.separator, items);
+                return String.join(fileSeparator, items);
             } else {
                 return filePath;
             }
@@ -1227,7 +1231,8 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected int doUnlink(RAbstractStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force) {
+        protected int doUnlink(RAbstractStringVector vec, boolean recursive, @SuppressWarnings("unused") boolean force,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             int result = 1;
             for (int i = -0; i < vec.getLength(); i++) {
                 String pathPattern = Utils.tildeExpand(vec.getDataAt(i));
@@ -1236,7 +1241,7 @@ public class FileFunctions {
                 }
                 int firstGlobCharIdx = containsGlobChar(pathPattern);
                 if (firstGlobCharIdx >= 0) {
-                    result = removeGlob(pathPattern, recursive, firstGlobCharIdx, result);
+                    result = removeGlob(pathPattern, recursive, firstGlobCharIdx, result, ctxRef.get().getEnv().getFileNameSeparator());
                 } else {
                     result = removeFile(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), pathPattern), recursive, result);
                 }
@@ -1244,9 +1249,9 @@ public class FileFunctions {
             return result;
         }
 
-        private int removeGlob(String pathPattern, boolean recursive, int firstGlobCharIdx, int result) {
+        private int removeGlob(String pathPattern, boolean recursive, int firstGlobCharIdx, int result, String fileSeparator) {
             // we take as much as we can from the pathPatter as the search root
-            int lastSeparator = pathPattern.substring(0, firstGlobCharIdx).lastIndexOf(File.separatorChar);
+            int lastSeparator = pathPattern.substring(0, firstGlobCharIdx).lastIndexOf(fileSeparator);
             String searchRoot = (lastSeparator != -1) ? pathPattern.substring(0, lastSeparator) : "";
             try {
                 int[] tmpResult = new int[]{result};
