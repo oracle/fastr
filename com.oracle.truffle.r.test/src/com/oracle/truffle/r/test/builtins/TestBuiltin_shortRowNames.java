@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -141,5 +141,15 @@ public class TestBuiltin_shortRowNames extends TestBase {
     public void testArgCasts() {
         assertEval(".Internal(shortRowNames(42, -2))");
         assertEval(".Internal(shortRowNames(42, '1'))");
+
+        assertEval(".Internal(shortRowNames(42, 0))");
+        assertEval(".Internal(shortRowNames(42, 1))");
+        assertEval(".Internal(shortRowNames(42, 2))");
+
+        assertEval(".Internal(shortRowNames(NULL, 0))");
+        assertEval(".Internal(shortRowNames(NULL, 1))");
+        assertEval(".Internal(shortRowNames(NULL, 2))");
+        assertEval(".Internal(shortRowNames(NULL, '0'))");
+        assertEval(".Internal(shortRowNames(NULL, '1'))");
     }
 }
