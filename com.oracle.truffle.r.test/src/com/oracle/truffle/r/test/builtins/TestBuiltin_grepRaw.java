@@ -88,6 +88,11 @@ public class TestBuiltin_grepRaw extends TestBase {
     }
 
     @Test
+    public void testFixedEmpty() {
+        assertEval("grepRaw('adf', '', fixed=TRUE)");
+    }
+
+    @Test
     public void testFixedFindOneMatch() {
         HaystackDescriptor haystackDescriptor = findFirst(new byte[]{'X'}, new byte[]{'a', 'X', 'a'});
 

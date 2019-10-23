@@ -49,8 +49,8 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Collections.ArrayListObj;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -1977,6 +1977,9 @@ public class GrepFunctions {
         protected Object grepFixedNoInvert(RRawVector pattern, RRawVector x, int offset, @SuppressWarnings("unused") Object ignoreCase, @SuppressWarnings("unused") boolean fixed, boolean value,
                         boolean all,
                         @SuppressWarnings("unused") boolean invert) {
+            if (x.getLength() == 0) {
+                return RDataFactory.createEmptyIntVector();
+            }
             HaystackDescriptor haystackDescriptor = null;
             if (all) {
                 haystackDescriptor = findAllOccurrences(pattern, x, offset);
@@ -2011,6 +2014,9 @@ public class GrepFunctions {
         protected Object grepFixedInvert(RRawVector pattern, RRawVector x, int offset, @SuppressWarnings("unused") Object ignoreCase, @SuppressWarnings("unused") boolean fixed,
                         @SuppressWarnings("unused") boolean value, boolean all,
                         @SuppressWarnings("unused") boolean invert) {
+            if (x.getLength() == 0) {
+                return RDataFactory.createEmptyIntVector();
+            }
             HaystackDescriptor haystackDescriptor = null;
             if (all) {
                 haystackDescriptor = findAllOccurrences(pattern, x, offset);
@@ -2029,6 +2035,9 @@ public class GrepFunctions {
         protected Object grepFixedIgnoreInvert(RRawVector pattern, RRawVector x, int offset, @SuppressWarnings("unused") Object ignoreCase, boolean fixed, boolean value, boolean all,
                         boolean invert) {
             warning(Message.ARGUMENT_IGNORED, "invert = TRUE");
+            if (x.getLength() == 0) {
+                return RDataFactory.createEmptyIntVector();
+            }
             return grepFixedNoInvert(pattern, x, offset, ignoreCase, fixed, value, all, invert);
         }
 
