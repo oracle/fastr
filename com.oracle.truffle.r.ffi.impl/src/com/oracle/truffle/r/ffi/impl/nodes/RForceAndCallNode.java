@@ -180,6 +180,7 @@ public abstract class RForceAndCallNode extends AbstractCallInfoEvalNode {
     }
 
     private void flattenFirstArgs(VirtualFrame frame, int n, RArgsValuesAndNames args, PromiseHelperNode promiseHelper) {
+        // In GnuR there appears to be no error checks on n > args.length
         if (args.getLength() < n) {
             CompilerDirectives.transferToInterpreter();
             throw RError.nyi(this, "forceAndCall with insufficient arguments");

@@ -32,7 +32,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -181,16 +180,16 @@ public abstract class RFFIContext extends RFFI {
      *            truffle boundary
      * @param rffiType the type of the RFFI backend
      */
-    public Object beforeDowncall(VirtualFrame frame, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+    public Object beforeDowncall(MaterializedFrame frame, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         rffiContextState.callDepth++;
         MaterializedFrame savedDowncallFrame = rffiContextState.currentDowncallFrame;
-        rffiContextState.currentDowncallFrame = frame == null || !RArguments.isRFrame(frame) ? null : frame.materialize();
+        rffiContextState.currentDowncallFrame = frame == null || !RArguments.isRFrame(frame) ? null : frame;
         return savedDowncallFrame;
     }
 
     /**
      * @param before the value returned by the corresponding call to
-     *            {@link #beforeDowncall(VirtualFrame, com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}
+     *            {@link #beforeDowncall(MaterializedFrame, com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}
      *            .
      */
     public void afterDowncall(Object before, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {

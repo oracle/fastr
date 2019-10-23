@@ -37,16 +37,26 @@ public class RInteropNA implements RTruffleObject {
     public static final RInteropNA INT = new RInteropNA(RRuntime.INT_NA);
     public static final RInteropNA DOUBLE = new RInteropNA(RRuntime.DOUBLE_NA);
     public static final RInteropNA STRING = new RInteropNA(RRuntime.STRING_NA);
-    public static final RInteropNA LOGICAL = new RInteropNA(RRuntime.LOGICAL_NA);
+    public static final RInteropNA LOGICAL = new RInteropNA(RRuntime.LOGICAL_NA, RRuntime.INT_NA);
 
     private final Object value;
+    private final Object nativeValue;
 
     protected RInteropNA(Object value) {
+        this(value, value);
+    }
+
+    protected RInteropNA(Object value, Object nativeValue) {
         this.value = value;
+        this.nativeValue = nativeValue;
     }
 
     public Object getValue() {
         return value;
+    }
+
+    public Object getNativeValue() {
+        return nativeValue;
     }
 
     @SuppressWarnings("static-method")
@@ -74,5 +84,4 @@ public class RInteropNA implements RTruffleObject {
             return getValue().hashCode();
         }
     }
-
 }
