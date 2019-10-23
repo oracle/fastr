@@ -26,7 +26,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -42,6 +44,8 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -109,7 +113,8 @@ public class FortranAndCFunctions {
         protected RList doFortran(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
                 if (explicitCall == null) {
@@ -120,14 +125,15 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args);
+                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args, ctxRef.get());
             }
         }
 
         @Specialization
         protected RList doFortran(VirtualFrame frame, RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             String libName = LookupAdapter.checkPackageArg(rPackage);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(symbol.getDataAt(0), libName, rns);
@@ -143,7 +149,7 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
+                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args, ctxRef.get());
             }
         }
 
@@ -212,7 +218,8 @@ public class FortranAndCFunctions {
         @Specialization
         protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage, @SuppressWarnings("unused") RMissing encoding,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
                 if (explicitCall == null) {
@@ -223,14 +230,15 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args);
+                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args, ctxRef.get());
             }
         }
 
         @Specialization
         protected RList c(VirtualFrame frame, RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile,
+                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             String libName = null;
             if (!(rPackage instanceof RMissing)) {
                 libName = RRuntime.asString(rPackage);
@@ -253,7 +261,7 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
+                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args, ctxRef.get());
             }
         }
 
