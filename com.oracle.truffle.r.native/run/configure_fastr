@@ -102,9 +102,9 @@ done
     res=$?
     if [[ $res != 0 ]]; then
       echo "Cannot build a simple C program linking with libgfortran, libgcc_s, and libquadmath."
-      echo "Please install GCC using:"
-      echo "    On Debian based systems: apt-get install build-essential"
-      echo "    On CentOS/RHEL: yum groupinstall \"Developent Tools\""
+      echo "Please install GCC and gfortran using:"
+      echo "    On Debian based systems: sudo apt-get install build-essential gfortran"
+      echo "    On CentOS/RHEL/Oracle Linux: sudo yum groupinstall \"Developent Tools\"; yum install gcc-gfortran"
 	  echo ""	
       printHelp
       exit 1

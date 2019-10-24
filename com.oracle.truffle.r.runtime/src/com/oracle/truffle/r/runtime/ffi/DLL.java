@@ -46,6 +46,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.FileSystemUtils;
+import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
@@ -591,11 +592,15 @@ public class DLL {
         try {
             handle = load.apply(path);
         } catch (UnsatisfiedLinkError ex) {
-            throw RSuicide.rSuicide(context, "error loading libR from: " + path + ".\n" +
-                            "If running on the NFI backend, did you provide the location of libtrufflenfi.so as the value of the system " +
-                            "property 'truffle.nfi.library'?\nThe current value is '" + System.getProperty("truffle.nfi.library") + "'.\n" +
-                            "Is the OpenMP runtime library (libgomp.so) present on your system? This library is, e.g., typically part of the GCC package.\n" +
-                            "Details: " + ex.getMessage());
+            throw RSuicide.rSuicide(context, String.format("error loading libR from: %s.\n" +
+                            "Message: " + ex.getMessage() + "\n\n" +
+                            "Troubleshooting: \n\n" +
+                            " * If you have not already %s/bin/configure_fastr yet, try running it.\n\n" +
+                            " * Is the OpenMP runtime library (libgomp.so) present on your system? This library is, e.g., typically part of the 'gcc' package.\n\n" +
+                            " * Are the gfortran runtime libraries present on your system? These libraries are, e.g., typically part of the 'gfortran' package.\n\n" +
+                            " * Did you provide the location of libtrufflenfi.so as the value of the system " +
+                            "property 'truffle.nfi.library'? The current value is '%s'.\n\n",
+                            path, REnvVars.rHome(), System.getProperty("truffle.nfi.library")));
         } catch (Throwable ex) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + ". Details: " + ex.getMessage());
         }
