@@ -63,7 +63,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         @Override
         public void execute(VirtualFrame frame, int seed) {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
+            Object before = stateRFFI.beforeDowncall(frame.materialize(), RFFIFactory.Type.NFI);
             try {
                 userFunctionInterop.execute(userFunctionTarget, seed);
             } catch (InteropException ex) {
@@ -83,7 +83,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         @Override
         public double execute(VirtualFrame frame) {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
+            Object before = stateRFFI.beforeDowncall(frame.materialize(), RFFIFactory.Type.NFI);
             try {
                 Object address = userFunctionInterop.execute(userFunctionTarget);
                 return (double) readPointerInterop.execute(readPointerTarget, address);
@@ -104,7 +104,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         @Override
         public int execute(VirtualFrame frame) {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
+            Object before = stateRFFI.beforeDowncall(frame.materialize(), RFFIFactory.Type.NFI);
             try {
                 Object address = userFunctionInterop.execute(userFunctionTarget);
                 return (int) readPointerInterop.execute(readPointerTarget, address);
@@ -125,7 +125,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         @Override
         public void execute(VirtualFrame frame, int[] n) {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            Object before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.NFI);
+            Object before = stateRFFI.beforeDowncall(frame.materialize(), RFFIFactory.Type.NFI);
             try {
                 Object address = userFunctionInterop.execute(userFunctionTarget);
                 for (int i = 0; i < n.length; i++) {

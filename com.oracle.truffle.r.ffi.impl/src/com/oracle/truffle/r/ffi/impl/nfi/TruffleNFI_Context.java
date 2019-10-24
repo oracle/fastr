@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -399,7 +399,7 @@ public class TruffleNFI_Context extends RFFIContext {
     }
 
     @Override
-    public Object beforeDowncall(VirtualFrame frame, RFFIFactory.Type rffiType) {
+    public Object beforeDowncall(MaterializedFrame frame, RFFIFactory.Type rffiType) {
         Object tokenFromSuper = super.beforeDowncall(frame, RFFIFactory.Type.NFI);
         transientAllocations.push(new ArrayList<>());
         if (hasAccessLock) {

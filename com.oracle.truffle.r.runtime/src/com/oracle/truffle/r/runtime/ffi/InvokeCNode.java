@@ -31,6 +31,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -51,6 +52,7 @@ public abstract class InvokeCNode extends RBaseNode {
     @Child private CRFFIWrapVectorsNode argsWrapperNode = CRFFIWrapVectorsNodeGen.create();
     @Child private CRFFIUnwrapVectorsNode argsUnwrapperNode = CRFFIUnwrapVectorsNodeGen.create();
     @Child private FunctionObjectGetter functionGetterNode;
+    private final ValueProfile stateRFFIProfile = ValueProfile.createClassProfile();
 
     public InvokeCNode(FunctionObjectGetter functionGetterNode) {
         this.functionGetterNode = functionGetterNode;
@@ -62,7 +64,7 @@ public abstract class InvokeCNode extends RBaseNode {
      */
     protected abstract void execute(NativeCallInfo nativeCallInfo, Object[] args);
 
-    public final RList dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, byte naok, byte dup, RArgsValuesAndNames args) {
+    public final RList dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, byte naok, byte dup, RArgsValuesAndNames args, RContext rCtx) {
         @SuppressWarnings("unused")
         boolean dupArgs = RRuntime.fromLogical(dup);
         @SuppressWarnings("unused")
@@ -70,8 +72,8 @@ public abstract class InvokeCNode extends RBaseNode {
 
         Object[] preparedArgs = argsWrapperNode.execute(args.getArguments());
 
-        RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-        Object before = stateRFFI.beforeDowncall(frame, nativeCallInfo.dllInfo.handle.getRFFIType());
+        RFFIContext stateRFFI = stateRFFIProfile.profile(rCtx.getStateRFFI());
+        Object before = stateRFFI.beforeDowncall(frame.materialize(), nativeCallInfo.dllInfo.handle.getRFFIType());
         try {
             execute(nativeCallInfo, preparedArgs);
             return RDataFactory.createList(argsUnwrapperNode.execute(preparedArgs), validateArgNames(preparedArgs.length, args.getSignature()));

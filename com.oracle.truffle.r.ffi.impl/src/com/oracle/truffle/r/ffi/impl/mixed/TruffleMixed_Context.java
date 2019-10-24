@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.mixed;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Context;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
@@ -137,7 +137,7 @@ public final class TruffleMixed_Context extends RFFIContext {
     }
 
     @Override
-    public Object beforeDowncall(VirtualFrame frame, Type rffiType) {
+    public Object beforeDowncall(MaterializedFrame frame, Type rffiType) {
         Type actualRffiType = rffiType == null ? Type.LLVM : rffiType;
         assert rffiType != null;
         switch (rffiType) {

@@ -42,7 +42,7 @@ public interface CallRFFI {
             DLLInfo dllInfo = nativeCallInfo.dllInfo;
             LibHandle handle = dllInfo == null ? null : dllInfo.handle;
             Type rffiType = handle == null ? stateRFFI.getDefaultRFFIType() : handle.getRFFIType();
-            Object before = stateRFFI.beforeDowncall(frame, rffiType);
+            Object before = stateRFFI.beforeDowncall(frame == null ? null : frame.materialize(), rffiType);
             try {
                 return execute(nativeCallInfo, args);
             } finally {
@@ -61,7 +61,7 @@ public interface CallRFFI {
     interface InvokeVoidCallNode extends NodeInterface {
         default void dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            Object before = stateRFFI.beforeDowncall(frame, nativeCallInfo.dllInfo.handle.getRFFIType());
+            Object before = stateRFFI.beforeDowncall(frame == null ? null : frame.materialize(), nativeCallInfo.dllInfo.handle.getRFFIType());
             try {
                 execute(frame, nativeCallInfo, args);
             } finally {
