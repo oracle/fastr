@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public class RToDoubleVectorClosure extends RAbstractDoubleVector {
+public class RToDoubleVectorClosure extends RAbstractDoubleVector implements RClosure {
 
     protected final boolean keepAttributes;
     private final RAbstractVector vector;
@@ -63,6 +63,11 @@ public class RToDoubleVectorClosure extends RAbstractDoubleVector {
     }
 
     @Override
+    public RAbstractVector getDelegate() {
+        return vector;
+    }
+
+    @Override
     public int getLength() {
         return vector.getLength();
     }
@@ -86,6 +91,11 @@ public class RToDoubleVectorClosure extends RAbstractDoubleVector {
     public double getDataAt(int index) {
         VectorAccess spa = vector.slowPathAccess();
         return spa.getDouble(spa.randomAccess(vector), index);
+    }
+
+    @Override
+    public Object getDelegateDataAt(int index) {
+        return vector.getDataAtAsObject(index);
     }
 
     @CompilerDirectives.TruffleBoundary

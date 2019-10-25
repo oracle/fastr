@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public class RToIntVectorClosure extends RAbstractIntVector {
+public class RToIntVectorClosure extends RAbstractIntVector implements RClosure {
 
     protected final boolean keepAttributes;
     private final RAbstractVector vector;
@@ -71,6 +71,11 @@ public class RToIntVectorClosure extends RAbstractIntVector {
     }
 
     @Override
+    public RAbstractVector getDelegate() {
+        return vector;
+    }
+
+    @Override
     public int getLength() {
         return vector.getLength();
     }
@@ -95,6 +100,11 @@ public class RToIntVectorClosure extends RAbstractIntVector {
         RAbstractVector v = vector;
         VectorAccess spa = v.slowPathAccess();
         return spa.getInt(spa.randomAccess(v), index);
+    }
+
+    @Override
+    public Object getDelegateDataAt(int index) {
+        return vector.getDataAtAsObject(index);
     }
 
     @Override

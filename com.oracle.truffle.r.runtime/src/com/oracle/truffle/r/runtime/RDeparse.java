@@ -58,6 +58,11 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
+import com.oracle.truffle.r.runtime.data.closures.RToComplexVectorClosure;
+import com.oracle.truffle.r.runtime.data.closures.RToDoubleVectorClosure;
+import com.oracle.truffle.r.runtime.data.closures.RToIntVectorClosure;
+import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -1001,8 +1006,12 @@ public class RDeparse {
                 if (sequence != null) {
                     append(RRuntime.intToStringNoCheck(sequence.getStart())).append(':').append(RRuntime.intToStringNoCheck(sequence.getEnd()));
                 } else {
+                    if (vec instanceof RClosure) {
+                        append(closureToCoercionFunction((RClosure) vec));
+                    }
                     // TODO COMPAT?
                     append("c(");
+
                     for (int i = 0; i < len; i++) {
                         RStringVector names = vec.getNames();
                         if (names != null) {
@@ -1017,19 +1026,41 @@ public class RDeparse {
                                 append(" = ");
                             }
                         }
-                        vecElement2buff(vec.getDataAtAsObject(i), false);
+                        Object elem;
+                        if (vec instanceof RClosure) {
+                            elem = ((RClosure) vec).getDelegateDataAt(i);
+                        } else {
+                            elem = vec.getDataAtAsObject(i);
+                        }
+                        vecElement2buff(elem, false);
                         if (i < (len - 1)) {
                             append(", ");
                         }
                         lbreak = listLinebreak(lbreak);
                     }
                     append(')');
+                    if (vec instanceof RClosure) {
+                        append(")");
+                    }
                 }
             }
         }
 
+        private static String closureToCoercionFunction(RClosure vec) {
+            if (vec instanceof RToComplexVectorClosure) {
+                return "as.complex(";
+            } else if (vec instanceof RToDoubleVectorClosure) {
+                return "as.double(";
+            } else if (vec instanceof RToIntVectorClosure) {
+                return "as.integer(";
+            } else if (vec instanceof RToStringVectorClosure) {
+                return "as.character(";
+            }
+            throw RInternalError.shouldNotReachHere("unhandled closure type " + vec.getClass().getSimpleName());
+        }
+
         private static RIntSequence asIntSequence(RAbstractVector vec) {
-            if (!(vec instanceof RAbstractIntVector)) {
+            if (!(vec instanceof RAbstractIntVector) || vec instanceof RToIntVectorClosure) {
                 return null;
             }
             RAbstractIntVector intVec = (RAbstractIntVector) vec;
