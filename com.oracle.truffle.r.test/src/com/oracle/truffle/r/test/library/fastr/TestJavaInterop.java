@@ -1210,27 +1210,52 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testNoCopyOncast() throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
-        testNoCopyOncast("integer", "RToIntVectorClosure", new String[]{"fieldBooleanArray", "fieldDoubleArray", "fieldStringArray"});
-        testNoCopyOncast("double", "RToDoubleVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldStringArray"});
-        testNoCopyOncast("complex", "RToComplexVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray", "fieldStringArray"});
-        testNoCopyOncast("character", "RToStringVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray"});
+    public void testNoCopyOnCast() throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
+        testNoCopyOnCast("integer", "RToIntVectorClosure", new String[]{"fieldBooleanArray", "fieldDoubleArray", "fieldStringArray"});
+        testNoCopyOnCast("double", "RToDoubleVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldStringArray"});
+        testNoCopyOnCast("complex", "RToComplexVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray", "fieldStringArray"});
+        testNoCopyOnCast("character", "RToStringVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray"});
     }
 
-    public void testNoCopyOncast(String type, String closure, String... fields) throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
+    public void testNoCopyOnCast(String type, String closure, String... fields) throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
         for (String field : fields) {
+            String cmd = CREATE_TRUFFLE_OBJECT + "as." + type + "(as.vector(to$" + field + "))";
+            String gnur = "as." + type + "(" + toRVectorFromFieldValue(new TestClass(), field) + ")";
             if (!"character".equals(type) && field.contains("String")) {
-                assertEvalFastR(Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + "as." + type + "(as.vector(to$" + field + "));",
-                                "as." + type + "(" + toRVectorFromFieldValue(new TestClass(), field) + ")");
+                assertEvalFastR(Output.IgnoreWarningMessage, cmd, gnur);
             } else {
-                assertEvalFastR(CREATE_TRUFFLE_OBJECT + "as." + type + "(as.vector(to$" + field + "));", "as." + type + "(" + toRVectorFromFieldValue(new TestClass(), field) + ")");
+                assertEvalFastR(cmd, gnur);
             }
-            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as." + type + "(as.vector(to$" + field + ")));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
-            assertEvalFastR(CREATE_TRUFFLE_OBJECT +
-                            ".fastr.inspect(as.vector(as.vector(to$" + field + "), '" + type + "'));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
-            assertEvalFastR(CREATE_TRUFFLE_OBJECT +
-                            ".fastr.inspect(as.vector(as." + type + "(to$" + field + "), '" + type + "'));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
+            gnur = "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')";
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as." + type + "(as.vector(to$" + field + ")))", gnur);
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as.vector(as.vector(to$" + field + "), '" + type + "'))", gnur);
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as.vector(as." + type + "(to$" + field + "), '" + type + "'))", gnur);
+        }
+    }
 
+    @Test
+    public void testDeparseForeignArrayClosure() throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
+        testDeparseForeignArrayClosure("integer", new String[]{"fieldBooleanArray", "fieldDoubleArray", "fieldStringArray"});
+        testDeparseForeignArrayClosure("double", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldStringArray"});
+        testDeparseForeignArrayClosure("complex", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray", "fieldStringArray"});
+        testDeparseForeignArrayClosure("character", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray"});
+    }
+
+    public void testDeparseForeignArrayClosure(String type, String... fields) throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
+        for (String field : fields) {
+            String vectorFromField = toRVectorFromFieldValue(new TestClass(), field);
+
+            String deparse = CREATE_TRUFFLE_OBJECT + "deparse(as." + type + "(as.vector(to$" + field + ")))";
+            String gnur = "\"as." + type + "(" + vectorFromField.replace("\"", "\\\"") + ")\"";
+            assertEvalFastR(deparse, gnur);
+
+            String evalDeparsed = CREATE_TRUFFLE_OBJECT + "eval(parse(text=deparse(as." + type + "(as.vector(to$" + field + ")))))";
+            gnur = "as." + type + "(" + vectorFromField + ")";
+            if (!"character".equals(type) && field.contains("String")) {
+                assertEvalFastR(Output.IgnoreWarningContext, evalDeparsed, gnur);
+            } else {
+                assertEvalFastR(evalDeparsed, gnur);
+            }
         }
     }
 
@@ -1648,6 +1673,10 @@ public class TestJavaInterop extends TestBase {
     }
 
     private String getRValue(Object value) {
+        return getRValue(value, false);
+    }
+
+    private String getRValue(Object value, boolean denoteInteger) {
         if (value == null) {
             return "NULL";
         }
@@ -1662,8 +1691,8 @@ public class TestJavaInterop extends TestBase {
         if (value instanceof String) {
             return "\"" + value.toString() + "\"";
         }
-        if (value instanceof String) {
-            return "\"" + value.toString() + "\"";
+        if (denoteInteger && value instanceof Integer) {
+            return value.toString() + "L";
         }
         if (value instanceof Character) {
             return "\"" + ((Character) value).toString() + "\"";
@@ -1746,10 +1775,10 @@ public class TestJavaInterop extends TestBase {
                 }
                 sb.append(getRValue(o));
             } else {
-                sb.append(getRValue(o));
+                sb.append(getRValue(o, true));
             }
             if (it.hasNext()) {
-                sb.append(',');
+                sb.append(", ");
             }
         }
         if (asXXX != null) {
