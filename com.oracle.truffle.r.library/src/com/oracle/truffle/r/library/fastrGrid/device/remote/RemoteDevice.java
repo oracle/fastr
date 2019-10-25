@@ -31,9 +31,6 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,12 +38,15 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class RemoteDevice implements GridDevice {
 
@@ -103,7 +103,7 @@ public final class RemoteDevice implements GridDevice {
 
     private static Process serverProcess;
 
-    private static Path javaCmd;
+    private static TruffleFile javaCmd;
 
     private final int remoteDeviceId;
 
@@ -113,27 +113,27 @@ public final class RemoteDevice implements GridDevice {
 
     private final Map<DrawingContext, DrawingContextWeakRef> drawingContext2Ref = new WeakHashMap<>();
 
-    public static RemoteDevice open(String filename, String fileType, int width, int height) throws NotSupportedImageFormatException {
-        return new RemoteDevice(DeviceType.BUFFERED_IMAGE, filename, fileType, width, height);
+    public static RemoteDevice open(RContext context, String filename, String fileType, int width, int height) throws NotSupportedImageFormatException {
+        return new RemoteDevice(context, DeviceType.BUFFERED_IMAGE, filename, fileType, width, height);
     }
 
-    public static RemoteDevice createWindowDevice(int width, int height) {
+    public static RemoteDevice createWindowDevice(RContext context, int width, int height) {
         try {
-            return new RemoteDevice(DeviceType.WINDOW, null, null, width, height);
+            return new RemoteDevice(context, DeviceType.WINDOW, null, null, width, height);
         } catch (NotSupportedImageFormatException ex) { // Should never happen for this device type
             throw new AssertionError();
         }
     }
 
     @SuppressFBWarnings(value = "LI_LAZY_INIT_UPDATE_STATIC", justification = "one-time initialization")
-    private static Path javaCmd() {
+    private static TruffleFile javaCmd(RContext context) {
         if (javaCmd == null) {
             String javaHome = System.getenv("JAVA_HOME");
             if (javaHome == null) {
                 throw new RInternalError("JAVA_HOME is null");
             }
-            javaCmd = Paths.get(javaHome, "bin", "java");
-            if (!Files.exists(javaCmd)) {
+            javaCmd = FileSystemUtils.getSafeTruffleFile(context.getEnv(), javaHome).resolve("bin").resolve("java");
+            if (!javaCmd.exists()) {
                 throw new RInternalError("Non-existent path '" + javaCmd + "'.");
             }
         }
@@ -141,7 +141,7 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @SuppressFBWarnings(value = "LI_LAZY_INIT_UPDATE_STATIC", justification = "one-time initialization")
-    private static void checkQueueInited() {
+    private static void checkQueueInited(RContext context) {
         if (queueWorker == null) {
             Runnable queueWorkerRun = new Runnable() {
                 @Override
@@ -160,7 +160,7 @@ public final class RemoteDevice implements GridDevice {
                                 HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
                                 sendRequest(request, conn);
                             } catch (IOException ex) {
-                                if (!checkServerConnectable()) {
+                                if (!checkServerConnectable(context)) {
                                     destroyServer();
                                     request.finish(new byte[]{STATUS_SERVER_ERROR}, ex);
                                 }
@@ -201,28 +201,28 @@ public final class RemoteDevice implements GridDevice {
     }
 
     @SuppressFBWarnings(value = "LI_LAZY_INIT_STATIC", justification = "one-time initialization")
-    private static boolean checkServerConnectable() {
+    private static boolean checkServerConnectable(RContext context) {
         for (int i = SERVER_CONNECT_RETRIES - 1; i >= 0; i--) {
             if (serverProcess != null && !serverProcess.isAlive()) {
                 serverProcess.destroy();
                 serverProcess = null;
             }
             if (serverProcess == null) {
-                String rHome = REnvVars.rHome();
-                Path serverJar = Paths.get(rHome, SERVER_JAR_NAME);
-                if (!Files.exists(serverJar)) {
-                    Path buildServerJar = Paths.get(rHome, "mxbuild", "dists", SERVER_JAR_NAME);
-                    if (!Files.exists(buildServerJar)) {
+                TruffleFile rHome = REnvVars.getRHomeTruffleFile(context.getEnv());
+                TruffleFile serverJar = rHome.resolve(SERVER_JAR_NAME);
+                if (!serverJar.exists()) {
+                    TruffleFile buildServerJar = rHome.resolve("mxbuild").resolve("dists").resolve(SERVER_JAR_NAME);
+                    if (!buildServerJar.exists()) {
                         RInternalError.shouldNotReachHere(
                                         "Remote grid server jar " + serverJar + " nor " + buildServerJar + " not found.");
                     }
                     serverJar = buildServerJar;
                 }
                 ProcessBuilder pb = new ProcessBuilder(
-                                javaCmd().toAbsolutePath().toString(),
+                                javaCmd(context).getAbsoluteFile().toString(),
                                 "-Dsun.net.httpserver.nodelay=true",
                                 "-jar",
-                                serverJar.toAbsolutePath().toString());
+                                serverJar.getAbsoluteFile().toString());
                 pb.inheritIO();
                 try {
                     serverProcess = pb.start();
@@ -268,8 +268,8 @@ public final class RemoteDevice implements GridDevice {
         return new RInternalError("Grid Server communication error.");
     }
 
-    private RemoteDevice(DeviceType type, String filename, String fileType, int width, int height) throws NotSupportedImageFormatException {
-        checkQueueInited();
+    private RemoteDevice(RContext context, DeviceType type, String filename, String fileType, int width, int height) throws NotSupportedImageFormatException {
+        checkQueueInited(context);
         paramsEncoder.writeByte(CREATE_IMAGE);
         paramsEncoder.writeInt(type.ordinal());
         paramsEncoder.writeString(filename);
