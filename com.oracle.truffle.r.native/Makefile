@@ -39,7 +39,7 @@ export F2C_HOME= $(FASTR_R_HOME)/f2c
 
 $(info R_VERSION: $(R_VERSION))
 $(info GNUR_HOME: $(GNUR_HOME))
-
+	
 # TODO: can be removed?
 ifndef FASTR_RFFI
 export FASTR_RFFI = nfi
@@ -57,40 +57,17 @@ endif
 
 OS_NAME := $(shell uname -s)
 
-all: checkversion ../f2c
-	# Following block builds f2c, TODO: move to f2c/Makefile
-	# TODO: use -fPIC only on linux in libf2c.makefile
-	mkdir -p ../bin
-	$(MAKE) -f makefile.u -C ../f2c/f2c CC=$(LABS_LLVM_CC)
-	cp ../f2c/f2c/f2c ../bin
-
-	mkdir -p ../lib
-	cp f2c/libf2c-patch/* ../f2c/libf2c
-	$(MAKE) -C ../f2c/libf2c CC=$(LABS_LLVM_CC)
-ifeq ($(OS_NAME),Darwin)	
-	cp ../f2c/libf2c/libf2c.so ../lib/libf2c.dylib
-	install_name_tool -id @rpath/libf2c.dylib ../lib/libf2c.dylib
-else	
-	cp ../f2c/libf2c/libf2c.so ../lib/
-endif
-	cp ../f2c/libf2c/f2c.h include
-
+all: checkversion
+	$(MAKE) -C f2c
 	$(MAKE) -C gnur
 	$(MAKE) -C include
 	$(MAKE) -C fficall
 	$(MAKE) -C $(GNUR_HOME)/src/library
 	$(MAKE) -C run
 	cp version.source version.built
-
-# Shuffles f2c from libdownloads to the right location...
-# TODO: build directly in libdownloads
-../f2c: ../libdownloads/f2c/libf2c.zip
-	(cd ..; mkdir -p f2c/libf2c; cd f2c/libf2c; unzip ../../libdownloads/f2c/libf2c.zip)
-	(cd ../f2c; tar xfz ../libdownloads/f2c/src.tgz; mv src f2c)
-
+	
 clean:
-	if [ -d ../f2c/libf2c ]; then $(MAKE) -C ../f2c/libf2c clean; fi
-	if [ -d ../f2c/f2c ]; then $(MAKE) -f makefile.u -C ../f2c/f2c clean; fi
+	$(MAKE) -C f2c clean
 	$(MAKE) -C include clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C run clean
