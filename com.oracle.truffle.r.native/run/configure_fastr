@@ -144,7 +144,7 @@ done
 			# don't look at symlinks
 			if [ ! -L "${TARGET_LIB}" ] ; then
 			  # grep for the current path of this gfortran library in this library's linking info
-			  CURRENT_LIB_NAME=`otool -L ${TARGET_LIB} | grep -o "\t.*${GFORTRAN_LIB_BASE}"`
+			  CURRENT_LIB_NAME=`otool -L ${TARGET_LIB} | grep -o "\t.*${GFORTRAN_LIB_BASE}[^ ]*"`
 			  if [ ! -z "$CURRENT_LIB_NAME" ] ; then
 				if [ "$CURRENT_LIB_NAME" != "$LIB_LOCATION" ] ; then
 				  # change to the new location
