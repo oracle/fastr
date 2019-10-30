@@ -76,6 +76,7 @@ function printHelp {
 GCC_LIB_PATH=""
 CONFIGURE_ARGS=""
 CONFIGURE_ETC=0
+CONFIGURE_NATIVE_TOOLCHAIN=0
 while [[ $# -gt 0 ]]; do
   case $1 in
     --help)
@@ -88,13 +89,22 @@ while [[ $# -gt 0 ]]; do
     ;;
     --configure-etc)
       CONFIGURE_ETC=1
-    ;;  
+    ;;
+    --enable-native-compilers-toolchain)
+      CONFIGURE_NATIVE_TOOLCHAIN=1
+      CONFIGURE_ARGS="$CONFIGURE_ARGS $1"
+    ;;
     *)
       CONFIGURE_ARGS="$CONFIGURE_ARGS $1"
     ;;
   esac
   shift
-done  
+done
+
+if [[ $CONFIGURE_NATIVE_TOOLCHAIN = 1 ]] && [[ $CONFIGURE_ETC = 0 ]]; then
+  echo "Error: --enable-native-compilers-toolchain does not have any effect when not run with --configure-etc."
+  exit 100
+fi
 
 (
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
