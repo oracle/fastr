@@ -129,12 +129,10 @@ fi
       res=1
     fi
     if which gfortran > /dev/null 2> /dev/null; then
-      echo "Note: if you intend to install R packages with Fortran 90 and newer code, you need to install gfortran compiler."
-      echo "Fortran 77 or any Fortran code that is compilable by the 'f2c' tool does not require gfortran compiler."
-      echo "You can install the gfortran compiler with:"
-      echo "    On Debian based systems: apt-get install build-essential"
-      echo "    On Oracle Linux 7: yum groupinstall 'Development Tools'"
-      echo "    On Oracle Linux 8: yum groupinstall 'Development Tools'"
+      echo "Note: if you intend to install R packages you may need additional packages."
+      echo "The following packages should cover the most commonly used R packages:"
+      echo "    On Debian based systems: apt-get install build-essential gfortran libxml2 libc++-dev"
+      echo "    On Oracle Linux 7 and 8: yum groupinstall 'Development Tools'"
       if [[ $res != 0 ]]; then
         echo "Caution: you still need to install gfortran3 runtime libraries on all systems where this version is not the default (Ubuntu 18 or higher, Oracle Linux 8 or higher)."
       fi
