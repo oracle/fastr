@@ -52,19 +52,25 @@ public abstract class FastRSetToolchain extends RBuiltinNode.Arg1 {
     @Specialization
     protected RNull setToolchain(String name) {
         String srcConf;
+        String srcLdpaths;
         if ("native".equals(name)) {
             srcConf = "Makeconf.native";
+            srcLdpaths = "ldpaths.native";
         } else if ("llvm".equals(name)) {
             srcConf = "Makeconf.llvm";
+            srcLdpaths = "ldpaths.llvm";
         } else {
             throw error(RError.Message.GENERIC, "Only 'native' or 'llvm' argument values accepted");
         }
         TruffleFile rHome = REnvVars.getRHomeTruffleFile(RContext.getInstance().getEnv());
         TruffleFile etc = rHome.resolve("etc");
-        TruffleFile src = etc.resolve(srcConf);
-        TruffleFile dst = etc.resolve("Makeconf");
+        TruffleFile srcConfFile = etc.resolve(srcConf);
+        TruffleFile dstConfFile = etc.resolve("Makeconf");
+        TruffleFile srcLdpathsFile = etc.resolve(srcLdpaths);
+        TruffleFile dstLdpathsFile = etc.resolve("ldpaths");
         try {
-            src.copy(dst, StandardCopyOption.REPLACE_EXISTING);
+            srcConfFile.copy(dstConfFile, StandardCopyOption.REPLACE_EXISTING);
+            srcLdpathsFile.copy(dstLdpathsFile, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RInternalError(String.format("Copying %s over etc/Makeconf failed", srcConf), e);
         }
