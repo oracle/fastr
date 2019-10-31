@@ -595,12 +595,9 @@ public class DLL {
             throw RSuicide.rSuicide(context, String.format("error loading libR from: %s.\n" +
                             "Message: " + ex.getMessage() + "\n\n" +
                             "Troubleshooting: \n\n" +
-                            " * If you have not already %s/bin/configure_fastr yet, try running it.\n\n" +
-                            " * Is the OpenMP runtime library (libgomp.so) present on your system? This library is, e.g., typically part of the 'gcc' package.\n\n" +
-                            " * Are the gfortran runtime libraries present on your system? These libraries are, e.g., typically part of the 'gfortran' package.\n\n" +
-                            " * Did you provide the location of libtrufflenfi.so as the value of the system " +
-                            "property 'truffle.nfi.library'? The current value is '%s'.\n\n",
-                            path, REnvVars.rHome(), System.getProperty("truffle.nfi.library")));
+                            "  * Please run %s/bin/configure_fastr. It will check that your system has the necessary dependencies and if not it will suggest how to install them.\n\n" +
+                            "  * If this does not help, please open an issue on https://github.com/oracle/fastr/ or reach us on https://graalvm.slack.com.\n\n",
+                            path, REnvVars.rHome()));
         } catch (Throwable ex) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + ". Details: " + ex.getMessage());
         }
