@@ -126,7 +126,7 @@ public final class REnvVars implements RContext.ContextState {
                 }
             }
             TruffleFile userFile = userFilePath != null ? FileSystemUtils.getSafeTruffleFile(env, userFilePath) : null;
-            if (userFile.exists()) {
+            if (userFile != null && userFile.exists()) {
                 safeReadEnvironFile(userFile);
             }
         }
