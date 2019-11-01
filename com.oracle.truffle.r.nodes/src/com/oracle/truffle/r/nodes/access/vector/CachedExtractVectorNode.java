@@ -308,6 +308,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     }
                     newDimNames[dimIndex] = result;
                     if (newDimNamesNames != null) {
+                        // (newDimNamesNames == null) <=> (originalDimNamesNames == null)
+                        assert originalDimNamesNames != null;
                         newDimNamesNames[dimIndex] = originalDimNamesNames.getDataAt(i);
                     }
                 }
