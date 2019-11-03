@@ -1376,14 +1376,15 @@ public final class NativeDataAccess {
     }
 
     private static long allocateNativeMemory(long bytes) {
+        LOGGER.finest(() -> String.format("Going to allocate %d bytes of native memory", bytes));
         long result = UnsafeAdapter.UNSAFE.allocateMemory(bytes);
-        // Uncomment for debugging
-        // System.out.printf("DEBUG: allocated %x, length %d\n", result, bytes);
+        LOGGER.finest(() -> String.format("Done allocating %d bytes of native memory, result: %x", bytes, result));
         return result;
     }
 
     private static void freeNativeMemory(long address) {
-        // Uncomment for debugging
+        // Uncomment for debugging, this cannot be logged via Truffle logger, because it runs on
+        // dedicated thread without any Truffle context
         // System.out.printf("DEBUG: freeing %x\n", address);
         UnsafeAdapter.UNSAFE.freeMemory(address);
     }
