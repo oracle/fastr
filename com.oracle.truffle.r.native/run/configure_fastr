@@ -147,65 +147,51 @@ fi
       echo "The basic configuration of FastR was successfull."
     fi
   elif [[ "$OSTYPE" == "darwin"* ]]; then
-    cd -P "$( dirname "$source" )/../lib"
-    # correct paths on Mac OSX
-    GFORTRAN_LIBRARIES="libgfortran.3.dylib libgfortran.5.dylib libquadmath.0.dylib libgomp.1.dylib libgcc_s.1.dylib"
-    # This allows determining if all libraries were found after the main loop
-    GFORTRAN_LIBRARIES_CHECK="libgfortran libquadmath libgomp libgcc_s"
-    GFORTRAN_LOCATIONS="$GCC_LIB_PATH /opt/local/lib /opt/local/lib/libgcc /usr/local/gfortran/lib"
-    TARGET_LIBRARIES="`find ../library/* | grep "\(\.dylib\|\.so\)$"` `find * | grep "\(\.dylib\|\.so\)$"`"
-    FOUND=""
-    LAST_FOUND=""
-    for GFORTRAN_LIB in $GFORTRAN_LIBRARIES
-    do
-      # Remove the 'dylib' extension	
-	  GFORTRAN_LIB_BASE=${GFORTRAN_LIB%.*}
-      # Remove the number extension
-	  GFORTRAN_LIB_BASE=${GFORTRAN_LIB_BASE%.*}
-	  if [ "$LAST_FOUND" = "$GFORTRAN_LIB_BASE" ] ; then
-	  	# A previous version of the current library has already been found
-	  	echo "skipping $GFORTRAN_LIB"
-	  	continue;
-	  fi
-	  
-      for LOCATION in $GFORTRAN_LOCATIONS
-      do
-        if test -f "${LOCATION}/${GFORTRAN_LIB}"; then
-          LIB_LOCATION="${LOCATION}/${GFORTRAN_LIB}"
-          FOUND="$FOUND $GFORTRAN_LIB_BASE"
-          LAST_FOUND=$GFORTRAN_LIB_BASE
-          
-		  echo "${GFORTRAN_LIB} found at ${LIB_LOCATION}"
-		  for TARGET_LIB in $TARGET_LIBRARIES
-		  do
-			# don't look at symlinks
-			if [ ! -L "${TARGET_LIB}" ] ; then
-			  # grep for the current path of this gfortran library in this library's linking info
-			  CURRENT_LIB_NAME=`otool -L ${TARGET_LIB} | grep -o "\t.*${GFORTRAN_LIB_BASE}[^ ]*"`
-			  if [ ! -z "$CURRENT_LIB_NAME" ] ; then
-				if [ "$CURRENT_LIB_NAME" != "$LIB_LOCATION" ] ; then
-				  # change to the new location
-				  echo "changing path to ${GFORTRAN_LIB} in ${TARGET_LIB} to $LIB_LOCATION"
-				  install_name_tool -change $CURRENT_LIB_NAME $LIB_LOCATION ${TARGET_LIB}
-				fi
-			  fi
-			fi
-		  done
-
-          break
-          
-        fi
-      done
-    done
     
-    if [ "$FOUND" != " $GFORTRAN_LIBRARIES_CHECK" ] ; then
-	  echo "From expected libraries '$GFORTRAN_LIBRARIES_CHECK' found only '$FOUND'."
-	  echo "Please ensure that you have gcc installed on your system, e.g., using homebrew or MacPorts (brew install gcc)."
-	  echo "If it is installed in a non-standard location, you can specify its location using the '--gcc-lib-path' parameter."
-	  echo ""	
-      printHelp
+    GCC_DARWIN_HOME=/usr/local/Cellar/gcc@4.9/4.9.4_1/lib/gcc/4.9
+    
+    if [ -d "$GCC_DARWIN_HOME" ] ; then
+	  echo "gcc 4.9 installation found."
+	  
+      cd -P "$( dirname "$source" )/../lib"
+	  # correct paths on Mac OSX
+	  GFORTRAN_LIBRARIES="libgfortran.3.dylib libquadmath.0.dylib libgomp.1.dylib libgcc_s.1.dylib"
+      TARGET_LIBRARIES="`find ../library/* | grep "\(\.dylib\|\.so\)$"` `find * | grep "\(\.dylib\|\.so\)$"`"
+      for GFORTRAN_LIB in $GFORTRAN_LIBRARIES
+      do
+  	    LIB_LOCATION="${GCC_DARWIN_HOME}/${GFORTRAN_LIB}"
+	    for TARGET_LIB in $TARGET_LIBRARIES
+		do
+		  # don't look at symlinks
+		  if [ ! -L "${TARGET_LIB}" ] ; then
+		    # grep for the current path of this gfortran library in this library's linking info
+		    CURRENT_LIB_NAME=`otool -L ${TARGET_LIB} | grep -o "\t.*${GFORTRAN_LIB}"`
+		    if [ ! -z "$CURRENT_LIB_NAME" ] ; then
+		   	  if [ "$CURRENT_LIB_NAME" != "$LIB_LOCATION" ] ; then
+			    # change to the new location
+			    echo "changing path to ${GFORTRAN_LIB} in ${TARGET_LIB} to $LIB_LOCATION"
+			    install_name_tool -change $CURRENT_LIB_NAME $LIB_LOCATION ${TARGET_LIB}
+			  fi
+		    fi
+		  fi
+		done
+      done
+	  
+	else
+	  echo "No Homebrew gcc 4.9 installation found."
+	  echo "Please ensure that you have gcc installed on your system using the homebrew command:"
+	  echo "   brew install gcc@4.9"
+	  
+	  HOMEBREW_PREFIX_OUT=`brew config | grep HOMEBREW_PREFIX`
+	  HOMEBREW_PREFIX=${HOMEBREW_PREFIX_OUT##*: }
+	  if [[ "$HOMEBREW_PREFIX" != "/usr/local" ]]; then
+	    echo "Your Homebrew uses other than the default installation directory prefix (i.e. /usr/local)."\
+	    "Since FastR assumes the default prefix, use the following command to create a symbolic link to your Homebrew installations:"	
+	    echo "   sudo ln -s $HOMEBREW_PREFIX/Cellar /usr/local/Cellar"
+	  fi	
+	  	
 	  exit 1
-     fi
+    fi
     
   else
     echo "Unknown operating system."
