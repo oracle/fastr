@@ -432,7 +432,13 @@ public final class NativeDataAccess {
     @TruffleBoundary
     private static void putMirrorObject(RBaseObject obj, NativeMirror oldMirror) {
         NativeMirror newMirror;
-        obj.setNativeMirror(newMirror = obj instanceof CustomNativeMirror ? new NativeMirror(obj, ((CustomNativeMirror) obj).getCustomMirrorAddress()) : new NativeMirror(obj));
+        if (oldMirror != null && oldMirror.dataAddress != 0L) {
+            // We need to transfer the dataAddress from the transient mirror to the new one
+            newMirror = new NativeMirror(obj, oldMirror.dataAddress);
+        } else {
+            newMirror = obj instanceof CustomNativeMirror ? new NativeMirror(obj, ((CustomNativeMirror) obj).getCustomMirrorAddress()) : new NativeMirror(obj);
+        }
+        obj.setNativeMirror(newMirror);
         if (oldMirror != null) {
             newMirror.nativeWrapperRef = oldMirror.nativeWrapperRef;
         }
