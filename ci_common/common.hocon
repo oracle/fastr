@@ -3,6 +3,7 @@ java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
 java8 : {name : oraclejdk, version : "8u231-jvmci-19.3-b04", platformspecific: true}
 java11 : {name : labsjdk, version : "ce-11.0.5+9-jvmci-19.3-b03", platformspecific: true}
+f2c : {name : f2c-binary, version : "1", platformspecific: true}
 
 java8Downloads : {
   downloads : {
@@ -20,6 +21,12 @@ java11Downloads : {
       ${java7}
     ]}
     JAVA_HOME : ${java11}
+  }
+}
+
+f2cDownloads : {
+  downloads : {    
+    F2C_BINARY : ${f2c}
   }
 }
 
@@ -116,7 +123,7 @@ packagesDarwin : {
 
 # Common settings for all builds
 
-common : ${java8Downloads} {
+common : ${java8Downloads} ${f2cDownloads} {
   logs: ${logfiles}
   catch_files : [
     "Graal diagnostic output saved in (?P<filename>.+\.zip)",
@@ -134,7 +141,7 @@ common : ${java8Downloads} {
   }
 }
 
-commonJdk11 : ${java11Downloads} {
+commonJdk11 : ${java11Downloads} ${f2cDownloads} {
   logs: ${logfiles}
   catch_files : [
     "Graal diagnostic output saved in (?P<filename>.+\.zip)",
