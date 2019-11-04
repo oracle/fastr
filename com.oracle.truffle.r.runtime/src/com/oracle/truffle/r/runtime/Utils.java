@@ -342,7 +342,7 @@ public final class Utils {
                 if (path.length() == 0) {
                     return keepRelative ? path : wdState().getCurrentPath().getPath();
                 } else {
-                    TruffleFile p = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
+                    TruffleFile p = RContext.getInstance().getEnv().getInternalTruffleFile(path);
                     if (p.isAbsolute()) {
                         return path;
                     } else {
