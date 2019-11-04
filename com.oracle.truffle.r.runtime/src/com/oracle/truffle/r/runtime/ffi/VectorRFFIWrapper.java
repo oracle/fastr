@@ -70,6 +70,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
     private VectorRFFIWrapper(TruffleObject vector) {
         assert vector instanceof RBaseObject;
         this.vector = vector;
+        // Establish the 1-1 relationship between the object and its native wrapper
         NativeDataAccess.setNativeWrapper((RBaseObject) vector, this);
         pointer = NativeDataAccess.getNativeDataAddress((RBaseObject) vector);
     }
@@ -84,8 +85,6 @@ public final class VectorRFFIWrapper implements TruffleObject {
             // TODO: create subclasses of VectorRFFIWrapper specialized for concrete vector types
             // and use directly the vector methods (possibly via VectorAccess) not interop library
             wrapper = new VectorRFFIWrapper(x);
-            // Establish the 1-1 relationship between the object and its native wrapper
-            NativeDataAccess.setNativeWrapper((RBaseObject) x, wrapper);
             return (VectorRFFIWrapper) wrapper;
         }
     }
