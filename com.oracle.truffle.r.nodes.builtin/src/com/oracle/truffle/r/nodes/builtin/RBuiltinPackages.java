@@ -71,10 +71,10 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         return instance;
     }
 
-    public static void loadBase(TruffleRLanguage language, MaterializedFrame baseFrame) {
+    public static void loadBase(RContext context, MaterializedFrame baseFrame) {
         RBuiltinPackage pkg = basePackage;
         REnvironment baseEnv = REnvironment.baseEnv();
-        BaseVariables.initialize(baseEnv);
+        BaseVariables.initialize(baseEnv, context);
         /*
          * All the RBuiltin PRIMITIVE methods that were created earlier need to be added to the
          * environment so that lookups through the environment work as expected.
@@ -84,7 +84,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
             String methodName = entrySet.getKey();
             RBuiltinFactory builtinFactory = entrySet.getValue();
             if (builtinFactory.getKind() != RBuiltinKind.INTERNAL) {
-                RFunction function = createFunction(language, builtinFactory, methodName);
+                RFunction function = createFunction(context.getLanguage(), builtinFactory, methodName);
                 try {
                     baseEnv.put(methodName, function);
                     baseEnv.lockBinding(methodName);

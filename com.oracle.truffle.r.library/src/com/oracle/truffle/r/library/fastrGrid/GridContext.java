@@ -110,7 +110,7 @@ public final class GridContext {
 
     public static GridDevice openLocalOrRemoteDevice(RContext context, String filename, String fileType, int width, int height) throws NotSupportedImageFormatException {
         if (FastRConfig.UseRemoteGridAwtDevice) {
-            return RemoteDevice.open(filename, fileType, width, height);
+            return RemoteDevice.open(context, filename, fileType, width, height);
         } else {
             return BufferedImageDevice.open(context, filename, fileType, width, height);
         }
@@ -168,7 +168,7 @@ public final class GridContext {
             if (!FastRConfig.InternalGridAwtSupport) {
                 throw awtNotSupported();
             }
-            setCurrentDevice(defaultDev, WindowDevice.createWindowDevice(false, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT));
+            setCurrentDevice(defaultDev, WindowDevice.createWindowDevice(context, false, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT));
         } else if (defaultDev.equals("svg")) {
             String filename = "Rplot%03d.svg";
             SVGDevice svgDevice = new SVGDevice(context, FileDevUtils.formatInitialFilename(filename), GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
