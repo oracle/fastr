@@ -47,11 +47,7 @@ $(TOPDIR)/platform.mk: sedMakeconf $(GNUR_HOME)/Makeconf Makefile
 	ed platform.mk.temp <edLLVM
 
 	echo OS_NAME = $(OS_NAME) >> platform.mk.temp
-ifeq ($(OS_NAME),SunOS)
-	echo JDK_OS_DIR = solaris >> platform.mk.temp
-else
 	echo JDK_OS_DIR = $(OS_DIR) >> platform.mk.temp
-endif
 	mv platform.mk.temp $(TOPDIR)/platform.mk
 
 clean:

@@ -34,10 +34,6 @@ OSNAME := $(shell uname)
 
 ifeq ($(OSNAME), Linux)
   LD_FLAGS :=  -Wl,--unresolved-symbols=ignore-all
-else 
-  ifeq ($(OSNAME), SunOS)
-    LD_FLAGS := -z lazyload
-  endif
 endif
 
 FASTR_LIB_DIR = $(abspath ../../lib)

@@ -47,11 +47,7 @@ endif
 include $(TOPDIR)/fficall/src/include/gnurheaders.mk
 PKG_INCLUDES := $(GNUR_INCLUDES) $(GNUR_HEADER_DEFS) $(GRDEV_INCLUDES)
 # Suppress warnings
-ifeq ($(OS_NAME), SunOS)
-    XTRA_C_OPTS :=
-else
-	XTRA_C_OPTS := -Wno-int-conversion -Wno-implicit-function-declaration
-endif
+XTRA_C_OPTS := -Wno-int-conversion -Wno-implicit-function-declaration
 
 include ../lib.mk
 

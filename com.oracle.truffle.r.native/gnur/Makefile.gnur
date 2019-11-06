@@ -38,65 +38,14 @@ PATCH_BUILD := patch-build
 
 ifeq ($(OSNAME), Linux)
   FORCE_PIC := true
-else ifeq ($(OSNAME), SunOS)
-  FORCE_PIC := true
 else ifeq ($(OSNAME), Darwin)
 else
 	$(error OS $(OSNAME) is not supported)
 endif
 
-all: Makefile iconv $(GNUR_HOME_BINARY)/gnur.done $(PATCH_BUILD) config $(PATCH_BUILD)/include
+all: Makefile $(GNUR_HOME_BINARY)/gnur.done $(PATCH_BUILD) config $(PATCH_BUILD)/include
 
-
-# After this platform check, GNUR_CONFIG_FLAGS must be set
-ifeq ($(OSNAME), SunOS)
-#
-# Configuring GnuR for Solaris is slightly complicated for three reasons:
-# 1. the default iconv utility is inadequate and has to be replaced by Gnu iconv
-# 2. the solaris studio compilers must be used, assumed to be on the PATH
-# 3. Solaris runs on x64 and Sparc and the configure options are different
-#
-    OS_ARCH := $(shell uname -p)
-    SSTUDIO_HOME := $(shell which cc | sed s/bin\\/*cc//g)
-    FLIBS_COMMON := -lsunimath -lfai -lsunmath -lmtsk
-    ifeq ($(OS_ARCH), i386)
-        SUB_ARCH := amd64
-        FLIBS_SUB_ARCH := $(SSTUDIO_HOME)lib/$(SUB_ARCH)/libfsu.so.1 $(SSTUDIO_HOME)lib/$(SUB_ARCH)/libfui.so.2
-        GNUR_CONFIG_FLAGS := --build=x86_64-pc-solaris2.11
-    else
-        SUB_ARCH := sparc/64
-        FLIBS_SUB_ARCH := -lifai -lfai2 -lfsumai -lfprodai -lfminlai -lfmaxlai -lfminvai -lfmaxvai -lfui $(SSTUDIO_HOME)lib/$(SUB_ARCH)/libfsu.so.1
-    endif
-    ICONV := libiconv-1.14
-    $(shell mkdir -p iconv_install)
-    ICONV_INSTALL := $(abspath iconv_install)
-    ICONV_CFLAGS := "$(CFLAGS) -m64 -xcode=pic32 -I$(ICONV_INSTALL)/include -I$(XZ_HOME)/include"
-    ICONV_LDFLAGS := "-m64 -L$(ICONV_INSTALL)/lib -L$(XZ_HOME)/lib"
-    ICONV_CONFIG_FLAGS := CC=cc CXX=CC CFLAGS=$(ICONV_CFLAGS) LDFLAGS=$(ICONV_LDFLAGS)
-# required for Solaris compiler >=12.2, see Appendix C of R installation guide: 
-# http://cran.r-project.org/doc/manuals/r-release/R-admin.html#Solaris 
-    GNUR_FLIBS := FLIBS="-R$(SSTUDIO_HOME)lib/$(SUB_ARCH) $(FLIBS_COMMON) $(FLIBS_SUB_ARCH)"
-    GNUR_CONFIG_FLAGS += $(ICONV_CONFIG_FLAGS) CPPFLAGS=$(ICONV_CFLAGS) DYLIB_LDFLAGS=$(ICONV_LDFLAGS) $(GNUR_FLIBS) F77="sunf95 -m64 -xcode=pic32"
-
-iconv: $(ICONV) iconv_config iconv_build
-
-$(ICONV):
-	tar xf $(TOPDIR)/../libdownloads/$(ICONV).tar.gz
-
-iconv_config: $(ICONV)/Makefile
-
-$(ICONV)/Makefile:
-	(cd $(ICONV); ./configure --prefix $(ICONV_INSTALL) $(ICONV_CONFIG_FLAGS) > iconv_configure.log 2>&1)
-
-iconv_build: $(ICONV)/lib/libcharset.so
-
-$(ICONV)/lib/libcharset.so:
-	(cd $(ICONV); $(MAKE) MAKE=$(MAKE) && $(MAKE) MAKE=$(MAKE) install > iconv_make.log 2>&1)
-else
-# nothing to do for iconv on Linux/Darwin
-iconv:
-
-# check for overrides of the locations of required packages
+# GNUR_CONFIG_FLAGS must be set using possible overrides of the locations of required packages
 
 ifneq ($(PKG_INCLUDE_FLAGS_OVERRIDE),)
     GNUR_CONFIG_FLAGS := CFLAGS="$(CFLAGS) $(PKG_INCLUDE_FLAGS_OVERRIDE)" \
@@ -110,9 +59,6 @@ endif
 
 # setup for LLVM (if enabled)
 GNUR_CONFIG_FLAGS := $(GNUR_CONFIG_FLAGS) FFLAGS=-O2 $(FASTR_COMPILERS)
-
-endif
-# End of platform check
 
 config: $(PATCH_BUILD)/Makefile config_update
 
@@ -166,18 +112,8 @@ $(PATCH_BUILD)/Makefile:
 $(PATCH_BUILD)/include:
 	$(MAKE) -C $(PATCH_BUILD)/src/include
 
-clean: cleanpatchbuild cleaniconv
+clean: cleanpatchbuild
 	rm -f Makeconf.done
 
 cleanpatchbuild:
 	rm -rf $(PATCH_BUILD)
-
-ifeq ($(OSNAME), SunOS)
-cleaniconv:
-	rm -rf $(ICONV)
-	rm -rf $(ICONV_INSTALL)
-else
-cleaniconv:
-endif
-#end SunOS
-
