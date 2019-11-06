@@ -80,16 +80,11 @@ then delving into individual scripts that patch and build parts of GNUR. Last se
 
  * copies `com.oracle.truffle.r.native/gnur/patch` to `com.oracle.truffle.r.native/gnur/patch-build`
  * unpacks `libdownloads/R-$(R_VERSION).tar.gz`
- * optionally (Solaris) unpacks `libdownloads/$(ICONV).tar.gz`
 	* Note: `libdownloads` must not contain multiple GNUR binary distributions, otherwise `R_VERSION` contains all version numbers extracted from those distribution files
  * `GNUR_CONFIG_FLAGS` constructed and passed over to the configure utility that generates the `Makeconf` file for GNUR
 	 * the output in `$(GNUR_HOME_BINARY)/gnur_configure.log`
  * optionally (on Linux) patches the generated `$(GNUR_HOME_BINARY)/Makeconf` by `$(GNUR_HOME_BINARY)/Makeconf < edMakeconf` (adds `-fPIC` to `CFLAGS` and `FFLAGS`, i.e. enables Position Independent Code)
  * builds GNUR in `libdownloads/R-$(R_VERSION)` using special compiler options. **Note: the output is redirected to `libdownloads/R-{version}/gnur_make.log` in order not to pollute the main build output.**
- * A special configuration for Solaris:
-  1. the default `iconv` utility is inadequate and has to be replaced by GNU `iconv`
-  2. the solaris studio compilers must be used, assumed to be on the `PATH`
-  3. Solaris runs on x64 and Sparc and the configure options are different
  * makes `com.oracle.truffle.r.native/gnur/patch-build/src/include` creating `com.oracle.truffle.r.native/gnur/patch-build/include`. 
  TBD: Some headers are already patched to conform the FastR needs (in the previous system, the patching was done by `mx.fastr/mx_fastr_edinclude.py`).
  The header files in the resulting `include` directory are later linked from `com.oracle.truffle.r.native/include`. See *Building `include`*.

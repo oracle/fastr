@@ -1,4 +1,9 @@
 /^CFLAGS/s/$/ -fPIC/
+/^CXXFLAGS/s/$/ -fPIC/
+/^CXX98FLAGS/s/$/ -fPIC/
+/^CXX11FLAGS/s/$/ -fPIC/
+/^CXX14FLAGS/s/$/ -fPIC/
+/^CXX17FLAGS/s/$/ -fPIC/
 /^FFLAGS/s/$/ -fPIC/
 w
 q
