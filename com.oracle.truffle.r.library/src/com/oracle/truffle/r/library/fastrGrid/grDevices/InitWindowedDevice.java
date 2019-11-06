@@ -96,9 +96,10 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         }
 
         // otherwise create the window ourselves
-        GridDevice device = WindowDevice.createWindowDevice(false, width, height);
+        RContext context = RContext.getInstance();
+        GridDevice device = WindowDevice.createWindowDevice(context, false, width, height);
         String name = isFastRDevice ? "awt" : "X11cairo";
-        GridContext.getContext().setCurrentDevice(name, device);
+        GridContext.getContext(context).setCurrentDevice(name, device);
         return RNull.instance;
     }
 

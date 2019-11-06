@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,13 +44,16 @@ public final class WindowDevice {
     }
 
     public static GridDevice createWindowDevice(boolean byGridServer, int width, int height) {
+        return createWindowDevice(RContext.getInstance(), byGridServer, width, height);
+    }
+
+    public static GridDevice createWindowDevice(RContext ctx, boolean byGridServer, int width, int height) {
         if (FastRConfig.UseRemoteGridAwtDevice) {
             noSchedulingSupportWarning();
-            return RemoteDevice.createWindowDevice(width, height);
+            return RemoteDevice.createWindowDevice(ctx, width, height);
         } else {
             JFrameDevice frameDevice = new JFrameDevice(width, height);
-            RContext ctx;
-            if (!byGridServer && ((ctx = RContext.getInstance()) != null) && ctx.hasExecutor() && !FastRConfig.UseRemoteGridAwtDevice) {
+            if (!byGridServer && ctx != null && ctx.hasExecutor() && !FastRConfig.UseRemoteGridAwtDevice) {
                 frameDevice.setResizeListener(() -> redrawAll(ctx));
                 frameDevice.setCloseListener(() -> devOff(ctx));
             } else {

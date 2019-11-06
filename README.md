@@ -1,5 +1,3 @@
-[![Join the chat at https://gitter.im/graalvm/graal-core](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/graalvm/graal-core?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 A high-performance implementation of the R programming language, built on GraalVM.
 
 FastR aims to be:
@@ -57,13 +55,13 @@ which can be installed with `install.fastr.packages(c("rJava", "data.table"))`.
 Packages that use the [R extensions C API](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) in hot paths,
 especially via `Rcpp`, may exhibit slower performance on FastR due to the high cost of transitions between the native and managed code.
 This will be mitigated by using the Graal LLVM interpreter. The support is available in the development version via
-the `--R.BackEndLLVM` option. Note that most of the times FastR running R code equivalent to given `Rcpp` code is as
+the `--R.BackEnd=llvm` option. Note that most of the times FastR running R code equivalent to given `Rcpp` code is as
 fast as GNU-R and sometimes even faster because the GraalVM dynamic compiler can optimize the program as a whole.
 
 ## Stay connected with the community
 
 See [graalvm.org/community](https://www.graalvm.org/community/) on how to stay connected with the development community.
-The discussion on [gitter](https://gitter.im/graalvm/graal-core) is a good way to get in touch with us.
+The discussion on [slack](https://graalvm.slack.com) is a good way to get in touch with us.
 
 We would like to grow the FastR open-source community to provide a free R implementation atop the Truffle/Graal stack.
 We encourage contributions, and invite interested developers to join in.

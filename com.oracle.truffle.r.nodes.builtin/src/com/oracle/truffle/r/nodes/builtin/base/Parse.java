@@ -27,13 +27,14 @@ import static com.oracle.truffle.r.runtime.RError.Message.MUST_BE_STRING_OR_CONN
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.EnumSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -55,6 +56,7 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.Engine.ParsedExpression;
 import com.oracle.truffle.r.runtime.context.Engine.ParserMetadata;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -112,7 +114,8 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
 
     @TruffleBoundary
     @Specialization
-    protected RExpression parse(int conn, int n, @SuppressWarnings("unused") RNull text, String prompt, Object srcFile, String encoding) {
+    protected RExpression parse(int conn, int n, @SuppressWarnings("unused") RNull text, String prompt, Object srcFile, String encoding,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         String[] lines;
         RConnection connection = RConnection.fromIndex(conn);
         if (connection == StdConnections.getStdin()) {
@@ -123,22 +126,24 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         } catch (IOException ex) {
             throw error(RError.Message.PARSE_ERROR);
         }
-        return doParse(connection, n, coalesce(lines), prompt, srcFile, encoding);
+        return doParse(connection, n, coalesce(lines), prompt, srcFile, encoding, ctxRef.get());
     }
 
     @TruffleBoundary
     @Specialization
-    protected RExpression parse(int conn, int n, RAbstractStringVector text, String prompt, Object srcFile, String encoding) {
+    protected RExpression parse(int conn, int n, RAbstractStringVector text, String prompt, Object srcFile, String encoding,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         RConnection connection = RConnection.fromIndex(conn);
-        return doParse(connection, n, coalesce(text), prompt, srcFile, encoding);
+        return doParse(connection, n, coalesce(text), prompt, srcFile, encoding, ctxRef.get());
     }
 
-    private RExpression doParse(RConnection conn, int n, String coalescedLines, @SuppressWarnings("unused") String prompt, Object srcFile, @SuppressWarnings("unused") String encoding) {
+    private RExpression doParse(RConnection conn, int n, String coalescedLines, @SuppressWarnings("unused") String prompt, Object srcFile, @SuppressWarnings("unused") String encoding,
+                    RContext context) {
         if (coalescedLines.length() == 0 || n == 0) {
             return RDataFactory.createExpression(new Object[0]);
         }
         try {
-            Source source = srcFile != RNull.instance ? createSource(RContext.getInstance(), srcFile, coalescedLines) : createSource(conn, coalescedLines);
+            Source source = srcFile != RNull.instance ? createSource(context, srcFile, coalescedLines) : createSource(conn, coalescedLines);
             boolean keepSource = srcFile instanceof REnvironment;
             ParsedExpression parseRes = RContext.getEngine().parse(source, keepSource);
             RExpression exprs = parseRes.getExpression();
@@ -201,7 +206,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                 String path = null;
                 if (!fnf.isAbsolute()) {
                     String wd = RRuntime.asString(srcFileEnv.get("wd"));
-                    path = String.join(File.separator, wd, fileName);
+                    path = String.join(context.getEnv().getFileNameSeparator(), wd, fileName);
                 } else {
                     path = fileName;
                 }

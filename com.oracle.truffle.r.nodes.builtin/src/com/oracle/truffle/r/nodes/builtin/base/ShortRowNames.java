@@ -38,11 +38,11 @@ import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @RBuiltin(name = "shortRowNames", kind = INTERNAL, parameterNames = {"x", "type"}, behavior = PURE)
 public abstract class ShortRowNames extends RBuiltinNode.Arg2 {
@@ -65,13 +65,10 @@ public abstract class ShortRowNames extends RBuiltinNode.Arg2 {
     protected Object getNames(Object originalOperand, int originalType) {
         Object operand = operandTypeProfile.profile(originalOperand);
         Object rowNames;
-        if (operand instanceof RAbstractContainer) {
-            rowNames = getRowNamesNode.getRowNames((RAbstractContainer) operand);
-        } else if (operand instanceof REnvironment) {
-            rowNames = getRowNamesNode.execute((REnvironment) operand);
+        if (operand instanceof RAttributable) {
+            rowNames = getRowNamesNode.execute((RAttributable) operand);
         } else {
-            // for any other type GnuR returns 0
-            return 0;
+            rowNames = null;
         }
 
         int type = typeProfile.profile(originalType);

@@ -84,9 +84,9 @@ all: install.recommended
 ifndef R_RECOMMENDED_PKGS_CACHE_DIR
 	@echo Installing recommended package `basename $<`
 	@_R_CHECK_INSTALL_DEPENDS_=no $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
-	@touch $@
-	@echo Finish installing recommended package `basename $<`
+	@echo Finished installing recommended package `basename $<`
 endif
+	@touch $@
 
 $(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
 $(info GNUR_RECOMMENDED_PATTERN=$(GNUR_RECOMMENDED_PATTERN))

@@ -89,7 +89,11 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp $(GNUR_HOME_BINARY)/etc/Makeconf Makeconf.etc
 	cp $(GNUR_HOME_BINARY)/etc/javaconf $(FASTR_ETC_DIR)/javaconf
 	cp $(GNUR_HOME_BINARY)/etc/repositories $(FASTR_ETC_DIR)/repositories
-	cp $(GNUR_HOME_BINARY)/etc/ldpaths $(FASTR_ETC_DIR)/ldpaths
+	# ldpaths: create two versions: ldpaths.llvm (used also as default ldpaths) and ldpaths.native
+	# the llvm version adds the LLVM lib folder to the LD_LIBRARY_PATH
+	sed 's!export LD_LIBRARY_PATH!LD_LIBRARY_PATH="$$\{R_HOME\}/../llvm/native/lib/:$$\{LD_LIBRARY_PATH\}"; export LD_LIBRARY_PATH!' $(GNUR_HOME_BINARY)/etc/ldpaths > $(FASTR_ETC_DIR)/ldpaths
+	cp $(FASTR_ETC_DIR)/ldpaths $(FASTR_ETC_DIR)/ldpaths.llvm
+	cp $(GNUR_HOME_BINARY)/etc/ldpaths $(FASTR_ETC_DIR)/ldpaths.native
 	# the ed script adds -DFASTR to compiler options and removes JAVA related variables
 	ed Makeconf.etc < edMakeconf.etc
 	# Backup the current state of Makeconf.etc to allow users to switch back to the native toolchain
@@ -105,7 +109,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	ed Makeconf.etc < edMakeconf.etc.llvm
 	sed -i -e 's/-fopenmp//' Makeconf.etc
 	sed -i -e 's~LIBR0 =~LIBR0 = -lR~' Makeconf.etc
-	sed -i -e 's~LDFLAGS =~LDFLAGS = -Wl,-rpath,$$\(R_HOME\)/lib/ -L$$\(R_HOME\)/lib -lf2c~' Makeconf.etc
+	sed -i -e 's~LDFLAGS =~LDFLAGS = -Wl,-rpath,$$\(R_HOME\)/lib/,-rpath,$$\(R_HOME\)/../llvm/native/lib -L$$\(R_HOME\)/lib -lf2c~' Makeconf.etc
 	sed -i -e 's~^CXXFLAGS =\(.*\)~CXXFLAGS = \1 $(FASTR_CXXFLAGS)~g' Makeconf.etc
 	# A workaround for a Sulong issue: TODO: the issue ID
 	sed -i -e 's/-O2//' Makeconf.etc

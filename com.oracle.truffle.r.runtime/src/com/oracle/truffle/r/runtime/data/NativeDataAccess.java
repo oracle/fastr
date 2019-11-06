@@ -432,7 +432,13 @@ public final class NativeDataAccess {
     @TruffleBoundary
     private static void putMirrorObject(RBaseObject obj, NativeMirror oldMirror) {
         NativeMirror newMirror;
-        obj.setNativeMirror(newMirror = obj instanceof CustomNativeMirror ? new NativeMirror(obj, ((CustomNativeMirror) obj).getCustomMirrorAddress()) : new NativeMirror(obj));
+        if (oldMirror != null && oldMirror.dataAddress != 0L) {
+            // We need to transfer the dataAddress from the transient mirror to the new one
+            newMirror = new NativeMirror(obj, oldMirror.dataAddress);
+        } else {
+            newMirror = obj instanceof CustomNativeMirror ? new NativeMirror(obj, ((CustomNativeMirror) obj).getCustomMirrorAddress()) : new NativeMirror(obj);
+        }
+        obj.setNativeMirror(newMirror);
         if (oldMirror != null) {
             newMirror.nativeWrapperRef = oldMirror.nativeWrapperRef;
         }
@@ -1376,14 +1382,15 @@ public final class NativeDataAccess {
     }
 
     private static long allocateNativeMemory(long bytes) {
+        LOGGER.finest(() -> String.format("Going to allocate %d bytes of native memory", bytes));
         long result = UnsafeAdapter.UNSAFE.allocateMemory(bytes);
-        // Uncomment for debugging
-        // System.out.printf("DEBUG: allocated %x, length %d\n", result, bytes);
+        LOGGER.finest(() -> String.format("Done allocating %d bytes of native memory, result: %x", bytes, result));
         return result;
     }
 
     private static void freeNativeMemory(long address) {
-        // Uncomment for debugging
+        // Uncomment for debugging, this cannot be logged via Truffle logger, because it runs on
+        // dedicated thread without any Truffle context
         // System.out.printf("DEBUG: freeing %x\n", address);
         UnsafeAdapter.UNSAFE.freeMemory(address);
     }

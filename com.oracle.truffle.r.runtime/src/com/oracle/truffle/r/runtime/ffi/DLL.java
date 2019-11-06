@@ -46,6 +46,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.FileSystemUtils;
+import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
@@ -591,11 +592,12 @@ public class DLL {
         try {
             handle = load.apply(path);
         } catch (UnsatisfiedLinkError ex) {
-            throw RSuicide.rSuicide(context, "error loading libR from: " + path + ".\n" +
-                            "If running on the NFI backend, did you provide the location of libtrufflenfi.so as the value of the system " +
-                            "property 'truffle.nfi.library'?\nThe current value is '" + System.getProperty("truffle.nfi.library") + "'.\n" +
-                            "Is the OpenMP runtime library (libgomp.so) present on your system? This library is, e.g., typically part of the GCC package.\n" +
-                            "Details: " + ex.getMessage());
+            throw RSuicide.rSuicide(context, String.format("error loading libR from: %s.\n" +
+                            "Message: " + ex.getMessage() + "\n\n" +
+                            "Troubleshooting: \n\n" +
+                            "  * Please run %s/bin/configure_fastr. It will check that your system has the necessary dependencies and if not it will suggest how to install them.\n\n" +
+                            "  * If this does not help, please open an issue on https://github.com/oracle/fastr/ or reach us on https://graalvm.slack.com.\n\n",
+                            path, REnvVars.rHome()));
         } catch (Throwable ex) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + ". Details: " + ex.getMessage());
         }

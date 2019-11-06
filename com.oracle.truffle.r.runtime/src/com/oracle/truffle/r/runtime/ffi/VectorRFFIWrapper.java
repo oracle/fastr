@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -69,6 +70,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
     private VectorRFFIWrapper(TruffleObject vector) {
         assert vector instanceof RBaseObject;
         this.vector = vector;
+        // Establish the 1-1 relationship between the object and its native wrapper
         NativeDataAccess.setNativeWrapper((RBaseObject) vector, this);
         pointer = NativeDataAccess.getNativeDataAddress((RBaseObject) vector);
     }
@@ -83,8 +85,6 @@ public final class VectorRFFIWrapper implements TruffleObject {
             // TODO: create subclasses of VectorRFFIWrapper specialized for concrete vector types
             // and use directly the vector methods (possibly via VectorAccess) not interop library
             wrapper = new VectorRFFIWrapper(x);
-            // Establish the 1-1 relationship between the object and its native wrapper
-            NativeDataAccess.setNativeWrapper((RBaseObject) x, wrapper);
             return (VectorRFFIWrapper) wrapper;
         }
     }
@@ -208,9 +208,15 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         @Specialization(guards = "isNotStringOrComplex(value)", limit = "getInteropLibraryCacheSize()")
         protected static Object others(Object value, int index,
-                        @CachedLibrary("value") InteropLibrary interop) throws InvalidArrayIndexException {
+                        @CachedLibrary("value") InteropLibrary interop,
+                        @Cached BranchProfile naProfile) throws InvalidArrayIndexException {
             try {
-                return interop.readArrayElement(value, index);
+                Object elem = interop.readArrayElement(value, index);
+                if (elem instanceof RInteropNA) {
+                    naProfile.enter();
+                    return ((RInteropNA) elem).getNativeValue();
+                }
+                return elem;
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
