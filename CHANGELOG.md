@@ -1,3 +1,10 @@
+# 20.0.0
+
+Added missing R builtins and C APIs
+
+* Subsetting an array by numeric/string matrix
+
+
 # 19.3.0
 
 New features:

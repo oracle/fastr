@@ -105,7 +105,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         super(mode, vector, positions, recursive);
         assert vectorType.isVector();
 
-        if (numberOfDimensions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {
+        if (numberOfPositions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {
             this.updatePositionNames = updatePositionNames;
         } else {
             this.updatePositionNames = false;
@@ -119,7 +119,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         // determine the target cast type
         if (vectorType == RType.List && mode.isSubscript()) {
-            if (valueType.isNull() && numberOfDimensions > 1) {
+            if (valueType.isNull() && numberOfPositions > 1) {
                 this.castType = null;
             } else {
                 this.castType = vectorType;
@@ -132,7 +132,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
                 this.castType = RType.maxPrecedence(valueType, vectorType);
             }
         } else if (valueType.isNull()) {
-            if (mode.isSubscript() && numberOfDimensions > 1) {
+            if (mode.isSubscript() && numberOfPositions > 1) {
                 this.castType = null;
             } else {
                 this.castType = vectorType;
@@ -202,7 +202,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         int appliedValueLength = valueLengthProfile.profile(value.getLength());
 
         int valueLength;
-        if (this.numberOfDimensions > 1 && isDeleteElements()) {
+        if (this.numberOfPositions > 1 && isDeleteElements()) {
             valueLength = 0;
         } else {
             valueLength = appliedValueLength;
@@ -210,11 +210,11 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         int vectorLength = targetLengthProfile.profile(vector.getLength());
         int[] vectorDimensions;
-        if (numberOfDimensions == 1) {
+        if (numberOfPositions == 1) {
             /* For single dimension case we never need to load the dimension. */
             vectorDimensions = null;
         } else {
-            assert numberOfDimensions > 1;
+            assert numberOfPositions > 1;
             vectorDimensions = loadVectorDimensions(vector);
         }
 
@@ -274,8 +274,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
              * Interestingly we always need to provide not NOT_MULTIPLE_REPLACEMENT error messages
              * for multi-dimensional deletes.
              */
-            if ((this.numberOfDimensions > 1 && isNullValue()) || (replacementLength != valueLength && replacementLength % valueLength != 0)) {
-                if (this.numberOfDimensions > 1) {
+            if ((this.numberOfPositions > 1 && isNullValue()) || (replacementLength != valueLength && replacementLength % valueLength != 0)) {
+                if (this.numberOfPositions > 1) {
                     throw error(RError.Message.NOT_MULTIPLE_REPLACEMENT);
                 } else {
                     warningBranch.enter();
@@ -291,7 +291,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (isDeleteElements()) {
             assert deleteElementsNode != null;
             vector = deleteElementsNode.deleteElements(vector, vectorLength);
-        } else if (this.numberOfDimensions == 1 && updatePositionNames) {
+        } else if (this.numberOfPositions == 1 && updatePositionNames) {
 
             // depth must be == 0 to avoid recursive position name updates
             updateVectorWithPositionNames(vector, positions);
@@ -321,7 +321,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             }
         } else {
             assert mode.isSubset();
-            if (!isNullValue() || this.numberOfDimensions == 1) {
+            if (!isNullValue() || this.numberOfPositions == 1) {
                 if (valueLength == 0) {
                     throw error(RError.Message.REPLACEMENT_0);
                 } else if (positionsCheckNode.getContainsNA(positionProfiles)) {

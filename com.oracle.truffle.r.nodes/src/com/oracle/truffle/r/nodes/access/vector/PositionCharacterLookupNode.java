@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,17 +39,17 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 final class PositionCharacterLookupNode extends RBaseNode {
 
     private final ElementAccessMode mode;
-    private final int numDimensions;
-    private final int dimensionIndex;
+    private final int numPositions;
+    private final int positionIndex;
     private final BranchProfile emptyProfile = BranchProfile.create();
 
     @Child private SearchFirstStringNode searchNode;
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
-    PositionCharacterLookupNode(ElementAccessMode mode, int numDimensions, int dimensionIndex, boolean useNAForNotFound, boolean exact) {
-        this.numDimensions = numDimensions;
-        this.dimensionIndex = dimensionIndex;
+    PositionCharacterLookupNode(ElementAccessMode mode, int numPositions, int positionIndex, boolean useNAForNotFound, boolean exact) {
+        this.numPositions = numPositions;
+        this.positionIndex = positionIndex;
         this.searchNode = SearchFirstStringNode.createNode(exact, useNAForNotFound);
         this.mode = mode;
     }
@@ -57,7 +57,7 @@ final class PositionCharacterLookupNode extends RBaseNode {
     public RAbstractIntVector execute(RAbstractContainer target, RAbstractStringVector position, int notFoundStartIndex) {
         // lookup names for single dimension case
         RAbstractIntVector result;
-        if (numDimensions <= 1) {
+        if (numPositions <= 1) {
             RStringVector names = getNamesNode.getNames(target);
             if (names == null) {
                 emptyProfile.enter();
@@ -67,7 +67,7 @@ final class PositionCharacterLookupNode extends RBaseNode {
         } else {
             RList dimNames = getDimNamesNode.getDimNames(target);
             if (dimNames != null) {
-                Object dataAt = dimNames.getDataAt(dimensionIndex);
+                Object dataAt = dimNames.getDataAt(positionIndex);
                 if (dataAt != RNull.instance) {
                     RAbstractStringVector dimName = (RAbstractStringVector) dataAt;
                     result = searchNode.apply(dimName, position, notFoundStartIndex, null);
