@@ -914,4 +914,11 @@ public final class Utils {
         return (s.toString());
     }
 
+    /**
+     * Testing purposes only.
+     */
+    public static void resetWD() {
+        wdState().current = wdState().initial;
+    }
+
 }

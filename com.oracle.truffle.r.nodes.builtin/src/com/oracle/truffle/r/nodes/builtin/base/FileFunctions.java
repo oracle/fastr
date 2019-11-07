@@ -824,6 +824,9 @@ public class FileFunctions {
                     }
                     while (iter.hasNext()) {
                         TruffleFile dir = iter.next();
+                        if (!recursive && dir.equals(root)) {
+                            continue;
+                        }
                         if (!fullNames) {
                             dir = vecPath.relativize(dir);
                         }
