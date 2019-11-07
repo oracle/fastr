@@ -65,8 +65,13 @@ else
 # codetools must always be installed because of S4
 GNUR_RECOMMENDED_PKGNAMES := codetools
 endif # FASTR_RELEASE
+GNUR_RECOMMENDED_PKGNAMES_TS = $(GNUR_RECOMMENDED_PKGNAMES:=.ts)
 
-GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_HOME_BINARY)/src/library/Recommended/$(pkg)*.tar.gz)
+GNUR_RECOMMENDED_TAR_DIR = $(GNUR_HOME_BINARY)/src/library/Recommended/
+GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_RECOMMENDED_TAR_DIR)/$(pkg)*.tar.gz)
+## need to allow parallel installs
+INSTALL_OPTS = --pkglock --data-compress=xz --no-staged-install
+
 e :=
 c := )|(
 clist = $(subst $e $e,$c,$(strip $1))
@@ -74,6 +79,14 @@ clist = $(subst $e $e,$c,$(strip $1))
 GNUR_RECOMMENDED_PATTERN := "^(($(call clist,$(GNUR_RECOMMENDED_PKGNAMES))))$$"
 
 all: install.recommended
+
+%.ts: $(GNUR_RECOMMENDED_TAR_DIR)%.tgz
+ifndef R_RECOMMENDED_PKGS_CACHE_DIR
+	@echo Installing recommended package `basename $<`
+	@_R_CHECK_INSTALL_DEPENDS_=no $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
+	@echo Finished installing recommended package `basename $<`
+endif
+	@touch $@
 
 $(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
 $(info GNUR_RECOMMENDED_PATTERN=$(GNUR_RECOMMENDED_PATTERN))
@@ -84,13 +97,9 @@ $(PKGS_REPO_DIR):
 	cp $(GNUR_RECOMMENDED_TARS) $(PKGS_REPO_DIR)
 	(cd $(PKGS_REPO_DIR); $(GNUR_HOME_BINARY)/bin/R --vanilla --slave -e "tools::write_PACKAGES('.', type='source')")
 
-install.recommended: $(PKGS_REPO_DIR)
+install.recommended: $(PKGS_REPO_DIR) $(GNUR_RECOMMENDED_PKGNAMES_TS)
 ifdef R_RECOMMENDED_PKGS_CACHE_DIR
 	mx -p $(FASTR_R_HOME) r-pkgcache $(VERBOSE) --vm fastr --library fastr=$(FASTR_R_HOME)/library --repos RECOMMENDED=$(PKGS_REPO_DIR) --cache-dir $(R_RECOMMENDED_PKGS_CACHE_DIR) --pkg-pattern $(GNUR_RECOMMENDED_PATTERN)
-else
-	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
-		($(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar) || (echo "ERROR: during installation of $$pkgtar"; exit 1); \
-	done
 endif
 ifeq ($(OS_NAME),Darwin)
 	set -e; \
@@ -114,3 +123,12 @@ clean:
 	done
 	rm -f install.recommended
 	rm -rf $(PKGS_REPO_DIR)
+
+Matrix.ts: lattice.ts
+mgcv.ts: nlme.ts MASS.ts Matrix.ts
+nlme.ts: lattice.ts
+class.ts: MASS.ts
+survival.ts: Matrix.ts
+## and for static html links
+boot.ts: MASS.ts survival.ts
+cluster.ts: MASS.ts
