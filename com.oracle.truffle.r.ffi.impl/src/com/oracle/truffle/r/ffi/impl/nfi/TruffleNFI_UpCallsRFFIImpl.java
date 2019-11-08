@@ -25,12 +25,10 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.oracle.truffle.api.CallTarget;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -43,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.ffi.FFIWrap;
+import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
@@ -111,21 +109,17 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            FFIWrap ffiWrap = new FFIWrap();
-            try {
+            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap()) {
                 Object[] args = frame.getArguments();
                 // first arg is DLLInfo - have to wrapUncached it for native
                 args[0] = ffiWrap.wrapUncached(args[0]);
                 interop.execute(setSymFun, args);
                 return RNull.instance;
-            } catch (InteropException ex) {
+            } catch (Exception ex) {
                 throw RInternalError.shouldNotReachHere(ex);
-            } finally {
-                // FFIwrap holds the materialized values,
-                // we have to keep them alive until the call returns
-                CompilerDirectives.materialize(ffiWrap);
             }
         }
+
     }
 
     @TruffleBoundary

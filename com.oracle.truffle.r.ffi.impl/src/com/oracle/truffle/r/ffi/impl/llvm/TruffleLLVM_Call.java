@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
-import com.oracle.truffle.r.runtime.ffi.FFIWrap;
+import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
@@ -175,13 +175,10 @@ public final class TruffleLLVM_Call implements CallRFFI {
                 } else if (value instanceof Integer) {
                     interop.execute(INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
                 } else if (value instanceof TruffleObject) {
-                    FFIWrap ffiWrap = new FFIWrap();
-                    try {
+                    try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap()) {
                         interop.execute(INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, ffiWrap.wrapUncached(value));
-                    } finally {
-                        // FFIwrap holds the materialized values,
-                        // we have to keep them alive until the call returns
-                        CompilerDirectives.materialize(ffiWrap);
+                    } catch (Exception ex) {
+                        throw RInternalError.shouldNotReachHere(ex);
                     }
                 }
             } catch (InteropException ex) {
@@ -252,9 +249,9 @@ public final class TruffleLLVM_Call implements CallRFFI {
         }
 
         private Object doInvoke(InteropLibrary interop, TruffleObject truffleObject, Object[] args, FFIMaterializeNode[] ffiMaterializeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
-            FFIWrap ffiWrap;
+            FFIDownCallWrap ffiWrap;
             if (ffiToNativeMirrorNodes != null) {
-                ffiWrap = new FFIWrap(args.length);
+                ffiWrap = new FFIDownCallWrap(args.length);
                 ffiWrap.wrap(args, ffiMaterializeNodes, ffiToNativeMirrorNodes);
             } else {
                 ffiWrap = null;

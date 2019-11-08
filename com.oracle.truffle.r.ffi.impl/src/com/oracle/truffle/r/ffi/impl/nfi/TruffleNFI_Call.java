@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
 import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -45,7 +44,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
-import com.oracle.truffle.r.runtime.ffi.FFIWrap;
+import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 public class TruffleNFI_Call implements CallRFFI {
@@ -108,19 +107,16 @@ public class TruffleNFI_Call implements CallRFFI {
         private static Object doInvoke(NativeCallInfo nativeCallInfo, TruffleObject address, TruffleObject function, Object[] args, int cachedArgsLength, FFIMaterializeNode[] ffiMaterializeNode,
                         FFIToNativeMirrorNode[] ffiToNativeMirrorNodes, InteropLibrary interop, FFIUnwrapNode unwrap) throws RuntimeException {
             Object result = null;
-            FFIWrap ffiWrap = prepareCall(nativeCallInfo.name, args, ffiMaterializeNode, ffiToNativeMirrorNodes);
-            Object[] realArgs = new Object[cachedArgsLength + 1];
-            try {
+            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
+                logCall(nativeCallInfo.name, args);
+                ffiWrap.wrap(args, ffiMaterializeNode, ffiToNativeMirrorNodes);
+                Object[] realArgs = new Object[cachedArgsLength + 1];
                 realArgs[0] = address;
                 System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
                 result = interop.execute(function, realArgs);
                 return unwrap.execute(result);
-            } catch (InteropException ex) {
+            } catch (Exception ex) {
                 throw RInternalError.shouldNotReachHere(ex);
-            } finally {
-                // FFIwrap holds the materialized values,
-                // we have to keep them alive until the call returns
-                CompilerDirectives.materialize(ffiWrap);
             }
         }
 
@@ -146,42 +142,33 @@ public class TruffleNFI_Call implements CallRFFI {
 
         @Override
         public void execute(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
-            FFIWrap ffiWrap = null;
-            try {
+            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
                 switch (args.length) {
                     case 0:
-                        ffiWrap = prepareCall(nativeCallInfo.name, args, ffiMaterialize0, ffiWrapper0);
+                        logCall(nativeCallInfo.name, args);
+                        ffiWrap.wrap(args, ffiMaterialize0, ffiWrapper0);
                         TruffleObject callVoid0Function = getFunction("dot_call_void0", CallVoid0Sig);
                         execute0Interop.execute(callVoid0Function, nativeCallInfo.address.asTruffleObject());
                         break;
                     case 1:
-                        ffiWrap = prepareCall(nativeCallInfo.name, args, ffiMaterialize1, ffiWrapper1);
+                        logCall(nativeCallInfo.name, args);
+                        ffiWrap.wrap(args, ffiMaterialize1, ffiWrapper1);
                         TruffleObject callVoid1Function = getFunction("dot_call_void1", CallVoid1Sig);
                         execute1Interop.execute(callVoid1Function, nativeCallInfo.address.asTruffleObject(), args[0]);
                         break;
                     default:
                         throw RInternalError.shouldNotReachHere();
                 }
-            } catch (InteropException ex) {
+            } catch (Exception ex) {
                 throw RInternalError.shouldNotReachHere(ex);
-            } finally {
-                if (ffiWrap != null) {
-                    // FFIwrap holds the materialized values,
-                    // we have to keep them alive until the call returns
-                    CompilerDirectives.materialize(ffiWrap);
-                }
             }
         }
     }
 
-    private static FFIWrap prepareCall(String name, Object[] args, FFIMaterializeNode[] materializeNodes, FFIToNativeMirrorNode[] wrapperNodes) {
-        assert materializeNodes.length == wrapperNodes.length;
+    private static void logCall(String name, Object[] args) {
         if (logEnabled()) {
             logDownCall(name, args);
         }
-        FFIWrap wrap = new FFIWrap(args.length);
-        wrap.wrap(args, materializeNodes, wrapperNodes);
-        return wrap;
     }
 
     @Override

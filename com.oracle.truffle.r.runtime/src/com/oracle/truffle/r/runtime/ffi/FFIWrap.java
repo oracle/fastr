@@ -23,60 +23,102 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.r.runtime.data.RBaseObject;
 
 /**
- * A final step before an object is sent to native code or LLVM interpreter.
  * 
- * The resulting object must be able to live on the native side, i.e., {@link RBaseObject} that can
- * have its native mirror.
+ * In general, two steps are necessary before an object is sent to native code or LLVM interpreter.
+ * <ol>
+ * <li>Ensure the object is <b>materialized</b>. Done via {@link FFIMaterializeNode}</li>
+ * <li>Convert to an object, that is able to <b>live on the native side</b>. Done via
+ * {@link FFIToNativeMirrorNode}</li>
+ * </ol>
  *
- * The life-cycle of the resulting Java object should be tied to the argument, which is performance
- * (caching the result) and defensive measure. It is a defensive measure since any RFFI function
- * whose result's life-cycle should be tied with some other R object (e.g. it is retrieved from an
- * environment) should make sure it is tied by replacing the original compact representation with
- * the materialized one inside the referer.
+ * <p>
+ * As a result, two additional objects are created, and so we have now three objects - the original
+ * argument, the materialized (via FFIMaterializeNode) version of the original argument and the
+ * NativeMirror.
+ * </p>
+ * <br>
+ * 
+ * The life-cycle of both resulting Java objects should be tied to the original argument, which is a
+ * performance (caching the result) and a defensive measure.
+ * 
+ * <ol>
+ * <li><b>Performance measure</b> - the NativeMirror life cycle is trivially tied to the
+ * materialized version of the arg since it's going to be stored in its nativeMirror field, but what
+ * is important is that the materialized arg life-cycle is tied to the original argument, that is,
+ * e.g., why sequences cache and reuse the materialized vector.</li>
+ * 
+ * <li><b>Defensive measure</b> - any RFFI function whose result's life-cycle should be tied with
+ * some other R object (e.g. it is retrieved from an environment or list) should make sure it is
+ * tied by replacing the original compact representation with the materialized one inside the
+ * referer. For return values of upcalls, the upcall itself should already have called
+ * FFIMaterializeNode and, for example, saved the materialized object to the list from which it had
+ * retrieved it original non-materialized object, but for arguments of downcalls this doesn't apply
+ * and calling FFIMaterializeNode is not a defensive measure, but necessity and it has to be ensured
+ * that the materialized value stays alive until the downcall returns.</li>
+ * </ol>
  *
+ * <p>
  * We cannot tie the life-cycle of wrappers of primitive values, they are at least protected with
  * {@link RFFIContext#registerReferenceUsedInNative(Object)} elsewhere.
- *
+ * </p>
+ * <br>
  * See documentation/dev/ffi.md for more details.
  */
-public final class FFIWrap {
-    /**
-     * Hold the materialized values for as long, as the FFIWrap instance exists.
-     */
-    public final Object[] materialized;
+public class FFIWrap {
 
-    public FFIWrap() {
-        materialized = new Object[1];
-    }
+    public static class FFIDownCallWrap implements AutoCloseable {
+        /**
+         * Hold the materialized values for as long, as the FFIWrap instance exists.
+         */
+        private final Object[] materialized;
 
-    public FFIWrap(int length) {
-        materialized = new Object[length];
-    }
-
-    public Object wrapUncached(Object arg) {
-        assert materialized.length == 1;
-        materialized[0] = FFIMaterializeNode.getUncached().materialize(arg);
-        return FFIToNativeMirrorNode.getUncached().execute(materialized[0]);
-    }
-
-    public Object wrap(Object arg, FFIMaterializeNode ffiMateralizeNodes, FFIToNativeMirrorNode ffiToNativeMirrorNode) {
-        assert materialized.length == 1;
-        materialized[0] = ffiMateralizeNodes.materialize(arg);
-        return ffiToNativeMirrorNode.execute(materialized[0]);
-    }
-
-    @ExplodeLoop
-    public void wrap(Object[] args, FFIMaterializeNode[] ffiMateralizeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
-        assert ffiMateralizeNodes.length == ffiToNativeMirrorNodes.length;
-        assert ffiMateralizeNodes.length == materialized.length;
-        CompilerAsserts.compilationConstant(ffiMateralizeNodes.length);
-        for (int i = 0; i < ffiMateralizeNodes.length; i++) {
-            materialized[i] = ffiMateralizeNodes[i].materialize(args[i]);
-            args[i] = ffiToNativeMirrorNodes[i].execute(materialized[i]);
+        public FFIDownCallWrap() {
+            materialized = new Object[1];
         }
+
+        public FFIDownCallWrap(int length) {
+            materialized = new Object[length];
+        }
+
+        public Object wrapUncached(Object arg) {
+            assert materialized.length == 1;
+            materialized[0] = FFIMaterializeNode.getUncached().materialize(arg);
+            return FFIToNativeMirrorNode.getUncached().execute(materialized[0]);
+        }
+
+        @ExplodeLoop
+        public void wrap(Object[] args, FFIMaterializeNode[] ffiMateralizeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
+            assert ffiMateralizeNodes.length == ffiToNativeMirrorNodes.length;
+            assert ffiMateralizeNodes.length == materialized.length;
+            CompilerAsserts.compilationConstant(ffiMateralizeNodes.length);
+            for (int i = 0; i < ffiMateralizeNodes.length; i++) {
+                materialized[i] = ffiMateralizeNodes[i].materialize(args[i]);
+                args[i] = ffiToNativeMirrorNodes[i].execute(materialized[i]);
+            }
+        }
+
+        @Override
+        public void close() {
+            CompilerDirectives.materialize(materialized);
+        }
+    }
+
+    public static class FFIUpCallWrap {
+        public static class FFIWrapResult {
+            public Object materialized;
+            public Object nativeMirror;
+        }
+
+        public FFIWrapResult wrap(Object arg, FFIMaterializeNode ffiMateralizeNodes, FFIToNativeMirrorNode ffiToNativeMirrorNode) {
+            FFIWrapResult result = new FFIWrapResult();
+            result.materialized = ffiMateralizeNodes.materialize(arg);
+            result.nativeMirror = ffiToNativeMirrorNode.execute(result.materialized);
+            return result;
+        }
+
     }
 }

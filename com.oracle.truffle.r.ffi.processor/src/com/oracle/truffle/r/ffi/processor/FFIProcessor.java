@@ -294,7 +294,8 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;\n");
         }
         if (needsReturnWrap) {
-            w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrap;\n");
+            w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIUpCallWrap;\n");
+            w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIUpCallWrap.FFIWrapResult;\n");
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;\n");
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;\n");
         }
@@ -395,9 +396,10 @@ public final class FFIProcessor extends AbstractProcessor {
 
         if (returnKind != TypeKind.VOID) {
             if (needsReturnWrap) {
-                w.append("            FFIWrap ffiWrap = new FFIWrap();\n");
-                w.append("            resultRObj = ffiWrap.wrap(resultRObj0, materializeNode, toNativeWrapperNode);\n");
-                w.append("            registerRObj = ffiWrap.materialized[0];\n");
+                w.append("            FFIUpCallWrap ffiWrap = new FFIUpCallWrap();\n");
+                w.append("            FFIWrapResult result = ffiWrap.wrap(resultRObj0, materializeNode, toNativeWrapperNode);\n");
+                w.append("            resultRObj = result.nativeMirror;\n");
+                w.append("            registerRObj = result.materialized;\n");
             } else {
                 w.append("            resultRObj = resultRObj0;\n");
             }

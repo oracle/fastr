@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 
@@ -46,9 +48,21 @@ public abstract class FFIToNativeMirrorNode extends Node {
         return NativeDataAccess.createNativeMirror(value);
     }
 
+    @Specialization
+    protected static Object wrap(VectorRFFIWrapper value) {
+        return value;
+    }
+
+    @Specialization
+    protected static Object wrap(long value) {
+        // e.g in the CAR upcall (CARCall.java) for NFISymbol
+        return value;
+    }
+
     @Fallback
     protected static Object wrap(Object value) {
-        return value;
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere("Cannot create NativeMirror for " + value.getClass().getSimpleName());
     }
 
     public static FFIToNativeMirrorNode[] create(int count) {
