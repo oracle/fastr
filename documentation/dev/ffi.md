@@ -1,9 +1,8 @@
 # The R FFI Implementation
 
 # Introduction
-FastR can interface to native C and Fortran code in a number of ways, for example, access to C library APIs not supported by the Java JDK, access to LaPack functions, and the `.Call`, `.Fortran`, `.C` builtins. Each of these are defined by a Java interface,e.g. `CallRFFI` for the `.Call` builtin. To facilitate experimentation and different implementations, the implementation of these interfaces is defined by a factory class, `RFFIFactory`, that is chosen at run time via the `fastr.ffi.factory.class` system property, or the `FASTR_RFFI` environment variable.
-The factory is responsible for creating an instance of the `RFFI` interface that in turn provides access to implementations of the underlying interfaces such as `CallRFFI`. This structure allows
-for each of the individual interfaces to be implemented by a different mechanism. Currently the default factory class is `TruffleNFI_RFFIFactory` which uses the Truffle NFI system to implement the transition to native code.
+FastR can interface to native C and Fortran code in a number of ways, for example, access to C library APIs not supported by the Java JDK, access to LaPack functions, and the `.Call`, `.Fortran`, `.C` builtins. Each of these are defined by a Java interface, e.g. `CallRFFI` for the `.Call` builtin. To facilitate experimentation and different implementations, the implementation of these interfaces is defined by a factory class, `RFFIFactory`, that is chosen at run time via the `fastr.ffi.factory.class` system property, or the `FASTR_RFFI` environment variable.
+The factory is responsible for creating an instance of the `RFFI` interface that in turn provides access to implementations of the underlying interfaces such as `CallRFFI`. This structure allows for each of the individual interfaces to be implemented by a different mechanism. Currently the default factory class is `TruffleNFI_RFFIFactory` which uses the Truffle NFI system to implement the transition to native code.
 
 # No native code mode
 FastR can be configured to avoid running any unmanaged code coming from GNU R or packages. It is described in more detail [here](managed_ffi.md).
@@ -24,7 +23,7 @@ See [build process documentation](build-process.md) for more details.
 ## The `fficall/include` directory
 
 `include` should be thought as analogous to GNU R's `src/include`, i.e. internal headers needed by the code in `src/main`.
-What we are trying to do by redefining them here is provide a boundary so that we don`t accidently capture code from GNU R that
+What we are trying to do by redefining them here is to provide a boundary so that we don`t accidently capture code from GNU R that
 is specific to the implementation of GNU R that is different in FastR, e.g., the representation of R objects. Evidently not every
 piece of GNU R code or an internal header has that characteristic but this strategy allows us some control to draw the boundary as
 tight as possible. Obviously we want to avoid duplicating (copying) code, as this requires validating the copy when migrating GNU R versions,
@@ -69,13 +68,7 @@ Typically special initialization may be required on the initialization of the in
 
 # Sharing data structures from Java with the native code
 
-Every subclass of `RBaseObject` abstract class, notably `RVector<ArrayT>` subclasses, may have a so called `NativeMirror` object associated with it.
-This object is created once the `RBaseObject` is passed to the native code. Initially FastR assigns a unique number (ID) to such `RBaseObject` and keeps this
-ID in the `NativeMirror` object, the ID is then passed to the native code as opaque pointer. The native code then may call R-API function,
-e.g. `Rf_eval` passing it an opaque pointer, this transitions back to Java and FastR finds `RBaseObject` corresponding to the value stored in the
-opaque pointer and passes this `RBaseObject` the FastR implementation of `Rf_eval` in `JavaUpCallsRFFIImpl#Rf_eval`. Note that any opaque pointer can only
-be obtained using R-API function, e.g. `allocVec`, which up-calls to Java and FastR creates `RBaseObject`, corresponding `NativeMirror` with ID and
-passes that as the opaque pointer back to the native code.
+Every subclass of the `RBaseObject` abstract class, notably `RVector<ArrayT>` subclasses, may have a so called `NativeMirror` object associated with it. This object is created once the `RBaseObject` is passed to native and then used as a representation for the original `RBaseObject`. Initially FastR assigns a unique number (ID) to such `RBaseObject` and keeps this ID in the `NativeMirror` object, the ID is then passed to the native code as opaque pointer. The native code then may call a R-API function, e.g. `Rf_eval` passing it an opaque pointer, this transitions back to Java and FastR finds the `RBaseObject` corresponding to the value stored in the opaque pointer and passes this `RBaseObject` to the FastR implementation of `Rf_eval` in `JavaUpCallsRFFIImpl#Rf_eval`. Note that any opaque pointer can only be obtained using R-API function, e.g. `allocVec`, which up-calls to Java and FastR creates `RBaseObject`, corresponding `NativeMirror` with ID and passes that as the opaque pointer back to the native code.
 
 Every subclass of `RMaterializedVector` can be materialized into native memory. In such case, its `data` field that normally holds a reference to
 the managed data, e.g. `int[]`, is set to `null` and its `NativeMirror` object will hold address to the off-heap data as a `long` value.
@@ -83,13 +76,16 @@ All the operations, e.g. `getDataAt`, on such vector will now reach to the nativ
 This materialization happens, for example, when the native code calls `INTEGER` R-API function, which is supposed to return a
 pointer to the backing (native) array. The finalizer of the `NativeMirror` object is responsible for freeing the native memory.
 
-FastR needs to materialize any vectors sent to the native code, because the native code assumes
-that it can change them in-place via this mechanism. Any object that is returned to the native
-code must be first processed though `FFIWrapNode` (this is done automatically in the code generated by `FFIProcessor`).
+Two steps are necessary, when a `RBaseObject` is about to be send to native code:
+First, FastR needs to materialize any vectors sent to the native code, because the native code assumes
+that it can change them in-place via this mechanism. Any object that is send to the native
+code (either as an argument in a downcall or as a return value from an upcall) must be first processed through `FFIMaterializeNode` (this is done automatically in the code generated by `FFIProcessor`).
 
 For the time being, sequences cache their materialized version to avoid having to recreate it and
 to avoid issues with GC described below. In future FastR vectors may support in-place changes of
 the internal representation. 
+
+Next, once it is ensured the `RBaseObject` is materialised, the `NativeMirror` representation for the materialized version has to be created and passed over to native.
 
 # Garbage collection
 
@@ -98,14 +94,14 @@ GNU-R provides API for protecting such objects (e.g., `PROTECT`). Unfortunately,
 namely during calls that are known to allocate new R objects. This knowledge is used by extensions authors and it is common that R objects are not properly
 protected when there are no allocating up-calls. This is in contrast with JVM, where GC can run at (almost) any point.
 FastR has to manually protect R objects leaked to the native code for the time until next GC cycle would be executed by GNU-R,
-i.e., until next allocating up-call is invoked.
+i.e., until the next allocating up-call is invoked.
 
 Moreover, extension authors use knowledge of relationships between R objects, which let them avoid GC protection for
 R objects that are known to be referenced by other R objects that are known to be reachable from a GC root.
 For example, R objects retrieved from an environment that is on a library search path do not need to be protected.
 The problem is that FastR needs to materialize vectors before sending them to the native code as described above,
 but the materialized vector would not be referenced by the environment. For this reason, any up-call that returns
-an object (A) that the user may assume is referenced by another R object (B) must materialize (A) via `FFIWrapNode`
+an object (A) that the user may assume is referenced by another R object (B) must materialize (A) via `FFIMaterializeNode`
 and then fixup the value inside (B) to actually create the same reference relationship as GNU-R.
 
 This approach does not work for situations where (B) cannot hold (A) because of different internal
@@ -117,3 +113,4 @@ referencing object in GNU-R. What this approach doesn't solve is that the extens
 may assume that changes done in such objects (e.g., attributes pair-list) will be visible in
 their referencing object. At this point, we ignore this potential problem.
 
+Additionally, in in case of a downcall, the materialized version of a `RBaseObject` has to be kept alive until the downcall returns, so that it is ensured that an eventual upcall might still get access to the original downcalls argument object.
