@@ -48,6 +48,9 @@ x <- 1; rffi.findvar("x", globalenv())
 
 rffi.test_duplicate(quote(a[,3])[[3]], 1L) # try duplicating empty symbol
 
+result <- rffi.invokeFun(c(1,2,4), function(i) 42)
+print(result[[1]])
+
 strVec <- rffi.getStringNA();
 stopifnot(anyNA(strVec))
 stopifnot(rffi.isNAString(strVec))

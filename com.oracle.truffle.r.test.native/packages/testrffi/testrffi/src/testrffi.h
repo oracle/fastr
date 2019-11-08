@@ -41,6 +41,8 @@ extern SEXP invoke_error(SEXP msg);
 
 extern SEXP dot_external_access_args(SEXP args);
 
+extern void invoke_fun(double* data, int* n, void* fun);
+
 extern SEXP invoke_isString(SEXP s);
 
 extern SEXP invoke12(SEXP a1, SEXP a2, SEXP a3, SEXP a4, SEXP a5, SEXP a6, SEXP a7, SEXP a8, SEXP a9, SEXP a10, SEXP a11, SEXP a12);
