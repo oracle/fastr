@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,8 +27,21 @@ import com.oracle.truffle.r.test.TestBase;
 // Checkstyle: stop line length check
 public class TestBuiltin_listdirs extends TestBase {
 
+    private static String dirPath0 = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple";
+    private static String dirPath1 = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/data";
+
     @Test
     public void testlistdirs1() {
-        assertEval(Ignored.SideEffects, "argv <- list('/home/lzhao/hg/r-instrumented/library/rpart/doc', TRUE, FALSE); .Internal(list.dirs(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("list.dirs('" + dirPath1 + "', full.names=T, recursive=T)");
+        assertEval("list.dirs('" + dirPath1 + "', full.names=T, recursive=F)");
+        assertEval("list.dirs('" + dirPath1 + "', full.names=F, recursive=T)");
+        assertEval("list.dirs('" + dirPath1 + "', full.names=F, recursive=F)");
+
+        assertEval("wd <- getwd(); setwd('" + dirPath0 + "'); list.dirs('data', full.names=T, recursive=T); setwd(wd)");
+        assertEval("wd <- getwd(); setwd('" + dirPath0 + "'); list.dirs('data', full.names=T, recursive=F); setwd(wd)");
+        assertEval("wd <- getwd(); setwd('" + dirPath0 + "'); list.dirs('data', full.names=F, recursive=T); setwd(wd)");
+        assertEval("wd <- getwd(); setwd('" + dirPath0 + "'); list.dirs('data', full.names=F, recursive=F); setwd(wd)");
+
+        assertEval("list.dirs('does-not-exist', full.names=F, recursive=F)");
     }
 }
