@@ -49,7 +49,6 @@ use_internals_section = '''#ifdef FASTR
 '''
 
 sexp = '''#ifdef FASTR
-typedef struct FASTR_SEXP_STRUCT *SEXP;
 #define DATAPTR(x)\t\tR_DATAPTR(x)
 void *(R_DATAPTR)(SEXP x);
 
@@ -65,7 +64,7 @@ Rboolean IS_ASCII(SEXP x);
 Rboolean IS_UTF8(SEXP x);
 Rboolean ENC_KNOWN(SEXP x);
 
-#else
+#endif
 '''
 use_internals_begin = '''#if defined (USE_RINTERNALS_DEFS) && (defined (USE_RINTERNALS) || defined (FASTR))
 '''
@@ -87,9 +86,8 @@ def ed_r_internals(gnu_dir):
                 f.write(line)
                 f.write('#endif\n')
             elif 'typedef struct SEXPREC *SEXP' in line:
-                f.write(sexp)
                 f.write(line)
-                f.write('#endif\n')
+                f.write(sexp)
             elif '#ifdef USE_RINTERNALS' in line:
                 if use_rinternals_count > 0:
                     f.write(use_internals_begin)
@@ -127,11 +125,8 @@ def is_internal_var(line):
     return None
 
 context_defs = '''#ifdef FASTR
+#include <Rinternals.h> // for SEXP
 typedef void *CTXT;
-struct FASTR_SEXP_STRUCT {
-    char dummy;
-};
-typedef struct FASTR_SEXP_STRUCT *SEXP;
 extern CTXT FASTR_GlobalContext();
 #define R_GlobalContext FASTR_GlobalContext()
 extern CTXT R_getGlobalFunctionContext();
