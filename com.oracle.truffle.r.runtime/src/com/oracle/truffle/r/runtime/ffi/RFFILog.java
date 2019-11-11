@@ -74,6 +74,12 @@ public class RFFILog {
         }
     }
 
+    @TruffleBoundary
+    public static void logRObject(String message, Object obj) {
+        Object mirror = obj instanceof RBaseObject ? mirror = ((RBaseObject) obj).getNativeMirror() : null;
+        log(String.format("%s [%s, native mirror: %s]", message, Utils.getDebugInfo(obj), mirror));
+    }
+
     public static void logUpCall(String name, List<Object> args) {
         logCall(CallMode.UP, name, getContext().getCallDepth(), args.toArray());
     }
