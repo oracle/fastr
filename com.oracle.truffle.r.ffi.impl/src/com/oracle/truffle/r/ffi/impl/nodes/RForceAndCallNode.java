@@ -96,6 +96,9 @@ public abstract class RForceAndCallNode extends AbstractCallInfoEvalNode {
         final ArgumentBuilderState argBuilderState = new ArgumentBuilderState(rBuiltin != null ? rBuiltin.isFieldAccess() : false);
         MaterializedFrame promiseEvalFrame = env.getFrame(accessProfile);
         for (int i = 0; i < argValueSupplierNodes.length; i++) {
+            if (el == RNull.instance) {
+                break;
+            }
             assert el instanceof RPairList;
             Object arg = plLib.car(el);
 
@@ -103,9 +106,6 @@ public abstract class RForceAndCallNode extends AbstractCallInfoEvalNode {
 
             argValues.add(argVal);
             el = plLib.cdr(el);
-            if (el == RNull.instance) {
-                break;
-            }
         }
 
         final RArgsValuesAndNames argsAndNames;

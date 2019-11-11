@@ -159,7 +159,7 @@ SEXP dot_external_access_args(SEXP args) {
 }
 
 void invoke_fun(double* data, int* n, void* fn) {
-    SEXP R_fcall = PROTECT(lang2(fn, R_NilValue));
+    SEXP R_fcall = PROTECT(lang1(fn));
     for (int i = 0; i < *n; ++i) {
         data[i] = REAL(R_forceAndCall(R_fcall, 0, R_GlobalEnv))[0];
     }
