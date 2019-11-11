@@ -59,6 +59,9 @@ public abstract class ReleaseObjectNode extends FFIUpCallNode.Arg1 {
             int decrementAndGet = atomicInteger.decrementAndGet();
             if (decrementAndGet == 0) {
                 // remove from "list"
+                // Note: developers expect the "unprotected" references to be still alive until next
+                // GNU-R compatible GC cycle
+                ctx.registerReferenceUsedInNative(x);
                 preserveList.removeKey(x);
             }
         } else {

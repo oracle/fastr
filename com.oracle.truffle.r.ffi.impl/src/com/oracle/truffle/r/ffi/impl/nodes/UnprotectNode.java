@@ -30,11 +30,14 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.Collections.StackLibrary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFILog;
 
 @GenerateUncached
 public abstract class UnprotectNode extends FFIUpCallNode.Arg1 {
@@ -54,11 +57,13 @@ public abstract class UnprotectNode extends FFIUpCallNode.Arg1 {
 
     @Specialization(guards = "n == 1")
     Object unprotectSingle(@SuppressWarnings("unused") int n,
+                    @Cached BranchProfile registerNativeRefProfile,
                     @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @CachedLibrary(limit = "1") StackLibrary stacks) {
         RContext ctx = ctxRef.get();
+        RFFIContext rffiCtx = ctx.getRFFI();
         try {
-            stacks.pop(ctx.getStateRFFI().rffiContextState.protectStack);
+            popProtectedObject(ctx, rffiCtx, stacks, registerNativeRefProfile);
         } catch (IndexOutOfBoundsException e) {
             debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
         }
@@ -69,12 +74,14 @@ public abstract class UnprotectNode extends FFIUpCallNode.Arg1 {
     @ExplodeLoop
     Object unprotectMultipleCached(@SuppressWarnings("unused") int n,
                     @Cached("n") int nCached,
+                    @Cached BranchProfile registerNativeRefProfile,
                     @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @CachedLibrary(limit = "1") StackLibrary stacks) {
         RContext ctx = ctxRef.get();
+        RFFIContext rffiCtx = ctx.getRFFI();
         try {
             for (int i = 0; i < nCached; i++) {
-                stacks.pop(ctx.getStateRFFI().rffiContextState.protectStack);
+                popProtectedObject(ctx, rffiCtx, stacks, registerNativeRefProfile);
             }
         } catch (IndexOutOfBoundsException e) {
             debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
@@ -84,17 +91,29 @@ public abstract class UnprotectNode extends FFIUpCallNode.Arg1 {
 
     @Specialization(guards = "n > 1", replaces = "unprotectMultipleCached")
     Object unprotectMultipleUnchached(int n,
+                    @Cached BranchProfile registerNativeRefProfile,
                     @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @CachedLibrary(limit = "1") StackLibrary stacks) {
         RContext ctx = ctxRef.get();
+        RFFIContext rffiCtx = ctx.getRFFI();
         try {
             for (int i = 0; i < n; i++) {
-                stacks.pop(ctx.getStateRFFI().rffiContextState.protectStack);
+                popProtectedObject(ctx, rffiCtx, stacks, registerNativeRefProfile);
             }
         } catch (IndexOutOfBoundsException e) {
             debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
         }
         return RNull.instance;
+    }
+
+    private static void popProtectedObject(RContext ctx, RFFIContext rffiCtx, StackLibrary stacks, BranchProfile registerNativeRefProfile) {
+        Object removed = stacks.pop(ctx.getStateRFFI().rffiContextState.protectStack);
+        // Developers expect the "unprotected" references to be still alive until next GNU-R
+        // compatible GC cycle
+        rffiCtx.registerReferenceUsedInNative(removed, registerNativeRefProfile);
+        if (RFFILog.logEnabled()) {
+            RFFILog.logRObject("Unprotected: ", removed);
+        }
     }
 
     private static boolean debugWarning(String message) {
