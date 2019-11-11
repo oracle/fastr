@@ -23,14 +23,17 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFILog;
 
 @GenerateUncached
 public abstract class UnprotectPtrNode extends FFIUpCallNode.Arg1 {
@@ -45,11 +48,18 @@ public abstract class UnprotectPtrNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     Object unprotect(RBaseObject x,
+                    @Cached BranchProfile registerNativeRefProfile,
                     @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
         RFFIContext ctx = ctxRef.get().getStateRFFI();
         Collections.ArrayListObj<RBaseObject> stack = ctx.rffiContextState.protectStack;
         for (int i = stack.size() - 1; i >= 0; i--) {
-            if (stack.get(i) == x) {
+            RBaseObject current = stack.get(i);
+            if (current == x) {
+                if (RFFILog.logEnabled()) {
+                    RFFILog.logRObject("Unprotected: ", current);
+                }
+                ctx.registerReferenceUsedInNative(current, registerNativeRefProfile);
+                stack.remove(i);
                 return null;
             }
         }
