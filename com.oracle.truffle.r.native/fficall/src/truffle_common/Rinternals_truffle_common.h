@@ -1936,6 +1936,35 @@ int R_nchar(SEXP string, nchar_type type_, Rboolean allowNA, Rboolean keepNA, co
 	return res;
 }
 
+// Simple definitions of the XY_RO -- read-only pointers to the data
+
+const void *(DATAPTR_RO)(SEXP x) {
+    return ((const void*) DATAPTR(x));
+}
+
+const int  *(LOGICAL_RO)(SEXP x) {
+    return ((const int *) DATAPTR_RO(x));
+}
+
+const int  *(INTEGER_RO)(SEXP x) {
+    return ((const int *) DATAPTR_RO(x));
+}
+
+const Rbyte *(RAW_RO)(SEXP x) {
+    return ((const Rbyte *) DATAPTR_RO(x));
+}
+
+const double *(REAL_RO)(SEXP x) {
+    return ((const double *) DATAPTR_RO(x));
+}
+
+const Rcomplex *(COMPLEX_RO)(SEXP x) {
+    return ((const Rcomplex *) DATAPTR_RO(x));
+}
+
+const SEXP *(STRING_PTR_RO)(SEXP x) {
+    return ((const SEXP *) DATAPTR_RO(x));
+}
 
 // The ALTREP framework is not implemented on FastR yet
 
