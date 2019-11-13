@@ -27,6 +27,7 @@ import hashlib
 import subprocess
 import sys
 import os
+import tempfile
 from os.path import join
 from datetime import datetime
 
@@ -113,13 +114,21 @@ def get_default_cran_mirror():
     return url
 
 
-def get_r_version(rscript_binary):
-    args = [rscript_binary, "--verbose", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], sep='')"]
+def get_r_version(rscript_binary, tmp_dir):
+    r_version_file = join(tmp_dir, "R.version")
+    args = [rscript_binary, "--verbose", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], file='%s', sep='')" % r_version_file]
     if not os.path.exists(rscript_binary):
         abort(1, "Rscript binary '%s' does not exist.", rscript_binary)
-    logging.debug("Running command: %s", args)
-    output = subprocess.check_output(args, stderr=subprocess.STDOUT, universal_newlines=True)
-    return output.splitlines()[-1].strip()
+    try:
+        logging.debug("Running command: %s", args)
+        output = subprocess.check_output(args, stderr=subprocess.STDOUT, universal_newlines=True)
+
+        lines = None
+        with open(r_version_file, "r") as f:
+           lines = f.readlines()
+        return lines[-1].strip()
+    finally:
+        os.unlink(r_version_file)
 
 
 def get_graalvm_home():
@@ -146,8 +155,9 @@ def check_r_versions():
     '''
     Checks that FastR and GnuR have the same version.
     '''
-    gnur_version = get_r_version(get_gnur_rscript())
-    fastr_version = get_r_version(get_fastr_rscript())
+    tmp_dir = tempfile.mkdtemp()
+    gnur_version = get_r_version(get_gnur_rscript(), tmp_dir)
+    fastr_version = get_r_version(get_fastr_rscript(), tmp_dir)
     logging.info("Using FastR version = %r ; GnuR version = %r: " % (fastr_version, gnur_version))
     if gnur_version != fastr_version:
         abort(1, 'GraalVM R version does not match GnuR version: %r (FastR) vs. %r (GnuR)' % (fastr_version, gnur_version))

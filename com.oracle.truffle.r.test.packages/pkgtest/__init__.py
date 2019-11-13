@@ -719,27 +719,33 @@ def _parse_testthat_result(lines):
         '''
         parses a part like "OK: 2"
         '''
-        parts = part.split(":")
+        parts = [x.strip() for x in part.split(":")]
         if len(parts) == 2:
-            assert parts[0] == "OK" or parts[0] == "SKIPPED" or parts[0] == "FAILED"
+            assert parts[0] == "OK" or parts[0] == "SKIPPED" or parts[0] == "WARNINGS" or parts[0] == "FAILED"
             return int(parts[1])
         raise Exception("could not parse testthat status part {0}".format(part))
 
     # find index of line which contains 'testthat results'
     try:
         i = next(iter([x for x in enumerate(lines) if 'testthat results' in x[1]]))[0]
-        if i + 1 < len(lines) and lines[i + 1].startswith("OK"):
-            result_line = lines[i + 1]
-            idx_ok = 0
-            idx_skipped = result_line.find("SKIPPED")
-            idx_failed = result_line.find("FAILED")
-            if idx_ok != -1 and idx_skipped != -1 and idx_failed != -1:
-                ok_part = result_line[idx_ok:idx_skipped]
-                skipped_part = result_line[idx_skipped:idx_failed]
-                failed_part = result_line[idx_failed:]
-                return (
-                    _testthat_parse_part(ok_part), _testthat_parse_part(skipped_part),
-                    _testthat_parse_part(failed_part))
+        if i + 1 < len(lines):
+            if lines[i + 1].startswith("OK"):
+                # old-style testthat report: "OK: 123 SKIPPED: 456 FAILED: 789"
+                result_line = lines[i + 1]
+                idx_ok = 0
+                idx_skipped = result_line.find("SKIPPED")
+                idx_failed = result_line.find("FAILED")
+                if idx_ok != -1 and idx_skipped != -1 and idx_failed != -1:
+                    ok_part = result_line[idx_ok:idx_skipped]
+                    skipped_part = result_line[idx_skipped:idx_failed]
+                    failed_part = result_line[idx_failed:]
+            elif lines[i + 1].startswith("["):
+                # newer-style testthat report: "[ OK: 1 | SKIPPED: 2 | WARNINGS: 3 | FAILED: 4 ]"
+                line = lines[i + 1].strip()[1:-1]
+                ok_part, skipped_part, warnings_part, failed_part = line.split("|")
+            return (
+                _testthat_parse_part(ok_part), _testthat_parse_part(skipped_part),
+                _testthat_parse_part(failed_part))
             raise TestFrameworkResultException("Could not parse testthat status line {0}".format(result_line))
         else:
             raise TestFrameworkResultException("Could not parse testthat summary at line {}".format(i + 1))
