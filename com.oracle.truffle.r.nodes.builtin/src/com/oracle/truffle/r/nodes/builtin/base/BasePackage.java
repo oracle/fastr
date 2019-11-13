@@ -667,6 +667,7 @@ public class BasePackage extends RBuiltinPackage {
         add(List2Env.class, List2EnvNodeGen::create);
         add(LoadSaveFunctions.Load.class, LoadSaveFunctionsFactory.LoadNodeGen::create);
         add(LoadSaveFunctions.LoadFromConn2.class, LoadSaveFunctionsFactory.LoadFromConn2NodeGen::create);
+        add(LoadSaveFunctions.LoadInfoFromConn2.class, LoadSaveFunctionsFactory.LoadInfoFromConn2NodeGen::create);
         add(LoadSaveFunctions.SaveToConn.class, LoadSaveFunctionsFactory.SaveToConnNodeGen::create);
         add(LocaleFunctions.BindTextDomain.class, LocaleFunctionsFactory.BindTextDomainNodeGen::create);
         add(LocaleFunctions.Enc2Native.class, LocaleFunctionsFactory.Enc2NativeNodeGen::create);
@@ -761,6 +762,7 @@ public class BasePackage extends RBuiltinPackage {
         add(SerializeFunctions.SerializeToConn.class, SerializeFunctionsFactory.SerializeToConnNodeGen::create);
         add(SerializeFunctions.Unserialize.class, SerializeFunctionsFactory.UnserializeNodeGen::create);
         add(SerializeFunctions.UnserializeFromConn.class, SerializeFunctionsFactory.UnserializeFromConnNodeGen::create);
+        add(SerializeFunctions.SerializeInfoFromConn.class, SerializeFunctionsFactory.SerializeInfoFromConnNodeGen::create);
         add(Setwd.class, SetwdNodeGen::create);
         add(ShortRowNames.class, ShortRowNamesNodeGen::create);
         add(Signif.class, SignifNodeGen::create);

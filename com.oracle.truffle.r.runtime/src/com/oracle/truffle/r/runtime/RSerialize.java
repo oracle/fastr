@@ -138,6 +138,21 @@ import java.util.logging.Level;
 // Checkstyle: stop final class check
 public class RSerialize {
 
+    public static final class VersionInfo {
+        public VersionInfo(int version, int writerVersion) {
+            this.version = version;
+            this.writerVersion = writerVersion;
+        }
+
+        private final int version;
+        private final int writerVersion;
+
+        public RList toVector() {
+            RStringVector names = RDataFactory.createStringVector(new String[]{"version", "writer_version"}, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createList(new Object[]{version, writerVersion}, names);
+        }
+    }
+
     private static class Flags {
         static final int IS_OBJECT_BIT_MASK = 1 << 8;
         static final int HAS_ATTR_BIT_MASK = 1 << 9;
@@ -334,6 +349,12 @@ public class RSerialize {
     }
 
     @TruffleBoundary
+    public static VersionInfo unserializeInfo(RConnection conn) throws IOException {
+        Input instance = trace() ? new TracingInput(conn) : new Input(conn);
+        return instance.unserializeInfo();
+    }
+
+    @TruffleBoundary
     public static Object unserialize(RConnection conn) throws IOException {
         Input instance = trace() ? new TracingInput(conn) : new Input(conn);
         Object result = instance.unserialize();
@@ -423,6 +444,13 @@ public class RSerialize {
             } else {
                 return i;
             }
+        }
+
+        private VersionInfo unserializeInfo() throws IOException {
+            int version = stream.readInt();
+            int writerVersion = stream.readInt();
+            // TODO: remaining info
+            return new VersionInfo(version, writerVersion);
         }
 
         private Object unserialize() throws IOException {
