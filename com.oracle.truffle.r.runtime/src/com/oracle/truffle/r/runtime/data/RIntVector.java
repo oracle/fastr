@@ -27,6 +27,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -218,7 +219,7 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
 
         @Override
         public int getIntImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((int[]) accessIter.getStore())[index] : NativeDataAccess.getIntNativeMirrorData(accessIter.getStore(), index);
+            return hasStore ? ((int[]) accessIter.getStore())[index] : NativeDataAccess.getIntNativeMirrorData((NativeMirror) accessIter.getStore(), index);
         }
 
         @Override
@@ -226,7 +227,7 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
             if (hasStore) {
                 ((int[]) accessIter.getStore())[index] = value;
             } else {
-                NativeDataAccess.setNativeMirrorIntData(accessIter.getStore(), index, value);
+                NativeDataAccess.setNativeMirrorIntData((NativeMirror) accessIter.getStore(), index, value);
             }
         }
     }

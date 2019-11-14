@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -363,7 +364,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
                     return ((String[]) accessIter.getStore())[index];
                 }
             } else {
-                return NativeDataAccess.getStringNativeMirrorData(accessIter.getStore(), index).getContents();
+                return NativeDataAccess.getStringNativeMirrorData((NativeMirror) accessIter.getStore(), index).getContents();
             }
         }
 
@@ -376,7 +377,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
                     ((String[]) accessIter.getStore())[index] = value;
                 }
             } else {
-                NativeDataAccess.setNativeMirrorStringData(accessIter.getStore(), index, CharSXPWrapper.create(value));
+                NativeDataAccess.setNativeMirrorStringData((NativeMirror) accessIter.getStore(), index, CharSXPWrapper.create(value));
             }
         }
     }

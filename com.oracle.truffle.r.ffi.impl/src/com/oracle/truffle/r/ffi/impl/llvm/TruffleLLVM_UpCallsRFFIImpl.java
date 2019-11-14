@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
@@ -41,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
@@ -140,9 +140,9 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     protected void setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
-        try {
-            InteropLibrary.getFactory().getUncached().execute(setSymbolHandle, dllInfo, nstOrd, routines, index);
-        } catch (InteropException ex) {
+        try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap()) {
+            InteropLibrary.getFactory().getUncached().execute(setSymbolHandle, ffiWrap.wrapUncached(dllInfo), nstOrd, routines, index);
+        } catch (Exception ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
     }

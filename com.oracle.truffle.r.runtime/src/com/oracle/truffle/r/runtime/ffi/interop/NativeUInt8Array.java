@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.ffi.interop;
 import static com.oracle.truffle.r.runtime.ffi.UnsafeAdapter.UNSAFE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -33,7 +32,6 @@ import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import sun.misc.Unsafe;
 
 /**
@@ -56,36 +54,6 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
     protected NativeUInt8Array(byte[] array, boolean nullTerminate) {
         super(array);
         this.effectiveLength = array.length + (nullTerminate ? 1 : 0);
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public boolean hasNativeType() {
-        return true;
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public Object getNativeType(@CachedContext(TruffleRLanguage.class) RContext ctx) {
-        return ctx.getRFFI().getSulongArrayType((byte) 42);
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public boolean isPointer() {
-        return nativeAddress() != 0;
-    }
-
-    @ExportMessage
-    public long asPointer() {
-        long na = nativeAddress();
-        assert na != 0L : "toNative() expected to be called first";
-        return na;
-    }
-
-    @ExportMessage
-    public void toNative() {
-        convertToNative();
     }
 
     @SuppressWarnings("static-method")
@@ -195,6 +163,11 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
     protected void copyBackFromNative(long nativeAddress) {
         // copy back
         UNSAFE.copyMemory(null, nativeAddress, array, Unsafe.ARRAY_BYTE_BASE_OFFSET, array.length);
+    }
+
+    @Override
+    protected Object getSulongArrayType(RContext ctx) {
+        return ctx.getRFFI().getSulongArrayType((byte) 42);
     }
 
 }

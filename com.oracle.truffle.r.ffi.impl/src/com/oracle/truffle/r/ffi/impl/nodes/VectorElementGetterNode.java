@@ -100,7 +100,7 @@ public abstract class VectorElementGetterNode extends RBaseNode {
             return RNull.instance;
         }
         Object result = extractNode.execute(list, (int) i);
-        Object materializedResult = ffiMaterializeNode.execute(result);
+        Object materializedResult = ffiMaterializeNode.materialize(result);
         if (materializeResultProfile.profile(materializedResult != result)) {
             // We need to tie together the life-cycle of the result with the owner
             setListElement.execute(list, (int) i, materializedResult);

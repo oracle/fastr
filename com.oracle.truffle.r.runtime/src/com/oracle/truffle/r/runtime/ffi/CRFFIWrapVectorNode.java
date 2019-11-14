@@ -38,12 +38,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class CRFFIWrapVectorNode extends Node {
 
-    @Child FFIWrapNode wrapNode = FFIWrapNode.create();
+    @Child protected FFIMaterializeNode materializeNode = FFIMaterializeNode.create();
 
-    public abstract Object execute(Object vector);
+    protected abstract Object execute(Object vector);
 
     public final Object dispatch(Object vector) {
-        return execute(wrapNode.execute(vector));
+        return execute(materializeNode.materialize(vector));
     }
 
     protected boolean isTemporary(Object vector) {
@@ -71,12 +71,15 @@ public abstract class CRFFIWrapVectorNode extends Node {
         return VectorRFFIWrapper.get(vector.copy());
     }
 
+    @Specialization
+    protected Object toNativeMirror(RBaseObject obj,
+                    @Cached() FFIToNativeMirrorNode ffiToNativeMirrorNode) {
+        return ffiToNativeMirrorNode.execute(obj);
+    }
+
     @Fallback
-    protected Object fallback(Object vector) {
-        if (vector instanceof RBaseObject) { // Used for passing RFunction so far
-            return wrapNode.execute(vector);
-        }
-        return fallbackError(vector);
+    protected Object fallback(Object obj) {
+        return fallbackError(obj);
     }
 
     @TruffleBoundary

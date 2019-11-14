@@ -27,6 +27,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -200,7 +201,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
         @Override
         protected double getDoubleImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((double[]) accessIter.getStore())[index] : NativeDataAccess.getDoubleNativeMirrorData(accessIter.getStore(), index);
+            return hasStore ? ((double[]) accessIter.getStore())[index] : NativeDataAccess.getDoubleNativeMirrorData((NativeMirror) accessIter.getStore(), index);
         }
 
         @Override
@@ -208,7 +209,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
             if (hasStore) {
                 ((double[]) accessIter.getStore())[index] = value;
             } else {
-                NativeDataAccess.setNativeMirrorDoubleData(accessIter.getStore(), index, value);
+                NativeDataAccess.setNativeMirrorDoubleData((NativeMirror) accessIter.getStore(), index, value);
             }
         }
     }

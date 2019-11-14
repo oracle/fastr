@@ -33,7 +33,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -53,15 +52,11 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    public final boolean isNull(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNA) {
-        if (!isScalar()) {
+    public final boolean isNull(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
+        if (!isScalar.profile(isScalar())) {
             return false;
         }
-        if (isNA.profile(RRuntime.isNA(getDataAt(0)))) {
-            return RContext.getInstance().stateRNullMR.isNull();
-        } else {
-            return false;
-        }
+        return RRuntime.isNA(getDataAt(0));
     }
 
     @ExportMessage

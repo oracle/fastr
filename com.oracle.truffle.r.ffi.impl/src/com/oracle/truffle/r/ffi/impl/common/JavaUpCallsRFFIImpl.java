@@ -287,7 +287,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                     // env) should not show up
                     RPromise promise = (RPromise) value;
                     Object result = promise.getRawValue();
-                    Object wrapped = FFIMaterializeNode.executeUncached(result);
+                    Object wrapped = FFIMaterializeNode.uncachedMaterialize(result);
                     if (wrapped != result) {
                         promise.updateValue(wrapped);
                     }
@@ -304,7 +304,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 if (value == RMissing.instance || value == REmpty.instance) {
                     return RSymbol.MISSING;
                 }
-                Object res = FFIMaterializeNode.executeUncached(value);
+                Object res = FFIMaterializeNode.uncachedMaterialize(value);
                 if (res != value) {
                     env.putOverrideLock(nameKey, res);
                 }
@@ -801,7 +801,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         if (res == null) {
             return RUnboundValue.instance;
         }
-        Object materialized = FFIMaterializeNode.executeUncached(res);
+        Object materialized = FFIMaterializeNode.uncachedMaterialize(res);
         if (materialized != res) {
             ShareObjectNode.executeUncached(res);
             baseEnv.putOverrideLock(name, materialized);
@@ -1052,7 +1052,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             return RUnboundValue.instance;
         }
         Object val = p.getValue();
-        Object materialized = FFIMaterializeNode.executeUncached(val);
+        Object materialized = FFIMaterializeNode.uncachedMaterialize(val);
         if (materialized != val) {
             ShareObjectNode.executeUncached(materialized);
             p.updateValue(materialized);
@@ -1362,7 +1362,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public Object R_ExternalPtrTag(Object x) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         Object result = p.getTag();
-        Object materialized = FFIMaterializeNode.executeUncached(result);
+        Object materialized = FFIMaterializeNode.uncachedMaterialize(result);
         if (result != materialized) {
             ShareObjectNode.executeUncached(materialized);
             p.setTag(materialized);
@@ -1374,7 +1374,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public Object R_ExternalPtrProtected(Object x) {
         RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
         Object result = p.getProt();
-        Object materialized = FFIMaterializeNode.executeUncached(result);
+        Object materialized = FFIMaterializeNode.uncachedMaterialize(result);
         if (result != materialized) {
             ShareObjectNode.executeUncached(materialized);
             p.setProt(materialized);

@@ -67,30 +67,30 @@ public final class ListAccessNodes {
     public abstract static class CARNode extends FFIUpCallNode.Arg1 {
         @Specialization
         protected Object car(RPairList pl,
-                        @Cached FFIMaterializeNode wrapResult,
+                        @Cached FFIMaterializeNode materializeNode,
                         @Cached("createBinaryProfile()") ConditionProfile wrapResultProfile,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib) {
             Object result = plLib.car(pl);
-            Object wrapped = wrapResult.execute(result);
-            if (wrapResultProfile.profile(wrapped != result)) {
-                plLib.setCar(pl, wrapped);
+            Object materialized = materializeNode.materialize(result);
+            if (wrapResultProfile.profile(materialized != result)) {
+                plLib.setCar(pl, materialized);
             }
-            return wrapped;
+            return materialized;
         }
 
         @Specialization
         protected Object car(RArgsValuesAndNames args,
-                        @Cached FFIMaterializeNode wrapResult,
+                        @Cached FFIMaterializeNode materializeNode,
                         @Cached("createBinaryProfile()") ConditionProfile wrapResultProfile) {
             if (args.isEmpty()) {
                 return RNull.instance;
             }
             Object result = args.getArgument(0);
-            Object wrapped = wrapResult.execute(result);
-            if (wrapResultProfile.profile(wrapped != result)) {
-                args.getArguments()[0] = wrapped;
+            Object materialized = materializeNode.materialize(result);
+            if (wrapResultProfile.profile(materialized != result)) {
+                args.getArguments()[0] = materialized;
             }
-            return wrapped;
+            return materialized;
         }
 
         @Specialization

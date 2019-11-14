@@ -68,6 +68,7 @@ public class VectorManipulationTest extends TestBase {
             assertThat("Invalid data reuse array", intVec.getInternalManagedData() != intData);
             assertDataContents(intVec, intData);
 
+            NativeDataAccess.createNativeMirror(intVec);
             NativeDataAccess.toNative(intVec);
             intVec.allocateNativeContents();
             intData = intDataReuseNode.execute(intVec.materialize());
@@ -76,6 +77,7 @@ public class VectorManipulationTest extends TestBase {
 
             intVec = generateInteger(2, true).materialize();
             assertThat("Not temporary", intVec.isTemporary());
+            NativeDataAccess.createNativeMirror(intVec);
             NativeDataAccess.toNative(intVec);
             intVec.allocateNativeContents();
             assertThat("Not a native mirror", intVec.getInternalManagedData() == null);
@@ -95,6 +97,7 @@ public class VectorManipulationTest extends TestBase {
             assertThat("Invalid data reuse array", doubleVector.getInternalManagedData() != doubleData);
             assertDataContents(doubleVector, doubleData);
 
+            NativeDataAccess.createNativeMirror(doubleVector);
             NativeDataAccess.toNative(doubleVector);
             doubleVector.allocateNativeContents();
             doubleData = doubleDataReuseNode.execute(doubleVector.materialize());
@@ -103,6 +106,7 @@ public class VectorManipulationTest extends TestBase {
 
             doubleVector = generateDouble(2, true).materialize();
             assertThat("Not temporary", doubleVector.isTemporary());
+            NativeDataAccess.createNativeMirror(doubleVector);
             NativeDataAccess.toNative(doubleVector);
             doubleVector.allocateNativeContents();
             assertThat("Not a native mirror", doubleVector.getInternalManagedData() == null);
@@ -122,6 +126,7 @@ public class VectorManipulationTest extends TestBase {
             assertThat("Invalid data reuse array", complexVector.getInternalManagedData() != complexData);
             assertDataContents(complexVector, complexData);
 
+            NativeDataAccess.createNativeMirror(complexVector);
             NativeDataAccess.toNative(complexVector);
             complexVector.allocateNativeContents();
             complexData = complexDataReuseNode.execute(complexVector.materialize());
@@ -130,6 +135,7 @@ public class VectorManipulationTest extends TestBase {
 
             complexVector = generateComplex(2, true).materialize();
             assertThat("Not temporary", complexVector.isTemporary());
+            NativeDataAccess.createNativeMirror(complexVector);
             NativeDataAccess.toNative(complexVector);
             complexVector.allocateNativeContents();
             assertThat("Not a native mirror", complexVector.getInternalManagedData() == null);

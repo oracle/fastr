@@ -104,7 +104,6 @@ import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
-import com.oracle.truffle.r.runtime.interop.RNullMRContextState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -356,7 +355,6 @@ public final class RContext {
     public final InstrumentationState stateInstrumentation;
     public final ContextStateImpl stateInternalCode;
     public final DLL.ContextStateImpl stateDLL;
-    public final RNullMRContextState stateRNullMR;
     public final GCTortureState gcTorture;
 
     public final RFFIUpCallTargets rffiUpCallTargets;
@@ -383,7 +381,7 @@ public final class RContext {
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRLocale, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG,
                         stateRFFI,
-                        stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL, stateRNullMR};
+                        stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL};
     }
 
     public static void setEmbedded() {
@@ -474,7 +472,6 @@ public final class RContext {
 
         this.rffiUpCallTargets = new RFFIUpCallTargets();
 
-        this.stateRNullMR = RNullMRContextState.newContextState();
         this.gcTorture = GCTortureState.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
         state.add(State.CONSTRUCTED);
@@ -554,7 +551,6 @@ public final class RContext {
         stateLazyDBCache.initialize(this);
         stateInstrumentation.initialize(this);
         stateInternalCode.initialize(this);
-        stateRNullMR.initialize(this);
         gcTorture.initialize(this);
         state.add(State.INITIALIZED);
 

@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -261,7 +262,7 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
             if (hasStore) {
                 return ((Object[]) accessIter.getStore())[index];
             } else {
-                return NativeDataAccess.getListElementNativeMirrorData(accessIter.getStore(), index);
+                return NativeDataAccess.getListElementNativeMirrorData((NativeMirror) accessIter.getStore(), index);
             }
         }
 
@@ -270,7 +271,7 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
             if (hasStore) {
                 ((Object[]) accessIter.getStore())[index] = value;
             } else {
-                NativeDataAccess.setNativeMirrorListData(accessIter.getStore(), index, value);
+                NativeDataAccess.setNativeMirrorListData((NativeMirror) accessIter.getStore(), index, value);
             }
         }
     }

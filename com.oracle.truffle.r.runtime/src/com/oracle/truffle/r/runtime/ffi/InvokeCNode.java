@@ -46,6 +46,26 @@ import com.oracle.truffle.r.runtime.ffi.CRFFIWrapVectorNode.CRFFIWrapVectorsNode
 import com.oracle.truffle.r.runtime.ffi.CRFFIWrapVectorNodeGen.CRFFIWrapVectorsNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+/**
+ * Invokes native C/Fortran function that takes primitive arrays as arguments, i.e., we do not pass
+ * the R objects to such functions, and such functions are usually not up-calling back to FastR,
+ * because they are plain C/Fortran code working on plain C/Fortran types, not SEXPs. However, in
+ * practice we've seen that those functions 1) up-call back to R and 2) developers passing other
+ * objects than atomic vectors and such objects are sent as SEXPs to the native code, which than
+ * casts those to {@code SEXP} are then proceed as usual.
+ *
+ * The contract is that the native code can write to the arrays that are passed to it, so data of
+ * non-temporary vectors must not be passed to the native code, instead they must be copied and data
+ * field of the copy is passed to the native code. The calling R code wants to "read back" the
+ * results and that is why this function returns {@link RList} with vectors corresponding to the
+ * arguments (or their copies if they were non-temporary).
+ *
+ * This class works as follows: it materializes all the arguments and retrieves the corresponding
+ * {@link VectorRFFIWrapper} instances that represent the "data" array of those vectors. Any other
+ * {@link com.oracle.truffle.r.runtime.data.RBaseObject} instances are transferred to
+ * {@code NativeMirror} so that they can be sent as {@code SEXP} to the native code. After the
+ * native call finishes, we read back the vector instances from the {@link VectorRFFIWrapper}s.
+ */
 @ReportPolymorphism
 public abstract class InvokeCNode extends RBaseNode {
 

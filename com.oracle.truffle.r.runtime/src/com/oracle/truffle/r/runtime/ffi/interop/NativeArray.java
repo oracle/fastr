@@ -23,12 +23,11 @@
 package com.oracle.truffle.r.runtime.ffi.interop;
 
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import static com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter.UNSAFE;
 
 import java.lang.ref.WeakReference;
 
-public abstract class NativeArray<T> implements RTruffleObject {
+public abstract class NativeArray<T> extends NativeArrayExport {
 
     protected T array;
     @SuppressWarnings("unused") private NativeMirror<T> nativeMirror;
@@ -37,15 +36,13 @@ public abstract class NativeArray<T> implements RTruffleObject {
         this.array = array;
     }
 
-    protected abstract long allocateNative();
-
-    protected abstract void copyBackFromNative(long nativeAddress);
-
-    protected long nativeAddress() {
+    @Override
+    protected final long nativeAddress() {
         return (nativeMirror != null) ? nativeMirror.nativeAddress : 0L;
     }
 
-    final long convertToNative() {
+    @Override
+    protected final long convertToNative() {
         if (nativeMirror == null) {
             nativeMirror = new NativeMirror<>(this);
         }

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.ffi.impl.nfi;
 
 import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
 import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -36,17 +35,16 @@ import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_CallFactory.TruffleNFI_InvokeCallNodeGen;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
+import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
-import com.oracle.truffle.r.runtime.ffi.FFIWrapNode;
+import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 public class TruffleNFI_Call implements CallRFFI {
@@ -86,53 +84,48 @@ public class TruffleNFI_Call implements CallRFFI {
         @Specialization(guards = {"args.length == cachedArgsLength", "nativeCallInfo.address.asTruffleObject() == cachedAddress"})
         protected Object invokeCallCached(NativeCallInfo nativeCallInfo, Object[] args,
                         @Cached("args.length") int cachedArgsLength,
-                        @Cached("createWrappers(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
+                        @Cached("createMaterializeNodess(cachedArgsLength)") FFIMaterializeNode[] ffiMaterializeNode,
+                        @Cached("createWrapperNodes(cachedArgsLength)") FFIToNativeMirrorNode[] ffiWrapperNodes,
                         @Cached("create()") FFIUnwrapNode unwrap,
                         @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
                         @Cached("getFunction(cachedArgsLength)") TruffleObject cachedFunction,
                         @CachedLibrary("cachedFunction") InteropLibrary interop) {
-            Object result = null;
-            Object[] realArgs = new Object[cachedArgsLength + 1];
-            RContext ctx = RContext.getInstance();
-            boolean isNullSetting = prepareCall(ctx, nativeCallInfo.name, args, ffiWrapNodes);
-            try {
-                System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
-                realArgs[0] = cachedAddress;
-                result = interop.execute(cachedFunction, realArgs);
-                return unwrap.execute(result);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            } finally {
-                assert realArgs != null; // to keep the values alive
-                prepareReturn(ctx, nativeCallInfo.name, result, isNullSetting);
-            }
+            return doInvoke(nativeCallInfo, cachedAddress, cachedFunction, args, cachedArgsLength, ffiMaterializeNode, ffiWrapperNodes, interop, unwrap);
         }
 
         @Specialization(limit = "99", guards = "args.length == cachedArgsLength")
         protected Object invokeCallCachedLength(NativeCallInfo nativeCallInfo, Object[] args,
                         @Cached("args.length") int cachedArgsLength,
-                        @Cached("createWrappers(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
+                        @Cached("createMaterializeNodess(cachedArgsLength)") FFIMaterializeNode[] ffiMaterializeNode,
+                        @Cached("createWrapperNodes(cachedArgsLength)") FFIToNativeMirrorNode[] ffiToNativeMirrorNodes,
                         @Cached("create()") FFIUnwrapNode unwrap,
                         @CachedLibrary(limit = "getInteropLibraryCacheSize()") InteropLibrary interop) {
+            return doInvoke(nativeCallInfo, nativeCallInfo.address.asTruffleObject(), getFunction(cachedArgsLength), args, cachedArgsLength, ffiMaterializeNode, ffiToNativeMirrorNodes, interop,
+                            unwrap);
+        }
+
+        private static Object doInvoke(NativeCallInfo nativeCallInfo, TruffleObject address, TruffleObject function, Object[] args, int cachedArgsLength, FFIMaterializeNode[] ffiMaterializeNode,
+                        FFIToNativeMirrorNode[] ffiToNativeMirrorNodes, InteropLibrary interop, FFIUnwrapNode unwrap) throws RuntimeException {
             Object result = null;
-            Object[] realArgs = new Object[cachedArgsLength + 1];
-            RContext ctx = RContext.getInstance();
-            boolean isNullSetting = prepareCall(ctx, nativeCallInfo.name, args, ffiWrapNodes);
-            try {
+            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
+                logCall(nativeCallInfo.name, args);
+                ffiWrap.wrap(args, ffiMaterializeNode, ffiToNativeMirrorNodes);
+                Object[] realArgs = new Object[cachedArgsLength + 1];
+                realArgs[0] = address;
                 System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
-                realArgs[0] = nativeCallInfo.address.asTruffleObject();
-                result = interop.execute(getFunction(cachedArgsLength), realArgs);
+                result = interop.execute(function, realArgs);
                 return unwrap.execute(result);
-            } catch (InteropException ex) {
+            } catch (Exception ex) {
                 throw RInternalError.shouldNotReachHere(ex);
-            } finally {
-                assert realArgs != null; // to keep the values alive
-                prepareReturn(ctx, nativeCallInfo.name, result, isNullSetting);
             }
         }
 
-        protected static FFIWrapNode[] createWrappers(int count) {
-            return FFIWrapNode.create(count);
+        protected static FFIMaterializeNode[] createMaterializeNodess(int count) {
+            return FFIMaterializeNode.create(count);
+        }
+
+        protected static FFIToNativeMirrorNode[] createWrapperNodes(int count) {
+            return FFIToNativeMirrorNode.create(count);
         }
     }
 
@@ -142,53 +135,39 @@ public class TruffleNFI_Call implements CallRFFI {
 
         @Child private InteropLibrary execute0Interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
         @Child private InteropLibrary execute1Interop = InteropLibrary.getFactory().createDispatched(DSLConfig.getInteropLibraryCacheSize());
-        @Children private final FFIWrapNode[] ffiWrapNodes0 = FFIWrapNode.create(0);
-        @Children private final FFIWrapNode[] ffiWrapNodes1 = FFIWrapNode.create(1);
+        @Children private final FFIMaterializeNode[] ffiMaterialize0 = FFIMaterializeNode.create(0);
+        @Children private final FFIToNativeMirrorNode[] ffiWrapper0 = FFIToNativeMirrorNode.create(0);
+        @Children private final FFIMaterializeNode[] ffiMaterialize1 = FFIMaterializeNode.create(1);
+        @Children private final FFIToNativeMirrorNode[] ffiWrapper1 = FFIToNativeMirrorNode.create(1);
 
         @Override
         public void execute(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
-            boolean isNullSetting = true;
-            RContext ctx = RContext.getInstance();
-            try {
+            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
                 switch (args.length) {
                     case 0:
-                        isNullSetting = prepareCall(ctx, nativeCallInfo.name, args, ffiWrapNodes0);
+                        logCall(nativeCallInfo.name, args);
+                        ffiWrap.wrap(args, ffiMaterialize0, ffiWrapper0);
                         TruffleObject callVoid0Function = getFunction("dot_call_void0", CallVoid0Sig);
                         execute0Interop.execute(callVoid0Function, nativeCallInfo.address.asTruffleObject());
                         break;
                     case 1:
-                        isNullSetting = prepareCall(ctx, nativeCallInfo.name, args, ffiWrapNodes1);
+                        logCall(nativeCallInfo.name, args);
+                        ffiWrap.wrap(args, ffiMaterialize1, ffiWrapper1);
                         TruffleObject callVoid1Function = getFunction("dot_call_void1", CallVoid1Sig);
                         execute1Interop.execute(callVoid1Function, nativeCallInfo.address.asTruffleObject(), args[0]);
                         break;
                     default:
                         throw RInternalError.shouldNotReachHere();
                 }
-            } catch (InteropException ex) {
+            } catch (Exception ex) {
                 throw RInternalError.shouldNotReachHere(ex);
-            } finally {
-                prepareReturn(ctx, nativeCallInfo.name, null, isNullSetting);
             }
         }
     }
 
-    @ExplodeLoop
-    private static boolean prepareCall(RContext ctx, String name, Object[] args, FFIWrapNode[] ffiWrapNodes) {
-        CompilerAsserts.compilationConstant(ffiWrapNodes.length);
+    private static void logCall(String name, Object[] args) {
         if (logEnabled()) {
             logDownCall(name, args);
-        }
-        for (int i = 0; i < ffiWrapNodes.length; i++) {
-            args[i] = ffiWrapNodes[i].execute(args[i]);
-        }
-        boolean isNullSetting = RNull.setIsNull(ctx, false);
-        return isNullSetting;
-    }
-
-    private static void prepareReturn(RContext ctx, String name, Object result, boolean isNullSetting) {
-        RNull.setIsNull(ctx, isNullSetting);
-        if (logEnabled()) {
-            logDownCallReturn(name, result);
         }
     }
 

@@ -52,11 +52,11 @@ import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -190,31 +190,30 @@ public class TruffleNFI_Context extends RFFIContext {
             if (!variablesInitialized) {
                 variablesInitialized = true;
                 RFFIVariables[] variables = RFFIVariables.initialize(context);
-                boolean isNullSetting = RNull.setIsNull(context, false);
-                try {
-                    for (int i = 0; i < variables.length; i++) {
-                        RFFIVariables var = variables[i];
-                        Object value = var.getValue();
-                        if (value == null || var.alwaysUpCall) {
-                            continue;
-                        }
-                        try {
-                            InteropLibrary interop = InteropLibrary.getFactory().getUncached();
-                            if (value instanceof Double) {
-                                interop.execute(lookupNativeFunction(NativeFunction.initvar_double), i, value);
-                            } else if (value instanceof Integer) {
-                                interop.execute(lookupNativeFunction(NativeFunction.initvar_int), i, value);
-                            } else if (value instanceof String) {
-                                interop.execute(lookupNativeFunction(NativeFunction.initvar_string), i, value);
-                            } else {
-                                interop.execute(lookupNativeFunction(NativeFunction.initvar_obj), i, value);
-                            }
-                        } catch (InteropException ex) {
-                            throw RInternalError.shouldNotReachHere(ex);
-                        }
+                for (int i = 0; i < variables.length; i++) {
+                    RFFIVariables var = variables[i];
+                    Object value = var.getValue();
+                    if (value == null || var.alwaysUpCall) {
+                        continue;
                     }
-                } finally {
-                    RNull.setIsNull(context, isNullSetting);
+                    try {
+                        InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+                        if (value instanceof Double) {
+                            interop.execute(lookupNativeFunction(NativeFunction.initvar_double), i, value);
+                        } else if (value instanceof Integer) {
+                            interop.execute(lookupNativeFunction(NativeFunction.initvar_int), i, value);
+                        } else if (value instanceof String) {
+                            interop.execute(lookupNativeFunction(NativeFunction.initvar_string), i, value);
+                        } else {
+                            try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap()) {
+                                interop.execute(lookupNativeFunction(NativeFunction.initvar_obj), i, ffiWrap.wrapUncached(value));
+                            } catch (Exception ex) {
+                                throw RInternalError.shouldNotReachHere(ex);
+                            }
+                        }
+                    } catch (InteropException ex) {
+                        throw RInternalError.shouldNotReachHere(ex);
+                    }
                 }
             }
         }

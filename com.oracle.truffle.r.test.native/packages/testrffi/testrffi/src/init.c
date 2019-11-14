@@ -52,6 +52,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(invoke_error, 1),
         CALLDEF(dot_external_access_args, 1),
         CALLDEF(invoke_isString, 1),
+        CALLDEF(invoke_fun, 3),
         CALLDEF(invoke12, 12),
         CALLDEF(interactive, 0),
         CALLDEF(tryEval, 2),

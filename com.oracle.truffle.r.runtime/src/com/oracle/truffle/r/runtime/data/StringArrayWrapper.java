@@ -22,10 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
 @ExportLibrary(InteropLibrary.class)
@@ -73,8 +76,14 @@ public final class StringArrayWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    public long asPointer() {
-        assert address != 0;
+    public long asPointer(@Cached("createBinaryProfile()") ConditionProfile isPointer) throws UnsupportedMessageException {
+        if (isPointer.profile(address != 0)) {
+            return address;
+        }
+        throw UnsupportedMessageException.create();
+    }
+
+    public long getAddress() {
         return address;
     }
 
