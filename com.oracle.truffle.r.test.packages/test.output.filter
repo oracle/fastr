@@ -120,6 +120,10 @@ clpAPI => D/Coin0511I After Postsolve, objective 3.2368421, infeasibilities - du
 clpAPI => D/Clp0032I Optimal objective 3.236842105 - 1 iterations time
 
 # --------
+# foreign: the "pager" function (in R options) prints out this banner at the beginnin in FastR and not in GNU-R
+foreign => D/==== R Information ====
+
+# --------
 # RcppBDT
 RcppBDT => s/code for methods in class .* was not checked for suspicious field assignments \(recommended package ‘codetools’ not available\?\)/
 
