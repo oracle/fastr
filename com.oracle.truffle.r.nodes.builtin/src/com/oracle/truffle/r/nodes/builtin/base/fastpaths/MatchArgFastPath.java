@@ -47,7 +47,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.nodes.builtin.base.AsCharacter;
 import com.oracle.truffle.r.nodes.builtin.base.AsCharacterNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.Identical;
-import com.oracle.truffle.r.nodes.builtin.base.IdenticalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.PMatch;
 import com.oracle.truffle.r.nodes.builtin.base.PMatchNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -87,7 +86,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
     protected abstract static class MatchArgInternal extends Node {
 
         @Child private PMatch pmatch = PMatchNodeGen.create();
-        @Child private Identical identical = IdenticalNodeGen.create();
+        @Child private Identical identical = Identical.create();
 
         @Child private CastNode argCast = newCastBuilder().defaultError(Message.MUST_BE_NULL_OR_STRING, "arg").allowNull().mustBe(stringValue()).buildCastNode();
         @Child private CastNode choicesCast = newCastBuilder().allowNull().mustBe(abstractVectorValue(), Message.CANNOT_COERCE, typeName(), "character").asVector().buildCastNode();
