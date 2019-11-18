@@ -10,6 +10,11 @@ Added missing R builtins and C APIs
 New features:
 
 * FastR is based on R 3.6.1
+* GCC runtime libraries are not shipped with FastR, use the following commands to install the necessary dependencies:
+    * Ubuntu 18.04 and 19.04: `apt-get install libgfortran3 libgomp1`
+    * Oracle Linux 7: `yum install libgfortran libgomp`
+    * Oracle Linux 8: `yum install compat-libgfortran-48`
+    * MacOS: `brew install gcc@4.9`
 * new Graal LLVM based back-end for running packages native code.
   * The default {FASTR_HOME}/etc/Makeconf is configured to use the Graal LLVM toolchain to build the native code of R packages.
     * The toolchain builds standard native binaries for a given plarform and also embeds the corresponding LLVM bitcode in them.
