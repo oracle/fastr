@@ -9,6 +9,7 @@ Added missing R builtins and C APIs
 
 New features:
 
+* FastR is based on R 3.6.1
 * new Graal LLVM based back-end for running packages native code.
   * The default {FASTR_HOME}/etc/Makeconf is configured to use the Graal LLVM toolchain to build the native code of R packages.
     * The toolchain builds standard native binaries for a given plarform and also embeds the corresponding LLVM bitcode in them.
