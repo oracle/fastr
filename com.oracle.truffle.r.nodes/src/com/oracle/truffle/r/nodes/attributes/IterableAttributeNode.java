@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -32,9 +32,8 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 
+@GenerateUncached
 public abstract class IterableAttributeNode extends AttributeIterativeAccessNode {
-
-    @Child private IterableAttributeNode recursive;
 
     public static IterableAttributeNode create() {
         return IterableAttributeNodeGen.create();
@@ -56,16 +55,13 @@ public abstract class IterableAttributeNode extends AttributeIterativeAccessNode
 
     @Specialization
     protected RAttributesLayout.RAttributeIterable getArrayFallback(RAttributable x,
-                    @Cached("create()") BranchProfile attrNullProfile) {
+                    @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached IterableAttributeNode recursive) {
         DynamicObject attributes = x.getAttributes();
 
         if (attributes == null) {
             attrNullProfile.enter();
             return RAttributesLayout.RAttributeIterable.EMPTY;
-        }
-        if (recursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursive = insert(create());
         }
 
         return recursive.execute(attributes);
