@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
@@ -49,6 +50,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -79,6 +81,15 @@ public class LoadSaveFunctions {
         }
     }
 
+    private static void checkMagicNumber(RConnection openConn, RBuiltinNode node) throws IOException {
+        String s = openConn.readChar(5, true);
+        if (!(s.equals(ASCII_HEADER2) || s.equals(ASCII_HEADER3) ||
+                        s.equals(XDR_HEADER2) || s.equals(XDR_HEADER3) ||
+                        s.equals(BINARY_HEADER2) || s.equals(BINARY_HEADER3))) {
+            throw node.error(RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection: " + s);
+        }
+    }
+
     @RBuiltin(name = "loadFromConn2", visibility = OFF, kind = INTERNAL, parameterNames = {"con", "envir", "verbose"}, behavior = IO)
     public abstract static class LoadFromConn2 extends RBuiltinNode.Arg3 {
 
@@ -96,45 +107,59 @@ public class LoadSaveFunctions {
         protected RStringVector load(int conIndex, REnvironment envir, @SuppressWarnings("unused") boolean verbose) {
             RConnection con = RConnection.fromIndex(conIndex);
             try (RConnection openConn = con.forceOpen("r")) {
-                String s = openConn.readChar(5, true);
-                if (s.equals(ASCII_HEADER2) || s.equals(ASCII_HEADER3) ||
-                                s.equals(XDR_HEADER2) || s.equals(XDR_HEADER3) ||
-                                s.equals(BINARY_HEADER2) || s.equals(BINARY_HEADER3)) {
-                    Object o = RSerialize.unserialize(con);
-                    if (o == RNull.instance) {
-                        return RDataFactory.createEmptyStringVector();
-                    }
-                    if (!((o instanceof RPairList && !((RPairList) o).isLanguage()))) {
-                        throw error(RError.Message.GENERIC, "loaded data is not in pair list form");
-                    }
-                    RPairList vars = (RPairList) o;
-
-                    String[] data = new String[vars.getLength()];
-                    int i = 0;
-                    naCheck.enable(true);
-                    while (true) {
-                        String tag = vars.getTag().toString();
-                        data[i] = tag;
-                        naCheck.check(tag);
-
-                        envir.put(tag, vars.car());
-
-                        if (vars.cdr() == null || vars.cdr() == RNull.instance) {
-                            break;
-                        }
-                        vars = (RPairList) vars.cdr();
-                        i++;
-                    }
-
-                    return RDataFactory.createStringVector(data, naCheck.neverSeenNA());
-
-                } else {
-                    throw error(RError.Message.GENERIC, "the input does not start with a magic number compatible with loading from a connection: " + s);
+                checkMagicNumber(openConn, this);
+                Object o = RSerialize.unserialize(con);
+                if (o == RNull.instance) {
+                    return RDataFactory.createEmptyStringVector();
                 }
+                if (!((o instanceof RPairList && !((RPairList) o).isLanguage()))) {
+                    throw error(RError.Message.GENERIC, "loaded data is not in pair list form");
+                }
+                RPairList vars = (RPairList) o;
+
+                String[] data = new String[vars.getLength()];
+                int i = 0;
+                naCheck.enable(true);
+                while (true) {
+                    String tag = vars.getTag().toString();
+                    data[i] = tag;
+                    naCheck.check(tag);
+
+                    envir.put(tag, vars.car());
+
+                    if (vars.cdr() == null || vars.cdr() == RNull.instance) {
+                        break;
+                    }
+                    vars = (RPairList) vars.cdr();
+                    i++;
+                }
+
+                return RDataFactory.createStringVector(data, naCheck.neverSeenNA());
             } catch (IOException iox) {
                 throw error(RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
             } catch (PutException px) {
                 throw error(px);
+            }
+        }
+    }
+
+    @RBuiltin(name = "loadInfoFromConn2", visibility = ON, kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
+    public abstract static class LoadInfoFromConn2 extends RBuiltinNode.Arg1 {
+
+        static {
+            Casts casts = new Casts(LoadInfoFromConn2.class);
+            casts.arg("con").defaultError(Message.INVALID_CONNECTION).mustNotBeNull().asIntegerVector().findFirst();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RList load(int conIndex) {
+            RConnection con = RConnection.fromIndex(conIndex);
+            try (RConnection openConn = con.forceOpen("r")) {
+                checkMagicNumber(openConn, this);
+                return RSerialize.unserializeInfo(con).toVector();
+            } catch (IOException iox) {
+                throw error(RError.Message.ERROR_READING_CONNECTION, iox.getMessage());
             }
         }
     }

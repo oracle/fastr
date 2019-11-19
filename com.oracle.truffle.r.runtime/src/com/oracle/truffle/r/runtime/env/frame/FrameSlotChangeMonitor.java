@@ -245,21 +245,26 @@ public final class FrameSlotChangeMonitor {
             if (slot != null) {
                 LookupResult lookupResult;
                 StableValue<Object> stableValue = getFrameSlotInfo(slot).stableValue;
-                if (stableValue != null) {
-                    lookupResult = new StableValueLookupResult(identifier.toString(), stableValue);
-                } else {
-                    FrameDescriptorMetaData currentMetaData = getMetaData(current);
-                    if (currentMetaData.singletonFrame == null) {
-                        // no stable value and no singleton frame
-                        return null;
+                // if stableValue.getValue() == null, then this is a frame slot that doesn't have a
+                // value, which can happen, e.g., when package creates a value in its namespace, but
+                // then removes it in .onLoad
+                if (stableValue == null || stableValue.getValue() != null) {
+                    if (stableValue != null) {
+                        lookupResult = new StableValueLookupResult(identifier.toString(), stableValue);
                     } else {
-                        assert currentMetaData.singletonFrame.get() != null;
-                        lookupResult = new FrameAndSlotLookupResult(identifier.toString(), currentMetaData.singletonFrame.get(), slot);
+                        FrameDescriptorMetaData currentMetaData = getMetaData(current);
+                        if (currentMetaData.singletonFrame == null) {
+                            // no stable value and no singleton frame
+                            return null;
+                        } else {
+                            assert currentMetaData.singletonFrame.get() != null;
+                            lookupResult = new FrameAndSlotLookupResult(identifier.toString(), currentMetaData.singletonFrame.get(), slot);
+                        }
                     }
+                    addPreviousLookups(frame, current, identifier);
+                    metaData.lookupResults.put(identifier, new WeakReference<>(lookupResult));
+                    return lookupResult;
                 }
-                addPreviousLookups(frame, current, identifier);
-                metaData.lookupResults.put(identifier, new WeakReference<>(lookupResult));
-                return lookupResult;
             }
             Frame next = RArguments.getEnclosingFrame(current);
             assert isEnclosingFrameDescriptor(current, next) : "the enclosing frame descriptor assumptions do not match the actual enclosing frame descriptor: " + getMetaData(current).name + " -> " +

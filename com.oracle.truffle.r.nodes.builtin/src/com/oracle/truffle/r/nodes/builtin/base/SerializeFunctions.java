@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.RSerialize.VersionInfo;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -54,13 +55,27 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class SerializeFunctions {
 
+    private static void checkCanRead(RConnection openConn, RBaseNode node) {
+        if (!openConn.canRead()) {
+            throw node.error(Message.CONNECTION_NOT_OPEN_READ);
+        }
+    }
+
     @TruffleBoundary
     protected static Object doUnserializeFromConnBase(RBaseNode node, int connIndex, @SuppressWarnings("unused") REnvironment refhook) {
         try (RConnection openConn = RConnection.fromIndex(connIndex).forceOpen("rb")) {
-            if (!openConn.canRead()) {
-                throw node.error(RError.Message.CONNECTION_NOT_OPEN_READ);
-            }
+            checkCanRead(openConn, node);
             return RSerialize.unserialize(openConn);
+        } catch (IOException ex) {
+            throw node.error(RError.Message.GENERIC, ex.getMessage());
+        }
+    }
+
+    @TruffleBoundary
+    protected static VersionInfo doUnserializeInfoFromConn(RBaseNode node, int connIndex) {
+        try (RConnection openConn = RConnection.fromIndex(connIndex).forceOpen("rb")) {
+            checkCanRead(openConn, node);
+            return RSerialize.unserializeInfo(openConn);
         } catch (IOException ex) {
             throw node.error(RError.Message.GENERIC, ex.getMessage());
         }
@@ -114,6 +129,20 @@ public class SerializeFunctions {
         protected Object doUnserializeFromConn(int conn, @SuppressWarnings("unused") REnvironment refhook) {
             // TODO figure out what this really means?
             return doUnserializeFromConnBase(this, conn, null);
+        }
+    }
+
+    @RBuiltin(name = "serializeInfoFromConn", kind = INTERNAL, parameterNames = {"con"}, behavior = IO)
+    public abstract static class SerializeInfoFromConn extends RBuiltinNode.Arg1 {
+
+        static {
+            Casts casts = new Casts(SerializeInfoFromConn.class);
+            connection(casts);
+        }
+
+        @Specialization
+        protected Object getSerializeInfoFromConn(int conn) {
+            return doUnserializeInfoFromConn(this, conn).toVector();
         }
     }
 

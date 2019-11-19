@@ -50,3 +50,17 @@ assertEquals(c('a','b'), names(x))
 
 assertEquals("hello world", api.Rf_mkCharLenCE("hello world", 11, 0))
 ignore("FastR bug", assertEquals("hello", api.Rf_mkCharLenCE("hello this will be cut away", 5, 0)))
+
+
+# ----------------------------------------------------------------------------------------
+# Rf_eval
+
+bar <- function(x) typeof(x)
+lang <- quote(bar(x))
+lang[[2L]] <- as.pairlist(1)
+# lang will be call to "bar" with a pairlist as the argument -- the pairlist is interpreted as the value
+assertEquals("pairlist", api.Rf_eval(lang, new.env()))
+
+lang[[2L]] <- quote(1)
+# lang will be call to "bar" with "language(1)" as the argument -- the language object is "executed"
+assertEquals("double", api.Rf_eval(lang, new.env()))

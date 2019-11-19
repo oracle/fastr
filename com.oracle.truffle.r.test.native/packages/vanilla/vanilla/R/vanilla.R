@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -34,4 +34,20 @@ functionTest <- function(x, y) {
 "foo<-"<-function(x, value) {
     x[[1]]<-value
     x
+}
+
+# "intToBits" happens to be a function in base too...
+intToBits <- 42L
+use_intToBits <- function(...) {
+  intToBits(...)
+}
+
+# creates a slot in the environment/FrameDescriptor, "strrep" happens to be a function in base too
+strrep <- NULL
+use_strrep <- function(...) {
+  strrep(...)
+}
+.onLoad <- function(libname, pkgname) {
+  # removes the value, but the slot in FrameDescriptor stays...
+  rm("strrep", inherits = TRUE)
 }

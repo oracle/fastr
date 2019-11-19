@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,3 +25,6 @@ functionTest(c(1,2,3,4,5,6),8:10)
 r<-42; vanilla::foo(r)<-7; r
 
 get('someDelayAssignedGlobal', environment(functionTest))
+
+use_strrep("repeatme", 3)
+use_intToBits(42L)

@@ -2,5 +2,6 @@
 useDynLib(testrffi, .registration = TRUE, .fixes = "C_")
 
 ## and exported functions
+exportPattern("load.*")
 exportPattern("rffi\\..*")
 exportPattern("api\\..*")

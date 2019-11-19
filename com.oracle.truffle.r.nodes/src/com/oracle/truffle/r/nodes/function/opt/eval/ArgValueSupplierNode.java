@@ -117,7 +117,7 @@ public abstract class ArgValueSupplierNode extends Node {
         return closure;
     }
 
-    @Specialization(guards = {"a.hasClosure()", "cachedFrameDescriptor == promiseEvalFrame.getFrameDescriptor()", "plSnapshotNode.execute(a)"}, limit = "monoCacheSize")
+    @Specialization(guards = {"a.isLanguage()", "a.hasClosure()", "cachedFrameDescriptor == promiseEvalFrame.getFrameDescriptor()", "plSnapshotNode.execute(a)"}, limit = "monoCacheSize")
     Object buildPromiseUsingExistingClosure(@SuppressWarnings("unused") RPairList a, @SuppressWarnings("unused") int i,
                     @SuppressWarnings("unused") CallInfo.ArgumentBuilderState argBuilderState,
                     @SuppressWarnings("unused") MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame,
@@ -129,7 +129,7 @@ public abstract class ArgValueSupplierNode extends Node {
         return RDataFactory.createPromise(PromiseState.Supplied, cachedClosure, promiseEvalFrame);
     }
 
-    @Specialization(guards = {"!a.hasClosure()", "cachedFrameDescriptor == promiseEvalFrame.getFrameDescriptor()", "plSnapshotNode.execute(a)"}, limit = "monoCacheSize")
+    @Specialization(guards = {"a.isLanguage()", "!a.hasClosure()", "cachedFrameDescriptor == promiseEvalFrame.getFrameDescriptor()", "plSnapshotNode.execute(a)"}, limit = "monoCacheSize")
     Object buildPromiseUsingCachedClosure(@SuppressWarnings("unused") RPairList a, @SuppressWarnings("unused") int i,
                     @SuppressWarnings("unused") CallInfo.ArgumentBuilderState argBuilderState,
                     @SuppressWarnings("unused") MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame,
@@ -141,7 +141,7 @@ public abstract class ArgValueSupplierNode extends Node {
         return RDataFactory.createPromise(PromiseState.Supplied, cachedClosure, promiseEvalFrame);
     }
 
-    @Specialization(replaces = {"buildPromiseUsingCachedClosure", "buildPromiseUsingExistingClosure"})
+    @Specialization(replaces = {"buildPromiseUsingCachedClosure", "buildPromiseUsingExistingClosure"}, guards = "a.isLanguage()")
     Object buildPromise(RPairList a, int i, @SuppressWarnings("unused") CallInfo.ArgumentBuilderState argBuilderState, @SuppressWarnings("unused") MaterializedFrame currentFrame,
                     MaterializedFrame promiseEvalFrame, @SuppressWarnings("unused") PromiseHelperNode promiseHelper,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
