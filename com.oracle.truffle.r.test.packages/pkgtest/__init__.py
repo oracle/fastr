@@ -211,13 +211,14 @@ def pkgtest(args):
         3: install & test fail
     '''
     unknown_args = parse_arguments(args)
-    install_args = prepare_r_install_and_test_arguments(unknown_args)
+    # common_install_args are shared between GnuR and FastR
+    common_install_args = prepare_r_install_and_test_arguments(unknown_args)
 
-    test_installed = '--no-install' in install_args
+    test_installed = '--no-install' in common_install_args
     fastr_libinstall, fastr_install_tmp = _create_libinstall('fastr', test_installed)
     gnur_libinstall, gnur_install_tmp = _create_libinstall('gnur', test_installed)
 
-    install_args = list(install_args)
+    common_install_args = list(common_install_args)
 
     env = os.environ.copy()
     env["TMPDIR"] = fastr_install_tmp
@@ -229,12 +230,12 @@ def pkgtest(args):
     commit_fastr_builtins()
 
     # If '--cache-pkgs' is set, then also set the native API version value
-    _set_pkg_cache_api_version(install_args, get_fastr_include_path())
+    fastr_args = _set_pkg_cache_api_version(common_install_args, get_fastr_include_path())
 
     log_step('BEGIN', 'install/test', 'FastR')
     # Currently installpkgs does not set a return code (in install.packages.R)
     out = OutputCapture()
-    rc = _fastr_installpkgs(install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    rc = _fastr_installpkgs(fastr_args, nonZeroIsFatal=False, env=env, out=out, err=out)
     if rc == 100:
         # fatal error connecting to package repo
         abort(status=rc)
@@ -247,14 +248,14 @@ def pkgtest(args):
 
     single_pkg = len(out.install_status) == 1
     install_failure = single_pkg and rc == 1
-    if '--run-tests' in install_args and not install_failure:
+    if '--run-tests' in common_install_args and not install_failure:
         # in order to compare the test output with GnuR we have to install/test the same
         # set of packages with GnuR
         ok_pkgs = [k for k, v in out.install_status.items() if v]
-        gnur_args = _args_to_forward_to_gnur(install_args)
+        gnur_args = _args_to_forward_to_gnur(common_install_args)
 
         # If '--cache-pkgs' is set, then also set the native API version value
-        _set_pkg_cache_api_version(gnur_args, get_gnur_include_path())
+        gnur_args = _set_pkg_cache_api_version(gnur_args, get_gnur_include_path())
 
         _gnur_install_test(gnur_args, ok_pkgs, gnur_libinstall, gnur_install_tmp)
         _set_test_status(out.test_info)
@@ -281,10 +282,15 @@ def _set_pkg_cache_api_version(arg_list, include_dir):
     if "--cache-pkgs" in arg_list:
         pkg_cache_values_idx = arg_list.index("--cache-pkgs") + 1
         if pkg_cache_values_idx < len(arg_list):
-            if 'version=' in arg_list[pkg_cache_values_idx]:
-                logging.info("Ignoring specified API version and using automatically computed one.")
-            arg_list[pkg_cache_values_idx] = arg_list[pkg_cache_values_idx] + ",version={0}".format(
-                computeApiChecksum(include_dir))
+            arg_list_copy = arg_list[:]
+            assert arg_list_copy is not arg_list
+            if 'version=' in arg_list_copy[pkg_cache_values_idx]:
+                logging.warning("Ignoring specified API version and using automatically computed one.")
+                raise RuntimeError
+            arg_list_copy[pkg_cache_values_idx] = arg_list_copy[pkg_cache_values_idx] + ",version={0}".format(computeApiChecksum(include_dir))
+            return arg_list_copy
+    return arg_list
+
 
 
 class OutputCapture:
@@ -971,7 +977,7 @@ def pkgcache(args):
         fastr_args = list(install_args)
 
         # If '--cache-pkgs' is set, then also set the native API version value
-        _set_pkg_cache_api_version(fastr_args, get_fastr_include_path())
+        fastr_args = _set_pkg_cache_api_version(fastr_args, get_fastr_include_path())
 
         log_step('BEGIN', 'install/cache', 'FastR')
         # Currently installpkgs does not set a return code (in install.packages.R)
@@ -995,7 +1001,7 @@ def pkgcache(args):
         gnur_args = list(install_args)
 
         # If '--cache-pkgs' is set, then also set the native API version value
-        _set_pkg_cache_api_version(gnur_args, get_gnur_include_path())
+        gnur_args = _set_pkg_cache_api_version(gnur_args, get_gnur_include_path())
 
         log_step('BEGIN', 'install/cache', 'GnuR')
         gnur_rc = _gnur_installpkgs(gnur_args, nonZeroIsFatal=False, env=env)
