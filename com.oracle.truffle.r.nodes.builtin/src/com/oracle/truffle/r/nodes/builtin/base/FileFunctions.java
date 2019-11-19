@@ -35,6 +35,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
@@ -1198,7 +1199,7 @@ public class FileFunctions {
             return doXyzName(vec, (env, name) -> {
                 TruffleFile path = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(name));
                 TruffleFile parent = path.getParent();
-                return parent != null ? parent.toString() : ".";
+                return parent != null ? parent.toString() : (path.getAbsoluteFile().getParent() != null ? "." : RContext.getInstance().getEnv().getFileNameSeparator());
             });
         }
     }
