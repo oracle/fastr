@@ -75,7 +75,6 @@ public class TestBuiltin_setwd extends TestBase {
             testFile.createNewFile();
         }
         // 3.) and setwd to {testdir} and try to access that README.md/test
-        assertEval("setwd('" + wd + testWDDir + "'); .Call(tools:::C_Rmd5, 'README.md/test'); setwd('" + wd + "')");
         Value result = context.eval(getSource("setwd('" + wd + testWDDir + "'); .Call(tools:::C_Rmd5, 'README.md/test')"));
         assertEquals("d41d8cd98f00b204e9800998ecf8427e", result.asString());
 
@@ -89,7 +88,6 @@ public class TestBuiltin_setwd extends TestBase {
             testFile.createNewFile();
         }
         // 3.) and setwd to {testdir} and try to access that bin/R/test
-        assertEval("setwd('" + wd + testWDDir + "'); .Call(tools:::C_Rmd5, 'bin/R/test'); setwd('" + wd + "')");
         result = context.eval(getSource("setwd('" + wd + testWDDir + "'); .Call(tools:::C_Rmd5, 'bin/R/test');"));
         assertEquals("d41d8cd98f00b204e9800998ecf8427e", result.asString());
     }
