@@ -201,11 +201,11 @@ public final class PipelineToCastNode {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public CastNode visit(FilterStep<?, ?> step, CastNode previous) {
             if (step.getFilter() instanceof RVarArgsFilter) {
                 return RVarArgsFilterNode.create();
             }
-            @SuppressWarnings("unchecked")
             ArgumentFilter<Object, Object> filter = (ArgumentFilter<Object, Object>) ArgumentFilterFactoryImpl.INSTANCE.createFilter(step.getFilter());
             MessageData msg = getDefaultIfNull(step.getMessage(), step.isWarning());
             return FilterNode.create(filter, step.isWarning(), msg, boxPrimitives, step.getFilter().resultForNull() == ResultForArg.TRUE,
@@ -267,9 +267,9 @@ public final class PipelineToCastNode {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public CastNode visit(MapIfStep<?, ?> step, CastNode previous) {
             assert !(step.getFilter() instanceof RVarArgsFilter) : "mapIf not yet implemented for RVarArgsFilter";
-            @SuppressWarnings("unchecked")
             ArgumentFilter<Object, Object> condition = (ArgumentFilter<Object, Object>) ArgumentFilterFactoryImpl.INSTANCE.createFilter(step.getFilter());
             CastNode trueCastNode = PipelineToCastNode.convert(null, step.getTrueBranch(), this);
             CastNode falseCastNode = PipelineToCastNode.convert(null, step.getFalseBranch(), this);

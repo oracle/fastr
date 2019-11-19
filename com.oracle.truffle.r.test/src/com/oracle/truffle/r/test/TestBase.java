@@ -292,6 +292,7 @@ public class TestBase {
                 if (prop.startsWith(optionPrefix)) {
                     String name = prop.substring(optionPrefix.length() + 1);
                     options.put(name, entry.getValue().toString());
+                    System.out.println("Note: using FastR option: " + name + "=" + entry.getValue().toString());
                 }
             }
         }

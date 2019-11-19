@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeDataInspector;
 import java.util.HashMap;
@@ -193,9 +194,11 @@ public class FastROptions {
                     value = null;
                 }
                 String name = d.getName();
-                String fastrOptionName = name.substring(2, name.length()); // skip the "R." prefix
+                // skip the "R." prefix
+                String fastrOptionName = name.substring(2, name.length());
                 Object envValue = getEnvValue(fastrOptionName, value);
                 if (envValue != null) {
+                    RLogger.getLogger(this.getClass().getName()).fine("Note: FastR option " + name + " is overriden by env variable FASTR_OPTION_" + fastrOptionName + "=" + envValue);
                     value = envValue;
                 }
             }
@@ -257,25 +260,26 @@ public class FastROptions {
     }
 
     public static Object getEnvValue(String name, Object defaultValue) {
-        String envValue = System.getenv().get("FASTR_OPTION_" + name);
-        if (envValue == null || envValue.isEmpty()) {
-            return envValue;
+        String value = System.getenv().get("FASTR_OPTION_" + name);
+        if (value == null || value.isEmpty()) {
+            return value;
         }
         try {
             if (defaultValue instanceof String) {
-                return envValue;
+                return value;
             } else if (defaultValue instanceof Boolean) {
-                return Boolean.parseBoolean(envValue);
+                return Boolean.parseBoolean(value);
             } else if (defaultValue instanceof Double) {
-                return Double.parseDouble(envValue);
+                return Double.parseDouble(value);
             } else if (defaultValue instanceof Integer) {
-                return Integer.parseInt(envValue);
+                return Integer.parseInt(value);
             }
+            return value;
         } catch (NumberFormatException e) {
-            System.out.println("failed to parse value " + envValue + "for numeric option FASTR_OPTION_" + name);
+            System.out.println("failed to parse value " + value + "for numeric option FASTR_OPTION_" + name);
             System.exit(2);
         }
-        return envValue;
+        return null;
     }
 
     public static String getName(OptionKey<?> key) {

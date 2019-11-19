@@ -20,6 +20,7 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
+import glob
 import platform, subprocess, sys, shlex
 from os.path import join, sep
 from argparse import ArgumentParser
@@ -58,6 +59,11 @@ def r_path():
 def r_version():
     # Could figure this out dynamically?
     return 'R-3.6.1'
+
+def gnur_path():
+    if 'GNUR_HOME_BINARY' in os.environ:
+        return os.environ['GNUR_HOME_BINARY']
+    return os.path.join(_fastr_suite.dir, 'libdownloads', r_version())
 
 def get_default_jdk():
     if mx.suite("compiler", fatalIfMissing=False):
@@ -285,42 +291,120 @@ def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
     tests_script = join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/embedded/test.sh')
     return mx.run([tests_script], env=env, nonZeroIsFatal=nonZeroIsFatal)
 
+class FastRGateTags:
+    unit_tests = 'unit_tests'
+    basic_tests = 'basic_tests'
+    internal_pkgs_test = 'internal_pkgs_test' # runs pkgtest on internal packages in com.oracle.truffle.r.test.native/packages
+    # cran_pkgs_testX runs pkgtest on selected CRAN packages listed in file com.oracle.truffle.r.test.packages/gatedX
+    # additional tag cran_pkgs_test_check_last runs check that com.oracle.truffle.r.test.packages/gated{X+1} doesn't exist
+
+    llvm = 'llvm'
+    no_specials = 'no_specials'
+    no_dsl_cache = 'no_dsl_cache'
+
+    cran_pkgs_test = 'cran_pkgs_test'
+    cran_pkgs_test_check_last = 'cran_pkgs_test_check_last'
+
 def _fastr_gate_runner(args, tasks):
-    '''
-    The specific additional gates tasks provided by FastR:
-    1. Copyright check
-    2. Check that ExpectedTestOutput file is in sync with unit tests
-    3. Unit tests
-    '''
-    # FastR has custom copyright check
-    with mx_gate.Task('Copyright check', tasks) as t:
+    with mx_gate.Task('Setup no specials', tasks, tags=[FastRGateTags.no_specials]) as t:
         if t:
-            if mx.checkcopyrights(['--primary']) != 0:
-                t.abort('copyright errors')
+            os.environ['FASTR_OPTION_UseSpecials'] = 'false'
+
+    with mx_gate.Task('Setup no dsl cache', tasks, tags=[FastRGateTags.no_dsl_cache]) as t:
+        if t:
+            os.environ['FASTR_OPTION_DSLCacheSizeFactor'] = '0'
+
+    with mx_gate.Task('SetupLLVM', tasks, tags=[FastRGateTags.llvm]) as t:
+        if t:
+            os.environ['FASTR_RFFI'] = 'llvm'
+
+    '''
+    The specific additional gates tasks provided by FastR.
+    '''
+    with mx_gate.Task('ExtSoftVersions', tasks, tags=[mx_gate.Tags.always]) as t:
+        if t:
+            rshell(['-q', '-e', 'extSoftVersion()'])
+
+    # ---------------------------------
+    # Style checks:
+
+    # FastR has custom copyright check
+    # with mx_gate.Task('Copyright check', tasks, tags=[mx_gate.Tags.style]) as t:
+    #     if t:
+    #         if mx.checkcopyrights(['--primary']) != 0:
+    #             t.abort('copyright errors')
 
     # check that the expected test output file is up to date
-    with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks) as t:
+    with mx_gate.Task('UnitTests: ExpectedTestOutput file check', tasks, tags=[mx_gate.Tags.style]) as t:
         if t:
-            mx_unittest.unittest(['-Dfastr.test.gen.expected=' + _test_srcdir(), '-Dfastr.test.check.expected'] + _gate_unit_tests())
+            mx_unittest.unittest(['-Dfastr.test.gen.expected=' + _test_srcdir(), '-Dfastr.test.check.expected=true'] + _gate_unit_tests())
 
-    with mx_gate.Task('UnitTests: no specials', tasks) as t:
-        if t:
-            mx_unittest.unittest(['-Dfastr.test.options.R.UseSpecials=false'] + _gate_noapps_unit_tests())
+    # ----------------------------------
+    # Basic tests:
 
-    with mx_gate.Task('UnitTests: with specials', tasks) as t:
+    with mx_gate.Task('UnitTests', tasks, tags=[FastRGateTags.basic_tests, FastRGateTags.unit_tests]) as t:
         if t:
             mx_unittest.unittest(_gate_noapps_unit_tests())
 
-    with mx_gate.Task('UnitTests: apps', tasks) as t:
-        if t:
-            mx_unittest.unittest(_apps_unit_tests())
-
-    with mx_gate.Task('Rembedded', tasks) as t:
+    with mx_gate.Task('Rembedded', tasks, tags=[FastRGateTags.basic_tests]) as t:
         if t:
             if rembedtest([]) != 0:
                 t.abort("Rembedded tests failed")
 
+    # ----------------------------------
+    # Package tests:
+
+    with mx_gate.Task('Internal pkg test', tasks, tags=[FastRGateTags.internal_pkgs_test]) as t:
+        if t:
+            list_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages/pkg-filelist')
+            if os.environ.get('FASTR_RFFI') == 'llvm':
+                list_file_llvm = list_file + '.llvm'
+                if os.path.exists(list_file_llvm):
+                    list_file = list_file_llvm
+            result = pkgtest(["--verbose", "--repos", "FASTR", "--pkg-filelist", list_file])
+            if result != 0:
+                mx.abort("internal package test failed")
+
+    # CRAN packages are listed in files com.oracle.truffle.r.test.packages/gated0, gated1, ...
+    # We loop over all such files and crete gate task for each of them
+    # See also documentation in FastRGateTags.cran_pkgs_tests
+    for i in range(1, 1000):
+        list_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.packages/gated' + str(i))
+        if not os.path.exists(list_file):
+            break
+        with mx_gate.Task('CRAN pkg test: ' + str(i), tasks, tags=[FastRGateTags.cran_pkgs_test + str(i)]) as t:
+            if t:
+                check_last = False if mx_gate.Task.tags is None else FastRGateTags.cran_pkgs_test_check_last in mx_gate.Task.tags # pylint: disable=unsupported-membership-test
+                if check_last:
+                    next_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.packages/gated' + str(i + 1))
+                    if os.path.exists(next_file):
+                        mx.abort("File %s exists, but the gate thinks that %s is the last file. Did you forget to update the gate configuration?" % (next_file, list_file))
+                cache_arg = os.environ.get('FASTR_PKGS_CACHE_OPT')
+                if cache_arg is None:
+                    cache_arg = []
+                    mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest'")
+                else:
+                    cache_arg = ['--cache-pkgs', cache_arg]
+                result = pkgtest(["--verbose"] + cache_arg + ["--repos", "SNAPSHOT", "--pkg-filelist", list_file])
+                if result != 0:
+                    mx.abort("package test failed")
+
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
+
+# Running this in "mx gate" would require to build FastR, because "mx gate" doesn't work with un-built FastR
+def gnur_packages_test(args):
+    '''
+    Runs tests of packages intended to be used in GNU-R only (for now only fastRCluster).
+    '''
+    package = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.pkgs/fastRCluster')
+    gnur_binary = os.path.join(gnur_path(), 'bin', 'R')
+    mx.run([gnur_binary, 'CMD', 'build', package])
+    result = glob.glob('fastRCluster*.tar.gz')
+    if len(result) != 1:
+        mx.abort('Found more than one file matching "fastRCluster_*.tar.gz". Are these some left over files or did R CMD build fastRCluster produce the package tarball?')
+    new_env = os.environ.copy()
+    new_env['_R_CHECK_FORCE_SUGGESTS_'] = 'false'
+    mx.run([gnur_binary, 'CMD', 'check', '--no-manual', result[0]], env=new_env)
 
 def rgate(args):
     '''
@@ -739,7 +823,8 @@ _commands = {
     'gnu-rtests' : [gnu_rtests, '[]'],
     'nativebuild' : [nativebuild, '[]'],
     'testrfficodegen' : [run_testrfficodegen, '[]'],
-    'rfficodegen' : [run_rfficodegen, '[]']
+    'rfficodegen' : [run_rfficodegen, '[]'],
+    'gnur-packages-test': [gnur_packages_test, '[]']
     }
 
 mx.update_commands(_fastr_suite, _commands)

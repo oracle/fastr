@@ -236,8 +236,7 @@ public abstract class VirtualEvalFrame implements MaterializedFrame {
             arguments[RArguments.INDEX_CALLER_FRAME] = callerFrame;
         }
         MaterializedFrame unwrappedFrame = originalFrame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) originalFrame).getOriginalFrame() : originalFrame;
-        @SuppressWarnings("unchecked")
-        Class<MaterializedFrame> clazz = (Class<MaterializedFrame>) unwrappedFrame.getClass();
+        Class<MaterializedFrame> clazz = getMaterializedFrameClass(unwrappedFrame);
         if (Substitute1.frameClass == clazz) {
             return new Substitute1(unwrappedFrame, arguments);
         } else if (Substitute1.frameClass == null) {
@@ -253,5 +252,10 @@ public abstract class VirtualEvalFrame implements MaterializedFrame {
         } else {
             return new SubstituteGeneric(unwrappedFrame, arguments);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Class<MaterializedFrame> getMaterializedFrameClass(MaterializedFrame unwrappedFrame) {
+        return (Class<MaterializedFrame>) unwrappedFrame.getClass();
     }
 }

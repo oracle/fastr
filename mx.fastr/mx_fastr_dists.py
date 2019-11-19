@@ -232,7 +232,8 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
         platformDependent=True,
         theLicense=None,
         relpath=True,
-        output=None
+        output=None,
+        overlaps=["FASTR_RELEASE" + rffi]
     )
 
     register_distribution(fastr_release_distribution)

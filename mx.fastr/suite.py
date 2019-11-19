@@ -375,6 +375,9 @@ suite = {
       "description" : "internal support for generating FFI classes",
       "dependencies" : ["com.oracle.truffle.r.ffi.processor"],
       "maven" : "False",
+      # FASTR and R_FFI_PROCESSOR share the actual annotations
+      # This could be refactored so that we have one project with just the annotations and FASTR would depend only on that
+      "overlaps": ["FASTR"],
     },
 
     "FASTR_LAUNCHER" : {
@@ -383,6 +386,9 @@ suite = {
       "distDependencies" : [
         "sdk:GRAAL_SDK"
       ],
+      # FASTR and FASTR_LAUNCHER share one common helper class RCmdOptions
+      # This could be refactored in the future
+      "overlaps": ["FASTR"],
     },
 
     "FASTR" : {
@@ -405,6 +411,8 @@ suite = {
         "truffle:TRUFFLE_NFI_NATIVE",
         "sulong:SULONG_API",
       ],
+      # TODO: is this intentional that we embed things from LAUNCHER_COMMON?
+      "overlaps": ["sdk:LAUNCHER_COMMON"],
     },
 
     "GRID_DEVICE_REMOTE_SERVER" : {
@@ -424,6 +432,7 @@ suite = {
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
         "sulong:SULONG_API",
+        "fastr:FASTR",
       ],
     },
 
