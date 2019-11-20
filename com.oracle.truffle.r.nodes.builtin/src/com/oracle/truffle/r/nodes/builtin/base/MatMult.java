@@ -515,7 +515,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                             RComplex x = mult.applyComplex(a.getDataAt(row), b.getDataAt(k));
                             na.check(x);
                             result[(k * aRows + row) << 1] = x.getRealPart();
-                            result[((k * aRows + row) << 1) + 1] = x.getRealPart();
+                            result[((k * aRows + row) << 1) + 1] = x.getImaginaryPart();
                         }
                     }
                     return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{aRows, b.getLength()});
