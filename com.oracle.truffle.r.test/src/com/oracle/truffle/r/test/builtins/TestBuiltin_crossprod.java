@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -84,6 +84,37 @@ public class TestBuiltin_crossprod extends TestBase {
         assertEval(Ignored.ImplementationError, "{ x <- matrix(c(NaN,2+3i,3,4+1i,5,NA), nrow=3); crossprod(x) }");
 
         assertEval(Output.ImprovedErrorContext, "{ crossprod('asdf', matrix(1:6, ncol=2)) }");
+
+        assertEval(template("crossprod(complex(real=%0, imaginary=%1), complex(real=%2, imaginary=%3))", new String[][]{
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"}
+        }));
+
+        assertEval(Ignored.ImplementationError, template("crossprod(complex(real=Inf, imaginary=%0), complex(real=%1, imaginary=%2))", new String[][]{
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"},
+        }));
+
+        assertEval(Ignored.ImplementationError, template("crossprod(complex(real=%0, imaginary=Inf), complex(real=%1, imaginary=%2))", new String[][]{
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"},
+        }));
+
+        assertEval(Ignored.ImplementationError, template("crossprod(complex(real=%0, imaginary=%1), complex(real=Inf, imaginary=%2))", new String[][]{
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"},
+        }));
+
+        assertEval(Ignored.ImplementationError, template("crossprod(complex(real=%0, imaginary=%1), complex(real=%2, imaginary=Inf))", new String[][]{
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"},
+                        new String[]{"0", "1", "NaN"},
+        }));
     }
 
     @Test
