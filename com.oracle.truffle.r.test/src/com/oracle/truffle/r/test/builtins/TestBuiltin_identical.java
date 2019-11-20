@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -290,6 +290,16 @@ public class TestBuiltin_identical extends TestBase {
                         new String[]{"NA, NA", "NaN, NaN", "0/0, NaN", "0/-1, NaN"},
                         new String[]{"T", "F"},
                         new String[]{"T", "F"}
+        }));
+    }
+
+    @Test
+    public void testComplex() {
+        assertEval(template("identical(complex(real=%0, imaginary=%1), complex(real=%2, imaginary=%3))", new String[][]{
+                        new String[]{"0", "1", "NaN", "Inf"},
+                        new String[]{"0", "1", "NaN", "Inf"},
+                        new String[]{"0", "1", "NaN", "Inf"},
+                        new String[]{"0", "1", "NaN", "Inf"}
         }));
     }
 }

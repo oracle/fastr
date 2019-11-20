@@ -142,7 +142,7 @@ public final class RComplex extends RAbstractComplexVector implements RScalarVec
             return false;
         }
         RComplex other = (RComplex) obj;
-        return isNA() && other.isNA() || (realPart == other.getRealPart() && imaginaryPart == other.getImaginaryPart());
+        return isNA() && other.isNA() || (((Double) realPart).equals(other.getRealPart())) && (((Double) imaginaryPart).equals(other.getImaginaryPart()));
     }
 
     @Override
