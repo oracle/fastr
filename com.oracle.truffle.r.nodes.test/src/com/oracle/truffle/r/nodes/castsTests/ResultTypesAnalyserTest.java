@@ -78,7 +78,6 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -121,7 +120,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAsIntegerVector() {
         arg.asIntegerVector();
-        assertTypes(RNull.class, RMissing.class, int.class, RIntSequence.class, com.oracle.truffle.r.runtime.data.RIntVector.class, RIntVector.class);
+        assertTypes(RNull.class, RMissing.class, int.class, RIntVector.class);
     }
 
     @Test
@@ -437,7 +436,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testReturnIf2() {
         arg.returnIf(nullValue(), emptyIntegerVector()).returnIf(missingValue(), emptyIntegerVector()).asIntegerVector();
-        assertTypes(atom(int.class).or(atom(RIntVector.class)).or(atom(RIntSequence.class)).or(atom(com.oracle.truffle.r.runtime.data.RIntVector.class)), true);
+        assertTypes(atom(int.class).or(atom(RIntVector.class)).or(atom(com.oracle.truffle.r.runtime.data.RIntVector.class)), true);
     }
 
     @Test

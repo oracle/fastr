@@ -70,7 +70,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
@@ -1689,9 +1689,9 @@ public class RSerialize {
                     RPairList info = null;
                     Object data = null;
                     String cls = null;
-                    if (obj instanceof RIntSequence) {
+                    if (obj instanceof RIntVector && ((RIntVector) obj).isSequence()) {
                         info = RDataFactory.createPairList(RDataFactory.createIntVectorFromScalar(SEXPTYPE.INTSXP.code));
-                        RIntSequence vec = (RIntSequence) obj;
+                        RIntSeqVectorData vec = ((RIntVector) obj).getSequence();
                         data = RDataFactory.createDoubleVector(new double[]{vec.getLength(), vec.getStart(), vec.getStride()}, RDataFactory.COMPLETE_VECTOR);
                         cls = "compact_intseq";
                     } else if (obj instanceof RToStringVectorClosure) {
@@ -2095,7 +2095,7 @@ public class RSerialize {
         }
 
         private static boolean isALTREP(Object obj) {
-            return obj instanceof RIntSequence || obj instanceof RToStringVectorClosure;
+            return (obj instanceof RIntVector && ((RIntVector) obj).isSequence()) || obj instanceof RToStringVectorClosure;
         }
     }
 

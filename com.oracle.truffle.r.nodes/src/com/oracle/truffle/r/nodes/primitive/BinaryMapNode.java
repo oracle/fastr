@@ -185,7 +185,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         boolean leftVectorImpl = RMaterializedVector.class.isAssignableFrom(leftClass);
         boolean rightVectorImpl = RMaterializedVector.class.isAssignableFrom(rightClass);
         this.mayContainMetadata = leftVectorImpl || rightVectorImpl;
-        this.mayFoldConstantTime = function.mayFoldConstantTime(leftClass, rightClass);
+        this.mayFoldConstantTime = function.mayFoldConstantTime(left, right);
         this.leftIsNAProfile = mayFoldConstantTime ? ConditionProfile.createBinaryProfile() : null;
         this.rightIsNAProfile = mayFoldConstantTime ? ConditionProfile.createBinaryProfile() : null;
         this.mayShareLeft = left.getRType() == resultType && leftVectorImpl;
@@ -233,7 +233,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
                  */
                 return resultType.getEmpty();
             }
-            if (mayFoldConstantTime) {
+            if (mayFoldConstantTime && function.mayFoldConstantTime(left, right)) {
                 target = function.tryFoldConstantTime(left.castSafe(argumentType, leftIsNAProfile, false), leftLength, right.castSafe(argumentType, rightIsNAProfile, false), rightLength);
             }
             if (target == null) {

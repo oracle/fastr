@@ -37,9 +37,8 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -71,7 +70,7 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     protected boolean isSequence(RAbstractVector vec) {
-        return vec instanceof RSequence;
+        return vec.isSequence();
     }
 
     protected boolean isCharSXP(RAbstractListVector list) {
@@ -83,15 +82,16 @@ public abstract class MatchInternalNode extends RBaseNode {
         return true;
     }
 
-    @Specialization
+    @Specialization(guards = "table.isSequence()")
     @CompilerDirectives.TruffleBoundary
-    protected com.oracle.truffle.r.runtime.data.RIntVector matchInSequence(RIntVector x, RIntSequence table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector matchInSequence(RIntVector x, RIntVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
 
+        RIntSeqVectorData seq = (RIntSeqVectorData) table.getData();
         for (int i = 0; i < result.length; i++) {
             int xx = x.getDataAt(i);
-            int index = table.getIndexFor(xx);
+            int index = seq.getIndexFor(xx);
             if (index != -1) {
                 result[i] = index + 1;
             } else {

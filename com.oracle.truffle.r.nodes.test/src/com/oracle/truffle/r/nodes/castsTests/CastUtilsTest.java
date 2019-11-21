@@ -29,7 +29,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RSeq;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,7 +39,6 @@ import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -69,13 +70,13 @@ public class CastUtilsTest {
         Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(RAbstractVector.class, RAbstractVector.class, false));
 
         Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(Not.negateType(Integer.class), Not.negateType(int.class), false));
-        Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(Not.negateType(RSequence.class), Not.negateType(RIntSequence.class), false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(Not.negateType(RSeq.class), Not.negateType(RIntSeqVectorData.class), false));
         Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(Not.negateType(String.class), Object.class, false));
-        Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(RIntSequence.class, Not.negateType(String.class), false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(RIntSeqVectorData.class, Not.negateType(String.class), false));
         // final class -> interface
-        Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(RIntSequence.class, Not.negateType(Serializable.class), false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(RIntSeqVectorData.class, Not.negateType(Serializable.class), false));
         // interface -> final class
-        Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(Serializable.class, Not.negateType(RIntSequence.class), false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(Serializable.class, Not.negateType(RIntSeqVectorData.class), false));
     }
 
     @Test
@@ -85,9 +86,9 @@ public class CastUtilsTest {
 
         Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(RIntVector.class), Not.negateType(RAbstractVector.class), false));
 
-        Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(RIntSequence.class), String.class, false));
-        Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(RIntSequence.class), Serializable.class, false));
-        Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(Serializable.class), RIntSequence.class, false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(RIntSeqVectorData.class), String.class, false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(RIntSeqVectorData.class), Serializable.class, false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(Serializable.class), RIntSeqVectorData.class, false));
 
     }
 
@@ -106,11 +107,11 @@ public class CastUtilsTest {
 
     @Test
     public void testIsNotConvertible() {
-        Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(RIntSequence.class, String.class, false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(RIntSeqVectorData.class, String.class, false));
         // final class -> interface
-        Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(RIntSequence.class, Serializable.class, false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(RIntSeqVectorData.class, Serializable.class, false));
         // interface -> final class
-        Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(Serializable.class, RIntSequence.class, false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(Serializable.class, RIntSeqVectorData.class, false));
         // Nothing -> Not<String>
         Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(Not.negateType(Object.class), Not.negateType(String.class), false));
         // Nothing -> Nothing

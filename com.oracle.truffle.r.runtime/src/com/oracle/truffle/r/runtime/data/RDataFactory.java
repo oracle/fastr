@@ -504,18 +504,18 @@ public final class RDataFactory {
             return createLogicalVector(data, !fillNA);
         }
 
-        public final RIntSequence createAscendingRange(int start, int end) {
+        public final RIntVector createAscendingRange(int start, int end) {
             assert start <= end;
-            return traceDataCreated(new RIntSequence(start, 1, end - start + 1));
+            return traceDataCreated(RIntVector.createSequence(start, 1, end - start + 1));
         }
 
-        public final RIntSequence createDescendingRange(int start, int end) {
+        public final RIntVector createDescendingRange(int start, int end) {
             assert start > end;
-            return traceDataCreated(new RIntSequence(start, -1, start - end + 1));
+            return traceDataCreated(RIntVector.createSequence(start, -1, start - end + 1));
         }
 
-        public final RIntSequence createIntSequence(int start, int stride, int length) {
-            return traceDataCreated(new RIntSequence(start, stride, length));
+        public final RIntVector createIntSequence(int start, int stride, int length) {
+            return traceDataCreated(RIntVector.createSequence(start, stride, length));
         }
 
         public final RDoubleSequence createAscendingRange(double start, double end) {
@@ -975,18 +975,18 @@ public final class RDataFactory {
         return createLogicalVector(length, true);
     }
 
-    public static RIntSequence createAscendingRange(int start, int end) {
+    public static RIntVector createAscendingRange(int start, int end) {
         assert start <= end;
-        return traceDataCreated(new RIntSequence(start, 1, end - start + 1));
+        return traceDataCreated(RIntVector.createSequence(start, 1, end - start + 1));
     }
 
-    public static RIntSequence createDescendingRange(int start, int end) {
+    public static RIntVector createDescendingRange(int start, int end) {
         assert start >= end;
-        return traceDataCreated(new RIntSequence(start, -1, start - end + 1));
+        return traceDataCreated(RIntVector.createSequence(start, -1, start - end + 1));
     }
 
-    public static RIntSequence createIntSequence(int start, int stride, int length) {
-        return traceDataCreated(new RIntSequence(start, stride, length));
+    public static RIntVector createIntSequence(int start, int stride, int length) {
+        return traceDataCreated(RIntVector.createSequence(start, stride, length));
     }
 
     private static final double FLT_EPSILON = 1.19209290e-7;

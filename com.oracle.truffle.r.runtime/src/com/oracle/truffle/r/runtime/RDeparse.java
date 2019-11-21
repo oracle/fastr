@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -1007,7 +1007,7 @@ public class RDeparse {
                 }
 
             } else {
-                RIntSequence sequence = asIntSequence(vec);
+                RIntSeqVectorData sequence = asIntSequence(vec);
                 if (sequence != null) {
                     append(RRuntime.intToStringNoCheck(sequence.getStart())).append(':').append(RRuntime.intToStringNoCheck(sequence.getEnd()));
                 } else {
@@ -1064,13 +1064,13 @@ public class RDeparse {
             throw RInternalError.shouldNotReachHere("unhandled closure type " + vec.getClass().getSimpleName());
         }
 
-        private static RIntSequence asIntSequence(RAbstractVector vec) {
+        private static RIntSeqVectorData asIntSequence(RAbstractVector vec) {
             if (!(vec instanceof RIntVector) || vec instanceof RToIntVectorClosure) {
                 return null;
             }
             RIntVector intVec = (RIntVector) vec;
-            if (vec instanceof RIntSequence) {
-                return (RIntSequence) vec;
+            if (vec.isSequence()) {
+                return ((RIntVector) vec).getSequence();
             }
             assert vec.getLength() >= 2;
             int start = intVec.getDataAt(0);
@@ -1088,7 +1088,7 @@ public class RDeparse {
                     return null;
                 }
             }
-            return RDataFactory.createIntSequence(start, stride, intVec.getLength());
+            return new RIntSeqVectorData(start, stride, intVec.getLength());
         }
 
         private DeparseVisitor vecElement2buff(Object element, boolean singleElement) {

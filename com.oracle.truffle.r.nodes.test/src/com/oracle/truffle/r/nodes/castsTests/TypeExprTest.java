@@ -38,9 +38,7 @@ import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.casts.UpperBoundsConjunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -51,7 +49,6 @@ public class TypeExprTest {
     public void testNormalize() {
         Assert.assertEquals(toSet(String.class), union(String.class).toNormalizedConjunctionSet());
         Assert.assertEquals(toSet(String.class, Integer.class), union(String.class, Integer.class).toNormalizedConjunctionSet());
-        Assert.assertEquals(toSet(RIntSequence.class), atom(RIntSequence.class).and(atom(RSequence.class)).toNormalizedConjunctionSet());
         Assert.assertEquals(toSet(String.class), atom(String.class).and(atom(RNull.class).not()).toNormalizedConjunctionSet());
         Assert.assertEquals(toSet(UpperBoundsConjunction.create(negateType(String.class), negateType(Integer.class))),
                         atom(String.class).not().and(atom(Integer.class).not()).toNormalizedConjunctionSet());

@@ -50,7 +50,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalar;
@@ -287,7 +288,8 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         while (i < length && isScalar(values.getDataAt(i))) {
             i++;
         }
-        if (i < length && values.getDataAt(i) instanceof RIntSequence) {
+        Object currVal = values.getDataAt(i);
+        if (i < length && currVal instanceof RIntVector && ((RIntVector) currVal).isSequence()) {
             // consume suffix
             int j = i + 1;
             while (j < length && isScalar(values.getDataAt(j))) {
@@ -312,7 +314,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
             // castCharacterVector should yield a single-element string vector
             prefix[i] = castCharacterVector(frame, values.getDataAt(i)).getDataAt(0);
         }
-        RIntSequence seq = (RIntSequence) values.getDataAt(seqPos);
+        RIntSeqVectorData seq = (RIntSeqVectorData) ((RIntVector) values.getDataAt(seqPos)).getData();
         String[] suffix;
         if (seqPos + 1 < length) {
             suffix = new String[length - seqPos - 1];
@@ -328,7 +330,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     }
 
     @TruffleBoundary
-    private static RStringSequence buildStringSequence(String[] prefixArr, RIntSequence seq, String[] suffixArr, String sep) {
+    private static RStringSequence buildStringSequence(String[] prefixArr, RIntSeqVectorData seq, String[] suffixArr, String sep) {
         StringBuilder prefix = new StringBuilder();
         for (int i = 0; i < prefixArr.length; i++) {
             prefix.append(prefixArr[i]).append(sep);

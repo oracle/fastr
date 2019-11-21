@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -89,12 +89,13 @@ public abstract class CumMax extends RBuiltinNode.Arg1 {
         return RDataFactory.createIntVector(new int[0], true, getNames.getNames(emptyVec));
     }
 
-    @Specialization
-    protected RIntVector cummaxIntSequence(RIntSequence v,
+    @Specialization(guards = "v.isSequence()")
+    protected RIntVector cummaxIntSequence(RIntVector v,
                                            @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
-        if (negativeStrideProfile.profile(v.getStride() < 0)) {
+        RIntSeqVectorData seq = (RIntSeqVectorData) v.getData();
+        if (negativeStrideProfile.profile(seq.getStride() < 0)) {
             // all numbers are smaller than the first one
-            return RDataFactory.createIntSequence(v.getStart(), 0, v.getLength());
+            return RDataFactory.createIntSequence(seq.getStart(), 0, v.getLength());
         } else {
             return v;
         }

@@ -70,6 +70,10 @@ public final class DSLConfig {
         return (int) (suggestedSize * cacheSizeFactor);
     }
 
+    public static int getTypedVectorDataLibraryCacheSize() {
+        return getCacheSize(3);
+    }
+
     /**
      * This method should be used to set any {@link InteropLibrary} cache size that can be
      * configured, i.e. it does not matter how large the cache is and it can even be zero. If used,

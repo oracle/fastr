@@ -33,6 +33,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
@@ -42,7 +43,6 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -303,9 +303,9 @@ abstract class WriteIndexedVectorAccessNode extends Node {
      *
      * @throws SlowPathException
      */
-    @Specialization(rewriteOn = SlowPathException.class)
+    @Specialization(rewriteOn = SlowPathException.class, guards = "position.isSequence()")
     protected int doIntegerSequencePosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
-                    Object[] positions, RIntSequence position, int positionOffset, int positionLength,
+                    Object[] positions, RIntVector position, int positionOffset, int positionLength,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("create()") IntValueProfile startProfile,
                     @Cached("create()") IntValueProfile strideProfile,
@@ -313,8 +313,9 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                     @Cached("createCountingProfile()") LoopConditionProfile profile) throws SlowPathException {
         // skip NA check. sequences never contain NA values.
         int rightIndex = rightBase;
-        int start = startProfile.profile(position.getStart() - 1);
-        int stride = strideProfile.profile(position.getStride());
+        RIntSeqVectorData seq = (RIntSeqVectorData) position.getData();
+        int start = startProfile.profile(seq.getStart() - 1);
+        int stride = strideProfile.profile(seq.getStride());
         int end = start + positionLength * stride;
 
         if (start < 0 || end <= 0) {

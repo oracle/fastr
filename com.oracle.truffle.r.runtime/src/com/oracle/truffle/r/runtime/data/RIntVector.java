@@ -27,14 +27,14 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-public final class RIntVector extends RAbstractNumericVector {
+public final class RIntVector extends RAbstractIntVector {
 
     private RIntVectorData data;
 
@@ -49,6 +49,11 @@ public final class RIntVector extends RAbstractNumericVector {
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    private RIntVector(RIntVectorData data) {
+        super(false);
+        this.data = data;
+    }
+
     private RIntVector() {
         super(false);
     }
@@ -60,13 +65,35 @@ public final class RIntVector extends RAbstractNumericVector {
         return result;
     }
 
+    public static RIntVector createSequence(int start, int stride, int length) {
+        return new RIntVector(new RIntSeqVectorData(start, stride, length));
+    }
+
+    public RIntVectorData getData() {
+        return data;
+    }
+
+    // To be removed
+
+    @Override
+    public boolean isSequence() {
+        return data instanceof RIntSeqVectorData;
+    }
+
+    @Override
+    public RIntSeqVectorData getSequence() {
+        return (RIntSeqVectorData) data;
+    }
+
+    // End: to be removed
+
     @Override
     protected boolean isScalarNA() {
         return RRuntime.isNA(getDataAt(0));
     }
 
     @Override
-    public final RType getRType() {
+    public RType getRType() {
         return RType.Integer;
     }
 
@@ -188,7 +215,7 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     @Override
-    public RAbstractVector createEmptySameType(int newLength, boolean newIsComplete) {
+    public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
         return new RIntVector(new int[newLength], newIsComplete);
     }
 

@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.RFFIAccess;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
@@ -74,6 +75,12 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     protected RAbstractVector(boolean complete) {
         this.complete = complete;
     }
+
+    public boolean isSequence() {
+        return this instanceof RSequence;
+    }
+
+    public RSeq getSequence() { return (RSeq) this; }
 
     @SuppressWarnings("static-method")
     @ExportMessage

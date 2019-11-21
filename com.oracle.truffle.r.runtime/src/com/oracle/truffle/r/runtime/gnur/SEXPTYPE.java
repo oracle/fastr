@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -74,7 +73,7 @@ public enum SEXPTYPE {
     /* logical vectors */
     LGLSXP(10, RLogicalVector.class, Byte.class, RForeignBooleanWrapper.class),
     /* integer vectors */
-    INTSXP(13, RIntVector.class, RIntSequence.class, Integer.class, RForeignIntWrapper.class, RToIntVectorClosure.class),
+    INTSXP(13, RIntVector.class, Integer.class, RForeignIntWrapper.class, RToIntVectorClosure.class),
     /* real vectors */
     REALSXP(14, RDoubleVector.class, RDoubleSequence.class, Double.class, RForeignDoubleWrapper.class, RToDoubleVectorClosure.class),
     /* complex vectors */

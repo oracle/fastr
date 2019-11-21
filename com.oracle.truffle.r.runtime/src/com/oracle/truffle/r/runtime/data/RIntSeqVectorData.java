@@ -15,7 +15,7 @@ import java.util.Arrays;
 import static com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.notWriteableError;
 
 @ExportLibrary(RIntVectorDataLibrary.class)
-public class RIntSeqVectorData extends RIntVectorData {
+public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     private final int start;
     private final int stride;
     private final int length;
@@ -24,6 +24,40 @@ public class RIntSeqVectorData extends RIntVectorData {
         this.start = start;
         this.stride = stride;
         this.length = length;
+    }
+
+    @Override
+    public Object getStartObject() {
+        return start;
+    }
+
+    @Override
+    public Object getStrideObject() {
+        return stride;
+    }
+
+    public int getStart() {
+        return start;
+    }
+
+    public int getStride() {
+        return stride;
+    }
+
+    public int getEnd() {
+        return start + (getLength() - 1) * stride;
+    }
+
+    public int getIndexFor(int element) {
+        int first = Math.min(getStart(), getEnd());
+        int last = Math.max(getStart(), getEnd());
+        if (element < first || element > last) {
+            return -1;
+        }
+        if ((element - getStart()) % getStride() == 0) {
+            return (element - getStart()) / getStride();
+        }
+        return -1;
     }
 
     @ExportMessage
@@ -68,7 +102,7 @@ public class RIntSeqVectorData extends RIntVectorData {
 
     @ExportMessage
     public boolean isSorted(boolean descending, boolean naLast) {
-        return descending ? stride >=0 : stride <= 0;
+        return descending ? stride < 0 : stride >= 0;
     }
 
     @ExportMessage

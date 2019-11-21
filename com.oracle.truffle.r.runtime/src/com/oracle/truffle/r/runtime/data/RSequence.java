@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVect
  * to indicate an ascending sequence and negative for a descending sequence. I.e., the "end" is
  * computed and not stored.
  */
-public interface RSequence {
+public interface RSequence extends RSeq {
 
     /**
      * Materializes the vector and remembers the materialized value for later use. The result should
