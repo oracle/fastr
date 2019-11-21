@@ -24,7 +24,7 @@ package com.oracle.truffle.r.test.engine.interop;
 
 import static org.junit.Assert.assertFalse;
 
-import com.oracle.truffle.r.runtime.data.model.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.InteropLibrary;

@@ -24,7 +24,7 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.indexWidth;
 import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 

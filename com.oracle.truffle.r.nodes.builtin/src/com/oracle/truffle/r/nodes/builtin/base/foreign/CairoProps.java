@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 public abstract class CairoProps extends RExternalBuiltinNode.Arg1 {
 

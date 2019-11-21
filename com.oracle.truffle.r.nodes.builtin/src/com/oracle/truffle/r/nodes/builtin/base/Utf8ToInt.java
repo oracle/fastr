@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 @RBuiltin(name = "utf8ToInt", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
 public abstract class Utf8ToInt extends RBuiltinNode.Arg1 {

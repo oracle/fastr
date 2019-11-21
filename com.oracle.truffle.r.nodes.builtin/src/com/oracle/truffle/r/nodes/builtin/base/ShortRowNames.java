@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 @RBuiltin(name = "shortRowNames", kind = INTERNAL, parameterNames = {"x", "type"}, behavior = PURE)
 public abstract class ShortRowNames extends RBuiltinNode.Arg2 {

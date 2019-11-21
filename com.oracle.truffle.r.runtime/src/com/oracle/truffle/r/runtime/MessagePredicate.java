@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime;
 import java.util.function.Predicate;
 
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.model.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 public enum MessagePredicate {
 

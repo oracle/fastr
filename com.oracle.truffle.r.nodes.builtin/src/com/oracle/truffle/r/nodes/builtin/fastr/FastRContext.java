@@ -35,7 +35,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
 
-import com.oracle.truffle.r.runtime.data.model.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import org.graalvm.polyglot.Context;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
