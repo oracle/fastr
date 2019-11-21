@@ -22,29 +22,25 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
-public final class RIntVector extends com.oracle.truffle.r.runtime.data.model.RIntVector implements RMaterializedVector, Shareable {
+public final class RIntVector extends RAbstractNumericVector {
 
-    private int[] data;
+    private RIntVectorData data;
 
     RIntVector(int[] data, boolean complete) {
         super(complete);
-        this.data = data;
+        this.data = new RIntArrayVectorData(data, complete);
         assert RAbstractVector.verifyVector(this);
     }
 
@@ -62,6 +58,16 @@ public final class RIntVector extends com.oracle.truffle.r.runtime.data.model.RI
         NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
         return result;
+    }
+
+    @Override
+    protected boolean isScalarNA() {
+        return RRuntime.isNA(getDataAt(0));
+    }
+
+    @Override
+    public final RType getRType() {
+        return RType.Integer;
     }
 
     @Override
@@ -83,25 +89,22 @@ public final class RIntVector extends com.oracle.truffle.r.runtime.data.model.RI
     }
 
     @Override
-    public int[] getInternalStore() {
+    public Object getInternalStore() {
         return data;
     }
 
-    @Override
     public int getDataAt(int index) {
-        return NativeDataAccess.getData(this, data, index);
+        return data.getIntAt(index);
     }
 
-    @Override
     public int getDataAt(Object store, int index) {
         assert data == store;
-        return NativeDataAccess.getData(this, (int[]) store, index);
+        return ((RIntVectorData) store).getIntAt(index);
     }
 
-    @Override
     public void setDataAt(Object store, int index, int value) {
         assert data == store;
-        NativeDataAccess.setData(this, (int[]) store, index, value);
+        ((RIntVectorData) store).setIntAt(index, value);
     }
 
     public RIntVector copyResetData(int[] newData) {
@@ -119,13 +122,13 @@ public final class RIntVector extends com.oracle.truffle.r.runtime.data.model.RI
 
     @Override
     public int getLength() {
-        return NativeDataAccess.getDataLength(this, data);
+        return data.getLength();
     }
 
     @Override
     public void setLength(int l) {
         try {
-            NativeDataAccess.setDataLength(this, data, l);
+            NativeDataAccess.setDataLength(this, getArrayForNativeDataAccess(), l);
         } finally {
             data = null;
             complete = false;
@@ -144,34 +147,24 @@ public final class RIntVector extends com.oracle.truffle.r.runtime.data.model.RI
 
     @Override
     public int[] getDataCopy() {
-        if (data != null) {
-            return Arrays.copyOf(data, data.length);
-        } else {
-            return NativeDataAccess.copyIntNativeData(getNativeMirror());
-        }
+        return RIntVectorDataLibrary.getFactory().getUncached().getIntDataCopy(data);
     }
 
     @Override
     public int[] getInternalManagedData() {
-        return data;
+        // TODO: get rid of this method
+        assert data instanceof RIntArrayVectorData;
+        return ((RIntArrayVectorData) data).getReadonlyIntData();
     }
 
     @Override
     public int[] getReadonlyData() {
-        if (data != null) {
-            return data;
-        } else {
-            return NativeDataAccess.copyIntNativeData(getNativeMirror());
-        }
+        return RIntVectorDataLibrary.getFactory().getUncached().getReadonlyIntData(data);
     }
 
     private RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
         assert !this.isShared();
-
-        NativeDataAccess.setData(this, data, index, value);
-        if (valueNACheck.check(value)) {
-            setComplete(false);
-        }
+        RIntVectorDataLibrary.getFactory().getUncached().setIntAt(data, index, value, valueNACheck);
         assert !isComplete() || !RRuntime.isNA(value);
         return this;
     }
@@ -183,12 +176,27 @@ public final class RIntVector extends com.oracle.truffle.r.runtime.data.model.RI
 
     @Override
     public RIntVector materialize() {
-        return this;
+        if (RIntVectorDataLibrary.getFactory().getUncached().isWriteable(data)) {
+            return this;
+        }
+        // To retain the semantics of the original materialize, for sequences and such we return new vector
+        return new RIntVector(getDataCopy(), isComplete());
+    }
+
+    public void materializeData(RIntVectorDataLibrary dataLib) {
+        data = dataLib.materialize(data);
+    }
+
+    @Override
+    public RAbstractVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return new RIntVector(new int[newLength], newIsComplete);
     }
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        NativeDataAccess.setData(this, data, toIndex, ((com.oracle.truffle.r.runtime.data.model.RIntVector) fromVector).getDataAt(fromIndex));
+        RIntVectorDataLibrary lib = RIntVectorDataLibrary.getFactory().getUncached();
+        int value = lib.getIntAt(data, fromIndex);
+        lib.setIntAt(((RIntVector) fromVector).data, toIndex, value);
     }
 
     @Override
@@ -198,36 +206,42 @@ public final class RIntVector extends com.oracle.truffle.r.runtime.data.model.RI
 
     @Override
     public void setElement(int index, Object value) {
-        NativeDataAccess.setData(this, data, index, (int) value);
+        data.setIntAt(index, (Integer) value);
     }
 
     public long allocateNativeContents() {
         try {
-            return NativeDataAccess.allocateNativeContents(this, data, getLength());
+            data = RIntVectorDataLibrary.getFactory().getUncached().materialize(data);
+            long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
+            data = new RIntNativeVectorData(this);
+            return result;
         } finally {
-            data = null;
             complete = false;
         }
     }
 
     private static final class FastPathAccess extends FastPathFromIntAccess {
 
+        @Child RIntVectorDataLibrary dataLib;
+
         FastPathAccess(RAbstractContainer value) {
             super(value);
+            dataLib = RIntVectorDataLibrary.getFactory().create(((RIntVector) value).data);
+        }
+
+        @Override
+        public boolean supports(Object value) {
+            return super.supports(value) && dataLib.accepts(value);
         }
 
         @Override
         public int getIntImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((int[]) accessIter.getStore())[index] : NativeDataAccess.getIntNativeMirrorData((NativeMirror) accessIter.getStore(), index);
+            return dataLib.getIntAt((RIntVectorData) accessIter.getStore(), index);
         }
 
         @Override
         protected void setIntImpl(AccessIterator accessIter, int index, int value) {
-            if (hasStore) {
-                ((int[]) accessIter.getStore())[index] = value;
-            } else {
-                NativeDataAccess.setNativeMirrorIntData((NativeMirror) accessIter.getStore(), index, value);
-            }
+            dataLib.setIntAt((RIntVectorData) accessIter.getStore(), index, value);
         }
     }
 
@@ -240,18 +254,24 @@ public final class RIntVector extends com.oracle.truffle.r.runtime.data.model.RI
         @Override
         public int getIntImpl(AccessIterator accessIter, int index) {
             RIntVector vector = (RIntVector) accessIter.getStore();
-            return NativeDataAccess.getData(vector, vector.data, index);
+            return vector.getDataAt(index);
         }
 
         @Override
         protected void setIntImpl(AccessIterator accessIter, int index, int value) {
             RIntVector vector = (RIntVector) accessIter.getStore();
-            NativeDataAccess.setData(vector, vector.data, index, value);
+            vector.setDataAt(vector.getInternalStore(), index, value);
         }
     };
 
     @Override
     public VectorAccess slowPathAccess() {
         return SLOW_PATH_ACCESS;
+    }
+
+    // TODO: Hack: we make sure the vector is either array or native, so that we can call NativeDataAccess methods
+    private int[] getArrayForNativeDataAccess() {
+        materializeData(RIntVectorDataLibrary.getFactory().getUncached());
+        return data instanceof RIntArrayVectorData ? ((RIntArrayVectorData) data).getReadonlyIntData() : null;
     }
 }

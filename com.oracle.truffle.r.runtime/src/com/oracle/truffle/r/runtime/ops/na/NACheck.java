@@ -121,6 +121,18 @@ public final class NACheck {
         // private constructor
     }
 
+    private static final NACheck ENABLED;
+
+    static {
+        ENABLED = new NACheck();
+        ENABLED.state = CHECK;
+        ENABLED.seenNaN = true;
+    }
+
+    public static NACheck getEnabled() {
+        return ENABLED;
+    }
+
     public static NACheck create() {
         return new NACheck();
     }

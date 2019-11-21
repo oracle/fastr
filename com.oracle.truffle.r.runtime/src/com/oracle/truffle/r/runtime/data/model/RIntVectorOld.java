@@ -31,19 +31,14 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import java.util.Arrays;
 
-public abstract class RIntVector extends RAbstractNumericVector {
+public abstract class RIntVectorOld {
 
-    public RIntVector(boolean complete) {
-        super(complete);
-    }
-
-    @Override
+    ////@Override
     protected boolean isScalarNA() {
-        assert getLength() == 1;
         return RRuntime.isNA(getDataAt(0));
     }
 
-    @Override
+    //@Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
@@ -59,30 +54,33 @@ public abstract class RIntVector extends RAbstractNumericVector {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public com.oracle.truffle.r.runtime.data.RIntVector materialize() {
-        com.oracle.truffle.r.runtime.data.RIntVector result = RDataFactory.createIntVector(getDataCopy(), isComplete());
+    //@Override
+    public RIntVectorOld materialize() {
+        com.oracle.truffle.r.runtime.data.RIntVector result = RDataFactory.createIntVector(getDataCopy(), /*isComplete()*/true);
         copyAttributes(result);
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
+        //MemoryCopyTracer.reportCopying(this, result);
+        //return result;
+        return null;
     }
 
     @TruffleBoundary
     protected void copyAttributes(com.oracle.truffle.r.runtime.data.RIntVector materialized) {
-        materialized.copyAttributesFrom(this);
+        // materialized.copyAttributesFrom(this);
     }
 
-    @Override
-    protected com.oracle.truffle.r.runtime.data.RIntVector internalCopy() {
-        return RDataFactory.createIntVector(getDataCopy(), isComplete());
+    //@Override
+    protected RIntVectorOld internalCopy() {
+        //return RDataFactory.createIntVector(getDataCopy(), isComplete());
+        return null;
     }
 
-    @Override
-    protected com.oracle.truffle.r.runtime.data.RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+    //@Override
+    protected RIntVectorOld internalCopyResized(int size, boolean fillNA, int[] dimensions) {
         int[] localData = getReadonlyData();
         int[] newData = Arrays.copyOf(localData, size);
         newData = resizeData(newData, localData, localData.length, fillNA);
-        return RDataFactory.createIntVector(newData, isResizedComplete(size, fillNA), dimensions);
+        // return RDataFactory.createIntVector(newData, isResizedComplete(size, fillNA), dimensions);
+        return null;
     }
 
     protected static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
@@ -101,24 +99,25 @@ public abstract class RIntVector extends RAbstractNumericVector {
         return newData;
     }
 
-    @Override
+    //@Override
     public final RType getRType() {
         return RType.Integer;
     }
 
-    @Override
+    //@Override
     public int[] getDataTemp() {
-        return (int[]) super.getDataTemp();
+        // return (int[]) super.getDataTemp();
+        return null;
     }
 
-    @Override
+    //@Override
     public int[] getReadonlyData() {
         return getDataCopy();
     }
 
-    @Override
+    //@Override
     public int[] getDataCopy() {
-        int length = getLength();
+        int length = 42; // getLength();
         int[] result = new int[length];
         for (int i = 0; i < length; i++) {
             result[i] = getDataAt(i);
@@ -126,14 +125,15 @@ public abstract class RIntVector extends RAbstractNumericVector {
         return result;
     }
 
-    @Override
+    //@Override
     public Object getInternalManagedData() {
         return null;
     }
 
-    @Override
-    public com.oracle.truffle.r.runtime.data.RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
-        return RDataFactory.createIntVector(new int[newLength], newIsComplete);
+    //@Override
+    public RIntVectorOld createEmptySameType(int newLength, boolean newIsComplete) {
+        // return RDataFactory.createIntVector(new int[newLength], newIsComplete);
+        return null;
     }
 
 }
