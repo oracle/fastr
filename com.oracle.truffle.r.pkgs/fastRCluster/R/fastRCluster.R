@@ -51,7 +51,7 @@
 #' the installation directory of GraalVM.
 #'
 #' You can use \code{fastRClusterInstallPackages} to install packages on the FastR engine.
-#' 
+#'
 #' FastR leverages dynamic just-in-time compilation. R functions are first interpreted
 #' and then compiled. The first few executions are much slower. To re-use
 #' the compiled code as much as possible, it is a good idea to first transfer all the
@@ -81,7 +81,7 @@
 #' parallel::clusterApply(fastrNode, 'dummy', function(...) R.version)
 #'
 #' }
-#' 
+#'
 #' \dontrun{
 #'
 #' # install required packages on FastR
@@ -163,7 +163,7 @@ mockServices <- function(newPsockClusterFactory = parallel::makePSOCKcluster,
 #'
 #' Gives the path to the default location of GraalVM installation that includes FastR.
 #' The default location is inside the directory where the fastRCluster was installed.
-#' 
+#'
 #' \code{\link{getGraalVMHome}} uses this value as the default,
 #' if no other value is explicitly configured via R options or an environment variable.
 #'
@@ -186,7 +186,7 @@ defaultGraalVMHome <- function() {
 #'     \item environment variable \code{GRAALVM_HOME}
 #'     \item \code{\link{defaultGraalVMHome}()}
 #' }
-#' 
+#'
 #' @return The currently configured path to GraalVM installation.
 #' @seealso \code{\link{defaultGraalVMHome}}
 #' @export
@@ -268,7 +268,7 @@ fastRClusterInstallPackages <- function(...) {
 #' which provides superb performance for computation intensive and long
 #' running jobs but takes bit more time to warm-up.
 #'
-#' @param nnodes Number of nodes to be created.
+#' @param names A positive integer giving the number of workers to be created locally, or a list of host names to execute workers on.
 #' @param graalVMHome Path to the installation directory of GraalVM and FastR. Default value is obtained from \code{getGraalVMHome()}.
 #' @param mode The mode in which to run FastR. See the FastR documentation for the details on the difference between jvm and native modes.
 #' @param polyglot Run FastR in a polyglot mode: other installed GraalVM languages will be available via \code{eval.polyglot}. Allowed only for mode 'jvm' (the default).
@@ -284,30 +284,33 @@ fastRClusterInstallPackages <- function(...) {
 #' fastr(fastrNode, R.version)
 #' parallel::stopCluster(fastrNode)
 #' }
-makeFastRCluster <- function (nnodes = 1L, graalVMHome = getGraalVMHome(), mode = c('jvm', 'native'), polyglot = FALSE, fastROptions = NULL, ...) {
-    nnodes <- as.integer(nnodes)
-    if(is.na(nnodes) || nnodes < 1L) {
-        stop("'nnodes' must be >= 1")
-    }
+makeFastRCluster <- function (names = 1L, graalVMHome = getGraalVMHome(), mode = c('jvm', 'native'), polyglot = FALSE, fastROptions = NULL, ...) {
+    if (is.numeric(names)) {
+        names <- as.integer(names[1L])
+        if (is.na(names) || names < 1L)
+            stop("numeric 'names' must be >= 1")
+        names <- rep("localhost", names)
 
-    if (services$validateGraalVMInstallation && !dir.exists(graalVMHome)) {
-        if (graalVMHome == defaultGraalVMHome()) {
-            stop(sprintf(paste0("It seems that FastR was not installed yet. ",
-                "Use installFastR() to install GraalVM and FastR to the default location '%s', ",
-                "or set argument 'graalVMHome' to a directory that contains GraalVM and FastR installation. ",
-                "See ?getGraalVMHome for more details."), defaultGraalVMHome()))
-        } else {
-            stop(sprintf(paste0("The GraalVM directory '%s' does not exist. ",
-                "Use installFastR('%s') to install GraalVM and FastR to that directory."),
-                graalVMHome, graalVMHome))
+        if (services$validateGraalVMInstallation && !dir.exists(graalVMHome)) {
+            if (graalVMHome == defaultGraalVMHome()) {
+                stop(sprintf(paste0("It seems that FastR was not installed yet. ",
+                    "Use installFastR() to install GraalVM and FastR to the default location '%s', ",
+                    "or set argument 'graalVMHome' to a directory that contains GraalVM and FastR installation. ",
+                    "See ?getGraalVMHome for more details."), defaultGraalVMHome()))
+            } else {
+                stop(sprintf(paste0("The GraalVM directory '%s' does not exist. ",
+                    "Use installFastR('%s') to install GraalVM and FastR to that directory."),
+                    graalVMHome, graalVMHome))
+            }
+        }
+        if (services$validateGraalVMInstallation && !file.exists(file.path(graalVMHome, 'bin', 'gu'))) {
+            stop(sprintf("The GraalVM directory '%s' appears to be corrupt. You can remove it and use installFastR('%s') to re-install GraalVM and FastR.", graalVMHome, graalVMHome))
+        }
+        if (services$validateGraalVMInstallation && !file.exists(file.path(graalVMHome, 'bin', 'Rscript'))) {
+            stop(sprintf("The GraalVM installation '%s' does not contain FastR. Use installFastR('%s') to install FastR.", graalVMHome, graalVMHome))
         }
     }
-    if (services$validateGraalVMInstallation && !file.exists(file.path(graalVMHome, 'bin', 'gu'))) {
-        stop(sprintf("The GraalVM directory '%s' appears to be corrupt. You can remove it and use installFastR('%s') to re-install GraalVM and FastR.", graalVMHome, graalVMHome))
-    }
-    if (services$validateGraalVMInstallation && !file.exists(file.path(graalVMHome, 'bin', 'Rscript'))) {
-        stop(sprintf("The GraalVM installation '%s' does not contain FastR. Use installFastR('%s') to install FastR.", graalVMHome, graalVMHome))
-    }
+
     if (any(c('--jvm', '--native') %in% fastROptions)) {
        warning("Ignoring --jvm/--native in 'fastROptions' argument. Use the 'mode' argument instead.")
     }
@@ -328,8 +331,8 @@ makeFastRCluster <- function (nnodes = 1L, graalVMHome = getGraalVMHome(), mode 
     options <- switch(mode,
         jvm = c('--jvm', options),
         native = c('--native', options))
-    
-    result <- services$psockClusterFactory(nnodes, rscript=file.path(graalVMHome, 'bin', 'Rscript'), rscript_args = options, ...)
+
+    result <- services$psockClusterFactory(names, rscript=file.path(graalVMHome, 'bin', 'Rscript'), rscript_args = options, ...)
     class(result) <- c("fastRCluster", class(result))
     result
 }
