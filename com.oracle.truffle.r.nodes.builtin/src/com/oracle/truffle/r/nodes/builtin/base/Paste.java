@@ -288,15 +288,17 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         while (i < length && isScalar(values.getDataAt(i))) {
             i++;
         }
-        Object currVal = values.getDataAt(i);
-        if (i < length && currVal instanceof RIntVector && ((RIntVector) currVal).isSequence()) {
-            // consume suffix
-            int j = i + 1;
-            while (j < length && isScalar(values.getDataAt(j))) {
-                j++;
-            }
-            if (j == length) {
-                return i;
+        if (i < length) {
+            Object currVal = values.getDataAt(i);
+            if (currVal instanceof RIntVector && ((RIntVector) currVal).isSequence()) {
+                // consume suffix
+                int j = i + 1;
+                while (j < length && isScalar(values.getDataAt(j))) {
+                    j++;
+                }
+                if (j == length) {
+                    return i;
+                }
             }
         }
         return -1;

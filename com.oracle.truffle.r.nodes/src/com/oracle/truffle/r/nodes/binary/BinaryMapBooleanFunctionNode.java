@@ -42,11 +42,6 @@ public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode 
     }
 
     @Override
-    public boolean mayFoldConstantTime(Class<? extends RAbstractVector> left, Class<? extends RAbstractVector> right) {
-        return false;
-    }
-
-    @Override
     public RAbstractVector tryFoldConstantTime(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
         return null;
     }

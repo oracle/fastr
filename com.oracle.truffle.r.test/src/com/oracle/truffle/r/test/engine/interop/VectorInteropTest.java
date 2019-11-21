@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
@@ -130,8 +129,8 @@ public class VectorInteropTest extends AbstractInteropTest {
         // int
         testRNARTOTIN(RDataFactory.createIntVector(new int[]{42, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), 42);
         testRNARTOTIN(RClosures.createToIntVector(RDataFactory.createDoubleVector(new double[]{42, RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR), true), 42);
-        testRNARTOTIN(new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{42, RRuntime.INT_NA})), 42);
-        testRNARTOTIN(new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new Integer[]{42, null})), 42);
+        testRNARTOTIN(RIntVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new int[]{42, RRuntime.INT_NA})), 42);
+        testRNARTOTIN(RIntVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new Integer[]{42, null})), 42);
         getInterop().isNull(RDataFactory.createIntVector(new int[]{RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR));
 
         // double
@@ -208,12 +207,12 @@ public class VectorInteropTest extends AbstractInteropTest {
                         RClosures.createToIntVector(RDataFactory.createDoubleVector(new double[]{1, RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR), true),
                         RClosures.createToIntVector(RDataFactory.createEmptyDoubleVector(), true),
                         // int foreign wrapper
-                        new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{1})),
-                        new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{1, 2, 3})),
-                        new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE})),
-                        new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{RRuntime.INT_NA})),
-                        new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{1, RRuntime.INT_NA})),
-                        new RForeignIntWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{})),
+                        RIntVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new int[]{1})),
+                        RIntVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new int[]{1, 2, 3})),
+                        RIntVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new int[]{Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE})),
+                        RIntVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new int[]{RRuntime.INT_NA})),
+                        RIntVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new int[]{1, RRuntime.INT_NA})),
+                        RIntVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new int[]{})),
 
                         // double array
                         RDataFactory.createDoubleVector(new double[]{1}, true),

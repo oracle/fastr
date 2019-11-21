@@ -35,9 +35,9 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -245,8 +245,9 @@ public abstract class CastComplexNode extends CastBaseNode {
         return RClosures.createToComplexVector(operand, true);
     }
 
-    @Specialization
-    protected RAbstractComplexVector doForeignWrapper(RForeignIntWrapper operand) {
+    @Specialization(guards = "operand.isForeignWrapper()")
+    protected RAbstractComplexVector doForeignWrapper(RIntVector operand) {
+        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other specialization
         return RClosures.createToComplexVector(operand, true);
     }
 

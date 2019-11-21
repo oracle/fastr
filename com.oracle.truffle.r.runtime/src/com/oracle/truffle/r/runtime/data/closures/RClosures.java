@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 public class RClosures {
 
     public static RIntVector createToIntVector(RAbstractVector vector, boolean keepAttributes) {
-        return new RToIntVectorClosure(vector, keepAttributes);
+        return RIntVector.createClosure(vector, keepAttributes);
     }
 
     public static RAbstractDoubleVector createToDoubleVector(RAbstractVector vector, boolean keepAttributes) {
@@ -97,7 +97,7 @@ public class RClosures {
      * contract of closures is that there attributes are preserved even when
      * {@code keepAttributes == true}.
      */
-    static void initRegAttributes(RAbstractVector closure, RAbstractVector delegate) {
+    public static void initRegAttributes(RAbstractVector closure, RAbstractVector delegate) {
         closure.setNames(delegate.getNames());
         closure.setDimensions(delegate.getDimensions());
         closure.setDimNames(delegate.getDimNames());

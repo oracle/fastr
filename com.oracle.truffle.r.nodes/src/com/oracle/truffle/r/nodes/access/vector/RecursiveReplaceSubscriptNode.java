@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -120,6 +120,6 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
     }
 
     private Object getPositionValue(Object firstPosition, int i) {
-        return getPositionExtract.apply(firstPosition, new Object[]{RInteger.valueOf(i + 1)}, RLogical.TRUE, RLogical.TRUE);
+        return getPositionExtract.apply(firstPosition, new Object[]{RDataFactory.createIntVectorFromScalar(i + 1)}, RLogical.TRUE, RLogical.TRUE);
     }
 }

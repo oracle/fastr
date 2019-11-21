@@ -48,7 +48,6 @@ import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -84,28 +83,28 @@ public class ReplaceVectorNodeTest extends TestBase {
             // replace rectangle with rectangle indices
             vector = generateInteger(20, true);
             vector.setDimensions(new int[]{5, 4});
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1),
                             RDataFactory.createIntVector(new int[]{2, 3, 4}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
             assertIndicies(vector, 0, 1, 2, 3, 4, 5, -1, -1, -1, 9, 10, -1, -1, -1, 14, 15, 16, 17, 18, 19);
 
             // replace box with box indices
             vector = generateInteger(9, true);
             vector.setDimensions(new int[]{3, 3});
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1),
                             RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
             assertIndicies(vector, 0, 1, 2, 3, -1, -1, 6, -1, -1);
 
             // replace three dimensions
             vector = generateInteger(24, true);
             vector.setDimensions(new int[]{2, 3, 4});
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1),
                             RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true));
             assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23);
 
             // replace three dimensions
             vector = generateInteger(24, true);
             vector.setDimensions(new int[]{2, 3, 4});
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1),
                             RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3, 4}, true));
             assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, 10, -1, 12, 13, 14, -1, 16, -1, 18, 19, 20, -1, 22, -1);
             return null;
@@ -128,28 +127,28 @@ public class ReplaceVectorNodeTest extends TestBase {
 
             // replace scalar with sequence stride=1
             vector = generateInteger(9, true);
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntSequence(5, 1, 3)});
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1), new Object[]{RDataFactory.createIntSequence(5, 1, 3)});
             assertIndicies(vector, 0, 1, 2, 3, -1, -1, -1, 7, 8);
 
             // replace scalar with sequence stride>1
             vector = generateInteger(9, true);
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntSequence(5, 2, 2)});
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1), new Object[]{RDataFactory.createIntSequence(5, 2, 2)});
             assertIndicies(vector, 0, 1, 2, 3, -1, 5, -1, 7, 8);
 
             // replace scalar with negative integer vector
             vector = generateInteger(4, true);
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntVector(new int[]{-2}, true)});
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1), new Object[]{RDataFactory.createIntVector(new int[]{-2}, true)});
             assertIndicies(vector, -1, 1, -1, -1);
 
             // replace scalar with logical scalar
             vector = generateInteger(3, true);
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1),
                             new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE}, true)});
             assertIndicies(vector, -1, -1, -1);
 
             // replace scalar with logical vector
             vector = generateInteger(4, true);
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1),
                             new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
             assertIndicies(vector, -1, 1, -1, 3);
 
@@ -161,12 +160,12 @@ public class ReplaceVectorNodeTest extends TestBase {
 
             // replace scalar with integer vector
             vector = generateInteger(9, true);
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntVector(new int[]{9, 8}, true)});
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1), new Object[]{RDataFactory.createIntVector(new int[]{9, 8}, true)});
             assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, -1, -1);
 
             // replace scalar with integer scalar
             vector = generateInteger(9, true);
-            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntVector(new int[]{9}, true)});
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(-1), new Object[]{RDataFactory.createIntVector(new int[]{9}, true)});
             assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, -1);
             return null;
         });
@@ -202,7 +201,7 @@ public class ReplaceVectorNodeTest extends TestBase {
             RAbstractVector replaceWith = generateVector(targetType, 1, true);
 
             assumeThat(vector.isComplete(), is(false));
-            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RInteger.valueOf(1));
+            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RDataFactory.createIntVectorFromScalar(1));
             assertThat(result.isComplete(), is(false));
             return null;
         });
@@ -243,7 +242,7 @@ public class ReplaceVectorNodeTest extends TestBase {
             RAbstractVector vector = generateVector(targetType, 4, true);
             RAbstractVector replaceWith = generateVector(targetType, 1, true);
 
-            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RInteger.valueOf(10));
+            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RDataFactory.createIntVectorFromScalar(10));
 
             assertThat(result.isComplete(), is(false));
             return null;

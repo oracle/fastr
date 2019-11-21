@@ -88,7 +88,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
@@ -1049,7 +1048,7 @@ public class FastRInterop {
             // it is up to the caler to ensure that the truffel object is a char array
             assert isCharArray(ctxRef.get().getEnv().asHostObject(obj)) : ctxRef.get().getEnv().asHostObject(obj).getClass().getName();
             // we also do not care about dims, which have to be evaluated and set by other means
-            return new RForeignIntWrapper(obj);
+            return RIntVector.createForeignWrapper(obj);
         }
 
         @Fallback

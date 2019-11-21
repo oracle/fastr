@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -69,11 +70,32 @@ public final class RIntVector extends RAbstractIntVector {
         return new RIntVector(new RIntSeqVectorData(start, stride, length));
     }
 
+    public static RIntVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
+        RIntVector result = new RIntVector(new RIntVecClosureData(delegate));
+        if (keepAttrs) {
+            result.initAttributes(result.getAttributes());
+        } else {
+            RClosures.initRegAttributes(result, delegate);
+        }
+        return result;
+    }
+
+    public static RIntVector createForeignWrapper(Object foreign) {
+        return new RIntVector(new RIntForeignObjData(foreign));
+    }
+
+    @Override
+    public boolean isShareable() {
+        // TODO: initially we retain even the behavior of "isShareable" forcing materialization where it may not be necessary
+        // Only Java array and native memory backed vectors "look like" shareable
+        return RIntVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
+    }
+
     public RIntVectorData getData() {
         return data;
     }
 
-    // To be removed
+     // TODO: method that break encapsulation of data
 
     @Override
     public boolean isSequence() {
@@ -85,7 +107,21 @@ public final class RIntVector extends RAbstractIntVector {
         return (RIntSeqVectorData) data;
     }
 
-    // End: to be removed
+    @Override
+    public boolean isClosure() {
+        return data instanceof RIntVecClosureData;
+    }
+
+    @Override
+    public RClosure getClosure() {
+        return (RIntVecClosureData) data;
+    }
+
+    public boolean isForeignWrapper() {
+        return data instanceof RIntForeignObjData;
+    }
+
+    // ---------------------
 
     @Override
     protected boolean isScalarNA() {
@@ -120,15 +156,18 @@ public final class RIntVector extends RAbstractIntVector {
         return data;
     }
 
+    @Override
     public int getDataAt(int index) {
         return data.getIntAt(index);
     }
 
+    @Override
     public int getDataAt(Object store, int index) {
         assert data == store;
         return ((RIntVectorData) store).getIntAt(index);
     }
 
+    @Override
     public void setDataAt(Object store, int index, int value) {
         assert data == store;
         ((RIntVectorData) store).setIntAt(index, value);

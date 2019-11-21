@@ -47,7 +47,6 @@ import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -191,7 +190,7 @@ public class ExtractVectorNodeTest extends TestBase {
 
             RStringVector names = (RStringVector) generateVector(RType.Character, 4, true);
             vector.setNames(names);
-            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(2));
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(2));
 
             RStringVector newNames = result.getNames();
             assertThat(newNames.getLength(), is(1));
@@ -205,7 +204,7 @@ public class ExtractVectorNodeTest extends TestBase {
         execInContext(() -> {
             RAbstractVector vector = generateVector(targetType, 4, true);
 
-            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(5));
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(5));
 
             assertThat(vector.getRType(), is(result.getRType()));
             assertThat(result.getLength(), is(1));
@@ -222,7 +221,7 @@ public class ExtractVectorNodeTest extends TestBase {
 
             assumeTrue(targetType != RType.Raw);
 
-            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(10));
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(10));
 
             assertThat(result.isComplete(), is(false));
             return null;
@@ -236,7 +235,7 @@ public class ExtractVectorNodeTest extends TestBase {
 
             assumeTrue(targetType != RType.List);
             assumeThat(vector.isComplete(), is(false));
-            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(1));
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVectorFromScalar(1));
 
             // TODO failing - how comes?
             assertThat(result.isComplete(), is(true));

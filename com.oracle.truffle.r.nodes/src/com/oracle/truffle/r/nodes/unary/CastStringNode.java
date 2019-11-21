@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -172,8 +171,9 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return RClosures.createToStringVector(operand, true);
     }
 
-    @Specialization
-    protected RAbstractStringVector doForeignWrapper(RForeignIntWrapper operand) {
+    @Specialization(guards = "operand.isForeignWrapper()")
+    protected RAbstractStringVector doForeignWrapper(RIntVector operand) {
+        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other specialization
         return RClosures.createToStringVector(operand, true);
     }
 

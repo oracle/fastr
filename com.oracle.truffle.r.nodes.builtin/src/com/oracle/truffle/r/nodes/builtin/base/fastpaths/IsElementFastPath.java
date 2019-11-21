@@ -85,11 +85,11 @@ public abstract class IsElementFastPath extends RFastPathNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = {"set.isSequence()", "el.getLength() == 1", "set.getStride() >= 0"})
+    @Specialization(guards = {"set.isSequence()", "el.getLength() == 1", "set.getSequence().getStride() >= 0"})
     protected Byte isElementOneSequence(RAbstractDoubleVector el, RIntVector set,
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
         double element = el.getDataAt(0);
-        RIntSeqVectorData seq = (RIntSeqVectorData) set.getData();
+        RIntSeqVectorData seq = set.getSequence();
         return RRuntime.asLogical(profile.profile(element >= seq.getStart() && element <= seq.getEnd()));
     }
 

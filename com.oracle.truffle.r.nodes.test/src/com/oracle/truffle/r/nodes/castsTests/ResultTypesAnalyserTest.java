@@ -58,6 +58,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVectorData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -78,7 +79,6 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -168,7 +168,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testBoxPrimitive() {
         arg.boxPrimitive();
-        TypeExpr expected = TypeExpr.union(RInteger.class, RLogical.class, RDouble.class, RString.class);
+        TypeExpr expected = TypeExpr.union(RIntVector.class, RLogical.class, RDouble.class, RString.class);
         expected = expected.or((expected.not().and(atom(String.class).not()).and(atom(Double.class).not()).and(atom(Integer.class).not()).and(atom(Byte.class).not())));
         assertTypes(expected);
     }

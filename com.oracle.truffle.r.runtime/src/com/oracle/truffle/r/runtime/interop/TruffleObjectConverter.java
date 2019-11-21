@@ -35,9 +35,9 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -70,7 +70,7 @@ public final class TruffleObjectConverter {
                     case Logical:
                         return new RForeignBooleanWrapper(obj);
                     case Integer:
-                        return new RForeignIntWrapper(obj);
+                        return RIntVector.createForeignWrapper(obj);
                     case Double:
                         return new RForeignDoubleWrapper(obj);
                     case Character:

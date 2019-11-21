@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromRawAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromRawAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.sun.org.apache.bcel.internal.generic.ARETURN;
 
 @ValueType
 public final class RRaw extends RAbstractRawVector implements RScalarVector {
@@ -76,7 +77,7 @@ public final class RRaw extends RAbstractRawVector implements RScalarVector {
             case Raw:
                 return this;
             case Integer:
-                return RInteger.valueOf(value);
+                return RDataFactory.createIntVectorFromScalar(value);
             case Double:
                 return RDouble.valueOf(value);
             case Complex:

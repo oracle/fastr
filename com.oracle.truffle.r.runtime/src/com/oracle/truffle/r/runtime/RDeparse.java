@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
+import com.oracle.truffle.r.runtime.data.RIntVecClosureData;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -60,7 +61,6 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RToComplexVectorClosure;
 import com.oracle.truffle.r.runtime.data.closures.RToDoubleVectorClosure;
-import com.oracle.truffle.r.runtime.data.closures.RToIntVectorClosure;
 import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -1011,8 +1011,8 @@ public class RDeparse {
                 if (sequence != null) {
                     append(RRuntime.intToStringNoCheck(sequence.getStart())).append(':').append(RRuntime.intToStringNoCheck(sequence.getEnd()));
                 } else {
-                    if (vec instanceof RClosure) {
-                        append(closureToCoercionFunction((RClosure) vec));
+                    if (vec.isClosure()) {
+                        append(closureToCoercionFunction(vec.getClosure()));
                     }
                     // TODO COMPAT?
                     append("c(");
@@ -1056,7 +1056,7 @@ public class RDeparse {
                 return "as.complex(";
             } else if (vec instanceof RToDoubleVectorClosure) {
                 return "as.double(";
-            } else if (vec instanceof RToIntVectorClosure) {
+            } else if (vec instanceof RIntVecClosureData) {
                 return "as.integer(";
             } else if (vec instanceof RToStringVectorClosure) {
                 return "as.character(";
@@ -1065,7 +1065,7 @@ public class RDeparse {
         }
 
         private static RIntSeqVectorData asIntSequence(RAbstractVector vec) {
-            if (!(vec instanceof RIntVector) || vec instanceof RToIntVectorClosure) {
+            if (!(vec instanceof RIntVector) || vec.isClosure()) {
                 return null;
             }
             RIntVector intVec = (RIntVector) vec;

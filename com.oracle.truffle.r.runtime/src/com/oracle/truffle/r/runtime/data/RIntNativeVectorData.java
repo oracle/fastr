@@ -23,11 +23,13 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+@ExportLibrary(RIntVectorDataLibrary.class)
 public class RIntNativeVectorData extends RIntVectorData {
     // We need the vector, so that we can easily use the existing NativeDataAccess methods
     // TODO: this field should be replaced with address/length fields and
@@ -40,6 +42,7 @@ public class RIntNativeVectorData extends RIntVectorData {
     }
 
     @ExportMessage
+    @Override
     public int getLength() {
         return NativeDataAccess.getDataLength(vec, null);
     }
@@ -65,7 +68,8 @@ public class RIntNativeVectorData extends RIntVectorData {
         return copy(deep).copyResized(newSize, deep, fillNA);
     }
 
-    @ExportMessage
+    // TODO: this will be message exported by the generic VectorDataLibrary
+    // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                                 @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
         dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
@@ -89,32 +93,34 @@ public class RIntNativeVectorData extends RIntVectorData {
     }
 
     @ExportMessage
+    @Override
     public int getIntAt(int index) {
         return NativeDataAccess.getData(vec, null, index);
     }
 
     @ExportMessage
-    public int getIntAt(SeqIterator it) {
+    public int getNext(SeqIterator it) {
         return NativeDataAccess.getData(vec, null, it.getIndex());
     }
 
     @ExportMessage
-    public int getIntAt(RandomAccessIterator it, int index) {
+    public int getAt(RandomAccessIterator it, int index) {
         return NativeDataAccess.getData(vec, null, index);
     }
 
+    @Override
     @ExportMessage
     public void setIntAt(int index, int value, @SuppressWarnings("unused") NACheck naCheck) {
         NativeDataAccess.setData(vec, null, index, value);
     }
 
     @ExportMessage
-    public void setIntAt(SeqIterator it, int value, @SuppressWarnings("unused") NACheck naCheck) {
+    public void setNext(SeqIterator it, int value, @SuppressWarnings("unused") NACheck naCheck) {
         NativeDataAccess.setData(vec, null, it.getIndex(), value);
     }
 
     @ExportMessage
-    public void setIntAt(@SuppressWarnings("unused") RandomAccessIterator it, int index, int value, @SuppressWarnings("unused") NACheck naCheck) {
+    public void setAt(@SuppressWarnings("unused") RandomAccessIterator it, int index, int value, @SuppressWarnings("unused") NACheck naCheck) {
         NativeDataAccess.setData(vec, null, index, value);
     }
 }

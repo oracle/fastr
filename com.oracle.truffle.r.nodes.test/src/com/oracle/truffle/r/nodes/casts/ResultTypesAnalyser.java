@@ -83,7 +83,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RIntVectorData;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -246,7 +246,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
         // cancel potential primitive types in the input
         TypeExpr noPrimInput = inputType.and(noPrimType);
         // the positive output type union
-        TypeExpr res = TypeExpr.union(RInteger.class, RLogical.class, RDouble.class, RString.class);
+        TypeExpr res = TypeExpr.union(RIntVector.class, RLogical.class, RDouble.class, RString.class);
         // intersect the to stop propagating the primitive types, such as String
         res = res.and(noPrimInput);
         // the output of the boxing is actually the union of the positive union with its negation

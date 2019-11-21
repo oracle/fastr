@@ -24,9 +24,15 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+import static com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.notWriteableError;
+
 public abstract class RIntVectorData extends RVectorData {
     public abstract int getIntAt(int index);
-    public abstract void setIntAt(int index, int value, NACheck naCheck);
+
+    public void setIntAt(int index, int value, NACheck naCheck) {
+        throw notWriteableError(this.getClass(), "setIntAt");
+    }
+
     public void setIntAt(int index, int value) {
         setIntAt(index, value, NACheck.getEnabled());
     }

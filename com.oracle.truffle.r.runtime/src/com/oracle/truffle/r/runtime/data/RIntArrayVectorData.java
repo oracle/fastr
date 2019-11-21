@@ -30,7 +30,6 @@ import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Arrays;
 
@@ -43,6 +42,7 @@ class RIntArrayVectorData extends RIntVectorData {
         this.data = data;
     }
 
+    @Override
     @ExportMessage
     public int getLength() {
         return data.length;
@@ -72,7 +72,8 @@ class RIntArrayVectorData extends RIntVectorData {
         return new RIntArrayVectorData(newData, complete);
     }
 
-    @ExportMessage
+    // TODO: this will be message exported by the generic VectorDataLibrary
+    // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                                 @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
         dataLib.setIntAt((RIntVectorData) destination, index, data[index]);
@@ -89,7 +90,7 @@ class RIntArrayVectorData extends RIntVectorData {
     }
 
     @ExportMessage
-    public int[] getIntDataCopy(RIntVectorData receiver) {
+    public int[] getIntDataCopy() {
         return Arrays.copyOf(data, data.length);
     }
 
@@ -103,21 +104,23 @@ class RIntArrayVectorData extends RIntVectorData {
         return new RandomAccessIterator(data, data.length);
     }
 
+    @Override
     @ExportMessage
     public int getIntAt(int index) {
         return data[index];
     }
 
     @ExportMessage
-    public int getIntAt(SeqIterator it) {
+    public int getNext(SeqIterator it) {
         return getStore(it)[it.getIndex()];
     }
 
     @ExportMessage
-    public int getIntAt(RandomAccessIterator it, int index) {
+    public int getAt(RandomAccessIterator it, int index) {
         return getStore(it)[index];
     }
 
+    @Override
     @ExportMessage
     public void setIntAt(int index, int value, NACheck naCheck) {
         updateComplete(value, naCheck);
@@ -125,13 +128,13 @@ class RIntArrayVectorData extends RIntVectorData {
     }
 
     @ExportMessage
-    public void setIntAt(SeqIterator it, int value, NACheck naCheck) {
+    public void setNext(SeqIterator it, int value, NACheck naCheck) {
         updateComplete(value, naCheck);
         getStore(it)[it.getIndex()] = value;
     }
 
     @ExportMessage
-    public void setIntAt(RandomAccessIterator it, int index, int value, NACheck naCheck) {
+    public void setAt(RandomAccessIterator it, int index, int value, NACheck naCheck) {
         updateComplete(value, naCheck);
         getStore(it)[index] = value;
     }

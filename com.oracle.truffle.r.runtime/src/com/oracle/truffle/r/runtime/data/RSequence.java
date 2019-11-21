@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVect
 
 /**
  * An {@link RSequence} only records the "length", "start" and "stride" (the latter two fields in
- * the subclasses {@link RIntSequence} and {@link RDoubleSequence}. The "stride" value is positive
+ * the subclasses {@link RDoubleSequence}. The "stride" value is positive
  * to indicate an ascending sequence and negative for a descending sequence. I.e., the "end" is
  * computed and not stored.
  */
@@ -38,10 +38,6 @@ public interface RSequence extends RSeq {
      * be shared permanent vector.
      */
     RMaterializedVector cachedMaterialize();
-
-    Object getStartObject();
-
-    Object getStrideObject();
 
     RAbstractVector materialize();
 

@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFFIAccess;
+import com.oracle.truffle.r.runtime.data.RIntVecClosureData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -52,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -81,6 +83,14 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     public RSeq getSequence() { return (RSeq) this; }
+
+    public boolean isClosure() {
+        return this instanceof RClosure;
+    }
+
+    public RClosure getClosure() {
+        return (RClosure) this;
+    }
 
     @SuppressWarnings("static-method")
     @ExportMessage

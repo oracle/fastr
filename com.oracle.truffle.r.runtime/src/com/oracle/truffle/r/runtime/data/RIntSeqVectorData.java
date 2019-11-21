@@ -61,6 +61,7 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
+    @Override
     public int getLength() {
         return length;
     }
@@ -76,12 +77,12 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
-    public Object copy(@SuppressWarnings("unused") boolean deep) {
+    public RIntSeqVectorData copy(@SuppressWarnings("unused") boolean deep) {
         return new RIntSeqVectorData(start, stride, length);
     }
 
     @ExportMessage
-    public Object copyResized(int newSize, boolean deep, boolean fillNA) {
+    public RIntArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
         int[] newData = getDataAsArray(newSize);
         if (fillNA) {
             Arrays.fill(newData, length, newData.length, RRuntime.INT_NA);
@@ -89,7 +90,8 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
         return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    @ExportMessage
+    // TODO: this will be message exported by the generic VectorDataLibrary
+    // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                                 @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
         dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
@@ -121,36 +123,22 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
+    @Override
     public int getIntAt(int index) {
         assert index < length;
         return start + stride * index;
     }
 
     @ExportMessage
-    public int getIntAt(SeqIterator it) {
+    public int getNext(SeqIterator it) {
         IteratorData data = getStore(it);
         return data.start + data.stride * it.getIndex();
     }
 
     @ExportMessage
-    public int getIntAt(RandomAccessIterator it, int index) {
+    public int getAt(RandomAccessIterator it, int index) {
         IteratorData data = getStore(it);
         return data.start + data.stride * index;
-    }
-
-    @ExportMessage
-    public void setIntAt(int index, int value, NACheck naCheck) {
-        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
-    }
-
-    @ExportMessage
-    public void setIntAt(SeqIterator it, int value, NACheck naCheck) {
-        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
-    }
-
-    @ExportMessage
-    public void setIntAt(RandomAccessIterator it, int index, int value, NACheck naCheck) {
-        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
     }
 
     private static IteratorData getStore(Iterator it) {

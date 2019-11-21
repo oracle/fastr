@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -257,52 +256,6 @@ public class RRuntime {
 
     public static boolean isNull(Object obj) {
         return obj == RNull.instance;
-    }
-
-    @TruffleBoundary
-    // TODO refactor this into RType so it is complete and more efficient
-    public static String classToString(Class<?> c) {
-        if (c == RLogical.class) {
-            return RType.Logical.getClazz();
-        } else if (c == RInteger.class) {
-            return RType.Integer.getClazz();
-        } else if (c == RDouble.class) {
-            return RType.Double.getClazz();
-        } else if (c == RComplex.class) {
-            return RType.Complex.getClazz();
-        } else if (c == RRaw.class) {
-            return RType.Raw.getClazz();
-        } else if (c == RString.class) {
-            return RType.Character.getClazz();
-        } else if (c == RFunction.class) {
-            return RType.Function.getClazz();
-        } else if (c == Object.class) {
-            return RType.Any.getClazz();
-        } else {
-            throw new RuntimeException("internal error, unknown class: " + c);
-        }
-    }
-
-    @TruffleBoundary
-    // TODO refactor this into RType so it is complete and more efficient
-    public static String classToStringCap(Class<?> c) {
-        if (c == RLogical.class) {
-            return "Logical";
-        } else if (c == RInteger.class) {
-            return "Integer";
-        } else if (c == RDouble.class) {
-            return "Numeric";
-        } else if (c == RComplex.class) {
-            return "Complex";
-        } else if (c == RRaw.class) {
-            return "Raw";
-        } else if (c == RString.class) {
-            return "Character";
-        } else if (c == Object.class) {
-            return "Any";
-        } else {
-            throw new RuntimeException("internal error, unknown class: " + c);
-        }
     }
 
     public static boolean isFinite(double d) {
@@ -1050,14 +1003,10 @@ public class RRuntime {
         }
     }
 
-    /**
-     * Convert Java boxing classes to {@link RScalar} subclasses, which implement the proper
-     * {@link RAbstractVector} interfaces. This doesn't go through {@link RDataFactory}, but it
-     * increases polymorphism by not using the normal vector classes.
-     */
+    // TODO: should return RAbstractVector eventually once all RScalars are removed
     public static Object convertScalarVectors(Object obj) {
         if (obj instanceof Integer) {
-            return RInteger.valueOf((int) obj);
+            return RDataFactory.createIntVectorFromScalar((int) obj);
         } else if (obj instanceof Double) {
             return RDouble.valueOf((double) obj);
         } else if (obj instanceof Byte) {

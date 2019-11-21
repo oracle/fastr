@@ -39,7 +39,6 @@ import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -49,15 +48,15 @@ public class CastUtilsTest {
     @Test
     public void testArgumentPowerSet() {
         List<TypeExpr> argTypeSets = new LinkedList<>();
-        argTypeSets.add(TypeExpr.union(Integer.class, RInteger.class));
+        argTypeSets.add(TypeExpr.union(Integer.class, RIntVector.class));
         argTypeSets.add(TypeExpr.union(Double.class, RDouble.class));
 
         Set<List<Type>> powerSet = CastUtils.argumentProductSet(argTypeSets);
         Assert.assertEquals(4, powerSet.size());
         Assert.assertTrue(powerSet.contains(Arrays.asList(Integer.class, Double.class)));
-        Assert.assertTrue(powerSet.contains(Arrays.asList(RInteger.class, Double.class)));
+        Assert.assertTrue(powerSet.contains(Arrays.asList(RIntVector.class, Double.class)));
         Assert.assertTrue(powerSet.contains(Arrays.asList(Integer.class, RDouble.class)));
-        Assert.assertTrue(powerSet.contains(Arrays.asList(RInteger.class, RDouble.class)));
+        Assert.assertTrue(powerSet.contains(Arrays.asList(RIntVector.class, RDouble.class)));
     }
 
     @Test

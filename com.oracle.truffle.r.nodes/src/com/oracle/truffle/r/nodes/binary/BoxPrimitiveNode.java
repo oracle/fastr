@@ -26,8 +26,9 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -45,8 +46,8 @@ public abstract class BoxPrimitiveNode extends CastNode {
     }
 
     @Specialization
-    protected static RInteger doInt(int vector) {
-        return RInteger.valueOf(vector);
+    protected static RIntVector doInt(int vector) {
+        return RDataFactory.createIntVectorFromScalar(vector);
     }
 
     @Specialization

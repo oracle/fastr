@@ -24,8 +24,6 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -40,7 +38,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -258,7 +255,6 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     private final BranchProfile noZeroes = BranchProfile.create();
-    @CompilationFinal private boolean checkForScalarPosition = true;
 
     private RAbstractVector doIntegerProfiled(PositionProfile profile, int dimensionLength, RIntVector intPosition, int positionLength, boolean hasSeenPositive, boolean hasSeenNegative,
                                               boolean hasSeenNA, int outOfBoundsCount, int zeroCount, int maxOutOfBoundsIndex) {
@@ -292,14 +288,6 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     private RAbstractVector eliminateZerosAndOutOfBounds(RIntVector position, int positionLength, int dimensionLength, int outOfBoundsCount, int zeroCount, boolean hasSeenNA) {
-        if (checkForScalarPosition) {
-            if (position instanceof RInteger && outOfBoundsCount == 1) {
-                return RInteger.valueOf(RRuntime.INT_NA);
-            } else {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                checkForScalarPosition = false;
-            }
-        }
         int[] newIndices = new int[positionLength - zeroCount];
         int newPositionIndex = 0;
         for (int i = 0; i < positionLength; i++) {

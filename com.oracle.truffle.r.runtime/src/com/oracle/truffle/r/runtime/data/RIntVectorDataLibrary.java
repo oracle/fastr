@@ -10,7 +10,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 // TODO: add "assertions" library, possible checks:
 //  - isComplete after write corresponds to the written value
 //  - something similar for isSorted?
-@GenerateLibrary(receiverType = RIntVectorData.class)
+@GenerateLibrary
 public abstract class RIntVectorDataLibrary extends Library {
 
     static final LibraryFactory<RIntVectorDataLibrary> FACTORY = LibraryFactory.resolve(RIntVectorDataLibrary.class);
@@ -108,15 +108,17 @@ public abstract class RIntVectorDataLibrary extends Library {
      */
     public abstract int[] getReadonlyIntData(RIntVectorData receiver);
 
+    // TODO: switch this: implement getReadonlyIntData using getIntDataCopy
+
     public int[] getIntDataCopy(RIntVectorData receiver) {
         return getReadonlyIntData(receiver);
     }
 
     public abstract int getIntAt(RIntVectorData receiver, int index);
 
-    public abstract int getIntAt(RIntVectorData receiver, SeqIterator it);
+    public abstract int getNext(RIntVectorData receiver, SeqIterator it);
 
-    public abstract int getIntAt(RIntVectorData receiver, RandomAccessIterator it, int index);
+    public abstract int getAt(RIntVectorData receiver, RandomAccessIterator it, int index);
 
     /**
      * Sets the value under given index. The vector must be writeable (see
@@ -125,21 +127,27 @@ public abstract class RIntVectorDataLibrary extends Library {
      * of the input data, i.e., the {@code value} argument. Using this overload makes sense if this method
      * is called multiple times with the same {@code naCheck} instance, otherwise use the overload without the {@code naCheck}.
      */
-    public abstract void setIntAt(RIntVectorData receiver, int index, int value, NACheck naCheck);
+    public void setIntAt(RIntVectorData receiver, int index, int value, NACheck naCheck) {
+        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
+    }
 
-    public abstract void setIntAt(RIntVectorData receiver, SeqIterator it, int value, NACheck naCheck);
+    public void setNext(RIntVectorData receiver, SeqIterator it, int value, NACheck naCheck) {
+        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
+    }
 
-    public abstract void setIntAt(RIntVectorData receiver, RandomAccessIterator it, int index, int value, NACheck naCheck);
+    public void setAt(RIntVectorData receiver, RandomAccessIterator it, int index, int value, NACheck naCheck) {
+        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
+    }
 
-    public void setIntAt(RIntVectorData receiver, int index, int value) {
+    public final void setIntAt(RIntVectorData receiver, int index, int value) {
         setIntAt(receiver, index, value, NACheck.getEnabled());
     }
 
-    public void setIntAt(RIntVectorData receiver, SeqIterator it, int value) {
-        setIntAt(receiver, it, value, NACheck.getEnabled());
+    public final void setIntAt(RIntVectorData receiver, SeqIterator it, int value) {
+        setNext(receiver, it, value, NACheck.getEnabled());
     }
 
-    public void setIntAt(RIntVectorData receiver, RandomAccessIterator it, int index, int value) {
-        setIntAt(receiver, it, index, value, NACheck.getEnabled());
+    public final void setIntAt(RIntVectorData receiver, RandomAccessIterator it, int index, int value) {
+        setAt(receiver, it, index, value, NACheck.getEnabled());
     }
 }

@@ -33,6 +33,8 @@ import static com.oracle.truffle.r.runtime.data.RDataFactory.createIntSequence;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createIntVector;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createLogicalVector;
 
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import org.hamcrest.CustomMatcher;
 import org.hamcrest.Matcher;
 import org.junit.experimental.theories.DataPoint;
@@ -41,14 +43,13 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class BinaryVectorTest extends TestBase {
 
     @DataPoint public static final RAbstractVector PRIMITIVE_LOGICAL = RLogical.valueOf((byte) 1);
-    @DataPoint public static final RAbstractVector PRIMITIVE_INTEGER = RInteger.valueOf(42);
+    @DataPoint public static final RAbstractVector PRIMITIVE_INTEGER = RDataFactory.createIntVectorFromScalar(42);
     @DataPoint public static final RAbstractVector PRIMITIVE_DOUBLE = RDouble.valueOf(42d);
     @DataPoint public static final RAbstractVector PRIMITIVE_COMPLEX = RComplex.valueOf(1.0, 1.0);
 

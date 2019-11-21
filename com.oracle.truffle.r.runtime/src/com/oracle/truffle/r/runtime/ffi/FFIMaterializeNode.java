@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalar;
@@ -116,16 +115,6 @@ public abstract class FFIMaterializeNode extends Node {
 
     private static <T extends RScalar> RAbstractVector protectMaterialized(T scalar, Function<T, RAbstractVector> factory) {
         return RContext.getInstance().getRFFI().getOrCreateMaterialized(scalar, factory);
-    }
-
-    @Specialization
-    protected static Object wrap(RInteger value, boolean protect,
-                    @Cached("createBinaryProfile()") ConditionProfile isProtected) {
-        if (isProtected.profile(protect)) {
-            return protectMaterialized(value, v -> RDataFactory.createIntVectorFromScalar(v.getValue()));
-        } else {
-            return value.materialize();
-        }
     }
 
     @Specialization

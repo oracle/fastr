@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.REmpty;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -78,7 +77,7 @@ abstract class PositionCastNode extends RBaseNode {
     // We use boxing specializations to avoid using the type system in this specific case
     @Specialization
     protected RAbstractVector doInteger(int position) {
-        return RInteger.valueOf(position);
+        return RDataFactory.createIntVectorFromScalar(position);
     }
 
     // We handle long indexes as ExtractVectorNode, which uses this node, can be used from the
@@ -110,7 +109,7 @@ abstract class PositionCastNode extends RBaseNode {
                     @Cached("create()") NACheck check) {
         if (mode.isSubscript()) {
             check.enable(position);
-            return RInteger.valueOf(check.convertDoubleToInt(position));
+            return RDataFactory.createIntVectorFromScalar(check.convertDoubleToInt(position));
         } else {
             return RDouble.valueOf(position);
         }
