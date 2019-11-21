@@ -26,7 +26,7 @@ package com.oracle.truffle.r.runtime.data.model;
  * Distinguishes what R considers an "atomic" vector, e.g. {@code integer()} from other "vectors",
  * e.g., {@code list()}. Specifically these are the FastR atomic vector types:
  * <ul>
- * <li>{@link RAbstractIntVector}</li>
+ * <li>{@link RIntVector}</li>
  * <li>{@link RAbstractLogicalVector}</li>
  * <li>{@link RAbstractDoubleVector}</li>
  * <li>{@link RAbstractComplexVector}</li>

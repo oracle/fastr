@@ -49,10 +49,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -92,20 +91,20 @@ public abstract class Match extends RBuiltinNode.Arg4 {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RIntVector match(RNull x, RNull table, int nomatch, Object incomparables) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RNull x, RNull table, int nomatch, Object incomparables) {
         return RDataFactory.createIntVector(0);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RIntVector match(RNull x, RAbstractVector table, int nomatch, Object incomparables) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RNull x, RAbstractVector table, int nomatch, Object incomparables) {
         return RDataFactory.createIntVector(0);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected RIntVector match(RAbstractVector x, RNull table, int nomatch, Object incomparables,
-                    @Cached("createBinaryProfile()") ConditionProfile na) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractVector x, RNull table, int nomatch, Object incomparables,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile na) {
         int[] data = new int[x.getLength()];
         Arrays.fill(data, nomatch);
         return RDataFactory.createIntVector(data, na.profile(!RRuntime.isNA(nomatch)));
@@ -118,24 +117,24 @@ public abstract class Match extends RBuiltinNode.Arg4 {
     }
 
     @Specialization(guards = {"isFactor(x)", "isFactor(table)"})
-    protected Object matchFactor(RAbstractIntVector x, RAbstractIntVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
-                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
-                    @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
+    protected Object matchFactor(RIntVector x, RIntVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
+                                 @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
+                                 @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
         return match.execute(RClosures.createFactorToVector(x, true, getLevelsNode.execute(x)),
                         RClosures.createFactorToVector(table, true, getLevelsNode.execute(table)), nomatch);
     }
 
     @Specialization(guards = {"isFactor(x)", "!isFactor(table)"})
-    protected Object matchFactor(RAbstractIntVector x, RAbstractVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
-                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
-                    @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
+    protected Object matchFactor(RIntVector x, RAbstractVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
+                                 @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
+                                 @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
         return match.execute(RClosures.createFactorToVector(x, true, getLevelsNode.execute(x)), table, nomatch);
     }
 
     @Specialization(guards = {"!isFactor(x)", "isFactor(table)"})
-    protected Object matchFactor(RAbstractVector x, RAbstractIntVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
-                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
-                    @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
+    protected Object matchFactor(RAbstractVector x, RIntVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
+                                 @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
+                                 @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
         return match.execute(x, RClosures.createFactorToVector(table, true, getLevelsNode.execute(table)), nomatch);
     }
 
@@ -160,7 +159,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
 
     @Fallback
     @SuppressWarnings("unused")
-    protected RIntVector match(Object x, Object table, Object nomatch, Object incomparables) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(Object x, Object table, Object nomatch, Object incomparables) {
         throw error(MATCH_VECTOR_ARGS);
     }
 

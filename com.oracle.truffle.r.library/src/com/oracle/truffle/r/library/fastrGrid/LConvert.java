@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
@@ -55,7 +55,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
 
     @Specialization
     @TruffleBoundary
-    Object doConvert(RAbstractVector units, RAbstractIntVector axisFromVec, RAbstractIntVector axisToVec, RAbstractIntVector unitToVec) {
+    Object doConvert(RAbstractVector units, RIntVector axisFromVec, RIntVector axisToVec, RIntVector unitToVec) {
 
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();
@@ -69,7 +69,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         int length = Unit.getLength(units);
         double[] result = new double[length];
 
-        RAbstractIntVector unitIds = null;
+        RIntVector unitIds = null;
         if (isSimpleUnit(units)) {
             unitIds = GridUtils.asIntVector(units.getAttr(Unit.VALID_UNIT_ATTR));
         }

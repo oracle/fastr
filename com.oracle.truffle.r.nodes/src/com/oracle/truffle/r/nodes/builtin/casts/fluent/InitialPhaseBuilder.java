@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -160,21 +160,21 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
         return this;
     }
 
-    public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+    public CoercedPhaseBuilder<RIntVector, Integer> asIntegerVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         pipelineBuilder().appendAsVector(RType.Integer, preserveNames, preserveDimensions, preserveAttributes);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Integer.class);
     }
 
-    public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVector() {
+    public CoercedPhaseBuilder<RIntVector, Integer> asIntegerVector() {
         return asIntegerVector(false, false, false);
     }
 
-    public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVectorClosure(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+    public CoercedPhaseBuilder<RIntVector, Integer> asIntegerVectorClosure(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         pipelineBuilder().appendAsVectorClosure(RType.Integer, preserveNames, preserveDimensions, preserveAttributes);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Integer.class);
     }
 
-    public CoercedPhaseBuilder<RAbstractIntVector, Integer> asIntegerVectorClosure() {
+    public CoercedPhaseBuilder<RIntVector, Integer> asIntegerVectorClosure() {
         return asIntegerVectorClosure(false, false, false);
     }
 

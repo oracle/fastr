@@ -54,11 +54,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
@@ -161,7 +160,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"isIntegerPrecedence(args)", "args.getLength() > 1"})
-    protected RIntVector pMinMaxInt(boolean naRm, RArgsValuesAndNames args) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector pMinMaxInt(boolean naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(args, getIntegerCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
             return RDataFactory.createEmptyIntVector();
@@ -173,7 +172,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
             for (int i = 0; i < maxLength; i++) {
                 int result = semantics.getIntStart();
                 for (int j = 0; j < argValues.length; j++) {
-                    RAbstractIntVector vec = (RAbstractIntVector) argValues[j];
+                    RIntVector vec = (RIntVector) argValues[j];
                     na.enable(vec);
                     if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
                         warning(RError.Message.ARG_RECYCYLED);
@@ -203,7 +202,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"isLogicalPrecedence(args)", "args.getLength() != 1"})
-    protected RIntVector pMinMaxLogical(boolean naRm, RArgsValuesAndNames args) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector pMinMaxLogical(boolean naRm, RArgsValuesAndNames args) {
         return pMinMaxInt(naRm, args);
     }
 

@@ -36,8 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "as.integer", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
@@ -49,22 +48,22 @@ public abstract class AsInteger extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
-    protected RAbstractIntVector asInteger(RAbstractIntVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
-                    @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
-                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
+    protected RIntVector asInteger(RIntVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
+                                   @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
+                                   @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            RIntVector res = (RIntVector) reuseTemporaryNode.getMaterializedResult(v);
+            com.oracle.truffle.r.runtime.data.RIntVector res = (com.oracle.truffle.r.runtime.data.RIntVector) reuseTemporaryNode.getMaterializedResult(v);
             res.resetAllAttributes(true);
             return res;
         }
     }
 
     @Specialization(replaces = "asInteger")
-    protected RAbstractIntVector asIntegerGeneric(RAbstractIntVector v, RArgsValuesAndNames dotdotdot,
-                    @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
-                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
+    protected RIntVector asIntegerGeneric(RIntVector v, RArgsValuesAndNames dotdotdot,
+                                          @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
+                                          @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         return asInteger(v, dotdotdot, reuseTemporaryNode, noAttributes);
     }
 }

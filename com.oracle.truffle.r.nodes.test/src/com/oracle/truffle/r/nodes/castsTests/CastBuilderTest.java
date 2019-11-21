@@ -99,12 +99,11 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -314,7 +313,7 @@ public class CastBuilderTest {
     @Test
     public void testSizeWarning() {
         arg.defaultWarning(RError.Message.LENGTH_GT_1).asIntegerVector().shouldBe(singleElement());
-        RIntVector intVector = RDataFactory.createIntVector(new int[]{1, 2}, true);
+        com.oracle.truffle.r.runtime.data.RIntVector intVector = RDataFactory.createIntVector(new int[]{1, 2}, true);
         assertCastWarning(intVector, intVector, RError.Message.LENGTH_GT_1.message);
         testPipeline(NO_FILTER_EXPECT_EMPTY_SAMPLES);
     }
@@ -401,7 +400,7 @@ public class CastBuilderTest {
     public void testSingleElementWarningAndEmptyError() {
         arg.asIntegerVector().shouldBe(singleElement(), RError.Message.INVALID_USE, "y").mustBe(notEmpty(), RError.Message.ARGUMENT_EMPTY, 42);
 
-        RIntVector vec = RDataFactory.createIntVector(new int[]{1, 2}, true);
+        com.oracle.truffle.r.runtime.data.RIntVector vec = RDataFactory.createIntVector(new int[]{1, 2}, true);
         assertCastWarning(vec, vec, String.format(RError.Message.INVALID_USE.message, "y"));
         assertCastFail(RDataFactory.createIntVector(0), String.format(Message.ARGUMENT_EMPTY.message, 42));
         testPipeline();
@@ -578,7 +577,7 @@ public class CastBuilderTest {
 
         assertCastFail(1.0);
 
-        RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
+        com.oracle.truffle.r.runtime.data.RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
         Object res = cast(vec);
         assertTrue(res instanceof RAbstractDoubleVector);
         RAbstractDoubleVector dvec = (RAbstractDoubleVector) res;
@@ -587,7 +586,7 @@ public class CastBuilderTest {
         assertEquals(2, dvec.getDimensions()[0]);
         assertEquals(2, dvec.getDimensions()[1]);
 
-        RIntVector notSquare = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{1, 4});
+        com.oracle.truffle.r.runtime.data.RIntVector notSquare = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{1, 4});
         assertCastFail(notSquare);
     }
 
@@ -595,7 +594,7 @@ public class CastBuilderTest {
     public void testDimensionsFilter() {
         arg.asDoubleVector(true, true, true).mustBe(dimGt(1, 0));
 
-        RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
+        com.oracle.truffle.r.runtime.data.RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
         RDoubleVector doubleVec = RDataFactory.createDoubleVector(new double[]{0, 1, 2, 3}, true, new int[]{2, 2});
         assertVectorEquals(doubleVec, cast(vec));
     }
@@ -914,7 +913,7 @@ public class CastBuilderTest {
             arg.mustBe(integerValue());
             int[] array = new int[]{1, 2, 3};
             Object value = cast(RContext.getInstance().getEnv().asGuestValue(array));
-            assertTrue(value instanceof RAbstractIntVector);
+            assertTrue(value instanceof RIntVector);
         });
     }
 
@@ -924,7 +923,7 @@ public class CastBuilderTest {
             arg.mustBe(integerValue());
             List<Integer> list = Arrays.asList(1, 2, 3);
             Object value = cast(RContext.getInstance().getEnv().asGuestValue(list));
-            assertTrue(value instanceof RAbstractIntVector);
+            assertTrue(value instanceof RIntVector);
         });
     }
 

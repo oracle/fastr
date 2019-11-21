@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -49,7 +49,7 @@ public abstract class Strrep extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object strrep(RAbstractStringVector xVec, RAbstractIntVector timesVec) {
+    protected Object strrep(RAbstractStringVector xVec, RIntVector timesVec) {
         int xLen = xVec.getLength();
         int timesLen = timesVec.getLength();
         if (xLen == 0 || timesLen == 0) {
@@ -92,7 +92,7 @@ public abstract class Strrep extends RBuiltinNode.Arg2 {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object strrep(RNull xVec, RAbstractIntVector timesVec) {
+    protected Object strrep(RNull xVec, RIntVector timesVec) {
         return RDataFactory.createEmptyStringVector(); // GnuR fails with segfault; return value
                                                        // adheres to non-internal strrep() result
     }

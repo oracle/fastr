@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -167,7 +167,7 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doAlpha(RAbstractIntVector r, RAbstractIntVector g, RAbstractIntVector b, RAbstractIntVector a, RAbstractStringVector names) {
+        protected RStringVector doAlpha(RIntVector r, RIntVector g, RIntVector b, RIntVector a, RAbstractStringVector names) {
             int lengthR = r.getLength();
             int lengthG = g.getLength();
             int lengthB = b.getLength();
@@ -192,7 +192,7 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doNonAlpha(RAbstractIntVector r, RAbstractIntVector g, RAbstractIntVector b, @SuppressWarnings("unused") RNull a, RAbstractStringVector names) {
+        protected RStringVector doNonAlpha(RIntVector r, RIntVector g, RIntVector b, @SuppressWarnings("unused") RNull a, RAbstractStringVector names) {
             int lengthR = r.getLength();
             int lengthG = g.getLength();
             int lengthB = b.getLength();

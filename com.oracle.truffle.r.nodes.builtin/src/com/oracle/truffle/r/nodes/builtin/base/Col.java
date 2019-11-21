@@ -34,8 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 
 @RBuiltin(name = "col", kind = INTERNAL, parameterNames = {"dims"}, behavior = PURE)
 public abstract class Col extends RBuiltinNode.Arg1 {
@@ -46,7 +45,7 @@ public abstract class Col extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RIntVector col(RAbstractIntVector x) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector col(RIntVector x) {
         int nrows = x.getDataAt(0);
         int ncols = x.getDataAt(1);
         int[] result = new int[nrows * ncols];

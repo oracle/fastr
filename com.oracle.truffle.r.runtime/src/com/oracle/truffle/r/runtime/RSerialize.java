@@ -86,7 +86,7 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -1010,8 +1010,8 @@ public class RSerialize {
 
         private static Object readCompactIntSeq(Object state) throws RuntimeException {
             RAbstractVector result;
-            if (state instanceof RAbstractIntVector) {
-                RAbstractIntVector vec = (RAbstractIntVector) state;
+            if (state instanceof RIntVector) {
+                RIntVector vec = (RIntVector) state;
                 int length = vec.getDataAt(0);
                 int first = vec.getDataAt(1);
                 int stride = vec.getDataAt(2);
@@ -2890,7 +2890,7 @@ public class RSerialize {
             if (value instanceof RAbstractVector) {
                 RAbstractVector vector = (RAbstractVector) value;
                 if (vector.getLength() == 1 && (vector.getAttributes() == null || vector.getAttributes().getShape().getPropertyCount() == 0)) {
-                    if (vector instanceof RAbstractDoubleVector || vector instanceof RAbstractIntVector || vector instanceof RAbstractStringVector ||
+                    if (vector instanceof RAbstractDoubleVector || vector instanceof RIntVector || vector instanceof RAbstractStringVector ||
                                     vector instanceof RAbstractLogicalVector || vector instanceof RAbstractRawVector || vector instanceof RAbstractComplexVector) {
                         return vector.getDataAtAsObject(0);
                     }
@@ -2988,8 +2988,8 @@ public class RSerialize {
             handleSrcrefAttr(RContext.getInstance(), func, (RSyntaxCall) elem);
         } else {
             Object srcref = func.getAttr(RRuntime.R_SRCREF);
-            if (srcref instanceof RAbstractIntVector) {
-                SourceSection ss = RSrcref.createSourceSection(RContext.getInstance(), (RAbstractIntVector) srcref, null);
+            if (srcref instanceof RIntVector) {
+                SourceSection ss = RSrcref.createSourceSection(RContext.getInstance(), (RIntVector) srcref, null);
                 elem.setSourceSection(ss);
             }
         }
@@ -3001,7 +3001,7 @@ public class RSerialize {
      */
     private static void handleSrcrefAttr(RContext context, RAttributable func, RSyntaxCall elem) {
         Object srcref = func.getAttr(RRuntime.R_SRCREF);
-        if (srcref instanceof RAbstractIntVector) {
+        if (srcref instanceof RIntVector) {
             Object srcfile = func.getAttr(RRuntime.R_SRCFILE);
             assert srcfile instanceof REnvironment;
             Source source;
@@ -3010,7 +3010,7 @@ public class RSerialize {
             } catch (IOException e) {
                 source = null;
             }
-            SourceSection ss = RSrcref.createSourceSection(context, (RAbstractIntVector) srcref, source);
+            SourceSection ss = RSrcref.createSourceSection(context, (RIntVector) srcref, source);
             elem.setSourceSection(ss);
         } else if (srcref instanceof RList) {
             try {
@@ -3025,8 +3025,8 @@ public class RSerialize {
                 for (int i = 0; i < blockSrcref.getLength(); i++) {
                     Object singleSrcref = blockSrcref.getDataAt(i);
                     // could also be NULL
-                    if (singleSrcref instanceof RAbstractIntVector) {
-                        SourceSection ss = RSrcref.createSourceSection(context, (RAbstractIntVector) singleSrcref, source);
+                    if (singleSrcref instanceof RIntVector) {
+                        SourceSection ss = RSrcref.createSourceSection(context, (RIntVector) singleSrcref, source);
                         if (i == 0) {
                             elem.setSourceSection(ss);
                         } else {

@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -100,7 +100,7 @@ abstract class PositionCastNode extends RBaseNode {
     }
 
     @Specialization
-    protected RAbstractVector doInteger(RAbstractIntVector position) {
+    protected RAbstractVector doInteger(RIntVector position) {
         // directly supported
         return position;
     }

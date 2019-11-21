@@ -28,7 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.Sub2Interface;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
@@ -43,18 +43,18 @@ public abstract class AccessSpecial2 extends IndexingSpecial2Common implements S
 
     public abstract double executeDouble(RAbstractDoubleVector vec, int index1, int index2);
 
-    public abstract int executeInteger(RAbstractIntVector vec, int index1, int index2);
+    public abstract int executeInteger(RIntVector vec, int index1, int index2);
 
     @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected int accessInt(RAbstractIntVector vector, int index1, int index2,
-                    @Cached("vector.access()") VectorAccess access) {
+    protected int accessInt(RIntVector vector, int index1, int index2,
+                            @Cached("vector.access()") VectorAccess access) {
         try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
             return access.getInt(iter, matrixIndex(vector, index1, index2));
         }
     }
 
     @Specialization(replaces = "accessInt", guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected int accessIntGeneric(RAbstractIntVector vector, int index1, int index2) {
+    protected int accessIntGeneric(RIntVector vector, int index1, int index2) {
         return accessInt(vector, index1, index2, vector.slowPathAccess());
     }
 

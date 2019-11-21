@@ -31,11 +31,10 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -118,7 +117,7 @@ public class RSrcref {
      * . assert: srcfile was created from the {@link Source} associated with {@code ss} or is
      * {@code null} in which case it will be created from {@code ss}.
      */
-    public static RIntVector createLloc(RContext context, SourceSection ss, String path) {
+    public static com.oracle.truffle.r.runtime.data.RIntVector createLloc(RContext context, SourceSection ss, String path) {
         return createLloc(ss, createSrcfile(context, path, null));
     }
 
@@ -188,7 +187,7 @@ public class RSrcref {
     }
 
     @TruffleBoundary
-    public static RIntVector createLloc(SourceSection ss, REnvironment srcfile) {
+    public static com.oracle.truffle.r.runtime.data.RIntVector createLloc(SourceSection ss, REnvironment srcfile) {
         /*
          * TODO: it's unclear what the exact format is, experimentally it is (first line, first
          * column, last line, last column, first column, last column, first line, last line). the
@@ -209,14 +208,13 @@ public class RSrcref {
         llocData[5] = lastColumn;
         llocData[6] = startLine;
         llocData[7] = lastLine;
-        RIntVector lloc = RDataFactory.createIntVector(llocData, RDataFactory.COMPLETE_VECTOR);
+        com.oracle.truffle.r.runtime.data.RIntVector lloc = RDataFactory.createIntVector(llocData, RDataFactory.COMPLETE_VECTOR);
         lloc.setClassAttr(SRCREF_ATTR);
         lloc.setAttr(RRuntime.R_SRCFILE, srcfile);
         return lloc;
     }
 
-    public static SourceSection createSourceSection(RContext context, RAbstractIntVector srcrefVec, Source sharedSource) {
-
+    public static SourceSection createSourceSection(RContext context, RIntVector srcrefVec, Source sharedSource) {
         try {
             Source source;
             if (sharedSource != null) {

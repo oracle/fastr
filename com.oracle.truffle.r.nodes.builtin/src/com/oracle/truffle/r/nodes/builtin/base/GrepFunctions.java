@@ -57,13 +57,12 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RegExp;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -215,7 +214,7 @@ public class GrepFunctions {
             return RDataFactory.createStringVector(naData, RDataFactory.INCOMPLETE_VECTOR);
         }
 
-        protected RIntVector allIntNAResult(int len) {
+        protected com.oracle.truffle.r.runtime.data.RIntVector allIntNAResult(int len) {
             int[] naData = new int[len];
             for (int i = 0; i < len; i++) {
                 naData[i] = RRuntime.INT_NA;
@@ -928,7 +927,7 @@ public class GrepFunctions {
                         }
                     }
                 }
-                RIntVector ret = RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
+                com.oracle.truffle.r.runtime.data.RIntVector ret = RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
                 setMatchLengthAttrNode.setAttr(ret, RDataFactory.createIntVector(matchLength, RDataFactory.COMPLETE_VECTOR));
                 if (useBytes) {
                     setIndexTypeAttrNode.setAttr(ret, indexType);
@@ -940,6 +939,7 @@ public class GrepFunctions {
                     setDimNamesAttrNode.setAttr(captureStartVec, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
                     setCaptureStartAttrNode.setAttr(ret, captureStartVec);
                     RIntVector captureLengthVec = RDataFactory.createIntVector(captureLength, RDataFactory.COMPLETE_VECTOR, new int[]{vectorLen, captureNames.length});
+
                     setDimNamesAttrNode.setAttr(captureLengthVec, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
                     setCaptureLengthAttrNode.setAttr(ret, captureLengthVec);
                     setCaptureNamesAttrNode.setAttr(ret, captureNamesVec);
@@ -1131,7 +1131,7 @@ public class GrepFunctions {
                             matchLength[j] = res[j].size;
                         }
                     }
-                    RIntVector matches = RDataFactory.createIntVector(matchPos, RDataFactory.COMPLETE_VECTOR);
+                    com.oracle.truffle.r.runtime.data.RIntVector matches = RDataFactory.createIntVector(matchPos, RDataFactory.COMPLETE_VECTOR);
                     setMatchLengthAttrNode.setAttr(matches, RDataFactory.createIntVector(matchLength, RDataFactory.COMPLETE_VECTOR));
                     ret.setElement(i, matches);
                 }
@@ -1205,15 +1205,15 @@ public class GrepFunctions {
             castUseBytes(casts);
         }
 
-        private void setNoCaptureAttributes(RIntVector vec, RStringVector captureNames) {
+        private void setNoCaptureAttributes(com.oracle.truffle.r.runtime.data.RIntVector vec, RStringVector captureNames) {
             int len = captureNames.getLength();
             int[] captureStartData = new int[len];
             int[] captureLengthData = new int[len];
             Arrays.fill(captureStartData, -1);
             Arrays.fill(captureLengthData, -1);
-            RIntVector captureStart = RDataFactory.createIntVector(captureStartData, RDataFactory.COMPLETE_VECTOR, new int[]{1, captureNames.getLength()});
+            com.oracle.truffle.r.runtime.data.RIntVector captureStart = RDataFactory.createIntVector(captureStartData, RDataFactory.COMPLETE_VECTOR, new int[]{1, captureNames.getLength()});
             setDimNamesAttrNode.setAttr(captureStart, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
-            RIntVector captureLength = RDataFactory.createIntVector(captureLengthData, RDataFactory.COMPLETE_VECTOR, new int[]{1, captureNames.getLength()});
+            com.oracle.truffle.r.runtime.data.RIntVector captureLength = RDataFactory.createIntVector(captureLengthData, RDataFactory.COMPLETE_VECTOR, new int[]{1, captureNames.getLength()});
             setDimNamesAttrNode.setAttr(captureLength, RDataFactory.createList(new Object[]{RNull.instance, captureNames.copy()}));
             setCaptureStartAttrNode.setAttr(vec, captureStart);
             setCaptureLengthAttrNode.setAttr(vec, captureLength);
@@ -1246,7 +1246,7 @@ public class GrepFunctions {
                 boolean hasAnyCapture = false;
                 RStringVector captureNames = null;
                 for (int i = 0; i < vector.getLength(); i++) {
-                    RIntVector res;
+                    com.oracle.truffle.r.runtime.data.RIntVector res;
                     if (pattern.length() == 0) {
                         String txt = vector.getDataAt(i);
                         int[] resData = new int[txt.length()];
@@ -1267,16 +1267,16 @@ public class GrepFunctions {
                             setIndexTypeAttrNode.setAttr(res, indexType);
                             setUseBytesAttrNode.setAttr(res, RRuntime.LOGICAL_TRUE);
                         }
-                        RIntVector captureStart = toCaptureStartOrLength(l, true);
+                        com.oracle.truffle.r.runtime.data.RIntVector captureStart = toCaptureStartOrLength(l, true);
                         if (captureStart != null) {
-                            RIntVector captureLength = toCaptureStartOrLength(l, false);
+                            com.oracle.truffle.r.runtime.data.RIntVector captureLength = toCaptureStartOrLength(l, false);
                             assert captureLength != null;
                             captureNames = getCaptureNamesVector(l);
                             assert captureNames.getLength() > 0;
                             if (!hasAnyCapture) {
                                 // set previous result list elements to "no capture"
                                 for (int j = 0; j < i; j++) {
-                                    setNoCaptureAttributes((RIntVector) result[j], captureNames);
+                                    setNoCaptureAttributes((com.oracle.truffle.r.runtime.data.RIntVector) result[j], captureNames);
                                 }
                             }
                             hasAnyCapture = true;
@@ -1298,7 +1298,7 @@ public class GrepFunctions {
             }
         }
 
-        private static RIntVector toIndexOrSizeVector(List<Info> list, boolean index) {
+        private static com.oracle.truffle.r.runtime.data.RIntVector toIndexOrSizeVector(List<Info> list, boolean index) {
             int[] arr = new int[list.size()];
             for (int i = 0; i < list.size(); i++) {
                 Info res = list.get(i);
@@ -1307,7 +1307,7 @@ public class GrepFunctions {
             return RDataFactory.createIntVector(arr, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private RIntVector toCaptureStartOrLength(List<Info> list, boolean start) {
+        private com.oracle.truffle.r.runtime.data.RIntVector toCaptureStartOrLength(List<Info> list, boolean start) {
             assert list.size() > 0;
             Info firstInfo = list.get(0);
             if (!firstInfo.hasCapture) {
@@ -1325,7 +1325,7 @@ public class GrepFunctions {
                     arr[ind++] = start ? info.captureStart[i] : info.captureLength[i];
                 }
             }
-            RIntVector ret = RDataFactory.createIntVector(arr, RDataFactory.COMPLETE_VECTOR, new int[]{list.size(), firstInfo.captureNames.length});
+            com.oracle.truffle.r.runtime.data.RIntVector ret = RDataFactory.createIntVector(arr, RDataFactory.COMPLETE_VECTOR, new int[]{list.size(), firstInfo.captureNames.length});
             setDimNamesAttrNode.setAttr(ret, RDataFactory.createList(new Object[]{RNull.instance, RDataFactory.createStringVector(firstInfo.captureNames, RDataFactory.COMPLETE_VECTOR)}));
             return ret;
         }
@@ -1360,7 +1360,7 @@ public class GrepFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RAbstractIntVector costs, RAbstractDoubleVector bounds, boolean useBytes, boolean fixed,
+        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RIntVector costs, RAbstractDoubleVector bounds, boolean useBytes, boolean fixed,
                         @Cached("createCommon()") CommonCodeNode common) {
             // TODO implement completely; this is a very basic implementation for fixed=TRUE only.
             common.checkExtraArgs(!fixed && ignoreCase, false, false, useBytes, false);
@@ -1482,7 +1482,7 @@ public class GrepFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RAbstractIntVector costs, RAbstractDoubleVector bounds, boolean useBytes, boolean fixed,
+        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RIntVector costs, RAbstractDoubleVector bounds, boolean useBytes, boolean fixed,
                         @Cached("createCommon()") CommonCodeNode common) {
             // TODO implement properly, this only supports strict equality!
             common.checkExtraArgs(ignoreCase, false, false, useBytes, false);
@@ -1972,7 +1972,7 @@ public class GrepFunctions {
             }
         }
 
-        private static RIntVector convertMatchedRangesToRIndices(HaystackDescriptor haystackDescriptor) {
+        private static com.oracle.truffle.r.runtime.data.RIntVector convertMatchedRangesToRIndices(HaystackDescriptor haystackDescriptor) {
             int[] rVectorIndices = new int[haystackDescriptor.getMatchedRangesCount()];
             int vectorIdx = 0;
             for (Range range : haystackDescriptor) {
@@ -1983,7 +1983,7 @@ public class GrepFunctions {
             return RDataFactory.createIntVector(rVectorIndices, true);
         }
 
-        private static RIntVector convertFirstMatchedRangeToRIndex(HaystackDescriptor haystackDescriptor) {
+        private static com.oracle.truffle.r.runtime.data.RIntVector convertFirstMatchedRangeToRIndex(HaystackDescriptor haystackDescriptor) {
             Range firstMatchedRange = null;
             for (Range range : haystackDescriptor) {
                 if (range.isMatched()) {

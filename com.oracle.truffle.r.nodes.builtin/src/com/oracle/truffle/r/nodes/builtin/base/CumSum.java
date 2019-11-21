@@ -47,11 +47,10 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -95,13 +94,13 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "x.getLength()==0")
-    protected RAbstractVector cumEmpty(RAbstractIntVector x) {
+    protected RAbstractVector cumEmpty(RIntVector x) {
         return RDataFactory.createIntVector(new int[0], true, extractNamesNode.execute(x));
     }
 
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
-    protected RIntVector cumsumInt(RAbstractIntVector x,
-                    @Cached("x.access()") VectorAccess xAccess) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector cumsumInt(RIntVector x,
+                                                                     @Cached("x.access()") VectorAccess xAccess) {
         try (SequentialIterator iter = xAccess.access(x)) {
             int[] array = new int[xAccess.getLength(iter)];
             int prev = 0;
@@ -124,7 +123,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(replaces = "cumsumInt")
-    protected RIntVector cumsumIntGeneric(RAbstractIntVector x) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector cumsumIntGeneric(RIntVector x) {
         return cumsumInt(x, x.slowPathAccess());
     }
 

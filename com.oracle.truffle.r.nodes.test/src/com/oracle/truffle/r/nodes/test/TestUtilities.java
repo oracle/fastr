@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -107,7 +107,7 @@ public class TestUtilities {
         return RDataFactory.createLogicalVector(array, complete || !complete && size < 3);
     }
 
-    public static RAbstractIntVector generateInteger(int size, boolean complete) {
+    public static RIntVector generateInteger(int size, boolean complete) {
         int[] array = new int[size];
         for (int i = 0; i < size; i++) {
             array[i] = !complete && i % (NA_INDEX + 1) == NA_INDEX ? RRuntime.INT_NA : i;

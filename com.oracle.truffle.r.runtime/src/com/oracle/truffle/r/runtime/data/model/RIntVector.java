@@ -31,9 +31,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import java.util.Arrays;
 
-public abstract class RAbstractIntVector extends RAbstractNumericVector {
+public abstract class RIntVector extends RAbstractNumericVector {
 
-    public RAbstractIntVector(boolean complete) {
+    public RIntVector(boolean complete) {
         super(complete);
     }
 
@@ -60,25 +60,25 @@ public abstract class RAbstractIntVector extends RAbstractNumericVector {
     }
 
     @Override
-    public RIntVector materialize() {
-        RIntVector result = RDataFactory.createIntVector(getDataCopy(), isComplete());
+    public com.oracle.truffle.r.runtime.data.RIntVector materialize() {
+        com.oracle.truffle.r.runtime.data.RIntVector result = RDataFactory.createIntVector(getDataCopy(), isComplete());
         copyAttributes(result);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
 
     @TruffleBoundary
-    protected void copyAttributes(RIntVector materialized) {
+    protected void copyAttributes(com.oracle.truffle.r.runtime.data.RIntVector materialized) {
         materialized.copyAttributesFrom(this);
     }
 
     @Override
-    protected RIntVector internalCopy() {
+    protected com.oracle.truffle.r.runtime.data.RIntVector internalCopy() {
         return RDataFactory.createIntVector(getDataCopy(), isComplete());
     }
 
     @Override
-    protected RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
         int[] localData = getReadonlyData();
         int[] newData = Arrays.copyOf(localData, size);
         newData = resizeData(newData, localData, localData.length, fillNA);
@@ -132,7 +132,7 @@ public abstract class RAbstractIntVector extends RAbstractNumericVector {
     }
 
     @Override
-    public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
+    public com.oracle.truffle.r.runtime.data.RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createIntVector(new int[newLength], newIsComplete);
     }
 

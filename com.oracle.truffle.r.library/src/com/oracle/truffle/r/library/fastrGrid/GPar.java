@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -363,8 +363,8 @@ public final class GPar {
             } else if (value instanceof RAbstractDoubleVector) {
                 double realVal = getDataAtMod((RAbstractDoubleVector) value, index);
                 return RRuntime.isNA(realVal) ? RRuntime.INT_NA : (int) realVal;
-            } else if (value instanceof RAbstractIntVector) {
-                return getDataAtMod((RAbstractIntVector) value, index);
+            } else if (value instanceof RIntVector) {
+                return getDataAtMod((RIntVector) value, index);
             } else {
                 return RRuntime.INT_NA;
             }

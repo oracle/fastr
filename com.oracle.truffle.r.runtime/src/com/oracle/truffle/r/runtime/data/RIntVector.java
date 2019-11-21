@@ -30,7 +30,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
@@ -39,7 +38,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
-public final class RIntVector extends RAbstractIntVector implements RMaterializedVector, Shareable {
+public final class RIntVector extends com.oracle.truffle.r.runtime.data.model.RIntVector implements RMaterializedVector, Shareable {
 
     private int[] data;
 
@@ -189,7 +188,7 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        NativeDataAccess.setData(this, data, toIndex, ((RAbstractIntVector) fromVector).getDataAt(fromIndex));
+        NativeDataAccess.setData(this, data, toIndex, ((com.oracle.truffle.r.runtime.data.model.RIntVector) fromVector).getDataAt(fromIndex));
     }
 
     @Override

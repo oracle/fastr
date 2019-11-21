@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -56,7 +55,7 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -260,9 +259,9 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "vecIn.getClass() == vecClass")
-    protected RIntVector doUniqueCached(RAbstractIntVector vecIn, byte incomparables, byte fromLast, int nmax,
-                    @Cached("vecIn.getClass()") Class<? extends RAbstractIntVector> vecClass) {
-        RAbstractIntVector vec = vecClass.cast(vecIn);
+    protected com.oracle.truffle.r.runtime.data.RIntVector doUniqueCached(RIntVector vecIn, byte incomparables, byte fromLast, int nmax,
+                                                                          @Cached("vecIn.getClass()") Class<? extends RIntVector> vecClass) {
+        RIntVector vec = vecClass.cast(vecIn);
         reportWork(vec.getLength());
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             NonRecursiveHashSetInt set = new NonRecursiveHashSetInt();
@@ -291,8 +290,8 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
     }
 
     @Specialization(replaces = "doUniqueCached")
-    protected RIntVector doUnique(RAbstractIntVector vec, byte incomparables, byte fromLast, int nmax) {
-        return doUniqueCached(vec, incomparables, fromLast, nmax, RAbstractIntVector.class);
+    protected com.oracle.truffle.r.runtime.data.RIntVector doUnique(RIntVector vec, byte incomparables, byte fromLast, int nmax) {
+        return doUniqueCached(vec, incomparables, fromLast, nmax, RIntVector.class);
     }
 
     @SuppressWarnings("unused")

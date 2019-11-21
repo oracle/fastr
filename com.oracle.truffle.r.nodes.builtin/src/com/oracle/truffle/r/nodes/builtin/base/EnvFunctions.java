@@ -85,7 +85,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -117,7 +117,7 @@ public class EnvFunctions {
         }
 
         @Specialization
-        protected Object asEnvironmentInt(VirtualFrame frame, RAbstractIntVector pos,
+        protected Object asEnvironmentInt(VirtualFrame frame, RIntVector pos,
                         @Cached("create()") GetCallerFrameNode getCallerFrame) {
             if (pos.getLength() == 0) {
                 CompilerDirectives.transferToInterpreter();

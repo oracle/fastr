@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 public abstract class VectorFastPaths {
@@ -38,13 +38,13 @@ public abstract class VectorFastPaths {
     public abstract static class IntegerFastPath extends RFastPathNode {
 
         @Specialization
-        protected RAbstractIntVector get(@SuppressWarnings("unused") RMissing length) {
+        protected RIntVector get(@SuppressWarnings("unused") RMissing length) {
             return RDataFactory.createEmptyIntVector();
         }
 
         @Specialization
-        protected RAbstractIntVector get(int length,
-                        @Cached("create()") VectorLengthProfile profile) {
+        protected RIntVector get(int length,
+                                 @Cached("create()") VectorLengthProfile profile) {
             if (length > 0) {
                 return RDataFactory.createIntVector(profile.profile(length));
             }
@@ -52,8 +52,8 @@ public abstract class VectorFastPaths {
         }
 
         @Specialization
-        protected RAbstractIntVector get(double length,
-                        @Cached("create()") VectorLengthProfile profile) {
+        protected RIntVector get(double length,
+                                 @Cached("create()") VectorLengthProfile profile) {
             if (!Double.isNaN(length)) {
                 return get((int) length, profile);
             }

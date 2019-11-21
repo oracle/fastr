@@ -47,10 +47,9 @@ import static com.oracle.truffle.r.runtime.RError.Message.INVALID_SAMPLE_TYPE_IN
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 public class RNGFunctions {
@@ -107,14 +106,14 @@ public class RNGFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RIntVector doRNGkind(int kind, int normKind, int sampleKind) {
+        protected com.oracle.truffle.r.runtime.data.RIntVector doRNGkind(int kind, int normKind, int sampleKind) {
             RRNG.getRNGState();
-            RIntVector result = getCurrent();
+            com.oracle.truffle.r.runtime.data.RIntVector result = getCurrent();
             RRNG.doRNGKind(kind, normKind, sampleKind);
             return result;
         }
 
-        private static RIntVector getCurrent() {
+        private static com.oracle.truffle.r.runtime.data.RIntVector getCurrent() {
             return RDataFactory.createIntVector(new int[]{RRNG.currentKindAsInt(), RRNG.currentNormKindAsInt(), RRNG.currentSampleKindAsInt()}, RDataFactory.COMPLETE_VECTOR);
         }
     }
@@ -129,7 +128,7 @@ public class RNGFunctions {
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         @Specialization
-        protected RNull setSeed(VirtualFrame frame, RAbstractIntVector data) {
+        protected RNull setSeed(VirtualFrame frame, RIntVector data) {
             int[] arr = new int[data.getLength()];
             for (int i = 0; i < arr.length; i++) {
                 arr[i] = data.getDataAt(i);

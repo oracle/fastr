@@ -29,7 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -76,7 +76,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         protected final RAbstractStringVector names;
         protected final String title;
         protected final MatrixDimNames matrixDimNames;
-        protected final RAbstractIntVector dims;
+        protected final RIntVector dims;
         protected final boolean supressIndexLabels;
 
         protected VectorPrintJob(T vector, int indx, PrintContext printCtx) {
@@ -87,8 +87,8 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
 
             Object dimAttr = getDims(vector);
             int length = vector.getLength();
-            if (dimAttr instanceof RAbstractIntVector) {
-                dims = (RAbstractIntVector) dimAttr;
+            if (dimAttr instanceof RIntVector) {
+                dims = (RIntVector) dimAttr;
                 if (dims.getLength() == 1) {
                     RList t = Utils.<RList> castTo(getDimNames(vector));
                     if (t != null && t.getDataAt(0) != null) {

@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import org.junit.Assert;
 import org.junit.Before;
@@ -38,8 +38,8 @@ import org.junit.Test;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PositionCharacterLookupNodeTest extends TestBase {
-    private RAbstractIntVector matrix;
-    private RAbstractIntVector vecWithNames;
+    private RIntVector matrix;
+    private RIntVector vecWithNames;
 
     private NodeHandle<PositionCharacterLookupNode> createNodeHandle(int numPositions, int positionIndex) {
         AtomicReference<NodeHandle<PositionCharacterLookupNode>> handle = new AtomicReference<>();
@@ -94,7 +94,7 @@ public class PositionCharacterLookupNodeTest extends TestBase {
 
         RStringVector index = RDataFactory.createStringVector("b");
 
-        RAbstractIntVector positionVector = (RAbstractIntVector) handle.call(vecWithNames, index);
+        RIntVector positionVector = (RIntVector) handle.call(vecWithNames, index);
 
         Assert.assertEquals(1, positionVector.getLength());
         Assert.assertEquals(2, positionVector.getDataAt(0));
@@ -112,12 +112,12 @@ public class PositionCharacterLookupNodeTest extends TestBase {
         RAbstractStringVector dimYIndex = RDataFactory.createStringVectorFromScalar("B");
 
         // Check X dimension character lookup.
-        RAbstractIntVector dimXPositionVector = (RAbstractIntVector) handleDimX.call(matrix, dimXIndex);
+        RIntVector dimXPositionVector = (RIntVector) handleDimX.call(matrix, dimXIndex);
         Assert.assertEquals(1, dimXPositionVector.getLength());
         Assert.assertEquals(1, dimXPositionVector.getDataAt(0));
 
         // Check Y dimension character lookup.
-        RAbstractIntVector dimYPositionVector = (RAbstractIntVector) handleDimY.call(matrix, dimYIndex);
+        RIntVector dimYPositionVector = (RIntVector) handleDimY.call(matrix, dimYIndex);
         Assert.assertEquals(1, dimYPositionVector.getLength());
         Assert.assertEquals(2, dimYPositionVector.getDataAt(0));
     }

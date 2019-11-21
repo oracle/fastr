@@ -30,7 +30,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
 @RBuiltin(name = "intToBits", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
@@ -47,7 +47,7 @@ public abstract class IntToBits extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RAbstractRawVector intToBits(RAbstractIntVector x) {
+    protected RAbstractRawVector intToBits(RIntVector x) {
         byte[] result = new byte[32 * x.getLength()];
         int pos = 0;
         for (int j = 0; j < x.getLength(); j++) {

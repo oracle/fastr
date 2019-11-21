@@ -102,7 +102,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -772,7 +772,7 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractIntVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+        public Object toArray(RIntVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
                         @Cached() R2Foreign r2Foreign,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             return toArray(ctxRef.get(), vec, flat, int.class, (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
@@ -780,7 +780,7 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractIntVector vec, String className, boolean flat,
+        public Object toArray(RIntVector vec, String className, boolean flat,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             RContext context = ctxRef.get();
             return toArray(context, vec, flat, getClazz(context, className), (array, i) -> {
@@ -1005,7 +1005,7 @@ public class FastRInterop {
 
         protected boolean isJavaLikeVector(RAbstractVector vec) {
             return vec instanceof RAbstractLogicalVector ||
-                            vec instanceof RAbstractIntVector ||
+                            vec instanceof RIntVector ||
                             vec instanceof RAbstractDoubleVector ||
                             vec instanceof RAbstractStringVector ||
                             vec instanceof RAbstractRawVector;
@@ -1099,8 +1099,8 @@ public class FastRInterop {
                             // TODO temporary hot fix
                             // need interop.instantiate(multiDimArrayClass, dims)
                             Object arg0 = args.getArgument(0);
-                            if (arg0 instanceof RAbstractIntVector) {
-                                RAbstractIntVector vec = (RAbstractIntVector) arg0;
+                            if (arg0 instanceof RIntVector) {
+                                RIntVector vec = (RIntVector) arg0;
                                 int[] dims = new int[vec.getLength()];
 
                                 for (int i = 0; i < vec.getLength(); i++) {

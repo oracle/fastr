@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.*;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -231,7 +231,7 @@ abstract class PositionCheckNode extends RBaseNode {
         assert posDim.length == 2;
 
         if (posDim[1] == vectorDim.length) {
-            if (matrixPosition instanceof RAbstractIntVector || matrixPosition instanceof RAbstractDoubleVector) {
+            if (matrixPosition instanceof RIntVector || matrixPosition instanceof RAbstractDoubleVector) {
                 return matrix2IndexCache.mat2indsub.execute(vectorDim, matrixPosition, posDim);
             } else if (matrixPosition instanceof RAbstractStringVector) {
                 return matrix2IndexCache.strmat2indsub.execute(vector, vectorDim, (RAbstractStringVector) matrixPosition, posDim);
@@ -272,7 +272,7 @@ abstract class PositionCheckNode extends RBaseNode {
         private final BranchProfile na = BranchProfile.create();
 
         @Specialization
-        protected RAbstractIntVector doInt(int[] vectorDimensions, RAbstractIntVector intPos, int[] positionDimensions) {
+        protected RIntVector doInt(int[] vectorDimensions, RIntVector intPos, int[] positionDimensions) {
             int numberOfPositions = positionDimensions[0];
             int[] flatIndexes = new int[numberOfPositions];
 
@@ -383,7 +383,7 @@ abstract class PositionCheckNode extends RBaseNode {
                     }
                     RStringVector nameToFindVector = RDataFactory.createStringVectorFromScalar(nameToFind);
                     int notFoundStartIndex = namesForCurrentDim.getLength();
-                    RAbstractIntVector foundIndexes = searchNode.apply(namesForCurrentDim, nameToFindVector, notFoundStartIndex, null);
+                    RIntVector foundIndexes = searchNode.apply(namesForCurrentDim, nameToFindVector, notFoundStartIndex, null);
 
                     assert foundIndexes.getLength() <= 1;
                     int foundIndex = foundIndexes.getDataAt(0);

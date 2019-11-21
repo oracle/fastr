@@ -27,7 +27,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.HiddenKey;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import java.util.Iterator;
@@ -147,7 +147,7 @@ public abstract class RAttributable extends RBaseObject {
         if (attributable.attributes != null && (classAttr == null || classAttr.getLength() == 0)) {
             attributable.removeAttributeMapping(RRuntime.CLASS_ATTR_KEY);
         } else if (classAttr != null && classAttr.getLength() != 0) {
-            if (attributable instanceof RAbstractVector && !(attributable instanceof RAbstractIntVector)) {
+            if (attributable instanceof RAbstractVector && !(attributable instanceof RIntVector)) {
                 for (int i = 0; i < classAttr.getLength(); i++) {
                     String attr = classAttr.getDataAt(i);
                     if (RRuntime.CLASS_FACTOR.equals(attr)) {

@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -56,7 +55,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -143,7 +142,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
     }
 
     protected boolean isSupportedVector(Object value) {
-        return value instanceof RAbstractIntVector || value instanceof RAbstractDoubleVector || value instanceof RAbstractComplexVector || value instanceof RAbstractLogicalVector ||
+        return value instanceof RIntVector || value instanceof RAbstractDoubleVector || value instanceof RAbstractComplexVector || value instanceof RAbstractLogicalVector ||
                         (!isLogicOp(factory) && (value instanceof RAbstractStringVector || value instanceof RAbstractRawVector));
     }
 
@@ -229,7 +228,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                     if (RRuntime.isNA((int) value)) {
                         result.setComplete(false);
                     }
-                    ((RIntVector) result).setDataAt(store, i, (int) value);
+                    ((com.oracle.truffle.r.runtime.data.RIntVector) result).setDataAt(store, i, (int) value);
                 } else if (type == RType.Double && value instanceof Double) {
                     if (RRuntime.isNA((double) value)) {
                         result.setComplete(false);

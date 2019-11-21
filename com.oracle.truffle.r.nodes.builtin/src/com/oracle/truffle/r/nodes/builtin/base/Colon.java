@@ -45,10 +45,9 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -113,7 +112,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         }
 
         @Specialization(guards = "left <= right")
-        protected RIntSequence colonAscending(int left, int right) {
+        protected RIntVector colonAscending(int left, int right) {
             leftNA.enable(left);
             rightNA.enable(right);
             naCheck(leftNA.check(left) || rightNA.check(right));
@@ -122,7 +121,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         }
 
         @Specialization(guards = "left > right")
-        protected RIntSequence colonDescending(int left, int right) {
+        protected RIntVector colonDescending(int left, int right) {
             leftNA.enable(left);
             rightNA.enable(right);
             naCheck(leftNA.check(left) || rightNA.check(right));
@@ -247,7 +246,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         }
 
         @Specialization
-        protected int doSequence(RAbstractIntVector vector) {
+        protected int doSequence(RIntVector vector) {
             checkLength(vector.getLength());
             return vector.getDataAt(0);
         }

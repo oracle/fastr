@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class TypeExprTest {
@@ -90,7 +90,7 @@ public class TypeExprTest {
         Set<Type> exp = toSet(UpperBoundsConjunction.create(Runnable.class, RAbstractStringVector.class).asWildcard("a"));
         Assert.assertEquals(exp, te.lower("a").toNormalizedConjunctionSet());
 
-        te = atom(RAbstractIntVector.class).and(atom(RAbstractDoubleVector.class).lower());
+        te = atom(RIntVector.class).and(atom(RAbstractDoubleVector.class).lower());
         Assert.assertTrue(te.isNothing());
     }
 

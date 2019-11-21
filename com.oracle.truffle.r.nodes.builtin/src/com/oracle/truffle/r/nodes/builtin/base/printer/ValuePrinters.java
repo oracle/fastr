@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -86,13 +86,13 @@ final class ValuePrinters implements ValuePrinter<Object> {
             x = printCtx.printerNode().boxPrimitive(x);
             ValuePrinter printer = printers.get(x.getClass());
             if (printer == null) {
-                if (x instanceof RAbstractIntVector && hasClass(x)) {
+                if (x instanceof RIntVector && hasClass(x)) {
                     printer = FactorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractStringVector) {
                     printer = StringVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractDoubleVector) {
                     printer = DoubleVectorPrinter.INSTANCE;
-                } else if (x instanceof RAbstractIntVector) {
+                } else if (x instanceof RIntVector) {
                     printer = IntegerVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractLogicalVector) {
                     printer = LogicalVectorPrinter.INSTANCE;

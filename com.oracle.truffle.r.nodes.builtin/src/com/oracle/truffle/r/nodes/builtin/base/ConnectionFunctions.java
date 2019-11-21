@@ -108,7 +108,6 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -118,7 +117,7 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -139,7 +138,7 @@ public abstract class ConnectionFunctions {
     public abstract static class Stdin extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector stdin() {
+        protected RIntVector stdin() {
             return getStdin().asVector();
         }
     }
@@ -148,7 +147,7 @@ public abstract class ConnectionFunctions {
     public abstract static class Stdout extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector stdout() {
+        protected RIntVector stdout() {
             return getStdout().asVector();
         }
     }
@@ -157,7 +156,7 @@ public abstract class ConnectionFunctions {
     public abstract static class Stderr extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector stderr() {
+        protected RIntVector stderr() {
             return getStderr().asVector();
         }
     }
@@ -236,7 +235,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector file(String description, String openArg, boolean blocking, String encoding, @SuppressWarnings("unused") String method, boolean raw,
+        protected RIntVector file(String description, String openArg, boolean blocking, String encoding, @SuppressWarnings("unused") String method, boolean raw,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             String open = openArg;
 
@@ -310,7 +309,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector zzFile(String description, String open, String encoding, int compression,
+        protected RIntVector zzFile(String description, String open, String encoding, int compression,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             try {
                 return new CompressedRConnection(ctxRef.get().getSafeTruffleFile(description), open, cType, encoding, compression).asVector();
@@ -372,7 +371,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-        public RAbstractIntVector gzcon(int conIndex, @SuppressWarnings("unused") int level, @SuppressWarnings("unused") boolean allowNonCompressed, @SuppressWarnings("unused") boolean text,
+        public RIntVector gzcon(int conIndex, @SuppressWarnings("unused") int level, @SuppressWarnings("unused") boolean allowNonCompressed, @SuppressWarnings("unused") boolean text,
                         @Cached("createBinaryProfile()") ConditionProfile gzConProfile) {
             BaseRConnection base = RConnection.fromIndex(conIndex);
             if (gzConProfile.profile(base.getConnectionClass() == ConnectionSupport.ConnectionClass.GZCon)) {
@@ -405,7 +404,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector textConnection(String description, RAbstractStringVector text, String open, REnvironment env, @SuppressWarnings("unused") int encoding) {
+        protected RIntVector textConnection(String description, RAbstractStringVector text, String open, REnvironment env, @SuppressWarnings("unused") int encoding) {
             try {
                 return new TextRConnection(description, text, env, open).asVector();
             } catch (IOException ex) {
@@ -414,7 +413,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-        protected RAbstractIntVector textConnection(String description, @SuppressWarnings("unused") RNull text, String open, REnvironment env, int encoding) {
+        protected RIntVector textConnection(String description, @SuppressWarnings("unused") RNull text, String open, REnvironment env, int encoding) {
             return textConnection(description, (RAbstractStringVector) null, open, env, encoding);
         }
     }
@@ -454,7 +453,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector socketConnection(String host, int port, boolean server, boolean blocking, String open,
+        protected RIntVector socketConnection(String host, int port, boolean server, boolean blocking, String open,
                         String encoding, int timeout) {
             try {
                 return new RSocketConnection(open, server, host, port, blocking, timeout, encoding).asVector();
@@ -480,7 +479,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, String encoding,
+        protected RIntVector urlConnection(String url, String open, @SuppressWarnings("unused") boolean blocking, String encoding,
                         @SuppressWarnings("unused") String method, @SuppressWarnings("unused") Object headers) {
             try {
                 return new URLRConnection(url, open, encoding).asVector();
@@ -506,7 +505,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector rawConnection(String description, RAbstractRawVector text, String open) {
+        protected RIntVector rawConnection(String description, RAbstractRawVector text, String open) {
             try {
                 return new RawRConnection(description, text.getDataTemp(), open).asVector();
             } catch (IOException ex) {
@@ -515,7 +514,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Fallback
-        protected RAbstractIntVector rawConnection(@SuppressWarnings("unused") Object description, @SuppressWarnings("unused") Object text, @SuppressWarnings("unused") Object open) {
+        protected RIntVector rawConnection(@SuppressWarnings("unused") Object description, @SuppressWarnings("unused") Object text, @SuppressWarnings("unused") Object open) {
             throw error(Message.INVALID_ARGUMENT, "raw");
         }
     }
@@ -779,13 +778,13 @@ public abstract class ConnectionFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "ncharsEmpty(nchars)")
-        protected RStringVector readCharNcharsEmpty(int con, RAbstractIntVector nchars, boolean useBytes) {
+        protected RStringVector readCharNcharsEmpty(int con, RIntVector nchars, boolean useBytes) {
             return RDataFactory.createEmptyStringVector();
         }
 
         @Specialization(guards = "!ncharsEmpty(nchars)")
         @TruffleBoundary
-        protected RStringVector readChar(int con, RAbstractIntVector nchars, boolean useBytes) {
+        protected RStringVector readChar(int con, RIntVector nchars, boolean useBytes) {
             try (BaseRConnection openConn = RConnection.fromIndex(con).forceOpen("rb")) {
                 String[] data = new String[nchars.getLength()];
                 for (int i = 0; i < data.length; i++) {
@@ -797,7 +796,7 @@ public abstract class ConnectionFunctions {
             }
         }
 
-        boolean ncharsEmpty(RAbstractIntVector nchars) {
+        boolean ncharsEmpty(RIntVector nchars) {
             return nchars.getLength() == 0;
         }
     }
@@ -819,12 +818,12 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-        protected RNull writeChar(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
+        protected RNull writeChar(RAbstractStringVector object, int con, RIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
             return writeCharGeneric(object, con, nchars, sep, useBytes);
         }
 
         @TruffleBoundary
-        private RNull writeCharGeneric(RAbstractStringVector object, int con, RAbstractIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
+        private RNull writeCharGeneric(RAbstractStringVector object, int con, RIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("wb")) {
                 final int length = object.getLength();
                 final int ncharsLen = nchars.getLength();
@@ -852,7 +851,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-        protected RNull writeChar(RAbstractStringVector object, int con, RAbstractIntVector nchars, @SuppressWarnings("unused") RNull sep, boolean useBytes) {
+        protected RNull writeChar(RAbstractStringVector object, int con, RIntVector nchars, @SuppressWarnings("unused") RNull sep, boolean useBytes) {
             return writeCharGeneric(object, con, nchars, null, useBytes);
         }
     }
@@ -977,7 +976,7 @@ public abstract class ConnectionFunctions {
             return buffer;
         }
 
-        private static RIntVector readInteger(RConnection con, int n, int size, boolean swap, boolean signed) throws IOException {
+        private static com.oracle.truffle.r.runtime.data.RIntVector readInteger(RConnection con, int n, int size, boolean swap, boolean signed) throws IOException {
             ByteBuffer buffer = fillBuffer(con, swap, n * size);
             int nInts = buffer.limit() / size;
             int[] data = new int[nInts];
@@ -1263,7 +1262,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector getConnection(int what) {
+        protected RIntVector getConnection(int what) {
             BaseRConnection con = RContext.getInstance().stateRConnection.getConnection(what, false);
             if (con == null) {
                 throw error(RError.Message.NO_SUCH_CONNECTION, what);
@@ -1277,7 +1276,7 @@ public abstract class ConnectionFunctions {
     public abstract static class GetAllConnections extends RBuiltinNode.Arg0 {
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector getAllConnections() {
+        protected RIntVector getAllConnections() {
             return RContext.getInstance().stateRConnection.getAllConnections();
         }
     }
@@ -1350,7 +1349,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector fifo(String path, String open, boolean blocking, String encoding) {
+        protected RIntVector fifo(String path, String open, boolean blocking, String encoding) {
             try {
                 return new FifoRConnection(path, open, blocking, encoding).asVector();
             } catch (IOException ex) {
@@ -1374,7 +1373,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector pipe(String path, String openArg, String encoding) {
+        protected RIntVector pipe(String path, String openArg, String encoding) {
 
             try {
                 return new PipeRConnection(path, openArg, encoding).asVector();
@@ -1442,7 +1441,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector channelConnection(TruffleObject channel, String open, String encoding) {
+        protected RIntVector channelConnection(TruffleObject channel, String open, String encoding) {
             try {
                 TruffleLanguage.Env env = RContext.getInstance().getEnv();
                 if (env.isHostObject(channel)) {
@@ -1470,7 +1469,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-        protected RLogicalVector selectMultiple(RAbstractIntVector socklist, boolean write, int timeout) {
+        protected RLogicalVector selectMultiple(RIntVector socklist, boolean write, int timeout) {
             RSocketConnection[] socketConnections = getSocketConnections(socklist);
             try {
                 byte[] selected = RSocketConnection.select(socketConnections, write, timeout * 1000L);
@@ -1482,7 +1481,7 @@ public abstract class ConnectionFunctions {
         }
 
         @TruffleBoundary
-        private RSocketConnection[] getSocketConnections(RAbstractIntVector socklist) {
+        private RSocketConnection[] getSocketConnections(RIntVector socklist) {
             RSocketConnection[] socketConnections = new RSocketConnection[socklist.getLength()];
             for (int i = 0; i < socklist.getLength(); i++) {
                 BaseRConnection baseConnection = getBaseConnection(RConnection.fromIndex(socklist.getDataAt(i)));

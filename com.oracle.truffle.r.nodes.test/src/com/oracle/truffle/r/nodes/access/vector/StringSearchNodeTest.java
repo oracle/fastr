@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.nodes.test.TestUtilities.createHandle;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
@@ -36,7 +37,6 @@ import com.oracle.truffle.r.nodes.test.TestBase;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RunWith(Theories.class)
@@ -87,7 +87,7 @@ public class StringSearchNodeTest extends TestBase {
         return RDataFactory.createStringVector(elements, complete);
     }
 
-    private static void assertResult(RAbstractStringVector a, RAbstractStringVector b, RAbstractIntVector result) {
+    private static void assertResult(RAbstractStringVector a, RAbstractStringVector b, RIntVector result) {
         assertThat(result.getLength(), is(b.getLength()));
         for (int i = 0; i < b.getLength(); i++) {
             int resultIndex = result.getDataAt(i);
@@ -125,7 +125,7 @@ public class StringSearchNodeTest extends TestBase {
                         });
     }
 
-    private RAbstractIntVector executeSearch(RAbstractStringVector a, RAbstractStringVector b) {
-        return (RAbstractIntVector) handle.call(a, b);
+    private RIntVector executeSearch(RAbstractStringVector a, RAbstractStringVector b) {
+        return (RIntVector) handle.call(a, b);
     }
 }

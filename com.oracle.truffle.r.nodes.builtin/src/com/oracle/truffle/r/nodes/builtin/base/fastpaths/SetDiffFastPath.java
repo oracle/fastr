@@ -27,15 +27,15 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 public abstract class SetDiffFastPath extends RFastPathNode {
 
     @Specialization(guards = {"x.getStride() == 1", "y.getClass() == yClass"}, limit = "getCacheSize(3)")
-    protected static Object cached(RIntSequence x, RAbstractIntVector y,
-                    @Cached("y.getClass()") Class<? extends RAbstractIntVector> yClass) {
-        RAbstractIntVector profiledY = yClass.cast(y);
+    protected static Object cached(RIntSequence x, RIntVector y,
+                    @Cached("y.getClass()") Class<? extends RIntVector> yClass) {
+        RIntVector profiledY = yClass.cast(y);
         int xLength = x.getLength();
         int xStart = x.getStart();
         int yLength = profiledY.getLength();
@@ -65,7 +65,7 @@ public abstract class SetDiffFastPath extends RFastPathNode {
     }
 
     @Specialization(guards = {"x.getStride() == 1"}, replaces = "cached")
-    protected static Object generic(RIntSequence x, RAbstractIntVector y) {
+    protected static Object generic(RIntSequence x, RIntVector y) {
         return cached(x, y, y.getClass());
     }
 

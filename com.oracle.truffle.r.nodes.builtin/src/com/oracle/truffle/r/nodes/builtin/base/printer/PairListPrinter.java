@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -49,7 +49,7 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
     @Override
     @TruffleBoundary
     protected void printValue(RPairList s, PrintContext printCtx) throws IOException {
-        final RAbstractIntVector dims = Utils.<RAbstractIntVector> castTo(
+        final RIntVector dims = Utils.<RIntVector> castTo(
                         s.getAttr(RRuntime.DIM_ATTR_KEY));
 
         final int ns = s.getLength();
@@ -63,7 +63,7 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
                     pbuf = RRuntime.NULL;
                 } else if (tmp instanceof RAbstractLogicalVector) {
                     pbuf = "Logical," + ((RAbstractContainer) tmp).getLength();
-                } else if (tmp instanceof RAbstractIntVector) {
+                } else if (tmp instanceof RIntVector) {
                     pbuf = "Integer," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractDoubleVector) {
                     pbuf = "Numeric," + ((RAbstractContainer) tmp).getLength();

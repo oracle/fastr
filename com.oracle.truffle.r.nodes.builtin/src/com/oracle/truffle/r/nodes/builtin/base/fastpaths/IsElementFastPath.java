@@ -30,7 +30,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -93,7 +93,7 @@ public abstract class IsElementFastPath extends RFastPathNode {
     }
 
     @Specialization(replaces = "isElementOneSequence", guards = "el.getLength() == 1")
-    protected Byte iselementOne(RAbstractDoubleVector el, RAbstractIntVector set,
+    protected Byte iselementOne(RAbstractDoubleVector el, RIntVector set,
                     @Cached("create()") NACheck na,
                     @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {

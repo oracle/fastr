@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -72,7 +72,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(limit = "getCacheSize(4)", guards = {"xAccess.supports(x)", "fAccess.supports(f)"})
-    protected RList split(RAbstractVector x, RAbstractIntVector f,
+    protected RList split(RAbstractVector x, RIntVector f,
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("f.access()") VectorAccess fAccess) {
         try (SequentialIterator xIter = xAccess.access(x); SequentialIterator fIter = fAccess.access(f)) {
@@ -267,7 +267,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "split")
-    protected RList splitGeneric(RAbstractVector x, RAbstractIntVector f) {
+    protected RList splitGeneric(RAbstractVector x, RIntVector f) {
         return split(x, f, x.slowPathAccess(), f.slowPathAccess());
     }
 

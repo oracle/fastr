@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryCompare;
@@ -78,7 +78,7 @@ public abstract class IsUnsorted extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected byte isUnsorted(RAbstractIntVector x, boolean strictly) {
+    protected byte isUnsorted(RIntVector x, boolean strictly) {
         int last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             int current = x.getDataAt(k);

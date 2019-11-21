@@ -64,7 +64,7 @@ import com.oracle.truffle.r.runtime.data.closures.RToIntVectorClosure;
 import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -1065,10 +1065,10 @@ public class RDeparse {
         }
 
         private static RIntSequence asIntSequence(RAbstractVector vec) {
-            if (!(vec instanceof RAbstractIntVector) || vec instanceof RToIntVectorClosure) {
+            if (!(vec instanceof RIntVector) || vec instanceof RToIntVectorClosure) {
                 return null;
             }
-            RAbstractIntVector intVec = (RAbstractIntVector) vec;
+            RIntVector intVec = (RIntVector) vec;
             if (vec instanceof RIntSequence) {
                 return (RIntSequence) vec;
             }

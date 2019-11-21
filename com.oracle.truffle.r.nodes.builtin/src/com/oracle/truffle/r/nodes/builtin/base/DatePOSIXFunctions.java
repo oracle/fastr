@@ -79,14 +79,14 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+
 import java.time.Month;
 
 // from GnuR datatime.c
@@ -215,7 +215,7 @@ public class DatePOSIXFunctions {
             RList result = builder.finish();
             RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
-                ((RIntVector) result.getDataAt(5)).copyNamesFrom(x);
+                ((com.oracle.truffle.r.runtime.data.RIntVector) result.getDataAt(5)).copyNamesFrom(x);
             }
             return result;
         }
@@ -254,7 +254,7 @@ public class DatePOSIXFunctions {
             RList result = builder.finish();
             RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
-                ((RIntVector) result.getDataAt(5)).copyNamesFrom(x);
+                ((com.oracle.truffle.r.runtime.data.RIntVector) result.getDataAt(5)).copyNamesFrom(x);
             }
             return result;
         }
@@ -391,11 +391,11 @@ public class DatePOSIXFunctions {
         @TruffleBoundary
         protected RStringVector format(RAbstractListVector x, RAbstractStringVector format, boolean usetz) {
             RAbstractDoubleVector secVector = (RAbstractDoubleVector) RRuntime.convertScalarVectors(x.getDataAt(0));
-            RAbstractIntVector minVector = (RAbstractIntVector) RRuntime.convertScalarVectors(x.getDataAt(1));
-            RAbstractIntVector hourVector = (RAbstractIntVector) RRuntime.convertScalarVectors(x.getDataAt(2));
-            RAbstractIntVector mdayVector = (RAbstractIntVector) RRuntime.convertScalarVectors(x.getDataAt(3));
-            RAbstractIntVector monVector = (RAbstractIntVector) RRuntime.convertScalarVectors(x.getDataAt(4));
-            RAbstractIntVector yearVector = (RAbstractIntVector) RRuntime.convertScalarVectors(x.getDataAt(5));
+            RIntVector minVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(1));
+            RIntVector hourVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(2));
+            RIntVector mdayVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(3));
+            RIntVector monVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(4));
+            RIntVector yearVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(5));
             ZoneId zone;
             DateTimeFormatterBuilder[] builders = createFormatters(format, false);
             String tzone = getTimeZomeFromAttribute(x);
@@ -789,8 +789,8 @@ public class DatePOSIXFunctions {
         int i = index % v.getLength();
         if (v instanceof RAbstractDoubleVector) {
             return ((RAbstractDoubleVector) v).getDataAt(i);
-        } else if (v instanceof RAbstractIntVector) {
-            return ((RAbstractIntVector) v).getDataAt(i);
+        } else if (v instanceof RIntVector) {
+            return ((RIntVector) v).getDataAt(i);
         } else {
             throw RInternalError.shouldNotReachHere();
         }
@@ -798,8 +798,8 @@ public class DatePOSIXFunctions {
 
     private static int getInt(RAbstractVector v, int index) {
         int i = index % v.getLength();
-        if (v instanceof RAbstractIntVector) {
-            return ((RAbstractIntVector) v).getDataAt(i);
+        if (v instanceof RIntVector) {
+            return ((RIntVector) v).getDataAt(i);
         } else if (v instanceof RAbstractDoubleVector) {
             return (int) ((RAbstractDoubleVector) v).getDataAt(i);
         } else {

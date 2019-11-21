@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -46,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -327,8 +327,8 @@ public class VectorInteropTest extends AbstractInteropTest {
     private static boolean isNA(RAbstractVector vec) {
         if (vec instanceof RAbstractDoubleVector) {
             return RRuntime.isNA(((RAbstractDoubleVector) vec).getDataAt(0));
-        } else if (vec instanceof RAbstractIntVector) {
-            return RRuntime.isNA(((RAbstractIntVector) vec).getDataAt(0));
+        } else if (vec instanceof RIntVector) {
+            return RRuntime.isNA(((RIntVector) vec).getDataAt(0));
         } else if (vec instanceof RAbstractLogicalVector) {
             return RRuntime.isNA(((RAbstractLogicalVector) vec).getDataAt(0));
         } else if (vec instanceof RAbstractStringVector) {
@@ -358,8 +358,8 @@ public class VectorInteropTest extends AbstractInteropTest {
         if (vec instanceof RAbstractStringVector) {
             return RRuntime.isNA(((RAbstractStringVector) vec).getDataAt(0));
         }
-        if (vec instanceof RAbstractIntVector) {
-            return RRuntime.isNA(((RAbstractIntVector) vec).getDataAt(0));
+        if (vec instanceof RIntVector) {
+            return RRuntime.isNA(((RIntVector) vec).getDataAt(0));
         }
         if (vec instanceof RAbstractDoubleVector) {
             return RRuntime.isNA(((RAbstractDoubleVector) vec).getDataAt(0));

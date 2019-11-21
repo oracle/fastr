@@ -56,7 +56,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
@@ -114,7 +114,7 @@ public class ConnectionSupport {
             return index;
         }
 
-        public RAbstractIntVector getAllConnections() {
+        public RIntVector getAllConnections() {
             ArrayList<Integer> list = new ArrayList<>();
             for (int i = 0; i <= hwm; i++) {
                 WeakReference<BaseRConnection> ref = allConnections.get(i);
@@ -1095,10 +1095,10 @@ public class ConnectionSupport {
             this.incomplete = b;
         }
 
-        public final RAbstractIntVector asVector() {
+        public final RIntVector asVector() {
             String[] classes = new String[]{ConnectionSupport.getBaseConnection(this).getConnectionClassName(), "connection"};
 
-            RAbstractIntVector result = RDataFactory.createIntVector(new int[]{getDescriptor()}, true);
+            RIntVector result = RDataFactory.createIntVector(new int[]{getDescriptor()}, true);
 
             RStringVector classVector = RDataFactory.createStringVector(classes, RDataFactory.COMPLETE_VECTOR);
             // it's important to put "this" into the externalptr, so that it doesn't get collected

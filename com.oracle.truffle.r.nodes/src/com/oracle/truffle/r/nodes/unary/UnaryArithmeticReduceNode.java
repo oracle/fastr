@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -269,13 +269,13 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
     }
 
     @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
-    protected Object doIntCached(RAbstractIntVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite,
-                    @Cached("vector.access()") VectorAccess access) {
+    protected Object doIntCached(RIntVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite,
+                                 @Cached("vector.access()") VectorAccess access) {
         return doInt(vector, naRm, access);
     }
 
     @Specialization(replaces = "doIntCached")
-    protected Object doIntGeneric(RAbstractIntVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected Object doIntGeneric(RIntVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         return doInt(vector, naRm, vector.slowPathAccess());
     }
 

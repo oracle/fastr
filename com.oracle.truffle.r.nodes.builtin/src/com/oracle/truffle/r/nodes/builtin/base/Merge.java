@@ -35,10 +35,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 
 /**
@@ -89,11 +88,11 @@ public abstract class Merge extends RBuiltinNode.Arg4 {
     }
 
     @Specialization
-    RList merge(RAbstractIntVector xIndsAbstract, RAbstractIntVector yIndsAbstract, boolean allX, boolean allY,
-                    @Cached("create()") GetReadonlyData.Int xIndsToArray,
-                    @Cached("create()") GetReadonlyData.Int yIndsToArray) {
-        RIntVector xInds = xIndsAbstract.materialize();
-        RIntVector yInds = yIndsAbstract.materialize();
+    RList merge(RIntVector xIndsAbstract, RIntVector yIndsAbstract, boolean allX, boolean allY,
+                @Cached("create()") GetReadonlyData.Int xIndsToArray,
+                @Cached("create()") GetReadonlyData.Int yIndsToArray) {
+        com.oracle.truffle.r.runtime.data.RIntVector xInds = xIndsAbstract.materialize();
+        com.oracle.truffle.r.runtime.data.RIntVector yInds = yIndsAbstract.materialize();
 
         /* 0. sort the indices */
         int nx = xInds.getLength();

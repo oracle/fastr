@@ -27,7 +27,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
@@ -35,12 +35,12 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public final class RIntSequence extends RAbstractIntVector implements RSequence {
+public final class RIntSequence extends RIntVector implements RSequence {
 
     private final int start;
     private final int stride;
     private final int length;
-    private AtomicReference<RIntVector> materialized = new AtomicReference<>();
+    private AtomicReference<com.oracle.truffle.r.runtime.data.RIntVector> materialized = new AtomicReference<>();
 
     RIntSequence(int start, int stride, int length) {
         super(RDataFactory.COMPLETE_VECTOR);
@@ -51,7 +51,7 @@ public final class RIntSequence extends RAbstractIntVector implements RSequence 
     }
 
     @Override
-    public RIntVector cachedMaterialize() {
+    public com.oracle.truffle.r.runtime.data.RIntVector cachedMaterialize() {
         if (materialized.get() == null) {
             materialized.compareAndSet(null, materialize());
         }

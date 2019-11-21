@@ -28,7 +28,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -63,7 +63,7 @@ public abstract class GridLinesNode extends Node {
 
         // Convert the list of vectors of indexes to type-safe array and calculate the max length of
         // the vectors.
-        RAbstractIntVector[] unitIndexesList = new RAbstractIntVector[lengths.getLength()];
+        RIntVector[] unitIndexesList = new RIntVector[lengths.getLength()];
         int maxIndexesLen = 0;
         for (int i = 0; i < lengths.getLength(); i++) {
             unitIndexesList[i] = asIntVector(lengths.getDataAt(i));
@@ -73,7 +73,7 @@ public abstract class GridLinesNode extends Node {
         double[] xx = new double[maxIndexesLen + 1];    // plus one for polygons
         double[] yy = new double[maxIndexesLen + 1];
         for (int unitIndexesListIdx = 0; unitIndexesListIdx < unitIndexesList.length; unitIndexesListIdx++) {
-            RAbstractIntVector unitIndexes = unitIndexesList[unitIndexesListIdx];
+            RIntVector unitIndexes = unitIndexesList[unitIndexesListIdx];
             DrawingContext drawingCtx = gpar.getDrawingContext(unitIndexesListIdx);
             boolean oldIsFinite = false;
             int start = 0;

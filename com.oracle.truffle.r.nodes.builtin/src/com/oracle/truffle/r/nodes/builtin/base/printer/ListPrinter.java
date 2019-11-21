@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -61,7 +61,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
     @Override
     @TruffleBoundary
     protected void printValue(RAbstractListVector s, PrintContext printCtx) throws IOException {
-        RAbstractIntVector dims = Utils.<RAbstractIntVector> castTo(
+        RIntVector dims = Utils.<RIntVector> castTo(
                         s.getAttr(RRuntime.DIM_ATTR_KEY));
 
         if (dims != null && dims.getLength() > 1) {
@@ -90,8 +90,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 } else {
                     pbuf = "Logical," + lv.getLength();
                 }
-            } else if (tmp instanceof RAbstractIntVector) {
-                RAbstractIntVector iv = (RAbstractIntVector) tmp;
+            } else if (tmp instanceof RIntVector) {
+                RIntVector iv = (RIntVector) tmp;
                 if (printCtx.printerNode().inherits(iv, RRuntime.CLASS_FACTOR)) {
                     /* factors are stored as integers */
                     pbuf = "factor," + iv.getLength();

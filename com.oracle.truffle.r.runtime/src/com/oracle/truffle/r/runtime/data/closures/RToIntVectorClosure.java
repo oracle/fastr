@@ -24,16 +24,16 @@ package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RIntVector;
+
 import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public class RToIntVectorClosure extends RAbstractIntVector implements RClosure {
+public class RToIntVectorClosure extends RIntVector implements RClosure {
 
     protected final boolean keepAttributes;
     private final RAbstractVector vector;
@@ -59,7 +59,7 @@ public class RToIntVectorClosure extends RAbstractIntVector implements RClosure 
 
     @TruffleBoundary
     @Override
-    protected void copyAttributes(RIntVector materialized) {
+    protected void copyAttributes(com.oracle.truffle.r.runtime.data.RIntVector materialized) {
         if (keepAttributes) {
             materialized.copyAttributesFrom(this);
         }

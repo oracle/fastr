@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -182,7 +182,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         boolean applyResultZeroLength = zeroLengthProfile.profile(applyResult.length == 0);
 
         naCheck.enable(true);
-        if (funValueVec instanceof RAbstractIntVector) {
+        if (funValueVec instanceof RIntVector) {
             int[] data = applyResultZeroLength ? new int[0] : convertIntVector(applyResult, funValueVecLen);
             result = RDataFactory.createIntVector(data, naCheck.neverSeenNA());
         } else if (funValueVec instanceof RAbstractDoubleVector) {
@@ -272,7 +272,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         int[] newArray = new int[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractIntVector v = (RAbstractIntVector) castInteger(values[i]);
+            RIntVector v = (RIntVector) castInteger(values[i]);
             checkValueLength(v, i, len);
             for (int j = 0; j < v.getLength(); j++) {
                 int val = v.getDataAt(j);

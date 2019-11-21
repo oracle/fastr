@@ -24,13 +24,13 @@ import static com.oracle.truffle.r.nodes.builtin.base.printer.Utils.indexWidth;
 import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/printutils.c, src/main/format.c
 
-public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector> {
+public final class IntegerVectorPrinter extends VectorPrinter<RIntVector> {
 
     static final IntegerVectorPrinter INSTANCE = new IntegerVectorPrinter();
 
@@ -39,13 +39,13 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
     }
 
     @Override
-    protected IntegerVectorPrintJob createJob(RAbstractIntVector vector, int indx, PrintContext printCtx) {
+    protected IntegerVectorPrintJob createJob(RIntVector vector, int indx, PrintContext printCtx) {
         return new IntegerVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class IntegerVectorPrintJob extends VectorPrintJob {
 
-        protected IntegerVectorPrintJob(RAbstractIntVector vector, int indx, PrintContext printCtx) {
+        protected IntegerVectorPrintJob(RIntVector vector, int indx, PrintContext printCtx) {
             super(vector, indx, printCtx);
         }
 
@@ -173,7 +173,7 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
         return x - DECIMAL_VALUES[digit][c];
     }
 
-    public static String[] format(RAbstractIntVector value, boolean trim, int width, PrintParameters pp) {
+    public static String[] format(RIntVector value, boolean trim, int width, PrintParameters pp) {
         VectorAccess access = value.slowPathAccess();
         try (RandomIterator iter = access.randomAccess(value)) {
             int w;

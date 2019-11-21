@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -54,21 +54,21 @@ public abstract class Substr extends RBuiltinNode.Arg3 {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg(arg)")
-    protected RStringVector substrEmptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected RStringVector substrEmptyArg(RAbstractStringVector arg, RIntVector start, RIntVector stop) {
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg(arg)", "wrongParams(start, stop)"})
-    protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
+    protected RNull substrWrongParams(RAbstractStringVector arg, RIntVector start, RIntVector stop,
+                                      @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         RInternalError.shouldNotReachHere();
         return RNull.instance; // dummy
     }
 
     @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)"})
-    protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop,
-                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
+    protected RStringVector substr(RAbstractStringVector arg, RIntVector start, RIntVector stop,
+                                   @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         String[] res = new String[arg.getLength()];
         na.enable(arg);
         na.enable(start);
@@ -143,7 +143,7 @@ public abstract class Substr extends RBuiltinNode.Arg3 {
         return arg.getLength() == 0;
     }
 
-    protected boolean wrongParams(RAbstractIntVector start, RAbstractIntVector stop) {
+    protected boolean wrongParams(RIntVector start, RIntVector stop) {
         if (start.getLength() == 0 || stop.getLength() == 0) {
             throw error(RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
         }

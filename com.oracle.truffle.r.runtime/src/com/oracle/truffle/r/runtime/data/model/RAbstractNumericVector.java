@@ -32,7 +32,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 /**
  * Provides interop messages for numeric vectors. <br>
  * <ul>
- * <li>{@link RAbstractIntVector}</li>
+ * <li>{@link RIntVector}</li>
  * <li>{@link RAbstractDoubleVector}</li>
  * <li>{@link RAbstractRawVector}</li>
  * </ul>

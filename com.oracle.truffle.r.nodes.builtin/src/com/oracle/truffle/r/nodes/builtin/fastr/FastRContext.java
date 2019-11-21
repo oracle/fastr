@@ -35,6 +35,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
 
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import org.graalvm.polyglot.Context;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -59,11 +60,9 @@ import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -199,7 +198,7 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected RIntVector spawn(RAbstractStringVector exprs, String kind) {
+        protected com.oracle.truffle.r.runtime.data.RIntVector spawn(RAbstractStringVector exprs, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
             if (RContext.getInstance().getOption(SharedContexts) && contextKind != ContextKind.SHARE_ALL) {
                 throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Only shared contexts are allowed");
@@ -249,7 +248,7 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected RNull eval(RAbstractIntVector handle) {
+        protected RNull eval(RIntVector handle) {
             try {
                 int[] multiSlotIndices = new int[handle.getLength()];
                 for (int i = 0; i < handle.getLength(); i++) {
@@ -289,7 +288,7 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected RNull eval(RAbstractIntVector handle) {
+        protected RNull eval(RIntVector handle) {
             for (int i = 0; i < handle.getLength(); i++) {
                 int id = handle.getDataAt(i);
                 Thread thread = RContext.getInstance().threads.get(id);
@@ -588,7 +587,7 @@ public class FastRContext {
                 if (o instanceof Integer) {
                     id = (int) o;
                 } else {
-                    id = ((RIntVector) o).getDataAt(0);
+                    id = ((com.oracle.truffle.r.runtime.data.RIntVector) o).getDataAt(0);
                 }
                 Object res = RChannel.poll(id);
                 if (res != null) {

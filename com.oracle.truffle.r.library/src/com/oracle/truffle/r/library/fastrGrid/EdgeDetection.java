@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 
 /**
  * Contains static method related to edge detection for bounds calculations.
@@ -215,7 +215,7 @@ final class EdgeDetection {
         RDoubleVector xVec = RDataFactory.createDoubleVector(xx, RDataFactory.COMPLETE_VECTOR);
         RDoubleVector yVec = RDataFactory.createDoubleVector(yy, RDataFactory.COMPLETE_VECTOR);
         Object hullObj = ctx.evalInternalRFunction("chullWrapper", xVec, yVec);
-        RAbstractIntVector hull = GridUtils.asIntVector(hullObj);
+        RIntVector hull = GridUtils.asIntVector(hullObj);
         double[] newXX = new double[hull.getLength()];
         double[] newYY = new double[hull.getLength()];
         for (int i = 0; i < hull.getLength(); i++) {

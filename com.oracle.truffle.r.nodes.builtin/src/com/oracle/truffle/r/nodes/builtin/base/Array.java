@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -68,13 +68,13 @@ public abstract class Array extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = {"dataAccess.supports(data)", "dimAccess.supports(dim)"})
-    protected RAbstractVector arrayCached(RAbstractVector data, RAbstractIntVector dim, Object dimNames,
-                    @Cached("data.access()") VectorAccess dataAccess,
-                    @Cached("dim.access()") VectorAccess dimAccess,
-                    @Cached("createNew(dataAccess.getType())") VectorAccess resultAccess,
-                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
-                    @Cached("createBinaryProfile()") ConditionProfile isEmpty,
-                    @Cached("create()") VectorFactory factory) {
+    protected RAbstractVector arrayCached(RAbstractVector data, RIntVector dim, Object dimNames,
+                                          @Cached("data.access()") VectorAccess dataAccess,
+                                          @Cached("dim.access()") VectorAccess dimAccess,
+                                          @Cached("createNew(dataAccess.getType())") VectorAccess resultAccess,
+                                          @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
+                                          @Cached("createBinaryProfile()") ConditionProfile isEmpty,
+                                          @Cached("create()") VectorFactory factory) {
         // extract dimensions and compute total length
         int[] dimArray;
         int totalLength = 1;
@@ -124,10 +124,10 @@ public abstract class Array extends RBuiltinNode.Arg3 {
 
     @Specialization(replaces = "arrayCached")
     @TruffleBoundary
-    protected RAbstractVector arrayGeneric(RAbstractVector data, RAbstractIntVector dim, Object dimNames,
-                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
-                    @Cached("createBinaryProfile()") ConditionProfile isEmpty,
-                    @Cached("create()") VectorFactory factory) {
+    protected RAbstractVector arrayGeneric(RAbstractVector data, RIntVector dim, Object dimNames,
+                                           @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
+                                           @Cached("createBinaryProfile()") ConditionProfile isEmpty,
+                                           @Cached("create()") VectorFactory factory) {
         VectorAccess dataAccess = data.slowPathAccess();
         return arrayCached(data, dim, dimNames, dataAccess, dim.slowPathAccess(), VectorAccess.createSlowPathNew(dataAccess.getType()), hasDimNames, isEmpty, factory);
     }

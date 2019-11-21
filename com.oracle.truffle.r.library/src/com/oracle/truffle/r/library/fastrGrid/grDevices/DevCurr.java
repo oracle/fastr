@@ -28,7 +28,7 @@ import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 
 public final class DevCurr extends RExternalBuiltinNode.Arg0 {
     static {
@@ -37,7 +37,7 @@ public final class DevCurr extends RExternalBuiltinNode.Arg0 {
 
     @TruffleBoundary
     @Override
-    public RAbstractIntVector execute() {
+    public RIntVector execute() {
         RContext rCtx = RContext.getInstance();
         RGridGraphicsAdapter.fixupDevicesVariable(rCtx);
         int index = GridContext.getContext(rCtx).getCurrentDeviceIndex();

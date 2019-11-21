@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "strtrim", kind = INTERNAL, parameterNames = {"x", "width"}, behavior = PURE)
@@ -52,7 +52,7 @@ public abstract class Strtrim extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RStringVector srtrim(RAbstractStringVector x, RAbstractIntVector width,
+    protected RStringVector srtrim(RAbstractStringVector x, RIntVector width,
                     @Cached("create()") StringMapNode mapNode,
                     @Cached("createBinaryProfile()") ConditionProfile fitsProfile) {
         int len = x.getLength();

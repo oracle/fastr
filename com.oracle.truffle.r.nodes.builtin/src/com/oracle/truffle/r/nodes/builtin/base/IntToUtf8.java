@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -55,9 +55,9 @@ public abstract class IntToUtf8 extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = "multiple")
-    protected RAbstractStringVector intToBitsMultiple(RAbstractIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
-                    @Cached("create()") NACheck na,
-                    @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
+    protected RAbstractStringVector intToBitsMultiple(RIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
+                                                      @Cached("create()") NACheck na,
+                                                      @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
 
         String[] result = new String[x.getLength()];
         na.enable(x);
@@ -79,9 +79,9 @@ public abstract class IntToUtf8 extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = "!multiple")
-    protected String intToBits(RAbstractIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
-                    @Cached("create()") NACheck na,
-                    @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
+    protected String intToBits(RIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
+                               @Cached("create()") NACheck na,
+                               @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
 
         int[] result = new int[x.getLength()];
         na.enable(x);

@@ -50,13 +50,12 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -134,7 +133,7 @@ public class SortFunctions {
         return RDataFactory.createDoubleVector(sort(data, decreasing), vec.isComplete());
     }
 
-    protected static RIntVector jdkSort(RAbstractIntVector vec, boolean decreasing) {
+    protected static com.oracle.truffle.r.runtime.data.RIntVector jdkSort(RIntVector vec, boolean decreasing) {
         int[] data = vec.materialize().getDataCopy();
         return RDataFactory.createIntVector(sort(data, decreasing), vec.isComplete());
     }
@@ -171,7 +170,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RIntVector sort(RAbstractIntVector vec, boolean decreasing) {
+        protected com.oracle.truffle.r.runtime.data.RIntVector sort(RIntVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
@@ -212,7 +211,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RIntVector qsort(RAbstractIntVector vec, boolean decreasing) {
+        protected com.oracle.truffle.r.runtime.data.RIntVector qsort(RIntVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
     }
@@ -233,7 +232,7 @@ public class SortFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RIntVector sort(RAbstractIntVector vec, Object partial) {
+        protected com.oracle.truffle.r.runtime.data.RIntVector sort(RIntVector vec, Object partial) {
             return jdkSort(vec, false);
         }
 
@@ -263,7 +262,7 @@ public class SortFunctions {
 
     /**
      * This a helper function for the code in sort.R. It does NOT return the input vectors sorted,
-     * but returns an {@link RIntVector} of indices (positions) indicating the sort order (Or
+     * but returns an {@link com.oracle.truffle.r.runtime.data.RIntVector} of indices (positions) indicating the sort order (Or
      * {@link RNull#instance} if no vectors). In short it is a special variant of {@code order}. For
      * now we delegate to {@code order} and do not implement the {@code retgrp} argument.
      */

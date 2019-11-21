@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
@@ -121,13 +121,13 @@ public abstract class ColSums extends ColSumsBase {
     }
 
     @Specialization
-    protected RDoubleVector colSums(RAbstractIntVector x, int rowNum, int colNum, boolean rna) {
+    protected RDoubleVector colSums(RIntVector x, int rowNum, int colNum, boolean rna) {
         checkVectorLength(x, rowNum, colNum);
 
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
-        final RAbstractIntVector profiledX = concreteVectorProfile.profile(x);
+        final RIntVector profiledX = concreteVectorProfile.profile(x);
         int pos = 0;
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;

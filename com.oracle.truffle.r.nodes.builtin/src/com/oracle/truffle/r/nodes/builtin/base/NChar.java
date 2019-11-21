@@ -42,10 +42,9 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 // TODO interpret "type" and "allowNA" arguments
@@ -63,7 +62,7 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector nchar(RNull value, String type, byte allowNA, byte keepNA) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector nchar(RNull value, String type, byte allowNA, byte keepNA) {
         return RDataFactory.createEmptyIntVector();
     }
 
@@ -77,14 +76,14 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector ncharInt(RAbstractIntVector vector, String type, byte allowNA, byte keepNAIn,
-                    @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
-                    @Cached("create()") GetDimAttributeNode getDimNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector ncharInt(RIntVector vector, String type, byte allowNA, byte keepNAIn,
+                                                                    @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                                                                    @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
+                                                                    @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
+                                                                    @Cached("create()") GetDimAttributeNode getDimNode,
+                                                                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                                                                    @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
+                                                                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
         boolean keepNA = keepNAProfile.profile(isNAKeptIn(keepNAIn, convertType(type)));
         int len = vector.getLength();
         int[] result = new int[len];
@@ -99,7 +98,7 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
                 result[i] = (int) (Math.log10(x) + 1); // not the fastest one
             }
         }
-        RIntVector resultVector = RDataFactory.createIntVector(result, isComplete, getDimNode.getDimensions(vector), extractNamesNode.execute(vector));
+        com.oracle.truffle.r.runtime.data.RIntVector resultVector = RDataFactory.createIntVector(result, isComplete, getDimNode.getDimensions(vector), extractNamesNode.execute(vector));
         RList dimNames = extractDimNamesNode.execute(vector);
         if (nullDimNamesProfile.profile(dimNames != null)) {
             setDimNamesNode.setDimNames(resultVector, dimNames);
@@ -109,14 +108,14 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector nchar(RAbstractStringVector vector, String type, byte allowNA, byte keepNAIn,
-                    @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
-                    @Cached("create()") GetDimAttributeNode getDimNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector nchar(RAbstractStringVector vector, String type, byte allowNA, byte keepNAIn,
+                                                                 @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
+                                                                 @Cached("create()") GetDimAttributeNode getDimNode,
+                                                                 @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                                                                 @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
+                                                                 @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
         boolean keepNA = keepNAProfile.profile(isNAKeptIn(keepNAIn, convertType(type)));
         int len = vector.getLength();
         int[] result = new int[len];
@@ -131,7 +130,7 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
                 result[i] = item.length();
             }
         }
-        RIntVector resultVector = RDataFactory.createIntVector(result, isComplete, getDimNode.getDimensions(vector), extractNamesNode.execute(vector));
+        com.oracle.truffle.r.runtime.data.RIntVector resultVector = RDataFactory.createIntVector(result, isComplete, getDimNode.getDimensions(vector), extractNamesNode.execute(vector));
         RList dimNames = extractDimNamesNode.execute(vector);
         if (nullDimNamesProfile.profile(dimNames != null)) {
             setDimNamesNode.setDimNames(resultVector, dimNames);

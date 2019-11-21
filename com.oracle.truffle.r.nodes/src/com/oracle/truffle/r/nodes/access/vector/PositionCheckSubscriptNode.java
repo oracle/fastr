@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -82,8 +82,8 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
     }
 
     @Specialization
-    protected RAbstractVector doInteger(PositionProfile profile, int dimSize, RAbstractIntVector position, int positionLength,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+    protected RAbstractVector doInteger(PositionProfile profile, int dimSize, RIntVector position, int positionLength,
+                                        @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
         if (positionLength != 1) {
             error.enter();
             Message message;

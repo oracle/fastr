@@ -31,6 +31,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +51,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RunWith(Theories.class)
@@ -79,7 +79,7 @@ public class ReplaceVectorNodeTest extends TestBase {
     @Test
     public void testSubsetMultiDimension() {
         execInContext(() -> {
-            RAbstractIntVector vector;
+            RIntVector vector;
 
             // replace rectangle with rectangle indices
             vector = generateInteger(20, true);
@@ -112,7 +112,7 @@ public class ReplaceVectorNodeTest extends TestBase {
         });
     }
 
-    private static void assertIndicies(RAbstractIntVector vector, int... expectedValues) {
+    private static void assertIndicies(RIntVector vector, int... expectedValues) {
         int[] actual = new int[vector.getLength()];
         for (int i = 0; i < expectedValues.length; i++) {
             actual[i] = vector.getDataAt(i);
@@ -124,7 +124,7 @@ public class ReplaceVectorNodeTest extends TestBase {
     @Test
     public void testSubsetSingleDimension() {
         execInContext(() -> {
-            RAbstractIntVector vector;
+            RIntVector vector;
 
             // replace scalar with sequence stride=1
             vector = generateInteger(9, true);
@@ -287,8 +287,8 @@ public class ReplaceVectorNodeTest extends TestBase {
     public void testSubscriptSingleDimensionTheory(RType targetType, RAbstractVector position) {
         execInContext(() -> {
             assumeTrue(position.getLength() == 1);
-            if (position instanceof RAbstractIntVector) {
-                assumeTrue(((RAbstractIntVector) position).getDataAt(0) > 0);
+            if (position instanceof RIntVector) {
+                assumeTrue(((RIntVector) position).getDataAt(0) > 0);
             }
 
             RAbstractVector vector = generateVector(targetType, 4, true);

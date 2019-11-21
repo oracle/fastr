@@ -29,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -64,7 +64,7 @@ public class CastUtilsTest {
         Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(Integer.class, int.class, false));
         Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(int.class, Integer.class, false));
         Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(String.class, Object.class, false));
-        Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(RAbstractIntVector.class, RAbstractVector.class, false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(RIntVector.class, RAbstractVector.class, false));
         Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(Object.class, Object.class, false));
         Assert.assertEquals(CastUtils.Cast.Coverage.full, CastUtils.Casts.isConvertible(RAbstractVector.class, RAbstractVector.class, false));
 
@@ -81,9 +81,9 @@ public class CastUtilsTest {
     @Test
     public void testIsPartiallyConvertible() {
         Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Object.class, String.class, false));
-        Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(RAbstractVector.class, RAbstractIntVector.class, false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(RAbstractVector.class, RIntVector.class, false));
 
-        Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(RAbstractIntVector.class), Not.negateType(RAbstractVector.class), false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(RIntVector.class), Not.negateType(RAbstractVector.class), false));
 
         Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(RIntSequence.class), String.class, false));
         Assert.assertEquals(CastUtils.Cast.Coverage.partial, CastUtils.Casts.isConvertible(Not.negateType(RIntSequence.class), Serializable.class, false));
@@ -122,6 +122,6 @@ public class CastUtilsTest {
         Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(Not.negateType(String.class), String.class, false));
         Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(Not.negateType(String.class), Not.negateType(Object.class), false));
         Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(Not.negateType(Object.class), Not.negateType(String.class), false));
-        Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(Not.negateType(RAbstractIntVector.class), RAbstractIntVector.class, false));
+        Assert.assertEquals(CastUtils.Cast.Coverage.none, CastUtils.Casts.isConvertible(Not.negateType(RIntVector.class), RIntVector.class, false));
     }
 }

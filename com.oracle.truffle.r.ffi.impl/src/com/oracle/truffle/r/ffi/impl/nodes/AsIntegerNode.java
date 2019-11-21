@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 
 /**
  * Implements the {@code Rf_asInteger} GNU R function . The behavior is subtly different (more
@@ -64,15 +64,15 @@ public abstract class AsIntegerNode extends FFIUpCallNode.Arg1 {
         Object castObj = castIntegerNode.executeInt(obj);
         if (castObj instanceof Integer) {
             return (Integer) castObj;
-        } else if (castObj instanceof RAbstractIntVector) {
-            return ((RAbstractIntVector) castObj).getDataAt(0);
+        } else if (castObj instanceof RIntVector) {
+            return ((RIntVector) castObj).getDataAt(0);
         } else {
             throw RInternalError.shouldNotReachHere();
         }
     }
 
     @Specialization
-    protected int asInteger(RAbstractIntVector obj) {
+    protected int asInteger(RIntVector obj) {
         if (obj.getLength() == 0) {
             return RRuntime.INT_NA;
         }
@@ -85,8 +85,8 @@ public abstract class AsIntegerNode extends FFIUpCallNode.Arg1 {
         Object castObj = castIntegerNode.executeInt(obj);
         if (castObj instanceof Integer) {
             return (Integer) castObj;
-        } else if (castObj instanceof RAbstractIntVector) {
-            return ((RAbstractIntVector) castObj).getDataAt(0);
+        } else if (castObj instanceof RIntVector) {
+            return ((RIntVector) castObj).getDataAt(0);
         } else {
             throw RInternalError.shouldNotReachHere();
         }

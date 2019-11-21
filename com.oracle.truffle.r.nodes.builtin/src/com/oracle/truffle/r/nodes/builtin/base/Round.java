@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -107,7 +107,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RDoubleVector round(RAbstractIntVector x, @SuppressWarnings("unused") double digits) {
+    protected RDoubleVector round(RIntVector x, @SuppressWarnings("unused") double digits) {
         double[] data = new double[x.getLength()];
         check.enable(x);
         for (int i = 0; i < data.length; i++) {

@@ -27,8 +27,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
@@ -43,10 +42,10 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"mergeAccess.supports(merge)", "whichAccess.supports(which)"})
-    protected RIntVector cutree(RAbstractIntVector merge, RAbstractIntVector which,
-                    @Cached("merge.access()") VectorAccess mergeAccess,
-                    @Cached("which.access()") VectorAccess whichAccess,
-                    @Cached("create()") GetDimAttributeNode getDimNode) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector cutree(RIntVector merge, RIntVector which,
+                                                                  @Cached("merge.access()") VectorAccess mergeAccess,
+                                                                  @Cached("which.access()") VectorAccess whichAccess,
+                                                                  @Cached("create()") GetDimAttributeNode getDimNode) {
         int whichLen = which.getLength();
 
         int j;
@@ -161,8 +160,8 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "cutree")
-    protected RIntVector cutreeGeneric(RAbstractIntVector merge, RAbstractIntVector which,
-                    @Cached("create()") GetDimAttributeNode getDimNode) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector cutreeGeneric(RIntVector merge, RIntVector which,
+                                                                         @Cached("create()") GetDimAttributeNode getDimNode) {
         return cutree(merge, which, merge.slowPathAccess(), which.slowPathAccess(), getDimNode);
     }
 

@@ -38,9 +38,8 @@ import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
@@ -69,13 +68,13 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "reuseNonSharedNode.supports(vector)", limit = "getVectorAccessCacheSize()")
-    protected RAbstractVector updateDim(RAbstractVector vector, RAbstractIntVector dimensions,
+    protected RAbstractVector updateDim(RAbstractVector vector, RIntVector dimensions,
                     @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                     @Cached("createDim()") SetFixedAttributeNode putDimensions,
                     @Cached("createNames()") RemoveFixedAttributeNode removeNames,
                     @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames,
                     @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
-        RIntVector dimensionsMaterialized = dimensions.materialize();
+        com.oracle.truffle.r.runtime.data.RIntVector dimensionsMaterialized = dimensions.materialize();
         int[] dimsData = dimensionsMaterialized.getDataCopy();
         RAbstractVector.verifyDimensions(vector.getLength(), dimsData, this);
         RAbstractVector result = reuseNonSharedNode.getMaterializedResult(vector);
@@ -93,7 +92,7 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "updateDim")
-    protected RAbstractVector updateDimGeneric(RAbstractVector vector, RAbstractIntVector dimensions,
+    protected RAbstractVector updateDimGeneric(RAbstractVector vector, RIntVector dimensions,
                     @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                     @Cached("createDim()") SetFixedAttributeNode putDimensions,
                     @Cached("createNames()") RemoveFixedAttributeNode removeNames,
@@ -103,7 +102,7 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "!isRAbstractVector(obj)")
-    protected RAbstractVector noVector(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") RAbstractIntVector dimensions) {
+    protected RAbstractVector noVector(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") RIntVector dimensions) {
         throw error(RError.Message.INVALID_FIRST_ARGUMENT);
     }
 }

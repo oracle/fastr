@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -54,11 +54,11 @@ public abstract class FindInterval extends RBuiltinNode.Arg5 {
     }
 
     @Specialization(guards = {"xtAccess.supports(xt)", "xAccess.supports(x)"})
-    RAbstractIntVector doFindInterval(RAbstractDoubleVector xt, RAbstractDoubleVector x, boolean right, boolean inside, boolean leftOpen,
-                    @Cached("createEqualityProfile()") ValueProfile leftOpenProfile,
-                    @Cached("create(xt)") VectorAccess xtAccess,
-                    @Cached("create(x)") VectorAccess xAccess,
-                    @Cached("create()") VectorFactory vectorFactory) {
+    RIntVector doFindInterval(RAbstractDoubleVector xt, RAbstractDoubleVector x, boolean right, boolean inside, boolean leftOpen,
+                              @Cached("createEqualityProfile()") ValueProfile leftOpenProfile,
+                              @Cached("create(xt)") VectorAccess xtAccess,
+                              @Cached("create(x)") VectorAccess xAccess,
+                              @Cached("create()") VectorFactory vectorFactory) {
         boolean leftOpenProfiled = leftOpenProfile.profile(leftOpen);
         try (SequentialIterator xIter = xAccess.access(x)) {
             int[] result = new int[xAccess.getLength(xIter)];
@@ -81,9 +81,9 @@ public abstract class FindInterval extends RBuiltinNode.Arg5 {
     }
 
     @Specialization(replaces = "doFindInterval")
-    RAbstractIntVector doFindIntervalGeneric(RAbstractDoubleVector xt, RAbstractDoubleVector x, boolean right, boolean inside, boolean leftOpen,
-                    @Cached("createEqualityProfile()") ValueProfile leftOpenProfile,
-                    @Cached("create()") VectorFactory factory) {
+    RIntVector doFindIntervalGeneric(RAbstractDoubleVector xt, RAbstractDoubleVector x, boolean right, boolean inside, boolean leftOpen,
+                                     @Cached("createEqualityProfile()") ValueProfile leftOpenProfile,
+                                     @Cached("create()") VectorFactory factory) {
         return doFindInterval(xt, x, right, inside, leftOpen, leftOpenProfile, xt.slowPathAccess(), x.slowPathAccess(), factory);
     }
 

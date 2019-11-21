@@ -38,13 +38,12 @@ import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -86,7 +85,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector matchInSequence(RAbstractIntVector x, RIntSequence table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector matchInSequence(RIntVector x, RIntSequence table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
 
@@ -104,10 +103,10 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization(guards = {"x.getLength() == 1", "!isSequence(table)"})
     @CompilerDirectives.TruffleBoundary
-    protected int matchSizeOne(RAbstractIntVector x, RAbstractIntVector table, int nomatch,
-                    @Cached("create()") NAProfile naProfile,
-                    @Cached("create()") BranchProfile foundProfile,
-                    @Cached("create()") BranchProfile notFoundProfile) {
+    protected int matchSizeOne(RIntVector x, RIntVector table, int nomatch,
+                               @Cached("create()") NAProfile naProfile,
+                               @Cached("create()") BranchProfile foundProfile,
+                               @Cached("create()") BranchProfile notFoundProfile) {
         int element = x.getDataAt(0);
         int length = table.getLength();
         if (naProfile.isNA(element)) {
@@ -131,7 +130,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization(guards = {"x.getLength() != 1", "!isSequence(table)"})
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractIntVector x, RAbstractIntVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RIntVector x, RIntVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapInt hashTable;
@@ -167,7 +166,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractDoubleVector x, RAbstractIntVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractDoubleVector x, RIntVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapDouble hashTable;
@@ -203,7 +202,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractIntVector x, RAbstractDoubleVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RIntVector x, RAbstractDoubleVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapInt hashTable;
@@ -273,7 +272,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization(guards = "x.getLength() != 1")
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractDoubleVector x, RAbstractDoubleVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractDoubleVector x, RAbstractDoubleVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapDouble hashTable;
@@ -309,7 +308,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractIntVector x, RAbstractLogicalVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RIntVector x, RAbstractLogicalVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         int[] values = {RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA};
@@ -341,7 +340,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractDoubleVector x, RAbstractLogicalVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractDoubleVector x, RAbstractLogicalVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         int[] values = {RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA};
@@ -373,7 +372,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector matchInSequence(RAbstractStringVector x, RStringSequence table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector matchInSequence(RAbstractStringVector x, RStringSequence table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
 
@@ -418,7 +417,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization(guards = {"x.getLength() != 1", "!isSequence(table)"})
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractStringVector x, RAbstractStringVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractStringVector x, RAbstractStringVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapCharacter hashTable;
@@ -489,7 +488,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization(guards = {"x.getLength() != 1", "isCharSXP(x)", "isCharSXP(table)"})
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RList x, RList table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RList x, RList table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         Object element;
         boolean matchAll = true;
@@ -533,38 +532,38 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractDoubleVector x, RAbstractComplexVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractDoubleVector x, RAbstractComplexVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractComplexVector) x.castSafe(RType.Complex, isNAProfile), table, nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractLogicalVector x, RAbstractIntVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
-        return match((RAbstractIntVector) x.castSafe(RType.Integer, isNAProfile), table, nomatch);
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractLogicalVector x, RIntVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+        return match((RIntVector) x.castSafe(RType.Integer, isNAProfile), table, nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractLogicalVector x, RAbstractDoubleVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractLogicalVector x, RAbstractDoubleVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractDoubleVector) x.castSafe(RType.Double, isNAProfile), table, nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractLogicalVector x, RAbstractComplexVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractLogicalVector x, RAbstractComplexVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractComplexVector) x.castSafe(RType.Complex, isNAProfile), table, nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractLogicalVector x, RAbstractStringVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractLogicalVector x, RAbstractStringVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractIntVector x, RAbstractComplexVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RIntVector x, RAbstractComplexVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractComplexVector) x.castSafe(RType.Complex, isNAProfile), table, nomatch);
     }
 
@@ -586,7 +585,7 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     @Specialization(guards = "x.getLength() != 1")
-    protected RIntVector match(RAbstractRawVector x, RAbstractRawVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractRawVector x, RAbstractRawVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapRaw hashTable;
@@ -622,95 +621,95 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractRawVector x, RAbstractIntVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractRawVector x, RIntVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractRawVector x, RAbstractDoubleVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractRawVector x, RAbstractDoubleVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractRawVector x, RAbstractStringVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractRawVector x, RAbstractStringVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractRawVector x, @SuppressWarnings("unused") RAbstractLogicalVector table, @SuppressWarnings("unused") int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractRawVector x, @SuppressWarnings("unused") RAbstractLogicalVector table, @SuppressWarnings("unused") int nomatch) {
         return RDataFactory.createIntVector(x.getLength(), true);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractRawVector x, @SuppressWarnings("unused") RAbstractComplexVector table, @SuppressWarnings("unused") int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractRawVector x, @SuppressWarnings("unused") RAbstractComplexVector table, @SuppressWarnings("unused") int nomatch) {
         return RDataFactory.createIntVector(x.getLength(), true);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractIntVector x, RAbstractStringVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RIntVector x, RAbstractStringVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractDoubleVector x, RAbstractStringVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractDoubleVector x, RAbstractStringVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractIntVector x, RAbstractRawVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RIntVector x, RAbstractRawVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractLogicalVector x, @SuppressWarnings("unused") RAbstractRawVector table, @SuppressWarnings("unused") int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractLogicalVector x, @SuppressWarnings("unused") RAbstractRawVector table, @SuppressWarnings("unused") int nomatch) {
         return RDataFactory.createIntVector(x.getLength(), true);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractComplexVector x, @SuppressWarnings("unused") RAbstractRawVector table, @SuppressWarnings("unused") int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractComplexVector x, @SuppressWarnings("unused") RAbstractRawVector table, @SuppressWarnings("unused") int nomatch) {
         return RDataFactory.createIntVector(x.getLength(), true);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractComplexVector x, RAbstractLogicalVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractComplexVector x, RAbstractLogicalVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match(x, (RAbstractComplexVector) table.castSafe(RType.Complex, isNAProfile), nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractComplexVector x, RAbstractIntVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractComplexVector x, RIntVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match(x, (RAbstractComplexVector) table.castSafe(RType.Complex, isNAProfile), nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractComplexVector x, RAbstractDoubleVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractComplexVector x, RAbstractDoubleVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match(x, (RAbstractComplexVector) table.castSafe(RType.Complex, isNAProfile), nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractComplexVector x, RAbstractStringVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractComplexVector x, RAbstractStringVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
     }
 
     @Specialization
-    protected RIntVector match(RAbstractDoubleVector x, RAbstractRawVector table, int nomatch,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractDoubleVector x, RAbstractRawVector table, int nomatch,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile),
                         (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
     }
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractLogicalVector x, RAbstractLogicalVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractLogicalVector x, RAbstractLogicalVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         byte[] values = {RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA};
@@ -741,7 +740,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization(guards = "!isRAbstractStringVector(table)")
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractStringVector x, RAbstractVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractStringVector x, RAbstractVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         RAbstractStringVector stringTable = castString(table);
@@ -790,7 +789,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractComplexVector x, RAbstractComplexVector table, int nomatch) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractComplexVector x, RAbstractComplexVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapComplex hashTable;

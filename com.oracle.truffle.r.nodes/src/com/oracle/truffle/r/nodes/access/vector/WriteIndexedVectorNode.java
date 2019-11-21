@@ -33,6 +33,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
@@ -44,7 +45,6 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -177,7 +177,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
 
     /**
      * Positions is an array of instances of {@link RMissing} (What is that doing?), or
-     * {@link RAbstractIntVector}, or {@link RAbstractLogicalVector} (select only elements under
+     * {@link RIntVector}, or {@link RAbstractLogicalVector} (select only elements under
      * {@code TRUE} indexes). Each dimension must have one entry in this array.
      * 
      * The left vector is either the result of read (newly created vector to hold the result) or the
@@ -339,9 +339,9 @@ abstract class WriteIndexedVectorAccessNode extends Node {
      */
     @Specialization(replaces = "doIntegerSequencePosition")
     protected int doIntegerPosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
-                    Object[] positions, RAbstractIntVector position, int positionOffset, int positionLength,
-                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
-                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
+                                    Object[] positions, RIntVector position, int positionOffset, int positionLength,
+                                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
+                                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
         getPositionNACheck().enable(position);
         int rightIndex = rightBase;
 

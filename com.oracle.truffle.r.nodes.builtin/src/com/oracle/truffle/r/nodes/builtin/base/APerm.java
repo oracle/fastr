@@ -46,11 +46,10 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
@@ -122,10 +121,10 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = {"isIdentityPermutation(vector, permVector, getDimsNode)", "reuseNonSharedNode.supports(vector)"}, limit = "getVectorAccessCacheSize()")
-    protected RAbstractVector doIdentity(RAbstractVector vector, @SuppressWarnings("unused") RAbstractIntVector permVector, @SuppressWarnings("unused") byte resize,
-                    @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
-                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
+    protected RAbstractVector doIdentity(RAbstractVector vector, @SuppressWarnings("unused") RIntVector permVector, @SuppressWarnings("unused") byte resize,
+                                         @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
+                                         @Cached("create()") GetDimAttributeNode getDimsNode,
+                                         @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);
 
@@ -140,19 +139,19 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(replaces = "doIdentity", guards = "isIdentityPermutation(vector, permVector, getDimsNode)")
-    protected RAbstractVector doIdentityGeneric(RAbstractVector vector, RAbstractIntVector permVector, byte resize,
-                    @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
-                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
+    protected RAbstractVector doIdentityGeneric(RAbstractVector vector, RIntVector permVector, byte resize,
+                                                @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
+                                                @Cached("create()") GetDimAttributeNode getDimsNode,
+                                                @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
         return doIdentity(vector, permVector, resize, removeClassAttrNode, getDimsNode, reuseNonSharedNode);
     }
 
     @Specialization(guards = "!isIdentityPermutation(vector, permVector, getDimsNode)")
-    protected RAbstractVector aPerm(RAbstractVector vector, RAbstractIntVector permVector, byte resize,
-                    @Cached("create()") GetNamesAttributeNode getNames,
-                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") SetDimAttributeNode setDimsNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+    protected RAbstractVector aPerm(RAbstractVector vector, RIntVector permVector, byte resize,
+                                    @Cached("create()") GetNamesAttributeNode getNames,
+                                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                                    @Cached("create()") SetDimAttributeNode setDimsNode,
+                                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
 
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);
@@ -198,7 +197,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         return result;
     }
 
-    protected boolean isIdentityPermutation(RAbstractVector v, RAbstractIntVector permVector, GetDimAttributeNode getDimAttributeNode) {
+    protected boolean isIdentityPermutation(RAbstractVector v, RIntVector permVector, GetDimAttributeNode getDimAttributeNode) {
         int[] dimensions = getDimAttributeNode.getDimensions(v);
         if (dimensions != null) {
             int[] perm = getPermute(dimensions, permVector);
@@ -238,7 +237,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
             // TODO: not found dimname error
         }
 
-        RIntVector permIntVector = RDataFactory.createIntVector(perm, true);
+        com.oracle.truffle.r.runtime.data.RIntVector permIntVector = RDataFactory.createIntVector(perm, true);
         if (isIdentityProfile.profile(isIdentityPermutation(vector, permIntVector, getDimsNode))) {
             return doIdentity(vector, permIntVector, resize, removeClassAttrNode, getDimsNode, reuseNonSharedNode);
         }
@@ -267,7 +266,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         return arrayPerm;
     }
 
-    private int[] getPermute(int[] dim, RAbstractIntVector perm) {
+    private int[] getPermute(int[] dim, RIntVector perm) {
         if (perm.getLength() == 0) {
             // If perm missing, the default is a reverse of the dim.
             emptyPermVector.enter();

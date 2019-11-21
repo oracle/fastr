@@ -57,6 +57,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -78,7 +79,6 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -91,7 +91,6 @@ import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -122,7 +121,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAsIntegerVector() {
         arg.asIntegerVector();
-        assertTypes(RNull.class, RMissing.class, int.class, RIntSequence.class, RIntVector.class, RAbstractIntVector.class);
+        assertTypes(RNull.class, RMissing.class, int.class, RIntSequence.class, com.oracle.truffle.r.runtime.data.RIntVector.class, RIntVector.class);
     }
 
     @Test
@@ -232,7 +231,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testRTypeFilter() {
         arg.mustBe(integerValue());
-        assertTypes(Integer.class, RAbstractIntVector.class);
+        assertTypes(Integer.class, RIntVector.class);
     }
 
     @Test
@@ -286,14 +285,14 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAndAsNegationOfOrFilter() {
         // !(!A || !B) = A && B
-        arg.mustBe(instanceOf(RAbstractStringVector.class).not().or(instanceOf(RAbstractIntVector.class).not()).not());
-        assertTypes(atom(RAbstractStringVector.class).and(atom(RAbstractIntVector.class)));
+        arg.mustBe(instanceOf(RAbstractStringVector.class).not().or(instanceOf(RIntVector.class).not()).not());
+        assertTypes(atom(RAbstractStringVector.class).and(atom(RIntVector.class)));
     }
 
     @Test
     public void testAndAsNegationOfOrFilter2() {
         // !(!A || !B) = A && B
-        arg.mustBe(instanceOf(RStringVector.class).not().or(instanceOf(RIntVector.class).not()).not());
+        arg.mustBe(instanceOf(RStringVector.class).not().or(instanceOf(com.oracle.truffle.r.runtime.data.RIntVector.class).not()).not());
         // A and B are mutually exclusive, thus their conjunction is empty
         assertTypes(TypeExpr.NOTHING);
     }
@@ -306,8 +305,8 @@ public class ResultTypesAnalyserTest {
 
     @Test
     public void testOrFilter2() {
-        arg.mustBe(instanceOf(RStringVector.class).or(instanceOf(RIntVector.class).not()));
-        assertTypes(atom(RStringVector.class).or(atom(RIntVector.class).not()));
+        arg.mustBe(instanceOf(RStringVector.class).or(instanceOf(com.oracle.truffle.r.runtime.data.RIntVector.class).not()));
+        assertTypes(atom(RStringVector.class).or(atom(com.oracle.truffle.r.runtime.data.RIntVector.class).not()));
     }
 
     @Test
@@ -438,7 +437,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testReturnIf2() {
         arg.returnIf(nullValue(), emptyIntegerVector()).returnIf(missingValue(), emptyIntegerVector()).asIntegerVector();
-        assertTypes(atom(int.class).or(atom(RAbstractIntVector.class)).or(atom(RIntSequence.class)).or(atom(RIntVector.class)), true);
+        assertTypes(atom(int.class).or(atom(RIntVector.class)).or(atom(RIntSequence.class)).or(atom(com.oracle.truffle.r.runtime.data.RIntVector.class)), true);
     }
 
     @Test
@@ -467,7 +466,7 @@ public class ResultTypesAnalyserTest {
     public void testAnalyseRealPipeline() {
         arg.mustBe(numericValue()).asVector().mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(not(dimEq(0, 0)),
                         RError.Message.GENERIC, "'a' is 0-diml").mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
-        assertTypes(TypeExpr.union(RAbstractDoubleVector.class, RAbstractIntVector.class, RAbstractLogicalVector.class), true);
+        assertTypes(TypeExpr.union(RAbstractDoubleVector.class, RIntVector.class, RAbstractLogicalVector.class), true);
     }
 
     // utilities

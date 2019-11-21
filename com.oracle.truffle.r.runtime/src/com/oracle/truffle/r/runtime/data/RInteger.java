@@ -27,14 +27,14 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
-public final class RInteger extends RAbstractIntVector implements RScalarVector {
+public final class RInteger extends RIntVector implements RScalarVector {
 
     protected final int value;
 
@@ -54,8 +54,8 @@ public final class RInteger extends RAbstractIntVector implements RScalarVector 
     }
 
     @Override
-    public RIntVector materialize() {
-        RIntVector result = RDataFactory.createIntVector(new int[]{getValue()}, isComplete());
+    public com.oracle.truffle.r.runtime.data.RIntVector materialize() {
+        com.oracle.truffle.r.runtime.data.RIntVector result = RDataFactory.createIntVector(new int[]{getValue()}, isComplete());
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

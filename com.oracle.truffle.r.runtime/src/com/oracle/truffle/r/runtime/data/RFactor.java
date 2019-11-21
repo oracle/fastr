@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
@@ -37,7 +37,7 @@ public final class RFactor {
      * Helper method to get 'levels' of a factor. However, all the invocations of this method should
      * be replaced with FactorNodes.GetLevel in the future.
      */
-    public static RAbstractVector getLevels(RAbstractIntVector factor) {
+    public static RAbstractVector getLevels(RIntVector factor) {
         Object attr = factor.getAttr(RRuntime.LEVELS_ATTR_KEY);
         // convert scalar to RAbstractVector if necessary
         return attr instanceof RMaterializedVector ? (RAbstractVector) attr : (RAbstractVector) RRuntime.asAbstractVector(attr);

@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -473,7 +473,7 @@ public class CastUtils {
     }
 
     public static Type elementType(Class<?> vectorType) {
-        if (RAbstractIntVector.class.isAssignableFrom(vectorType) || Integer.class.isAssignableFrom(vectorType) || int.class.isAssignableFrom(vectorType)) {
+        if (RIntVector.class.isAssignableFrom(vectorType) || Integer.class.isAssignableFrom(vectorType) || int.class.isAssignableFrom(vectorType)) {
             return Integer.class;
         }
         if (RAbstractDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType) || double.class.isAssignableFrom(vectorType)) {
@@ -523,7 +523,7 @@ public class CastUtils {
     }
 
     public static RAbstractVector vectorOfSize(Class<?> vectorType, int size) {
-        if (RAbstractIntVector.class.isAssignableFrom(vectorType) || Integer.class.isAssignableFrom(vectorType) || int.class.isAssignableFrom(vectorType)) {
+        if (RIntVector.class.isAssignableFrom(vectorType) || Integer.class.isAssignableFrom(vectorType) || int.class.isAssignableFrom(vectorType)) {
             return RDataFactory.createIntVector(size);
         }
         if (RAbstractDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType) || double.class.isAssignableFrom(vectorType)) {
@@ -566,7 +566,7 @@ public class CastUtils {
     public static Class<?>[] rTypeToClasses(RType type) {
         switch (type) {
             case Integer:
-                return new Class<?>[]{Integer.class, RAbstractIntVector.class};
+                return new Class<?>[]{Integer.class, RIntVector.class};
             case Double:
                 return new Class<?>[]{Double.class, RAbstractDoubleVector.class};
             case Logical:
@@ -718,8 +718,8 @@ public class CastUtils {
             if (((RAbstractContainer) vectorOrScalar).getLength() == 0) {
                 return defaultValue == null ? Optional.empty() : Optional.of((T) defaultValue);
             } else {
-                if (vectorOrScalar instanceof RAbstractIntVector) {
-                    return Optional.of((T) ((RAbstractIntVector) vectorOrScalar).getDataAtAsObject(0));
+                if (vectorOrScalar instanceof RIntVector) {
+                    return Optional.of((T) ((RIntVector) vectorOrScalar).getDataAtAsObject(0));
                 }
                 if (vectorOrScalar instanceof RAbstractDoubleVector) {
                     return Optional.of((T) ((RAbstractDoubleVector) vectorOrScalar).getDataAtAsObject(0));
@@ -742,7 +742,7 @@ public class CastUtils {
 
     public static Optional<Class<?>> vectorElementType(Object vector) {
         if (vector instanceof RAbstractContainer) {
-            if (vector instanceof RAbstractIntVector) {
+            if (vector instanceof RIntVector) {
                 return Optional.of(Integer.class);
             }
             if (vector instanceof RAbstractDoubleVector) {
@@ -810,7 +810,7 @@ public class CastUtils {
             samples.add(-1);
         }
 
-        if (cls == Object.class || RAbstractIntVector.class.isAssignableFrom(cls)) {
+        if (cls == Object.class || RIntVector.class.isAssignableFrom(cls)) {
             samples.add(RDataFactory.createIntVectorFromScalar(0));
             samples.add(RDataFactory.createIntVectorFromScalar(1));
             samples.add(RDataFactory.createIntVectorFromScalar(-1));

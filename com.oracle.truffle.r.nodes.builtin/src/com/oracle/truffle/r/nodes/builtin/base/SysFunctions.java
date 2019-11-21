@@ -68,11 +68,10 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
@@ -310,7 +309,7 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") boolean useUmask,
+        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RIntVector octmode, @SuppressWarnings("unused") boolean useUmask,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             byte[] data = new byte[pathVec.getLength()];
             for (int i = 0; i < data.length; i++) {
@@ -347,7 +346,7 @@ public class SysFunctions {
                 res = umaskNode.umask(octmode);
                 setVisibilityNode.execute(frame, false);
             }
-            RIntVector rv = RDataFactory.createIntVectorFromScalar(res);
+            com.oracle.truffle.r.runtime.data.RIntVector rv = RDataFactory.createIntVectorFromScalar(res);
             setClassNode.setAttr(rv, RDataFactory.createStringVector("octmode"));
             return rv;
         }

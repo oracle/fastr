@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
@@ -164,7 +164,7 @@ public final class CoerceNodes {
         @Child private RFactorNodes.GetLevels getLevels = RFactorNodes.GetLevels.create();
 
         @Specialization
-        protected Object doFactor(RAbstractIntVector o) {
+        protected Object doFactor(RIntVector o) {
             if (!inheritsFactorNode.execute(o)) {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "attempting to coerce non-factor");
             }

@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections.StdConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 
 @RBuiltin(name = "isatty", kind = INTERNAL, parameterNames = {"con"}, behavior = PURE)
 public abstract class IsATTY extends RBuiltinNode.Arg1 {
@@ -47,7 +47,7 @@ public abstract class IsATTY extends RBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    protected byte isATTYNonConnection(RAbstractIntVector con) {
+    protected byte isATTYNonConnection(RIntVector con) {
         if (con.getLength() == 1) {
             RStringVector clazz = ClassHierarchyNode.getClassHierarchy(con);
             for (int i = 0; i < clazz.getLength(); i++) {

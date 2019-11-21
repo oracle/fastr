@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -326,7 +326,7 @@ abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
         }
 
         @Specialization
-        public Object doIntVector(RAbstractIntVector vector) {
+        public Object doIntVector(RIntVector vector) {
             if (vector.getLength() == 0) {
                 throw error(RError.Message.GENERIC, "invalid index during foreign access");
             }

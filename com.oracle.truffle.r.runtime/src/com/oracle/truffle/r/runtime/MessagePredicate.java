@@ -25,13 +25,13 @@ package com.oracle.truffle.r.runtime;
 import java.util.function.Predicate;
 
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 
 public enum MessagePredicate {
 
     MUST_NOT_BE_NA_VALUE((Integer x) -> !RRuntime.isNA(x), Message.INVALID_LARGE_NA_VALUE),
     MUST_BE_GT_ZERO((Integer x) -> x >= 0, Message.INVALID_NEGATIVE_VALUE),
-    SEED_MUST_BE_INT(x -> x instanceof RAbstractIntVector || x instanceof Integer, Message.SEED_NOT_VALID_INT),
+    SEED_MUST_BE_INT(x -> x instanceof RIntVector || x instanceof Integer, Message.SEED_NOT_VALID_INT),
     FILL_SHOULD_BE_POSITIVE(x -> x instanceof Byte || x instanceof Integer && ((Integer) x) > 0, Message.NON_POSITIVE_FILL);
 
     private final Predicate<?> predicate;

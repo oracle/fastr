@@ -28,10 +28,10 @@ import java.io.PrintWriter;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RFactor;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
+final class FactorPrinter extends AbstractValuePrinter<RIntVector> {
 
     static final FactorPrinter INSTANCE = new FactorPrinter();
 
@@ -41,7 +41,7 @@ final class FactorPrinter extends AbstractValuePrinter<RAbstractIntVector> {
 
     @Override
     @TruffleBoundary
-    protected void printValue(RAbstractIntVector operand, PrintContext printCtx) throws IOException {
+    protected void printValue(RIntVector operand, PrintContext printCtx) throws IOException {
         // TODO: this should be handled by an S3 function. Should it? For example, in C code for
         // split, there is direct call to getAttrib. This should be refactored to use
         // AttributeAccess node or even Factor.GetLevels node. The same holds for the access

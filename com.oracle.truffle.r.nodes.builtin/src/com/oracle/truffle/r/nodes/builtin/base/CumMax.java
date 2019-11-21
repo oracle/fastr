@@ -44,10 +44,9 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -85,14 +84,14 @@ public abstract class CumMax extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(RAbstractIntVector emptyVec,
-                    @Cached("create()") GetNamesAttributeNode getNames) {
+    protected RAbstractVector cumEmpty(RIntVector emptyVec,
+                                       @Cached("create()") GetNamesAttributeNode getNames) {
         return RDataFactory.createIntVector(new int[0], true, getNames.getNames(emptyVec));
     }
 
     @Specialization
-    protected RAbstractIntVector cummaxIntSequence(RIntSequence v,
-                    @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
+    protected RIntVector cummaxIntSequence(RIntSequence v,
+                                           @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
         if (negativeStrideProfile.profile(v.getStride() < 0)) {
             // all numbers are smaller than the first one
             return RDataFactory.createIntSequence(v.getStart(), 0, v.getLength());
@@ -127,7 +126,7 @@ public abstract class CumMax extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(replaces = "cummaxIntSequence")
-    protected RIntVector cummax(RAbstractIntVector v) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector cummax(RIntVector v) {
         int[] cmaxV = new int[v.getLength()];
         na.enable(v);
         int max = v.getDataAt(0);

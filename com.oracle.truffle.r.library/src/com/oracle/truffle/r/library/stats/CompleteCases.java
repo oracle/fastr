@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -131,8 +131,8 @@ public final class CompleteCases extends RExternalBuiltinNode {
 
     private void iterateAbstractVectorContents(int len, byte[] result, Object obj) {
         Object entry = RRuntime.asAbstractVector(obj);
-        if (entry instanceof RAbstractIntVector) {
-            RAbstractIntVector v = (RAbstractIntVector) entry;
+        if (entry instanceof RIntVector) {
+            RIntVector v = (RIntVector) entry;
             for (int e = 0; e < v.getLength(); e++) {
                 if (RRuntime.isNA(v.getDataAt(e))) {
                     result[e % len] = RRuntime.LOGICAL_FALSE;

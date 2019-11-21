@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
@@ -63,7 +63,7 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
 
     @Specialization
     @TruffleBoundary
-    public Object doPoints(RAbstractVector xVec, RAbstractVector yVec, RAbstractIntVector pchVec, RAbstractVector sizeVec) {
+    public Object doPoints(RAbstractVector xVec, RAbstractVector yVec, RIntVector pchVec, RAbstractVector sizeVec) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();
 

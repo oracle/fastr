@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -54,7 +54,7 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
         casts.arg("times").defaultError(RError.Message.INVALID_TYPE, typeName(), "times", "vector").mustBe(abstractVectorValue()).asIntegerVector();
     }
 
-    private RAbstractVector performRep(RAbstractVector value, RAbstractIntVector times, VectorFactory factory, VectorAccess valueAccess, VectorAccess timesAccess, VectorAccess resultAccess) {
+    private RAbstractVector performRep(RAbstractVector value, RIntVector times, VectorFactory factory, VectorAccess valueAccess, VectorAccess timesAccess, VectorAccess resultAccess) {
         try (SequentialIterator valueIter = valueAccess.access(value); SequentialIterator timesIter = timesAccess.access(times)) {
             int valueLength = valueAccess.getLength(valueIter);
             int timesLength = timesAccess.getLength(timesIter);
@@ -111,7 +111,7 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"valueAccess.supports(value)", "timesAccess.supports(times)"})
-    protected RAbstractVector repCached(RAbstractVector value, RAbstractIntVector times,
+    protected RAbstractVector repCached(RAbstractVector value, RIntVector times,
                     @Cached("create()") VectorFactory factory,
                     @Cached("value.access()") VectorAccess valueAccess,
                     @Cached("times.access()") VectorAccess timesAccess,
@@ -121,7 +121,7 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
 
     @Specialization(replaces = "repCached")
     @TruffleBoundary
-    protected RAbstractVector repGeneric(RAbstractVector value, RAbstractIntVector times,
+    protected RAbstractVector repGeneric(RAbstractVector value, RIntVector times,
                     @Cached("create()") VectorFactory factory) {
         return performRep(value, times, factory, value.slowPathAccess(), times.slowPathAccess(), VectorAccess.createSlowPathNew(value.getRType()));
     }

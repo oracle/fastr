@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFFIAccess;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
@@ -108,7 +107,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         if (attributes == null) {
             return null;
         } else {
-            RIntVector dims = (RIntVector) attributes.get(RRuntime.DIM_ATTR_KEY);
+            com.oracle.truffle.r.runtime.data.RIntVector dims = (com.oracle.truffle.r.runtime.data.RIntVector) attributes.get(RRuntime.DIM_ATTR_KEY);
             return dims == null ? null : dims.getReadonlyData();
         }
     }
@@ -232,7 +231,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
             if (value instanceof Integer) {
                 setDimensions(new int[]{(int) value});
             } else {
-                setDimensions(((RAbstractIntVector) value).materialize().getDataCopy());
+                setDimensions(((RIntVector) value).materialize().getDataCopy());
             }
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             setDimNames((RList) value);
@@ -709,7 +708,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     public static DynamicObject createAttributes(int[] dimensions, RStringVector names, RList dimNames) {
         if (dimNames != null) {
             if (dimensions != null) {
-                RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                com.oracle.truffle.r.runtime.data.RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
                 // one-dimensional arrays do not have names, only dimnames with one value so do not
                 // init names in that case
                 if (names != null && dimensions.length != 1) {
@@ -726,7 +725,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
             }
         } else {
             if (dimensions != null) {
-                RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                com.oracle.truffle.r.runtime.data.RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
                 if (names != null) {
                     if (dimensions.length != 1) {
                         return RAttributesLayout.createNamesAndDim(names, dimensionsVector);
