@@ -57,8 +57,8 @@ public class TraceHandling {
 
     private static final TruffleLogger LOGGER = RLogger.getLogger(LOGGER_FUNCTION_CALLS);
 
+    @SuppressWarnings("unchecked")
     public static void enableTrace(RFunction func) {
-        @SuppressWarnings("unchecked")
         EventBinding<TraceEventListener> binding = (EventBinding<TraceEventListener>) RContext.getInstance().stateInstrumentation.getTraceBinding(RInstrumentation.getSourceSection(func));
         if (binding != null) {
             // only one
@@ -67,8 +67,8 @@ public class TraceHandling {
         attachPrimitiveTraceHandler(func);
     }
 
+    @SuppressWarnings("unchecked")
     public static void disableTrace(RFunction func) {
-        @SuppressWarnings("unchecked")
         EventBinding<TraceEventListener> binding = (EventBinding<TraceEventListener>) RContext.getInstance().stateInstrumentation.getTraceBinding(RInstrumentation.getSourceSection(func));
         if (binding != null) {
             binding.dispose();
@@ -76,10 +76,10 @@ public class TraceHandling {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static void setTracingState(boolean state) {
         EventBinding<?>[] listeners = RContext.getInstance().stateInstrumentation.getTraceBindings();
         for (int i = 0; i < listeners.length; i++) {
-            @SuppressWarnings("unchecked")
             EventBinding<TraceEventListener> binding = (EventBinding<TraceEventListener>) listeners[i];
             if (state) {
                 binding.getElement().enable();
@@ -109,8 +109,8 @@ public class TraceHandling {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static boolean enableStatementTrace(RFunction func, RPairList tracer, Object at, boolean print) {
-        @SuppressWarnings("unchecked")
         EventBinding<TraceEventListener> binding = (EventBinding<TraceEventListener>) RContext.getInstance().stateInstrumentation.getTraceBinding(RInstrumentation.getSourceSection(func));
         if (binding != null) {
             // only one allowed

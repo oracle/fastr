@@ -144,16 +144,9 @@ public final class FastRSession implements RSession {
         return builder;
     }
 
-    private static boolean cliOptionSet = false;
-
     private static void setCLIOptions(Context.Builder builder) {
-        if (cliOptionSet) {
-            return;
-        }
-        cliOptionSet = true;
         for (Map.Entry<String, String> entry : TestBase.options.entrySet()) {
             builder.option(entry.getKey(), entry.getValue());
-            System.out.println("Setting option " + entry.getKey() + "=" + entry.getValue());
         }
     }
 

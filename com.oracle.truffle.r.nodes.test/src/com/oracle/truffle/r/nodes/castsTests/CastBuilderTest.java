@@ -939,7 +939,7 @@ public class CastBuilderTest {
     }
 
     private static void execInContext(Runnable r) {
-        Context context = Context.newBuilder("R", "llvm").allowExperimentalOptions(true).allowAllAccess(true).build();
+        Context context = FastRSession.getContextBuilder("R", "llvm").build();
         context.eval("R", "1"); // initialize context
         context.enter();
         try {

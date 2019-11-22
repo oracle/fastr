@@ -464,9 +464,9 @@ public class SampleCollectorTest {
             this.expectedLength = expectedLength;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public boolean matches(Object item) {
-            @SuppressWarnings("unchecked")
             Set<Object> samples = (Set<Object>) item;
             return samples.stream().filter(s -> s instanceof String && s.toString().length() == expectedLength).findAny().isPresent();
         }
@@ -483,9 +483,9 @@ public class SampleCollectorTest {
             this.expectedSize = expectedSize;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public boolean matches(Object item) {
-            @SuppressWarnings("unchecked")
             Set<Object> samples = (Set<Object>) item;
             return samples.stream().filter(s -> s instanceof RAbstractVector && ((RAbstractVector) s).getRType() == type && ((RAbstractVector) s).getLength() == expectedSize).findAny().isPresent();
         }
@@ -501,9 +501,9 @@ public class SampleCollectorTest {
             this.expectedElements = expectedElements;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public boolean matches(Object item) {
-            @SuppressWarnings("unchecked")
             Set<Object> samples = (Set<Object>) item;
             return samples.stream().filter(s -> s instanceof RAbstractVector && elemType.equals(((RAbstractVector) s).getRType()) && contains((RAbstractVector) s)).findAny().isPresent();
         }
