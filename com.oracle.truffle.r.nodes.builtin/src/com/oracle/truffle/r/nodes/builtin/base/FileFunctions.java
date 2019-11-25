@@ -35,7 +35,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
@@ -63,6 +62,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -1195,11 +1195,11 @@ public class FileFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doDirName(RAbstractStringVector vec) {
+        protected RStringVector doDirName(RAbstractStringVector vec, @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             return doXyzName(vec, (env, name) -> {
                 TruffleFile path = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(name));
                 TruffleFile parent = path.getParent();
-                return parent != null ? parent.toString() : (path.getAbsoluteFile().getParent() != null ? "." : RContext.getInstance().getEnv().getFileNameSeparator());
+                return parent != null ? parent.toString() : (path.getAbsoluteFile().getParent() != null ? "." : ctxRef.get().getEnv().getFileNameSeparator());
             });
         }
     }
