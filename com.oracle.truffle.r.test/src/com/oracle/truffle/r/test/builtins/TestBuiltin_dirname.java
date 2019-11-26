@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -57,4 +57,11 @@ public class TestBuiltin_dirname extends TestBase {
     public void testdirname7() {
         assertEval("argv <- structure(list(path = character(0)), .Names = 'path');do.call('dirname', argv)");
     }
+
+    @Test
+    public void testdirname8() {
+        assertEval("dirname('.')");
+        assertEval("dirname('/')");
+    }
+
 }

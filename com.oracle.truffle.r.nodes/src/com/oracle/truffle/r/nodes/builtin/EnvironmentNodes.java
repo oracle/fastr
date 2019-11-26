@@ -108,15 +108,14 @@ public final class EnvironmentNodes {
             if (parentEnv != null) {
                 result.setParent(parentEnv);
             }
-            for (int i = list.getLength() - 1; i >= 0; i--) {
+            int len = list.getLength();
+            for (int i = 0; i < len; i++) {
                 String name = names.getDataAt(i);
                 if (!ignoreMissingNames && name.length() == 0) {
                     throw error(RError.Message.ZERO_LENGTH_VARIABLE);
                 }
                 // in case of duplicates, last element in list wins
-                if (result.get(name) == null) {
-                    result.safePut(name, UpdateShareableChildValue.update(list, list.getDataAt(i)));
-                }
+                result.safePut(name, UpdateShareableChildValue.update(list, list.getDataAt(i)));
             }
             return result;
         }
