@@ -190,53 +190,6 @@ public final class Utils {
         return userHome;
     }
 
-    private static final class WorkingDirectoryState {
-        /**
-         * The initial working directory on startup. This and {@link #current} are always absolute
-         * paths.
-         */
-        private final String initial;
-        private String current;
-        private TruffleFile currentPath;
-
-        private WorkingDirectoryState() {
-            initial = System.getProperty("user.dir");
-            current = initial;
-            currentPath = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), initial);
-        }
-
-        private TruffleFile getCurrentPath() {
-            return currentPath;
-        }
-
-        private void setCurrent(String path) {
-            current = path;
-            currentPath = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
-        }
-
-        private boolean isInitial() {
-            return current.equals(initial);
-        }
-
-    }
-
-    /**
-     * Keeps a record of the current working directory as Java provides no way to change this AND
-     * many of the file methods that operate on relative paths work from the initial value.
-     */
-    private static WorkingDirectoryState wdState;
-
-    private static WorkingDirectoryState wdState() {
-        if (wdState == null) {
-            wdState = new WorkingDirectoryState();
-        }
-        return wdState;
-    }
-
-    public static void updateCurwd(String path) {
-        wdState().setCurrent(path);
-    }
-
     /**
      * Returns a path for a log file with base name {@code fileNamePrefix}, adding '_pid' and
      * process-id and '.log' and taking into account whether the system is running in embedded mode.
@@ -328,48 +281,12 @@ public final class Utils {
      * shifted curwd will not produce the right result. This {@code keepRelative == true} case is
      * required for file/directory listings.
      */
-    public static String tildeExpand(String path, boolean keepRelative) {
+    public static String tildeExpand(String path) {
         if (path.length() > 0 && path.charAt(0) == '~') {
             return userHome() + path.substring(1);
         } else {
-            if (wdState().isInitial()) {
-                return path;
-            } else {
-                /*
-                 * This is moderately painful, as can't rely on most of the normal relative path
-                 * support in Java as much of it works relative to the initial setting.
-                 */
-                if (path.length() == 0) {
-                    return keepRelative ? path : wdState().getCurrentPath().getPath();
-                } else {
-                    TruffleFile p = RContext.getInstance().getEnv().getInternalTruffleFile(path);
-                    if (p.isAbsolute()) {
-                        return path;
-                    } else {
-                        TruffleFile currentPath = wdState().getCurrentPath();
-                        TruffleFile truePath = currentPath.resolve(p.getPath());
-                        if (keepRelative) {
-                            // relativize it (it was relative to start with)
-                            if (".".equals(path) || "..".equals(path)) {
-                                return path;
-                            } else {
-                                return currentPath.relativize(truePath).getPath();
-                            }
-                        } else {
-                            return truePath.toString();
-                        }
-                    }
-                }
-            }
+            return path;
         }
-    }
-
-    /**
-     * Return an absolute path, with "~" expansion, for {@code path}, taking into account any change
-     * in curwd.
-     */
-    public static String tildeExpand(String path) {
-        return tildeExpand(path, false);
     }
 
     public static String unShQuote(String s) {
@@ -913,12 +830,4 @@ public final class Utils {
         s.append('$');
         return (s.toString());
     }
-
-    /**
-     * Testing purposes only.
-     */
-    public static void resetWD() {
-        wdState().current = wdState().initial;
-    }
-
 }

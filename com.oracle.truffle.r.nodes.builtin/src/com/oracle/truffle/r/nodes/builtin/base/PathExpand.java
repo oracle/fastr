@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ public abstract class PathExpand extends RBuiltinNode.Arg1 {
     protected Object doPathExpand(RAbstractStringVector vec) {
         String[] results = new String[vec.getLength()];
         for (int i = 0; i < results.length; i++) {
-            String path = Utils.tildeExpand(vec.getDataAt(i), true);
+            String path = Utils.tildeExpand(vec.getDataAt(i));
             results[i] = path;
         }
         return RDataFactory.createStringVector(results, RDataFactory.COMPLETE_VECTOR);

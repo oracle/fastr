@@ -698,7 +698,7 @@ public class FileFunctions {
             Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < vec.getLength(); i++) {
                 String vecPathString = vec.getDataAt(i);
-                String pathString = Utils.tildeExpand(vecPathString, true);
+                String pathString = Utils.tildeExpand(vecPathString);
                 TruffleFile root = FileSystemUtils.getSafeTruffleFile(env, pathString);
                 if (pathString.isEmpty() || !root.exists()) { // File.exists() returns false for ""
                                                               // but TF gives true
@@ -706,19 +706,25 @@ public class FileFunctions {
                 }
                 try (Stream<TruffleFile> stream = FileSystemUtils.find(root, recursive ? Integer.MAX_VALUE : 1, new FileMatcher(pattern, allFiles, includeDirs))) {
                     Iterator<TruffleFile> iter = stream.iterator();
-                    TruffleFile vecPath = null;
-                    if (!fullNames) {
-                        vecPath = FileSystemUtils.getSafeTruffleFile(env, vecPathString);
-                    }
                     while (iter.hasNext()) {
                         TruffleFile file = iter.next();
                         if (file.equals(root)) {
                             continue;
                         }
-                        if (!fullNames) {
-                            file = vecPath.relativize(file);
+                        file = root.relativize(file);
+                        String p = file.getPath();
+                        if (p.startsWith(vecPathString)) {
+                            p = p.substring(vecPathString.length());
+                            if (p.startsWith("/")) {
+                                p = p.substring(1);
+                            }
                         }
-                        files.add(file.toString());
+                        if (fullNames) {
+                            p = p.isEmpty() ? vecPathString : vecPathString + context.getEnv().getFileNameSeparator() + p;
+                            files.add(p);
+                        } else {
+                            files.add(p);
+                        }
                     }
                     /*
                      * Annoyingly "." and ".." are never visited by Files.find, so we have to
@@ -816,26 +822,26 @@ public class FileFunctions {
             Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < paths.getLength(); i++) {
                 String vecPathString = paths.getDataAt(i);
-                String pathString = Utils.tildeExpand(vecPathString, true);
+                String pathString = Utils.tildeExpand(vecPathString);
                 TruffleFile root = FileSystemUtils.getSafeTruffleFile(env, pathString);
                 if (!root.exists()) {
                     continue;
                 }
                 try (Stream<TruffleFile> stream = FileSystemUtils.find(root, recursive ? Integer.MAX_VALUE : 1, new FileMatcher())) {
                     Iterator<TruffleFile> iter = stream.iterator();
-                    TruffleFile vecPath = null;
-                    if (!fullNames) {
-                        vecPath = FileSystemUtils.getSafeTruffleFile(env, vecPathString);
-                    }
                     while (iter.hasNext()) {
                         TruffleFile dir = iter.next();
                         if (!recursive && dir.equals(root)) {
                             continue;
                         }
-                        if (!fullNames) {
-                            dir = vecPath.relativize(dir);
+                        dir = root.relativize(dir);
+                        if (fullNames) {
+                            String p = dir.getPath();
+                            p = p.isEmpty() ? vecPathString : vecPathString + context.getEnv().getFileNameSeparator() + p;
+                            dirList.add(p);
+                        } else {
+                            dirList.add(dir.getPath());
                         }
-                        dirList.add(dir.getPath());
                     }
                 } catch (IOException ex) {
                     // ignored
