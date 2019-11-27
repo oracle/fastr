@@ -69,6 +69,7 @@ public abstract class NormalizePath extends RBuiltinNode.Arg3 {
         Env env = RContext.getInstance().getEnv();
         for (int i = 0; i < results.length; i++) {
             String path = pathVec.getDataAt(i);
+            // XXX
             String expandPath = Utils.tildeExpand(path);
             String normPath = expandPath;
             try {

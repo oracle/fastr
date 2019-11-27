@@ -1343,11 +1343,27 @@ public class FileFunctions {
             } else {
                 ok = true;
                 String path = Utils.tildeExpand(pathIn);
-                if (recursive) {
-                    ok = mkparentdirs(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path).getAbsoluteFile().getParent(), showWarnings, octMode);
-                }
-                if (ok) {
-                    ok = mkdir(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path), showWarnings, octMode);
+                TruffleFile newDir = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
+                if (newDir.exists()) {
+                    ok = false;
+                    if (showWarnings) {
+                        warning(Message.ALREADY_EXISTS, newDir);
+                    }
+                } else {
+                    if (!recursive) {
+                        TruffleFile par = newDir.getParent();
+                        if (par != null && !par.exists()) {
+                            ok = false;
+                            if (showWarnings) {
+                                warning(Message.DIR_CANNOT_CREATE_NO_SUCH, newDir);
+                            }
+                        }
+                    } else {
+                        ok = mkparentdirs(newDir.getAbsoluteFile().getParent(), showWarnings, octMode);
+                    }
+                    if (ok) {
+                        ok = mkdir(newDir, showWarnings, octMode);
+                    }
                 }
             }
             return RRuntime.asLogical(ok);
@@ -1391,6 +1407,7 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected RLogicalVector dirExists(RAbstractStringVector pathVec) {
+            // XXX testme
             Env env = RContext.getInstance().getEnv();
             byte[] data = new byte[pathVec.getLength()];
             for (int i = 0; i < data.length; i++) {

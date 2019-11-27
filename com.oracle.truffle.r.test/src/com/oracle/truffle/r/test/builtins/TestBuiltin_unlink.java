@@ -50,6 +50,11 @@ public class TestBuiltin_unlink extends TestBase {
     @Test
     public void testunlink() {
         assertEval("{ unlink('abcnonexistentxyz*') }");
+
+        assertEval("{ td <- tempfile(pattern='r-test-unlink'); dir.exists(td); dir.create(td); dir.exists(td); unlink(td, recursive=F); dir.exists(td) }");
+        assertEval("{ td <- tempfile(pattern='r-test-unlink'); dir.exists(td); dir.create(td); dir.exists(td); unlink(td, recursive=T); dir.exists(td) }");
+        assertEval("{ td <- tempfile(pattern='r-test-unlink'); td <- paste0(td, '/dir1/dir2'); dir.exists(td); dir.create(td, recursive=T); dir.exists(td); unlink(td, recursive=F); dir.exists(td) }");
+        assertEval("{ td <- tempfile(pattern='r-test-unlink'); td <- paste0(td, '/dir1/dir2'); dir.exists(td); dir.create(td, recursive=T); dir.exists(td); unlink(td, recursive=T); dir.exists(td) }");
     }
 
 }
