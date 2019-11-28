@@ -105,7 +105,7 @@ public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
         if (targetDir == null || !targetDir.isDirectory()) {
             throw error(Message.GENERIC, "invalid target directory");
         }
-        TruffleFile tZipFile = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(zipfile));
+        TruffleFile tZipFile = FileSystemUtils.getSafeTruffleFile(env, zipfile);
         try (ZipInputStream stream = new ZipInputStream(tZipFile.newInputStream())) {
             ZipEntry entry;
             ArrayList<String> extracted = new ArrayList<>();
@@ -145,7 +145,7 @@ public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
 
     @SuppressWarnings("deprecation")
     private Object list(String zipfile) {
-        try (ZipInputStream stream = new ZipInputStream(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), Utils.tildeExpand(zipfile)).newInputStream())) {
+        try (ZipInputStream stream = new ZipInputStream(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), zipfile).newInputStream())) {
             ArrayList<ZipEntry> entryList = new ArrayList<>();
             ZipEntry entry;
             while ((entry = stream.getNextEntry()) != null) {

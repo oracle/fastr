@@ -312,7 +312,7 @@ public class SysFunctions {
             byte[] data = new byte[pathVec.getLength()];
             TruffleLanguage.Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < data.length; i++) {
-                String path = Utils.tildeExpand(pathVec.getDataAt(i));
+                String path = pathVec.getDataAt(i);
                 if (path.length() == 0 || RRuntime.isNA(path)) {
                     continue;
                 }

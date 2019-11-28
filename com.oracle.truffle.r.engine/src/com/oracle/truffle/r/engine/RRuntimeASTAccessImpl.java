@@ -444,7 +444,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             if (arg.equals("<")) {
                 String file;
                 if (i < args.length - 1) {
-                    file = Utils.tildeExpand(Utils.unShQuote(args[i + 1]));
+                    file = Utils.unShQuote(args[i + 1]);
                 } else {
                     throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "redirect missing");
                 }

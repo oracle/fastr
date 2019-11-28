@@ -54,6 +54,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.runtime.RError.Message;
+import java.nio.file.NoSuchFileException;
+import java.util.logging.Level;
 
 public class FileSystemUtils {
     private static PosixFilePermission[] permissionValues = PosixFilePermission.values();
@@ -648,50 +650,43 @@ public class FileSystemUtils {
     }
 
     public static TruffleFile getSafeTruffleFile(Env env, String path) {
-        // TODO: HOTFIX the commented in code bellow does not work well with the FastR
-        // 'working.dir' vs java 'user.dir' dichotomy
-        return env.getInternalTruffleFile(path);
+        String expandedPath = Utils.tildeExpand(path);
+        TruffleFile origFile = env.getInternalTruffleFile(expandedPath);
+        TruffleFile f = origFile;
+        try {
+            if (origFile.exists()) {
+                try {
+                    f = origFile.getCanonicalFile();
+                } catch (NoSuchFileException e) {
+                    // absolute path "exists", but cannonical does not
+                    // happens e.g. during install.packages: file.exists("/{rHome}/inst/..")
+                    // lets optimistically FALLBACK on absolute path
+                }
+            }
+        } catch (IOException e) {
+            RLogger.getLogger(RLogger.LOGGER_FILE_ACCEESS).log(Level.SEVERE, "Unable to access file " + expandedPath + " " + e.getMessage(), e);
+            throw RError.error(RError.SHOW_CALLER, Message.FILE_OPEN_ERROR);
+        }
 
-        // TruffleFile origFile = env.getInternalTruffleFile(path);
-        //
-        // TruffleFile f = origFile;
-        // try {
-        // origFile = env.getInternalTruffleFile(path);
-        // if (origFile.exists()) {
-        // try {
-        // f = origFile.getCanonicalFile();
-        // } catch (NoSuchFileException e) {
-        // // absolute path "exists", but cannonical does not
-        // // happens e.g. during install.packages: file.exists("/{rHome}/inst/..")
-        // // lets optimistically FALLBACK on absolute path
-        // }
-        // }
-        // } catch (IOException e) {
-        // RLogger.getLogger(RLogger.LOGGER_FILE_ACCEESS).log(Level.SEVERE, "Unable to access file "
-        // + path + " " + e.getMessage(), e);
-        // throw RError.error(RError.SHOW_CALLER, Message.FILE_OPEN_ERROR);
-        // }
-        //
-        // final TruffleFile home = REnvVars.getRHomeTruffleFile(env);
-        // if (f.startsWith(home) && isLibraryFile(home.relativize(f))) {
-        // return origFile;
-        // } else {
-        // try {
-        // return env.getPublicTruffleFile(path);
-        // } catch (SecurityException e) {
-        // RLogger.getLogger(RLogger.LOGGER_FILE_ACCEESS).log(Level.SEVERE, "Unable to access file "
-        // + path + " " + e.getMessage(), e);
-        // throw RError.error(RError.SHOW_CALLER, Message.FILE_OPEN_ERROR);
-        // }
-        // }
+        final TruffleFile home = REnvVars.getRHomeTruffleFile(env);
+        if (f.startsWith(home) && isLibraryFile(home.relativize(f))) {
+            return origFile;
+        } else {
+            try {
+                return env.getPublicTruffleFile(expandedPath);
+            } catch (SecurityException e) {
+                RLogger.getLogger(RLogger.LOGGER_FILE_ACCEESS).log(Level.SEVERE, "Unable to access file " + expandedPath + " " + e.getMessage(), e);
+                throw RError.error(RError.SHOW_CALLER, Message.FILE_OPEN_ERROR);
+            }
+        }
     }
 
-    // private static boolean isLibraryFile(TruffleFile relativePathFromHome) {
-    // final String fileName = relativePathFromHome.getName();
-    // if (fileName == null) {
-    // return false;
-    // }
-    // return relativePathFromHome.startsWith("library");
-    // }
+    private static boolean isLibraryFile(TruffleFile relativePathFromHome) {
+        final String fileName = relativePathFromHome.getName();
+        if (fileName == null) {
+            return false;
+        }
+        return relativePathFromHome.startsWith("library");
+    }
 
 }

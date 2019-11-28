@@ -113,7 +113,7 @@ public class FileFunctions {
         protected Object fileAccess(RAbstractStringVector names, int mode) {
             int[] data = new int[names.getLength()];
             for (int i = 0; i < data.length; i++) {
-                TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), Utils.tildeExpand(names.getDataAt(i)));
+                TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), names.getDataAt(i));
                 if (file.exists()) {
                     if ((mode & EXECUTE) != 0 && !file.isExecutable()) {
                         data[i] = -1;
@@ -166,7 +166,6 @@ public class FileFunctions {
             if (len1 == 1) {
                 String file1 = file1Vec.getDataAt(0);
                 if (!RRuntime.isNA(file1)) {
-                    file1 = Utils.tildeExpand(file1);
                     try (BufferedOutputStream out = new BufferedOutputStream(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), file1).newOutputStream(StandardOpenOption.APPEND))) {
                         for (int f2 = 0; f2 < len2; f2++) {
                             String file2 = file2Vec.getDataAt(f2);
@@ -187,7 +186,6 @@ public class FileFunctions {
                 for (int f = 0; f < len; f++) {
                     String file1 = file1A[f];
                     if (!RRuntime.isNA(file1)) {
-                        file1 = Utils.tildeExpand(file1);
                         try (BufferedOutputStream out = new BufferedOutputStream(
                                         FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), file1).newOutputStream(StandardOpenOption.APPEND))) {
                             String file2 = file2A[f];
@@ -205,8 +203,7 @@ public class FileFunctions {
             if (RRuntime.isNA(pathArg)) {
                 return false;
             }
-            String path = Utils.tildeExpand(pathArg);
-            TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
+            TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), pathArg);
             if (!file.exists()) {
                 // not an error (cf GnuR), just status
                 return false;
@@ -255,7 +252,7 @@ public class FileFunctions {
                     boolean ok = true;
                     try {
                         Env env = RContext.getInstance().getEnv();
-                        FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(path)).newOutputStream().close();
+                        FileSystemUtils.getSafeTruffleFile(env, path).newOutputStream().close();
                     } catch (IOException ex) {
                         ok = false;
                         if (showWarnings == RRuntime.LOGICAL_TRUE) {
@@ -314,7 +311,7 @@ public class FileFunctions {
             Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < vecLength; i++) {
                 String vecPath = vec.getDataAt(i);
-                TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(vecPath));
+                TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, vecPath);
                 // missing defaults to NA
                 if (file.exists()) {
                     double size = RRuntime.DOUBLE_NA;
@@ -457,8 +454,8 @@ public class FileFunctions {
                 if (RRuntime.isNA(from) || RRuntime.isNA(to)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
-                    TruffleFile fromFile = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(from));
-                    TruffleFile toFile = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(to));
+                    TruffleFile fromFile = FileSystemUtils.getSafeTruffleFile(env, from);
+                    TruffleFile toFile = FileSystemUtils.getSafeTruffleFile(env, to);
                     status[i] = RRuntime.LOGICAL_TRUE;
                     try {
                         if (symbolic) {
@@ -526,7 +523,7 @@ public class FileFunctions {
                 if (RRuntime.isNA(path)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
-                    TruffleFile f = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(path));
+                    TruffleFile f = FileSystemUtils.getSafeTruffleFile(env, path);
                     boolean ok;
                     try {
                         f.delete();
@@ -574,7 +571,7 @@ public class FileFunctions {
                 } else {
                     boolean ok;
                     try {
-                        FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(from)).move(FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(to)));
+                        FileSystemUtils.getSafeTruffleFile(env, from).move(FileSystemUtils.getSafeTruffleFile(env, to));
                         ok = true;
                     } catch (IOException ex) {
                         ok = false;
@@ -607,7 +604,7 @@ public class FileFunctions {
                 if (RRuntime.isNA(path) || path.isEmpty()) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
-                    TruffleFile f = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(path));
+                    TruffleFile f = FileSystemUtils.getSafeTruffleFile(env, path);
                     // TODO R's notion of exists may not match Java - check
                     if (f.exists()) {
                         try {
@@ -698,10 +695,9 @@ public class FileFunctions {
             Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < vec.getLength(); i++) {
                 String vecPathString = vec.getDataAt(i);
-                String pathString = Utils.tildeExpand(vecPathString);
-                TruffleFile root = FileSystemUtils.getSafeTruffleFile(env, pathString);
-                if (pathString.isEmpty() || !root.exists()) { // File.exists() returns false for ""
-                                                              // but TF gives true
+                TruffleFile root = FileSystemUtils.getSafeTruffleFile(env, vecPathString);
+                if (vecPathString.isEmpty() || !root.exists()) {
+                    // File.exists() returns false for "" but TF gives true
                     continue;
                 }
                 try (Stream<TruffleFile> stream = FileSystemUtils.find(root, recursive ? Integer.MAX_VALUE : 1, new FileMatcher(pattern, allFiles, includeDirs))) {
@@ -822,8 +818,7 @@ public class FileFunctions {
             Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < paths.getLength(); i++) {
                 String vecPathString = paths.getDataAt(i);
-                String pathString = Utils.tildeExpand(vecPathString);
-                TruffleFile root = FileSystemUtils.getSafeTruffleFile(env, pathString);
+                TruffleFile root = FileSystemUtils.getSafeTruffleFile(env, vecPathString);
                 if (!root.exists()) {
                     continue;
                 }
@@ -837,7 +832,7 @@ public class FileFunctions {
                         dir = root.relativize(dir);
                         if (fullNames) {
                             String p = dir.getPath();
-                            p = p.isEmpty() ? vecPathString : vecPathString + context.getEnv().getFileNameSeparator() + p;
+                            p = p.isEmpty() ? vecPathString : vecPathString + env.getFileNameSeparator() + p;
                             dirList.add(p);
                         } else {
                             dirList.add(dir.getPath());
@@ -1010,7 +1005,7 @@ public class FileFunctions {
                 TruffleFile toDir = null;
                 Env env = RContext.getInstance().getEnv();
                 if (vecTo.getLength() == 1) {
-                    TruffleFile vecTo0Path = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(vecTo.getDataAt(0)));
+                    TruffleFile vecTo0Path = FileSystemUtils.getSafeTruffleFile(env, vecTo.getDataAt(0));
                     if (vecTo0Path.isDirectory()) {
                         toDir = vecTo0Path;
                     }
@@ -1024,9 +1019,9 @@ public class FileFunctions {
 
                 for (int i = 0; i < lenFrom; i++) {
                     String from = vecFrom.getDataAt(i % lenFrom);
-                    TruffleFile fromPath = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(from));
+                    TruffleFile fromPath = FileSystemUtils.getSafeTruffleFile(env, from);
                     String to = vecTo.getDataAt(i % lenTo);
-                    TruffleFile toPath = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(to));
+                    TruffleFile toPath = FileSystemUtils.getSafeTruffleFile(env, to);
                     assert !recursive || toDir != null;
                     status[i] = RRuntime.LOGICAL_FALSE;
                     try {
@@ -1203,7 +1198,7 @@ public class FileFunctions {
         @TruffleBoundary
         protected RStringVector doDirName(RAbstractStringVector vec, @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             return doXyzName(vec, (env, name) -> {
-                TruffleFile path = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(name));
+                TruffleFile path = FileSystemUtils.getSafeTruffleFile(env, name);
                 TruffleFile parent = path.getParent();
                 return parent != null ? parent.toString() : (path.getAbsoluteFile().getParent() != null ? "." : ctxRef.get().getEnv().getFileNameSeparator());
             });
@@ -1245,7 +1240,7 @@ public class FileFunctions {
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             int result = 1;
             for (int i = -0; i < vec.getLength(); i++) {
-                String pathPattern = Utils.tildeExpand(vec.getDataAt(i));
+                String pathPattern = vec.getDataAt(i);
                 if (pathPattern.length() == 0 || RRuntime.isNA(pathPattern)) {
                     continue;
                 }
@@ -1348,7 +1343,7 @@ public class FileFunctions {
                 ok = false;
             } else {
                 ok = true;
-                String path = Utils.tildeExpand(pathIn);
+                String path = pathIn;
                 TruffleFile newDir = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
                 if (newDir.exists()) {
                     ok = false;
@@ -1417,7 +1412,7 @@ public class FileFunctions {
             Env env = RContext.getInstance().getEnv();
             byte[] data = new byte[pathVec.getLength()];
             for (int i = 0; i < data.length; i++) {
-                String pathString = Utils.tildeExpand(pathVec.getDataAt(i));
+                String pathString = pathVec.getDataAt(i);
                 TruffleFile path = FileSystemUtils.getSafeTruffleFile(env, pathString);
                 data[i] = RRuntime.asLogical(path.isDirectory());
             }

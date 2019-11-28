@@ -41,7 +41,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -69,25 +68,23 @@ public abstract class NormalizePath extends RBuiltinNode.Arg3 {
         Env env = RContext.getInstance().getEnv();
         for (int i = 0; i < results.length; i++) {
             String path = pathVec.getDataAt(i);
-            // XXX
-            String expandPath = Utils.tildeExpand(path);
-            String normPath = expandPath;
+            String normPath = path;
             try {
-                normPath = FileSystemUtils.getSafeTruffleFile(env, normPath).getCanonicalFile().toString();
+                normPath = FileSystemUtils.getSafeTruffleFile(env, path).getCanonicalFile().toString();
             } catch (IOException e) {
                 if (doesNotNeedToWork.profile(mustWork == RRuntime.LOGICAL_FALSE)) {
                     // no error or warning
                 } else {
                     if (mustWork == RRuntime.LOGICAL_TRUE) {
                         if (e instanceof NoSuchFileException) {
-                            throw error(Message.NORMALIZE_PATH_NOSUCH, i + 1, expandPath);
+                            throw error(Message.NORMALIZE_PATH_NOSUCH, i + 1, path);
                         } else {
                             throw error(Message.GENERIC, e.toString());
                         }
                     } else {
                         // NA means warning
                         if (e instanceof NoSuchFileException) {
-                            warning(Message.NORMALIZE_PATH_NOSUCH, i + 1, expandPath);
+                            warning(Message.NORMALIZE_PATH_NOSUCH, i + 1, path);
                         } else {
                             warning(Message.GENERIC, e.toString());
                         }

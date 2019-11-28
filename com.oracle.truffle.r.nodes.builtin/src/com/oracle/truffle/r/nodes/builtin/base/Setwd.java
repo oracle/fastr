@@ -29,9 +29,19 @@ import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;<<<<<<<HEAD=======
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;import com.oracle.truffle.api.dsl.CachedContext;>>>>>>>give up FastR handling of current directory and use env.get/setCurrentDirectory instead import com.oracle.truffle.api.dsl.Specialization;import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;import com.oracle.truffle.r.runtime.RError;import com.oracle.truffle.r.runtime.Utils;import com.oracle.truffle.r.runtime.builtins.RBuiltin;import com.oracle.truffle.r.runtime.context.RContext;import com.oracle.truffle.r.runtime.context.TruffleRLanguage;import com.oracle.truffle.r.runtime.data.RNull;import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 @RBuiltin(name = "setwd", visibility = OFF, kind = INTERNAL, parameterNames = "path", behavior = IO)
@@ -48,16 +58,15 @@ public abstract class Setwd extends RBuiltinNode.Arg1 {
     @Specialization
     @TruffleBoundary
     protected Object setwd(String path,
-            @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         String owd = getwdNode.execute();
-        String nwd = Utils.tildeExpand(path);
-        int rc = setwdNode.execute(nwd);
+        TruffleLanguage.Env env = ctxRef.get().getEnv();
+        TruffleFile nwd = FileSystemUtils.getSafeTruffleFile(env, path);
+        int rc = setwdNode.execute(nwd.toString());
         if (rc != 0) {
             throw error(RError.Message.CANNOT_CHANGE_DIRECTORY);
         } else {
-            String nwdAbs = getwdNode.execute();
-            TruffleLanguage.Env env = ctxRef.get().getEnv();
-            env.setCurrentWorkingDirectory(env.getInternalTruffleFile(nwdAbs));
+            env.setCurrentWorkingDirectory(nwd.getAbsoluteFile());
             return owd != null ? owd : RNull.instance;
         }
     }

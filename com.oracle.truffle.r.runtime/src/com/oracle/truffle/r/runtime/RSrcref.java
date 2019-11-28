@@ -80,7 +80,7 @@ public class RSrcref {
      * Internal version of srcfile(path).
      */
     public static REnvironment createSrcfile(RContext context, String path, Set<Object> envRefHolder) {
-        TruffleFile file = FileSystemUtils.getSafeTruffleFile(context.getEnv(), Utils.tildeExpand(path));
+        TruffleFile file = FileSystemUtils.getSafeTruffleFile(context.getEnv(), path);
         return createSrcfile(context, file, envRefHolder);
     }
 

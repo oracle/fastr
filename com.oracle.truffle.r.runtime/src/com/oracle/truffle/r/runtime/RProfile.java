@@ -52,8 +52,6 @@ public final class RProfile implements RContext.ContextState {
             String siteProfilePath = envVars.get("R_PROFILE");
             if (siteProfilePath == null) {
                 siteProfilePath = REnvVars.getRHomeTruffleFile(context.getEnv()).resolve("etc").resolve("Rprofile.site").toString();
-            } else {
-                siteProfilePath = Utils.tildeExpand(siteProfilePath);
             }
             TruffleFile siteProfileFile = FileSystemUtils.getSafeTruffleFile(context.getEnv(), siteProfilePath);
             if (siteProfileFile.exists()) {
@@ -69,8 +67,6 @@ public final class RProfile implements RContext.ContextState {
                 if (!FileSystemUtils.getSafeTruffleFile(context.getEnv(), userProfilePath).exists()) {
                     userProfilePath = FileSystemUtils.getSafeTruffleFile(context.getEnv(), System.getProperty("user.home")).resolve(dotRenviron).getPath();
                 }
-            } else {
-                userProfilePath = Utils.tildeExpand(userProfilePath);
             }
             if (userProfilePath != null) {
                 TruffleFile userProfileFile = FileSystemUtils.getSafeTruffleFile(context.getEnv(), userProfilePath);

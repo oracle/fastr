@@ -227,7 +227,7 @@ public class FastRInterop {
         protected CallTarget parseFile(String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
             Env env = RContext.getInstance().getEnv();
-            TruffleFile tFile = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(path)).getAbsoluteFile();
+            TruffleFile tFile = FileSystemUtils.getSafeTruffleFile(env, path).getAbsoluteFile();
             LanguageInfo languageInfo = null;
             try {
                 String languageId = languageIdArg;

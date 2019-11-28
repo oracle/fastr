@@ -190,7 +190,7 @@ public class LoadSaveFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector load(String pathIn, @SuppressWarnings("unused") REnvironment envir) {
-            try (BufferedInputStream bs = new BufferedInputStream(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), Utils.tildeExpand(pathIn)).newInputStream())) {
+            try (BufferedInputStream bs = new BufferedInputStream(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), pathIn).newInputStream())) {
                 int magic = readMagic(bs);
                 switch (magic) {
                     case R_MAGIC_EMPTY:

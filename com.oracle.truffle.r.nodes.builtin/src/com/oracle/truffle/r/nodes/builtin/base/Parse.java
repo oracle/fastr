@@ -201,14 +201,13 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                  * N.B. GnuR compatibility problem: Truffle Source does not handle ~ in pathnames
                  * but GnuR does not appear to do tilde expansion
                  */
-                fileName = Utils.tildeExpand(fileName);
                 TruffleFile fnf = FileSystemUtils.getSafeTruffleFile(context.getEnv(), fileName);
                 String path = null;
                 if (!fnf.isAbsolute()) {
                     String wd = RRuntime.asString(srcFileEnv.get("wd"));
                     path = String.join(context.getEnv().getFileNameSeparator(), wd, fileName);
                 } else {
-                    path = fileName;
+                    path = Utils.tildeExpand(fileName);
                 }
                 Source result = createFileSource(path, coalescedLines, false);
                 assert result != null : "Source created from environment should not be null";
