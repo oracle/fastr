@@ -90,7 +90,7 @@ Returned java primitives, primitive wrappers and String instances are automatica
 R `integer` values map directly to Java `int`/`Integer`, R `numeric` to Java `double`/`Double`, R `logical` to Java `boolean`/`Boolean` and R `character` to Java `String`. If necessary R `integer` and `double` are converted to the expected Java type.
 
 ### Inspecting polyglot objects
-The `names` function can be used to obtain a list of instance and static members from an polyglot Java Object or Java Class.
+The `names` function can be used to obtain a list of instance and static members from a polyglot Java Object or Java Class.
 ```
 > names(calendar)
 > names(calendarClass)
