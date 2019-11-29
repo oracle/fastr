@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClass
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.foreign;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -65,7 +66,7 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(UpdateClass.class);
-        casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENT_EMPTY, 1);
+        casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENT_EMPTY, 1).mustBe(foreign().not(), RError.Message.INVALID_TYPE_ARGUMENT, "polyglot.value");
         casts.arg("value").mustBe(missingValue().not(), RError.Message.ARGUMENT_EMPTY, 2).asStringVector();
     }
 

@@ -222,7 +222,7 @@ if(any(R.version$engine == "FastR")) {
     # IMPLICIT CONVERSIONS - HOMOGENOUS ARRAY
 
     # when passing a homogenous one-dimensional array to a builtin 
-    # it is implicitly converted to a vector of the corresponging atomic type
+    # it is implicitly converted to a vector of the corresponding atomic type
     # e.g. sum(int[] {1, 2, 3}) == sum(c(1, 2, 3))
     checkElements(
         actual=intArray,
