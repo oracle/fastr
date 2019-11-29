@@ -966,6 +966,12 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$heterogenousPrimitiveArray))", "'character'");
     }
 
+    @Test
+    public void testClassUpdate() {
+        assertEvalFastR(CREATE_TEST_ARRAYS + " jia <- ta$integerArray; class(jia) <- 'test'; class(jia)", "'test'");
+        assertEvalFastR("jo <- new('java.lang.Object'); class(jo) <- 'test';", errorIn("class(jo) <- \\\"test\\\"", "invalid 'type' (polyglot.value) of argument"));
+    }
+
     private void testUnlistByType(String fieldType, String[] result, String clazz) {
         testForeingObjectUnlist(fieldType + "Array", result, clazz);
         if (!fieldType.equals("string")) {
