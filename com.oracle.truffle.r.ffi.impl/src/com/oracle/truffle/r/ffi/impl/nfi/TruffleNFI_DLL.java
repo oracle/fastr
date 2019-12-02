@@ -72,7 +72,7 @@ public class TruffleNFI_DLL implements DLLRFFI {
         boolean notifyStateRFFI = !librffiPath.equals(path);
         Object before = notifyStateRFFI ? ctx.getStateRFFI().beforeDowncall(null, Type.NFI) : 0;
         try {
-            String libName = DLL.libName(path);
+            String libName = DLL.libName(ctx, path);
             Env env = RContext.getInstance().getEnv();
             TruffleObject libHandle = (TruffleObject) env.parseInternal(Source.newBuilder("nfi", prepareLibraryOpen(path, local, now), path).build()).call();
             return new NFIHandle(libName, libHandle);

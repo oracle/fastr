@@ -70,7 +70,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     static LibHandle dlOpen(RContext context, String path) {
         RFFIContext stateRFFI = context.getStateRFFI();
         TruffleFile file = context.getSafeTruffleFile(path);
-        String libName = DLL.libName(file.getPath());
+        String libName = DLL.libName(context, file.getPath());
         boolean isLibR = libName.equals("libR");
         if (isLibR) {
             // TODO: make it generic, if +"l" file exists, use that instead
