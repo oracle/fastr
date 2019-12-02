@@ -98,7 +98,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         Path basePathbase = baseDirPath.resolve("R").resolve("base");
         Source baseSource = null;
         try {
-            baseSource = RSource.fromFileName(basePathbase.toString(), true);
+            baseSource = RSource.fromFileName(context, basePathbase.toString(), true);
         } catch (IOException ex) {
             throw RSuicide.rSuicide(String.format("unable to open the base package %s", basePathbase));
         }

@@ -215,7 +215,7 @@ public class RSrcref {
         return lloc;
     }
 
-    public static SourceSection createSourceSection(RAbstractIntVector srcrefVec, Source sharedSource) {
+    public static SourceSection createSourceSection(RContext context, RAbstractIntVector srcrefVec, Source sharedSource) {
 
         try {
             Source source;
@@ -224,7 +224,7 @@ public class RSrcref {
             } else {
                 Object srcfile = srcrefVec.getAttr(RRuntime.R_SRCFILE);
                 assert srcfile instanceof REnvironment;
-                source = RSource.fromSrcfile((REnvironment) srcfile);
+                source = RSource.fromSrcfile(context, (REnvironment) srcfile);
             }
             int startLine = srcrefVec.getDataAt(0);
             int startColumn = srcrefVec.getDataAt(1);

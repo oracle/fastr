@@ -55,7 +55,7 @@ public final class RProfile implements RContext.ContextState {
             }
             TruffleFile siteProfileFile = context.getSafeTruffleFile(siteProfilePath);
             if (siteProfileFile.exists()) {
-                newSiteProfile = getProfile(siteProfilePath, false);
+                newSiteProfile = getProfile(context, siteProfilePath, false);
             }
         }
 
@@ -71,7 +71,7 @@ public final class RProfile implements RContext.ContextState {
             if (userProfilePath != null) {
                 TruffleFile userProfileFile = context.getSafeTruffleFile(userProfilePath);
                 if (userProfileFile.exists()) {
-                    newUserProfile = getProfile(userProfilePath, false);
+                    newUserProfile = getProfile(context, userProfilePath, false);
                 }
             }
         }
@@ -83,9 +83,9 @@ public final class RProfile implements RContext.ContextState {
     private Source siteProfile;
     private Source userProfile;
 
-    public static Source systemProfile() {
+    public static Source systemProfile(RContext context) {
         TruffleFile path = REnvVars.getRHomeTruffleFile(RContext.getInstance().getEnv()).resolve("library").resolve("base").resolve("R").resolve("Rprofile");
-        Source source = getProfile(path.getPath(), true);
+        Source source = getProfile(context, path.getPath(), true);
         if (source == null) {
             RSuicide.rSuicide("can't find system profile");
         }
@@ -100,9 +100,9 @@ public final class RProfile implements RContext.ContextState {
         return userProfile;
     }
 
-    private static Source getProfile(String path, boolean internal) {
+    private static Source getProfile(RContext context, String path, boolean internal) {
         try {
-            return RSource.fromFileName(path, internal);
+            return RSource.fromFileName(context, path, internal);
         } catch (IOException ex) {
             // GnuR does not report an error, just ignores
             return null;
