@@ -52,10 +52,7 @@ import java.util.stream.StreamSupport;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.runtime.RError.Message;
-import java.nio.file.NoSuchFileException;
-import java.util.logging.Level;
 
 public class FileSystemUtils {
     private static PosixFilePermission[] permissionValues = PosixFilePermission.values();
