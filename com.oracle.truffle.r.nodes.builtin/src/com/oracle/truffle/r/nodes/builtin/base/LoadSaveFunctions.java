@@ -34,13 +34,14 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -49,6 +50,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -189,8 +191,9 @@ public class LoadSaveFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector load(String pathIn, @SuppressWarnings("unused") REnvironment envir) {
-            try (BufferedInputStream bs = new BufferedInputStream(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), pathIn).newInputStream())) {
+        protected RStringVector load(String pathIn, @SuppressWarnings("unused") REnvironment envir,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            try (BufferedInputStream bs = new BufferedInputStream(ctxRef.get().getSafeTruffleFile(pathIn).newInputStream())) {
                 int magic = readMagic(bs);
                 switch (magic) {
                     case R_MAGIC_EMPTY:

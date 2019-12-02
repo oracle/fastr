@@ -20,7 +20,6 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -1992,7 +1991,7 @@ public class RSerialize {
                     String path = RSource.getPathInternal(ss.getSource());
                     if (path != null) {
                         // do this only for packages
-                        TruffleFile relPath = relativizeLibPath(context.getEnv(), FileSystemUtils.getSafeTruffleFile(context.getEnv(), path));
+                        TruffleFile relPath = relativizeLibPath(context, path);
                         if (relPath != null) {
                             REnvironment createSrcfile = RSrcref.createSrcfile(context, relPath, state.envRefHolder);
                             Object createLloc = RSrcref.createLloc(ss, createSrcfile);
@@ -2719,8 +2718,7 @@ public class RSerialize {
 
             // do this only for packages
             RContext ctx = state.getContext();
-            Env env = ctx.getEnv();
-            TruffleFile relPath = relativizeLibPath(env, FileSystemUtils.getSafeTruffleFile(env, pathInternal));
+            TruffleFile relPath = relativizeLibPath(ctx, pathInternal);
             if (relPath != null) {
                 RAttributable attributable = (RAttributable) serObj;
                 attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(ctx, relPath, state.envRefHolder));
@@ -2741,10 +2739,11 @@ public class RSerialize {
      * Relativizes the given path to its corresponding library path. If the given path is not a
      * child of any library path, {@code null} will be returned.
      */
-    private static TruffleFile relativizeLibPath(Env env, TruffleFile sourcePath) {
+    private static TruffleFile relativizeLibPath(RContext context, String path) {
+        TruffleFile file = context.getSafeTruffleFile(path);
         for (String libPath : RContext.getInstance().libraryPaths) {
-            if (sourcePath.startsWith(libPath)) {
-                return FileSystemUtils.getSafeTruffleFile(env, libPath).relativize(sourcePath);
+            if (file.startsWith(libPath)) {
+                return context.getSafeTruffleFile(libPath).relativize(file);
             }
         }
         return null;

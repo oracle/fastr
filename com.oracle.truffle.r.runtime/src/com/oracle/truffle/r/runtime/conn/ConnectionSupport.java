@@ -40,6 +40,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -1120,30 +1121,27 @@ public class ConnectionSupport {
     }
 
     abstract static class BasePathRConnection extends BaseRConnection {
-        /** The path of the actual file to open. */
-        protected final String path;
+        /** The actual file to open. */
+        protected final TruffleFile path;
 
         /** The description used in the call (required summary output). */
         protected String description;
 
-        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, String encoding) throws IOException {
-            this(description, path, connectionClass, modeString, AbstractOpenMode.Read, encoding);
-        }
-
-        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, boolean blocking, String encoding) throws IOException {
+        protected BasePathRConnection(String description, TruffleFile path, ConnectionClass connectionClass, String modeString, boolean blocking, String encoding) throws IOException {
             this(description, path, connectionClass, modeString, AbstractOpenMode.Read, blocking, encoding);
         }
 
-        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, String encoding) throws IOException {
+        protected BasePathRConnection(String description, TruffleFile path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, String encoding)
+                        throws IOException {
             super(connectionClass, modeString, defaultLazyOpenMode, encoding);
-            this.path = Utils.tildeExpand(path);
+            this.path = path;
             this.description = description;
         }
 
-        protected BasePathRConnection(String description, String path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, boolean blocking, String encoding)
+        protected BasePathRConnection(String description, TruffleFile path, ConnectionClass connectionClass, String modeString, AbstractOpenMode defaultLazyOpenMode, boolean blocking, String encoding)
                         throws IOException {
             super(connectionClass, modeString, defaultLazyOpenMode, blocking, encoding);
-            this.path = Utils.tildeExpand(path);
+            this.path = path;
             this.description = description;
         }
 

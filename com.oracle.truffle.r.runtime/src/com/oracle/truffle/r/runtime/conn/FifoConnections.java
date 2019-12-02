@@ -36,25 +36,22 @@ import java.util.HashSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 public class FifoConnections {
 
     public static class FifoRConnection extends BaseRConnection {
 
         private final String path;
-        private final Env env;
 
-        public FifoRConnection(Env env, String path, String open, boolean blocking, String encoding) throws IOException {
+        public FifoRConnection(String path, String open, boolean blocking, String encoding) throws IOException {
             super(ConnectionClass.FIFO, open, AbstractOpenMode.Read, blocking, encoding);
             this.path = path;
-            this.env = env;
             openNonLazyConnection();
         }
 
@@ -65,7 +62,6 @@ public class FifoConnections {
             if (isBlocking()) {
                 delegate = createBlockingDelegate();
             } else {
-
                 delegate = createNonBlockingDelegate();
             }
             setDelegate(delegate);
@@ -76,18 +72,18 @@ public class FifoConnections {
             switch (getOpenMode().abstractOpenMode) {
                 case Read:
                 case ReadBinary:
-                    delegate = new FifoReadRConnection(env, this, path);
+                    delegate = new FifoReadRConnection(this, path);
                     break;
                 case Write:
                 case WriteBinary:
-                    delegate = new FifoWriteConnection(env, this, path);
+                    delegate = new FifoWriteConnection(this, path);
                     break;
                 case ReadAppend:
                 case ReadWrite:
                 case ReadWriteBinary:
                 case ReadWriteTrunc:
                 case ReadWriteTruncBinary:
-                    delegate = new FifoReadWriteConnection(env, this, path);
+                    delegate = new FifoReadWriteConnection(this, path);
                     break;
                 default:
                     throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
@@ -100,18 +96,18 @@ public class FifoConnections {
             switch (getOpenMode().abstractOpenMode) {
                 case Read:
                 case ReadBinary:
-                    delegate = new FifoReadNonBlockingRConnection(env, this, path);
+                    delegate = new FifoReadNonBlockingRConnection(this, path);
                     break;
                 case Write:
                 case WriteBinary:
-                    delegate = new FifoWriteNonBlockingRConnection(env, this, path);
+                    delegate = new FifoWriteNonBlockingRConnection(this, path);
                     break;
                 case ReadAppend:
                 case ReadWrite:
                 case ReadWriteBinary:
                 case ReadWriteTrunc:
                 case ReadWriteTruncBinary:
-                    delegate = new FifoReadWriteNonBlockingRConnection(env, this, path);
+                    delegate = new FifoReadWriteNonBlockingRConnection(this, path);
                     break;
                 default:
                     throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
@@ -128,9 +124,9 @@ public class FifoConnections {
     static class FifoReadRConnection extends DelegateReadRConnection {
         private final SeekableByteChannel channel;
 
-        protected FifoReadRConnection(Env env, BaseRConnection base, String path) throws IOException {
+        protected FifoReadRConnection(BaseRConnection base, String path) throws IOException {
             super(base);
-            channel = FileSystemUtils.getSafeTruffleFile(env, path).newByteChannel(Collections.singleton(StandardOpenOption.READ));
+            channel = RContext.getInstance().getSafeTruffleFile(path).newByteChannel(Collections.singleton(StandardOpenOption.READ));
         }
 
         @Override
@@ -147,9 +143,9 @@ public class FifoConnections {
     private static class FifoWriteConnection extends DelegateWriteRConnection {
         private final SeekableByteChannel channel;
 
-        FifoWriteConnection(Env env, BaseRConnection base, String path) throws IOException {
+        FifoWriteConnection(BaseRConnection base, String path) throws IOException {
             super(base);
-            this.channel = createAndOpenFifo(env, path);
+            this.channel = createAndOpenFifo(path);
         }
 
         @Override
@@ -172,9 +168,9 @@ public class FifoConnections {
 
         private final SeekableByteChannel channel;
 
-        protected FifoReadWriteConnection(Env env, BaseRConnection base, String path) throws IOException {
+        protected FifoReadWriteConnection(BaseRConnection base, String path) throws IOException {
             super(base);
-            this.channel = createAndOpenFifo(env, path);
+            this.channel = createAndOpenFifo(path);
         }
 
         @Override
@@ -191,9 +187,9 @@ public class FifoConnections {
     static class FifoReadNonBlockingRConnection extends DelegateReadRConnection {
         private final SeekableByteChannel channel;
 
-        protected FifoReadNonBlockingRConnection(Env env, BaseRConnection base, String path) throws IOException {
+        protected FifoReadNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
             super(base);
-            channel = FileSystemUtils.getSafeTruffleFile(env, path).newByteChannel(Collections.singleton(StandardOpenOption.READ));
+            channel = RContext.getInstance().getSafeTruffleFile(path).newByteChannel(Collections.singleton(StandardOpenOption.READ));
         }
 
         @Override
@@ -210,9 +206,9 @@ public class FifoConnections {
     private static class FifoWriteNonBlockingRConnection extends DelegateWriteRConnection {
         private final SeekableByteChannel channel;
 
-        FifoWriteNonBlockingRConnection(Env env, BaseRConnection base, String path) throws IOException {
+        FifoWriteNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
             super(base);
-            channel = createAndOpenNonBlockingFifo(env, path, StandardOpenOption.READ, StandardOpenOption.WRITE);
+            channel = createAndOpenNonBlockingFifo(path, StandardOpenOption.READ, StandardOpenOption.WRITE);
         }
 
         @Override
@@ -229,9 +225,9 @@ public class FifoConnections {
     private static class FifoReadWriteNonBlockingRConnection extends DelegateReadWriteRConnection {
         private final SeekableByteChannel channel;
 
-        FifoReadWriteNonBlockingRConnection(Env env, BaseRConnection base, String path) throws IOException {
+        FifoReadWriteNonBlockingRConnection(BaseRConnection base, String path) throws IOException {
             super(base);
-            channel = createAndOpenNonBlockingFifo(env, path, StandardOpenOption.WRITE, StandardOpenOption.READ);
+            channel = createAndOpenNonBlockingFifo(path, StandardOpenOption.WRITE, StandardOpenOption.READ);
         }
 
         @Override
@@ -247,8 +243,8 @@ public class FifoConnections {
 
     private static final String MKFIFO_ERROR_FILE_EXISTS = "File exists";
 
-    private static SeekableByteChannel createAndOpenFifo(Env env, String path) throws IOException {
-        TruffleFile truffleFile = FileSystemUtils.getSafeTruffleFile(env, path);
+    private static SeekableByteChannel createAndOpenFifo(String path) throws IOException {
+        TruffleFile truffleFile = RContext.getInstance().getSafeTruffleFile(path);
         if (!truffleFile.exists()) {
             // try to create fifo on demand
             createNamedPipe(path);
@@ -256,8 +252,8 @@ public class FifoConnections {
         return truffleFile.newByteChannel(EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
     }
 
-    private static SeekableByteChannel createAndOpenNonBlockingFifo(Env env, String path, OpenOption... openOptions) throws IOException {
-        TruffleFile truffleFile = FileSystemUtils.getSafeTruffleFile(env, path);
+    private static SeekableByteChannel createAndOpenNonBlockingFifo(String path, OpenOption... openOptions) throws IOException {
+        TruffleFile truffleFile = RContext.getInstance().getSafeTruffleFile(path);
         if (!truffleFile.exists()) {
             // try to create fifo on demand
             createNamedPipe(path);

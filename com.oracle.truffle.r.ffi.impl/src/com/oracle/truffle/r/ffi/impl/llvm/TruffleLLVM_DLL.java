@@ -68,14 +68,13 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     }
 
     static LibHandle dlOpen(RContext context, String path) {
-        final Env env = context.getEnv();
         RFFIContext stateRFFI = context.getStateRFFI();
-        TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, path);
+        TruffleFile file = context.getSafeTruffleFile(path);
         String libName = DLL.libName(file.getPath());
         boolean isLibR = libName.equals("libR");
         if (isLibR) {
             // TODO: make it generic, if +"l" file exists, use that instead
-            file = FileSystemUtils.getSafeTruffleFile(env, path + "l");
+            file = context.getSafeTruffleFile(path + "l");
         }
         boolean isInitialization = isLibR;
         Object before = null;
@@ -84,7 +83,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 before = stateRFFI.beforeDowncall(null, Type.LLVM);
             }
             Source src = Source.newBuilder("llvm", file).internal(true).build();
-            Object lib = env.parseInternal(src).call();
+            Object lib = context.getEnv().parseInternal(src).call();
             assert lib instanceof TruffleObject;
             if (isLibR) {
                 // TODO: accessing what used to be a private field, this will be refactored

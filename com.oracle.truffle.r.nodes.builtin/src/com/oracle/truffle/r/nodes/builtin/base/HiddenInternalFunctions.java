@@ -35,7 +35,9 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -52,7 +54,6 @@ import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
@@ -62,6 +63,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -225,8 +227,9 @@ public class HiddenInternalFunctions {
         @Specialization
         protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, int compressed, RFunction envhook,
                         @Cached("create(2)") CallRFunctionCachedNode callCache,
-                        @Cached("createBinaryProfile()") ConditionProfile isPromiseProfile) {
-            Object result = lazyLoadDBFetchInternal(frame.materialize(), key, datafile, compressed, envhook, callCache);
+                        @Cached("createBinaryProfile()") ConditionProfile isPromiseProfile,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            Object result = lazyLoadDBFetchInternal(ctxRef.get(), frame.materialize(), key, datafile, compressed, envhook, callCache);
             if (isPromiseProfile.profile(result instanceof RPromise)) {
                 if (evaluateAndSharePromiseNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -238,12 +241,13 @@ public class HiddenInternalFunctions {
         }
 
         @TruffleBoundary
-        private Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook, CallRFunctionCachedNode callCache) {
+        private Object lazyLoadDBFetchInternal(RContext context, MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook,
+                        CallRFunctionCachedNode callCache) {
             if (CompilerDirectives.inInterpreter()) {
                 LoopNode.reportLoopCount(this, -5);
             }
             String dbPath = datafile.getDataAt(0);
-            String packageName = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), dbPath).getName();
+            String packageName = context.getSafeTruffleFile(dbPath).getName();
             byte[] dbData = RContext.getInstance().stateLazyDBCache.getData(dbPath);
             int dotIndex;
             if ((dotIndex = packageName.lastIndexOf('.')) > 0) {
@@ -433,12 +437,13 @@ public class HiddenInternalFunctions {
         }
 
         @Specialization
-        protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RAbstractStringVector file, int asciiL, int compression, RFunction hook) {
-            return lazyLoadDBinsertValueInternal(frame.materialize(), value, file, asciiL, compression, hook);
+        protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RAbstractStringVector file, int asciiL, int compression, RFunction hook,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return lazyLoadDBinsertValueInternal(ctxRef.get(), frame.materialize(), value, file, asciiL, compression, hook);
         }
 
         @TruffleBoundary
-        private RIntVector lazyLoadDBinsertValueInternal(MaterializedFrame frame, Object value, RAbstractStringVector file, int type, int compression, RFunction hook) {
+        private RIntVector lazyLoadDBinsertValueInternal(RContext context, MaterializedFrame frame, Object value, RAbstractStringVector file, int type, int compression, RFunction hook) {
             if (!(compression == 1 || compression == 3)) {
                 throw error(Message.GENERIC, "unsupported compression");
             }
@@ -484,7 +489,7 @@ public class HiddenInternalFunctions {
                 }
                 int[] intData = new int[2];
                 intData[1] = outLen + offset; // include length + type (compression == 3)
-                intData[0] = appendFile(file.getDataAt(0), cdata, data.length, ctype);
+                intData[0] = appendFile(context, file.getDataAt(0), cdata, data.length, ctype);
                 return RDataFactory.createIntVector(intData, RDataFactory.COMPLETE_VECTOR);
             } catch (Throwable ex) {
                 // Exceptions have been observed that were masked and very hard to find
@@ -508,8 +513,8 @@ public class HiddenInternalFunctions {
          * @param ulen length of uncompressed data
          * @return offset in file of appended data
          */
-        private int appendFile(String path, byte[] cdata, int ulen, RCompression.Type type) {
-            TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
+        private int appendFile(RContext context, String path, byte[] cdata, int ulen, RCompression.Type type) {
+            TruffleFile file = context.getSafeTruffleFile(path);
             try (BufferedOutputStream out = new BufferedOutputStream(file.newOutputStream(StandardOpenOption.APPEND))) {
                 int result = (int) file.size();
                 ByteBuffer dataLengthBuf = ByteBuffer.allocate(4);

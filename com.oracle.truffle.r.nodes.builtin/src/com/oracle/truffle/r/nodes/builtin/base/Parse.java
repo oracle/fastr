@@ -40,7 +40,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -143,7 +142,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
             return RDataFactory.createExpression(new Object[0]);
         }
         try {
-            Source source = srcFile != RNull.instance ? createSource(context, srcFile, coalescedLines) : createSource(conn, coalescedLines);
+            Source source = srcFile != RNull.instance ? createSource(context, srcFile, coalescedLines) : createSource(context, conn, coalescedLines);
             boolean keepSource = srcFile instanceof REnvironment;
             ParsedExpression parseRes = RContext.getEngine().parse(source, keepSource);
             RExpression exprs = parseRes.getExpression();
@@ -201,7 +200,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                  * N.B. GnuR compatibility problem: Truffle Source does not handle ~ in pathnames
                  * but GnuR does not appear to do tilde expansion
                  */
-                TruffleFile fnf = FileSystemUtils.getSafeTruffleFile(context.getEnv(), fileName);
+                TruffleFile fnf = context.getSafeTruffleFile(fileName);
                 String path = null;
                 if (!fnf.isAbsolute()) {
                     String wd = RRuntime.asString(srcFileEnv.get("wd"));
@@ -209,7 +208,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                 } else {
                     path = Utils.tildeExpand(fileName);
                 }
-                Source result = createFileSource(path, coalescedLines, false);
+                Source result = createFileSource(context, path, coalescedLines, false);
                 assert result != null : "Source created from environment should not be null";
                 return result;
             } else {
@@ -220,21 +219,21 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
             if (srcFileText.equals("<text>")) {
                 return Source.newBuilder(RRuntime.R_LANGUAGE_ID, coalescedLines, "<parse>").build();
             } else {
-                return createFileSource(ConnectionSupport.removeFileURLPrefix(srcFileText), coalescedLines, false);
+                return createFileSource(context, ConnectionSupport.removeFileURLPrefix(srcFileText), coalescedLines, false);
             }
         }
     }
 
-    private static Source createSource(RConnection conn, String coalescedLines) {
+    private static Source createSource(RContext context, RConnection conn, String coalescedLines) {
         // TODO check if file
         ConnectionSupport.BaseRConnection bconn = ConnectionSupport.getBaseConnection(conn);
         String path = bconn.getSummaryDescription();
-        return createFileSource(path, coalescedLines, bconn.isInternal());
+        return createFileSource(context, path, coalescedLines, bconn.isInternal());
     }
 
-    private static Source createFileSource(String path, String chars, boolean internal) {
+    private static Source createFileSource(RContext context, String path, String chars, boolean internal) {
         try {
-            return RSource.fromFileName(chars, path, internal);
+            return RSource.fromFileName(context, chars, path, internal);
         } catch (URISyntaxException e) {
             // Note: to be compatible with GnuR we construct Source even with a malformed path
             return Source.newBuilder(RRuntime.R_LANGUAGE_ID, chars, path).internal(internal).build();

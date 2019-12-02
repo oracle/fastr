@@ -30,15 +30,17 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -61,7 +63,8 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
-    public Object doRprofmem(RAbstractStringVector filenameVec, byte appendL, RAbstractDoubleVector thresholdVec) {
+    public Object doRprofmem(RAbstractStringVector filenameVec, byte appendL, RAbstractDoubleVector thresholdVec,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         String filename = filenameVec.getDataAt(0);
         if (filename.length() == 0) {
             // disable
@@ -74,8 +77,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
             }
             boolean append = RRuntime.fromLogical(appendL);
             try {
-                PrintStream out = new PrintStream(
-                                FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.WRITE));
+                PrintStream out = new PrintStream(ctxRef.get().getSafeTruffleFile(filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.WRITE));
                 assert thresholdVec != null;
                 profmemState.initialize(out, thresholdVec.getDataAt(0));
                 RDataFactory.addListener(LISTENER);

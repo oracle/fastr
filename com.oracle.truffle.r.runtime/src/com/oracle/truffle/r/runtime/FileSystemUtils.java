@@ -648,45 +648,4 @@ public class FileSystemUtils {
     public static String toUnixRegexPattern(String globPattern) {
         return toRegexPattern(globPattern, false);
     }
-
-    public static TruffleFile getSafeTruffleFile(Env env, String path) {
-        String expandedPath = Utils.tildeExpand(path);
-        TruffleFile origFile = env.getInternalTruffleFile(expandedPath);
-        TruffleFile f = origFile;
-        try {
-            if (origFile.exists()) {
-                try {
-                    f = origFile.getCanonicalFile();
-                } catch (NoSuchFileException e) {
-                    // absolute path "exists", but cannonical does not
-                    // happens e.g. during install.packages: file.exists("/{rHome}/inst/..")
-                    // lets optimistically FALLBACK on absolute path
-                }
-            }
-        } catch (IOException e) {
-            RLogger.getLogger(RLogger.LOGGER_FILE_ACCEESS).log(Level.SEVERE, "Unable to access file " + expandedPath + " " + e.getMessage(), e);
-            throw RError.error(RError.SHOW_CALLER, Message.FILE_OPEN_ERROR);
-        }
-
-        final TruffleFile home = REnvVars.getRHomeTruffleFile(env);
-        if (f.startsWith(home) && isLibraryFile(home.relativize(f))) {
-            return origFile;
-        } else {
-            try {
-                return env.getPublicTruffleFile(expandedPath);
-            } catch (SecurityException e) {
-                RLogger.getLogger(RLogger.LOGGER_FILE_ACCEESS).log(Level.SEVERE, "Unable to access file " + expandedPath + " " + e.getMessage(), e);
-                throw RError.error(RError.SHOW_CALLER, Message.FILE_OPEN_ERROR);
-            }
-        }
-    }
-
-    private static boolean isLibraryFile(TruffleFile relativePathFromHome) {
-        final String fileName = relativePathFromHome.getName();
-        if (fileName == null) {
-            return false;
-        }
-        return relativePathFromHome.startsWith("library");
-    }
-
 }

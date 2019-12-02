@@ -53,7 +53,7 @@ public final class RProfile implements RContext.ContextState {
             if (siteProfilePath == null) {
                 siteProfilePath = REnvVars.getRHomeTruffleFile(context.getEnv()).resolve("etc").resolve("Rprofile.site").toString();
             }
-            TruffleFile siteProfileFile = FileSystemUtils.getSafeTruffleFile(context.getEnv(), siteProfilePath);
+            TruffleFile siteProfileFile = context.getSafeTruffleFile(siteProfilePath);
             if (siteProfileFile.exists()) {
                 newSiteProfile = getProfile(siteProfilePath, false);
             }
@@ -63,13 +63,13 @@ public final class RProfile implements RContext.ContextState {
             String userProfilePath = envVars.get("R_PROFILE_USER");
             if (userProfilePath == null) {
                 String dotRenviron = ".Rprofile";
-                userProfilePath = FileSystemUtils.getSafeTruffleFile(context.getEnv(), (String) BaseRFFI.GetwdRootNode.create().getCallTarget().call()).resolve(dotRenviron).getPath();
-                if (!FileSystemUtils.getSafeTruffleFile(context.getEnv(), userProfilePath).exists()) {
-                    userProfilePath = FileSystemUtils.getSafeTruffleFile(context.getEnv(), System.getProperty("user.home")).resolve(dotRenviron).getPath();
+                userProfilePath = context.getSafeTruffleFile((String) BaseRFFI.GetwdRootNode.create().getCallTarget().call()).resolve(dotRenviron).getPath();
+                if (!context.getSafeTruffleFile(userProfilePath).exists()) {
+                    userProfilePath = context.getSafeTruffleFile(System.getProperty("user.home")).resolve(dotRenviron).getPath();
                 }
             }
             if (userProfilePath != null) {
-                TruffleFile userProfileFile = FileSystemUtils.getSafeTruffleFile(context.getEnv(), userProfilePath);
+                TruffleFile userProfileFile = context.getSafeTruffleFile(userProfilePath);
                 if (userProfileFile.exists()) {
                     newUserProfile = getProfile(userProfilePath, false);
                 }

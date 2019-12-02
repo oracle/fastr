@@ -212,10 +212,11 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.RCodeToken;
 	    		if(q0 != -1 && q1 != -1) {
 	    			String path = commentLine.substring(q0+1, q1);
 	    			try {
-	    			    String content = new String(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path).readAllBytes(), StandardCharsets.UTF_8);
+                                    RContext context = RContext.getInstance();
+	    			    String content = new String(context.getSafeTruffleFile(path).readAllBytes(), StandardCharsets.UTF_8);
 	    			    String lineEnding = detectLineEnding(initialSource.getCharacters());
 	    			    content = convertToLineEnding(content, lineEnding);
-                        source = RSource.fromFileName(content, path, false);
+                        source = RSource.fromFileName(context, content, path, false);
                         fileStartOffset = commentToken.getStopIndex() + 1;
                     } catch (IOException e) {
                     	resetSource();

@@ -108,8 +108,8 @@ public class RSource {
      * Create an (external) source from the {@code text} that is known to originate from the file
      * system path {@code path}.
      */
-    public static Source fromFileName(String text, String path, boolean internal) throws URISyntaxException {
-        TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path).getAbsoluteFile();
+    public static Source fromFileName(RContext context, String text, String path, boolean internal) throws URISyntaxException {
+        TruffleFile file = context.getSafeTruffleFile(path).getAbsoluteFile();
         URI uri = new URI("file://" + file.getPath());
         return Source.newBuilder(RRuntime.R_LANGUAGE_ID, text, path).content(text).uri(uri).internal(internal).build();
     }
@@ -179,7 +179,8 @@ public class RSource {
      * Create an (external) source from the file system path {@code path}.
      */
     public static Source fromFileName(String path, boolean internal) throws IOException {
-        final TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
+        // XXX pass context
+        final TruffleFile file = RContext.getInstance().getSafeTruffleFile(path);
         return getCachedByOrigin(file, origin -> Source.newBuilder(RRuntime.R_LANGUAGE_ID, file).internal(internal).build());
     }
 

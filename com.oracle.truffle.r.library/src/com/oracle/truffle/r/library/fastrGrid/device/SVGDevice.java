@@ -33,12 +33,10 @@ import java.text.DecimalFormat;
 import java.util.Base64;
 
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.library.fastrGrid.GridColorUtils;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -48,15 +46,13 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     private static final double COORD_FACTOR = INCH_TO_POINTS_FACTOR;
 
     private final StringBuilder data = new StringBuilder(1024);
-    private final Env env;
     private String filename;
     private final double width;
     private final double height;
 
     private DrawingContext cachedCtx;
 
-    public SVGDevice(RContext context, String filename, double width, double height) {
-        this.env = context.getEnv();
+    public SVGDevice(String filename, double width, double height) {
         this.filename = filename;
         this.width = width;
         this.height = height;
@@ -221,7 +217,7 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     private void saveFile() throws DeviceCloseException {
         closeSVGDocument(data);
         try {
-            TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, filename);
+            TruffleFile file = RContext.getInstance().getSafeTruffleFile(filename);
             if (FileGridDevice.isDevNull(file)) {
                 return;
             }

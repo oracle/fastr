@@ -66,6 +66,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -83,6 +84,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.TempPathName;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
@@ -101,6 +103,7 @@ import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
 import com.oracle.truffle.r.runtime.conn.TextConnections.TextRConnection;
 import com.oracle.truffle.r.runtime.conn.URLConnections.URLRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -233,7 +236,8 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector file(String description, String openArg, boolean blocking, String encoding, @SuppressWarnings("unused") String method, boolean raw) {
+        protected RAbstractIntVector file(String description, String openArg, boolean blocking, String encoding, @SuppressWarnings("unused") String method, boolean raw,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             String open = openArg;
 
             // check if the description is an URL and dispatch if necessary
@@ -263,13 +267,22 @@ public abstract class ConnectionFunctions {
                     }
                 }
             }
+            path = checkTemp(path);
             try {
-                return new FileRConnection(description, path, open, blocking, encoding, raw, true).asVector();
+                return new FileRConnection(description, ctxRef.get().getSafeTruffleFile(path), open, blocking, encoding, raw, true).asVector();
             } catch (IOException ex) {
                 warning(RError.Message.NO_SUCH_FILE, description);
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             } catch (IllegalCharsetNameException ex) {
                 throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");
+            }
+        }
+
+        private static String checkTemp(String path) {
+            if (path.length() == 0) {
+                return TempPathName.createNonExistingFilePath(RContext.getInstance(), "Rf", TempPathName.tempDirPath(RContext.getInstance()), "");
+            } else {
+                return path;
             }
         }
     }
@@ -297,9 +310,10 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector zzFile(String description, String open, String encoding, int compression) {
+        protected RAbstractIntVector zzFile(String description, String open, String encoding, int compression,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             try {
-                return new CompressedRConnection(description, open, cType, encoding, compression).asVector();
+                return new CompressedRConnection(ctxRef.get().getSafeTruffleFile(description), open, cType, encoding, compression).asVector();
             } catch (IOException ex) {
                 throw reportError(description, ex);
             } catch (IllegalCharsetNameException ex) {
@@ -1338,7 +1352,7 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RAbstractIntVector fifo(String path, String open, boolean blocking, String encoding) {
             try {
-                return new FifoRConnection(RContext.getInstance().getEnv(), path, open, blocking, encoding).asVector();
+                return new FifoRConnection(path, open, blocking, encoding).asVector();
             } catch (IOException ex) {
                 warning(RError.Message.CANNOT_OPEN_FIFO, path);
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);

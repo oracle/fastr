@@ -68,7 +68,7 @@ public final class REnvVars implements RContext.ContextState {
         String home = rHome();
         envVars.put(R_HOME, home);
         // Always read the system file
-        TruffleFile rHomeDir = FileSystemUtils.getSafeTruffleFile(context.getEnv(), home);
+        TruffleFile rHomeDir = context.getSafeTruffleFile(home);
         safeReadEnvironFile(rHomeDir.resolve("etc").resolve("Renviron"));
 
         String internalArgs = System.getenv("FASTR_INTERNAL_ARGS");
@@ -112,20 +112,19 @@ public final class REnvVars implements RContext.ContextState {
             if (siteFile == null) {
                 siteFile = rHomeDir.resolve("etc").resolve("Renviron.site").toString();
             }
-            Env env = context.getEnv();
-            TruffleFile siteTruffleFile = FileSystemUtils.getSafeTruffleFile(env, siteFile);
+            TruffleFile siteTruffleFile = context.getSafeTruffleFile(siteFile);
             if (siteTruffleFile.exists()) {
                 safeReadEnvironFile(siteTruffleFile);
             }
             String userFilePath = envVars.get("R_ENVIRON_USER");
             if (userFilePath == null) {
                 String dotRenviron = ".Renviron";
-                userFilePath = FileSystemUtils.getSafeTruffleFile(env, (String) BaseRFFI.GetwdRootNode.create().getCallTarget().call()).resolve(dotRenviron).toString();
-                if (FileSystemUtils.getSafeTruffleFile(env, userFilePath).exists()) {
-                    userFilePath = FileSystemUtils.getSafeTruffleFile(env, System.getProperty("user.home")).resolve(dotRenviron).toString();
+                userFilePath = context.getSafeTruffleFile((String) BaseRFFI.GetwdRootNode.create().getCallTarget().call()).resolve(dotRenviron).toString();
+                if (context.getSafeTruffleFile(userFilePath).exists()) {
+                    userFilePath = context.getSafeTruffleFile(System.getProperty("user.home")).resolve(dotRenviron).toString();
                 }
             }
-            TruffleFile userFile = userFilePath != null ? FileSystemUtils.getSafeTruffleFile(env, userFilePath) : null;
+            TruffleFile userFile = userFilePath != null ? context.getSafeTruffleFile(userFilePath) : null;
             if (userFile != null && userFile.exists()) {
                 safeReadEnvironFile(userFile);
             }
@@ -354,8 +353,8 @@ public final class REnvVars implements RContext.ContextState {
         return envVars;
     }
 
-    public void readEnvironFile(String path) throws IOException {
-        readEnvironFile(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path));
+    public void readEnvironFile(RContext context, String path) throws IOException {
+        readEnvironFile(context.getSafeTruffleFile(path));
     }
 
     public void readEnvironFile(TruffleFile file) throws IOException {
@@ -388,7 +387,7 @@ public final class REnvVars implements RContext.ContextState {
     public static String getCRANMirror() {
         String cranMirror = System.getenv("CRAN_MIRROR");
         if (cranMirror == null) {
-            TruffleFile defCranMirror = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), REnvVars.rHome()).resolve("etc").resolve("DEFAULT_CRAN_MIRROR");
+            TruffleFile defCranMirror = RContext.getInstance().getSafeTruffleFile(REnvVars.rHome()).resolve("etc").resolve("DEFAULT_CRAN_MIRROR");
             if (!defCranMirror.exists()) {
                 throw RSuicide.rSuicide("Missing etc/DEFAULT_CRAN_MIRROR file");
             }

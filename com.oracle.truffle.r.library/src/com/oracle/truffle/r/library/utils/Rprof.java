@@ -49,7 +49,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -119,7 +118,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
             }
             try {
                 PrintStream out = new PrintStream(
-                                FileSystemUtils.getSafeTruffleFile(ctxRef.get().getEnv(), filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.TRUNCATE_EXISTING));
+                                ctxRef.get().getSafeTruffleFile(filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.TRUNCATE_EXISTING));
                 if (gcProfiling) {
                     warning(RError.Message.GENERIC, "Rprof: gc profiling not supported");
                 }

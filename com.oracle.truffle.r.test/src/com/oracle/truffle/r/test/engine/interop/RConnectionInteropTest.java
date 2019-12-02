@@ -24,6 +24,7 @@ package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.conn.FileConnections;
+import com.oracle.truffle.r.runtime.context.RContext;
 import java.io.File;
 import org.junit.Test;
 
@@ -31,7 +32,8 @@ public class RConnectionInteropTest extends AbstractInteropTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{new FileConnections.FileRConnection("test", File.createTempFile("fastrTestConnectiopnMR", null).getAbsolutePath(), "r", false, null, false, false)};
+        return new TruffleObject[]{new FileConnections.FileRConnection("test", RContext.getInstance().getSafeTruffleFile(File.createTempFile("fastrTestConnectiopnMR", null).getAbsolutePath()), "r",
+                        false, null, false, false)};
     }
 
     @Test

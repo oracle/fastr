@@ -29,13 +29,14 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -95,22 +96,22 @@ public class ToolsText {
 
         @Specialization
         @TruffleBoundary
-        protected Object codeFilesAppend(String file1, RAbstractStringVector file2) {
+        protected Object codeFilesAppend(String file1, RAbstractStringVector file2,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             if (file2.getLength() < 1) {
                 return RDataFactory.createEmptyLogicalVector();
             }
             int n2 = file2.getLength();
             byte[] data = new byte[n2];
             if (!RRuntime.isNA(file1)) {
-                Env env = RContext.getInstance().getEnv();
-                TruffleFile tFile1 = FileSystemUtils.getSafeTruffleFile(env, file1);
+                TruffleFile tFile1 = ctxRef.get().getSafeTruffleFile(file1);
                 try (BufferedOutputStream out = new BufferedOutputStream(tFile1.newOutputStream(StandardOpenOption.APPEND))) {
                     for (int i = 0; i < file2.getLength(); i++) {
                         String file2e = file2.getDataAt(i);
                         if (RRuntime.isNA(file2e)) {
                             continue;
                         }
-                        TruffleFile tFile2 = FileSystemUtils.getSafeTruffleFile(env, file2e);
+                        TruffleFile tFile2 = ctxRef.get().getSafeTruffleFile(file2e);
                         try {
                             byte[] path2Data = tFile2.readAllBytes();
                             byte[] header = ("#line 1 \"" + file2e + "\"\n").getBytes();

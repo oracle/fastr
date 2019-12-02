@@ -759,7 +759,7 @@ public final class Utils {
     }
 
     private static boolean isWriteableDirectory(String path) {
-        TruffleFile f = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
+        TruffleFile f = RContext.getInstance().getSafeTruffleFile(path);
         return f.exists() && f.isDirectory() && f.isWritable();
     }
 

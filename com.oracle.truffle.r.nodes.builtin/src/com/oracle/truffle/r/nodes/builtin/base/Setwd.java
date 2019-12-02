@@ -35,7 +35,6 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -60,13 +59,13 @@ public abstract class Setwd extends RBuiltinNode.Arg1 {
     protected Object setwd(String path,
                     @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         String owd = getwdNode.execute();
-        TruffleLanguage.Env env = ctxRef.get().getEnv();
-        TruffleFile nwd = FileSystemUtils.getSafeTruffleFile(env, path);
+        RContext context = ctxRef.get();
+        TruffleFile nwd = context.getSafeTruffleFile(path);
         int rc = setwdNode.execute(nwd.toString());
         if (rc != 0) {
             throw error(RError.Message.CANNOT_CHANGE_DIRECTORY);
         } else {
-            env.setCurrentWorkingDirectory(nwd.getAbsoluteFile());
+            context.getEnv().setCurrentWorkingDirectory(nwd.getAbsoluteFile());
             return owd != null ? owd : RNull.instance;
         }
     }
