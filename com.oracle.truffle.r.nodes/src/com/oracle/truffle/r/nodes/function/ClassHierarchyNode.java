@@ -225,7 +225,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization(guards = "isForeignObject(object)")
     protected RStringVector getClassHrTruffleObject(@SuppressWarnings("unused") TruffleObject object) {
-        return withImplicitTypes ? truffleObjectClassHeader : null;
+        return truffleObjectClassHeader;
     }
 
     @Specialization
