@@ -1163,6 +1163,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object Rf_asS4(Object x, int b, int i) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public void SET_S4_OBJECT(Object x) {
         guaranteeInstanceOf(x, RBaseObject.class).setS4();
     }

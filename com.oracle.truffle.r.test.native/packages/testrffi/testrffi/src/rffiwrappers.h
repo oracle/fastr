@@ -248,6 +248,8 @@ SEXP api_R_HomeDir();
 
 SEXP api_IS_S4_OBJECT(SEXP x);
 
+SEXP api_Rf_asS4(SEXP x, SEXP b, SEXP i);
+
 SEXP api_SET_S4_OBJECT(SEXP x);
 
 SEXP api_UNSET_S4_OBJECT(SEXP x);

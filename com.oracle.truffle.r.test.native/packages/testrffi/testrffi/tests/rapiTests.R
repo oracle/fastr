@@ -21,11 +21,20 @@
 
 # Contains unit-tests of the individual R API functions
 
-assertEquals <- function(expected, actual) {
+printCallPreffix <- function() {
     width <- 80L
-    name <- substr(deparse(sys.call(), width)[[1L]], 1, width)
+    name <- substr(deparse(sys.call(-1), width)[[1L]], 1, width)
     cat(name, paste(rep('.', width + 3L - nchar(name)), collapse=''))
+}
+
+assertEquals <- function(expected, actual) {
+    printCallPreffix()
     cat(if (identical(expected, actual)) 'pass' else 'fail', '\n')
+}
+
+assertTrue <- function(value) {
+    printCallPreffix()
+    cat(if (value) 'pass' else 'fail', '\n')
 }
 
 ignore <- function(...) {}
@@ -64,3 +73,11 @@ assertEquals("pairlist", api.Rf_eval(lang, new.env()))
 lang[[2L]] <- quote(1)
 # lang will be call to "bar" with "language(1)" as the argument -- the language object is "executed"
 assertEquals("double", api.Rf_eval(lang, new.env()))
+
+# ----------------------------------------------------------------------------------------
+# Rf_asS4
+v <- c(1,2,3)
+assertEquals(0L, api.IS_S4_OBJECT(v))
+v <- api.Rf_asS4(v, TRUE, 0)
+# GnuR returns 16, FastR returns 1
+assertTrue(api.IS_S4_OBJECT(v) > 0)

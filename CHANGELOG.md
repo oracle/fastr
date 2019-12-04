@@ -3,7 +3,7 @@
 Added missing R builtins and C APIs
 
 * Subsetting an array by numeric/string matrix
-
+* Rf_asS4
 
 # 19.3.0
 
