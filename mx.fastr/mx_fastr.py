@@ -305,6 +305,9 @@ class FastRGateTags:
     cran_pkgs_test = 'cran_pkgs_test'
     cran_pkgs_test_check_last = 'cran_pkgs_test_check_last'
 
+    gc_torture1 = 'gc_torture1'
+    gc_torture5 = 'gc_torture5'
+
 def _fastr_gate_runner(args, tasks):
     with mx_gate.Task('Setup no specials', tasks, tags=[FastRGateTags.no_specials]) as t:
         if t:
@@ -317,6 +320,14 @@ def _fastr_gate_runner(args, tasks):
     with mx_gate.Task('SetupLLVM', tasks, tags=[FastRGateTags.llvm]) as t:
         if t:
             os.environ['FASTR_RFFI'] = 'llvm'
+
+    with mx_gate.Task('GCTorture1', tasks, tags=[FastRGateTags.gc_torture1]) as t:
+        if t:
+            os.environ['FASTR_GCTORTURE'] = '1'
+
+    with mx_gate.Task('GCTorture5', tasks, tags=[FastRGateTags.gc_torture5]) as t:
+        if t:
+            os.environ['FASTR_GCTORTURE'] = '5'
 
     '''
     The specific additional gates tasks provided by FastR.
@@ -361,6 +372,10 @@ def _fastr_gate_runner(args, tasks):
                 list_file_llvm = list_file + '.llvm'
                 if os.path.exists(list_file_llvm):
                     list_file = list_file_llvm
+            if os.environ.get('FASTR_GCTORTURE') != '':
+                list_file_gctorture = list_file + '.gctorture'
+                if os.path.exists(list_file_gctorture):
+                    list_file = list_file_gctorture
             result = pkgtest(["--verbose", "--repos", "FASTR", "--pkg-filelist", list_file])
             if result != 0:
                 mx.abort("internal package test failed")
