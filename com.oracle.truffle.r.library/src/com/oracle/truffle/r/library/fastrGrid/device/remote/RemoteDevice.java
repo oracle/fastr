@@ -207,7 +207,7 @@ public final class RemoteDevice implements GridDevice {
                 serverProcess = null;
             }
             if (serverProcess == null) {
-                TruffleFile rHome = REnvVars.getRHomeTruffleFile(context.getEnv());
+                TruffleFile rHome = REnvVars.getRHomeTruffleFile(context);
                 TruffleFile serverJar = rHome.resolve(SERVER_JAR_NAME);
                 if (!serverJar.exists()) {
                     TruffleFile buildServerJar = rHome.resolve("mxbuild").resolve("dists").resolve(SERVER_JAR_NAME);

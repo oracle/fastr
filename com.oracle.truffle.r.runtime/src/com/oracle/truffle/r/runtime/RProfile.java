@@ -51,7 +51,7 @@ public final class RProfile implements RContext.ContextState {
         if (context.getStartParams().getLoadSiteFile()) {
             String siteProfilePath = envVars.get("R_PROFILE");
             if (siteProfilePath == null) {
-                siteProfilePath = REnvVars.getRHomeTruffleFile(context.getEnv()).resolve("etc").resolve("Rprofile.site").toString();
+                siteProfilePath = REnvVars.getRHomeTruffleFile(context).resolve("etc").resolve("Rprofile.site").toString();
             }
             TruffleFile siteProfileFile = context.getSafeTruffleFile(siteProfilePath);
             if (siteProfileFile.exists()) {
@@ -84,7 +84,7 @@ public final class RProfile implements RContext.ContextState {
     private Source userProfile;
 
     public static Source systemProfile(RContext context) {
-        TruffleFile path = REnvVars.getRHomeTruffleFile(RContext.getInstance().getEnv()).resolve("library").resolve("base").resolve("R").resolve("Rprofile");
+        TruffleFile path = REnvVars.getRHomeTruffleFile(context).resolve("library").resolve("base").resolve("R").resolve("Rprofile");
         Source source = getProfile(context, path.getPath(), true);
         if (source == null) {
             RSuicide.rSuicide("can't find system profile");

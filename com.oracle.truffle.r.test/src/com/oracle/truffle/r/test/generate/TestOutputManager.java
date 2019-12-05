@@ -452,6 +452,7 @@ public class TestOutputManager {
                     testClass.beforeEval();
                     expected = rSession.eval(testClass, test, null, USE_DEFAULT_TIMEOUT);
                 } catch (Throwable e) {
+                    e.printStackTrace();
                     throw RInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
                 }
                 expected = prepareResult(expected, keepTrailingWhiteSpace);

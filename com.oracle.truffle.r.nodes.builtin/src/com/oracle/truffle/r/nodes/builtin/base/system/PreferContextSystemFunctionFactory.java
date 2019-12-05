@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,24 +27,25 @@
 package com.oracle.truffle.r.nodes.builtin.base.system;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 public class PreferContextSystemFunctionFactory extends SystemFunctionFactory {
     private ContextSystemFunctionFactory contextSystemFunctionFactory;
     private ProcessSystemFunctionFactory processSystemFunctionFactory;
 
     @Override
-    public Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs) {
-        CommandInfo commandInfo = checkRCommand(command);
+    public Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs, RContext context) {
+        CommandInfo commandInfo = checkRCommand(context, command);
         if (commandInfo == null) {
             if (processSystemFunctionFactory == null) {
                 processSystemFunctionFactory = new ProcessSystemFunctionFactory();
             }
-            return processSystemFunctionFactory.execute(frame, command, intern, timeoutSecs);
+            return processSystemFunctionFactory.execute(frame, command, intern, timeoutSecs, context);
         } else {
             if (contextSystemFunctionFactory == null) {
                 contextSystemFunctionFactory = new ContextSystemFunctionFactory();
             }
-            return contextSystemFunctionFactory.execute(frame, command, intern, timeoutSecs);
+            return contextSystemFunctionFactory.execute(frame, command, intern, timeoutSecs, context);
         }
     }
 }

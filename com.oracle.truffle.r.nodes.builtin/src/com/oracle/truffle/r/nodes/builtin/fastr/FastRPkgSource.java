@@ -33,6 +33,8 @@ import java.io.IOException;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -46,6 +48,7 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -76,21 +79,23 @@ public abstract class FastRPkgSource extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    public RNull pkgSource(VirtualFrame frame, @SuppressWarnings("unused") RNull pkgs, boolean verbose) {
+    public RNull pkgSource(VirtualFrame frame, @SuppressWarnings("unused") RNull pkgs, boolean verbose,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         CompilerDirectives.transferToInterpreter();
         String[] searchPath = REnvironment.searchPath();
         for (String s : searchPath) {
             REnvironment env = REnvironment.lookupOnSearchPath(s);
             String pkg = env.isPackageEnv();
             if (pkg != null) {
-                pkgSource(frame, RDataFactory.createStringVectorFromScalar(pkg.replace("package:", "")), verbose);
+                pkgSource(frame, RDataFactory.createStringVectorFromScalar(pkg.replace("package:", "")), verbose, ctxRef);
             }
         }
         return RNull.instance;
     }
 
     @Specialization
-    public RNull pkgSource(VirtualFrame frame, RAbstractStringVector pkgs, boolean verbose) {
+    public RNull pkgSource(VirtualFrame frame, RAbstractStringVector pkgs, boolean verbose,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         CompilerDirectives.transferToInterpreter();
         for (int i = 0; i < pkgs.getLength(); i++) {
             String pkg = pkgs.getDataAt(i);
@@ -118,7 +123,7 @@ public abstract class FastRPkgSource extends RBuiltinNode.Arg2 {
                                     output(name, true);
                                 }
                                 String deparseResult = RDeparse.deparseSyntaxElement((FunctionDefinitionNode) fun.getRootNode());
-                                saveSource(pkg, name, deparseResult);
+                                saveSource(ctxRef.get(), pkg, name, deparseResult);
                             }
                         }
                     } catch (Throwable t) {
@@ -150,10 +155,10 @@ public abstract class FastRPkgSource extends RBuiltinNode.Arg2 {
     }
 
     @TruffleBoundary
-    private void saveSource(String pkg, String fname, String deparseResult) {
+    private void saveSource(RContext context, String pkg, String fname, String deparseResult) {
         RSerialize.setSaveDeparse(false);
         try {
-            TruffleFile target = targetPath(pkg, fname);
+            TruffleFile target = targetPath(context, pkg, fname);
             try (Writer wr = target.newBufferedWriter()) {
                 wr.write(deparseResult);
             }
@@ -172,8 +177,8 @@ public abstract class FastRPkgSource extends RBuiltinNode.Arg2 {
         return result;
     }
 
-    private static TruffleFile targetPath(String pkg, String fnameArg) throws IOException {
-        TruffleFile targetDir = REnvVars.getRHomeTruffleFile(RContext.getInstance().getEnv()).resolve(PKGSOURCE_PROJECT).resolve(pkg);
+    private static TruffleFile targetPath(RContext context, String pkg, String fnameArg) throws IOException {
+        TruffleFile targetDir = REnvVars.getRHomeTruffleFile(context).resolve(PKGSOURCE_PROJECT).resolve(pkg);
         targetDir.createDirectories();
         String fname = mungeName(fnameArg);
         TruffleFile target = targetDir.resolve(fname + ".R");

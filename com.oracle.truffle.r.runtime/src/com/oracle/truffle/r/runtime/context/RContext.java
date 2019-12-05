@@ -985,7 +985,7 @@ public final class RContext {
             throw RError.error(RError.SHOW_CALLER, RError.Message.FILE_OPEN_ERROR);
         }
 
-        final TruffleFile home = REnvVars.getRHomeTruffleFile(env);
+        final TruffleFile home = REnvVars.getRHomeTruffleFile(this);
         if (f.startsWith(home) && isLibraryFile(home.relativize(f))) {
             return origFile;
         } else {

@@ -601,7 +601,7 @@ public class DLL {
                             "Troubleshooting: \n\n" +
                             "  * Please run %s/bin/configure_fastr. It will check that your system has the necessary dependencies and if not it will suggest how to install them.\n\n" +
                             "  * If this does not help, please open an issue on https://github.com/oracle/fastr/ or reach us on https://graalvm.slack.com.\n\n",
-                            path, REnvVars.rHome()));
+                            path, REnvVars.rHome(context)));
         } catch (Throwable ex) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + ". Details: " + ex.getMessage());
         }

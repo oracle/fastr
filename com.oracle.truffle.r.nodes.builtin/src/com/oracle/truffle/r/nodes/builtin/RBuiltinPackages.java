@@ -94,7 +94,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
             }
         }
         // Now "load" the package
-        Path baseDirPath = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base");
+        Path baseDirPath = FileSystems.getDefault().getPath(REnvVars.rHome(context), "library", "base");
         Path basePathbase = baseDirPath.resolve("R").resolve("base");
         Source baseSource = null;
         try {

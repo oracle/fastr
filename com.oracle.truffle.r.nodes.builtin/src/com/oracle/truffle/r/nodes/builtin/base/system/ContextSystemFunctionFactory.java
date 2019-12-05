@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRContext;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRContextFactory;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -83,9 +84,9 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
     }
 
     @Override
-    public Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs) {
+    public Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs, RContext context) {
         log(command, "Context");
-        CommandInfo commandInfo = checkRCommand(command);
+        CommandInfo commandInfo = checkRCommand(context, command);
         if (commandInfo != null) {
             ContextSystemFunctionNode node = Utils.unShQuote(commandInfo.command).equals("R") ? ContextRSystemFunctionNodeGen.create() : ContextRscriptSystemFunctionNodeGen.create();
             Object result = node.execute(frame, RDataFactory.createStringVector(commandInfo.args, RDataFactory.COMPLETE_VECTOR),

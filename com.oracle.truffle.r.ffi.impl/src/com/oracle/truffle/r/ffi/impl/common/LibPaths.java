@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RPlatform;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 public class LibPaths {
 
@@ -36,8 +37,8 @@ public class LibPaths {
      * Returns the absolute path to the directory containing the builtin libraries.
      */
     @TruffleBoundary
-    public static String getBuiltinLibPath() {
-        return FileSystems.getDefault().getPath(REnvVars.rHome(), "lib").toString();
+    public static String getBuiltinLibPath(RContext context) {
+        return FileSystems.getDefault().getPath(REnvVars.rHome(context), "lib").toString();
     }
 
     /**
@@ -45,8 +46,8 @@ public class LibPaths {
      * {@link System#load}.
      */
     @TruffleBoundary
-    public static String getBuiltinLibPath(String libName) {
-        String rHome = REnvVars.rHome();
+    public static String getBuiltinLibPath(RContext context, String libName) {
+        String rHome = REnvVars.rHome(context);
         OSInfo osInfo = RPlatform.getOSInfo();
         Path path = FileSystems.getDefault().getPath(rHome, "lib", "lib" + libName + "." + osInfo.libExt);
         return path.toString();
@@ -57,8 +58,8 @@ public class LibPaths {
      * not check for existence).
      */
     @TruffleBoundary
-    public static String getPackageLibPath(String name) {
-        String rHome = REnvVars.rHome();
+    public static String getPackageLibPath(RContext context, String name) {
+        String rHome = REnvVars.rHome(context);
         String packageDir = "library";
         Path path = FileSystems.getDefault().getPath(rHome, packageDir, name, "libs", name + ".so");
         return path.toString();

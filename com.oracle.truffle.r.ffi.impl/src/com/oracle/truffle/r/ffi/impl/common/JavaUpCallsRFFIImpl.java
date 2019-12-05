@@ -1108,7 +1108,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public String R_HomeDir() {
         // This should actually return char* on the native side and there is no documentation
         // regarding the ownership of the result. So far there has not been any issues with this
-        return REnvVars.rHome();
+        return REnvVars.rHome(RContext.getInstance());
     }
 
     @Override

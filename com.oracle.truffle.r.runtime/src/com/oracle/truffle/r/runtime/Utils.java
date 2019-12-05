@@ -200,7 +200,7 @@ public final class Utils {
      * a {@link TruffleFile} instance) might be uninitialized at time when log writing would be
      * needed.
      */
-    public static Path getLogPath(String fileNamePrefix) {
+    public static Path getLogPath(RContext context, String fileNamePrefix) {
         String tmpDir = robustGetProperty("java.io.tmpdir");
         String dir = RContext.isEmbedded() ? tmpDir : robustGetProperty("user.dir");
         int dirId = 0;
@@ -234,7 +234,7 @@ public final class Utils {
                     dir = tmpDir;
                     break;
                 case 2:
-                    dir = REnvVars.rHome();
+                    dir = REnvVars.rHome(context);
                     break;
                 default:
                     return null;

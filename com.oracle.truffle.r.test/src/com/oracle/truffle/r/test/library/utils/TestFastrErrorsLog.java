@@ -95,7 +95,7 @@ public class TestFastrErrorsLog extends TestBase {
                     String dir3 = System.getProperty("java.io.tmpdir");
                     Path path3 = FileSystems.getDefault().getPath(dir3, baseName);
 
-                    String dir4 = REnvVars.rHome();
+                    String dir4 = REnvVars.rHome(RContext.getInstance());
                     Path path4 = FileSystems.getDefault().getPath(dir4, baseName);
 
                     try {
