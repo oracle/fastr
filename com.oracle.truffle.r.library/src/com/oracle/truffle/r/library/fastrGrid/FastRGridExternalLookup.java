@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,6 +44,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -95,7 +96,7 @@ public final class FastRGridExternalLookup {
         }
     }
 
-    public static RExternalBuiltinNode lookupDotCall(String name) {
+    public static RExternalBuiltinNode lookupDotCall(RContext context, String name) {
         switch (name) {
             case "gridDirty":
                 return new LGridDirty();
@@ -122,7 +123,7 @@ public final class FastRGridExternalLookup {
             case "setviewport":
             case "downviewport":
             case "downvppath":
-                return getExternalFastRGridBuiltinNode(name);
+                return getExternalFastRGridBuiltinNode(context, name);
 
             // Drawing primitives
             case "rect":
@@ -222,7 +223,7 @@ public final class FastRGridExternalLookup {
         }
     }
 
-    private static RExternalBuiltinNode getExternalFastRGridBuiltinNode(String name) {
-        return new RInternalCodeBuiltinNode("grid", RInternalCode.loadSourceRelativeTo(LInitGrid.class, "fastrGrid.R"), name);
+    private static RExternalBuiltinNode getExternalFastRGridBuiltinNode(RContext context, String name) {
+        return new RInternalCodeBuiltinNode("grid", RInternalCode.loadSourceRelativeTo(context, LInitGrid.class, "fastrGrid.R"), name);
     }
 }

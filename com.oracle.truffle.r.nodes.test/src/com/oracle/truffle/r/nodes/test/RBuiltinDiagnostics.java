@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,8 +59,12 @@ import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.test.generate.FastRContext;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import static com.oracle.truffle.r.test.generate.FastRSession.execInContext;
 
 public class RBuiltinDiagnostics {
 
@@ -101,8 +105,14 @@ public class RBuiltinDiagnostics {
         List<String> bNames = Arrays.stream(args).filter(arg -> !arg.startsWith("-")).collect(Collectors.toList());
 
         RBuiltinDiagnostics rbDiag = ChimneySweepingSuite.createChimneySweepingSuite(args).orElseGet(() -> createRBuiltinDiagnostics(args, bNames.isEmpty()));
+        FastRSession fastRSession = FastRSession.create();
         if (bNames.isEmpty()) {
-            rbDiag.diagnoseAllBuiltins();
+            try (FastRContext context = fastRSession.createContext(RContext.ContextKind.SHARE_NOTHING)) {
+                execInContext(context, () -> {
+                    rbDiag.diagnoseAllBuiltins();
+                    return null;
+                });
+            }
         } else {
             boolean ok = true;
             for (String bName : bNames) {
@@ -122,7 +132,7 @@ public class RBuiltinDiagnostics {
         try {
             print(0, "Diagnosing '" + builtinName + "' ...");
 
-            BasePackage bp = new BasePackage();
+            BasePackage bp = new BasePackage(RContext.getInstance());
             RBuiltinFactory bf = bp.lookupByName(builtinName);
             RBuiltinDiagFactory bdf;
 
@@ -163,7 +173,7 @@ public class RBuiltinDiagnostics {
     }
 
     public void diagnoseAllBuiltins() {
-        BasePackage bp = new BasePackage();
+        BasePackage bp = new BasePackage(RContext.getInstance());
 
         List<Class<? extends RExternalBuiltinNode>> extBltn = ExtBuiltinsList.getBuiltins();
         Collection<RBuiltinFactory> intBltn = bp.getBuiltins().values();

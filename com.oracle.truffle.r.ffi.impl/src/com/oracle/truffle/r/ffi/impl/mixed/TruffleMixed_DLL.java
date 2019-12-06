@@ -22,23 +22,25 @@
  */
 package com.oracle.truffle.r.ffi.impl.mixed;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLLFactory.TruffleMixed_DLCloseNodeGen;
+import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLLFactory.TruffleMixed_DLOpenNodeGen;
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLLFactory.TruffleMixed_DLSymNodeGen;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
@@ -80,14 +82,13 @@ public class TruffleMixed_DLL implements DLLRFFI {
         }
     }
 
-    boolean isLLVMPackage(Path libPath) {
+    boolean isLLVMPackage(TruffleFile libPath) {
         if (explicitPackages.isEmpty()) {
             return isLLVMDefault;
         }
 
-        Path libFileName = libPath.getFileName();
-        assert libFileName != null;
-        String libName = libFileName.toString();
+        assert libPath != null;
+        String libName = libPath.getName();
         libName = libName.substring(0, libName.lastIndexOf('.'));
         boolean isExplicitPkg = explicitPackages.contains(libName);
         return isExplicitPkg ^ isLLVMDefault;
@@ -95,7 +96,7 @@ public class TruffleMixed_DLL implements DLLRFFI {
 
     @Override
     public DLOpenNode createDLOpenNode() {
-        return new TruffleMixed_DLOpenNode(this);
+        return TruffleMixed_DLOpenNodeGen.create(this);
     }
 
     @Override
@@ -108,7 +109,7 @@ public class TruffleMixed_DLL implements DLLRFFI {
         return TruffleMixed_DLCloseNodeGen.create(this);
     }
 
-    private static final class TruffleMixed_DLOpenNode extends Node implements DLOpenNode {
+    abstract static class TruffleMixed_DLOpenNode extends Node implements DLOpenNode {
 
         private final DLOpenNode llvmDllOpenNode;
         private final DLOpenNode nfiDllOpenNode;
@@ -120,10 +121,11 @@ public class TruffleMixed_DLL implements DLLRFFI {
             this.nfiDllOpenNode = dllRffi.nfiDllRFFI.createDLOpenNode();
         }
 
-        @Override
-        public LibHandle execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError {
-            Path libPath = Paths.get(path);
-            if (!Files.exists(libPath)) {
+        @Specialization
+        public LibHandle exec(String path, boolean local, boolean now,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) throws UnsatisfiedLinkError {
+            TruffleFile libPath = ctxRef.get().getSafeTruffleFile(path);
+            if (!libPath.exists()) {
                 throw new UnsatisfiedLinkError(String.format("Shared library %s not found", path));
             }
 

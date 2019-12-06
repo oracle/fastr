@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,11 +33,11 @@ public class LazyDBCache {
     public static final class ContextStateImpl implements RContext.ContextState {
         private final Map<String, byte[]> dbCache = new HashMap<>();
 
-        public byte[] getData(String dbPath) {
+        public byte[] getData(RContext context, String dbPath) {
             byte[] dbData = dbCache.get(dbPath);
             if (dbData == null) {
                 try {
-                    dbData = Files.readAllBytes(FileSystems.getDefault().getPath(dbPath));
+                    dbData = context.getSafeTruffleFile(dbPath).readAllBytes();
                 } catch (IOException ex) {
                     // unexpected
                     throw RInternalError.shouldNotReachHere(ex);

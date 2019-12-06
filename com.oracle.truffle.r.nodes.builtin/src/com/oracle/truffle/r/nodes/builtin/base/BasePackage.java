@@ -182,6 +182,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -194,8 +195,8 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 public class BasePackage extends RBuiltinPackage {
 
-    public BasePackage() {
-        super("base");
+    public BasePackage(RContext context) {
+        super(context, "base");
 
         /*
          * Primitive operations (these are really builtins, but not currently defined that way, so

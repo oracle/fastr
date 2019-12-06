@@ -27,7 +27,9 @@ import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridG
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -102,6 +104,7 @@ import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -243,8 +246,9 @@ public class CallAndExternalFunctions {
      * symbol could be duplicated)</li>
      * </ol>
      * Many of the functions in the builtin packages have been translated to Java which is handled
-     * by specializations that {@link #lookupBuiltin(RList)}. N.N. In principle such a function
-     * could be invoked by a string but experimentally that situation has never been encountered.
+     * by specializations that {@link #lookupBuiltin(RContext, RList)}. N.N. In principle such a
+     * function could be invoked by a string but experimentally that situation has never been
+     * encountered.
      */
     @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCall extends Dot {
@@ -270,10 +274,10 @@ public class CallAndExternalFunctions {
 
         @Override
         @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RList symbol) {
+        public RExternalBuiltinNode lookupBuiltin(RContext context, RList symbol) {
             String name = lookupName(symbol);
-            if (RContext.getInstance().getOption(UseInternalGridGraphics) && name != null) {
-                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(name);
+            if (context.getOption(UseInternalGridGraphics) && name != null) {
+                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(context, name);
                 if (gridExternal != null) {
                     return gridExternal;
                 }
@@ -578,10 +582,10 @@ public class CallAndExternalFunctions {
                     return PPSum.IntgrtVecNode.create();
 
                 case "updateform":
-                    return getExternalModelBuiltinNode("updateform");
+                    return getExternalModelBuiltinNode(context, "updateform");
 
                 case "Cdqrls":
-                    return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(RandFunctionsNodes.class, "lm.R"), "Cdqrls");
+                    return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(context, RandFunctionsNodes.class, "lm.R"), "Cdqrls");
 
                 case "dnorm":
                     return StatsFunctionsNodes.Function3_1Node.create(new DNorm());
@@ -646,7 +650,8 @@ public class CallAndExternalFunctions {
         @Specialization(limit = "99", guards = {"cached == symbol", "builtin != null"})
         protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
-                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin) {
             return builtin.call(frame, args);
         }
 
@@ -658,7 +663,8 @@ public class CallAndExternalFunctions {
         @Specialization(limit = "getCacheSize(2)", guards = {"cached == symbol", "builtin == null"})
         protected Object callSymbolInfoFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
-                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
                         @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo,
                         @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
@@ -676,8 +682,9 @@ public class CallAndExternalFunctions {
         @Specialization(replaces = {"callSymbolInfoFunction", "doExternal"})
         protected Object callSymbolInfoFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
-            RExternalBuiltinNode builtin = lookupBuiltin(symbol);
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RExternalBuiltinNode builtin = lookupBuiltin(ctxRef.get(), symbol);
             if (builtin != null) {
                 throw RInternalError.shouldNotReachHere("Cache for .Calls with FastR reimplementation (lookupBuiltin(...) != null) exceeded the limit");
             }
@@ -750,9 +757,9 @@ public class CallAndExternalFunctions {
 
         @Override
         @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RList f) {
+        public RExternalBuiltinNode lookupBuiltin(RContext context, RList f) {
             String name = lookupName(f);
-            if (RContext.getInstance().getOption(UseInternalGridGraphics)) {
+            if (context.getOption(UseInternalGridGraphics)) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal(name);
                 if (gridExternal != null) {
                     return gridExternal;
@@ -774,7 +781,7 @@ public class CallAndExternalFunctions {
                 case "download":
                     return DownloadNodeGen.create();
                 case "termsform":
-                    return getExternalModelBuiltinNode("termsform");
+                    return getExternalModelBuiltinNode(context, "termsform");
                 case "Rprof":
                     return RprofNodeGen.create();
                 case "Rprofmem":
@@ -803,14 +810,16 @@ public class CallAndExternalFunctions {
         @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
         protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
-                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin) {
             return builtin.call(frame, args);
         }
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached.symbol == symbol", "builtin == null"})
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin,
                         @Cached("new(symbol)") CallNamedFunctionNode cached,
                         @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             if (registeredProfile.profile(isRegisteredRFunction(cached.nativeCallInfo))) {
@@ -890,9 +899,9 @@ public class CallAndExternalFunctions {
 
         @Override
         @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RList symbol) {
+        public RExternalBuiltinNode lookupBuiltin(RContext context, RList symbol) {
             String name = lookupName(symbol);
-            if (RContext.getInstance().getOption(UseInternalGridGraphics)) {
+            if (context.getOption(UseInternalGridGraphics)) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal2(name);
                 if (gridExternal != null) {
                     return gridExternal;
@@ -908,7 +917,7 @@ public class CallAndExternalFunctions {
                     return C_ParseRdNodeGen.create();
                 case "modelmatrix":
                 case "modelframe":
-                    return getExternalModelBuiltinNode(name);
+                    return getExternalModelBuiltinNode(context, name);
                 case "zeroin2":
                     return Zeroin2.create();
 
@@ -925,14 +934,16 @@ public class CallAndExternalFunctions {
         @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
         protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
-                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin) {
             return builtin.call(frame, args);
         }
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached.symbol == symbol", "builtin == null"})
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin,
                         @Cached("new(symbol)") CallNamedFunctionNode cached) {
             Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
             REnvironment rho = REnvironment.frameToEnvironment(frame.materialize());
@@ -1015,7 +1026,7 @@ public class CallAndExternalFunctions {
 
         @Override
         @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RList f) {
+        public RExternalBuiltinNode lookupBuiltin(RContext ctx, RList f) {
             return null;
         }
 
@@ -1023,7 +1034,8 @@ public class CallAndExternalFunctions {
         @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
         protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName,
                         @Cached("f") RList cached,
-                        @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("lookupBuiltin(ctxRef.get(), f)") RExternalBuiltinNode builtin) {
             return builtin.call(frame, args);
         }
 
@@ -1075,8 +1087,8 @@ public class CallAndExternalFunctions {
 
         @Override
         @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RList f) {
-            if (RContext.getInstance().getOption(UseInternalGridGraphics)) {
+        public RExternalBuiltinNode lookupBuiltin(RContext ctx, RList f) {
+            if (ctx.getOption(UseInternalGridGraphics)) {
                 return FastRGridExternalLookup.lookupDotCallGraphics(lookupName(f));
             } else {
                 return null;
@@ -1087,7 +1099,8 @@ public class CallAndExternalFunctions {
         @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
         protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName,
                         @Cached("f") RList cached,
-                        @Cached("lookupBuiltin(f)") RExternalBuiltinNode builtin) {
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("lookupBuiltin(ctxRef.get(), f)") RExternalBuiltinNode builtin) {
             return builtin.call(frame, args);
         }
 

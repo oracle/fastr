@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.TruffleFile;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -37,7 +38,6 @@ import java.util.jar.JarFile;
 
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory.Handler;
 import com.oracle.truffle.r.runtime.context.RContext;
-import java.io.File;
 
 /**
  * Default implementation uses the default mechanism in {@code java.lang.Class}.
@@ -50,7 +50,7 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
     }
 
     @Override
-    public InputStream getResourceAsStream(Class<?> accessor, String name) {
+    public InputStream getResourceAsStream(RContext context, Class<?> accessor, String name) {
         return accessor.getResourceAsStream(name);
     }
 
@@ -60,13 +60,12 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
     }
 
     @Override
-    public Map<String, String> getRFiles(Class<?> accessor, String pkgName) {
+    public Map<String, String> getRFiles(RContext context, Class<?> accessor, String pkgName) {
         CodeSource source = accessor.getProtectionDomain().getCodeSource();
         Map<String, String> result = new HashMap<>();
         try {
             URL url = source.getLocation();
-            Path sourcePath = Paths.get(url.toURI().getPath());
-            File sourceFile = sourcePath.toFile();
+            TruffleFile sourceFile = context.getSafeTruffleFile(url.toURI().getPath());
             if (sourceFile.isDirectory()) {
                 try (InputStream is = accessor.getResourceAsStream(pkgName + "/R")) {
                     if (is != null) {
@@ -75,14 +74,14 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
                             while ((line = r.readLine()) != null) {
                                 if (line.endsWith(".r") || line.endsWith(".R")) {
                                     final String rResource = pkgName + "/R/" + line.trim();
-                                    result.put(rResource, Utils.getResourceAsString(accessor, rResource, true));
+                                    result.put(rResource, Utils.getResourceAsString(context, accessor, rResource, true));
                                 }
                             }
                         }
                     }
                 }
             } else {
-                try (JarFile fastrJar = new JarFile(sourceFile)) {
+                try (JarFile fastrJar = new JarFile(sourceFile.getPath())) {
                     Enumeration<JarEntry> iter = fastrJar.entries();
                     while (iter.hasMoreElements()) {
                         JarEntry entry = iter.nextElement();

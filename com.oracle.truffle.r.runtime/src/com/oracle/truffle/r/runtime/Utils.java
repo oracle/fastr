@@ -26,10 +26,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
@@ -115,9 +111,9 @@ public final class Utils {
      * implementations and, in particular may not be a persistently accessible URL, we read the
      * content and store it as an "internal" instance.
      */
-    public static Source getResourceAsSource(Class<?> clazz, String resourceName) {
+    public static Source getResourceAsSource(RContext context, Class<?> clazz, String resourceName) {
         try {
-            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(clazz, resourceName);
+            InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(context, clazz, resourceName);
             if (is == null) {
                 throw new IOException();
             }
@@ -128,8 +124,8 @@ public final class Utils {
         }
     }
 
-    public static String getResourceAsString(Class<?> clazz, String resourceName, boolean mustExist) {
-        InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(clazz, resourceName);
+    public static String getResourceAsString(RContext context, Class<?> clazz, String resourceName, boolean mustExist) {
+        InputStream is = ResourceHandlerFactory.getHandler().getResourceAsStream(context, clazz, resourceName);
         if (is == null) {
             if (!mustExist) {
                 return null;
@@ -196,15 +192,15 @@ public final class Utils {
      * In the latter case, we can't assume that the cwd is writable so '/tmp' is attempted. For
      * regular mode dirs are attempted in this order: cwd, user's home, '/tmp', rHome. If none of
      * the dirs is writable null is returned. <br/>
-     * Currently {@link Path} object is returned since {@link RContext} instance (in order to obtain
-     * a {@link TruffleFile} instance) might be uninitialized at time when log writing would be
-     * needed.
+     * Currently {@link TruffleFile} object is returned since {@link RContext} instance (in order to
+     * obtain a {@link TruffleFile} instance) might be uninitialized at time when log writing would
+     * be needed.
      */
-    public static Path getLogPath(RContext context, String fileNamePrefix) {
+    public static TruffleFile getLogPath(RContext context, String fileNamePrefix) {
         String tmpDir = robustGetProperty("java.io.tmpdir");
         String dir = RContext.isEmbedded() ? tmpDir : robustGetProperty("user.dir");
         int dirId = 0;
-        if (dir != null && tmpDir != null && Paths.get(dir).startsWith(tmpDir) && dir.contains("R.INSTALL")) {
+        if (dir != null && tmpDir != null && context.getSafeTruffleFile(dir).startsWith(tmpDir) && dir.contains("R.INSTALL")) {
             // Simple heuristic to find out if we are in the middle of package installation, in
             // which case we do not want to write to the working directory, since the installation
             // process will remove that directory when finished.
@@ -217,7 +213,7 @@ public final class Utils {
         String baseName = fileNamePrefix + pidStr + ".log";
         while (true) {
             if (dir != null) {
-                Path path = FileSystems.getDefault().getPath(dir, baseName);
+                TruffleFile path = context.getSafeTruffleFile(dir).resolve(baseName);
                 if (robustCheckWriteable(path)) {
                     return path;
                 }
@@ -254,13 +250,13 @@ public final class Utils {
         }
     }
 
-    private static boolean robustCheckWriteable(Path logFile) {
+    private static boolean robustCheckWriteable(TruffleFile logFile) {
         try {
             if (logFile == null) {
                 return false;
             }
-            Path parent = logFile.getParent();
-            return parent != null && Files.isWritable(parent) && (!Files.exists(logFile) || Files.isWritable(logFile));
+            TruffleFile parent = logFile.getParent();
+            return parent != null && parent.isWritable() && (!logFile.exists() || logFile.isWritable());
         } catch (Throwable ex) {
             // may throw SecurityException, we catch all since we really need to be robust
             logGetLogPathError(ex.getMessage());

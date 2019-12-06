@@ -133,11 +133,13 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
      */
     private static void putToolChainVars(Map<String, String> pEnv) {
         LanguageInfo llvmInfo = RContext.getInstance().getEnv().getInternalLanguages().get("llvm");
-        Toolchain toolchain = RContext.getInstance().getEnv().lookup(llvmInfo, Toolchain.class);
-        TruffleFile cc = toolchain.getToolPath("CC");
-        TruffleFile cxx = toolchain.getToolPath("CXX");
+        if (llvmInfo != null) {
+            Toolchain toolchain = RContext.getInstance().getEnv().lookup(llvmInfo, Toolchain.class);
+            TruffleFile cc = toolchain.getToolPath("CC");
+            TruffleFile cxx = toolchain.getToolPath("CXX");
 
-        pEnv.put("TOOLCHAIN_CPP", cxx.toString());
-        pEnv.put("TOOLCHAIN_CC", cc.toString());
+            pEnv.put("TOOLCHAIN_CPP", cxx.toString());
+            pEnv.put("TOOLCHAIN_CC", cc.toString());
+        }
     }
 }

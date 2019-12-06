@@ -408,15 +408,15 @@ public final class FastRSession implements RSession {
         }
     }
 
-    public static void execInContext(FastRContext context, Callable<Object> c) {
-        execInContext(context, c, (Class<?>[]) null);
+    public static Value execInContext(FastRContext context, Callable<Object> c) {
+        return execInContext(context, c, (Class<?>[]) null);
     }
 
-    public static <E extends Exception> void execInContext(FastRContext context, Callable<Object> c, Class<?>... acceptExceptions) {
+    public static <E extends Exception> Value execInContext(FastRContext context, Callable<Object> c, Class<?>... acceptExceptions) {
         context.eval(FastRSession.GET_CONTEXT); // ping creation of TruffleRLanguage
         context.getPolyglotBindings().putMember("testSymbol", (ProxyExecutable) (Value... args) -> {
             try {
-                c.call();
+                return c.call();
             } catch (Exception ex) {
                 if (acceptExceptions != null) {
                     for (Class<?> cs : acceptExceptions) {
@@ -430,7 +430,7 @@ public final class FastRSession implements RSession {
             }
             return null;
         });
-        context.getPolyglotBindings().getMember("testSymbol").execute();
+        return context.getPolyglotBindings().getMember("testSymbol").execute();
     }
 
 }

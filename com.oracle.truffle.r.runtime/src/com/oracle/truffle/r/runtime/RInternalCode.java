@@ -53,8 +53,8 @@ public final class RInternalCode {
     }
 
     @TruffleBoundary
-    public static Source loadSourceRelativeTo(Class<?> clazz, String fileName) {
-        return Utils.getResourceAsSource(clazz, fileName);
+    public static Source loadSourceRelativeTo(RContext context, Class<?> clazz, String fileName) {
+        return Utils.getResourceAsSource(context, clazz, fileName);
     }
 
     private synchronized REnvironment evaluate() {

@@ -88,10 +88,10 @@ public abstract class RBuiltinPackage {
         builtins.put(builtinName, factory);
     }
 
-    protected RBuiltinPackage(String name) {
+    protected RBuiltinPackage(RContext context, String name) {
         this.name = name;
         // Check for overriding R code
-        ArrayList<Source> componentList = getRFiles(getName());
+        ArrayList<Source> componentList = getRFiles(context, getName());
         if (componentList.size() > 0) {
             rSources.put(getName(), componentList);
         }
@@ -108,11 +108,11 @@ public abstract class RBuiltinPackage {
      * subdirectory.
      */
     @SuppressFBWarnings(value = "AT_OPERATION_SEQUENCE_ON_CONCURRENT_ABSTRACTION", justification = "one-time initialization")
-    public static ArrayList<Source> getRFiles(String pkgName) {
+    public static ArrayList<Source> getRFiles(RContext context, String pkgName) {
         ArrayList<Source> componentList = new ArrayList<>();
         Map<String, String> rFileContents = rFilesCache.get(pkgName);
         if (rFileContents == null) {
-            rFileContents = ResourceHandlerFactory.getHandler().getRFiles(RBuiltinPackage.class, pkgName);
+            rFileContents = ResourceHandlerFactory.getHandler().getRFiles(context, RBuiltinPackage.class, pkgName);
             rFilesCache.put(pkgName, rFileContents);
         }
         for (String rFileContent : rFileContents.values()) {

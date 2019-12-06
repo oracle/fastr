@@ -19,7 +19,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -369,7 +368,7 @@ public class RDeparse {
             String name = rootNode != null ? rootNode.getName() : null;
             String text = sb.toString();
             if (name != null && !name.isEmpty() && !name.equals("<no source>")) {
-                name = name.replace(File.separatorChar, '_') + ".r";
+                name = name.replace(RContext.getInstance().getEnv().getFileNameSeparator(), "_") + ".r";
             } else {
                 name = "unknown.r";
             }

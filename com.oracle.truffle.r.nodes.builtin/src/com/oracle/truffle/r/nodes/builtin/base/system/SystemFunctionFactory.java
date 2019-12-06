@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.system;
 
-import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -189,24 +187,20 @@ public abstract class SystemFunctionFactory {
         }
         // often it is an absolute path
         String rhome = REnvVars.rHome(context);
-        if (isFullPath(rhome, "Rscript", xc)) {
+        if (isFullPath(context, rhome, "Rscript", xc)) {
             return "Rscript";
         }
-        if (isFullPath(rhome, "R", xc)) {
+        if (isFullPath(context, rhome, "R", xc)) {
             return "R";
         }
         return null;
     }
 
-    private static boolean isFullPath(String rhome, String rcmd, String command) {
-        try {
-            String rpath = FileSystems.getDefault().getPath(rhome, "bin", rcmd).toString();
-            String cpath = FileSystems.getDefault().getPath(command).toRealPath().toString();
-            if (cpath.equals(rpath)) {
-                return true;
-            }
-        } catch (IOException ex) {
-            // should not happen but just return false
+    private static boolean isFullPath(RContext context, String rhome, String rcmd, String command) {
+        String rpath = context.getSafeTruffleFile(rhome).resolve("bin").resolve(rcmd).resolve(rcmd).toString();
+        String cpath = context.getSafeTruffleFile(command).getAbsoluteFile().toString();
+        if (cpath.equals(rpath)) {
+            return true;
         }
         return false;
     }
