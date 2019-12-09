@@ -4,6 +4,9 @@ Added missing R builtins and C APIs
 
 * Subsetting an array by numeric/string matrix
 
+Bug fixes:
+
+* fixed GitHub Issue #123: Polyglot value is not an object
 
 # 19.3.0
 

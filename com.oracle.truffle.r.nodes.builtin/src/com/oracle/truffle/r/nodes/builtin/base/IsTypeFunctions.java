@@ -490,6 +490,7 @@ public class IsTypeFunctions {
      * been added explicitly to the object. If the attribute is removed, it should return
      * {@code FALSE}.
      */
+    @ImportStatic(RRuntime.class)
     @RBuiltin(name = "is.object", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsObject extends RBuiltinNode.Arg1 {
 
@@ -504,6 +505,11 @@ public class IsTypeFunctions {
         @Specialization
         protected byte isObject(RAttributable arg) {
             return RRuntime.asLogical(getClassNode.isObject(arg));
+        }
+
+        @Specialization(guards = "isForeignObject(arg)")
+        protected byte isObject(@SuppressWarnings("unused") TruffleObject arg) {
+            return RRuntime.LOGICAL_TRUE;
         }
 
         @Fallback

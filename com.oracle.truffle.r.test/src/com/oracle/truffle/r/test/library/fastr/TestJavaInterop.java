@@ -592,7 +592,7 @@ public class TestJavaInterop extends TestBase {
         assertPassingForeighObjectToFunction("is.numeric.difftime", "FALSE");
         assertPassingForeighObjectToFunction("is.numeric.POSIXt", "FALSE");
         assertPassingForeighObjectToFunction("is.numeric_version", "FALSE");
-        assertPassingForeighObjectToFunction("is.object", "FALSE");
+        assertPassingForeighObjectToFunction("is.object", "TRUE");
         assertPassingForeighObjectToFunction("is.ordered", "FALSE");
         assertPassingForeighObjectToFunction("is.package_version", "FALSE");
         assertPassingForeighObjectToFunction("is.pairlist", "FALSE");
@@ -1599,6 +1599,12 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.na(to$fieldDoubleNALongbits)", "TRUE");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.nan(to$fieldDoubleNALongbits)", "TRUE");
 
+    }
+
+    @Test
+    public void testS3() {
+        assertEvalFastR("cal <- new('java.util.GregorianCalendar'); ff <- function(x) UseMethod('ff', x); ff.default <- function(x) 666; ff.polyglot.value <- function(x) 42; ff(cal)", "42");
+        assertEvalFastR("cal <- new('java.util.GregorianCalendar'); dim.polyglot.value <- function(x) 42; dim(cal)", "42");
     }
 
     @Test
