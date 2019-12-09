@@ -34,9 +34,9 @@ def edinclude(args):
     edit GNU include files for FASTR
     args[0] path to GNUR include directory
     '''
-    ed_r_internals(args[0])
-    ed_r_interface(args[0])
-    ed_graphicsengine(args[0])
+    ed_r_internals(args[1])
+    ed_r_interface(args[1])
+    ed_graphicsengine(args[1])
     ed_rconfig(args[0])
 
 use_internals_section = '''#ifdef FASTR

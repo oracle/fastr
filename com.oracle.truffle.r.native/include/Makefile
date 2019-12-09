@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -27,17 +27,27 @@
 
 SRC=src
 
-R_EXT_HEADERS := $(wildcard $(GNUR_HOME)/include/R_ext/*.h)
+ifdef BUILD_GNUR
+# patch-build/include
+export INCLUDE_SOURCE=$(GNUR_HOME)/include
+else
+# $GNUR_HOME_BINARY/include
+export INCLUDE_SOURCE=$(GNUR_HOME_BINARY)/include
+endif
+
+INCLUDE_SOURCE_PATCHED=$(GNUR_HOME)/src/include
+
+R_EXT_HEADERS := $(wildcard $(INCLUDE_SOURCE)/R_ext/*.h)
 #$(info R_EXT_HEADERS=$(R_EXT_HEADERS))
 R_EXT_HEADERS_FILENAMES := $(notdir $(R_EXT_HEADERS))
 R_EXT_HEADERS_LOCAL := src/R_ext/GraphicsEngine.h
 #$(info R_EXT_HEADERS_LOCAL=$(R_EXT_HEADERS_LOCAL))
 R_EXT_HEADERS_TO_LINK := $(filter-out $(notdir $(R_EXT_HEADERS_LOCAL)),$(R_EXT_HEADERS_FILENAMES))
 #$(info R_EXT_HEADERS_TO_LINK=$(R_EXT_HEADERS_TO_LINK))
-R_HEADERS := $(wildcard $(GNUR_HOME)/include/*.h)
+R_HEADERS := $(wildcard $(INCLUDE_SOURCE)/*.h)
 R_HEADERS_FILENAMES := $(notdir $(R_HEADERS))
 #$(info R_HEADERS_FILENAMES=$(R_HEADERS_FILENAMES))
-R_HEADERS_LOCAL := src/Rinternals.h src/Rinterface.h
+R_HEADERS_LOCAL := src/Rinternals.h src/Rinterface.h src/Rconfig.h
 #$(info R_HEADERS_LOCAL=$(R_HEADERS_LOCAL))
 R_HEADERS_TO_LINK := $(filter-out $(notdir $(R_HEADERS_LOCAL)),$(R_HEADERS_FILENAMES))
 #$(info R_HEADERS_TO_LINK=$(R_HEADERS_TO_LINK))
@@ -46,9 +56,9 @@ all: linked
 
 linked:
 	mkdir -p R_ext
-	$(foreach file,$(R_HEADERS_TO_LINK),ln -sf $(GNUR_HOME)/include/$(file) $(file);)
-	mx -p $(FASTR_R_HOME) edinclude $(GNUR_HOME)/include
-	$(foreach file,$(R_EXT_HEADERS_TO_LINK),ln -sf $(GNUR_HOME)/include/R_ext/$(file) R_ext/$(file);)
+	$(foreach file,$(R_HEADERS_TO_LINK),ln -sf $(INCLUDE_SOURCE)/$(file) $(file);)
+	mx -p $(FASTR_R_HOME) edinclude $(INCLUDE_SOURCE) $(INCLUDE_SOURCE_PATCHED)
+	$(foreach file,$(R_EXT_HEADERS_TO_LINK),ln -sf $(INCLUDE_SOURCE)/R_ext/$(file) R_ext/$(file);)
 #	cp $(R_EXT_HEADERS_LOCAL) R_ext
 	touch linked
 

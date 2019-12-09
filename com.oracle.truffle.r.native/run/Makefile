@@ -85,8 +85,8 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	mkdir -p $(FASTR_ETC_DIR)/src/include
 	cp config.h.in $(FASTR_ETC_DIR)/src/include
 	cp Renviron.in $(FASTR_ETC_DIR)/Renviron.in
-	cp $(GNUR_HOME_BINARY)/etc/ldpaths.in $(FASTR_ETC_DIR)/ldpaths.in
-	cp $(GNUR_HOME_BINARY)/etc/Makeconf Makeconf.etc
+	cp $(GNUR_HOME_BINARY_UNPACKED)/etc/ldpaths.in $(FASTR_ETC_DIR)/ldpaths.in
+	cp $(GNUR_HOME)/Makeconf Makeconf.etc
 	cp $(GNUR_HOME_BINARY)/etc/javaconf $(FASTR_ETC_DIR)/javaconf
 	cp $(GNUR_HOME_BINARY)/etc/repositories $(FASTR_ETC_DIR)/repositories
 	# ldpaths: create two versions: ldpaths.llvm (used also as default ldpaths) and ldpaths.native
@@ -131,11 +131,11 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp configure $(FASTR_ETC_DIR)
 	cp edMakeconf.etc $(FASTR_ETC_DIR)
 	cp edMakeconf.etc.llvm $(FASTR_ETC_DIR)
-	cp $(GNUR_HOME_BINARY)/etc/Makeconf.in $(FASTR_ETC_DIR)
+	cp $(GNUR_HOME_BINARY_UNPACKED)/etc/Makeconf.in $(FASTR_ETC_DIR)
 	cp native-packages $(FASTR_ETC_DIR)
-	cp $(GNUR_HOME_BINARY)/VERSION $(FASTR_ETC_DIR)
-	cp -R $(GNUR_HOME_BINARY)/m4 $(FASTR_ETC_DIR)
-	cp -R $(GNUR_HOME_BINARY)/tools $(FASTR_ETC_DIR)
+	cp $(GNUR_HOME_BINARY_UNPACKED)/VERSION $(FASTR_ETC_DIR)
+	cp -R $(GNUR_HOME_BINARY_UNPACKED)/m4 $(FASTR_ETC_DIR)
+	cp -R $(GNUR_HOME_BINARY_UNPACKED)/tools $(FASTR_ETC_DIR)
 
 	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)
 	# TODO may need filtering
@@ -146,7 +146,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	echo 'All Oracle contributions in the FastR source code are licensed as GPL version 3, so that FastR as a whole is distributed under GPL version 3.' > $(FASTR_DOC_DIR)/COPYRIGHTS
 	echo 'The original content of the COPYRIGHTS file from GNU R follows:' >> $(FASTR_DOC_DIR)/COPYRIGHTS
 	echo '-------------------------' >> $(FASTR_DOC_DIR)/COPYRIGHTS
-	cat $(GNUR_HOME_BINARY)/doc/COPYRIGHTS >> $(FASTR_DOC_DIR)/COPYRIGHTS
+	cat $(GNUR_HOME_BINARY_UNPACKED)/doc/COPYRIGHTS >> $(FASTR_DOC_DIR)/COPYRIGHTS
 	# overrides
 	cp examples-header.R examples-footer.R $(FASTR_SHARE_DIR)/R
 	# record the FFI version

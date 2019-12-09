@@ -76,11 +76,7 @@ PKGDIR := $(FASTR_LIBRARY_DIR)/$(PKG)
 
 F2C := -lf2c
 
-ifeq ($(OS_NAME), SunOS)
-    SUPPRESS_WARNINGS :=
-else
-    SUPPRESS_WARNINGS := -Wno-int-conversion -Wno-implicit-function-declaration
-endif
+SUPPRESS_WARNINGS := -Wno-int-conversion -Wno-implicit-function-declaration
 
 ifeq ($(NO_LIBRARY),)
 all: $(LIB_PKG_PRE) libcommon $(LIB_PKG) $(LIB_PKG_POST) 

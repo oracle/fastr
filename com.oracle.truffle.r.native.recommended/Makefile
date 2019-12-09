@@ -36,11 +36,13 @@ ifdef MX_VERBOSE
 VERBOSE=--verbose
 endif
 
-# The package tar balls are copied from $(GNUR_HOME_BINARY)/src/library/Recommended
-ifndef GNUR_HOME_BINARY
 FASTR_R_HOME = $(abspath $(TOPDIR)/..)
 R_VERSION = $(subst R-,,$(notdir $(basename $(basename $(wildcard $(FASTR_R_HOME)/libdownloads/R-*.gz)))))
-export GNUR_HOME_BINARY = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
+# The package tar balls are copied from $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended
+export GNUR_HOME_BINARY_UNPACKED = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
+
+ifndef GNUR_HOME_BINARY
+export GNUR_HOME_BINARY = $(GNUR_HOME_BINARY_UNPACKED)
 $(info GNUR_HOME_BINARY not set. Assuming the default location at $(GNUR_HOME_BINARY))
 endif
 
@@ -67,7 +69,7 @@ GNUR_RECOMMENDED_PKGNAMES := codetools
 endif # FASTR_RELEASE
 GNUR_RECOMMENDED_PKGNAMES_TS = $(GNUR_RECOMMENDED_PKGNAMES:=.ts)
 
-GNUR_RECOMMENDED_TAR_DIR = $(GNUR_HOME_BINARY)/src/library/Recommended/
+GNUR_RECOMMENDED_TAR_DIR = $(GNUR_HOME_BINARY_UNPACKED)/src/library/Recommended/
 GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_RECOMMENDED_TAR_DIR)/$(pkg)*.tar.gz)
 ## need to allow parallel installs
 INSTALL_OPTS = --pkglock --data-compress=xz --no-staged-install

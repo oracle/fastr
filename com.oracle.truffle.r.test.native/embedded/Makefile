@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -34,10 +34,6 @@ OSNAME := $(shell uname)
 
 ifeq ($(OSNAME), Linux)
   LD_FLAGS :=  -Wl,--unresolved-symbols=ignore-all
-else 
-  ifeq ($(OSNAME), SunOS)
-    LD_FLAGS := -z lazyload
-  endif
 endif
 
 FASTR_LIB_DIR = $(abspath ../../lib)

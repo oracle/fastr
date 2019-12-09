@@ -857,17 +857,19 @@ check_graalvm <- function() {
 }
 
 gnu_rscript <- function() {
-	gnur_dir <- check_graalvm()
-	if (!is.na(gnur_dir)) {
-		file.path(gnur_dir, 'bin', 'Rscript')
-	} else {
-		rv <- R.Version()
-		dirv <- paste0('R-', rv$major, '.', rv$minor)
-		gnurHome <- Sys.getenv("GNUR_HOME_BINARY")
-		if (gnurHome == "") {
+	gnurHomeBin <- Sys.getenv("GNUR_HOME_BINARY")
+	if (gnurHomeBin == "") {
+		gnur_dir <- check_graalvm()
+		if (!is.na(gnur_dir)) {
+			file.path(gnur_dir, 'bin', 'Rscript')
+		} else {
+			rv <- R.Version()
+			dirv <- paste0('R-', rv$major, '.', rv$minor)
 			gnurHome <- "libdownloads"
+			file.path(gnurHome, dirv, 'bin', 'Rscript')
 		}
-		file.path(gnurHome, dirv, 'bin', 'Rscript')
+	} else {
+		file.path(gnurHomeBin, 'bin', 'Rscript')
 	}
 }
 

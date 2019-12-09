@@ -47,8 +47,10 @@ endif
 
 ifndef GNUR_HOME_BINARY
 export GNUR_HOME_BINARY = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
+export BUILD_GNUR = "true"
 $(info GNUR_HOME_BINARY not set. Assuming the default location at $(GNUR_HOME_BINARY))
 endif
+export GNUR_HOME_BINARY_UNPACKED = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
 
 # Completely accurate dependency analysis is very difficult for this project, so use a version number
 # to force a clean build, and elsewhere use sentinels to avoid rebuilding when we can't compute the
@@ -67,7 +69,7 @@ all: checkversion
 	cp version.source version.built
 	
 clean:
-	$(MAKE) -C f2c clean
+	#$(MAKE) -C f2c clean
 	$(MAKE) -C include clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C run clean

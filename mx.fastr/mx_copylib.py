@@ -55,8 +55,6 @@ def _copylib(lib, libpath, plain_libpath_base, target):
         try:
             if platform.system() == 'Linux':
                 output = subprocess.check_output(['objdump', '-p', libpath], universal_newlines=True)
-            elif platform.system() == 'SunOS':
-                output = subprocess.check_output(['elfdump', '-d', libpath], universal_newlines=True)
             lines = output.split('\n')
             for line in lines:
                 if 'SONAME' in line:
