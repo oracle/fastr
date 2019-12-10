@@ -26,6 +26,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.AsCharNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AsIntegerNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AsLogicalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
+import com.oracle.truffle.r.ffi.impl.nodes.AsS4;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.ATTRIB;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.CopyMostAttrib;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.GetAttrib;
@@ -468,6 +469,9 @@ public interface StdUpCallsRFFI {
     String R_HomeDir();
 
     int IS_S4_OBJECT(Object x);
+
+    @RFFIUpCallNode(value = AsS4.class, needsCallTarget = true)
+    Object Rf_asS4(Object x, int b, int i);
 
     void SET_S4_OBJECT(Object x);
 

@@ -7,6 +7,7 @@ Added missing R builtins and C APIs
 Bug fixes:
 
 * fixed GitHub Issue #123: Polyglot value is not an object
+* Rf_asS4
 
 # 19.3.0
 

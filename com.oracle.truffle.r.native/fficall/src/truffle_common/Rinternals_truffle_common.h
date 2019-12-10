@@ -1537,7 +1537,9 @@ Rboolean Rf_isS4(SEXP x) {
 
 SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
     TRACE0();
-    unimplemented("Rf_asS4");
+    SEXP result = ((call_Rf_asS4) callbacks[Rf_asS4_x])(x, b, i);
+    checkExitCall();
+    return result;
 }
 
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, int silent) {

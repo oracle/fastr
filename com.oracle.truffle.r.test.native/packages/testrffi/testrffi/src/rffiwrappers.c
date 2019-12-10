@@ -501,6 +501,10 @@ SEXP api_IS_S4_OBJECT(SEXP x) {
     return ScalarInteger(IS_S4_OBJECT(x));
 }
 
+SEXP api_Rf_asS4(SEXP x, SEXP b, SEXP i) {
+    return Rf_asS4(x, INTEGER_VALUE(b), INTEGER_VALUE(i));
+}
+
 SEXP api_SET_S4_OBJECT(SEXP x) {
     SET_S4_OBJECT(x);
     return R_NilValue;

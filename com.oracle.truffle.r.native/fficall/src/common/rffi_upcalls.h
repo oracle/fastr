@@ -204,6 +204,7 @@ typedef void (*call_SET_NAMED)(SEXP x, int v);
 typedef void (*call_SET_ATTRIB)(SEXP x, SEXP v);
 typedef void (*call_DUPLICATE_ATTRIB)(SEXP to, SEXP from);
 typedef int (*call_IS_S4_OBJECT)(SEXP x);
+typedef SEXP (*call_Rf_asS4)(SEXP x, Rboolean b, int i);
 typedef void (*call_SET_S4_OBJECT)(SEXP x);
 typedef void (*call_UNSET_S4_OBJECT)(SEXP x);
 typedef SEXP (*call_R_ToplevelExec)();

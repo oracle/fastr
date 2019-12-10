@@ -81,4 +81,6 @@ public final class RFFIUpCallTargets {
 
     public RootCallTarget RForceAndCallNode;
 
+    public RootCallTarget AsS4;
+
 }
