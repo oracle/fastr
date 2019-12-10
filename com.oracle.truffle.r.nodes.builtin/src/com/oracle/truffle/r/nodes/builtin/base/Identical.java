@@ -133,8 +133,8 @@ public final class Identical extends RBuiltinNode.Arg8 {
                         int depth) {
             DynamicObject xAttributes = x.getAttributes();
             DynamicObject yAttributes = y.getAttributes();
-            int xSize = xAttributes == null ? 0 : xAttributes.size();
-            int ySize = yAttributes == null ? 0 : yAttributes.size();
+            int xSize = xAttributes == null ? 0 : xAttributes.getShape().getPropertyCount();
+            int ySize = yAttributes == null ? 0 : yAttributes.getShape().getPropertyCount();
             if (xSize == 0 && ySize == 0) {
                 return RRuntime.LOGICAL_TRUE;
             } else if (xSize != ySize) {

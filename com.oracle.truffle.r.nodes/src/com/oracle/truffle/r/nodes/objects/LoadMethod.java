@@ -122,7 +122,7 @@ abstract class LoadMethod extends RBaseNode {
         }
         assert !fname.equals(RRuntime.R_LOAD_METHOD_NAME);
         RFunction ret;
-        if (fdef.getAttributes() != null && moreAttributes.profile(found < fdef.getAttributes().size())) {
+        if (fdef.getAttributes() != null && moreAttributes.profile(found < fdef.getAttributes().getShape().getPropertyCount())) {
             RFunction currentFunction;
             REnvironment methodsEnv = (REnvironment) methodsEnvRead.execute(frame, regFrameProfile.profile(REnvironment.getNamespaceRegistry().getFrame(regFrameAccessProfile)));
             if (loadMethodFind == null) {

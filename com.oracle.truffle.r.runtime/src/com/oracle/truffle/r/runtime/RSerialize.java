@@ -2390,7 +2390,7 @@ public class RSerialize {
         }
 
         public boolean hasAttributes() {
-            return explicitAttributes != null && !explicitAttributes.isEmpty() || ss != null;
+            return explicitAttributes != null && explicitAttributes.getShape().getPropertyCount() != 0 || ss != null;
         }
 
         public DynamicObject getExplicitAttributes() {
@@ -2848,7 +2848,7 @@ public class RSerialize {
         private static Object unwrapScalarValues(Object value) {
             if (value instanceof RAbstractVector) {
                 RAbstractVector vector = (RAbstractVector) value;
-                if (vector.getLength() == 1 && (vector.getAttributes() == null || vector.getAttributes().isEmpty())) {
+                if (vector.getLength() == 1 && (vector.getAttributes() == null || vector.getAttributes().getShape().getPropertyCount() == 0)) {
                     if (vector instanceof RAbstractDoubleVector || vector instanceof RAbstractIntVector || vector instanceof RAbstractStringVector ||
                                     vector instanceof RAbstractLogicalVector || vector instanceof RAbstractRawVector || vector instanceof RAbstractComplexVector) {
                         return vector.getDataAtAsObject(0);

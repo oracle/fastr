@@ -130,7 +130,7 @@ public class DefaultRParserFactory extends RParserFactory {
 
         @Override
         public List<RSyntaxNode> script(Source source, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
-            RContext context = language.getContextReference().get();
+            RContext context = RContext.getInstance();
             RLexer lexer = new RLexer(CharStreams.fromString(source.getCharacters().toString()));
             RParser parser = new RParser(source, lexer, builder, language, context.sourceCache);
             parser.removeErrorListeners();
@@ -156,7 +156,7 @@ public class DefaultRParserFactory extends RParserFactory {
 
         @Override
         public List<RSyntaxNode> statements(Source source, Source fullSource, int startLine, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
-            RContext context = language.getContextReference().get();
+            RContext context = RContext.getInstance();
             RLexer lexer = new RLexer(CharStreams.fromString(source.getCharacters().toString()));
             RParser parser = new RParser(source, lexer, fullSource, startLine, builder, language, context.sourceCache);
             parser.removeErrorListeners();
@@ -182,7 +182,7 @@ public class DefaultRParserFactory extends RParserFactory {
 
         @Override
         public RootCallTarget rootFunction(Source source, String name, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
-            RContext context = language.getContextReference().get();
+            RContext context = RContext.getInstance();
             RLexer lexer = new RLexer(CharStreams.fromString(source.getCharacters().toString()));
             RParser parser = new RParser(source, lexer, builder, language, context.sourceCache);
             parser.removeErrorListeners();

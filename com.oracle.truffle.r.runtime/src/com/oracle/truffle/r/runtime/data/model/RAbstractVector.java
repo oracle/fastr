@@ -260,7 +260,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
             attributes.delete(name);
             // nullify only here because other methods invoke removeAttributeMapping which does
             // it already
-            if (attributes.size() == 0) {
+            if (attributes.getShape().getPropertyCount() == 0) {
                 attributes = null;
             }
         }
@@ -648,7 +648,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         assert (!hasDimNames());
         assert (!hasRowNames());
         assert (!hasDimensions());
-        assert (this.attributes == null || this.attributes.size() == 0) : this.attributes.size();
+        assert (this.attributes == null || this.attributes.getShape().getPropertyCount() == 0) : this.attributes.getShape().getPropertyCount();
         DynamicObject vecAttributes = vector.getAttributes();
         if (vecAttributes != null) {
             initAttributes(RAttributesLayout.copy(vecAttributes));

@@ -216,6 +216,8 @@ public abstract class RBaseNode extends Node {
     }
 
     protected final TruffleRLanguage getRLanguage() {
+        // Note: we cannot move from the deprecated API since new API unlike the deprecated API
+        // checks runtime objects sharing between contexts that happens in our unit tests
         return getRootNode().getLanguage(RContext.getTruffleRLanguage());
     }
 

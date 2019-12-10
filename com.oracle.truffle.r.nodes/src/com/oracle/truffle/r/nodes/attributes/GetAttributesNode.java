@@ -129,7 +129,7 @@ public abstract class GetAttributesNode extends RBaseNode {
      */
     private Object createResult(RAttributable attributable, boolean ignoreNames, RStringVector explicitNames) {
         DynamicObject attributes = attributable.getAttributes();
-        int size = attributes.size() + (explicitNames == null ? 0 : 1);
+        int size = attributes.getShape().getPropertyCount() + (explicitNames == null ? 0 : 1);
         String[] names = new String[size];
         Object[] values = new Object[size];
         int z = 0;
@@ -180,6 +180,6 @@ public abstract class GetAttributesNode extends RBaseNode {
     }
 
     private static boolean hasAttributes(RAttributable attributable) {
-        return attributable.getAttributes() != null && !attributable.getAttributes().isEmpty();
+        return attributable.getAttributes() != null && attributable.getAttributes().getShape().getPropertyCount() != 0;
     }
 }

@@ -68,7 +68,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
 
     protected static boolean emptyAttributes(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes == null || attributes.isEmpty();
+        return attributes == null || attributes.getShape().getPropertyCount() == 0;
     }
 
     @Specialization(guards = "emptyAttributes(source)", replaces = "copyNoAttributes")
@@ -78,7 +78,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
 
     protected final boolean onlyDimAttribute(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(source) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && dimAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyDimAttribute(source)")
@@ -88,7 +88,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
 
     protected final boolean onlyNamesAttribute(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(source) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && namesAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyNamesAttribute(source)")
@@ -98,7 +98,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
 
     protected final boolean onlyClassAttribute(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(source) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && classAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")

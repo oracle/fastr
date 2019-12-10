@@ -1148,7 +1148,7 @@ public class RDeparse {
             // TODO check (and ignore) function source attribute
             if (obj instanceof RAttributable) {
                 DynamicObject attrs = ((RAttributable) obj).getAttributes();
-                return attrs != null && !attrs.isEmpty();
+                return attrs != null && attrs.getShape().getPropertyCount() != 0;
             } else {
                 return false;
             }
