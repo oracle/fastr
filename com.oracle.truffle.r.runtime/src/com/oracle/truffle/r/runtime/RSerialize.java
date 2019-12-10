@@ -20,7 +20,6 @@
 package com.oracle.truffle.r.runtime;
 
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -1992,7 +1991,7 @@ public class RSerialize {
                     String path = RSource.getPathInternal(ss.getSource());
                     if (path != null) {
                         // do this only for packages
-                        TruffleFile relPath = relativizeLibPath(context.getEnv(), FileSystemUtils.getSafeTruffleFile(context.getEnv(), path));
+                        TruffleFile relPath = relativizeLibPath(context, path);
                         if (relPath != null) {
                             REnvironment createSrcfile = RSrcref.createSrcfile(context, relPath, state.envRefHolder);
                             Object createLloc = RSrcref.createLloc(ss, createSrcfile);
@@ -2719,8 +2718,7 @@ public class RSerialize {
 
             // do this only for packages
             RContext ctx = state.getContext();
-            Env env = ctx.getEnv();
-            TruffleFile relPath = relativizeLibPath(env, FileSystemUtils.getSafeTruffleFile(env, pathInternal));
+            TruffleFile relPath = relativizeLibPath(ctx, pathInternal);
             if (relPath != null) {
                 RAttributable attributable = (RAttributable) serObj;
                 attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(ctx, relPath, state.envRefHolder));
@@ -2741,10 +2739,11 @@ public class RSerialize {
      * Relativizes the given path to its corresponding library path. If the given path is not a
      * child of any library path, {@code null} will be returned.
      */
-    private static TruffleFile relativizeLibPath(Env env, TruffleFile sourcePath) {
+    private static TruffleFile relativizeLibPath(RContext context, String path) {
+        TruffleFile file = context.getSafeTruffleFile(path);
         for (String libPath : RContext.getInstance().libraryPaths) {
-            if (sourcePath.startsWith(libPath)) {
-                return FileSystemUtils.getSafeTruffleFile(env, libPath).relativize(sourcePath);
+            if (file.startsWith(libPath)) {
+                return context.getSafeTruffleFile(libPath).relativize(file);
             }
         }
         return null;
@@ -2947,11 +2946,11 @@ public class RSerialize {
      */
     private static void handleSrcrefAttr(RAttributable func, RSyntaxElement elem) {
         if (elem instanceof RSyntaxCall) {
-            handleSrcrefAttr(func, (RSyntaxCall) elem);
+            handleSrcrefAttr(RContext.getInstance(), func, (RSyntaxCall) elem);
         } else {
             Object srcref = func.getAttr(RRuntime.R_SRCREF);
             if (srcref instanceof RAbstractIntVector) {
-                SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) srcref, null);
+                SourceSection ss = RSrcref.createSourceSection(RContext.getInstance(), (RAbstractIntVector) srcref, null);
                 elem.setSourceSection(ss);
             }
         }
@@ -2961,24 +2960,24 @@ public class RSerialize {
      * @param func Element carrying the {@value RRuntime#R_SRCREF} attribute.
      * @param elem The syntax element to create the source section for.
      */
-    private static void handleSrcrefAttr(RAttributable func, RSyntaxCall elem) {
+    private static void handleSrcrefAttr(RContext context, RAttributable func, RSyntaxCall elem) {
         Object srcref = func.getAttr(RRuntime.R_SRCREF);
         if (srcref instanceof RAbstractIntVector) {
             Object srcfile = func.getAttr(RRuntime.R_SRCFILE);
             assert srcfile instanceof REnvironment;
             Source source;
             try {
-                source = RSource.fromSrcfile((REnvironment) srcfile);
+                source = RSource.fromSrcfile(context, (REnvironment) srcfile);
             } catch (IOException e) {
                 source = null;
             }
-            SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) srcref, source);
+            SourceSection ss = RSrcref.createSourceSection(context, (RAbstractIntVector) srcref, source);
             elem.setSourceSection(ss);
         } else if (srcref instanceof RList) {
             try {
                 Object srcfile = func.getAttr(RRuntime.R_SRCFILE);
                 assert srcfile instanceof REnvironment;
-                Source source = RSource.fromSrcfile((REnvironment) srcfile);
+                Source source = RSource.fromSrcfile(context, (REnvironment) srcfile);
 
                 RList blockSrcref = (RList) srcref;
                 RSyntaxElement[] syntaxArguments = elem.getSyntaxArguments();
@@ -2988,7 +2987,7 @@ public class RSerialize {
                     Object singleSrcref = blockSrcref.getDataAt(i);
                     // could also be NULL
                     if (singleSrcref instanceof RAbstractIntVector) {
-                        SourceSection ss = RSrcref.createSourceSection((RAbstractIntVector) singleSrcref, source);
+                        SourceSection ss = RSrcref.createSourceSection(context, (RAbstractIntVector) singleSrcref, source);
                         if (i == 0) {
                             elem.setSourceSection(ss);
                         } else {

@@ -29,6 +29,8 @@ import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -37,6 +39,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
@@ -56,8 +59,9 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected RNull dirChmod(String pathName, boolean setGroupWrite) {
-        TruffleFile path = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), pathName);
+    protected RNull dirChmod(String pathName, boolean setGroupWrite,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        TruffleFile path = ctxRef.get().getSafeTruffleFile(pathName);
         int fileMask = setGroupWrite ? GRPWRITE_FILE_MASK : FILE_MASK;
         int dirMask = setGroupWrite ? GRPWRITE_DIR_MASK : DIR_MASK;
         if (!path.exists()) {

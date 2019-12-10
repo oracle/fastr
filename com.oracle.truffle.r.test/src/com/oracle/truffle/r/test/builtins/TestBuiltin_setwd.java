@@ -23,42 +23,14 @@
 
 package com.oracle.truffle.r.test.builtins;
 
-import com.oracle.truffle.r.runtime.Utils;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
-import com.oracle.truffle.r.test.generate.FastRSession;
 import java.io.File;
 import java.io.IOException;
-import org.graalvm.polyglot.PolyglotException;
-import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.Value;
-import org.junit.AfterClass;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import org.junit.BeforeClass;
 
 public class TestBuiltin_setwd extends TestBase {
-
-    protected static org.graalvm.polyglot.Context context;
-    private static String beforeWD;
-
-    @BeforeClass
-    public static void before() {
-        context = FastRSession.getContextBuilder("R", "llvm").build();
-        context.eval("R", "1"); // initialize context
-        context.enter();
-        beforeWD = gewtWD();
-    }
-
-    @AfterClass
-    public static void after() {
-        context.eval(getSource("setwd('" + beforeWD + "')"));
-        context.leave();
-        context.close();
-        Utils.resetWD();
-
-    }
 
     private static final String testWDDir = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/data/";
 
@@ -75,8 +47,7 @@ public class TestBuiltin_setwd extends TestBase {
             testFile.createNewFile();
         }
         // 3.) and setwd to {testdir} and try to access that README.md/test
-        Value result = context.eval(getSource("setwd('" + wd + testWDDir + "'); .Call(tools:::C_Rmd5, 'README.md/test')"));
-        assertEquals("d41d8cd98f00b204e9800998ecf8427e", result.asString());
+        assertEvalOneShot("wd <- getwd(); setwd('" + wd + testWDDir + "'); .Call(tools:::C_Rmd5, 'README.md/test'); setwd(wd)");
 
         // 1.) current java user.dir is {fastr_home} and it contains a dir 'bin' containig a file R
         assertTrue("no bin/R file in the {fastr_home}, try ot use some another file for this test then.", new File(wd + "bin/R").exists());
@@ -88,8 +59,7 @@ public class TestBuiltin_setwd extends TestBase {
             testFile.createNewFile();
         }
         // 3.) and setwd to {testdir} and try to access that bin/R/test
-        result = context.eval(getSource("setwd('" + wd + testWDDir + "'); .Call(tools:::C_Rmd5, 'bin/R/test');"));
-        assertEquals("d41d8cd98f00b204e9800998ecf8427e", result.asString());
+        assertEvalOneShot("wd <- getwd(); setwd('" + wd + testWDDir + "'); .Call(tools:::C_Rmd5, 'bin/R/test'); setwd(wd)");
     }
 
     private static String dirPathWD = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/data";
@@ -97,37 +67,13 @@ public class TestBuiltin_setwd extends TestBase {
     @Test
     public void testSetWD() {
         String wd = gewtWD();
+        assertEvalOneShot("{ wd <- getwd(); setwd(); setwd(wd) }");
+        assertEvalOneShot("{ wd <- getwd(); setwd(''); setwd(wd)}");
+        assertEvalOneShot("{ wd <- getwd(); setwd('" + wd + dirPathWD + "'); print(getwd()); setwd(wd)}");
+        assertEvalOneShot("{ wd <- getwd(); setwd('" + wd + dirPathWD + "'); setwd('tree1'); print(getwd()); setwd(wd) }");
+        assertEvalOneShot("{ wd <- getwd(); tryCatch({setwd('" + wd + dirPathWD + "'); setwd('does-not-exist') }, error=function(e) print(e$message)); setwd(wd) }");
+        assertEvalOneShot("{ wd <- getwd(); setwd('" + wd + dirPathWD + "/tree1/..'); print(getwd()); setwd(wd) }");
 
-        try {
-            context.eval(getSource("{ setwd() }"));
-        } catch (PolyglotException pe) {
-            assertEquals(pe.getMessage(), "Error in setwd() : argument \"dir\" is missing, with no default");
-        }
-
-        try {
-            context.eval(getSource("{ setwd('') }"));
-        } catch (PolyglotException pe) {
-            assertEquals(pe.getMessage(), "Error in setwd(\"\") : cannot change working directory");
-        }
-
-        Value result = context.eval(getSource("{ setwd('" + wd + dirPathWD + "'); getwd(); }"));
-        assertEquals(wd + dirPathWD, result.asString());
-
-        result = context.eval(getSource("{ setwd('" + wd + dirPathWD + "'); setwd('tree1'); getwd(); }"));
-        assertEquals(wd + dirPathWD + "/tree1", result.asString());
-
-        try {
-            context.eval(getSource("{ setwd('" + wd + dirPathWD + "'); setwd('does-not-exist'); getwd(); }"));
-        } catch (PolyglotException pe) {
-            assertEquals(pe.getMessage(), "Error in setwd(\"does-not-exist\") : cannot change working directory");
-        }
-
-        result = context.eval(getSource("{ setwd('" + wd + dirPathWD + "/tree1/..'); getwd(); }"));
-        assertEquals(wd + dirPathWD, result.asString());
-    }
-
-    private static Source getSource(String srcTxt) {
-        return Source.newBuilder("R", srcTxt, "<testExternalPointerMR>").internal(true).buildLiteral();
     }
 
     private static String gewtWD() {

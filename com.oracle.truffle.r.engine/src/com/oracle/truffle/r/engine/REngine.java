@@ -167,10 +167,11 @@ final class REngine implements Engine, Engine.Timings {
              * eval the system/site/user profiles. Experimentally GnuR does not report warnings
              * during system profile evaluation, but does for the site/user profiles.
              */
+            Source systemProfile = RProfile.systemProfile(context);
             try {
-                parseAndEval(RProfile.systemProfile(), baseFrame, false);
+                parseAndEval(systemProfile, baseFrame, false);
             } catch (ParseException e) {
-                throw new RInternalError(e, "error while parsing system profile from %s", RProfile.systemProfile().getName());
+                throw new RInternalError(e, "error while parsing system profile from %s", systemProfile.getName());
             }
             checkAndRunStartupShutdownFunction(".OptRequireMethods", ".OptRequireMethods()");
 

@@ -33,7 +33,10 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
@@ -45,7 +48,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -59,6 +61,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.CustomNativeMirror;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
@@ -71,6 +74,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
+import com.oracle.truffle.r.runtime.ffi.DLLFactory.LoadPackageDLLNodeGen;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLCloseRootNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI.LibHandle;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
@@ -597,14 +601,14 @@ public class DLL {
                             "Troubleshooting: \n\n" +
                             "  * Please run %s/bin/configure_fastr. It will check that your system has the necessary dependencies and if not it will suggest how to install them.\n\n" +
                             "  * If this does not help, please open an issue on https://github.com/oracle/fastr/ or reach us on https://graalvm.slack.com.\n\n",
-                            path, REnvVars.rHome()));
+                            path, REnvVars.rHome(context)));
         } catch (Throwable ex) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + ". Details: " + ex.getMessage());
         }
         if (handle == null) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + "\n");
         }
-        return DLLInfo.create(libName(path), path, true, handle, false);
+        return DLLInfo.create(libName(context, path), path, true, handle, false);
     }
 
     private static final class SynthLibHandle implements LibHandle {
@@ -622,8 +626,8 @@ public class DLL {
         return dllInfo;
     }
 
-    public static String libName(String absPath) {
-        TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), absPath);
+    public static String libName(RContext context, String absPath) {
+        TruffleFile file = context.getSafeTruffleFile(absPath);
         String name = file.getName();
         int dx = name.lastIndexOf('.');
         if (dx > 0) {
@@ -634,17 +638,21 @@ public class DLL {
 
     public static final String R_INIT_PREFIX = "R_init_";
 
-    public static final class LoadPackageDLLNode extends Node {
+    public abstract static class LoadPackageDLLNode extends Node {
         @Child private InvokeVoidCallNode invokeVoidCallNode;
         @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
         @Child private DLLRFFI.DLOpenNode dlOpenNode = RFFIFactory.getDLLRFFI().createDLOpenNode();
 
         public static LoadPackageDLLNode create() {
-            return new LoadPackageDLLNode();
+            return LoadPackageDLLNodeGen.create();
         }
 
+        public abstract DLLInfo execute(String path, boolean local, boolean now) throws DLLException;
+
         @TruffleBoundary
-        public DLLInfo execute(String path, boolean local, boolean now) throws DLLException {
+        @Specialization
+        public DLLInfo exec(String path, boolean local, boolean now,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) throws DLLException {
             String absPath = Utils.tildeExpand(path);
             ContextStateImpl contextState = getContextState();
             for (DLLInfo dllInfo : contextState.list) {
@@ -653,7 +661,7 @@ public class DLL {
                     return dllInfo;
                 }
             }
-            DLLInfo dllInfo = doLoad(absPath, local, now, true);
+            DLLInfo dllInfo = doLoad(ctxRef.get(), absPath, local, now, true);
 
             // Search for an init method
             String pkgInit = R_INIT_PREFIX + dllInfo.name;
@@ -689,10 +697,10 @@ public class DLL {
          * {@link RSuicide#rSuicide(String)} instead. When the system is stable, we can undo this,
          * so that errors loading (user) packages added to R_DEFAULT_PACKAGES do throw RErrors.
          */
-        private synchronized DLLInfo doLoad(String absPath, boolean local, boolean now, boolean addToList) throws DLLException {
+        private synchronized DLLInfo doLoad(RContext context, String absPath, boolean local, boolean now, boolean addToList) throws DLLException {
             try {
                 LibHandle handle = dlOpenNode.execute(absPath, local, now);
-                return DLLInfo.create(libName(absPath), absPath, true, handle, addToList);
+                return DLLInfo.create(libName(context, absPath), absPath, true, handle, addToList);
             } catch (UnsatisfiedLinkError ex) {
                 String dlError = ex.getMessage();
                 if (RContext.isInitialContextInitialized()) {

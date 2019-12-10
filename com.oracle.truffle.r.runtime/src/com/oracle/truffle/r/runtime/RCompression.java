@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.TruffleFile;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -82,8 +83,8 @@ public class RCompression {
         }
     }
 
-    public static Type getCompressionType(String path) throws IOException {
-        try (InputStream is = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path).newInputStream()) {
+    public static Type getCompressionType(TruffleFile path) throws IOException {
+        try (InputStream is = path.newInputStream()) {
             byte[] buf = new byte[5];
             int count = is.read(buf);
             if (count == 5) {
@@ -198,8 +199,8 @@ public class RCompression {
         }
     }
 
-    public static byte[] bzipUncompressFromFile(String path) throws IOException {
-        String[] command = new String[]{"bzip2", "-dc", path};
+    public static byte[] bzipUncompressFromFile(TruffleFile path) throws IOException {
+        String[] command = new String[]{"bzip2", "-dc", path.getPath()};
         ProcessBuilder pb = new ProcessBuilder(command);
         pb.redirectError(Redirect.INHERIT);
         Process p = pb.start();
@@ -220,7 +221,7 @@ public class RCompression {
         throw new IOException();
     }
 
-    public static void bzipCompressToFile(byte[] data, String path, boolean append) throws IOException {
+    public static void bzipCompressToFile(byte[] data, TruffleFile path, boolean append) throws IOException {
         String[] command = new String[]{"bzip2", "-zc"};
         int rc;
         ProcessBuilder pb = new ProcessBuilder(command);
@@ -238,7 +239,7 @@ public class RCompression {
                 readThread.join();
                 byte[] cData = Arrays.copyOf(readThread.getData(), readThread.getTotalRead());
                 OpenOption[] openOptions = append ? new OpenOption[]{StandardOpenOption.APPEND} : new OpenOption[0];
-                FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path).newOutputStream(openOptions).write(cData);
+                path.newOutputStream(openOptions).write(cData);
                 return;
             } else {
                 throw new IOException("bzip2 error code: " + rc);

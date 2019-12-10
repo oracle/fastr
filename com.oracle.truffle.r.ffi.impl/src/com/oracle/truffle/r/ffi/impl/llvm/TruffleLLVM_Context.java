@@ -98,8 +98,8 @@ public class TruffleLLVM_Context extends RFFIContext {
         // We build the libR.sol on purpose without liking it to libRblas and libRlapack, so that
         // Sulong is not trying to load these here.
         if (context.isInitial()) {
-            TruffleLLVM_DLL.dlOpen(context, LibPaths.getBuiltinLibPath("f2c"));
-            String librffiPath = LibPaths.getBuiltinLibPath("R");
+            TruffleLLVM_DLL.dlOpen(context, LibPaths.getBuiltinLibPath(context, "f2c"));
+            String librffiPath = LibPaths.getBuiltinLibPath(context, "R");
             DLLInfo libR = DLL.loadLibR(context, librffiPath, path -> TruffleLLVM_DLL.dlOpen(context, path));
             addLibRToDLLContextState(context, libR);
         }

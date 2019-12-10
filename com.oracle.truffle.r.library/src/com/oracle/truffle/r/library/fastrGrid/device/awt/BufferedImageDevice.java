@@ -33,21 +33,17 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.library.fastrGrid.device.FileGridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class BufferedImageDevice extends Graphics2DDevice implements FileGridDevice {
     private final BufferedImage image;
     private final String fileType;
-    private final Env env;
     private String filename;
 
-    private BufferedImageDevice(RContext context, String fileType, BufferedImage image, Graphics2D graphics, int width, int height, String filename) {
+    private BufferedImageDevice(String fileType, BufferedImage image, Graphics2D graphics, int width, int height, String filename) {
         super(graphics, width, height, true);
-        this.env = context.getEnv();
         this.filename = filename;
         this.fileType = fileType;
         this.image = image;
@@ -55,14 +51,14 @@ public final class BufferedImageDevice extends Graphics2DDevice implements FileG
         graphics.clearRect(0, 0, width, height);
     }
 
-    public static BufferedImageDevice open(RContext context, String filename, String fileType, int width, int height) throws NotSupportedImageFormatException {
+    public static BufferedImageDevice open(String filename, String fileType, int width, int height) throws NotSupportedImageFormatException {
         if (!isSupportedFormat(fileType)) {
             throw new NotSupportedImageFormatException();
         }
         BufferedImage image = new BufferedImage(width, height, TYPE_INT_RGB);
         Graphics2D graphics = (Graphics2D) image.getGraphics();
         defaultInitGraphics(graphics);
-        return new BufferedImageDevice(context, fileType, image, graphics, width, height, filename);
+        return new BufferedImageDevice(fileType, image, graphics, width, height, filename);
     }
 
     @Override
@@ -79,7 +75,7 @@ public final class BufferedImageDevice extends Graphics2DDevice implements FileG
 
     private void saveImage() throws DeviceCloseException {
         try {
-            TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, filename);
+            TruffleFile file = RContext.getInstance().getSafeTruffleFile(filename);
             TruffleFile parent = file.getParent();
             if (FileGridDevice.isDevNull(file)) {
                 return;

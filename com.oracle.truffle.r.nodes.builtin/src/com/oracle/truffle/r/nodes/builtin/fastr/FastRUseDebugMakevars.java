@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -35,6 +37,7 @@ import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import java.io.IOException;
 import java.nio.file.StandardCopyOption;
@@ -49,8 +52,9 @@ public abstract class FastRUseDebugMakevars extends RBuiltinNode.Arg1 {
 
     @TruffleBoundary
     @Specialization
-    protected RNull useDebugMakevars(boolean use) {
-        TruffleFile rHome = REnvVars.getRHomeTruffleFile(RContext.getInstance().getEnv());
+    protected RNull useDebugMakevars(boolean use,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+        TruffleFile rHome = REnvVars.getRHomeTruffleFile(ctxRef.get());
         TruffleFile dst = rHome.resolve("etc").resolve("Makevars.site");
         try {
             if (use) {

@@ -31,6 +31,7 @@ import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDouble;
@@ -97,7 +98,7 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     @Override
     @TruffleBoundary
     public Object R_Home() {
-        byte[] sbytes = REnvVars.rHome().getBytes();
+        byte[] sbytes = REnvVars.rHome(RContext.getInstance()).getBytes();
         return new NativeCharArray(sbytes);
     }
 

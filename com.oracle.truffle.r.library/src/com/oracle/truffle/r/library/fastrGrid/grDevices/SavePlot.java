@@ -54,7 +54,7 @@ public abstract class SavePlot extends RExternalBuiltinNode.Arg3 {
                             "Note that FastR savePlot function ignores the device argument and always uses the current device.");
         }
         try {
-            ((ImageSaver) device).save(RContext.getInstance().getEnv(), filename, type);
+            ((ImageSaver) device).save(RContext.getInstance(), filename, type);
         } catch (IOException e) {
             throw error(Message.GENERIC, "I/O error occured when saving the image.");
         }

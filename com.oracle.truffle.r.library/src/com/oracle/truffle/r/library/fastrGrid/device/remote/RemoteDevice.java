@@ -42,7 +42,6 @@ import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
@@ -132,7 +131,7 @@ public final class RemoteDevice implements GridDevice {
             if (javaHome == null) {
                 throw new RInternalError("JAVA_HOME is null");
             }
-            javaCmd = FileSystemUtils.getSafeTruffleFile(context.getEnv(), javaHome).resolve("bin").resolve("java");
+            javaCmd = context.getSafeTruffleFile(javaHome).resolve("bin").resolve("java");
             if (!javaCmd.exists()) {
                 throw new RInternalError("Non-existent path '" + javaCmd + "'.");
             }
@@ -208,7 +207,7 @@ public final class RemoteDevice implements GridDevice {
                 serverProcess = null;
             }
             if (serverProcess == null) {
-                TruffleFile rHome = REnvVars.getRHomeTruffleFile(context.getEnv());
+                TruffleFile rHome = REnvVars.getRHomeTruffleFile(context);
                 TruffleFile serverJar = rHome.resolve(SERVER_JAR_NAME);
                 if (!serverJar.exists()) {
                     TruffleFile buildServerJar = rHome.resolve("mxbuild").resolve("dists").resolve(SERVER_JAR_NAME);

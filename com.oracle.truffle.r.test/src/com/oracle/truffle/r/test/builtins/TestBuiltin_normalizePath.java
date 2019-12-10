@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,6 +23,8 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import java.io.File;
+import static org.junit.Assert.assertTrue;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_normalizePath extends TestBase {
@@ -31,5 +33,23 @@ public class TestBuiltin_normalizePath extends TestBase {
     public void testnormalizePath1() {
         assertEval(Output.IgnoreWarningContext,
                         "argv <- list(c('/home/lzhao/hg/r-instrumented/library', '/home/lzhao/R/x86_64-unknown-linux-gnu-library/3.0', '/home/lzhao/hg/r-instrumented/library'), '/', NA); .Internal(normalizePath(argv[[1]], argv[[2]], argv[[3]]))");
+    }
+
+    private static String dirPath = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/simple/data/tree1";
+
+    private static String[] mustWork = new String[]{"T", "F", "NA"};
+
+    @Test
+    public void testFileDoesNotExist() {
+        // make sure dirPath exists
+        assertTrue(new File(dirPath).exists());
+
+        assertEval(template("normalizePath('" + dirPath + "/filedoesnotexist', mustWork=%0)", mustWork));
+        // TODO: ignored tests GR-18968
+        assertEval(Ignored.ImplementationError, template("normalizePath('" + dirPath + "/filedoesnotexist/..', mustWork=%0)", mustWork));
+        assertEval(template("normalizePath('" + dirPath + "/filedoesnotexist/../aa', mustWork=%0)", mustWork));
+        assertEval(Ignored.ImplementationError, template("normalizePath('" + dirPath + "/filedoesnotexist/../aa/..', mustWork=%0)", mustWork));
+
+        assertEval(Ignored.ImplementationError, template("normalizePath('" + dirPath + "/filedoesnotexist/../dummy.txt', mustWork=%0)", mustWork));
     }
 }

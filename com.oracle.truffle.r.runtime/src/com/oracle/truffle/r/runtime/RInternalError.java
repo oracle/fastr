@@ -219,7 +219,7 @@ public final class RInternalError extends Error implements TruffleException {
             // if ctx == null and we can't determine if stactrace should be logged, or not,
             // then at least print to file
             if (printErrorStacktracesToFile) {
-                Path logfile = Utils.getLogPath(getLogFileName(contextId));
+                Path logfile = Utils.getLogPath(ctx, getLogFileName(contextId));
                 if (logfile != null) {
                     message += " and the error log file '" + logfile + "'.";
                     try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,

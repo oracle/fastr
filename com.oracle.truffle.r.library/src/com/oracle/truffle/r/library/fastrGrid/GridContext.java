@@ -112,7 +112,7 @@ public final class GridContext {
         if (FastRConfig.UseRemoteGridAwtDevice) {
             return RemoteDevice.open(context, filename, fileType, width, height);
         } else {
-            return BufferedImageDevice.open(context, filename, fileType, width, height);
+            return BufferedImageDevice.open(filename, fileType, width, height);
         }
     }
 
@@ -171,7 +171,7 @@ public final class GridContext {
             setCurrentDevice(defaultDev, WindowDevice.createWindowDevice(context, false, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT));
         } else if (defaultDev.equals("svg")) {
             String filename = "Rplot%03d.svg";
-            SVGDevice svgDevice = new SVGDevice(context, FileDevUtils.formatInitialFilename(filename), GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
+            SVGDevice svgDevice = new SVGDevice(FileDevUtils.formatInitialFilename(filename), GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
             setCurrentDevice(defaultDev, svgDevice, filename);
         } else if (defaultDev.equals("png")) {
             safeOpenImageDev(context, "Rplot%03d.png", "png");

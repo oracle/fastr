@@ -429,7 +429,8 @@ public class TestOutputManager {
      * @param keepTrailingWhiteSpace if {@code true} preserve trailing white space, otherwise trim
      * @return the GnuR output
      */
-    public String genTestResult(TestBase testClass, String testElementName, String test, DiagnosticHandler d, boolean checkOnly, boolean keepTrailingWhiteSpace, TestTrait... traits) {
+    public String genTestResult(TestBase testClass, String testElementName, String test, DiagnosticHandler d, boolean checkOnly, boolean keepTrailingWhiteSpace, boolean hasGeneratedOutput,
+                    TestTrait... traits) {
         Map<String, TestInfo> testMap = getTestMap(testElementName);
         TestInfo testInfo = testMap.get(test);
         if (testInfo != null) {
@@ -442,13 +443,16 @@ public class TestOutputManager {
             testInfo.setElementName(testElementName);
             return testInfo.output;
         } else {
-            d.note("test file does not contain: " + test);
+            if (hasGeneratedOutput) {
+                d.note("test file does not contain: " + test);
+            }
             String expected = null;
             if (!checkOnly) {
                 try {
                     testClass.beforeEval();
                     expected = rSession.eval(testClass, test, null, USE_DEFAULT_TIMEOUT);
                 } catch (Throwable e) {
+                    e.printStackTrace();
                     throw RInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
                 }
                 expected = prepareResult(expected, keepTrailingWhiteSpace);

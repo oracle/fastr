@@ -94,11 +94,11 @@ public final class RBuiltinPackages implements RBuiltinLookup {
             }
         }
         // Now "load" the package
-        Path baseDirPath = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base");
+        Path baseDirPath = FileSystems.getDefault().getPath(REnvVars.rHome(context), "library", "base");
         Path basePathbase = baseDirPath.resolve("R").resolve("base");
         Source baseSource = null;
         try {
-            baseSource = RSource.fromFileName(basePathbase.toString(), true);
+            baseSource = RSource.fromFileName(context, basePathbase.toString(), true);
         } catch (IOException ex) {
             throw RSuicide.rSuicide(String.format("unable to open the base package %s", basePathbase));
         }

@@ -63,7 +63,6 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -370,16 +369,16 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Object rcommandMain(String[] args, String[] env, boolean intern, int timeoutSecs) {
-        IORedirect redirect = handleIORedirect(args, intern);
+    public Object rcommandMain(RContext context, String[] args, String[] env, boolean intern, int timeoutSecs) {
+        IORedirect redirect = handleIORedirect(context, args, intern);
         assert env == null : "re-enable env arguments";
         int result = RMain.runR(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
         return redirect.getInternResult(result);
     }
 
     @Override
-    public Object rscriptMain(String[] args, String[] env, boolean intern, int timeoutSecs) {
-        IORedirect redirect = handleIORedirect(args, intern);
+    public Object rscriptMain(RContext context, String[] args, String[] env, boolean intern, int timeoutSecs) {
+        IORedirect redirect = handleIORedirect(context, args, intern);
         // TODO argument parsing can fail with ExitException, which needs to be handled correctly in
         // nested context
         assert env == null : "re-enable env arguments";
@@ -428,7 +427,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         }
     }
 
-    private static IORedirect handleIORedirect(String[] args, boolean intern) {
+    private static IORedirect handleIORedirect(RContext context, String[] args, boolean intern) {
         /*
          * This code is primarily intended to handle the "system" .Internal so the possible I/O
          * redirects are taken from the system/system2 R code. N.B. stdout redirection is never set
@@ -444,12 +443,12 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             if (arg.equals("<")) {
                 String file;
                 if (i < args.length - 1) {
-                    file = Utils.tildeExpand(Utils.unShQuote(args[i + 1]));
+                    file = Utils.unShQuote(args[i + 1]);
                 } else {
                     throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "redirect missing");
                 }
                 try {
-                    in = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), file).newInputStream();
+                    in = context.getSafeTruffleFile(file).newInputStream();
                 } catch (IOException ex) {
                     throw RError.error(RError.NO_CALLER, RError.Message.NO_SUCH_FILE, file);
                 }

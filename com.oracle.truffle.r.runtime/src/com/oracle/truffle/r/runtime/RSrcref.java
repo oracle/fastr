@@ -80,7 +80,7 @@ public class RSrcref {
      * Internal version of srcfile(path).
      */
     public static REnvironment createSrcfile(RContext context, String path, Set<Object> envRefHolder) {
-        TruffleFile file = FileSystemUtils.getSafeTruffleFile(context.getEnv(), Utils.tildeExpand(path));
+        TruffleFile file = context.getSafeTruffleFile(path);
         return createSrcfile(context, file, envRefHolder);
     }
 
@@ -166,7 +166,7 @@ public class RSrcref {
             env.setClassAttr(RDataFactory.createStringVector(new String[]{"srcfilecopy", RRuntime.R_SRCFILE}, true));
             try {
                 String pathStr = RSource.getPathInternal(source);
-                TruffleFile path = FileSystemUtils.getSafeTruffleFile(context.getEnv(), pathStr != null ? pathStr : "");
+                TruffleFile path = context.getSafeTruffleFile(pathStr != null ? pathStr : "");
 
                 env.put(SrcrefFields.filename.name(), path.toString());
                 env.put(SrcrefFields.fixedNewlines.name(), RRuntime.LOGICAL_TRUE);
@@ -215,7 +215,7 @@ public class RSrcref {
         return lloc;
     }
 
-    public static SourceSection createSourceSection(RAbstractIntVector srcrefVec, Source sharedSource) {
+    public static SourceSection createSourceSection(RContext context, RAbstractIntVector srcrefVec, Source sharedSource) {
 
         try {
             Source source;
@@ -224,7 +224,7 @@ public class RSrcref {
             } else {
                 Object srcfile = srcrefVec.getAttr(RRuntime.R_SRCFILE);
                 assert srcfile instanceof REnvironment;
-                source = RSource.fromSrcfile((REnvironment) srcfile);
+                source = RSource.fromSrcfile(context, (REnvironment) srcfile);
             }
             int startLine = srcrefVec.getDataAt(0);
             int startColumn = srcrefVec.getDataAt(1);

@@ -584,7 +584,15 @@ public class TestBase {
     }
 
     protected boolean assertEvalFastR(String input, String gnuROutput, boolean useREPL) {
-        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), useREPL, USE_DEFAULT_TIMEOUT);
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), useREPL, USE_DEFAULT_TIMEOUT, true);
+    }
+
+    protected void assertEvalOneShot(String input) {
+        evalAndCompare(new String[]{input}, true, USE_DEFAULT_TIMEOUT, false);
+    }
+
+    protected void assertEvalOneShot(String[] inputs) {
+        evalAndCompare(inputs, true, USE_DEFAULT_TIMEOUT, false);
     }
 
     private static String[] getAssertEvalFastR(String gnuROutput, String input) {
@@ -728,10 +736,13 @@ public class TestBase {
     }
 
     private boolean evalAndCompare(String[] inputs, long timeout, TestTrait... traitsList) {
-        return evalAndCompare(inputs, false, timeout, traitsList);
+        return evalAndCompare(inputs, false, timeout, true, traitsList);
     }
 
-    private boolean evalAndCompare(String[] inputs, boolean useREPL, long timeout, TestTrait... traitsList) {
+    private boolean evalAndCompare(String[] inputs, boolean useREPL, long timeout, boolean hasGeneratedOutput, TestTrait... traitsList) {
+        if (!hasGeneratedOutput && generatingExpected()) {
+            return true;
+        }
         WhiteList[] whiteLists = TestTrait.collect(traitsList, WhiteList.class);
         TestTraitsSet traits = new TestTraitsSet(traitsList);
         ContextKind contextKind = traits.context.contains(Context.NonShared) ? ContextKind.SHARE_NOTHING : ContextKind.SHARE_PARENT_RW;
@@ -739,7 +750,7 @@ public class TestBase {
         boolean allOk = true;
         boolean skipFastREval = traits.isIgnored || generatingExpected();
         for (String input : inputs) {
-            String expected = expectedEval(input, traitsList);
+            String expected = expectedEval(input, hasGeneratedOutput, traitsList);
             if (skipFastREval) {
                 ignoredInputCount++;
             } else {
@@ -1122,6 +1133,10 @@ public class TestBase {
         return new String[]{expectedStripped, resultStripped};
     }
 
+    protected String fastREval(String input) {
+        return fastREval(input, ContextKind.SHARE_PARENT_RW);
+    }
+
     /**
      * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced. If
      * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
@@ -1203,17 +1218,17 @@ public class TestBase {
      * Evaluate expected output from {@code input}. By default the lookup is based on {@code input}
      * but can be overridden by providing a non-null {@code testIdOrNull}.
      */
-    protected String expectedEval(String input, TestTrait... traits) {
+    protected String expectedEval(String input, boolean hasGeneratedOutput, TestTrait... traits) {
         if (generatingExpected()) {
             // generation mode
-            return genTestResult(input, traits);
+            return genTestResult(input, hasGeneratedOutput, traits);
         } else {
             // unit test mode
             String expected = expectedOutputManager.getOutput(input);
             if (expected == null) {
                 // get the expected output dynamically (but do not update the file)
                 expectedOutputManager.createRSession();
-                expected = genTestResult(input);
+                expected = genTestResult(input, hasGeneratedOutput);
                 if (expected == null) {
                     expected = "<<NO EXPECTED OUTPUT>>";
                 }
@@ -1223,8 +1238,8 @@ public class TestBase {
         }
     }
 
-    private String genTestResult(String input, TestTrait... traits) {
-        return expectedOutputManager.genTestResult(this, testElementName, input, localDiagnosticHandler, expectedOutputManager.checkOnly, keepTrailingWhiteSpace, traits);
+    private String genTestResult(String input, boolean hasGeneratedOutput, TestTrait... traits) {
+        return expectedOutputManager.genTestResult(this, testElementName, input, localDiagnosticHandler, expectedOutputManager.checkOnly, keepTrailingWhiteSpace, hasGeneratedOutput, traits);
     }
 
     /**

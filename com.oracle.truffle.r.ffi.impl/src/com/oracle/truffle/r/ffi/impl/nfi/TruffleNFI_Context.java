@@ -340,7 +340,7 @@ public class TruffleNFI_Context extends RFFIContext {
             acquireLock();
         }
         try {
-            String librffiPath = LibPaths.getBuiltinLibPath("R");
+            String librffiPath = LibPaths.getBuiltinLibPath(context, "R");
             if (context.isInitial()) {
                 rlibDLLInfo = DLL.loadLibR(context, librffiPath, path -> TruffleNFI_DLL.dlOpen(context, path, false, false));
                 addLibRToDLLContextState(context, rlibDLLInfo);

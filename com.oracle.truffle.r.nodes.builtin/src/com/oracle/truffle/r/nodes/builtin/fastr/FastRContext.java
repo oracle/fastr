@@ -39,6 +39,8 @@ import org.graalvm.polyglot.Context;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
@@ -55,6 +57,7 @@ import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -390,20 +393,23 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected Object r(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs) {
-            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(prependCommand(args, "R"), env.materialize().getDataCopy(), intern, timeoutSecs);
+        protected Object r(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(ctxRef.get(), prependCommand(args, "R"), env.materialize().getDataCopy(), intern, timeoutSecs);
             return rc;
         }
 
         @Specialization
-        protected Object r(@SuppressWarnings("unused") RMissing arg, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs) {
-            return r(RDataFactory.createEmptyStringVector(), RDataFactory.createEmptyStringVector(), intern, timeoutSecs);
+        protected Object r(@SuppressWarnings("unused") RMissing arg, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return r(RDataFactory.createEmptyStringVector(), RDataFactory.createEmptyStringVector(), intern, timeoutSecs, ctxRef);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object r(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern, int timeoutSecs) {
-            return r(RDataFactory.createEmptyStringVector(), env, intern, timeoutSecs);
+        protected Object r(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern, int timeoutSecs,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return r(RDataFactory.createEmptyStringVector(), env, intern, timeoutSecs, ctxRef);
         }
     }
 
@@ -427,14 +433,16 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected Object rscript(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs) {
-            return RContext.getRRuntimeASTAccess().rscriptMain(prependCommand(args, "Rscript"), env.materialize().getDataCopy(), intern, timeoutSecs);
+        protected Object rscript(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return RContext.getRRuntimeASTAccess().rscriptMain(ctxRef.get(), prependCommand(args, "Rscript"), env.materialize().getDataCopy(), intern, timeoutSecs);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object rscript(RAbstractStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs) {
-            return rscript(args, RDataFactory.createEmptyStringVector(), intern, timeoutSecs);
+        protected Object rscript(RAbstractStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return rscript(args, RDataFactory.createEmptyStringVector(), intern, timeoutSecs, ctxRef);
         }
     }
 

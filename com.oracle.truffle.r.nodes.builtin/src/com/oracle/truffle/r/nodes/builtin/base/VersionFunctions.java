@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,12 +31,16 @@ import java.util.List;
 import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RVersionInfo;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -64,7 +68,7 @@ public abstract class VersionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector getSymbolInfo() {
+        protected RStringVector getSymbolInfo(@CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
 
             Map<String, String> eSoftVersion = eSoftVersionNode.eSoftVersion();
 
@@ -86,7 +90,7 @@ public abstract class VersionFunctions {
 
             // BLAS
             libNames.add("BLAS");
-            versions.add(LibPaths.getBuiltinLibPath("Rblas"));
+            versions.add(LibPaths.getBuiltinLibPath(ctxRef.get(), "Rblas"));
 
             RStringVector names = RDataFactory.createStringVector(libNames.toArray(new String[0]), true);
             return RDataFactory.createStringVector(versions.toArray(new String[0]), true, names);

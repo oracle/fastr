@@ -42,8 +42,10 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -73,7 +75,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -81,10 +82,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
@@ -107,7 +108,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
-import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
@@ -134,8 +134,8 @@ public class FastRInterop {
         @Child private SetVisibilityNode setVisibilityNode = SetVisibilityNode.create();
         @Child private Foreign2R foreign2rNode = Foreign2R.create();
 
-        protected DirectCallNode createCall(String languageId, String code) {
-            return Truffle.getRuntime().createDirectCallNode(parse(languageId, code));
+        protected DirectCallNode createCall(RContext context, String languageId, String code) {
+            return Truffle.getRuntime().createDirectCallNode(parse(context, languageId, code));
         }
 
         @SuppressWarnings("unused")
@@ -143,7 +143,8 @@ public class FastRInterop {
         protected Object evalCached(VirtualFrame frame, String languageId, String code, RMissing path,
                         @Cached("languageId") String cachedLanguageId,
                         @Cached("code") String cachedSource,
-                        @Cached("createCall(languageId, code)") DirectCallNode call) {
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("createCall(ctxRef.get(), languageId, code)") DirectCallNode call) {
             try {
                 return foreign2rNode.convert(call.call(EMPTY_OBJECT_ARRAY));
             } finally {
@@ -152,17 +153,18 @@ public class FastRInterop {
         }
 
         @Specialization(replaces = "evalCached")
-        protected Object eval(VirtualFrame frame, String languageId, String code, @SuppressWarnings("unused") RMissing path) {
+        protected Object eval(VirtualFrame frame, String languageId, String code, @SuppressWarnings("unused") RMissing path,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             try {
-                return foreign2rNode.convert(parseAndCall(code, languageId));
+                return foreign2rNode.convert(parseAndCall(ctxRef.get(), code, languageId));
             } finally {
                 setVisibilityNode.execute(frame, true);
             }
         }
 
         @TruffleBoundary
-        private Object parseAndCall(String code, String languageId) {
-            return parse(languageId, code).call();
+        private Object parseAndCall(RContext context, String code, String languageId) {
+            return parse(context, languageId, code).call();
         }
 
         @Specialization()
@@ -170,9 +172,9 @@ public class FastRInterop {
             throw error(RError.Message.NO_LANGUAGE_PROVIDED, "eval.polyglot");
         }
 
-        protected CallTarget parse(String languageId, String code) {
+        protected CallTarget parse(RContext context, String languageId, String code) {
             CompilerAsserts.neverPartOfCompilation();
-            Env env = RContext.getInstance().getEnv();
+            Env env = context.getEnv();
             LanguageInfo languageInfo = languageId != null ? env.getPublicLanguages().get(languageId) : null;
             if ((languageId != null && languageInfo == null) || (languageInfo != null &&
                             languageInfo.isInternal())) {
@@ -192,9 +194,10 @@ public class FastRInterop {
         }
 
         @Specialization
-        protected Object eval(VirtualFrame frame, String languageId, @SuppressWarnings("unused") RMissing code, String path) {
+        protected Object eval(VirtualFrame frame, String languageId, @SuppressWarnings("unused") RMissing code, String path,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             try {
-                return foreign2rNode.convert(parseFileAndCall(path, languageId));
+                return foreign2rNode.convert(parseFileAndCall(ctxRef.get(), path, languageId));
             } catch (RuntimeException e) {
                 if (e instanceof TruffleException && !(e instanceof RError)) {
                     throw RErrorHandling.handleInteropException(this, e);
@@ -211,23 +214,24 @@ public class FastRInterop {
         }
 
         @Specialization
-        protected Object eval(VirtualFrame frame, @SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") RMissing code, String path) {
+        protected Object eval(VirtualFrame frame, @SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") RMissing code, String path,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             try {
-                return foreign2rNode.convert(parseFileAndCall(path, null));
+                return foreign2rNode.convert(parseFileAndCall(ctxRef.get(), path, null));
             } finally {
                 setVisibilityNode.execute(frame, false);
             }
         }
 
         @TruffleBoundary
-        private Object parseFileAndCall(String path, String languageId) {
-            return parseFile(path, languageId).call();
+        private Object parseFileAndCall(RContext context, String path, String languageId) {
+            return parseFile(context, path, languageId).call();
         }
 
-        protected CallTarget parseFile(String path, String languageIdArg) {
+        protected CallTarget parseFile(RContext context, String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
-            Env env = RContext.getInstance().getEnv();
-            TruffleFile tFile = FileSystemUtils.getSafeTruffleFile(env, Utils.tildeExpand(path, false)).getAbsoluteFile();
+            Env env = context.getEnv();
+            TruffleFile tFile = context.getSafeTruffleFile(path).getAbsoluteFile();
             LanguageInfo languageInfo = null;
             try {
                 String languageId = languageIdArg;
@@ -280,11 +284,12 @@ public class FastRInterop {
 
         @Specialization(guards = "!isRMissing(value)")
         @TruffleBoundary
-        protected Object exportSymbol(String name, TruffleObject value) {
+        protected Object exportSymbol(String name, TruffleObject value,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             if (name == null) {
                 throw error(RError.Message.INVALID_ARGUMENT, "name");
             }
-            Env env = RContext.getInstance().getEnv();
+            Env env = ctxRef.get().getEnv();
             checkPolyglotAccess(env);
             env.exportSymbol(name, value);
             return RNull.instance;
@@ -313,8 +318,9 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        protected Object importSymbol(String name) {
-            Env env = RContext.getInstance().getEnv();
+        protected Object importSymbol(String name,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            Env env = ctxRef.get().getEnv();
             checkPolyglotAccess(env);
             Object object = env.importSymbol(name);
             if (object == null) {
@@ -477,15 +483,17 @@ public class FastRInterop {
         @Specialization(guards = {"isClass(className)", "className.equals(cachedClazz)"}, limit = "getCacheSize(10)")
         public TruffleObject javaClassCached(String className, boolean silent,
                         @Cached("className") String cachedClazz,
-                        @Cached("getJavaClass(className, silent)") Object result,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("getJavaClass(ctxRef.get(), className, silent)") Object result,
                         @Cached("create()") BranchProfile interopExceptionProfile) {
             return javaClassToTruffleObject(className, result, interopExceptionProfile);
         }
 
         @Specialization(replaces = "javaClassCached")
         public TruffleObject javaClass(String className, boolean silent,
-                        @Cached("create()") BranchProfile interopExceptionProfile) {
-            Object result = getJavaClass(className, silent);
+                        @Cached("create()") BranchProfile interopExceptionProfile,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            Object result = getJavaClass(ctxRef.get(), className, silent);
             return javaClassToTruffleObject(className, result, interopExceptionProfile);
         }
 
@@ -493,8 +501,8 @@ public class FastRInterop {
             return obj != null && obj instanceof Class;
         }
 
-        protected Object getJavaClass(String clazz, boolean silent) {
-            return classForName(clazz, silent);
+        protected Object getJavaClass(RContext context, String clazz, boolean silent) {
+            return classForName(context, clazz, silent);
         }
 
         @TruffleBoundary
@@ -528,13 +536,13 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public TruffleObject addEntries(RAbstractStringVector value, boolean silent) {
-            Env env = RContext.getInstance().getEnv();
-
+        public TruffleObject addEntries(RAbstractStringVector value, boolean silent,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
             for (int i = 0; i < value.getLength(); i++) {
-                TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, value.getDataAt(i));
+                TruffleFile file = ctxRef.get().getSafeTruffleFile(value.getDataAt(i));
                 try {
-                    env.addToHostClassPath(file);
+                    context.getEnv().addToHostClassPath(file);
                 } catch (Exception e) {
                     if (silent) {
                         return RNull.instance;
@@ -556,9 +564,10 @@ public class FastRInterop {
             Casts.noCasts(JavaIsIdentical.class);
         }
 
-        @Specialization(guards = {"isJavaObject(x1)", "isJavaObject(x2)"})
-        public byte isIdentical(TruffleObject x1, TruffleObject x2) {
-            RContext context = RContext.getInstance();
+        @Specialization(guards = {"isJavaObject(ctxRef.get(), x1)", "isJavaObject(ctxRef.get(), x2)"})
+        public byte isIdentical(TruffleObject x1, TruffleObject x2,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
             return RRuntime.asLogical(context.getEnv().asHostObject(x1) == context.getEnv().asHostObject(x2));
         }
 
@@ -568,8 +577,8 @@ public class FastRInterop {
             throw error(RError.Message.GENERIC, String.format("unsupported types: %s, %s", x1.getClass().getName(), x2.getClass().getName()));
         }
 
-        protected boolean isJavaObject(TruffleObject obj) {
-            return RContext.getInstance().getEnv().isHostObject(obj);
+        protected boolean isJavaObject(RContext context, TruffleObject obj) {
+            return context.getEnv().isHostObject(obj);
         }
     }
 
@@ -581,48 +590,57 @@ public class FastRInterop {
         }
 
         @Specialization
-        public TruffleObject asTruffleObject(byte b) {
-            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(RRuntime.fromLogical(b));
+        public TruffleObject asTruffleObject(byte b,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return (TruffleObject) ctxRef.get().getEnv().asBoxedGuestValue(RRuntime.fromLogical(b));
         }
 
         @Specialization
-        public TruffleObject asTruffleObject(int i) {
-            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(i);
+        public TruffleObject asTruffleObject(int i,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return (TruffleObject) ctxRef.get().getEnv().asBoxedGuestValue(i);
         }
 
         @Specialization
-        public TruffleObject asTruffleObject(double d) {
-            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(d);
+        public TruffleObject asTruffleObject(double d,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return (TruffleObject) ctxRef.get().getEnv().asBoxedGuestValue(d);
         }
 
         @Specialization
-        public TruffleObject asTruffleObject(String s) {
-            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(s);
+        public TruffleObject asTruffleObject(String s,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return (TruffleObject) ctxRef.get().getEnv().asBoxedGuestValue(s);
         }
 
         @Specialization
-        public TruffleObject asTruffleObject(RInteropByte b) {
-            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(b.getValue());
+        public TruffleObject asTruffleObject(RInteropByte b,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return (TruffleObject) ctxRef.get().getEnv().asBoxedGuestValue(b.getValue());
         }
 
         @Specialization
-        public TruffleObject asTruffleObject(RInteropChar c) {
-            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(c.getValue());
+        public TruffleObject asTruffleObject(RInteropChar c,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return (TruffleObject) ctxRef.get().getEnv().asBoxedGuestValue(c.getValue());
         }
 
         @Specialization
-        public TruffleObject asTruffleObject(RInteropFloat f) {
-            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(f.getValue());
+        public TruffleObject asTruffleObject(RInteropFloat f,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return (TruffleObject) ctxRef.get().getEnv().asBoxedGuestValue(f.getValue());
         }
 
         @Specialization
-        public TruffleObject asTruffleObject(RInteropLong l) {
-            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(l.getValue());
+        public TruffleObject asTruffleObject(RInteropLong l,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return (TruffleObject) ctxRef.get().getEnv().asBoxedGuestValue(l.getValue());
         }
 
         @Specialization
-        public TruffleObject asTruffleObject(RInteropShort s) {
-            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(s.getValue());
+        public TruffleObject asTruffleObject(RInteropShort s,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return (TruffleObject) ctxRef.get().getEnv().asBoxedGuestValue(s.getValue());
         }
 
         @Fallback
@@ -639,9 +657,10 @@ public class FastRInterop {
             Casts.noCasts(JavaIsAssignableFrom.class);
         }
 
-        @Specialization(guards = {"isJavaObject(x1)", "isJavaObject(x2)"})
-        public byte isAssignable(TruffleObject x1, TruffleObject x2) {
-            RContext context = RContext.getInstance();
+        @Specialization(guards = {"isJavaObject(ctxRef.get(), x1)", "isJavaObject(ctxRef.get(), x2)"})
+        public byte isAssignable(TruffleObject x1, TruffleObject x2,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
             Object jo1 = context.getEnv().asHostObject(x1);
             Class<?> cl1 = (jo1 instanceof Class) ? (Class<?>) jo1 : jo1.getClass();
             Object jo2 = context.getEnv().asHostObject(x2);
@@ -655,8 +674,8 @@ public class FastRInterop {
             throw error(RError.Message.GENERIC, String.format("unsupported types: %s, %s", x1.getClass().getName(), x2.getClass().getName()));
         }
 
-        protected boolean isJavaObject(TruffleObject obj) {
-            return RContext.getInstance().getEnv().isHostObject(obj);
+        protected boolean isJavaObject(RContext context, TruffleObject obj) {
+            return context.getEnv().isHostObject(obj);
         }
     }
 
@@ -667,9 +686,10 @@ public class FastRInterop {
             Casts.noCasts(JavaIsInstance.class);
         }
 
-        @Specialization(guards = {"isJavaObject(x1)", "isJavaObject(x2)"})
-        public byte isInstance(TruffleObject x1, TruffleObject x2) {
-            RContext context = RContext.getInstance();
+        @Specialization(guards = {"isJavaObject(ctxRef.get(), x1)", "isJavaObject(ctxRef.get(), x2)"})
+        public byte isInstance(TruffleObject x1, TruffleObject x2,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
             Object jo1 = context.getEnv().asHostObject(x1);
             Object jo2 = context.getEnv().asHostObject(x2);
             if (jo1 instanceof Class) {
@@ -679,10 +699,11 @@ public class FastRInterop {
             return RRuntime.asLogical(jo1.getClass().isInstance(jo2));
         }
 
-        @Specialization(guards = {"isJavaObject(x1)"})
+        @Specialization(guards = {"isJavaObject(ctxRef.get(), x1)"})
         public byte isInstance(TruffleObject x1, RInteropScalar x2,
-                        @Cached() R2Foreign r2Foreign) {
-            Object jo1 = RContext.getInstance().getEnv().asHostObject(x1);
+                        @Cached() R2Foreign r2Foreign,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            Object jo1 = ctxRef.get().getEnv().asHostObject(x1);
             if (jo1 instanceof Class) {
                 Class<?> cl1 = (Class<?>) jo1;
                 return RRuntime.asLogical(cl1.isInstance(r2Foreign.convertNoBox(x2)));
@@ -690,9 +711,10 @@ public class FastRInterop {
             return RRuntime.asLogical(jo1.getClass().isInstance(x2));
         }
 
-        @Specialization(guards = {"isJavaObject(x1)", "!isJavaObject(x2)", "!isInterop(x2)"})
-        public byte isInstance(TruffleObject x1, Object x2) {
-            Object jo1 = RContext.getInstance().getEnv().asHostObject(x1);
+        @Specialization(guards = {"isJavaObject(ctxRef.get(), x1)", "!isJavaObject(ctxRef.get(), x2)", "!isInterop(x2)"})
+        public byte isInstance(TruffleObject x1, Object x2,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            Object jo1 = ctxRef.get().getEnv().asHostObject(x1);
             if (jo1 instanceof Class) {
                 Class<?> cl1 = (Class<?>) jo1;
                 return RRuntime.asLogical(cl1.isInstance(x2));
@@ -706,8 +728,8 @@ public class FastRInterop {
             throw error(RError.Message.GENERIC, String.format("unsupported types: %s, %s", x1.getClass().getName(), x2.getClass().getName()));
         }
 
-        protected boolean isJavaObject(Object obj) {
-            return RRuntime.isForeignObject(obj) && RContext.getInstance().getEnv().isHostObject(obj);
+        protected boolean isJavaObject(RContext context, Object obj) {
+            return RRuntime.isForeignObject(obj) && context.getEnv().isHostObject(obj);
         }
 
         protected boolean isInterop(Object obj) {
@@ -734,28 +756,34 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         public Object toArray(RAbstractLogicalVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
-                        @Cached() R2Foreign r2Foreign) {
-            return toArray(vec, flat, boolean.class, (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
+                        @Cached() R2Foreign r2Foreign,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return toArray(ctxRef.get(), vec, flat, boolean.class, (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
         }
 
         @Specialization
         @TruffleBoundary
         public Object toArray(RAbstractLogicalVector vec, String className, boolean flat,
-                        @Cached() R2Foreign r2Foreign) {
-            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
+                        @Cached() R2Foreign r2Foreign,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
+            return toArray(context, vec, flat, getClazz(context, className), (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
         }
 
         @Specialization
         @TruffleBoundary
         public Object toArray(RAbstractIntVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
-                        @Cached() R2Foreign r2Foreign) {
-            return toArray(vec, flat, int.class, (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
+                        @Cached() R2Foreign r2Foreign,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return toArray(ctxRef.get(), vec, flat, int.class, (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractIntVector vec, String className, boolean flat) {
-            return toArray(vec, flat, getClazz(className), (array, i) -> {
+        public Object toArray(RAbstractIntVector vec, String className, boolean flat,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
+            return toArray(context, vec, flat, getClazz(context, className), (array, i) -> {
                 if (Byte.TYPE.getName().equals(className)) {
                     Array.set(array, i, (byte) vec.getDataAt(i));
                 } else if (Character.TYPE.getName().equals(className)) {
@@ -776,14 +804,17 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractDoubleVector vec, @SuppressWarnings("unused") RMissing className, boolean flat) {
-            return toArray(vec, flat, double.class, (array, i) -> Array.set(array, i, vec.getDataAt(i)));
+        public Object toArray(RAbstractDoubleVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return toArray(ctxRef.get(), vec, flat, double.class, (array, i) -> Array.set(array, i, vec.getDataAt(i)));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractDoubleVector vec, String className, boolean flat) {
-            return toArray(vec, flat, getClazz(className), (array, i) -> {
+        public Object toArray(RAbstractDoubleVector vec, String className, boolean flat,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
+            return toArray(context, vec, flat, getClazz(context, className), (array, i) -> {
                 if (Byte.TYPE.getName().equals(className)) {
                     Array.set(array, i, (byte) vec.getDataAt(i));
                 } else if (Character.TYPE.getName().equals(className)) {
@@ -804,56 +835,68 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractStringVector vec, @SuppressWarnings("unused") RMissing className, boolean flat) {
-            return toArray(vec, flat, String.class, (array, i) -> Array.set(array, i, vec.getDataAt(i)));
+        public Object toArray(RAbstractStringVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return toArray(ctxRef.get(), vec, flat, String.class, (array, i) -> Array.set(array, i, vec.getDataAt(i)));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractStringVector vec, String className, boolean flat) {
-            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, vec.getDataAt(i)));
+        public Object toArray(RAbstractStringVector vec, String className, boolean flat,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
+            return toArray(context, vec, flat, getClazz(context, className), (array, i) -> Array.set(array, i, vec.getDataAt(i)));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractRawVector vec, @SuppressWarnings("unused") RMissing className, boolean flat) {
-            return toArray(vec, flat, byte.class, (array, i) -> Array.set(array, i, vec.getRawDataAt(i)));
+        public Object toArray(RAbstractRawVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return toArray(ctxRef.get(), vec, flat, byte.class, (array, i) -> Array.set(array, i, vec.getRawDataAt(i)));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractRawVector vec, String className, boolean flat) {
-            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, vec.getRawDataAt(i)));
+        public Object toArray(RAbstractRawVector vec, String className, boolean flat,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
+            return toArray(context, vec, flat, getClazz(context, className), (array, i) -> Array.set(array, i, vec.getRawDataAt(i)));
         }
 
         @Specialization(guards = "!isJavaLikeVector(vec)")
         @TruffleBoundary
         public Object toArray(RAbstractVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
-                        @Cached() R2Foreign r2Foreign) {
-            return toArray(vec, flat, Object.class, r2Foreign);
+                        @Cached() R2Foreign r2Foreign,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return toArray(ctxRef.get(), vec, flat, Object.class, r2Foreign);
         }
 
         @Specialization(guards = "!isJavaLikeVector(vec)")
         @TruffleBoundary
         public Object toArray(RAbstractVector vec, String className, boolean flat,
-                        @Cached() R2Foreign r2Foreign) {
-            return toArray(vec, flat, getClazz(className), r2Foreign);
+                        @Cached() R2Foreign r2Foreign,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
+            return toArray(context, vec, flat, getClazz(context, className), r2Foreign);
         }
 
         @Specialization
         @TruffleBoundary
         public Object toArray(RInteropScalar ri, String className, boolean flat,
-                        @Cached() R2Foreign r2Foreign) {
+                        @Cached() R2Foreign r2Foreign,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             RList list = RDataFactory.createList(new Object[]{ri});
-            return toArray(list, flat, getClazz(className), (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(list.getDataAt(i))));
+            RContext context = ctxRef.get();
+            return toArray(context, list, flat, getClazz(context, className), (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(list.getDataAt(i))));
         }
 
         @Specialization
         @TruffleBoundary
         public Object toArray(RInteropScalar ri, @SuppressWarnings("unused") RMissing className, boolean flat,
-                        @Cached() R2Foreign r2Foreign) {
+                        @Cached() R2Foreign r2Foreign,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             RList list = RDataFactory.createList(new Object[]{ri});
-            return toArray(list, flat, ri.getJavaType(), (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(list.getDataAt(i))));
+            return toArray(ctxRef.get(), list, flat, ri.getJavaType(), (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(list.getDataAt(i))));
         }
 
         private static int[] getDim(boolean flat, RAbstractVector vec) {
@@ -869,7 +912,8 @@ public class FastRInterop {
             return dims;
         }
 
-        private static Object toArray(RAbstractVector vec, boolean flat, Class<?> clazz, VecElementToArray vecToArray) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
+        private static Object toArray(RContext context, RAbstractVector vec, boolean flat, Class<?> clazz, VecElementToArray vecToArray)
+                        throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
             int[] dims = getDim(flat, vec);
             // TODO need interop.instantiate(multiDimArrayClass, dims)
             final Object array = Array.newInstance(clazz, dims);
@@ -880,13 +924,13 @@ public class FastRInterop {
                     vecToArray.toArray(array, i);
                 }
             }
-            return RContext.getInstance().getEnv().asGuestValue(array);
+            return context.getEnv().asGuestValue(array);
         }
 
-        private Object toArray(RAbstractVector vec, boolean flat, Class<?> clazz, R2Foreign r2Foreign) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
+        private Object toArray(RContext context, RAbstractVector vec, boolean flat, Class<?> clazz, R2Foreign r2Foreign) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
             int[] dims = getDim(flat, vec);
             final Object array = Array.newInstance(clazz, dims);
-            TruffleObject truffleArray = (TruffleObject) RContext.getInstance().getEnv().asGuestValue(array);
+            TruffleObject truffleArray = (TruffleObject) context.getEnv().asGuestValue(array);
 
             for (int d = 0; d < dims.length; d++) {
                 int dim = dims[d];
@@ -907,16 +951,17 @@ public class FastRInterop {
             void toArray(Object array, Integer i);
         }
 
-        @Specialization(guards = "isJavaObject(obj)")
+        @Specialization(guards = "isJavaObject(ctxRef.get(), obj)")
         @TruffleBoundary
-        public Object toArray(TruffleObject obj, @SuppressWarnings("unused") RMissing missing, @SuppressWarnings("unused") boolean flat) {
+        public Object toArray(TruffleObject obj, @SuppressWarnings("unused") RMissing missing, @SuppressWarnings("unused") boolean flat,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             InteropLibrary interop = InteropLibrary.getFactory().getUncached();
             if (interop.hasArrayElements(obj)) {
                 // TODO should return copy?
                 return obj;
             }
             try {
-                RContext context = RContext.getInstance();
+                RContext context = ctxRef.get();
                 Object o = context.getEnv().asHostObject(obj);
                 if (o == null) {
                     return obj;
@@ -936,11 +981,11 @@ public class FastRInterop {
         }
 
         @TruffleBoundary
-        private Class<?> getClazz(String className) throws RError {
-            Object result = classForName(className);
+        private Class<?> getClazz(RContext context, String className) throws RError {
+            Object result = classForName(context, className);
 
             if (result instanceof TruffleObject) {
-                Object clazz = RContext.getInstance().getEnv().asHostObject(result);
+                Object clazz = context.getEnv().asHostObject(result);
                 if (clazz instanceof Class) {
                     return (Class<?>) clazz;
                 }
@@ -954,8 +999,8 @@ public class FastRInterop {
             }
         }
 
-        protected boolean isJavaObject(TruffleObject obj) {
-            return RContext.getInstance().getEnv().isHostObject(obj);
+        protected boolean isJavaObject(RContext context, TruffleObject obj) {
+            return context.getEnv().isHostObject(obj);
         }
 
         protected boolean isJavaLikeVector(RAbstractVector vec) {
@@ -999,9 +1044,10 @@ public class FastRInterop {
         @Specialization(guards = {"isForeignObject(obj)", "charToInt"})
         @TruffleBoundary
         public Object charToIntVector(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean dropDimensions,
-                        @SuppressWarnings("unused") boolean charToInt) {
+                        @SuppressWarnings("unused") boolean charToInt,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             // it is up to the caler to ensure that the truffel object is a char array
-            assert isCharArray(RContext.getInstance().getEnv().asHostObject(obj)) : RContext.getInstance().getEnv().asHostObject(obj).getClass().getName();
+            assert isCharArray(ctxRef.get().getEnv().asHostObject(obj)) : ctxRef.get().getEnv().asHostObject(obj).getClass().getName();
             // we also do not care about dims, which have to be evaluated and set by other means
             return new RForeignIntWrapper(obj);
         }
@@ -1033,7 +1079,8 @@ public class FastRInterop {
         public Object interopNew(TruffleObject clazz, RArgsValuesAndNames args,
                         @CachedLibrary("clazz") InteropLibrary interop,
                         @Cached() R2Foreign r2Foreign,
-                        @Cached() Foreign2R foreign2R) {
+                        @Cached() Foreign2R foreign2R,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             try {
                 Object[] argValues = new Object[args.getLength()];
                 for (int i = 0; i < argValues.length; i++) {
@@ -1042,8 +1089,8 @@ public class FastRInterop {
                 Object result = interop.instantiate(clazz, argValues);
                 return foreign2R.convert(result);
             } catch (UnsupportedTypeException ute) {
-                RContext context = RContext.getInstance();
-                Env env = RContext.getInstance().getEnv();
+                RContext context = ctxRef.get();
+                Env env = context.getEnv();
                 if (env.isHostObject(clazz)) {
                     Object obj = env.asHostObject(clazz);
                     if (obj instanceof Class) {
@@ -1117,12 +1164,12 @@ public class FastRInterop {
         }
     }
 
-    private static Object classForName(String className) {
-        return classForName(className, false);
+    private static Object classForName(RContext context, String className) {
+        return classForName(context, className, false);
     }
 
-    private static Object classForName(String className, boolean silent) {
-        Env env = RContext.getInstance().getEnv();
+    private static Object classForName(RContext context, String className, boolean silent) {
+        Env env = context.getEnv();
         if (env != null && env.isHostLookupAllowed()) {
             try {
                 Object found = env.lookupHostSymbol(patchClassName(className));
@@ -1185,8 +1232,10 @@ public class FastRInterop {
         }
 
         @Specialization
-        public Object tryFunc(VirtualFrame frame, RFunction function, byte check) {
-            getInteropTryState().stepIn();
+        public Object tryFunc(VirtualFrame frame, RFunction function, byte check,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
+            context.stateInteropTry.stepIn();
             try {
                 return call.call(frame, function, RArgsValuesAndNames.EMPTY);
             } catch (FastRInteropTryException e) {
@@ -1201,13 +1250,13 @@ public class FastRInterop {
                         msg = msg != null ? String.format("%s: %s", causeName, msg) : causeName;
                         throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, msg);
                     } else {
-                        getInteropTryState().lastException = cause;
+                        context.stateInteropTry.lastException = cause;
                     }
                 } else {
                     RInternalError.reportError(e);
                 }
             } finally {
-                getInteropTryState().stepOut();
+                context.stateInteropTry.stepOut();
             }
             return RNull.instance;
         }
@@ -1223,18 +1272,21 @@ public class FastRInterop {
         }
 
         @Specialization
-        public Object checkException(byte silent, @SuppressWarnings("unused") RMissing callerFor) {
-            return checkException(silent, (String) null);
+        public Object checkException(byte silent, @SuppressWarnings("unused") RMissing callerFor,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return checkException(silent, (String) null, ctxRef);
         }
 
         @Specialization
-        public Object checkException(byte silent, String showCallerOf) {
-            Throwable t = getInteropTryState().lastException;
+        public Object checkException(byte silent, String showCallerOf,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
+            Throwable t = context.stateInteropTry.lastException;
             if (t != null) {
                 CompilerDirectives.transferToInterpreter();
-                getInteropTryState().lastException = null;
+                context.stateInteropTry.lastException = null;
                 if (!RRuntime.fromLogical(silent)) {
-                    Env env = RContext.getInstance().getEnv();
+                    Env env = context.getEnv();
                     if (env.isHostException(t)) {
                         t = env.asHostException(t);
                     }
@@ -1260,12 +1312,14 @@ public class FastRInterop {
         }
 
         @Specialization
-        public Object getException(byte clear) {
-            Throwable ret = getInteropTryState().lastException;
+        public Object getException(byte clear,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            RContext context = ctxRef.get();
+            Throwable ret = context.stateInteropTry.lastException;
             if (RRuntime.fromLogical(clear)) {
-                getInteropTryState().lastException = null;
+                context.stateInteropTry.lastException = null;
             }
-            return ret != null ? RContext.getInstance().getEnv().asGuestValue(ret) : RNull.instance;
+            return ret != null ? context.getEnv().asGuestValue(ret) : RNull.instance;
         }
     }
 
@@ -1277,14 +1331,10 @@ public class FastRInterop {
         }
 
         @Specialization
-        public Object clearException() {
-            getInteropTryState().lastException = null;
+        public Object clearException(@CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            ctxRef.get().stateInteropTry.lastException = null;
             return RNull.instance;
         }
-    }
-
-    private static FastrInteropTryContextState getInteropTryState() {
-        return RContext.getInstance().stateInteropTry;
     }
 
 }

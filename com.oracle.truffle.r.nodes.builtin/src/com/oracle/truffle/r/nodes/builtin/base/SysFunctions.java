@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -66,6 +67,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -308,15 +310,15 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") boolean useUmask) {
+        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") boolean useUmask,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             byte[] data = new byte[pathVec.getLength()];
-            TruffleLanguage.Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < data.length; i++) {
-                String path = Utils.tildeExpand(pathVec.getDataAt(i));
+                String path = pathVec.getDataAt(i);
                 if (path.length() == 0 || RRuntime.isNA(path)) {
                     continue;
                 }
-                int result = FileSystemUtils.chmod(FileSystemUtils.getSafeTruffleFile(env, path), octmode.getDataAt(i % octmode.getLength()));
+                int result = FileSystemUtils.chmod(ctxRef.get().getSafeTruffleFile(path), octmode.getDataAt(i % octmode.getLength()));
                 data[i] = RRuntime.asLogical(result == 0);
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);

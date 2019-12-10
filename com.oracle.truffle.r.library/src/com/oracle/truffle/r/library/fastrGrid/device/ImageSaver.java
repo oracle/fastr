@@ -24,7 +24,7 @@ package com.oracle.truffle.r.library.fastrGrid.device;
 
 import java.io.IOException;
 
-import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * Devices that support saving their current state into a file should implement this interface.
@@ -32,5 +32,5 @@ import com.oracle.truffle.api.TruffleLanguage.Env;
  * file.
  */
 public interface ImageSaver {
-    void save(Env env, String path, String fileType) throws IOException;
+    void save(RContext context, String path, String fileType) throws IOException;
 }

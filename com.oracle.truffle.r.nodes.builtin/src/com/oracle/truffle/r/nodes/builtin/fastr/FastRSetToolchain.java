@@ -31,6 +31,8 @@ import java.nio.file.StandardCopyOption;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -38,6 +40,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "fastr.setToolchain", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
@@ -50,7 +53,8 @@ public abstract class FastRSetToolchain extends RBuiltinNode.Arg1 {
 
     @TruffleBoundary
     @Specialization
-    protected RNull setToolchain(String name) {
+    protected RNull setToolchain(String name,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         String srcConf;
         String srcLdpaths;
         if ("native".equals(name)) {
@@ -62,7 +66,7 @@ public abstract class FastRSetToolchain extends RBuiltinNode.Arg1 {
         } else {
             throw error(RError.Message.GENERIC, "Only 'native' or 'llvm' argument values accepted");
         }
-        TruffleFile rHome = REnvVars.getRHomeTruffleFile(RContext.getInstance().getEnv());
+        TruffleFile rHome = REnvVars.getRHomeTruffleFile(ctxRef.get());
         TruffleFile etc = rHome.resolve("etc");
         TruffleFile srcConfFile = etc.resolve(srcConf);
         TruffleFile dstConfFile = etc.resolve("Makeconf");

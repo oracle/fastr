@@ -30,7 +30,6 @@ import java.util.Random;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
@@ -56,7 +55,7 @@ public class TempPathName implements RContext.ContextState {
             return this;
         }
         String startingTempDir = Utils.getUserTempDir();
-        TruffleFile startingTempDirPath = FileSystemUtils.getSafeTruffleFile(context.getEnv(), startingTempDir).resolve("Rtmp");
+        TruffleFile startingTempDirPath = context.getSafeTruffleFile(startingTempDir).resolve("Rtmp");
         // ensure absolute, to avoid problems with R code does a setwd
         if (!startingTempDirPath.isAbsolute()) {
             startingTempDirPath = startingTempDirPath.getAbsoluteFile();
@@ -78,7 +77,7 @@ public class TempPathName implements RContext.ContextState {
             return;
         }
         try {
-            FileSystemUtils.walkFileTree(FileSystemUtils.getSafeTruffleFile(context.getEnv(), tempDirPath), new DeleteVisitor());
+            FileSystemUtils.walkFileTree(context.getSafeTruffleFile(tempDirPath), new DeleteVisitor());
         } catch (Throwable e) {
             // unexpected and we are exiting anyway
         }
@@ -90,7 +89,7 @@ public class TempPathName implements RContext.ContextState {
 
     public static String tempDirPathChecked(RContext ctx) {
         String path = tempDirPath(ctx);
-        TruffleFile tFile = FileSystemUtils.getSafeTruffleFile(ctx.getEnv(), path);
+        TruffleFile tFile = ctx.getSafeTruffleFile(path);
         if (!tFile.isDirectory()) {
             if (ctx.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
                 RContext parentCtx = ctx.getParent();
@@ -108,15 +107,14 @@ public class TempPathName implements RContext.ContextState {
 
     @TruffleBoundary
     public static String createNonExistingFilePath(RContext ctx, String pattern, String tempDir, String fileExt) {
-        Env env = ctx.getEnv();
         while (true) {
-            StringBuilder sb = new StringBuilder(FileSystemUtils.getSafeTruffleFile(env, tempDir).resolve(pattern).toString());
+            StringBuilder sb = new StringBuilder(ctx.getSafeTruffleFile(tempDir).resolve(pattern).toString());
             appendRandomString(sb);
             if (fileExt.length() > 0) {
                 sb.append(fileExt);
             }
             String path = sb.toString();
-            if (!FileSystemUtils.getSafeTruffleFile(env, path).exists()) {
+            if (!ctx.getSafeTruffleFile(path).exists()) {
                 return path;
             }
         }

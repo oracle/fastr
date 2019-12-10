@@ -81,6 +81,7 @@ import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalCode.ContextStateImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLocale;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -107,6 +108,8 @@ import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
+import java.nio.file.NoSuchFileException;
+import java.util.logging.Level;
 
 /**
  * Encapsulates the runtime state ("context") of an R session. All access to that state from the
@@ -961,6 +964,46 @@ public final class RContext {
 
     public AllocationReporter getAllocationReporter() {
         return this.allocationReporter;
+    }
+
+    public TruffleFile getSafeTruffleFile(String path) {
+        String expandedPath = Utils.tildeExpand(path);
+        TruffleFile origFile = env.getInternalTruffleFile(expandedPath);
+        TruffleFile f = origFile;
+        try {
+            if (origFile.exists()) {
+                try {
+                    f = origFile.getCanonicalFile();
+                } catch (NoSuchFileException e) {
+                    // absolute path "exists", but cannonical does not
+                    // happens e.g. during install.packages: file.exists("/{rHome}/inst/..")
+                    // lets optimistically FALLBACK on absolute path
+                }
+            }
+        } catch (IOException e) {
+            RLogger.getLogger(RLogger.LOGGER_FILE_ACCEESS).log(Level.SEVERE, "Unable to access file " + expandedPath + " " + e.getMessage(), e);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.FILE_OPEN_ERROR);
+        }
+
+        final TruffleFile home = REnvVars.getRHomeTruffleFile(this);
+        if (f.startsWith(home) && isLibraryFile(home.relativize(f))) {
+            return origFile;
+        } else {
+            try {
+                return env.getPublicTruffleFile(expandedPath);
+            } catch (SecurityException e) {
+                RLogger.getLogger(RLogger.LOGGER_FILE_ACCEESS).log(Level.SEVERE, "Unable to access file " + expandedPath + " " + e.getMessage(), e);
+                throw RError.error(RError.SHOW_CALLER, RError.Message.FILE_OPEN_ERROR);
+            }
+        }
+    }
+
+    private static boolean isLibraryFile(TruffleFile relativePathFromHome) {
+        final String fileName = relativePathFromHome.getName();
+        if (fileName == null) {
+            return false;
+        }
+        return relativePathFromHome.startsWith("library");
     }
 
     private static final Consumer<Boolean> ALLOCATION_ACTIVATION_LISTENER = new Consumer<Boolean>() {

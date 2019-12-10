@@ -171,9 +171,9 @@ public interface RRuntimeASTAccess {
      * X=Y.
      */
 
-    Object rcommandMain(String[] args, String[] env, boolean intern, int timeoutSecs);
+    Object rcommandMain(RContext contexrt, String[] args, String[] env, boolean intern, int timeoutSecs);
 
-    Object rscriptMain(String[] args, String[] env, boolean intern, int timeoutSecs);
+    Object rscriptMain(RContext contexrt, String[] args, String[] env, boolean intern, int timeoutSecs);
 
     String encodeDouble(double x);
 

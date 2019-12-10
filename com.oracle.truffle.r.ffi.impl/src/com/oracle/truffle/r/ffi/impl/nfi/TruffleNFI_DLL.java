@@ -66,13 +66,13 @@ public class TruffleNFI_DLL implements DLLRFFI {
     }
 
     public static LibHandle dlOpen(RContext ctx, String path, boolean local, boolean now) {
-        String librffiPath = LibPaths.getBuiltinLibPath("R");
+        String librffiPath = LibPaths.getBuiltinLibPath(ctx, "R");
         // Do not call before/afterDowncall when loading libR to prevent the pushing/popping of
         // the callback array, which requires that the libR have already been loaded
         boolean notifyStateRFFI = !librffiPath.equals(path);
         Object before = notifyStateRFFI ? ctx.getStateRFFI().beforeDowncall(null, Type.NFI) : 0;
         try {
-            String libName = DLL.libName(path);
+            String libName = DLL.libName(ctx, path);
             Env env = RContext.getInstance().getEnv();
             TruffleObject libHandle = (TruffleObject) env.parseInternal(Source.newBuilder("nfi", prepareLibraryOpen(path, local, now), path).build()).call();
             return new NFIHandle(libName, libHandle);

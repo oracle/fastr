@@ -31,7 +31,6 @@ import java.util.Set;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -39,7 +38,6 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -68,14 +66,13 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     }
 
     static LibHandle dlOpen(RContext context, String path) {
-        final Env env = context.getEnv();
         RFFIContext stateRFFI = context.getStateRFFI();
-        TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, path);
-        String libName = DLL.libName(file.getPath());
+        TruffleFile file = context.getSafeTruffleFile(path);
+        String libName = DLL.libName(context, file.getPath());
         boolean isLibR = libName.equals("libR");
         if (isLibR) {
             // TODO: make it generic, if +"l" file exists, use that instead
-            file = FileSystemUtils.getSafeTruffleFile(env, path + "l");
+            file = context.getSafeTruffleFile(path + "l");
         }
         boolean isInitialization = isLibR;
         Object before = null;
@@ -84,7 +81,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 before = stateRFFI.beforeDowncall(null, Type.LLVM);
             }
             Source src = Source.newBuilder("llvm", file).internal(true).build();
-            Object lib = env.parseInternal(src).call();
+            Object lib = context.getEnv().parseInternal(src).call();
             assert lib instanceof TruffleObject;
             if (isLibR) {
                 // TODO: accessing what used to be a private field, this will be refactored

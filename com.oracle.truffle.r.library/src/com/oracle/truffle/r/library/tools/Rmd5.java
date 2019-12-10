@@ -31,15 +31,16 @@ import java.security.NoSuchAlgorithmException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -53,7 +54,8 @@ public abstract class Rmd5 extends RExternalBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector rmd5(RAbstractStringVector files) {
+    protected RStringVector rmd5(RAbstractStringVector files,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         MessageDigest digest;
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         try {
@@ -61,10 +63,9 @@ public abstract class Rmd5 extends RExternalBuiltinNode.Arg1 {
         } catch (NoSuchAlgorithmException ex) {
             throw RInternalError.shouldNotReachHere("no MD5");
         }
-        Env env = RContext.getInstance().getEnv();
         String[] data = new String[files.getLength()];
         for (int i = 0; i < data.length; i++) {
-            TruffleFile file = FileSystemUtils.getSafeTruffleFile(env, files.getDataAt(i));
+            TruffleFile file = ctxRef.get().getSafeTruffleFile(files.getDataAt(i));
             String dataValue = RRuntime.STRING_NA;
             if (!(file.exists() && file.isReadable())) {
                 complete = false;

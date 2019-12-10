@@ -121,7 +121,7 @@ public class ROptions {
         @Override
         public RContext.ContextState initialize(RContext context) {
             if (context.getKind() == ContextKind.SHARE_NOTHING) {
-                applyDefaults(map, context.getStartParams(), envVars);
+                applyDefaults(map, context.getStartParams(), envVars, context);
             } else {
                 map.putAll(context.getParent().stateROptions.map);
             }
@@ -178,7 +178,7 @@ public class ROptions {
                     "keep.source", "keep.source.pkgs", "keep.parse.data", "keep.parse.data.pkgs", "warning.length", "nwarnings", "OutDec", "browserNLdisabled", "CBoundsCheck", "matprod", "PCRE_study",
                     "PCRE_use_JIT", "PCRE_limit_recursion", "rl_word_breaks", "warn", "max.print", "show.error.messages"));
 
-    private static void applyDefaults(HashMap<String, Object> map, RStartParams startParams, REnvVars envVars) {
+    private static void applyDefaults(HashMap<String, Object> map, RStartParams startParams, REnvVars envVars, RContext context) {
         putOption(map, "add.smooth", RDataFactory.createSharedLogicalVectorFromScalar(true));
         putOption(map, "check.bounds", RDataFactory.createSharedLogicalVectorFromScalar(false));
         putOption(map, "continue", RDataFactory.createSharedStringVectorFromScalar("+ "));
@@ -210,7 +210,7 @@ public class ROptions {
         boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK", envVars);
         putOption(map, "CBoundsCheck", RDataFactory.createSharedLogicalVectorFromScalar(cBoundsCheck));
 
-        String cranMirror = REnvVars.getCRANMirror();
+        String cranMirror = REnvVars.getCRANMirror(context);
         if (cranMirror != null) {
             putOption(map, "repos", cranMirror);
         }
@@ -219,7 +219,7 @@ public class ROptions {
             putOption(map, "download.file.method", FastRConfig.DefaultDownloadMethod);
         }
 
-        String additional = RContext.getInstance().getOption(AdditionalOptions);
+        String additional = context.getOption(AdditionalOptions);
         if (additional == null || additional.isEmpty()) {
             return;
         }

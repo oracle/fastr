@@ -120,7 +120,7 @@ public enum RFFIVariables {
      * Sets {@link #R_TempDir} for the initial context.
      */
     public static RFFIVariables[] initialize(RContext context) {
-        R_Home.value = REnvVars.rHome();
+        R_Home.value = REnvVars.rHome(context);
         R_TempDir.value = TempPathName.tempDirPath(context);
         Sys_TempDir.value = TempPathName.tempDirPath(context);
         R_GlobalEnv.value = RContext.getInstance().stateREnvironment.getGlobalEnv();

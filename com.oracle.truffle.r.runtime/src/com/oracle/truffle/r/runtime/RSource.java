@@ -108,8 +108,8 @@ public class RSource {
      * Create an (external) source from the {@code text} that is known to originate from the file
      * system path {@code path}.
      */
-    public static Source fromFileName(String text, String path, boolean internal) throws URISyntaxException {
-        TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path).getAbsoluteFile();
+    public static Source fromFileName(RContext context, String text, String path, boolean internal) throws URISyntaxException {
+        TruffleFile file = context.getSafeTruffleFile(path).getAbsoluteFile();
         URI uri = new URI("file://" + file.getPath());
         return Source.newBuilder(RRuntime.R_LANGUAGE_ID, text, path).content(text).uri(uri).internal(internal).build();
     }
@@ -178,8 +178,8 @@ public class RSource {
     /**
      * Create an (external) source from the file system path {@code path}.
      */
-    public static Source fromFileName(String path, boolean internal) throws IOException {
-        final TruffleFile file = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), path);
+    public static Source fromFileName(RContext context, String path, boolean internal) throws IOException {
+        final TruffleFile file = context.getSafeTruffleFile(path);
         return getCachedByOrigin(file, origin -> Source.newBuilder(RRuntime.R_LANGUAGE_ID, file).internal(internal).build());
     }
 
@@ -187,10 +187,10 @@ public class RSource {
      * Create an (external) source from an R srcfile (
      * {@link RSrcref#createSrcfile(RContext, TruffleFile, Set)}).
      */
-    public static Source fromSrcfile(REnvironment env) throws IOException {
+    public static Source fromSrcfile(RContext context, REnvironment env) throws IOException {
         Path filename = Paths.get(getPath(env, SrcrefFields.filename.name()));
         if (filename.isAbsolute()) {
-            return fromFileName(filename.toString(), false);
+            return fromFileName(context, filename.toString(), false);
         }
         Path resolved = filename;
         if (!filename.isAbsolute()) {
@@ -203,7 +203,7 @@ public class RSource {
         } else {
             resolved = filename;
         }
-        return fromFileName(resolved.toString(), false);
+        return fromFileName(context, resolved.toString(), false);
     }
 
     private static String getPath(REnvironment env, String name) {

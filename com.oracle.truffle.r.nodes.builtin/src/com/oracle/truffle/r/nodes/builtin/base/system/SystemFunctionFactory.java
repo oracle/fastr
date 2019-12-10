@@ -67,7 +67,7 @@ public abstract class SystemFunctionFactory {
      * {@code command} is a string with args separated by spaces with the first element enclosed in
      * single quotes.
      */
-    public abstract Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs);
+    public abstract Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs, RContext context);
 
     protected void log(String command, String useKind) {
         checkObsoleteEnvVar();
@@ -111,7 +111,7 @@ public abstract class SystemFunctionFactory {
      *         {@code null}.
      */
     @TruffleBoundary
-    public static CommandInfo checkRCommand(String command) {
+    public static CommandInfo checkRCommand(RContext context, String command) {
         CommandInfo commandInfo = null;
         String[] parts = command.split(" ");
         /* The actual command may be prefixed by environment variable settings of the form X=Y */
@@ -119,7 +119,7 @@ public abstract class SystemFunctionFactory {
         while (parts[i].contains("=")) {
             i++;
         }
-        String rcommand = isFastR(parts[i]);
+        String rcommand = isFastR(context, parts[i]);
         if (rcommand == null) {
             return null;
         } else {
@@ -181,14 +181,14 @@ public abstract class SystemFunctionFactory {
     /**
      * Returns {@code true} iff, {@code command} is {@code R} or {@code Rscript}.
      */
-    private static String isFastR(String command) {
+    private static String isFastR(RContext context, String command) {
         // strip off quotes
         String xc = Utils.unShQuote(command);
         if (xc.equals("R") || xc.equals("Rscript")) {
             return xc;
         }
         // often it is an absolute path
-        String rhome = REnvVars.rHome();
+        String rhome = REnvVars.rHome(context);
         if (isFullPath(rhome, "Rscript", xc)) {
             return "Rscript";
         }

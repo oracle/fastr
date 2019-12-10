@@ -34,16 +34,16 @@ import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -64,29 +64,28 @@ public abstract class NormalizePath extends RBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork) {
+    protected RStringVector doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         String[] results = new String[pathVec.getLength()];
-        Env env = RContext.getInstance().getEnv();
         for (int i = 0; i < results.length; i++) {
             String path = pathVec.getDataAt(i);
-            String expandPath = Utils.tildeExpand(path);
-            String normPath = expandPath;
+            String normPath = path;
             try {
-                normPath = FileSystemUtils.getSafeTruffleFile(env, normPath).getCanonicalFile().toString();
+                normPath = ctxRef.get().getSafeTruffleFile(path).getCanonicalFile().toString();
             } catch (IOException e) {
                 if (doesNotNeedToWork.profile(mustWork == RRuntime.LOGICAL_FALSE)) {
                     // no error or warning
                 } else {
                     if (mustWork == RRuntime.LOGICAL_TRUE) {
                         if (e instanceof NoSuchFileException) {
-                            throw error(Message.NORMALIZE_PATH_NOSUCH, i + 1, expandPath);
+                            throw error(Message.NORMALIZE_PATH_NOSUCH, i + 1, path);
                         } else {
                             throw error(Message.GENERIC, e.toString());
                         }
                     } else {
                         // NA means warning
                         if (e instanceof NoSuchFileException) {
-                            warning(Message.NORMALIZE_PATH_NOSUCH, i + 1, expandPath);
+                            warning(Message.NORMALIZE_PATH_NOSUCH, i + 1, path);
                         } else {
                             warning(Message.GENERIC, e.toString());
                         }

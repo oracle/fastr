@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,6 +23,7 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import static org.junit.Assert.assertEquals;
 
 // Checkstyle: stop line length check
 public class TestBuiltin_pathexpand extends TestBase {
@@ -56,5 +57,15 @@ public class TestBuiltin_pathexpand extends TestBase {
     public void testArgsValidation() {
         assertEval("path.expand(NULL)");
         assertEval("path.expand(42)");
+    }
+
+    @Test
+    public void testTildeExpand() {
+        String userHome = System.getProperty("user.home");
+        assertEquals("[1] \"" + userHome + "\"\n", fastREval("path.expand('~')"));
+        assertEquals("[1] \"" + userHome + "/.\"\n", fastREval("path.expand('~/.')"));
+        assertEquals("[1] \"" + userHome + "/..\"\n", fastREval("path.expand('~/..')"));
+        assertEquals("[1] \"" + userHome + "/Dis-doz-nottt_exyst\"\n", fastREval("path.expand('~/Dis-doz-nottt_exyst')"));
+        assertEquals("[1] \"" + userHome + "/Dis-doz-nottt_exyst/..\"\n", fastREval("path.expand('~/Dis-doz-nottt_exyst/..')"));
     }
 }

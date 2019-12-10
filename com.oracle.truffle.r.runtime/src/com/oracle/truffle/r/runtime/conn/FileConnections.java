@@ -39,19 +39,16 @@ import org.tukaani.xz.XZOutputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RCompression.Type;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.DelegateRConnection.CompressedInputRConnection;
 import com.oracle.truffle.r.runtime.conn.DelegateRConnection.CompressedOutputRConnection;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import java.nio.channels.SeekableByteChannel;
 import java.util.Collections;
@@ -68,19 +65,11 @@ public class FileConnections {
         private final boolean internal;
         private Type cType = RCompression.Type.NONE;
 
-        public FileRConnection(String description, String path, String modeString, boolean blocking, String encoding, boolean raw, boolean internal) throws IOException {
-            super(description, checkTemp(path), ConnectionClass.File, modeString, blocking, encoding);
+        public FileRConnection(String description, TruffleFile path, String modeString, boolean blocking, String encoding, boolean raw, boolean internal) throws IOException {
+            super(description, path, ConnectionClass.File, modeString, blocking, encoding);
             this.raw = raw;
             this.internal = internal;
             openNonLazyConnection();
-        }
-
-        private static String checkTemp(String path) {
-            if (path.length() == 0) {
-                return TempPathName.createNonExistingFilePath(RContext.getInstance(), "Rf", TempPathName.tempDirPath(RContext.getInstance()), "");
-            } else {
-                return path;
-            }
         }
 
         @Override
@@ -158,8 +147,8 @@ public class FileConnections {
         private final RCompression.Type cType;
         @SuppressWarnings("unused") private final int compression; // TODO
 
-        public CompressedRConnection(String path, String modeString, Type cType, String encoding, int compression) throws IOException {
-            super(path, path, mapConnectionClass(cType), modeString, AbstractOpenMode.ReadBinary, encoding);
+        public CompressedRConnection(TruffleFile path, String modeString, Type cType, String encoding, int compression) throws IOException {
+            super(path.getPath(), path, mapConnectionClass(cType), modeString, AbstractOpenMode.ReadBinary, encoding);
             this.cType = cType;
             this.compression = compression;
             openNonLazyConnection();
@@ -224,14 +213,14 @@ public class FileConnections {
         switch (base.getOpenMode().abstractOpenMode) {
             case Read:
             case ReadBinary:
-                return new CompressedInputRConnection(base, new XZInputStream(FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), base.path).newInputStream()));
+                return new CompressedInputRConnection(base, new XZInputStream(base.path.newInputStream()));
             case Append:
             case AppendBinary:
-                TruffleFile afile = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), base.path);
+                TruffleFile afile = base.path;
                 return new CompressedOutputRConnection(base, new XZOutputStream(afile.newOutputStream(StandardOpenOption.APPEND), new LZMA2Options(), XZ.CHECK_CRC32), false);
             case Write:
             case WriteBinary:
-                TruffleFile wfile = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), base.path);
+                TruffleFile wfile = base.path;
                 return new CompressedOutputRConnection(base, new XZOutputStream(wfile.newOutputStream(), new LZMA2Options(), XZ.CHECK_CRC32), false);
             default:
                 throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
@@ -286,15 +275,13 @@ public class FileConnections {
                 switch (base.getOpenMode().abstractOpenMode) {
                     case Read:
                     case ReadBinary:
-                        return DelegateRConnection.createGZIPDelegateInputConnection(base, FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), base.path).newInputStream());
+                        return DelegateRConnection.createGZIPDelegateInputConnection(base, base.path.newInputStream());
                     case Append:
                     case AppendBinary:
-                        TruffleFile afile = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), base.path);
-                        return DelegateRConnection.createGZIPDelegateOutputConnection(base, afile.newOutputStream(StandardOpenOption.APPEND));
+                        return DelegateRConnection.createGZIPDelegateOutputConnection(base, base.path.newOutputStream(StandardOpenOption.APPEND));
                     case Write:
                     case WriteBinary:
-                        TruffleFile wfile = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), base.path);
-                        return DelegateRConnection.createGZIPDelegateOutputConnection(base, wfile.newOutputStream());
+                        return DelegateRConnection.createGZIPDelegateOutputConnection(base, base.path.newOutputStream());
                     default:
                         throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
                 }
@@ -327,7 +314,7 @@ public class FileConnections {
 
         FileReadBinaryRConnection(BasePathRConnection base) throws IOException {
             super(base);
-            channel = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), base.path).newByteChannel(Collections.singleton(StandardOpenOption.READ));
+            channel = base.path.newByteChannel(Collections.singleton(StandardOpenOption.READ));
         }
 
         @Override
@@ -389,7 +376,7 @@ public class FileConnections {
             } else {
                 opts.add(StandardOpenOption.TRUNCATE_EXISTING);
             }
-            channel = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), base.path).newByteChannel(opts);
+            channel = base.path.newByteChannel(opts);
         }
 
         @Override
@@ -426,7 +413,7 @@ public class FileConnections {
             opts.add(StandardOpenOption.READ);
             opts.add(StandardOpenOption.WRITE);
             opts.add(StandardOpenOption.CREATE);
-            channel = FileSystemUtils.getSafeTruffleFile(RContext.getInstance().getEnv(), base.path).newByteChannel(opts);
+            channel = base.path.newByteChannel(opts);
             if (append) {
                 writeOffset = channel.size();
             } else {
@@ -597,7 +584,7 @@ public class FileConnections {
 
         FileReadWriteBinaryConnection(BasePathRConnection base, boolean append) throws IOException {
             super(base);
-            raf = new RandomAccessFile(base.path, "rw");
+            raf = new RandomAccessFile(base.path.getPath(), "rw");
             if (append) {
                 writeOffset = raf.length();
             } else {

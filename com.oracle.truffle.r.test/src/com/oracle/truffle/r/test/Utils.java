@@ -43,7 +43,7 @@ public class Utils {
             gnurHome = System.getenv(GNUR_R_HOME);
             if (gnurHome == null) {
                 try {
-                    gnurHome = FileSystems.getDefault().getPath(REnvVars.rHome(), "libdownloads", RVersionNumber.R_HYPHEN_FULL).toString();
+                    gnurHome = FileSystems.getDefault().getPath(REnvVars.rHome(null), "libdownloads", RVersionNumber.R_HYPHEN_FULL).toString();
                 } catch (Throwable t) {
                     throw new RuntimeException("Cannot get GNU-R home. Maybe you need to run with " + GNUR_R_HOME + " environment variable pointing to GNU-R home.", t);
                 }

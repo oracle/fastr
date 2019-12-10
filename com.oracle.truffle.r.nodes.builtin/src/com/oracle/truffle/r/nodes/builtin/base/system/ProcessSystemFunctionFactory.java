@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
 
     @Override
-    public Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs) {
+    public Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs, RContext context) {
         return execute(command, intern, timeoutSecs);
     }
 
