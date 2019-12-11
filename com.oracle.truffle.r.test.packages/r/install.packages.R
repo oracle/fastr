@@ -943,7 +943,11 @@ system.test <- function(pkgname, pkgEnv) {
              paste0("FASTR_INTERNAL_ARGS=", fastr.test.jvm.args())
             )
 	env <- c(pkgEnv, genEnv)
-	rc <- system2(rscript, args, env=env, timeout=1200)
+        if(Sys.getenv("FASTR_GCTORTURE") == "") {
+            rc <- system2(rscript, args, env=env, timeout=1200)
+        } else {
+            rc <- system2(rscript, args, env=env)
+        }
 	rc
 }
 
