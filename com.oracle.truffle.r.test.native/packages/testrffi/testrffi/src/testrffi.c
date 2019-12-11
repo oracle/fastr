@@ -636,13 +636,11 @@ SEXP test_RfFindFunAndRfEval(SEXP x, SEXP y) {
     return result;
 }
 
+// NOTE: this is used as a benchmark!
 SEXP test_lapply(SEXP list, SEXP fn, SEXP rho) {
     int n = length(list);
     SEXP R_fcall, ans;
 
-//    if(!isNewList(list)) error("'list' must be a list");
-//    if(!isFunction(fn)) error("'fn' must be a function");
-//    if(!isEnvironment(rho)) error("'rho' should be an environment");
     R_fcall = PROTECT(lang2(fn, R_NilValue));
     ans = PROTECT(allocVector(VECSXP, n));
     for(int i = 0; i < n; i++) {
@@ -654,6 +652,7 @@ SEXP test_lapply(SEXP list, SEXP fn, SEXP rho) {
     return ans;
 }
 
+// NOTE: this is used as a benchmark!
 SEXP test_lapplyWithForceAndCall(SEXP list, SEXP fn, SEXP fa, SEXP rho) {
     int n = length(list);
     SEXP R_fcall, ans;
@@ -1057,8 +1056,18 @@ SEXP benchMultipleUpcalls(SEXP x) {
   SEXP result;
   PROTECT(result = Rf_allocVector(VECSXP, Rf_length(x)));
   for (int i = 0; i < Rf_length(x); ++i) {
+    int cnt = 0;
+    int type = TYPEOF(VECTOR_ELT(x, i));
+    // count vectors under indexes from 0 to i that
+    // 1) have the same type as i-th vector and
+    // 2) are longer than i
+    for (int j = 0; j < i; ++j) {
+      if (TYPEOF(VECTOR_ELT(x, j)) == type && Rf_length(VECTOR_ELT(x, j)) > i) {
+        cnt++;
+      }
+    }
     SEXP val;
-    PROTECT(val = ScalarInteger(Rf_length(VECTOR_ELT(x, i))));
+    PROTECT(val = ScalarInteger(cnt));
     SET_VECTOR_ELT(result, i, val);
     UNPROTECT(1);
   }
@@ -1068,9 +1077,11 @@ SEXP benchMultipleUpcalls(SEXP x) {
 
 SEXP benchProtect(SEXP x, SEXP nn) {
   int n = INTEGER_VALUE(nn);
+  volatile int res = 0;
   for (int i = 0; i < n; ++i) {
     PROTECT(x);
+    res++;
     UNPROTECT(1);
   }
-  return R_NilValue;
+  return res > 10 ? R_NilValue : x;
 }
