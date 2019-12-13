@@ -582,7 +582,7 @@ public final class Collections {
         }
 
         public void clear() {
-            Arrays.fill(data, null);
+            Arrays.fill(data, 0, size, null);
             size = 0;
         }
 
