@@ -36,6 +36,8 @@ import com.oracle.truffle.llvm.api.Toolchain;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -133,13 +135,29 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
      */
     private static void putToolChainVars(Map<String, String> pEnv) {
         LanguageInfo llvmInfo = RContext.getInstance().getEnv().getInternalLanguages().get("llvm");
-        if (llvmInfo != null) {
-            Toolchain toolchain = RContext.getInstance().getEnv().lookup(llvmInfo, Toolchain.class);
-            TruffleFile cc = toolchain.getToolPath("CC");
-            TruffleFile cxx = toolchain.getToolPath("CXX");
-
-            pEnv.put("TOOLCHAIN_CPP", cxx.toString());
-            pEnv.put("TOOLCHAIN_CC", cc.toString());
+        if (llvmInfo == null) {
+            warnNoToolchain();
+            return;
         }
+
+        Toolchain toolchain = RContext.getInstance().getEnv().lookup(llvmInfo, Toolchain.class);
+        if (toolchain == null) {
+            warnNoToolchain();
+            return;
+        }
+
+        TruffleFile cc = toolchain.getToolPath("CC");
+        TruffleFile cxx = toolchain.getToolPath("CXX");
+
+        pEnv.put("TOOLCHAIN_CPP", cxx.toString());
+        pEnv.put("TOOLCHAIN_CC", cc.toString());
+    }
+
+    private static void warnNoToolchain() {
+        RError.warning(NO_CALLER, Message.GENERIC, "Labs LLVM Toolchain services are not available. " +
+                        "If the current $FASTR_HOME/etc/Makeconf is configured to use those services (uses variables TOOLCHAIN_CC and TOOLCHAIN_CPP or tools llvm-cc or llvm-c++), " +
+                        "then the compilation will fail. Please make sure you have Labs LLVM Toolchain installed in GraalVM, " +
+                        "or update etc/Makeconf to use your system compilers (see ?fastr.setToolchain). " +
+                        "Note: the LLVM back-end will not work for packages compiled with system compilers.");
     }
 }
