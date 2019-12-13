@@ -4,12 +4,12 @@
 \alias{makeFastRCluster}
 \title{Creates cluster nodes that delegate to FastR}
 \usage{
-makeFastRCluster(nnodes = 1L, graalVMHome = getGraalVMHome(),
+makeFastRCluster(names = 1L, graalVMHome = getGraalVMHome(),
   mode = c("jvm", "native"), polyglot = FALSE, fastROptions = NULL,
   ...)
 }
 \arguments{
-\item{nnodes}{Number of nodes to be created.}
+\item{names}{A positive integer giving the number of workers to be created locally, or a list of host names to execute workers on.}
 
 \item{graalVMHome}{Path to the installation directory of GraalVM and FastR. Default value is obtained from \code{getGraalVMHome()}.}
 
