@@ -44,6 +44,8 @@ import com.oracle.truffle.r.runtime.ffi.CRFFIUnwrapVectorNode.CRFFIUnwrapVectors
 import com.oracle.truffle.r.runtime.ffi.CRFFIUnwrapVectorNodeGen.CRFFIUnwrapVectorsNodeGen;
 import com.oracle.truffle.r.runtime.ffi.CRFFIWrapVectorNode.CRFFIWrapVectorsNode;
 import com.oracle.truffle.r.runtime.ffi.CRFFIWrapVectorNodeGen.CRFFIWrapVectorsNodeGen;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI.LibHandle;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -93,12 +95,14 @@ public abstract class InvokeCNode extends RBaseNode {
         Object[] preparedArgs = argsWrapperNode.execute(args.getArguments());
 
         RFFIContext stateRFFI = stateRFFIProfile.profile(rCtx.getStateRFFI());
-        Object before = stateRFFI.beforeDowncall(frame.materialize(), nativeCallInfo.dllInfo.handle.getRFFIType());
+        LibHandle handle = nativeCallInfo.dllInfo == null ? null : nativeCallInfo.dllInfo.handle;
+        Type rffiType = handle == null ? stateRFFI.getDefaultRFFIType() : handle.getRFFIType();
+        Object before = stateRFFI.beforeDowncall(frame.materialize(), rffiType);
         try {
             execute(nativeCallInfo, preparedArgs);
             return RDataFactory.createList(argsUnwrapperNode.execute(preparedArgs), validateArgNames(preparedArgs.length, args.getSignature()));
         } finally {
-            stateRFFI.afterDowncall(before, nativeCallInfo.dllInfo.handle.getRFFIType());
+            stateRFFI.afterDowncall(before, rffiType);
         }
     }
 

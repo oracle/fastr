@@ -19,22 +19,14 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
-import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen;
@@ -92,8 +84,6 @@ import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.UnzipNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.foreign.CallAndExternalFunctions.DotExternal.CallNamedFunctionNode;
-import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
@@ -108,15 +98,13 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.DLL.NativeSymbolType;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nmath.distr.Cauchy;
@@ -211,56 +199,247 @@ import com.oracle.truffle.r.runtime.nmath.distr.Wilcox.PWilcox;
 import com.oracle.truffle.r.runtime.nmath.distr.Wilcox.QWilcox;
 import com.oracle.truffle.r.runtime.nmath.distr.Wilcox.RWilcox;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
+
 /**
  * {@code .Call}, {@code .Call.graphics}, {@code .External}, {@code .External2},
  * {@code External.graphics} functions, which share a common signature.
  *
- * TODO Completeness (more types, more error checks), Performance (copying). Especially all the
- * subtleties around copying.
+ * The native function to be called can be specified in two ways:
+ * <ol>
+ * <li>as an object of R class {@code NativeSymbolInfo} (passed as an {@link RList}. In this case
+ * {@code .PACKAGE} is ignored even if provided.</li>
+ * <li>as a character string. If {@code .PACKAGE} is provided the search is restricted to that
+ * package, else the symbol is searched in all loaded packages (evidently dangerous as the symbol
+ * could be duplicated)</li>
+ * </ol>
+ *
+ * Many of the functions in the builtin packages have been translated to Java "external builtins".
+ * This is handled by specializations that call {@link LookupAdapter#lookupBuiltin(String)}.
+ *
+ * Another possiblity to override the native functions with R functions is via FastR specific
+ * built-in {@code .fastr.register.functions}. It registers overrides for given native function
+ * pointers. Before executing any native function, we check if there is an override for it.
+ *
+ * TODO Completeness (more types, more error checks), Performance (copying).
  *
  * See <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/Foreign.html">here</a>.
  */
 public class CallAndExternalFunctions {
 
     @TruffleBoundary
-    private static Object encodeArgumentPairList(RArgsValuesAndNames args, String symbolName) {
+    private static Object encodeArgumentPairList(RArgsValuesAndNames args, Object handle) {
         Object list = RNull.instance;
         for (int i = args.getLength() - 1; i >= 0; i--) {
             String name = args.getSignature().getName(i);
             list = RDataFactory.createPairList(args.getArgument(i), list, name == null ? RNull.instance : RDataFactory.createSymbolInterned(name));
         }
-        list = RDataFactory.createPairList(symbolName, list);
+        list = RDataFactory.createPairList(handle, list);
         return list;
     }
 
     /**
-     * Handles the generic case, but also many special case functions that are called from the
-     * default packages.
-     *
-     * The native function to be called can be specified in two ways:
-     * <ol>
-     * <li>as an object of R class {@code NativeSymbolInfo} (passed as an {@link RList}. In this
-     * case {@code .PACKAGE} is ignored even if provided.</li>
-     * <li>as a character string. If {@code .PACKAGE} is provided the search is restricted to that
-     * package, else the symbol is searched in all loaded packages (evidently dangerous as the
-     * symbol could be duplicated)</li>
-     * </ol>
-     * Many of the functions in the builtin packages have been translated to Java which is handled
-     * by specializations that {@link #lookupBuiltin(RContext, RList)}. N.N. In principle such a
-     * function could be invoked by a string but experimentally that situation has never been
-     * encountered.
+     * Base class with common logic for all the variants.
      */
+    protected abstract static class Dot extends LookupAdapter {
+        @Child private InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
+        @CompilationFinal private ContextReference<RContext> ctxRef;
+
+        protected Object dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
+            return callRFFINode.dispatch(frame, nativeCallInfo, args);
+        }
+
+        protected static void applyCommonCasts(Casts casts) {
+            casts.arg(".NAME").mustBe(instanceOf(RList.class).or(instanceOf(RExternalPtr.class)).or(stringValue())).mapIf(stringValue(), asStringVector().setNext(findFirst().stringElement()));
+            casts.arg("PACKAGE").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+        }
+
+        protected RContext getContext() {
+            if (ctxRef == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                ctxRef = lookupContextReference(TruffleRLanguage.class);
+            }
+            return ctxRef.get();
+        }
+
+        // Note: we cannot declare "abstract" methods, because Truffle DSL
+
+        /**
+         * This is where the logic for various native call interfaces differs: in the way how the
+         * arguments and pre/post processed and what the result is.
+         */
+        protected Object dispatch(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") Object originalHandle, @SuppressWarnings("unused") RArgsValuesAndNames args,
+                        @SuppressWarnings("unused") NativeCallInfo nativeCallInfo) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        protected NativeSymbolType getNativeSymbolType() {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        protected String getDotBuiltinName() {
+            // may be OK to not implement, if you override symbolNotFoundError
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        protected RuntimeException symbolNotFoundError(String symbol, String packageName) {
+            throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, getDotBuiltinName(), packageName);
+        }
+
+        @Override
+        protected RExternalBuiltinNode lookupBuiltin(String symbol) {
+            return null;
+        }
+
+        // ----------------------------------------------------------
+        // Specializations for the case of FastR's "external builtins" -- native functions
+        // overridden in Java
+
+        /**
+         * {@code .NAME = NativeSymbolInfo} implemented as a builtin.
+         */
+        @Specialization(limit = "99", guards = {"cachedName != null", "cachedName.equals(getSymbolName(symbol))", "builtin != null"})
+        protected Object doExternalBuiltinSymbolInfo(VirtualFrame frame, @SuppressWarnings("unused") RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
+                        @SuppressWarnings("unused") @Cached("getSymbolNameSlowPath(symbol)") String cachedName,
+                        @Cached("lookupBuiltinSlowPath(symbol)") RExternalBuiltinNode builtin) {
+            return builtin.call(frame, args);
+        }
+
+        /**
+         * {@code .NAME = String} implemented as a builtin.
+         */
+        @Specialization(limit = "99", guards = {"cachedName != null", "cachedName.equals(symbol)", "builtin != null"})
+        protected Object doExternalBuiltinString(VirtualFrame frame, @SuppressWarnings("unused") String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
+                        @SuppressWarnings("unused") @Cached("symbol") String cachedName,
+                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
+            return builtin.call(frame, args);
+        }
+
+        // ----------------------------------------------------------
+        // Specializations for the case of native call info in an RList (NativeSymbolInfo)
+
+        @Specialization(limit = "getCacheSize(2)", guards = {"cached == symbol", "builtin == null"})
+        protected Object callSymbolInfoFunction(VirtualFrame frame, @SuppressWarnings("unused") RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
+                        @SuppressWarnings("unused") @Cached("symbol") RList cached,
+                        @SuppressWarnings("unused") @Cached("lookupBuiltinSlowPath(symbol)") RExternalBuiltinNode builtin,
+                        @SuppressWarnings("unused") @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
+                        @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo,
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
+            // AST sharing TODO: NativeCallInfo caches runtime objects: restrict to single context
+            if (callRegisteredROverride.isRegisteredRFunction(nativeCallInfo)) {
+                return callRegisteredROverride.execute(frame, nativeCallInfo, args);
+            } else {
+                return dispatch(frame, symbol, args, nativeCallInfo);
+            }
+        }
+
+        @Specialization(replaces = "callSymbolInfoFunction", guards = "lookupBuiltin(getSymbolName(symbol)) == null")
+        protected Object callSymbolInfoFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
+            return callSymbolInfoFunction(frame, symbol, args, packageName, symbol, null, extractSymbolInfo, extractSymbolInfo.execute(symbol), callRegisteredROverride);
+        }
+
+        // ----------------------------------------------------------
+        // Specializations for the case of native call as a String: name of the native function
+
+        // Note: from cast pipeline: packageName must be missing or String
+        protected static boolean packageNameEqual(Object a, Object b) {
+            if (a == b) {
+                return true;
+            } else if (a == RMissing.instance || b == RMissing.instance) {
+                return false;
+            }
+            return CompilerDirectives.castExact(a, String.class).equals(CompilerDirectives.castExact(b, String.class));
+        }
+
+        protected int getNST() {
+            return getNativeSymbolType().ordinal();
+        }
+
+        // Caching on the String helps us to avoid builtin lookup, we may consider caching the
+        // native function lookup but that would have to be guarded by single context assumption!
+        @Specialization(limit = "getCacheSize(2)", guards = {"cachedSymbol.equals(symbol)", "builtin == null", "packageNameEqual(cachePackageArg, packageNameIn)"})
+        protected Object callNamedFunctionCached(VirtualFrame frame, String symbol, RArgsValuesAndNames args, Object packageNameIn,
+                        @SuppressWarnings("unused") @Cached("symbol") String cachedSymbol,
+                        @SuppressWarnings("unused") @Cached("packageNameIn") Object cachePackageArg,
+                        @SuppressWarnings("unused") @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
+                        @Cached("createRegisteredNativeSymbol(getNST())") DLL.RegisteredNativeSymbol rns,
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
+            String packageName = packageNameIn == RMissing.instance ? null : (String) packageNameIn;
+            DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
+            if (func == DLL.SYMBOL_NOT_FOUND) {
+                throw symbolNotFoundError(symbol, packageName);
+            }
+            if (callRegisteredROverride.isRegisteredRFunction(func)) {
+                return callRegisteredROverride.execute(frame, func, args);
+            } else {
+                return dispatch(frame, symbol, args, new NativeCallInfo(symbol, func, rns.getDllInfo()));
+            }
+        }
+
+        @Specialization(replaces = "callNamedFunctionCached", guards = "lookupBuiltin(symbol) == null")
+        protected Object callNamedFunction(VirtualFrame frame, String symbol, RArgsValuesAndNames args, Object packageNameIn,
+                        @Cached("createRegisteredNativeSymbol(getNST())") DLL.RegisteredNativeSymbol rns,
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
+            return callNamedFunctionCached(frame, symbol, args, packageNameIn, symbol, packageNameIn, null, rns, findSymbolNode, callRegisteredROverride);
+        }
+
+        // ----------------------------------------------------------
+        // External pointer:
+
+        @Specialization
+        protected Object callExternalPtrFunction(VirtualFrame frame, RExternalPtr symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
+                        @Cached CallRegisteredROverride callRegisteredROverride) {
+            if (callRegisteredROverride.isRegisteredRFunction(symbol)) {
+                return callRegisteredROverride.execute(frame, symbol, args);
+            } else {
+                return dispatch(frame, symbol, args, new NativeCallInfo("", symbol.getAddr(), null));
+            }
+        }
+
+        // ----------------------------------------------------------
+        // Fallbacks: we need few extra specializations to satisfy the DSL compiler
+
+        @Specialization(replaces = {"doExternalBuiltinSymbolInfo", "callSymbolInfoFunction"})
+        protected Object doInfoFallback(@SuppressWarnings("unused") VirtualFrame frame, @SuppressWarnings("unused") RList symbol, @SuppressWarnings("unused") RArgsValuesAndNames args,
+                        @SuppressWarnings("unused") Object packageName) {
+            throw LookupAdapter.fallback(this, symbol);
+        }
+
+        @Specialization(replaces = {"doExternalBuiltinString", "callNamedFunction"})
+        protected Object doStringFallback(@SuppressWarnings("unused") VirtualFrame frame, String symbol, @SuppressWarnings("unused") RArgsValuesAndNames args,
+                        @SuppressWarnings("unused") Object packageName) {
+            throw LookupAdapter.fallback(this, symbol);
+        }
+
+        @Fallback
+        protected Object dotCallFallback(Object symbol, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
+            throw fallback(this, symbol);
+        }
+    }
+
     @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotCall extends Dot {
 
         @Child private MaterializeNode materializeNode = MaterializeNode.create();
 
         static {
-            Casts.noCasts(DotCall.class);
+            applyCommonCasts(new Casts(DotCall.class));
         }
 
         @Override
-        public Object[] getDefaultParameterValues() {
+        public final Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RMissing.instance};
         }
 
@@ -273,11 +452,25 @@ public class CallAndExternalFunctions {
         }
 
         @Override
+        protected final String getDotBuiltinName() {
+            return "Call";
+        }
+
+        @Override
+        protected NativeSymbolType getNativeSymbolType() {
+            return DLL.NativeSymbolType.Call;
+        }
+
+        @Override
+        protected final Object dispatch(VirtualFrame frame, Object originalHandle, RArgsValuesAndNames args, NativeCallInfo nativeCallInfo) {
+            return super.dispatch(frame, nativeCallInfo, materializeArgs(args.getArguments()));
+        }
+
+        @Override
         @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RContext context, RList symbol) {
-            String name = lookupName(symbol);
-            if (context.getOption(UseInternalGridGraphics) && name != null) {
-                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(context, name);
+        public final RExternalBuiltinNode lookupBuiltin(String name) {
+            if (getContext().getOption(UseInternalGridGraphics) && name != null) {
+                RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(getContext(), name);
                 if (gridExternal != null) {
                     return gridExternal;
                 }
@@ -571,10 +764,10 @@ public class CallAndExternalFunctions {
                     return PPSum.IntgrtVecNode.create();
 
                 case "updateform":
-                    return getExternalModelBuiltinNode(context, "updateform");
+                    return getExternalModelBuiltinNode(getContext(), "updateform");
 
                 case "Cdqrls":
-                    return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(context, RandFunctionsNodes.class, "lm.R"), "Cdqrls");
+                    return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(getContext(), RandFunctionsNodes.class, "lm.R"), "Cdqrls");
 
                 case "dnorm":
                     return StatsFunctionsNodes.Function3_1Node.create(new DNorm());
@@ -631,124 +824,19 @@ public class CallAndExternalFunctions {
             // Note: some externals that may be ported with reasonable effort
             // tukeyline, rfilter, SWilk, acf, Burg, d2x2xk, pRho
         }
-
-        /**
-         * {@code .NAME = NativeSymbolInfo} implemented as a builtin.
-         */
-        @SuppressWarnings("unused")
-        @Specialization(limit = "99", guards = {"cached == symbol", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @Cached("symbol") RList cached,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
-                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin) {
-            return builtin.call(frame, args);
-        }
-
-        /**
-         * {@code .NAME = NativeSymbolInfo} implementation remains in native code (e.g. non-builtin
-         * package)
-         */
-        @SuppressWarnings("unused")
-        @Specialization(limit = "getCacheSize(2)", guards = {"cached == symbol", "builtin == null"})
-        protected Object callSymbolInfoFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @Cached("symbol") RList cached,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
-                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin,
-                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
-                        @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
-            if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
-                return explicitCall(frame, nativeCallInfo, args);
-            } else {
-                return dispatch(frame, nativeCallInfo, materializeArgs(args.getArguments()));
-            }
-        }
-
-        /**
-         * For some reason, the list instance may change, although it carries the same info. For
-         * such cases there is this generic version.
-         */
-        @Specialization(replaces = {"callSymbolInfoFunction", "doExternal"})
-        protected Object callSymbolInfoFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
-                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
-            RExternalBuiltinNode builtin = lookupBuiltin(ctxRef.get(), symbol);
-            if (builtin != null) {
-                throw RInternalError.shouldNotReachHere("Cache for .Calls with FastR reimplementation (lookupBuiltin(...) != null) exceeded the limit");
-            }
-            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
-            if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
-                return explicitCall(frame, nativeCallInfo, args);
-            } else {
-                return dispatch(frame, nativeCallInfo, materializeArgs(args.getArguments()));
-            }
-        }
-
-        /**
-         * {@code .NAME = string}, no package specified.
-         */
-        @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
-                        @Cached("createRegisteredNativeSymbol(CallNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
-            return callNamedFunctionWithPackage(frame, symbol, args, null, rns, findSymbolNode, registeredProfile);
-        }
-
-        /**
-         * {@code .NAME = string, .PACKAGE = package}. An error if package provided and it does not
-         * define that symbol.
-         */
-        @Specialization
-        protected Object callNamedFunctionWithPackage(VirtualFrame frame, String symbol, RArgsValuesAndNames args, String packageName,
-                        @Cached("createRegisteredNativeSymbol(CallNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
-            DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
-            if (func == DLL.SYMBOL_NOT_FOUND) {
-                throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
-            }
-            if (registeredProfile.profile(isRegisteredRFunction(func))) {
-                return explicitCall(frame, func, args);
-            } else {
-                return dispatch(frame, new NativeCallInfo(symbol, func, rns.getDllInfo()), materializeArgs(args.getArguments()));
-            }
-        }
-
-        @Specialization
-        protected Object callExternalPtrFunction(VirtualFrame frame, RExternalPtr symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
-            if (registeredProfile.profile(isRegisteredRFunction(symbol))) {
-                return explicitCall(frame, symbol, args);
-            } else {
-                return dispatch(frame, new NativeCallInfo("", symbol.getAddr(), null), materializeArgs(args.getArguments()));
-            }
-        }
-
-        @SuppressWarnings("unused")
-        @Fallback
-        protected Object dotCallFallback(Object symbol, Object args, Object packageName) {
-            throw fallback(this, symbol);
-        }
     }
 
-    /**
-     * The interpretation of the {@code .NAME} and {code .PACKAGE} arguments as are for
-     * {@link DotCall}.
-     */
     @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = RBehavior.COMPLEX)
     public abstract static class DotExternal extends Dot {
 
         static {
-            Casts.noCasts(DotExternal.class);
+            applyCommonCasts(new Casts(DotExternal.class));
         }
 
         @Override
         @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RContext context, RList f) {
-            String name = lookupName(f);
-            if (context.getOption(UseInternalGridGraphics)) {
+        public final RExternalBuiltinNode lookupBuiltin(String name) {
+            if (getContext().getOption(UseInternalGridGraphics)) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal(name);
                 if (gridExternal != null) {
                     return gridExternal;
@@ -770,7 +858,7 @@ public class CallAndExternalFunctions {
                 case "download":
                     return DownloadNodeGen.create();
                 case "termsform":
-                    return getExternalModelBuiltinNode(context, "termsform");
+                    return getExternalModelBuiltinNode(getContext(), "termsform");
                 case "Rprof":
                     return RprofNodeGen.create();
                 case "Rprofmem":
@@ -795,75 +883,28 @@ public class CallAndExternalFunctions {
             }
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @Cached("symbol") RList cached,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
-                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin) {
-            return builtin.call(frame, args);
+        @Override
+        protected final String getDotBuiltinName() {
+            return "External";
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached.symbol == symbol", "builtin == null"})
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
-                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin,
-                        @Cached("new(symbol)") CallNamedFunctionNode cached,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
-            if (registeredProfile.profile(isRegisteredRFunction(cached.nativeCallInfo))) {
-                return explicitCall(frame, cached.nativeCallInfo, args);
-            } else {
-                Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
-                return dispatch(frame, cached.nativeCallInfo, new Object[]{list});
-            }
+        @Override
+        protected NativeSymbolType getNativeSymbolType() {
+            return NativeSymbolType.External;
         }
 
-        public static class CallNamedFunctionNode extends Node {
-            public final RList symbol;
-            public final NativeCallInfo nativeCallInfo;
-
-            public CallNamedFunctionNode(RList symbol) {
-                this.symbol = symbol;
-                this.nativeCallInfo = new ExtractNativeCallInfoNode().execute(symbol);
-            }
-
-        }
-
-        @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
-                        @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
-            return callNamedFunctionWithPackage(frame, symbol, args, null, rns, findSymbolNode, registeredProfile);
-        }
-
-        @Specialization
-        protected Object callNamedFunctionWithPackage(VirtualFrame frame, String symbol, RArgsValuesAndNames args, String packageName,
-                        @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
-                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
-            DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
-            if (func == DLL.SYMBOL_NOT_FOUND) {
-                throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External", packageName);
-            }
-            if (registeredProfile.profile(isRegisteredRFunction(func))) {
-                return explicitCall(frame, func, args);
-            } else {
-                Object list = encodeArgumentPairList(args, symbol);
-                return dispatch(frame, new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
-            }
-        }
-
-        @Fallback
-        protected Object fallback(Object f, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
-            throw fallback(this, f);
+        @Override
+        protected final Object dispatch(VirtualFrame frame, Object originalHandle, RArgsValuesAndNames args, NativeCallInfo nativeCallInfo) {
+            Object list = encodeArgumentPairList(args, originalHandle);
+            return dispatch(frame, nativeCallInfo, new Object[]{list});
         }
     }
 
     @RBuiltin(name = ".External2", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternal2 extends Dot {
         private static final Object CALL = "call";
+
+        // AST sharing TODO: this is a runtime object cached in AST
         /**
          * This argument for the native function should be SPECIALSXP reprenting the .External2
          * builtin. In GnuR SPECIALSXP is index into the table of builtins. External2 and External
@@ -875,7 +916,7 @@ public class CallAndExternalFunctions {
         @CompilationFinal private Object op = null;
 
         static {
-            Casts.noCasts(DotExternal2.class);
+            applyCommonCasts(new Casts(DotExternal2.class));
         }
 
         private Object getOp() {
@@ -887,10 +928,26 @@ public class CallAndExternalFunctions {
         }
 
         @Override
+        protected final String getDotBuiltinName() {
+            return "External2";
+        }
+
+        @Override
+        protected NativeSymbolType getNativeSymbolType() {
+            return NativeSymbolType.External;
+        }
+
+        @Override
+        protected final Object dispatch(VirtualFrame frame, Object originalHandle, RArgsValuesAndNames args, NativeCallInfo nativeCallInfo) {
+            Object list = encodeArgumentPairList(args, originalHandle);
+            REnvironment rho = REnvironment.frameToEnvironment(frame.materialize());
+            return dispatch(frame, nativeCallInfo, new Object[]{CALL, getOp(), list, rho});
+        }
+
+        @Override
         @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RContext context, RList symbol) {
-            String name = lookupName(symbol);
-            if (context.getOption(UseInternalGridGraphics)) {
+        public final RExternalBuiltinNode lookupBuiltin(String name) {
+            if (getContext().getOption(UseInternalGridGraphics)) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal2(name);
                 if (gridExternal != null) {
                     return gridExternal;
@@ -906,7 +963,7 @@ public class CallAndExternalFunctions {
                     return C_ParseRdNodeGen.create();
                 case "modelmatrix":
                 case "modelframe":
-                    return getExternalModelBuiltinNode(context, name);
+                    return getExternalModelBuiltinNode(getContext(), name);
                 case "zeroin2":
                     return Zeroin2.create();
 
@@ -918,214 +975,64 @@ public class CallAndExternalFunctions {
                     return null;
             }
         }
-
-        @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @Cached("symbol") RList cached,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
-                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin) {
-            return builtin.call(frame, args);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached.symbol == symbol", "builtin == null"})
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
-                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin,
-                        @Cached("new(symbol)") CallNamedFunctionNode cached) {
-            Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
-            REnvironment rho = REnvironment.frameToEnvironment(frame.materialize());
-            return dispatch(frame, cached.nativeCallInfo, new Object[]{CALL, getOp(), list, rho});
-        }
-
-        @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
-                        @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            return callNamedFunctionWithPackage(frame, symbol, args, null, rns, findSymbolNode);
-        }
-
-        @Specialization
-        protected Object callNamedFunctionWithPackage(VirtualFrame frame, String symbol, RArgsValuesAndNames args, String packageName,
-                        @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
-            if (func == DLL.SYMBOL_NOT_FOUND) {
-                throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External2", packageName);
-            }
-            Object list = encodeArgumentPairList(args, symbol);
-            REnvironment rho = REnvironment.frameToEnvironment(frame.materialize());
-            return dispatch(frame, new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, getOp(), list, rho});
-        }
-
-        @Fallback
-        protected Object fallback(Object f, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
-            throw fallback(this, f);
-        }
-    }
-
-    private abstract static class Dot extends LookupAdapter {
-        @Child private InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
-        @Child private RExplicitCallNode explicitCall;
-
-        protected Object dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
-            return callRFFINode.dispatch(frame, nativeCallInfo, args);
-        }
-
-        protected Object explicitCall(VirtualFrame frame, NativeCallInfo nativeCallInfo, RArgsValuesAndNames args) {
-            return explicitCall(frame, nativeCallInfo.address, args);
-        }
-
-        protected Object explicitCall(VirtualFrame frame, RExternalPtr ptr, RArgsValuesAndNames args) {
-            return explicitCall(frame, ptr.getAddr(), args);
-        }
-
-        protected Object explicitCall(VirtualFrame frame, SymbolHandle symbolHandle, RArgsValuesAndNames args) {
-            if (explicitCall == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                explicitCall = insert(RExplicitCallNode.create());
-            }
-            RFunction function = (RFunction) symbolHandle.asTruffleObject();
-            return explicitCall.call(frame, function, args);
-        }
-
-        protected boolean isRegisteredRFunction(NativeCallInfo nativeCallInfo) {
-            return isRegisteredRFunction(nativeCallInfo.address);
-        }
-
-        protected boolean isRegisteredRFunction(RExternalPtr ptr) {
-            DLL.SymbolHandle addr = ptr.getAddr();
-            return !addr.isLong() && addr.asTruffleObject() instanceof RFunction;
-        }
-
-        protected static boolean isRegisteredRFunction(SymbolHandle handle) {
-            return !handle.isLong() && handle.asTruffleObject() instanceof RFunction;
-        }
     }
 
     @RBuiltin(name = ".External.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotExternalGraphics extends LookupAdapter {
-
-        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
-
+    public abstract static class DotExternalGraphics extends Dot {
         static {
-            Casts.noCasts(DotExternalGraphics.class);
+            applyCommonCasts(new Casts(DotExternalGraphics.class));
         }
 
         @Override
-        @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RContext ctx, RList f) {
-            return null;
+        protected final Object dispatch(VirtualFrame frame, Object originalHandle, RArgsValuesAndNames args, NativeCallInfo nativeCallInfo) {
+            Object list = encodeArgumentPairList(args, originalHandle);
+            return dispatch(frame, nativeCallInfo, new Object[]{list});
         }
 
-        @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName,
-                        @Cached("f") RList cached,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
-                        @Cached("lookupBuiltin(ctxRef.get(), f)") RExternalBuiltinNode builtin) {
-            return builtin.call(frame, args);
+        @Override
+        protected NativeSymbolType getNativeSymbolType() {
+            return NativeSymbolType.External;
         }
 
-        @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
-                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
-            Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return callRFFINode.dispatch(frame, nativeCallInfo, new Object[]{list});
-        }
-
-        @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            return callNamedFunctionWithPackage(frame, name, args, null, findSymbolNode);
-        }
-
-        @Specialization
-        protected Object callNamedFunctionWithPackage(VirtualFrame frame, String name, RArgsValuesAndNames args, String packageName,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
-            DLL.SymbolHandle func = findSymbolNode.execute(name, packageName, rns);
-            if (func == DLL.SYMBOL_NOT_FOUND) {
-                throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
-            }
-            Object list = encodeArgumentPairList(args, name);
-            return callRFFINode.dispatch(frame, new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
-        }
-
-        @Fallback
-        protected Object fallback(Object f, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
-            throw fallback(this, f);
+        @Override
+        protected final RuntimeException symbolNotFoundError(String symbol, String packageName) {
+            throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
         }
     }
 
     @RBuiltin(name = ".Call.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotCallGraphics extends LookupAdapter {
-
-        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
-
+    public abstract static class DotCallGraphics extends Dot {
         static {
-            Casts.noCasts(DotCallGraphics.class);
+            applyCommonCasts(new Casts(DotCallGraphics.class));
         }
 
         @Override
-        public Object[] getDefaultParameterValues() {
+        public final Object[] getDefaultParameterValues() {
             return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY, RMissing.instance};
         }
 
         @Override
-        @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RContext ctx, RList f) {
-            if (ctx.getOption(UseInternalGridGraphics)) {
-                return FastRGridExternalLookup.lookupDotCallGraphics(lookupName(f));
+        protected final Object dispatch(VirtualFrame frame, Object originalHandle, RArgsValuesAndNames args, NativeCallInfo nativeCallInfo) {
+            return dispatch(frame, nativeCallInfo, args.getArguments());
+        }
+
+        @Override
+        protected NativeSymbolType getNativeSymbolType() {
+            return NativeSymbolType.Call;
+        }
+
+        @Override
+        protected final RuntimeException symbolNotFoundError(String symbol, String packageName) {
+            throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
+        }
+
+        @Override
+        public final RExternalBuiltinNode lookupBuiltin(String name) {
+            if (getContext().getOption(UseInternalGridGraphics)) {
+                return FastRGridExternalLookup.lookupDotCallGraphics(name);
             } else {
                 return null;
             }
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached == f", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList f, RArgsValuesAndNames args, RMissing packageName,
-                        @Cached("f") RList cached,
-                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
-                        @Cached("lookupBuiltin(ctxRef.get(), f)") RExternalBuiltinNode builtin) {
-            return builtin.call(frame, args);
-        }
-
-        @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
-                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
-            NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
-            return callRFFINode.dispatch(frame, nativeCallInfo, args.getArguments());
-        }
-
-        @Specialization
-        protected Object callNamedFunction(VirtualFrame frame, String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            return callNamedFunctionWithPackage(frame, name, args, null, findSymbolNode);
-        }
-
-        @Specialization
-        protected Object callNamedFunctionWithPackage(VirtualFrame frame, String name, RArgsValuesAndNames args, String packageName,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Call, null, null);
-            DLL.SymbolHandle func = findSymbol(name, packageName, findSymbolNode, rns);
-            return callRFFINode.dispatch(frame, new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
-        }
-
-        @TruffleBoundary
-        private DLL.SymbolHandle findSymbol(String name, String packageName, DLL.RFindSymbolNode findSymbolNode, DLL.RegisteredNativeSymbol rns) {
-            DLL.SymbolHandle func = findSymbolNode.execute(name, packageName, rns);
-            if (func == DLL.SYMBOL_NOT_FOUND) {
-                throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
-            }
-            return func;
-        }
-
-        @Fallback
-        protected Object dotCallFallback(Object fobj, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
-            throw fallback(this, fobj);
         }
     }
 }

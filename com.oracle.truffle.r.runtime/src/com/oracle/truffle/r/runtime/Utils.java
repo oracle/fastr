@@ -44,6 +44,9 @@ import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -303,25 +306,44 @@ public final class Utils {
         return sb.toString();
     }
 
+    public static void printDebugInfo(StringBuilder sb, Object arg) {
+        printDebugInfo(sb, arg, "");
+    }
+
     /**
      * @see #getDebugInfo(Object)
      */
-    public static void printDebugInfo(StringBuilder sb, Object arg) {
+    public static void printDebugInfo(StringBuilder sb, Object arg, String additional) {
+        if (arg == null) {
+            sb.append("[null]");
+            return;
+        }
+        sb.append(arg.getClass().getSimpleName()).append('(').append("hash:").append(Long.toHexString(arg.hashCode()));
         if (arg instanceof RSymbol) {
-            sb.append("\"").append(arg.toString()).append("\"");
+            sb.append(";\"").append(arg.toString()).append("\"");
         } else if (arg instanceof RAbstractVector) {
             RAbstractVector vec = (RAbstractVector) arg;
             if (vec.getLength() == 0) {
-                sb.append("empty");
+                sb.append(";empty");
             } else {
-                sb.append("len:").append(vec.getLength()).append(";data:");
+                sb.append(";len:").append(vec.getLength()).append(";data:");
                 for (int i = 0; i < Math.min(3, vec.getLength()); i++) {
                     String str = ((RAbstractVector) arg).getDataAtAsObject(0).toString();
                     str = str.length() > 30 ? str.substring(0, 27) + "..." : str;
                     sb.append(',').append(str);
                 }
             }
+        } else if (arg instanceof TruffleObject) {
+            InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+            if (interop.isPointer(arg)) {
+                try {
+                    sb.append(";ptr:").append(Long.toHexString(interop.asPointer(arg)));
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            }
         }
+        sb.append(additional).append(')');
     }
 
     /**

@@ -189,7 +189,9 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
     @ExportMessage
     public void toNative(@Cached DispatchAllocate dispatchAllocate) {
-        pointer = dispatchAllocate.execute(vector);
+        if (pointer == 0) {
+            pointer = dispatchAllocate.execute(vector);
+        }
     }
 
     // Following two messages are used in our Sulong specific C code

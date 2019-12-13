@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.DisplayList.LGetDisplayListElement;
 import com.oracle.truffle.r.library.fastrGrid.DisplayList.LInitDisplayList;
 import com.oracle.truffle.r.library.fastrGrid.DisplayList.LSetDisplayListOn;
@@ -210,6 +211,7 @@ public final class FastRGridExternalLookup {
         state.setDisplayList(val == RNull.instance ? RDataFactory.createList() : (RList) val);
     }
 
+    @TruffleBoundary
     public static RExternalBuiltinNode lookupDotCallGraphics(String name) {
         switch (name) {
             case "gridDirty":

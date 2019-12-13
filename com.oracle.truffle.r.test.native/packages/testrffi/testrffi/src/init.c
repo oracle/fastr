@@ -25,11 +25,19 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 #include "testrffi.h"
+#include "rapi_helpers.h"
 #include "rffiwrappers.h"
 
 static const R_CMethodDef CEntries[]  = {
+    {"rapi_dotC", (DL_FUNC) &rapi_dotC, 3},
     {"dotCModifiedArguments", (DL_FUNC) &dotCModifiedArguments, 5},
     {"benchRf_isNull", (DL_FUNC) &benchRf_isNull, 1},
+    {NULL, NULL, 0}
+};
+
+static const R_ExternalMethodDef ExternalEntries[]  = {
+    {"rapi_dotExternal", (DL_FUNC) &rapi_dotExternal, 3},
+    {"rapi_dotExternal2", (DL_FUNC) &rapi_dotExternal2, 3},
     {NULL, NULL, 0}
 };
 
@@ -109,6 +117,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(benchMultipleUpcalls, 1),
         CALLDEF(benchProtect, 2),
         CALLDEF(test_lapplyWithForceAndCall, 4),
+        CALLDEF(rapi_dotCall, 2),
         #include "init_api.h"
         {NULL, NULL, 0}
 };
@@ -116,5 +125,5 @@ static const R_CallMethodDef CallEntries[] = {
 void
 R_init_testrffi(DllInfo *dll)
 {
-    R_registerRoutines(dll, CEntries, CallEntries, NULL, NULL);
+    R_registerRoutines(dll, CEntries, CallEntries, NULL, ExternalEntries);
 }
