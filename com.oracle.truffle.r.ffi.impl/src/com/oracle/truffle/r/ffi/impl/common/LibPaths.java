@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.common;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RPlatform;
@@ -38,7 +35,7 @@ public class LibPaths {
      */
     @TruffleBoundary
     public static String getBuiltinLibPath(RContext context) {
-        return FileSystems.getDefault().getPath(REnvVars.rHome(context), "lib").toString();
+        return REnvVars.getRHomeTruffleFile(context).resolve("lib").toString();
     }
 
     /**
@@ -47,10 +44,8 @@ public class LibPaths {
      */
     @TruffleBoundary
     public static String getBuiltinLibPath(RContext context, String libName) {
-        String rHome = REnvVars.rHome(context);
         OSInfo osInfo = RPlatform.getOSInfo();
-        Path path = FileSystems.getDefault().getPath(rHome, "lib", "lib" + libName + "." + osInfo.libExt);
-        return path.toString();
+        return REnvVars.getRHomeTruffleFile(context).resolve("lib").resolve("lib" + libName + "." + osInfo.libExt).toString();
     }
 
     /**
@@ -59,9 +54,6 @@ public class LibPaths {
      */
     @TruffleBoundary
     public static String getPackageLibPath(RContext context, String name) {
-        String rHome = REnvVars.rHome(context);
-        String packageDir = "library";
-        Path path = FileSystems.getDefault().getPath(rHome, packageDir, name, "libs", name + ".so");
-        return path.toString();
+        return REnvVars.getRHomeTruffleFile(context).resolve("library").resolve(name).resolve("libs").resolve(name + ".so").toString();
     }
 }

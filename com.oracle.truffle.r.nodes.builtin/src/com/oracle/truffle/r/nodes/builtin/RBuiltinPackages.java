@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,6 +30,7 @@ import java.util.Map;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -65,13 +64,14 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 public final class RBuiltinPackages implements RBuiltinLookup {
 
     private static final RBuiltinPackages instance = new RBuiltinPackages();
-    private static final RBuiltinPackage basePackage = new BasePackage();
+    private static RBuiltinPackage basePackage;
 
     public static RBuiltinPackages getInstance() {
         return instance;
     }
 
     public static void loadBase(RContext context, MaterializedFrame baseFrame) {
+        basePackage = new BasePackage(context);
         RBuiltinPackage pkg = basePackage;
         REnvironment baseEnv = REnvironment.baseEnv();
         BaseVariables.initialize(baseEnv, context);
@@ -94,8 +94,8 @@ public final class RBuiltinPackages implements RBuiltinLookup {
             }
         }
         // Now "load" the package
-        Path baseDirPath = FileSystems.getDefault().getPath(REnvVars.rHome(context), "library", "base");
-        Path basePathbase = baseDirPath.resolve("R").resolve("base");
+        TruffleFile baseDirPath = REnvVars.getRHomeTruffleFile(context).resolve("library").resolve("base");
+        TruffleFile basePathbase = baseDirPath.resolve("R").resolve("base");
         Source baseSource = null;
         try {
             baseSource = RSource.fromFileName(context, basePathbase.toString(), true);
@@ -128,8 +128,8 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         pkg.loadOverrides(baseFrame);
     }
 
-    public static void loadDefaultPackageOverrides(String pkgName) {
-        ArrayList<Source> componentList = RBuiltinPackage.getRFiles(pkgName);
+    public static void loadDefaultPackageOverrides(RContext context) {
+        ArrayList<Source> componentList = RBuiltinPackage.getRFiles(context, context.getNamespaceName());
         if (componentList.size() > 0) {
             /*
              * Only the overriding code can know which environment to update, package or namespace.
@@ -188,6 +188,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     @Override
     public RBuiltinFactory lookupBuiltinDescriptor(String name) {
         CompilerAsserts.neverPartOfCompilation();
+        assert basePackage != null;
         return basePackage.lookupByName(name);
     }
 
@@ -198,6 +199,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
      */
     @Override
     public boolean isPrimitiveBuiltin(String name) {
+        assert basePackage != null;
         RBuiltinPackage pkg = basePackage;
         RBuiltinDescriptor rbf = pkg.lookupByName(name);
         return rbf != null && rbf.getKind() != RBuiltinKind.INTERNAL;

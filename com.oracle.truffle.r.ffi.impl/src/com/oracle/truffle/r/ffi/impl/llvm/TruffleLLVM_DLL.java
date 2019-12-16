@@ -23,8 +23,6 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -168,21 +166,23 @@ public class TruffleLLVM_DLL implements DLLRFFI {
 
     // Method used only for internal debugging, not run by default
     // To be adjusted to the fact that we load bitcode embedded in native libraries
-    @SuppressWarnings("unused")
-    private static void disassemble(TruffleFile llFile, byte[] ir) {
-        try {
-            ProcessBuilder pb = new ProcessBuilder("llvm-dis");
-            pb.redirectOutput(Paths.get(llFile.getAbsoluteFile().getPath()).toFile());
-            Process p = pb.start();
-            OutputStream is = p.getOutputStream();
-            is.write(ir);
-            is.close();
-            int rc = p.waitFor();
-            if (rc != 0) {
-                System.err.printf("Warning: LLVM disassembler exited with status %d. Target file %s\n", rc, llFile);
-            }
-        } catch (Exception e) {
-            throw RInternalError.shouldNotReachHere(e);
-        }
-    }
+    // @SuppressWarnings("unused")
+    // private static void disassemble(TruffleFile llFile, byte[] ir) {
+    // try {
+    // ProcessBuilder pb = new ProcessBuilder("llvm-dis");
+    // File toFile = Paths.get(llFile.getAbsoluteFile().getPath()).toFile();
+    // pb.redirectOutput(toFile);
+    // Process p = pb.start();
+    // OutputStream is = p.getOutputStream();
+    // is.write(ir);
+    // is.close();
+    // int rc = p.waitFor();
+    // if (rc != 0) {
+    // System.err.printf("Warning: LLVM disassembler exited with status %d. Target file %s\n", rc,
+    // llFile);
+    // }
+    // } catch (Exception e) {
+    // throw RInternalError.shouldNotReachHere(e);
+    // }
+    // }
 }

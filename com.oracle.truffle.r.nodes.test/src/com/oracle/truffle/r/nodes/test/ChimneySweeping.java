@@ -227,7 +227,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     @Override
     SingleBuiltinDiagnostics init() throws Throwable {
         super.init();
-        try (FastRContext context = diagSuite.fastRSession.createContext(ContextKind.SHARE_PARENT_RW)) {
+        try (FastRContext context = diagSuite.fastRSession.createContext(ContextKind.SHARE_NOTHING)) {
             execInContext(context, () -> {
                 this.castNodes = builtinFactory.getCastNodes();
                 print(0, "\n*** Chimney-sweeping of '" + builtinName + "' (" + builtinFactory.getBuiltinMetaClass().getName() + ") ***");

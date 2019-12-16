@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,11 @@ import java.util.Map.Entry;
 import org.junit.Test;
 
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import com.oracle.truffle.r.test.generate.FastRContext;
 
 /**
  * Base class for all Java test suites (in the sense of JUnit Java files) that want to run R tests
@@ -47,6 +52,8 @@ import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
  */
 public class TestRBase extends TestBase {
 
+    private static FastRContext context;
+
     /*
      * Each test suite that wants to run R tests from R sources needs to override this method.
      */
@@ -54,33 +61,48 @@ public class TestRBase extends TestBase {
         return null;
     }
 
+    @BeforeClass
+    public static void setupClass() {
+        FastRSession session = FastRSession.create();
+        context = session.createContext(RContext.ContextKind.SHARE_NOTHING);
+    }
+
+    @AfterClass
+    public static void finishClass() {
+        context.close();
+    }
+
     @Test
     public void runRSourceTests() {
-        String testDirName = getTestDir();
-        if (testDirName == null) {
-            return;
-        }
-        Map<String, String> rFiles = ResourceHandlerFactory.getHandler().getRFiles(this.getClass(), testDirName);
-        for (Entry<String, String> entry : rFiles.entrySet()) {
-            String entryName = entry.getKey();
-            String entryValue = entry.getValue();
-            explicitTestContext = entryName;
-            String[] lines = entryValue.split("\n");
-            TestTrait testTrait = getTestTrait(lines);
-            try {
-                Path dir = TestBase.createTestDir(testDirName);
-                Path p = dir.resolve(Paths.get(entryName).getFileName());
-                Files.write(p, entryValue.getBytes());
-                if (testTrait == null) {
-                    assertEval(30000, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
-                } else {
-                    assertEval(30000, testTrait, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
-                }
-            } catch (IOException ex) {
-                assert false;
+        FastRSession.execInContext(context, () -> {
+            String testDirName = getTestDir();
+            if (testDirName == null) {
+                return null;
             }
-            explicitTestContext = null;
-        }
+            Map<String, String> rFiles = ResourceHandlerFactory.getHandler().getRFiles(RContext.getInstance(), this.getClass(),
+                            testDirName);
+            for (Entry<String, String> entry : rFiles.entrySet()) {
+                String entryName = entry.getKey();
+                String entryValue = entry.getValue();
+                explicitTestContext = entryName;
+                String[] lines = entryValue.split("\n");
+                TestTrait testTrait = getTestTrait(lines);
+                try {
+                    Path dir = TestBase.createTestDir(testDirName);
+                    Path p = dir.resolve(Paths.get(entryName).getFileName());
+                    Files.write(p, entryValue.getBytes());
+                    if (testTrait == null) {
+                        assertEval(30000, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
+                    } else {
+                        assertEval(30000, testTrait, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
+                    }
+                } catch (IOException ex) {
+                    assert false;
+                }
+                explicitTestContext = null;
+            }
+            return null;
+        });
     }
 
     private static TestTrait getTestTrait(String[] lines) {

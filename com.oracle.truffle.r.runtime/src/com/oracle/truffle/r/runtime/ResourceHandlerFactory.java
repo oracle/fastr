@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.r.runtime.context.RContext;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
@@ -44,13 +45,13 @@ public abstract class ResourceHandlerFactory {
         /**
          * See {@link java.lang.Class#getResourceAsStream(String)}.
          */
-        InputStream getResourceAsStream(Class<?> accessor, String name);
+        InputStream getResourceAsStream(RContext context, Class<?> accessor, String name);
 
         /**
          * Return the contents of all "R" files (ending with ".r" or ".R") relative to
          * {@code accessor} and {@code pkgname/R}. I.e. essentially a directory search.
          */
-        Map<String, String> getRFiles(Class<?> accessor, String pkgName);
+        Map<String, String> getRFiles(RContext context, Class<?> accessor, String pkgName);
     }
 
     static {

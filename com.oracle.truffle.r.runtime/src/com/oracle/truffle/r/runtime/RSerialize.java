@@ -29,8 +29,6 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -3035,9 +3033,10 @@ public class RSerialize {
             Object pathObj = ((REnvironment) namespaceEnv).get("path");
             if (pathObj instanceof RAbstractStringVector) {
                 String path = ((RAbstractStringVector) pathObj).getDataAt(0);
-                Path libLoc = Paths.get(path).getParent();
+                RContext context = RContext.getInstance();
+                TruffleFile libLoc = context.getSafeTruffleFile(path).getParent();
                 assert libLoc != null;
-                RContext.getInstance().libraryPaths.add(0, libLoc.toString());
+                context.libraryPaths.add(0, libLoc.toString());
                 return true;
             }
         }

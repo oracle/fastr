@@ -45,8 +45,13 @@ import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.TestBase.Ignored;
 import com.oracle.truffle.r.test.Utils;
+import com.oracle.truffle.r.test.generate.FastRContext;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import static com.oracle.truffle.r.test.generate.FastRSession.execInContext;
+import org.graalvm.polyglot.PolyglotException;
 
 /**
  * Utility to analyze builtins implemented in FastR vs. builtins available in GNU R. The GNU R
@@ -164,7 +169,8 @@ public final class RBuiltinCheck {
         }
 
         // Build the sets with gnur/fastr builtins and their intersection
-        final Map<String, BuiltinInfo> fastr = extractFastRBuiltins();
+        FastRSession fastRSession = FastRSession.create();
+        final Map<String, BuiltinInfo> fastr = extractFastrBuiltins(fastRSession);
         final Map<String, BuiltinInfo> gnur;
         try {
             gnur = extractGnuRBuiltins();
@@ -186,6 +192,15 @@ public final class RBuiltinCheck {
 
         // Print the results
         printOutput(suitePath, show, both, descriptorsDiff, fastrOnly, gnurOnly);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, BuiltinInfo> extractFastrBuiltins(FastRSession fastRSession) throws PolyglotException, IllegalStateException, ClassCastException {
+        try (FastRContext context = fastRSession.createContext(RContext.ContextKind.SHARE_NOTHING)) {
+            return execInContext(context, () -> {
+                return extractFastRBuiltins();
+            }).as(Map.class);
+        }
     }
 
     private static void printOutput(String suitePath, EnumSet<FilterOption> show, Set<String> both, Map<String, BuiltinTuple> descriptorsDiff, Set<String> fastrOnly, Set<String> gnurOnly) {
@@ -267,7 +282,7 @@ public final class RBuiltinCheck {
     }
 
     private static Map<String, BuiltinInfo> extractFastRBuiltins() {
-        BasePackage base = new BasePackage();
+        BasePackage base = new BasePackage(RContext.getInstance());
         Map<String, BuiltinInfo> result = new TreeMap<>();
         for (Map.Entry<String, RBuiltinFactory> builtin : base.getBuiltins().entrySet()) {
             Class<?> clazz = builtin.getValue().getBuiltinMetaClass();

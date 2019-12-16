@@ -208,7 +208,8 @@ public final class GridContext {
      */
     public Object evalInternalRFunction(String functionName, Object... args) {
         if (internalCode == null) {
-            internalCode = RInternalCode.lookup(RContext.getInstance(), "grid", RInternalCode.loadSourceRelativeTo(LInitGrid.class, "fastrGrid.R"));
+            RContext context = RContext.getInstance();
+            internalCode = RInternalCode.lookup(context, "grid", RInternalCode.loadSourceRelativeTo(context, LInitGrid.class, "fastrGrid.R"));
         }
         RFunction redrawAll = internalCode.lookupFunction(functionName);
         return RContext.getEngine().evalFunction(redrawAll, REnvironment.baseEnv().getFrame(), RCaller.topLevel, true, null, args);

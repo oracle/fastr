@@ -22,11 +22,10 @@
  */
 package com.oracle.truffle.r.ffi.impl.managed;
 
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -166,23 +165,24 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
 
         @SuppressWarnings("static-method")
         @ExportMessage
-        public Object execute(Object... args) {
+        public Object execute(Object[] args,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             NativeCharArray templateBytes = (NativeCharArray) args[0];
             String template = templateBytes.getString();
             if (!template.endsWith("XXXXXX")) {
                 throw new IllegalArgumentException("template must end with XXXXXX");
             }
             String templatePrefix = template.substring(0, template.length() - 6);
-            Path path = null;
+            TruffleFile dir = null;
             int counter = 0;
             boolean done = false;
             while (!done) {
                 try {
-                    path = Paths.get(templatePrefix + String.format("%06d", counter++));
-                    if (Files.exists(path)) {
+                    dir = ctxRef.get().getSafeTruffleFile(templatePrefix + String.format("%06d", counter++));
+                    if (dir.exists()) {
                         continue;
                     }
-                    Files.createDirectories(path, irwxuPermissions);
+                    dir.createDirectories(irwxuPermissions);
                     done = true;
                 } catch (FileAlreadyExistsException e) {
                     // nop
@@ -190,7 +190,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
                     throw RError.error(RError.NO_CALLER, Message.GENERIC, "Cannot create temp directories.");
                 }
             }
-            byte[] resultBytes = path.toString().getBytes();
+            byte[] resultBytes = dir.toString().getBytes();
             System.arraycopy(resultBytes, 0, templateBytes.getValue(), 0, Math.min(resultBytes.length, templateBytes.getValue().length));
             return 1;
         }
@@ -211,9 +211,10 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
 
         @SuppressWarnings("static-method")
         @ExportMessage
-        public Object execute(Object... args) {
+        public Object execute(Object[] args,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             NativeCharArray buffer = (NativeCharArray) args[0];
-            byte[] bytes = Paths.get(".").toAbsolutePath().normalize().toString().getBytes();
+            byte[] bytes = ctxRef.get().getSafeTruffleFile(".").getAbsoluteFile().normalize().toString().getBytes();
             System.arraycopy(bytes, 0, buffer.getValue(), 0, Math.min(bytes.length, buffer.getValue().length));
             return 1;
         }

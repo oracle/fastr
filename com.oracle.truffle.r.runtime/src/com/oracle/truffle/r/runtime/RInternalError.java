@@ -29,8 +29,6 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Date;
 
@@ -38,6 +36,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleException;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktraces;
@@ -219,11 +218,10 @@ public final class RInternalError extends Error implements TruffleException {
             // if ctx == null and we can't determine if stactrace should be logged, or not,
             // then at least print to file
             if (printErrorStacktracesToFile) {
-                Path logfile = Utils.getLogPath(ctx, getLogFileName(contextId));
+                TruffleFile logfile = Utils.getLogPath(ctx, getLogFileName(contextId));
                 if (logfile != null) {
                     message += " and the error log file '" + logfile + "'.";
-                    try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,
-                                    StandardOpenOption.CREATE)) {
+                    try (BufferedWriter writer = logfile.newBufferedWriter(StandardCharsets.UTF_8, StandardOpenOption.APPEND, StandardOpenOption.CREATE)) {
                         writer.append(new Date().toString()).append('\n');
                         writer.append(out.toString()).append('\n');
                         writer.append(verboseStackTrace).append("\n\n");

@@ -24,13 +24,7 @@ package com.oracle.truffle.r.runtime.context;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,10 +33,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RLogger;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 /**
@@ -71,53 +71,17 @@ public class PackagePatching {
     };
 
     @TruffleBoundary
-    public static void patchPackage(String path) {
+    public static void patchPackage(RContext context, String path) {
         if (System.getenv(NO_PATCHING_ENV_VAR) != null) {
             return;
         }
         AtomicBoolean error = new AtomicBoolean(false);
         List<String> messages = Collections.synchronizedList(new ArrayList<>());
-        Path source = Paths.get(path);
+        TruffleFile source = context.getSafeTruffleFile(path);
         log("Patching package %s", path);
+        FilePatch fp = new FilePatch();
         try {
-            Files.walk(source).filter(Files::isRegularFile).filter(PackagePatching::isSource).parallel().forEach(file -> {
-                try {
-                    boolean matchFound = false;
-                    log("Checking file for patches %s", file);
-                    try (BufferedReader reader = new BufferedReader(new FileReader(file.toFile()))) {
-                        String line;
-                        findMatch: while ((line = reader.readLine()) != null) {
-                            for (Patch patche : patches) {
-                                if (patche.find(line)) {
-                                    matchFound = true;
-                                    break findMatch;
-                                }
-                            }
-                        }
-                    }
-                    if (!matchFound) {
-                        log("No match found for patching in file %s", file);
-                        return;
-                    }
-                    List<String> lines = Files.readAllLines(file.toAbsolutePath());
-                    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file.toFile())))) {
-                        for (String l : lines) {
-                            String line = l;    // stylecheck
-                            for (Patch patch : patches) {
-                                if (patch.find(line)) {
-                                    String newLine = patch.replace(line);
-                                    messages.add(String.format("FastR patched file '%s': line '%s' was replaced with '%s'.", file.getFileName(), line, newLine));
-                                    line = newLine;
-                                }
-                            }
-                            writer.write(line);
-                            writer.newLine();
-                        }
-                    }
-                } catch (IOException e) {
-                    error.set(true);
-                }
-            });
+            FileSystemUtils.walkFileTree(source, fp);
         } catch (IOException e) {
             error.set(true);
         }
@@ -134,13 +98,84 @@ public class PackagePatching {
         }
     }
 
+    private static final class FilePatch implements FileVisitor<TruffleFile> {
+        private final AtomicBoolean error = new AtomicBoolean(false);
+        private final List<String> messages = Collections.synchronizedList(new ArrayList<>());
+
+        private FilePatch() {
+        }
+
+        @Override
+        public FileVisitResult visitFile(TruffleFile file, BasicFileAttributes attrs) throws IOException {
+            if (!isSource(file) || !file.exists()) {
+                return FileVisitResult.CONTINUE;
+            }
+            try {
+                boolean matchFound = false;
+                log("Checking file for patches %s", file);
+                try (BufferedReader reader = file.newBufferedReader()) {
+                    String line;
+                    findMatch: while ((line = reader.readLine()) != null) {
+                        for (Patch patche : patches) {
+                            if (patche.find(line)) {
+                                matchFound = true;
+                                break findMatch;
+                            }
+                        }
+                    }
+                }
+                if (!matchFound) {
+                    log("No match found for patching in file %s", file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                List<String> lines = Arrays.asList(new String(file.readAllBytes()).split("\n"));
+                try (BufferedWriter writer = file.newBufferedWriter()) {
+                    for (String l : lines) {
+                        String line = l;    // stylecheck
+                        for (Patch patch : patches) {
+                            if (patch.find(line)) {
+                                String newLine = patch.replace(line);
+                                messages.add(String.format("FastR patched file '%s': line '%s' was replaced with '%s'.", file.getName(), line, newLine));
+                                line = newLine;
+                            }
+                        }
+                        writer.write(line);
+                        writer.newLine();
+                    }
+                }
+            } catch (IOException e) {
+                error.set(true);
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult visitFileFailed(TruffleFile f, IOException exc) throws IOException {
+            throw exc;
+        }
+
+        @Override
+        public FileVisitResult postVisitDirectory(TruffleFile f, IOException exc) throws IOException {
+            if (exc != null) {
+                throw exc;
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        @Override
+        public FileVisitResult preVisitDirectory(TruffleFile dir, BasicFileAttributes attrs) throws IOException {
+            return FileVisitResult.CONTINUE;
+        }
+    }
+
     private static void log(String fmt, Object... args) {
         if (LOGGER.isLoggable(Level.FINE)) {
             LOGGER.log(Level.FINE, String.format(fmt, args));
         }
     }
 
-    private static boolean isSource(Path path) {
+    private static boolean isSource(TruffleFile path) {
         String sPath = path.toString().toLowerCase(Locale.ROOT);
         return sPath.endsWith(".c") || sPath.endsWith(".h") || sPath.endsWith(".cpp") || sPath.endsWith(".hpp") || sPath.endsWith(".cc");
     }

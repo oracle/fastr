@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -98,18 +99,19 @@ public class FortranAndCFunctions {
 
         @Override
         @TruffleBoundary
-        public RExternalBuiltinNode lookupBuiltin(RList symbol) {
+        public RExternalBuiltinNode lookupBuiltin(RContext ctx, RList symbol) {
             return null;
         }
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
         protected Object doFortran(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, @Cached("symbol") RList cached,
-                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef,
+                        @Cached("lookupBuiltin(ctxRef.get(), symbol)") RExternalBuiltinNode builtin) {
             return resNamesSetter.execute(builtin.call(frame, args), args);
         }
 
-        @Specialization(guards = "lookupBuiltin(symbol) == null")
+        @Specialization(guards = "lookupBuiltin(ctxRef.get(), symbol) == null")
         protected RList doFortran(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
                         @SuppressWarnings("unused") RMissing encoding,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,

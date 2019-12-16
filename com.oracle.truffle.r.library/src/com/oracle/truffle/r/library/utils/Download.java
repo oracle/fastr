@@ -33,11 +33,11 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -45,12 +45,18 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import java.io.OutputStream;
+import sun.net.www.protocol.ftp.FtpURLConnection;
 
 /**
  * Support for the "internal"method of "utils::download.file". TODO take note of "quiet", "mode" and
  * "cacheOK".
  */
 public abstract class Download extends RExternalBuiltinNode.Arg6 {
+
+    private static final int BUFFER_SIZE = 8192;
 
     static {
         Casts casts = new Casts(Download.class);
@@ -64,7 +70,8 @@ public abstract class Download extends RExternalBuiltinNode.Arg6 {
     @Specialization
     @TruffleBoundary
     protected int download(String urlString, String destFile, boolean quiet, @SuppressWarnings("unused") String mode, @SuppressWarnings("unused") boolean cacheOK,
-                    @SuppressWarnings("unused") Object headers) {
+                    @SuppressWarnings("unused") Object headers,
+                    @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         try {
             String urlStr = urlString;
             URLConnection con;
@@ -86,7 +93,16 @@ public abstract class Download extends RExternalBuiltinNode.Arg6 {
             }
 
             try (InputStream in = con.getInputStream()) {
-                long len = Files.copy(in, Paths.get(destFile), StandardCopyOption.REPLACE_EXISTING);
+
+                TruffleFile dest = ctxRef.get().getSafeTruffleFile(destFile);
+                OutputStream os = dest.newOutputStream();
+                long len = 0L;
+                byte[] buf = new byte[BUFFER_SIZE];
+                int n;
+                while ((n = in.read(buf)) > 0) {
+                    os.write(buf, 0, n);
+                    len += n;
+                }
                 if (!quiet) {
 
                     String contentType = null;
@@ -96,18 +112,26 @@ public abstract class Download extends RExternalBuiltinNode.Arg6 {
                     }
 
                     // Transcribed from GnuR, src/modules/internet/internet.c
-
-                    StdConnections.getStderr().writeString(String.format("Content type '%s'", contentType != null ? contentType : "unknown"), false);
-                    if (len > 1024 * 1024) {
-                        StdConnections.getStderr().writeString(String.format(" length %d bytes (%.1f MB)", len, len / 1024.0 / 1024.0), true);
-                    } else if (len > 10240) {
-                        StdConnections.getStderr().writeString(String.format(" length %d bytes (%d KB)", len, len / 1024), true);
-                    } else if (len >= 0) {
-                        StdConnections.getStderr().writeString(String.format(" length %d bytes", len), true);
-                    } else {
-                        StdConnections.getStderr().writeString(" length unknown", true);
+                    if (contentType != null) {
+                        StdConnections.getStderr().writeString(String.format("Content type '%s'", contentType), false);
+                        if (len > 1024 * 1024) {
+                            StdConnections.getStderr().writeString(String.format(" length %d bytes (%.1f MB)", len, len / 1024.0 / 1024.0), true);
+                        } else if (len > 10240) {
+                            StdConnections.getStderr().writeString(String.format(" length %d bytes (%d KB)", len, len / 1024), true);
+                        } else if (len >= 0) {
+                            StdConnections.getStderr().writeString(String.format(" length %d bytes", len), true);
+                        } else {
+                            StdConnections.getStderr().writeString(" length unknown", true);
+                        }
+                        StdConnections.getStderr().flush();
+                    } else if (con instanceof FtpURLConnection) {
+                        if (len >= 0) {
+                            StdConnections.getStderr().writeString(String.format(" ftp data connection made, file length %d bytes", len), true);
+                        } else {
+                            StdConnections.getStderr().writeString(String.format(" ftp data connection made, file length unknown", len), true);
+                        }
                     }
-                    StdConnections.getStderr().flush();
+
                 }
 
                 return 0;
@@ -153,8 +177,9 @@ public abstract class Download extends RExternalBuiltinNode.Arg6 {
         @Child private Download downloadBuiltin = DownloadNodeGen.create();
 
         @Specialization
-        protected int download(String urlString, String destFile, boolean quiet, String mode, boolean cacheOK, Object headers) {
-            return downloadBuiltin.download(urlString, destFile, quiet, mode, cacheOK, headers);
+        protected int download(String urlString, String destFile, boolean quiet, String mode, boolean cacheOK, Object headers,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            return downloadBuiltin.download(urlString, destFile, quiet, mode, cacheOK, headers, ctxRef);
         }
 
     }

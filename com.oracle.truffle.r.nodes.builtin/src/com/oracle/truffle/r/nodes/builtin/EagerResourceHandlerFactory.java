@@ -26,8 +26,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -38,6 +36,9 @@ import java.util.jar.JarFile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory.Handler;
+import com.oracle.truffle.r.runtime.context.RContext;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Implementation of {@link ResourceHandlerFactory} that pre-loads all the resources in its static
@@ -73,11 +74,10 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
     }
 
     @Override
-    public InputStream getResourceAsStream(Class<?> accessor, String name) {
+    public InputStream getResourceAsStream(RContext context, Class<?> accessor, String name) {
         // actual resource
-        Path fileNamePath = Paths.get(name).getFileName();
-        assert fileNamePath != null;
-        String fileName = fileNamePath.toString();
+        assert name != null;
+        String fileName = context.getSafeTruffleFile(name).getName().toString();
         FileInfo fileInfo = files.get(fileName);
         if (fileInfo == null || fileInfo.data == null) {
             return null;
@@ -121,7 +121,7 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
     }
 
     @Override
-    public Map<String, String> getRFiles(Class<?> accessor, String pkgName) {
+    public Map<String, String> getRFiles(RContext context, Class<?> accessor, String pkgName) {
         Map<String, String> result = new HashMap<>();
         for (Map.Entry<String, FileInfo> entry : files.entrySet()) {
             String url = entry.getValue().url.toString();

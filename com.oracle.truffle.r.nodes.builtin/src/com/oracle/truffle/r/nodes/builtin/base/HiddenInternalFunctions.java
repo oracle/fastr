@@ -248,7 +248,7 @@ public class HiddenInternalFunctions {
             }
             String dbPath = datafile.getDataAt(0);
             String packageName = context.getSafeTruffleFile(dbPath).getName();
-            byte[] dbData = RContext.getInstance().stateLazyDBCache.getData(dbPath);
+            byte[] dbData = RContext.getInstance().stateLazyDBCache.getData(context, dbPath);
             int dotIndex;
             if ((dotIndex = packageName.lastIndexOf('.')) > 0) {
                 packageName = packageName.substring(0, dotIndex);

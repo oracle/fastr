@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,24 +29,26 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = "contributors", visibility = OFF, kind = SUBSTITUTE, parameterNames = {}, behavior = IO)
 public abstract class Contributors extends RBuiltinNode.Arg0 {
 
-    private static final String CONTRIBUTORS = Utils.getResourceAsString(Contributors.class, "CONTRIBUTORS", true);
-
     @Specialization
     @TruffleBoundary
-    protected Object contributors() {
+    protected Object contributors(@CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         try {
-            StdConnections.getStdout().writeString(CONTRIBUTORS, true);
+            StdConnections.getStdout().writeString(Utils.getResourceAsString(ctxRef.get(), Contributors.class, "CONTRIBUTORS", true), true);
         } catch (IOException ex) {
             throw error(RError.Message.GENERIC, ex.getMessage());
         }

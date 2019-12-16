@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -49,7 +50,8 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 interface Lookup {
-    RExternalBuiltinNode lookupBuiltin(RList symbol);
+
+    RExternalBuiltinNode lookupBuiltin(RContext context, RList symbol);
 }
 
 /**
@@ -59,11 +61,11 @@ interface Lookup {
  * symbol, created when the package is loaded and stored in the namespace environment of the
  * package, that is a list-valued object. Evidently these "builtins" are somewhat similar to the
  * {@code .Primitive} and {@code .Internal} builtins and, similarly, most of these are
- * re-implemented in Java in FastR. The {@link Lookup#lookupBuiltin(RList)} method checks the name
- * in the list object and returns the {@link RExternalBuiltinNode} that implements the function, or
- * {@code null}. A {@code null} result implies that the builtin is not implemented in Java, but
- * called directly via the FFI interface, which is only possible for functions that use the FFI in a
- * way that FastR can handle.
+ * re-implemented in Java in FastR. The {@link Lookup#lookupBuiltin(RContext, RList)} method checks
+ * the name in the list object and returns the {@link RExternalBuiltinNode} that implements the
+ * function, or {@code null}. A {@code null} result implies that the builtin is not implemented in
+ * Java, but called directly via the FFI interface, which is only possible for functions that use
+ * the FFI in a way that FastR can handle.
  *
  * This class also handles the "lookup" of the {@link NativeCallInfo} data for builtins that are
  * still implemented by native code.
@@ -109,7 +111,7 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
         if (symbol instanceof RList) {
             name = lookupName((RList) symbol);
             name = Utils.fastPathIdentityEquals(name, UNKNOWN_EXTERNAL_BUILTIN) ? null : name;
-            if (name != null && lookup.lookupBuiltin((RList) symbol) != null) {
+            if (name != null && lookup.lookupBuiltin(RContext.getInstance(), (RList) symbol) != null) {
                 /*
                  * if we reach this point, then the cache saw a different value for f. the lists
                  * that contain the information about native calls are never expected to change.
@@ -151,8 +153,8 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
         }
     }
 
-    protected static RExternalBuiltinNode getExternalModelBuiltinNode(String name) {
-        return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(RandFunctionsNodes.class, "model.R"), name);
+    protected static RExternalBuiltinNode getExternalModelBuiltinNode(RContext context, String name) {
+        return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(context, RandFunctionsNodes.class, "model.R"), name);
     }
 
     protected static final int CallNST = DLL.NativeSymbolType.Call.ordinal();

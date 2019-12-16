@@ -27,9 +27,6 @@ import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -188,20 +185,20 @@ public class RSource {
      * {@link RSrcref#createSrcfile(RContext, TruffleFile, Set)}).
      */
     public static Source fromSrcfile(RContext context, REnvironment env) throws IOException {
-        Path filename = Paths.get(getPath(env, SrcrefFields.filename.name()));
-        if (filename.isAbsolute()) {
-            return fromFileName(context, filename.toString(), false);
+        TruffleFile file = context.getSafeTruffleFile(getPath(env, SrcrefFields.filename.name()));
+        if (file.isAbsolute()) {
+            return fromFileName(context, file.toString(), false);
         }
-        Path resolved = filename;
-        if (!filename.isAbsolute()) {
+        TruffleFile resolved = file;
+        if (!file.isAbsolute()) {
             for (String libPath : RContext.getInstance().libraryPaths) {
-                resolved = Paths.get(libPath).resolve(filename);
-                if (Files.exists(resolved)) {
+                resolved = context.getSafeTruffleFile(libPath).resolve(file.getPath());
+                if (resolved.exists()) {
                     break;
                 }
             }
         } else {
-            resolved = filename;
+            resolved = file;
         }
         return fromFileName(context, resolved.toString(), false);
     }

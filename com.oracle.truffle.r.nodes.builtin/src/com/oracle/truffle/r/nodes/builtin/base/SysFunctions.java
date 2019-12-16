@@ -37,8 +37,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.Map;
@@ -146,14 +144,14 @@ public class SysFunctions {
     private static final String NS_LOAD = "_R_NS_LOAD_";
     private static final String LOADNAMESPACE = "loadNamespace";
 
-    protected static void checkNSLoad(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values, boolean setting) {
+    protected static void checkNSLoad(RContext context, VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values, boolean setting) {
         if (names.getLength() == 1 && NS_LOAD.equals(names.getDataAt(0))) {
-            doCheckNSLoad(frame.materialize(), values, setting);
+            doCheckNSLoad(context, frame.materialize(), values, setting);
         }
     }
 
     @TruffleBoundary
-    private static void doCheckNSLoad(MaterializedFrame frame, RAbstractStringVector values, boolean setting) {
+    private static void doCheckNSLoad(RContext context, MaterializedFrame frame, RAbstractStringVector values, boolean setting) {
         RCaller caller = RArguments.getCall(frame);
         Frame callerFrame = Utils.getCallerFrame(caller, FrameAccess.READ_ONLY);
         RFunction func = RArguments.getFunction(callerFrame);
@@ -162,7 +160,7 @@ public class SysFunctions {
                 RContext.getInstance().setNamespaceName(values.getDataAt(0));
             } else {
                 // Now we can run the overrides
-                RBuiltinPackages.loadDefaultPackageOverrides(RContext.getInstance().getNamespaceName());
+                RBuiltinPackages.loadDefaultPackageOverrides(context);
             }
         }
     }
@@ -177,11 +175,12 @@ public class SysFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doSysSetEnv(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values) {
+        protected RLogicalVector doSysSetEnv(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             if (names.getLength() != values.getLength()) {
                 throw error(RError.Message.ARGUMENT_WRONG_LENGTH);
             }
-            checkNSLoad(frame, names, values, true);
+            checkNSLoad(ctxRef.get(), frame, names, values, true);
             return doSysSetEnv(names, values);
         }
 
@@ -206,8 +205,9 @@ public class SysFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doSysUnSetEnv(VirtualFrame frame, RAbstractStringVector names) {
-            checkNSLoad(frame, names, null, false);
+        protected RLogicalVector doSysUnSetEnv(VirtualFrame frame, RAbstractStringVector names,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
+            checkNSLoad(ctxRef.get(), frame, names, null, false);
             return doSysUnSetEnv(names);
         }
 
@@ -429,9 +429,10 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected byte sysSetFileTime(String path, int time) {
+        protected byte sysSetFileTime(String path, int time,
+                        @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             try {
-                Files.setLastModifiedTime(FileSystems.getDefault().getPath(path), FileTime.from(time, TimeUnit.SECONDS));
+                ctxRef.get().getSafeTruffleFile(path).setLastModifiedTime(FileTime.from(time, TimeUnit.SECONDS));
                 return RRuntime.LOGICAL_TRUE;
             } catch (IOException ex) {
                 return RRuntime.LOGICAL_FALSE;
