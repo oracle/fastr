@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -65,7 +66,7 @@ class EngineRootNode extends RootNode {
         this.sourceSection = sourceSection;
         this.bodyNode = bodyNode;
         this.executionFrame = executionFrame;
-        this.contextReference = context.getLanguage().getContextReference();
+        this.contextReference = lookupContextReference(TruffleRLanguage.class);
     }
 
     public static EngineRootNode createEngineRoot(REngine engine, RContext context, List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame,
@@ -85,10 +86,7 @@ class EngineRootNode extends RootNode {
             return r2Foreign.convert(this.bodyNode.execute(actualFrame));
         } catch (ReturnException ex) {
             return ex.getResult();
-        } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath e) {
-            CompilerDirectives.transferToInterpreter();
-            throw e;
-        } catch (RError e) {
+        } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath | RError e) {
             CompilerDirectives.transferToInterpreter();
             throw e;
         } catch (Throwable t) {
