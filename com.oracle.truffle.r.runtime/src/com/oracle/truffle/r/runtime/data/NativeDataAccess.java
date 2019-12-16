@@ -251,12 +251,14 @@ public final class NativeDataAccess {
             }
         }
 
+        @TruffleBoundary
         private void initMirror() {
             assert id == 0;
             this.id = counter.addAndGet(2);
             nativeMirrors.put(id, this);
         }
 
+        @TruffleBoundary
         private void initMirror(long address) {
             assert id == 0;
             assert address != 0;

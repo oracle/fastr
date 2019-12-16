@@ -97,10 +97,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
                 }
             }
 
-            if (fn.hasComplexInteraction()) {
-                return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(null, RFFIFactory.Type.NFI);
-            }
-            return 0;
+            return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(null, RFFIFactory.Type.NFI);
         }
 
         @TruffleBoundary
@@ -114,10 +111,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
         @Override
         @ExplodeLoop
         protected void afterCall(Object before, NativeFunction fn, TruffleObject target, Object[] args) {
-            if (fn.hasComplexInteraction()) {
-                (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI);
-            }
-
+            (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI);
             for (Object obj : args) {
                 // TODO: can this ever happen in NFI?
                 if (obj instanceof NativeArray<?>) {

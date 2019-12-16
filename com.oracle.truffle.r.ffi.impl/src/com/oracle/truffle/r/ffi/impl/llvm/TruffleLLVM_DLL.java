@@ -97,7 +97,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "Could not find function 'Rdynload_setSymbol' in libR on path: " + path);
         } finally {
-            if (!isInitialization && before != null) {
+            if (!isInitialization) {
                 stateRFFI.afterDowncall(before, Type.LLVM);
             }
         }
