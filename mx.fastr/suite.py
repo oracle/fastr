@@ -7,7 +7,8 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "35c554f45c6807f2fd12b0ca12fcf4cfbed07e29",
+               # The version must be the same as the version of Sulong
+               "version" : "d3e8095b1a0d931df80b971de338918e81b56d6f",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -17,7 +18,7 @@ suite = {
                "name" : "sulong",
                "subdir" : True,
                # The version must be the same as the version of Truffle
-               "version" : "8e10db696df9a99aa079e7951e37a2e414441d3b",
+               "version" : "d3e8095b1a0d931df80b971de338918e81b56d6f",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},

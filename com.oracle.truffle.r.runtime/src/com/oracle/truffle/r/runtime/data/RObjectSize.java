@@ -155,7 +155,7 @@ public class RObjectSize {
         if (obj instanceof RAttributable) {
             DynamicObject attrs = ((RAttributable) obj).getAttributes();
             if (attrs != null) {
-                attributesSize = OBJECT_HEADER_SIZE + attrs.size() * OBJECT_SIZE;
+                attributesSize = OBJECT_HEADER_SIZE + attrs.getShape().getPropertyCount() * OBJECT_SIZE;
             }
         }
         // Individual RBaseObjects:

@@ -93,7 +93,7 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
         }
         removeFixedPropertyNode.execute(attributes);
 
-        if (attributes.isEmpty()) {
+        if (attributes.getShape().getPropertyCount() == 0) {
             emptyAttrProfile.enter();
             x.initAttributes(null);
         }

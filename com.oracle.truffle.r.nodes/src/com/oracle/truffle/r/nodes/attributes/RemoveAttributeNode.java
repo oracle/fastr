@@ -53,7 +53,7 @@ public abstract class RemoveAttributeNode extends AttributeAccessNode {
 
         removePropertyNode.execute(attributes, name);
 
-        if (attributes.isEmpty()) {
+        if (attributes.getShape().getPropertyCount() == 0) {
             emptyAttrProfile.enter();
             x.initAttributes(null);
         }

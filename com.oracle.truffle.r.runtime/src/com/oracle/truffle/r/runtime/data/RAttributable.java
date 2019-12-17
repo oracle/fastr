@@ -103,7 +103,7 @@ public abstract class RAttributable extends RBaseObject {
         DynamicObject attrs = getAttributes();
         if (attrs != null) {
             attrs.delete(name);
-            if (attrs.isEmpty()) {
+            if (attrs.getShape().getPropertyCount() == 0) {
                 initAttributes(null);
             }
         }
@@ -163,7 +163,7 @@ public abstract class RAttributable extends RBaseObject {
     protected final void removeAttributeMapping(String key) {
         if (this.attributes != null) {
             this.attributes.delete(key);
-            if (this.attributes.size() == 0) {
+            if (this.attributes.getShape().getPropertyCount() == 0) {
                 this.attributes = null;
             }
         }

@@ -69,7 +69,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     protected static boolean emptyAttributes(RAttributable source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes == null || attributes.isEmpty();
+        return attributes == null || attributes.getShape().getPropertyCount() == 0;
     }
 
     @Specialization(guards = "emptyAttributes(source)", replaces = "copyNoAttributes")
@@ -79,7 +79,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     protected static final boolean onlyDimAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode dimAttrGetter) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(source) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && dimAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyDimAttribute(source, sizeOneProfile, dimAttrGetter)")
@@ -91,7 +91,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     protected static final boolean onlyNamesAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode namesAttrGetter) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(source) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && namesAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyNamesAttribute(source, sizeOneProfile, namesAttrGetter)")
@@ -103,7 +103,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
 
     protected static final boolean onlyClassAttribute(RAttributable source, ConditionProfile sizeOneProfile, GetFixedAttributeNode classAttrGetter) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(source) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.getShape().getPropertyCount() == 1) && classAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyClassAttribute(source, sizeOneProfile, classAttrGetter)")

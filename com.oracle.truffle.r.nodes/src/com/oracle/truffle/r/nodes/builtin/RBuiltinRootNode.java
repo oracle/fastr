@@ -79,6 +79,8 @@ public final class RBuiltinRootNode extends RRootNode {
     public RootCallTarget duplicateWithNewFrameDescriptor() {
         FrameDescriptor frameDescriptor = new FrameDescriptor();
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("builtin", frameDescriptor);
+        // getLanguage deprecation: we cannot remove this now, because the new API does not work
+        // with our unit tests
         return Truffle.getRuntime().createCallTarget(new RBuiltinRootNode(getLanguage(RContext.getTruffleRLanguage()), factory, frameDescriptor, getFastPath()));
     }
 

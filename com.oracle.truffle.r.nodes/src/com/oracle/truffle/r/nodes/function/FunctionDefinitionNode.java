@@ -190,6 +190,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     public TruffleRLanguage getRLanguage() {
+        // getLanguage deprecation: we cannot remove this now, because the new API does not work
+        // with our unit tests
         return getLanguage(RContext.getTruffleRLanguage());
     }
 

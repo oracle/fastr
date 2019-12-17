@@ -605,10 +605,10 @@ public class IsTypeFunctions {
 
         private boolean namesOnlyOrNoAttr(RAbstractVector x) {
             DynamicObject attributes = x.getAttributes();
-            if (attrNull.profile(attributes == null) || attrEmpty.profile(attributes.size() == 0)) {
+            if (attrNull.profile(attributes == null) || attrEmpty.profile(attributes.getShape().getPropertyCount() == 0)) {
                 return true;
             } else {
-                return attributes.size() == 1 && attrNames.profile(namesGetter.execute(x) != null);
+                return attributes.getShape().getPropertyCount() == 1 && attrNames.profile(namesGetter.execute(x) != null);
             }
         }
     }
