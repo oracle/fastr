@@ -368,7 +368,13 @@ public class RDeparse {
             String name = rootNode != null ? rootNode.getName() : null;
             String text = sb.toString();
             if (name != null && !name.isEmpty() && !name.equals("<no source>")) {
-                name = name.replace(RContext.getInstance().getEnv().getFileNameSeparator(), "_") + ".r";
+                // This code is invoked from "getSourceSection", where we may not have a context
+                // available to query for the "right" path separator. This happens, for example,
+                // when Truffle compiler is logging compilations and calls getSourceSection to
+                // provide additional info in the log. The only thing we need to do is to make sure
+                // this is a valid name for a file, so we replace any imaginable path separator with
+                // underscore
+                name = name.replace('/', '_').replace('\\', '_') + ".r";
             } else {
                 name = "unknown.r";
             }
