@@ -56,12 +56,14 @@ endif
 	$(MAKE) -f makefile.u -C ../../libdownloads/f2c/src/f2c CC=$(LABS_LLVM_CC)
 	mkdir -p ../../bin
 	cp ../../libdownloads/f2c/src/f2c/f2c ../../bin
+	mkdir -p ../../f2c/
+	cp -r ../../libdownloads/f2c/src/f2c ../../f2c/
 	
 	# make libf2c
 	$(MAKE) -C ../../libdownloads/f2c/src/libf2c CC=$(LABS_LLVM_CC)
 	mkdir -p ../../f2c
-	cp -r ../../libdownloads/f2c/src/libf2c ../../f2c/		
-endif # ifdef F2C_BINARY 
+	cp -r ../../libdownloads/f2c/src/libf2c ../../f2c/
+endif # ifdef F2C_BINARY
 	
 	mkdir -p ../../lib
 ifeq ($(OS_NAME),Darwin)
