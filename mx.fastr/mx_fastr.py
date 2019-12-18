@@ -754,7 +754,7 @@ def _pkgtest_args(args):
     else:
         pkgtest_args += ["--gnur-home"]
         pkgtest_args += [_gnur_path()]
-    mx.log(args)
+    mx.logv(args)
     full_args = pkgtest_args + list(args)
     mx.logv(full_args)
     return full_args

@@ -165,7 +165,7 @@ def check_r_versions():
 
 VERY_VERBOSE = logging.DEBUG - 5
 
-def parse_arguments(argv):
+def parse_arguments(argv, r_version_check=True):
     """
     Parses the given argument vector and stores the values of the arguments known by this script to appropriate globals.
     The unknown arguments are returned for further processing.
@@ -222,7 +222,8 @@ def parse_arguments(argv):
         logging.info("Using GraalVM at %r" % get_graalvm_home())
 
     # ensure that FastR and GnuR have the same version
-    check_r_versions()
+    if r_version_check:
+        check_r_versions()
 
     return r_args
 

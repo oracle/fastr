@@ -897,29 +897,42 @@ def pkgcache(args):
         --very-verbose, -V                  Very verbose output.
         --vm [fastr[,gnur]]                 Install and cache with FastR and/or GnuR.
         --quiet                             Reduce output during testing.
+        --print-api-checksum                Compute and print the API checksum for the specified VMs.
 
     Return codes:
         0: success
         1: fail
     '''
-    unknown_args = parse_arguments(args)
+    unknown_args = parse_arguments(args, r_version_check=False)
 
     parser = argparse.ArgumentParser(prog="pkgcache")
+    parser.add_argument('--vm', help='fastr|gnur', default=[])
+    parser.add_argument('--print-api-checksum', action="store_true", dest="print_api_checksum",
+                        help='Compute and print the API checksum for the specified VMs.')
     parser.add_argument('--cache-dir', metavar='DIR', dest="cache_dir", type=str, default=None,
-                        required=True, help='The package cache directory.')
-    parser.add_argument('--vm', help='fastr|gnur', default=None)
+                        help='The package cache directory.')
     parser.add_argument('--repos', metavar='REPO_NAME=URL', dest="repos", type=str, default=None,
                         help='Repos to install packages from.')
     parser.add_argument('--library', metavar='SPEC', type=str, default="",
                         help='The library folders to install to (must be specified for each used VM in form "<vm_name>=<dir>").')
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--pkg-filelist', metavar='FILE', dest="filelist", type=str, default=None,
+    pkg_spec_group = parser.add_mutually_exclusive_group()
+    pkg_spec_group.add_argument('--pkg-filelist', metavar='FILE', dest="filelist", type=str, default=None,
                         help='File contaning a list of files to install and cache.')
-    group.add_argument('--pkg-pattern', metavar='PATTERN', dest="pattern", type=str, default=None,
+    pkg_spec_group.add_argument('--pkg-pattern', metavar='PATTERN', dest="pattern", type=str, default=None,
                         help='Pattern of packages to install and cache.')
 
     from . import util
     _opts = parser.parse_args(args=unknown_args, namespace=util.get_opts())
+
+    if _opts.print_api_checksum:
+        if 'fastr' in _opts.vm:
+            print("fastr: " + str(computeApiChecksum(get_fastr_include_path())))
+        if 'gnur' in _opts.vm:
+            print("gnur: " + str(computeApiChecksum(get_gnur_include_path())))
+        return 0
+
+    # now do the version check
+    util.check_r_versions()
 
     install_args = ["--cache-pkgs", "dir={},ignore=base".format(_opts.cache_dir)]
     if _opts.filelist:
