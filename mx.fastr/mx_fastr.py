@@ -306,6 +306,8 @@ class FastRGateTags:
     cran_pkgs_test = 'cran_pkgs_test'
     cran_pkgs_test_check_last = 'cran_pkgs_test_check_last'
 
+    recommended_load = 'recommended_load'
+
     gc_torture1 = 'gc_torture1'
     gc_torture5 = 'gc_torture5'
 
@@ -335,7 +337,9 @@ def _fastr_gate_runner(args, tasks):
     '''
     with mx_gate.Task('ExtSoftVersions', tasks, tags=[mx_gate.Tags.always]) as t:
         if t:
-            rshell(['-q', '-e', 'extSoftVersion()'])
+            new_env = os.environ.copy()
+            new_env['R_DEFAULT_PACKAGES'] = 'base'
+            run_r(['-q', '-e', 'extSoftVersion()'], 'R', env = new_env)
 
     # ---------------------------------
     # Style checks:
@@ -365,6 +369,15 @@ def _fastr_gate_runner(args, tasks):
 
     # ----------------------------------
     # Package tests:
+
+    with mx_gate.Task('Recommended load test', tasks, tags=[FastRGateTags.recommended_load]) as t:
+        if t:
+            if not os.path.exists(os.path.join(_fastr_suite.dir, 'library', 'spatial')):
+                mx.abort('Recommended packages seem to be not installed in FastR. Did you forget to build with FASTR_RELEASE=true?')
+            # TODO: removed failing: "&& require(survival)", GR-20276
+            test_load = 'if (!(require(codetools) && require(MASS) && require(boot) && require(class) && require(cluster) && require(lattice) && require(nnet) && require(spatial) && require(Matrix) && require(KernSmooth) && require(foreign) && require(nlme) && require(rpart))) q(status=1)'
+            if run_r(['--vanilla', '-e', test_load], 'R', nonZeroIsFatal = False) != 0:
+                mx.abort("Loading of recommended packages failed")
 
     with mx_gate.Task('Internal pkg test', tasks, tags=[FastRGateTags.internal_pkgs_test]) as t:
         if t:
