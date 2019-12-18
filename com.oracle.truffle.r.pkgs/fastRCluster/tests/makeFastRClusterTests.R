@@ -41,10 +41,10 @@ checkArgs <- function(...) stopifnot(identical(makePSOCKCluster_mock_args, list(
 cl <- makeFastRCluster()
 stopifnot(cl == 42L)
 stopifnot(identical(c('fastRCluster', 'myClass'), class(cl)))
-checkArgs(1L, rscript=file.path(getGraalVMHome(), 'bin', 'Rscript'), rscript_args = c('--jvm'))
+checkArgs('localhost', rscript=file.path(getGraalVMHome(), 'bin', 'Rscript'), rscript_args = c('--jvm'))
 
 
 cl <- makeFastRCluster(3L, graalVMHome='mygvm', polyglot = T, fastROptions = c('--vm.Xmx1g'))
 stopifnot(cl == 42L)
 stopifnot(identical(c('fastRCluster', 'myClass'), class(cl)))
-checkArgs(3L, rscript=file.path('mygvm', 'bin', 'Rscript'), rscript_args = c('--jvm', '--polyglot', '--vm.Xmx1g'))
+checkArgs(c('localhost', 'localhost', 'localhost'), rscript=file.path('mygvm', 'bin', 'Rscript'), rscript_args = c('--jvm', '--polyglot', '--vm.Xmx1g'))

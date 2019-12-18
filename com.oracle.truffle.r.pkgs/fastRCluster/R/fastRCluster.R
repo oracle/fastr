@@ -144,6 +144,7 @@ services <- list2env(list(
 #' @param newPsockClusterFactory Replacement for parallel::makePSOCKcluster.
 #' @param newRunSystemCommand Replacement for base::sytem2.
 #' @param newDownloadFile Replacement for utils::download.file.
+#' @param validateGraalVMInstallation Turns on/off the validation of GraalVM home directory.
 #' @return invisible NULL
 #' @examples
 #' # to avoid downloading GraalVM when testing the function installFastR
@@ -290,25 +291,24 @@ makeFastRCluster <- function (names = 1L, graalVMHome = getGraalVMHome(), mode =
         if (is.na(names) || names < 1L)
             stop("numeric 'names' must be >= 1")
         names <- rep("localhost", names)
-
-        if (services$validateGraalVMInstallation && !dir.exists(graalVMHome)) {
-            if (graalVMHome == defaultGraalVMHome()) {
-                stop(sprintf(paste0("It seems that FastR was not installed yet. ",
-                    "Use installFastR() to install GraalVM and FastR to the default location '%s', ",
-                    "or set argument 'graalVMHome' to a directory that contains GraalVM and FastR installation. ",
-                    "See ?getGraalVMHome for more details."), defaultGraalVMHome()))
-            } else {
-                stop(sprintf(paste0("The GraalVM directory '%s' does not exist. ",
-                    "Use installFastR('%s') to install GraalVM and FastR to that directory."),
-                    graalVMHome, graalVMHome))
-            }
+    }
+    if (services$validateGraalVMInstallation && !dir.exists(graalVMHome)) {
+        if (graalVMHome == defaultGraalVMHome()) {
+            stop(sprintf(paste0("It seems that FastR was not installed yet. ",
+                                "Use installFastR() to install GraalVM and FastR to the default location '%s', ",
+                                "or set argument 'graalVMHome' to a directory that contains GraalVM and FastR installation. ",
+                                "See ?getGraalVMHome for more details."), defaultGraalVMHome()))
+        } else {
+            stop(sprintf(paste0("The GraalVM directory '%s' does not exist. ",
+                                "Use installFastR('%s') to install GraalVM and FastR to that directory."),
+                         graalVMHome, graalVMHome))
         }
-        if (services$validateGraalVMInstallation && !file.exists(file.path(graalVMHome, 'bin', 'gu'))) {
-            stop(sprintf("The GraalVM directory '%s' appears to be corrupt. You can remove it and use installFastR('%s') to re-install GraalVM and FastR.", graalVMHome, graalVMHome))
-        }
-        if (services$validateGraalVMInstallation && !file.exists(file.path(graalVMHome, 'bin', 'Rscript'))) {
-            stop(sprintf("The GraalVM installation '%s' does not contain FastR. Use installFastR('%s') to install FastR.", graalVMHome, graalVMHome))
-        }
+    }
+    if (services$validateGraalVMInstallation && !file.exists(file.path(graalVMHome, 'bin', 'gu'))) {
+        stop(sprintf("The GraalVM directory '%s' appears to be corrupt. You can remove it and use installFastR('%s') to re-install GraalVM and FastR.", graalVMHome, graalVMHome))
+    }
+    if (services$validateGraalVMInstallation && !file.exists(file.path(graalVMHome, 'bin', 'Rscript'))) {
+        stop(sprintf("The GraalVM installation '%s' does not contain FastR. Use installFastR('%s') to install FastR.", graalVMHome, graalVMHome))
     }
 
     if (any(c('--jvm', '--native') %in% fastROptions)) {
