@@ -340,9 +340,9 @@ abstract class WriteIndexedVectorAccessNode extends Node {
      */
     @Specialization(replaces = "doIntegerSequencePosition")
     protected int doIntegerPosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
-                                    Object[] positions, RIntVector position, int positionOffset, int positionLength,
-                                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
-                                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
+                    Object[] positions, RIntVector position, int positionOffset, int positionLength,
+                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
+                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
         getPositionNACheck().enable(position);
         int rightIndex = rightBase;
 

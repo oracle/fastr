@@ -141,7 +141,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
     @Specialization(limit = "1", guards = {"x.getClass() == cached.xClass", "y.getClass() == cached.yClass", "length(x, cached.xClass) > 0",
                     "length(y, cached.yClass) > 0", "getLimit1Guard()"}, rewriteOn = IllegalArgumentException.class)
     protected RIntVector intersectMaybeSorted(RIntVector x, RIntVector y,
-                                              @Cached("new(x.getClass(), y.getClass())") IntersectMaybeSortedNode cached) {
+                    @Cached("new(x.getClass(), y.getClass())") IntersectMaybeSortedNode cached) {
         // apply the type profiles:
         RIntVector profiledX = cached.xClass.cast(x);
         RIntVector profiledY = cached.yClass.cast(y);
@@ -172,7 +172,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
 
     @Specialization(limit = "1", guards = {"x.getClass() == cached.xClass", "y.getClass() == cached.yClass", "length(x, cached.xClass) > 0", "length(y, cached.yClass) > 0", "getLimit1Guard()"})
     protected RIntVector intersect(RIntVector x, RIntVector y,
-                                   @Cached("new(x.getClass(), y.getClass())") IntersectNode cached) {
+                    @Cached("new(x.getClass(), y.getClass())") IntersectNode cached) {
         // apply the type profiles:
         RIntVector profiledX = cached.xClass.cast(x);
         RIntVector profiledY = cached.yClass.cast(y);

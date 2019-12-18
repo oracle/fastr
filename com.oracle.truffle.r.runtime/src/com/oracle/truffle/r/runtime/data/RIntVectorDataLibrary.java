@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 3 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 3 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -14,6 +37,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class RIntVectorDataLibrary extends Library {
 
     static final LibraryFactory<RIntVectorDataLibrary> FACTORY = LibraryFactory.resolve(RIntVectorDataLibrary.class);
+
     public static LibraryFactory<RIntVectorDataLibrary> getFactory() {
         return FACTORY;
     }
@@ -25,7 +49,7 @@ public abstract class RIntVectorDataLibrary extends Library {
         throw RInternalError.shouldNotReachHere(String.format("RVectorData class '%s' is not writeable, it must be materialized before writing. Method: '%s'", dataClass.getSimpleName(), method));
     }
 
-    public static abstract class Iterator {
+    public abstract static class Iterator {
         private final Object store;
         private final int length;
 
@@ -76,6 +100,7 @@ public abstract class RIntVectorDataLibrary extends Library {
 
     public abstract RIntVectorData materialize(RIntVectorData receiver);
 
+    @SuppressWarnings("unused")
     public boolean isWriteable(RIntVectorData receiver) {
         return false;
     }
@@ -86,10 +111,12 @@ public abstract class RIntVectorDataLibrary extends Library {
 
     public abstract int getLength(RIntVectorData receiver);
 
+    @SuppressWarnings("unused")
     public boolean isComplete(RIntVectorData receiver) {
         return false;
     }
 
+    @SuppressWarnings("unused")
     public boolean isSorted(RIntVectorData receiver, boolean descending, boolean naLast) {
         return false;
     }
@@ -122,19 +149,23 @@ public abstract class RIntVectorDataLibrary extends Library {
 
     /**
      * Sets the value under given index. The vector must be writeable (see
-     * {@link #isWriteable(RIntVectorData)}. The {@code naCheck} is used to determine if it is necessary
-     * to check whether {@code value} is {@code NA}. The {@code naCheck} must be "enabled" on the source
-     * of the input data, i.e., the {@code value} argument. Using this overload makes sense if this method
-     * is called multiple times with the same {@code naCheck} instance, otherwise use the overload without the {@code naCheck}.
+     * {@link #isWriteable(RIntVectorData)}. The {@code naCheck} is used to determine if it is
+     * necessary to check whether {@code value} is {@code NA}. The {@code naCheck} must be "enabled"
+     * on the source of the input data, i.e., the {@code value} argument. Using this overload makes
+     * sense if this method is called multiple times with the same {@code naCheck} instance,
+     * otherwise use the overload without the {@code naCheck}.
      */
+    @SuppressWarnings("unused")
     public void setIntAt(RIntVectorData receiver, int index, int value, NACheck naCheck) {
         throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
     }
 
+    @SuppressWarnings("unused")
     public void setNext(RIntVectorData receiver, SeqIterator it, int value, NACheck naCheck) {
         throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
     }
 
+    @SuppressWarnings("unused")
     public void setAt(RIntVectorData receiver, RandomAccessIterator it, int index, int value, NACheck naCheck) {
         throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,12 +69,12 @@ public abstract class Array extends RBuiltinNode.Arg3 {
 
     @Specialization(guards = {"dataAccess.supports(data)", "dimAccess.supports(dim)"})
     protected RAbstractVector arrayCached(RAbstractVector data, RIntVector dim, Object dimNames,
-                                          @Cached("data.access()") VectorAccess dataAccess,
-                                          @Cached("dim.access()") VectorAccess dimAccess,
-                                          @Cached("createNew(dataAccess.getType())") VectorAccess resultAccess,
-                                          @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
-                                          @Cached("createBinaryProfile()") ConditionProfile isEmpty,
-                                          @Cached("create()") VectorFactory factory) {
+                    @Cached("data.access()") VectorAccess dataAccess,
+                    @Cached("dim.access()") VectorAccess dimAccess,
+                    @Cached("createNew(dataAccess.getType())") VectorAccess resultAccess,
+                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
+                    @Cached("createBinaryProfile()") ConditionProfile isEmpty,
+                    @Cached("create()") VectorFactory factory) {
         // extract dimensions and compute total length
         int[] dimArray;
         int totalLength = 1;
@@ -125,9 +125,9 @@ public abstract class Array extends RBuiltinNode.Arg3 {
     @Specialization(replaces = "arrayCached")
     @TruffleBoundary
     protected RAbstractVector arrayGeneric(RAbstractVector data, RIntVector dim, Object dimNames,
-                                           @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
-                                           @Cached("createBinaryProfile()") ConditionProfile isEmpty,
-                                           @Cached("create()") VectorFactory factory) {
+                    @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
+                    @Cached("createBinaryProfile()") ConditionProfile isEmpty,
+                    @Cached("create()") VectorFactory factory) {
         VectorAccess dataAccess = data.slowPathAccess();
         return arrayCached(data, dim, dimNames, dataAccess, dim.slowPathAccess(), VectorAccess.createSlowPathNew(dataAccess.getType()), hasDimNames, isEmpty, factory);
     }

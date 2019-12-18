@@ -173,7 +173,8 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     @Specialization(guards = "operand.isForeignWrapper()")
     protected RAbstractStringVector doForeignWrapper(RIntVector operand) {
-        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other specialization
+        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
+        // specialization
         return RClosures.createToStringVector(operand, true);
     }
 

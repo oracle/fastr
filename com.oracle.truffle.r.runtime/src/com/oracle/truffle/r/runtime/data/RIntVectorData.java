@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.notWriteab
 public abstract class RIntVectorData extends RVectorData {
     public abstract int getIntAt(int index);
 
+    @SuppressWarnings("unused")
     public void setIntAt(int index, int value, NACheck naCheck) {
         throw notWriteableError(this.getClass(), "setIntAt");
     }

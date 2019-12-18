@@ -203,7 +203,8 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     @Specialization(guards = "operand.isForeignWrapper()")
     protected RAbstractDoubleVector doForeignWrapper(RIntVector operand) {
-        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other specialization
+        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
+        // specialization
         return RClosures.createToDoubleVector(operand, true);
     }
 

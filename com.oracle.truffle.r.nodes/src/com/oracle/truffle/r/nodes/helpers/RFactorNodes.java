@@ -40,8 +40,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
- * Contains helper nodes related to factors, special R class of {@link RIntVector}. Note:
- * there is also {@link InheritsCheckNode}, which can be used to check if something is a factor.
+ * Contains helper nodes related to factors, special R class of {@link RIntVector}. Note: there is
+ * also {@link InheritsCheckNode}, which can be used to check if something is a factor.
  */
 public final class RFactorNodes {
 

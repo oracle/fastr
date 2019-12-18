@@ -122,9 +122,9 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
 
     @Specialization(guards = {"isIdentityPermutation(vector, permVector, getDimsNode)", "reuseNonSharedNode.supports(vector)"}, limit = "getVectorAccessCacheSize()")
     protected RAbstractVector doIdentity(RAbstractVector vector, @SuppressWarnings("unused") RIntVector permVector, @SuppressWarnings("unused") byte resize,
-                                         @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
-                                         @Cached("create()") GetDimAttributeNode getDimsNode,
-                                         @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
+                    @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);
 
@@ -140,18 +140,18 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
 
     @Specialization(replaces = "doIdentity", guards = "isIdentityPermutation(vector, permVector, getDimsNode)")
     protected RAbstractVector doIdentityGeneric(RAbstractVector vector, RIntVector permVector, byte resize,
-                                                @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
-                                                @Cached("create()") GetDimAttributeNode getDimsNode,
-                                                @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
+                    @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
         return doIdentity(vector, permVector, resize, removeClassAttrNode, getDimsNode, reuseNonSharedNode);
     }
 
     @Specialization(guards = "!isIdentityPermutation(vector, permVector, getDimsNode)")
     protected RAbstractVector aPerm(RAbstractVector vector, RIntVector permVector, byte resize,
-                                    @Cached("create()") GetNamesAttributeNode getNames,
-                                    @Cached("create()") GetDimAttributeNode getDimsNode,
-                                    @Cached("create()") SetDimAttributeNode setDimsNode,
-                                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+                    @Cached("create()") GetNamesAttributeNode getNames,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") SetDimAttributeNode setDimsNode,
+                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
 
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);

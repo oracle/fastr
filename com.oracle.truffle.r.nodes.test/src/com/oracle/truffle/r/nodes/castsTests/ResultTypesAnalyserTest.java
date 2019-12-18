@@ -58,7 +58,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RIntVectorData;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;

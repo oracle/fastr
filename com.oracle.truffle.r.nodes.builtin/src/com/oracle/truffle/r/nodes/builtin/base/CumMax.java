@@ -85,13 +85,13 @@ public abstract class CumMax extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = "emptyVec.getLength()==0")
     protected RAbstractVector cumEmpty(RIntVector emptyVec,
-                                       @Cached("create()") GetNamesAttributeNode getNames) {
+                    @Cached("create()") GetNamesAttributeNode getNames) {
         return RDataFactory.createIntVector(new int[0], true, getNames.getNames(emptyVec));
     }
 
     @Specialization(guards = "v.isSequence()")
     protected RIntVector cummaxIntSequence(RIntVector v,
-                                           @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
         RIntSeqVectorData seq = (RIntSeqVectorData) v.getData();
         if (negativeStrideProfile.profile(seq.getStride() < 0)) {
             // all numbers are smaller than the first one

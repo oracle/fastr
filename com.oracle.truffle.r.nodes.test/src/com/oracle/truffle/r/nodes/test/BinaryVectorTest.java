@@ -34,7 +34,6 @@ import static com.oracle.truffle.r.runtime.data.RDataFactory.createIntVector;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createLogicalVector;
 
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import org.hamcrest.CustomMatcher;
 import org.hamcrest.Matcher;
 import org.junit.experimental.theories.DataPoint;

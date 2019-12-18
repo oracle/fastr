@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1994-9 W. N. Venables and B. D. Ripley
  * Copyright (c) 2007-2017, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,9 +65,9 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     RIntVector findMaxCol(RAbstractContainer x, int tieArg,
-                          @Cached("x.access()") VectorAccess xAccess,
-                          @Cached("create()") VectorFactory vectorFactory,
-                          @Cached("create()") GetDimAttributeNode getDimNode) {
+                    @Cached("x.access()") VectorAccess xAccess,
+                    @Cached("create()") VectorFactory vectorFactory,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
         int nrows = getDimNode.nrows(x);
         int tie = tieProfile.profile(tieArg);
 
@@ -128,8 +128,8 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
 
     @Specialization(replaces = "findMaxCol")
     RIntVector findMaxColGeneric(RAbstractContainer x, int tie,
-                                 @Cached("create()") VectorFactory vectorFactory,
-                                 @Cached("create()") GetDimAttributeNode getDimNode) {
+                    @Cached("create()") VectorFactory vectorFactory,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
         return findMaxCol(x, tie, x.slowPathAccess(), vectorFactory, getDimNode);
     }
 

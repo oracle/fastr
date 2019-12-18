@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,7 @@ public abstract class SortedFastPass extends RBuiltinNode.Arg3 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected byte isSorted(RIntVector x, boolean decr, byte nalast,
-                            @CachedLibrary("x.getData()") RIntVectorDataLibrary dataLib) {
+                    @CachedLibrary("x.getData()") RIntVectorDataLibrary dataLib) {
         if (RRuntime.isNA(nalast)) {
             // TODO: we may add support for this into the library
             return RRuntime.LOGICAL_FALSE;

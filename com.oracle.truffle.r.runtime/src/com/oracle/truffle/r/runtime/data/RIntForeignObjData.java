@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,13 +29,10 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.SeqIterator;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
 
@@ -43,14 +40,14 @@ import java.util.Arrays;
 class RIntForeignObjData extends RIntVectorData {
     protected final Object foreign;
 
-    public RIntForeignObjData(Object foreign) {
+    RIntForeignObjData(Object foreign) {
         this.foreign = foreign;
     }
 
     @Override
     @Ignore
     public int getIntAt(int index) {
-        return getIntImpl(foreign, index, InteropLibrary.getFactory().getUncached(), InteropLibrary.getFactory().getUncached());
+        return getIntImpl(index, InteropLibrary.getFactory().getUncached(), InteropLibrary.getFactory().getUncached());
     }
 
     @Override
@@ -81,15 +78,15 @@ class RIntForeignObjData extends RIntVectorData {
 
     @ExportMessage
     public RIntArrayVectorData copy(@SuppressWarnings("unused") boolean deep,
-                                    @CachedLibrary(limit = "5") InteropLibrary valueInterop,
-                                    @CachedLibrary("this.foreign") InteropLibrary interop) {
+                    @CachedLibrary(limit = "5") InteropLibrary valueInterop,
+                    @CachedLibrary("this.foreign") InteropLibrary interop) {
         return new RIntArrayVectorData(getReadonlyIntData(valueInterop, interop), RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage
-    public RIntArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA,
-                                           @CachedLibrary(limit = "5") InteropLibrary valueInterop,
-                                          @CachedLibrary("this.foreign") InteropLibrary interop) {
+    public RIntArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
+                    @CachedLibrary(limit = "5") InteropLibrary valueInterop,
+                    @CachedLibrary("this.foreign") InteropLibrary interop) {
         int length = getLength(interop);
         int[] newData = getDataAsArray(newSize, length, interop, valueInterop);
         if (fillNA) {
@@ -101,7 +98,7 @@ class RIntForeignObjData extends RIntVectorData {
     // TODO: this will be message exported by the generic VectorDataLibrary
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
-                                @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
+                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
         dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
     }
 
@@ -121,33 +118,33 @@ class RIntForeignObjData extends RIntVectorData {
         return new RandomAccessIterator(foreign, getLength(interop));
     }
 
-    private int getIntImpl(Object delegate, int index, InteropLibrary valueInterop, InteropLibrary interop) {
+    private int getIntImpl(int index, InteropLibrary valueInterop, InteropLibrary interop) {
         try {
             return valueInterop.asInt(interop.readArrayElement(foreign, index));
-        } catch (UnsupportedMessageException|InvalidArrayIndexException e) {
+        } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
             throw RInternalError.shouldNotReachHere();
         }
     }
 
     @ExportMessage
     public int getIntAt(int index,
-                        @CachedLibrary(limit = "5") InteropLibrary valueInterop,
-                        @CachedLibrary("this.foreign") InteropLibrary interop) {
-        return getIntImpl(foreign, index, valueInterop, interop);
+                    @CachedLibrary(limit = "5") InteropLibrary valueInterop,
+                    @CachedLibrary("this.foreign") InteropLibrary interop) {
+        return getIntImpl(index, valueInterop, interop);
     }
 
     @ExportMessage
     public int getNext(SeqIterator it,
-                            @CachedLibrary(limit = "5") InteropLibrary valueInterop,
-                        @CachedLibrary("this.foreign") InteropLibrary interop) {
-        return getIntImpl(it.getStore(), it.getIndex(), valueInterop, interop);
+                    @CachedLibrary(limit = "5") InteropLibrary valueInterop,
+                    @CachedLibrary("this.foreign") InteropLibrary interop) {
+        return getIntImpl(it.getIndex(), valueInterop, interop);
     }
 
     @ExportMessage
-    public int getAt(RandomAccessIterator it, int index,
-                        @CachedLibrary(limit = "5") InteropLibrary valueInterop,
-                        @CachedLibrary("this.foreign") InteropLibrary interop) {
-        return getIntImpl(foreign, index, valueInterop, interop);
+    public int getAt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
+                    @CachedLibrary(limit = "5") InteropLibrary valueInterop,
+                    @CachedLibrary("this.foreign") InteropLibrary interop) {
+        return getIntImpl(index, valueInterop, interop);
     }
 
     private int[] getDataAsArray(int newLength, int length, InteropLibrary valueInterop, InteropLibrary interop) {

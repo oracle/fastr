@@ -175,7 +175,7 @@ final class SearchFirstStringNode extends Node {
     private final ConditionProfile hashingProfile = ConditionProfile.createBinaryProfile();
 
     private RIntVector searchGeneric(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength, int notFoundStartIndex, boolean nullOnNotFound,
-                                     RStringVector names) {
+                    RStringVector names) {
         int[] indices = new int[elementsLength];
         boolean resultComplete = true;
 

@@ -270,7 +270,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
 
     @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected Object doIntCached(RIntVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite,
-                                 @Cached("vector.access()") VectorAccess access) {
+                    @Cached("vector.access()") VectorAccess access) {
         return doInt(vector, naRm, access);
     }
 

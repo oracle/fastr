@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,7 @@ public final class ChooseFunctions {
 
         @Specialization(replaces = "doVectors")
         protected RAbstractDoubleVector doVectorsGeneric(RIntVector n, RIntVector k,
-                                                         @Cached("create()") VectorFactory factory) {
+                        @Cached("create()") VectorFactory factory) {
             return doVectors(n, k, n.slowPathAccess(), k.slowPathAccess(), factory);
         }
 

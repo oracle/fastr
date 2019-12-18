@@ -121,6 +121,7 @@ public final class RIntVector extends RAbstractNumericVector {
         return (RIntVecClosureData) data;
     }
 
+    @Override
     public boolean isForeignWrapper() {
         return data instanceof RIntForeignObjData;
     }
@@ -232,6 +233,7 @@ public final class RIntVector extends RAbstractNumericVector {
 
     private RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
         assert !this.isShared();
+        assert !RRuntime.isNA(value) || valueNACheck.isEnabled();
         RIntVectorDataLibrary.getFactory().getUncached().setIntAt(data, index, value, valueNACheck);
         assert !isComplete() || !RRuntime.isNA(value);
         return this;

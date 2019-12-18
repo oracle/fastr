@@ -207,14 +207,14 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
 
     @Specialization(/* contains = "doSequence" */)
     protected RAbstractVector doInteger(PositionProfile profile, int dimensionLength, RIntVector position, int positionLength,
-                                        @Cached("create()") BranchProfile seenZeroProfile,
-                                        @Cached("create()") BranchProfile seenPositiveProfile,
-                                        @Cached("create()") BranchProfile seenNegativeProfile,
-                                        @Cached("createBinaryProfile()") ConditionProfile seenNAFlagProfile,
-                                        @Cached("createBinaryProfile()") ConditionProfile seenPositiveFlagProfile,
-                                        @Cached("createBinaryProfile()") ConditionProfile seenNegativeFlagProfile,
-                                        @Cached("create()") BranchProfile seenOutOfBounds,
-                                        @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
+                    @Cached("create()") BranchProfile seenZeroProfile,
+                    @Cached("create()") BranchProfile seenPositiveProfile,
+                    @Cached("create()") BranchProfile seenNegativeProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile seenNAFlagProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile seenPositiveFlagProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile seenNegativeFlagProfile,
+                    @Cached("create()") BranchProfile seenOutOfBounds,
+                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
 
         positionNACheck.enable(position);
         boolean hasSeenPositive = false;
@@ -257,7 +257,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     private final BranchProfile noZeroes = BranchProfile.create();
 
     private RAbstractVector doIntegerProfiled(PositionProfile profile, int dimensionLength, RIntVector intPosition, int positionLength, boolean hasSeenPositive, boolean hasSeenNegative,
-                                              boolean hasSeenNA, int outOfBoundsCount, int zeroCount, int maxOutOfBoundsIndex) {
+                    boolean hasSeenNA, int outOfBoundsCount, int zeroCount, int maxOutOfBoundsIndex) {
         if (hasSeenPositive || hasSeenNA) {
             if (numPositions > 1 && outOfBoundsCount > 0) {
                 error.enter();

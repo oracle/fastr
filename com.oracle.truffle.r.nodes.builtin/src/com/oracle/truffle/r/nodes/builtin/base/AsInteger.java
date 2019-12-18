@@ -49,12 +49,12 @@ public abstract class AsInteger extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
     protected RIntVector asInteger(RIntVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
-                                   @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
-                                   @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
+                    @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
+                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            com.oracle.truffle.r.runtime.data.RIntVector res = (com.oracle.truffle.r.runtime.data.RIntVector) reuseTemporaryNode.getMaterializedResult(v);
+            RIntVector res = reuseTemporaryNode.getMaterializedResult(v);
             res.resetAllAttributes(true);
             return res;
         }
@@ -62,8 +62,8 @@ public abstract class AsInteger extends RBuiltinNode.Arg2 {
 
     @Specialization(replaces = "asInteger")
     protected RIntVector asIntegerGeneric(RIntVector v, RArgsValuesAndNames dotdotdot,
-                                          @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
-                                          @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
+                    @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
+                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         return asInteger(v, dotdotdot, reuseTemporaryNode, noAttributes);
     }
 }

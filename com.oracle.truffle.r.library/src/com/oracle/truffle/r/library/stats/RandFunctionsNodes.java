@@ -193,10 +193,10 @@ public final class RandFunctionsNodes {
 
         @Specialization(guards = {"aAccess.supports(a)", "bAccess.supports(b)", "cAccess.supports(c)"})
         protected RIntVector cached(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
-                                    @Cached("createFunction()") RandFunction3_DoubleBase function,
-                                    @Cached("a.access()") VectorAccess aAccess,
-                                    @Cached("b.access()") VectorAccess bAccess,
-                                    @Cached("c.access()") VectorAccess cAccess) {
+                        @Cached("createFunction()") RandFunction3_DoubleBase function,
+                        @Cached("a.access()") VectorAccess aAccess,
+                        @Cached("b.access()") VectorAccess bAccess,
+                        @Cached("c.access()") VectorAccess cAccess) {
             try (SequentialIterator aIter = aAccess.access(a); SequentialIterator bIter = bAccess.access(b); SequentialIterator cIter = cAccess.access(c)) {
                 if (aAccess.getLength(aIter) == 0 || bAccess.getLength(bIter) == 0 || cAccess.getLength(cIter) == 0) {
                     nanResult.enter();
@@ -232,7 +232,7 @@ public final class RandFunctionsNodes {
 
         @Specialization(replaces = "cached")
         protected RIntVector generic(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
-                                     @Cached("createFunction()") RandFunction3_DoubleBase function) {
+                        @Cached("createFunction()") RandFunction3_DoubleBase function) {
             return cached(length, a, b, c, randProvider, function, a.slowPathAccess(), b.slowPathAccess(), c.slowPathAccess());
         }
     }

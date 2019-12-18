@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,8 +56,8 @@ public abstract class IntToUtf8 extends RBuiltinNode.Arg3 {
 
     @Specialization(guards = "multiple")
     protected RAbstractStringVector intToBitsMultiple(RIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
-                                                      @Cached("create()") NACheck na,
-                                                      @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
+                    @Cached("create()") NACheck na,
+                    @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
 
         String[] result = new String[x.getLength()];
         na.enable(x);
@@ -80,8 +80,8 @@ public abstract class IntToUtf8 extends RBuiltinNode.Arg3 {
 
     @Specialization(guards = "!multiple")
     protected String intToBits(RIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
-                               @Cached("create()") NACheck na,
-                               @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
+                    @Cached("create()") NACheck na,
+                    @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
 
         int[] result = new int[x.getLength()];
         na.enable(x);

@@ -299,8 +299,8 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isInteger(RIntVector value,
-                                 @Cached("createIsFactorNode()") IsFactorNode isFactorNode,
-                                 @Cached("createBinaryProfile()") ConditionProfile isFactor) {
+                        @Cached("createIsFactorNode()") IsFactorNode isFactorNode,
+                        @Cached("createBinaryProfile()") ConditionProfile isFactor) {
             if (isFactor.profile(isFactorNode.executeIsFactor(value))) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
@@ -443,7 +443,7 @@ public class IsTypeFunctions {
 
         @Specialization
         protected byte isType(RIntVector value,
-                              @Cached("createBinaryProfile()") ConditionProfile profile) {
+                        @Cached("createBinaryProfile()") ConditionProfile profile) {
             return RRuntime.asLogical(!profile.profile(isFactor(value)));
         }
 

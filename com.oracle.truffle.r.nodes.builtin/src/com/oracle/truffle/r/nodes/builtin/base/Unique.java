@@ -260,7 +260,7 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
     @SuppressWarnings("unused")
     @Specialization(guards = "vecIn.getClass() == vecClass")
     protected com.oracle.truffle.r.runtime.data.RIntVector doUniqueCached(RIntVector vecIn, byte incomparables, byte fromLast, int nmax,
-                                                                          @Cached("vecIn.getClass()") Class<? extends RIntVector> vecClass) {
+                    @Cached("vecIn.getClass()") Class<? extends RIntVector> vecClass) {
         RIntVector vec = vecClass.cast(vecIn);
         reportWork(vec.getLength());
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {

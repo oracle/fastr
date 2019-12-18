@@ -131,9 +131,9 @@ public class SpecialsUtils {
 
         @Specialization(guards = {"access.supports(value)", "value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
         protected static int convertIntVector(RIntVector value,
-                                              @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
-                                              @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode,
-                                              @Cached("value.access()") VectorAccess access) {
+                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
+                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode,
+                        @Cached("value.access()") VectorAccess access) {
             try (VectorAccess.RandomIterator iter = access.randomAccess(value)) {
                 return access.getInt(iter, 0);
             }
@@ -141,8 +141,8 @@ public class SpecialsUtils {
 
         @Specialization(replaces = "convertIntVector", guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
         protected static int convertIntVectorGeneric(RIntVector value,
-                                                     @Cached("create()") ClassHierarchyNode hierarchyNode,
-                                                     @Cached("create()") HasAttributesNode hasAttrsNode) {
+                        @Cached("create()") ClassHierarchyNode hierarchyNode,
+                        @Cached("create()") HasAttributesNode hasAttrsNode) {
             return convertIntVector(value, hierarchyNode, hasAttrsNode, value.slowPathAccess());
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,13 +77,13 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
     @SuppressWarnings("unused")
     @Specialization
     protected com.oracle.truffle.r.runtime.data.RIntVector ncharInt(RIntVector vector, String type, byte allowNA, byte keepNAIn,
-                                                                    @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
-                                                                    @Cached("create()") GetDimAttributeNode getDimNode,
-                                                                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                                                                    @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
-                                                                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+                    @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
+                    @Cached("create()") GetDimAttributeNode getDimNode,
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                    @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
         boolean keepNA = keepNAProfile.profile(isNAKeptIn(keepNAIn, convertType(type)));
         int len = vector.getLength();
         int[] result = new int[len];
@@ -109,13 +109,13 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
     @SuppressWarnings("unused")
     @Specialization
     protected com.oracle.truffle.r.runtime.data.RIntVector nchar(RAbstractStringVector vector, String type, byte allowNA, byte keepNAIn,
-                                                                 @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-                                                                 @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
-                                                                 @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
-                                                                 @Cached("create()") GetDimAttributeNode getDimNode,
-                                                                 @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                                                                 @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
-                                                                 @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+                    @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
+                    @Cached("create()") GetDimAttributeNode getDimNode,
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                    @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
         boolean keepNA = keepNAProfile.profile(isNAKeptIn(keepNAIn, convertType(type)));
         int len = vector.getLength();
         int[] result = new int[len];

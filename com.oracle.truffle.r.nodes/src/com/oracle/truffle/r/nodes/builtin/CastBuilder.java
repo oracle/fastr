@@ -473,7 +473,7 @@ public final class CastBuilder {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Character));
         }
 
-        public static <T extends RIntVector> CompareFilter<T> elementAt(int index, int value) {
+        public static CompareFilter<RIntVector> elementAt(int index, int value) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Integer));
         }
 
@@ -669,7 +669,7 @@ public final class CastBuilder {
             return new TypeFilter<>(TruffleObject.class, x -> RRuntime.isForeignObject(x));
         }
 
-        public static <R extends RIntVector> Filter<Object, R> integerValue() {
+        public static Filter<Object, RIntVector> integerValue() {
             return new RTypeFilter<>(RType.Integer);
         }
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2014,  The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -89,8 +89,8 @@ public abstract class Merge extends RBuiltinNode.Arg4 {
 
     @Specialization
     RList merge(RIntVector xIndsAbstract, RIntVector yIndsAbstract, boolean allX, boolean allY,
-                @Cached("create()") GetReadonlyData.Int xIndsToArray,
-                @Cached("create()") GetReadonlyData.Int yIndsToArray) {
+                    @Cached("create()") GetReadonlyData.Int xIndsToArray,
+                    @Cached("create()") GetReadonlyData.Int yIndsToArray) {
         com.oracle.truffle.r.runtime.data.RIntVector xInds = xIndsAbstract.materialize();
         com.oracle.truffle.r.runtime.data.RIntVector yInds = yIndsAbstract.materialize();
 

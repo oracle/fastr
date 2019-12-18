@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,14 +61,14 @@ public abstract class Substr extends RBuiltinNode.Arg3 {
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg(arg)", "wrongParams(start, stop)"})
     protected RNull substrWrongParams(RAbstractStringVector arg, RIntVector start, RIntVector stop,
-                                      @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         RInternalError.shouldNotReachHere();
         return RNull.instance; // dummy
     }
 
     @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)"})
     protected RStringVector substr(RAbstractStringVector arg, RIntVector start, RIntVector stop,
-                                   @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
+                    @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         String[] res = new String[arg.getLength()];
         na.enable(arg);
         na.enable(start);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ public abstract class VectorFastPaths {
 
         @Specialization
         protected RIntVector get(int length,
-                                 @Cached("create()") VectorLengthProfile profile) {
+                        @Cached("create()") VectorLengthProfile profile) {
             if (length > 0) {
                 return RDataFactory.createIntVector(profile.profile(length));
             }
@@ -53,7 +53,7 @@ public abstract class VectorFastPaths {
 
         @Specialization
         protected RIntVector get(double length,
-                                 @Cached("create()") VectorLengthProfile profile) {
+                        @Cached("create()") VectorLengthProfile profile) {
             if (!Double.isNaN(length)) {
                 return get((int) length, profile);
             }

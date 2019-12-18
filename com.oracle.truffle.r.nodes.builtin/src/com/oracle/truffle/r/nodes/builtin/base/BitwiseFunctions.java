@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2015, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -256,7 +256,7 @@ public class BitwiseFunctions {
 
         @Specialization
         protected Object bitwNot(RIntVector a,
-                                 @Cached("create()") NACheck naCheck) {
+                        @Cached("create()") NACheck naCheck) {
             int[] ans = new int[a.getLength()];
             naCheck.enable(a);
             for (int i = 0; i < a.getLength(); i++) {

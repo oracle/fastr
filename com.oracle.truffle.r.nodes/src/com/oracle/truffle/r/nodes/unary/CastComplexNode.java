@@ -247,7 +247,8 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     @Specialization(guards = "operand.isForeignWrapper()")
     protected RAbstractComplexVector doForeignWrapper(RIntVector operand) {
-        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other specialization
+        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
+        // specialization
         return RClosures.createToComplexVector(operand, true);
     }
 

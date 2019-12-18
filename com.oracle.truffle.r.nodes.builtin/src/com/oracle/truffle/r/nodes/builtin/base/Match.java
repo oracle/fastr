@@ -104,7 +104,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
     @Specialization
     @SuppressWarnings("unused")
     protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractVector x, RNull table, int nomatch, Object incomparables,
-                                                                 @Cached("createBinaryProfile()") ConditionProfile na) {
+                    @Cached("createBinaryProfile()") ConditionProfile na) {
         int[] data = new int[x.getLength()];
         Arrays.fill(data, nomatch);
         return RDataFactory.createIntVector(data, na.profile(!RRuntime.isNA(nomatch)));
@@ -118,23 +118,23 @@ public abstract class Match extends RBuiltinNode.Arg4 {
 
     @Specialization(guards = {"isFactor(x)", "isFactor(table)"})
     protected Object matchFactor(RIntVector x, RIntVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
-                                 @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
-                                 @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
+                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
+                    @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
         return match.execute(RClosures.createFactorToVector(x, true, getLevelsNode.execute(x)),
                         RClosures.createFactorToVector(table, true, getLevelsNode.execute(table)), nomatch);
     }
 
     @Specialization(guards = {"isFactor(x)", "!isFactor(table)"})
     protected Object matchFactor(RIntVector x, RAbstractVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
-                                 @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
-                                 @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
+                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
+                    @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
         return match.execute(RClosures.createFactorToVector(x, true, getLevelsNode.execute(x)), table, nomatch);
     }
 
     @Specialization(guards = {"!isFactor(x)", "isFactor(table)"})
     protected Object matchFactor(RAbstractVector x, RIntVector table, int nomatch, @SuppressWarnings("unused") Object incomparables,
-                                 @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
-                                 @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
+                    @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
+                    @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
         return match.execute(x, RClosures.createFactorToVector(table, true, getLevelsNode.execute(table)), nomatch);
     }
 

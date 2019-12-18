@@ -106,7 +106,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     @Specialization(guards = {"uAccess.supports(operand)", "noClosure(operand)"}, limit = "getGenericVectorAccessCacheSize()")
     protected com.oracle.truffle.r.runtime.data.RIntVector doAbstractVector(RAbstractAtomicVector operand,
-                                                                            @Cached("operand.access()") VectorAccess uAccess) {
+                    @Cached("operand.access()") VectorAccess uAccess) {
         return createResultVector(operand, uAccess);
     }
 
@@ -117,15 +117,15 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     @Specialization(guards = {"useClosure(x)"})
     public RIntVector doAbstractVectorClosure(RAbstractAtomicVector x,
-                                              @Cached("createClassProfile()") ValueProfile operandTypeProfile,
-                                              @Cached("create()") NAProfile naProfile) {
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile,
+                    @Cached("create()") NAProfile naProfile) {
         RAbstractAtomicVector operand = operandTypeProfile.profile(x);
         return (RIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
     }
 
     @Specialization(guards = "uAccess.supports(list)", limit = "getVectorAccessCacheSize()")
     protected com.oracle.truffle.r.runtime.data.RIntVector doList(RAbstractListVector list,
-                                                                  @Cached("list.access()") VectorAccess uAccess) {
+                    @Cached("list.access()") VectorAccess uAccess) {
         int length = list.getLength();
         int[] result = new int[length];
         boolean seenNA = false;
@@ -179,7 +179,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     @Specialization(guards = "isForeignObject(obj)")
     protected RIntVector doForeignObject(TruffleObject obj,
-                                         @Cached("create()") ConvertForeignObjectNode convertForeign) {
+                    @Cached("create()") ConvertForeignObjectNode convertForeign) {
         Object o = convertForeign.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
             if (o instanceof RIntVector) {

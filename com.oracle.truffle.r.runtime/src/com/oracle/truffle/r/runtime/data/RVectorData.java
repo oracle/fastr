@@ -23,9 +23,9 @@
 package com.oracle.truffle.r.runtime.data;
 
 /**
- * Base class for all the implementations of {@code TODO:RVectorDataLibrary}. The methods defined here and
- * in subclasses of this class are convenience methods for slow path access only. In the future, we
- * should add {@code CompilerAsserts.neverPartOfCompilation()} to all of them.
+ * Base class for all the implementations of {@code TODO:RVectorDataLibrary}. The methods defined
+ * here and in subclasses of this class are convenience methods for slow path access only. In the
+ * future, we should add {@code CompilerAsserts.neverPartOfCompilation()} to all of them.
  */
 public abstract class RVectorData {
     public abstract int getLength();

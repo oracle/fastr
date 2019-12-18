@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,7 +100,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     protected com.oracle.truffle.r.runtime.data.RIntVector cumsumInt(RIntVector x,
-                                                                     @Cached("x.access()") VectorAccess xAccess) {
+                    @Cached("x.access()") VectorAccess xAccess) {
         try (SequentialIterator iter = xAccess.access(x)) {
             int[] array = new int[xAccess.getLength(iter)];
             int prev = 0;

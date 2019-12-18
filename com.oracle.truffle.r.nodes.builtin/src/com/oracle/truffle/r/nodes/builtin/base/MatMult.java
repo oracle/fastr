@@ -614,17 +614,17 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = {"a.getClass() == aClass", "b.getClass() == bClass"})
     protected com.oracle.truffle.r.runtime.data.RIntVector multiplyInt(RIntVector a, RIntVector b,
-                                                                       @Cached("a.getClass()") Class<? extends RIntVector> aClass,
-                                                                       @Cached("b.getClass()") Class<? extends RIntVector> bClass,
-                                                                       @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                                                                       @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+                    @Cached("a.getClass()") Class<? extends RIntVector> aClass,
+                    @Cached("b.getClass()") Class<? extends RIntVector> bClass,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
         return intMultiply(aClass.cast(a), bClass.cast(b), aIsMatrix, bIsMatrix);
     }
 
     @Specialization(replaces = "multiplyInt")
     protected com.oracle.truffle.r.runtime.data.RIntVector multiply(RIntVector a, RIntVector b,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
         return intMultiply(a, b, aIsMatrix, bIsMatrix);
     }
 
@@ -755,9 +755,9 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected com.oracle.truffle.r.runtime.data.RIntVector multiply(RAbstractLogicalVector aOriginal, RAbstractLogicalVector bOriginal,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
         return intMultiply((RIntVector) aOriginal.castSafe(RType.Integer, isNAProfile), (RIntVector) bOriginal.castSafe(RType.Integer, isNAProfile), aIsMatrix, bIsMatrix);
     }
 
@@ -765,17 +765,17 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected com.oracle.truffle.r.runtime.data.RIntVector multiply(RAbstractLogicalVector aOriginal, RIntVector b,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
         return intMultiply((RIntVector) aOriginal.castSafe(RType.Integer, isNAProfile), b, aIsMatrix, bIsMatrix);
     }
 
     @Specialization
     protected com.oracle.truffle.r.runtime.data.RIntVector multiply(RIntVector a, RAbstractLogicalVector bOriginal,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                                                                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
+                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
+                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
         return intMultiply(a, (RIntVector) bOriginal.castSafe(RType.Integer, isNAProfile), aIsMatrix, bIsMatrix);
     }
 

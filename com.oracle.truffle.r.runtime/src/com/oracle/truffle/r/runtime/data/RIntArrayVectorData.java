@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,8 +38,9 @@ class RIntArrayVectorData extends RIntVectorData {
     private final int[] data;
     private boolean complete;
 
-    public RIntArrayVectorData(int[] data, boolean complete) {
+    RIntArrayVectorData(int[] data, boolean complete) {
         this.data = data;
+        this.complete = complete;
     }
 
     @Override
@@ -64,7 +65,7 @@ class RIntArrayVectorData extends RIntVectorData {
     }
 
     @ExportMessage
-    public RIntArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
+    public RIntArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
         int[] newData = Arrays.copyOf(data, newSize);
         if (fillNA) {
             Arrays.fill(newData, data.length, newData.length, RRuntime.INT_NA);
@@ -75,11 +76,12 @@ class RIntArrayVectorData extends RIntVectorData {
     // TODO: this will be message exported by the generic VectorDataLibrary
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
-                                @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
+                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
         dataLib.setIntAt((RIntVectorData) destination, index, data[index]);
     }
 
     @ExportMessage
+    @Override
     public boolean isComplete() {
         return complete;
     }

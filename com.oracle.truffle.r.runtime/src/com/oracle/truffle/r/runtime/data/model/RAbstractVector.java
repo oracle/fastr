@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFFIAccess;
-import com.oracle.truffle.r.runtime.data.RIntVecClosureData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -82,7 +81,9 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return this instanceof RSequence;
     }
 
-    public RSeq getSequence() { return (RSeq) this; }
+    public RSeq getSequence() {
+        return (RSeq) this;
+    }
 
     public boolean isClosure() {
         return this instanceof RClosure;

@@ -83,7 +83,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
 
     @Specialization
     protected RAbstractVector doInteger(PositionProfile profile, int dimSize, RIntVector position, int positionLength,
-                                        @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
         if (positionLength != 1) {
             error.enter();
             Message message;

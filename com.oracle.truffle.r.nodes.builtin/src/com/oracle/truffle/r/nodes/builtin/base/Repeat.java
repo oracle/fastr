@@ -168,11 +168,11 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
 
         @Specialization
         protected RAbstractVector rep(RAbstractVector xIn, RIntVector timesIn, int lengthOutIn, int eachIn,
-                                      @Cached("createClassProfile()") ValueProfile xProfile,
-                                      @Cached("createClassProfile()") ValueProfile timesProfile,
-                                      @Cached("createEqualityProfile()") PrimitiveValueProfile lengthOutProfile,
-                                      @Cached("createEqualityProfile()") PrimitiveValueProfile eachProfile,
-                                      @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
+                        @Cached("createClassProfile()") ValueProfile xProfile,
+                        @Cached("createClassProfile()") ValueProfile timesProfile,
+                        @Cached("createEqualityProfile()") PrimitiveValueProfile lengthOutProfile,
+                        @Cached("createEqualityProfile()") PrimitiveValueProfile eachProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
             RAbstractVector x = xProfile.profile(xIn);
             RIntVector times = timesProfile.profile(timesIn);
             int lengthOut = lengthOutProfile.profile(lengthOutIn);

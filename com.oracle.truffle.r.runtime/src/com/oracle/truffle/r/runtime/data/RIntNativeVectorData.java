@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public class RIntNativeVectorData extends RIntVectorData {
     // We need the vector, so that we can easily use the existing NativeDataAccess methods
     // TODO: this field should be replaced with address/length fields and
-    //  the address/length fields and logic should be removed from NativeMirror
-    //  including the releasing of the native memory
+    // the address/length fields and logic should be removed from NativeMirror
+    // including the releasing of the native memory
     private final RIntVector vec;
 
     public RIntNativeVectorData(RIntVector vec) {
@@ -71,7 +71,7 @@ public class RIntNativeVectorData extends RIntVectorData {
     // TODO: this will be message exported by the generic VectorDataLibrary
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
-                                @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
+                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
         dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
     }
 
@@ -104,7 +104,7 @@ public class RIntNativeVectorData extends RIntVectorData {
     }
 
     @ExportMessage
-    public int getAt(RandomAccessIterator it, int index) {
+    public int getAt(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
         return NativeDataAccess.getData(vec, null, index);
     }
 
