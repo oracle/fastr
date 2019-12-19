@@ -41,9 +41,13 @@ from .fuzzy_compare import fuzzy_compare
 from .util import *
 
 def _create_tmpdir(rvm):
-    install_tmp = join(get_fastr_repo_dir(), "install.tmp." + rvm)
+    tmp_dir = os.environ.pop("TMPDIR", None)
+    if tmp_dir:
+        install_tmp = join(tmp_dir, "install.tmp." + rvm)
+    else:
+        install_tmp = join(get_fastr_repo_dir(), "install.tmp." + rvm)
     shutil.rmtree(install_tmp, ignore_errors=True)
-    os.mkdir(install_tmp)
+    os.makedirs(install_tmp)
     return install_tmp
 
 
@@ -893,6 +897,7 @@ def pkgcache(args):
         --pkg-filelist FILE                 A file containing a list of packages (cannot be combined with '--pkg-pattern').
         --pkg-pattern PATTERN               A pattern for packages to cache (cannot be combined with '--pkg-filelist').
         --repos REPO_NAME[=URL][,...]       Repos to install from (default: SNAPSHOT).
+        --sync                              Synchronize access to the package cache.
         --verbose, -v                       Verbose output.
         --very-verbose, -V                  Very verbose output.
         --vm [fastr[,gnur]]                 Install and cache with FastR and/or GnuR.
@@ -915,11 +920,13 @@ def pkgcache(args):
                         help='Repos to install packages from.')
     parser.add_argument('--library', metavar='SPEC', type=str, default="",
                         help='The library folders to install to (must be specified for each used VM in form "<vm_name>=<dir>").')
+    parser.add_argument('--sync', action="store_true", help='Synchronize access to the package cache.')
     pkg_spec_group = parser.add_mutually_exclusive_group()
     pkg_spec_group.add_argument('--pkg-filelist', metavar='FILE', dest="filelist", type=str, default=None,
                         help='File contaning a list of files to install and cache.')
     pkg_spec_group.add_argument('--pkg-pattern', metavar='PATTERN', dest="pattern", type=str, default=None,
                         help='Pattern of packages to install and cache.')
+    parser.add_argument('--install-opts', metavar="INSTALL_OPTS", dest="install_opts", help='R install options', default=None)
 
     from . import util
     _opts = parser.parse_args(args=unknown_args, namespace=util.get_opts())
@@ -934,7 +941,13 @@ def pkgcache(args):
     # now do the version check
     util.check_r_versions()
 
-    install_args = ["--cache-pkgs", "dir={},ignore=base".format(_opts.cache_dir)]
+    pkgcache_options = ["dir={}".format(_opts.cache_dir), "ignore=base"]
+    if _opts.sync:
+        pkgcache_options += ["sync=TRUE"]
+
+    install_args = ["--cache-pkgs", ",".join(pkgcache_options)]
+    if _opts.install_opts:
+        install_args += ["--install-opts", _opts.install_opts]
     if _opts.filelist:
         install_args += ["--pkg-filelist", _opts.filelist]
     if _opts.pattern:
@@ -958,6 +971,8 @@ def pkgcache(args):
     elif _opts.repos == 'FASTR':
         logging.info("Overwriting '--repos FASTR' with '--repos FASTR,%s'" % default_cran_mirror_url)
         install_args += ["--repos", "FASTR," + default_cran_mirror_url]
+    elif _opts.repos:
+        install_args += ["--repos", _opts.repos]
     else:
         logging.info("No '--repos' specified, using default CRAN mirror: " + default_cran_mirror_url)
         install_args += ["--repos", default_cran_mirror_url]
