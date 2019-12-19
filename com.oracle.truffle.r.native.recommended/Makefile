@@ -30,7 +30,6 @@
 FASTR_R_HOME := $(abspath $(VPATH)/..)
 NATIVE_PROJECT_DIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native
 TOPDIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native.recommended
-PKGS_REPO_DIR := repo/src/contrib
 
 ifdef MX_VERBOSE
 VERBOSE=--verbose
@@ -80,29 +79,42 @@ clist = $(subst $e $e,$c,$(strip $1))
 # This will create a string like "^((codetools)|(MASS)|...)$"
 GNUR_RECOMMENDED_PATTERN := "^(($(call clist,$(GNUR_RECOMMENDED_PKGNAMES))))$$"
 
+# in managed mode, we do nothing
+ifneq ($(FASTR_RFFI),managed)
+
 all: install.recommended
 
-%.ts: $(GNUR_RECOMMENDED_TAR_DIR)%.tgz
-ifndef R_RECOMMENDED_PKGS_CACHE_DIR
-	@echo Installing recommended package `basename $<`
-	@_R_CHECK_INSTALL_DEPENDS_=no $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
-	@echo Finished installing recommended package `basename $<`
-endif
-	@touch $@
+# ------------------------
+# If FASTR_RECOMMENDED_BINARY is defined, we just copy the binaries from there
+ifdef FASTR_RECOMMENDED_BINARY
+
+$(info Using FastR recommended packages binary: $(FASTR_RECOMMENDED_BINARY))
+
+install.recommended: $(GNUR_RECOMMENDED_TARS)
+	if ! (mx -p $(FASTR_R_HOME) r-pkgcache --print-api-checksum --vm fastr | diff -q $(FASTR_RECOMMENDED_BINARY)/api-checksum.txt -); then \
+		echo "******************************"; \
+		echo "ERROR:"; \
+		echo "The checksum of FastR header files does not match the checksum that the recommended packages were build against."; \
+		echo "You can run appropriate CI jobs in FastR repo to generate a new version of recommended packages binary and then upload it to the appropriate place."; \
+		echo "******************************"; \
+		exit 1; \
+	fi
+	cp -R $(FASTR_RECOMMENDED_BINARY)/pkgs/* $(FASTR_R_HOME)/library
+	touch install.recommended
+
+# ------------------------
+# If FASTR_RECOMMENDED_BINARY is not defined, we just build the packages
+else 
 
 $(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
 $(info GNUR_RECOMMENDED_PATTERN=$(GNUR_RECOMMENDED_PATTERN))
 
-ifneq ($(FASTR_RFFI),managed)
-$(PKGS_REPO_DIR):
-	mkdir -p $(PKGS_REPO_DIR)
-	cp $(GNUR_RECOMMENDED_TARS) $(PKGS_REPO_DIR)
-	(cd $(PKGS_REPO_DIR); $(GNUR_HOME_BINARY)/bin/R --vanilla --slave -e "tools::write_PACKAGES('.', type='source')")
+%.ts: $(GNUR_RECOMMENDED_TAR_DIR)%.tgz
+	@echo Installing recommended package `basename $<`
+	@_R_CHECK_INSTALL_DEPENDS_=no $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
+	@echo Finished installing recommended package `basename $<`
 
-install.recommended: $(PKGS_REPO_DIR) $(GNUR_RECOMMENDED_PKGNAMES_TS)
-ifdef R_RECOMMENDED_PKGS_CACHE_DIR
-	mx -p $(FASTR_R_HOME) r-pkgcache $(VERBOSE) --vm fastr --library fastr=$(FASTR_R_HOME)/library --repos RECOMMENDED=$(PKGS_REPO_DIR) --cache-dir $(R_RECOMMENDED_PKGS_CACHE_DIR) --pkg-pattern $(GNUR_RECOMMENDED_PATTERN)
-endif
+install.recommended: $(GNUR_RECOMMENDED_PKGNAMES_TS)
 ifeq ($(OS_NAME),Darwin)
 	set -e; \
 	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \
@@ -114,17 +126,6 @@ ifeq ($(OS_NAME),Darwin)
 	done
 endif
 	touch install.recommended
-else
-install.recommended:
-endif
-	touch install.recommended
-
-clean:
-	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \
-		rm -rf $(FASTR_R_HOME)/library/$$pkgname; \
-	done
-	rm -f install.recommended
-	rm -rf $(PKGS_REPO_DIR)
 
 Matrix.ts: lattice.ts
 mgcv.ts: nlme.ts MASS.ts Matrix.ts
@@ -134,3 +135,13 @@ survival.ts: Matrix.ts
 ## and for static html links
 boot.ts: MASS.ts survival.ts
 cluster.ts: MASS.ts
+
+endif # FASTR_RECOMMENDED_BINARY
+
+clean:
+	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \
+		rm -rf $(FASTR_R_HOME)/library/$$pkgname; \
+	done
+	rm -f install.recommended
+
+endif # FASTR_RFFI != managed
