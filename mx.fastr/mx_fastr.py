@@ -339,7 +339,7 @@ def _fastr_gate_runner(args, tasks):
         if t:
             new_env = os.environ.copy()
             new_env['R_DEFAULT_PACKAGES'] = 'base'
-            run_r(['-q', '-e', 'extSoftVersion()'], 'R', env = new_env)
+            run_r(['-q', '-e', 'extSoftVersion()'], 'R', env=new_env)
 
     # ---------------------------------
     # Style checks:
@@ -376,7 +376,7 @@ def _fastr_gate_runner(args, tasks):
                 mx.abort('Recommended packages seem to be not installed in FastR. Did you forget to build with FASTR_RELEASE=true?')
             # TODO: removed failing: "&& require(survival)", GR-20276
             test_load = 'if (!(require(codetools) && require(MASS) && require(boot) && require(class) && require(cluster) && require(lattice) && require(nnet) && require(spatial) && require(Matrix) && require(KernSmooth) && require(foreign) && require(nlme) && require(rpart))) q(status=1)'
-            if run_r(['--vanilla', '-e', test_load], 'R', nonZeroIsFatal = False) != 0:
+            if run_r(['--vanilla', '-e', test_load], 'R', nonZeroIsFatal=False) != 0:
                 mx.abort("Loading of recommended packages failed")
 
     with mx_gate.Task('Internal pkg test', tasks, tags=[FastRGateTags.internal_pkgs_test]) as t:
@@ -411,7 +411,7 @@ def _fastr_gate_runner(args, tasks):
                 cache_arg = os.environ.get('FASTR_PKGS_CACHE_OPT')
                 if cache_arg is None:
                     cache_arg = []
-                    mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest'")
+                    mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
                 else:
                     cache_arg = ['--cache-pkgs', cache_arg]
                 result = pkgtest(["--verbose"] + cache_arg + ["--repos", "SNAPSHOT", "--pkg-filelist", list_file])
@@ -825,7 +825,7 @@ def build_binary_pkgs(args_in, **kwargs):
 
     os_name = platform.system().lower()
     dest_dir = os.path.join(_fastr_suite.dir, 'binary-packages')
-    shutil.rmtree(dest_dir, ignore_errors = True)
+    shutil.rmtree(dest_dir, ignore_errors=True)
     mx.ensure_dir_exists(dest_dir)
 
     # F2C
@@ -865,20 +865,20 @@ def build_binary_pkgs(args_in, **kwargs):
     return 0
 
 def checkout_downstream_revision(args):
-    if (len(args) != 2):
+    if len(args) != 2:
         mx.abort("Give two arguments: main suite name and the downstream suite name")
 
     main_suite = mx.suite(args[0])
     downstream_suite = mx.suite(args[1])
 
     main_commit = mx.OutputCapture()
-    mx.run(['git', '-C', main_suite.vc_dir, 'log', '--pretty=%H', '--grep=PullRequest', '--merges', '--max-count=1'], nonZeroIsFatal=True, out = main_commit)
+    mx.run(['git', '-C', main_suite.vc_dir, 'log', '--pretty=%H', '--grep=PullRequest', '--merges', '--max-count=1'], nonZeroIsFatal=True, out=main_commit)
 
     downstream_commit = mx.OutputCapture()
     suite_file = os.path.relpath(os.path.join(downstream_suite.mxDir, 'suite.py'), downstream_suite.vc_dir)
     main_commit = main_commit.data.rstrip('\n')
     mx.log("Main repo commit for which the downstream repo will be searched: " + main_commit)
-    mx.run(['git', '-C', downstream_suite.vc_dir, 'log', 'origin/master', '--pretty=%H', '--grep=PullRequest:', '--reverse', '-m', '-S', main_commit, '--', suite_file], out = downstream_commit, nonZeroIsFatal=True)
+    mx.run(['git', '-C', downstream_suite.vc_dir, 'log', 'origin/master', '--pretty=%H', '--grep=PullRequest:', '--reverse', '-m', '-S', main_commit, '--', suite_file], out=downstream_commit, nonZeroIsFatal=True)
 
     downstream_commit = downstream_commit.data.split('\n')[0].rstrip('\n')
     mx.log("Checking out downstream repo commit " + downstream_commit)
