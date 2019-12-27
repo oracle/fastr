@@ -49,7 +49,7 @@ ifeq ($(wildcard ../../libdownloads/f2c/src),)
 	(cd ../../libdownloads; mkdir -p f2c/src/libf2c; cd f2c/src/libf2c; unzip ../../libf2c.zip)
 	(cd ../../libdownloads/f2c/src; tar xfz ../src.tgz; mv src f2c)
 	# patch downloaded sources
-	cp libf2c-patch/* ../../libdownloads/f2c/src/libf2c
+	cp -v libf2c-patch/* ../../libdownloads/f2c/src/libf2c
 endif 
 	# make f2c
 	# TODO: use -fPIC only on linux in libf2c.makefile
@@ -60,7 +60,7 @@ endif
 	cp -r ../../libdownloads/f2c/src/f2c ../../f2c/
 	
 	# make libf2c
-	$(MAKE) -C ../../libdownloads/f2c/src/libf2c CC=$(LABS_LLVM_CC)
+	$(MAKE) -f makefile -C ../../libdownloads/f2c/src/libf2c CC=$(LABS_LLVM_CC)
 	mkdir -p ../../f2c
 	cp -r ../../libdownloads/f2c/src/libf2c ../../f2c/
 endif # ifdef F2C_BINARY

@@ -91,7 +91,7 @@ all: f2c.h signal1.h sysdep1.h libf2c.so
 ## arrange for $DYLD_LIBRARY_PATH to include the directory containing libf2c.so.
 
 libf2c.so: $(OFILES)
-	$(CC) -shared -o libf2c.so $(OFILES)
+	$(CC) -lm -shared -o libf2c.so $(OFILES)
 
 ### If your system lacks ranlib, you don't need it; see README.
 
