@@ -8,7 +8,7 @@ suite = {
                "name" : "truffle",
                "subdir" : True,
                # The version must be the same as the version of Sulong
-               "version" : "d3e8095b1a0d931df80b971de338918e81b56d6f",
+               "version" : "f39c5a620cfb463373dbd758345339fc04547f14",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -18,7 +18,7 @@ suite = {
                "name" : "sulong",
                "subdir" : True,
                # The version must be the same as the version of Truffle
-               "version" : "d3e8095b1a0d931df80b971de338918e81b56d6f",
+               "version" : "f39c5a620cfb463373dbd758345339fc04547f14",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -54,14 +54,14 @@ suite = {
 
     "F2C" : {
         "path" : "libdownloads/f2c/src.tgz",
-        "urls" : ["https://www.netlib.org/f2c/src.tgz"],
-        "sha1" : "9a12bd6038c2bb60409b29beafd2db10a06bad8e",
+        "urls" : ["https://netlib.sandia.gov/f2c/src.tgz"],
+        "sha1" : "8a26107bf9f82a2dcfa597f15549a412be75e0ee",
         "resource" : "true"
     },
 
     "LIBF2C" : {
         "path" : "libdownloads/f2c/libf2c.zip",
-        "urls" : ["https://www.netlib.org/f2c/libf2c.zip"],
+        "urls" : ["https://netlib.sandia.gov/f2c/libf2c.zip"],
         "sha1" : "e39a00f425f8fc41dde434686080a94e94884f30",
         "resource" : "true"
     },

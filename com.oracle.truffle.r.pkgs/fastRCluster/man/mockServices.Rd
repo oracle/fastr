@@ -15,6 +15,8 @@ mockServices(newPsockClusterFactory = parallel::makePSOCKcluster,
 \item{newRunSystemCommand}{Replacement for base::sytem2.}
 
 \item{newDownloadFile}{Replacement for utils::download.file.}
+
+\item{validateGraalVMInstallation}{Turns on/off the validation of GraalVM home directory.}
 }
 \value{
 invisible NULL

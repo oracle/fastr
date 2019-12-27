@@ -24,6 +24,7 @@ import glob
 import platform, subprocess, sys, shlex
 from os.path import join, sep
 from argparse import ArgumentParser
+import tarfile
 import mx
 import mx_gate
 import mx_fastr_dists
@@ -334,7 +335,9 @@ def _fastr_gate_runner(args, tasks):
     '''
     with mx_gate.Task('ExtSoftVersions', tasks, tags=[mx_gate.Tags.always]) as t:
         if t:
-            rshell(['-q', '-e', 'extSoftVersion()'])
+            new_env = os.environ.copy()
+            new_env['R_DEFAULT_PACKAGES'] = 'base'
+            run_r(['-q', '-e', 'extSoftVersion()'], 'R', env=new_env)
 
     # ---------------------------------
     # Style checks:
@@ -397,7 +400,7 @@ def _fastr_gate_runner(args, tasks):
                 cache_arg = os.environ.get('FASTR_PKGS_CACHE_OPT')
                 if cache_arg is None:
                     cache_arg = []
-                    mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest'")
+                    mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
                 else:
                     cache_arg = ['--cache-pkgs', cache_arg]
                 result = pkgtest(["--verbose"] + cache_arg + ["--repos", "SNAPSHOT", "--pkg-filelist", list_file])
@@ -754,7 +757,7 @@ def _pkgtest_args(args):
     else:
         pkgtest_args += ["--gnur-home"]
         pkgtest_args += [_gnur_path()]
-    mx.log(args)
+    mx.logv(args)
     full_args = pkgtest_args + list(args)
     mx.logv(full_args)
     return full_args
@@ -798,6 +801,78 @@ def pkgcache(args, **kwargs):
     mx.logv(["r-pkgcache"] + full_args)
     return pkgtest_load().pkgcache(full_args)
 
+def build_binary_pkgs(args_in, **kwargs):
+    '''
+    Builds binary packages of components that we cache for build speed-up.
+    See the CI scripts for details.
+    '''
+    parser = ArgumentParser()
+    parser.add_argument('--f2c-version', type=int, dest='f2c_version', required=True, help='Current version of f2c, the tarball will use this + 1')
+    parser.add_argument('--recommended-pkgs-version', default=0, type=int, dest='recommended_version', help='Current version of recommended packages binary, the tarball will use this + 1')
+    parser.add_argument('--recommended-pkgs-list', dest='recommended_list', required=True, help='Comma separated list of recommended packages')
+    args = parser.parse_args(args_in)
+
+    os_name = platform.system().lower()
+    dest_dir = os.path.join(_fastr_suite.dir, 'binary-packages')
+    shutil.rmtree(dest_dir, ignore_errors=True)
+    mx.ensure_dir_exists(dest_dir)
+
+    # F2C
+    # creates binary-packages/f2c-binary-{version}-{osname}-amd64/f2c with contents of FASTR_HOME/f2c
+    f2c_name = 'f2c-binary-' + str(args.f2c_version + 1) + '-' + os_name + '-amd64'
+    f2c_path = os.path.join(dest_dir, f2c_name)
+    shutil.copytree(os.path.join(_fastr_suite.dir, 'f2c'), os.path.join(f2c_path, 'f2c'))
+    # creates the tarball
+    result_tarball = os.path.join(dest_dir, f2c_name + '.tar.gz')
+    with tarfile.open(result_tarball, "w:gz") as tar:
+        tar.add(f2c_path, arcname=os.path.basename(f2c_path))
+    mx.log("Binary package created at: " + result_tarball)
+
+    # Recommended packages
+    # creates binary-packages/fastr-recommended-pkgs-{version}-{osname}-amd64/fastr-recommended-pkgs
+    pkgs_name = 'fastr-recommended-pkgs-' + str(args.recommended_version + 1) + '-' + os_name + '-amd64'
+    pkgs_path = os.path.join(dest_dir, pkgs_name)
+    pkgs_pkgs_path = os.path.join(pkgs_path, 'pkgs')
+    mx.ensure_dir_exists(pkgs_pkgs_path)
+    for pkg_name in args.recommended_list.split(','):
+        shutil.copytree(os.path.join(_fastr_suite.dir, 'library', pkg_name), os.path.join(pkgs_pkgs_path, pkg_name))
+    # add file with API digest
+    try:
+        with open(os.path.join(pkgs_path, 'api-checksum.txt'), 'w') as f:
+            sys.stdout = f
+            pkgcache(['--print-api-checksum', '--vm', 'fastr'])
+    finally:
+        sys.stdout = sys.__stdout__
+    # creates the tarball
+    result_tarball = os.path.join(dest_dir, pkgs_name + '.tar.gz')
+    with tarfile.open(result_tarball, "w:gz") as tar:
+        tar.add(pkgs_path, arcname=os.path.basename(pkgs_path))
+    mx.log("Binary package created at: " + result_tarball)
+
+    mx.log("Contents of the " + dest_dir + "directory: ")
+    mx.run(['ls', '-R', dest_dir])
+    return 0
+
+def checkout_downstream_revision(args):
+    if len(args) != 2:
+        mx.abort("Give two arguments: main suite name and the downstream suite name")
+
+    main_suite = mx.suite(args[0])
+    downstream_suite = mx.suite(args[1])
+
+    main_commit = mx.OutputCapture()
+    mx.run(['git', '-C', main_suite.vc_dir, 'log', '--pretty=%H', '--grep=PullRequest', '--merges', '--max-count=1'], nonZeroIsFatal=True, out=main_commit)
+
+    downstream_commit = mx.OutputCapture()
+    suite_file = os.path.relpath(os.path.join(downstream_suite.mxDir, 'suite.py'), downstream_suite.vc_dir)
+    main_commit = main_commit.data.rstrip('\n')
+    mx.log("Main repo commit for which the downstream repo will be searched: " + main_commit)
+    mx.run(['git', '-C', downstream_suite.vc_dir, 'log', 'origin/master', '--pretty=%H', '--grep=PullRequest:', '--reverse', '-m', '-S', main_commit, '--', suite_file], out=downstream_commit, nonZeroIsFatal=True)
+
+    downstream_commit = downstream_commit.data.split('\n')[0].rstrip('\n')
+    mx.log("Checking out downstream repo commit " + downstream_commit)
+    mx.run(['git', '-C', downstream_suite.vc_dir, 'checkout', downstream_commit], nonZeroIsFatal=True)
+    return 0
 
 mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents  # pylint: disable=C0103
 
@@ -839,7 +914,9 @@ _commands = {
     'nativebuild' : [nativebuild, '[]'],
     'testrfficodegen' : [run_testrfficodegen, '[]'],
     'rfficodegen' : [run_rfficodegen, '[]'],
-    'gnur-packages-test': [gnur_packages_test, '[]']
+    'gnur-packages-test': [gnur_packages_test, '[]'],
+    'build-binary-pkgs': [build_binary_pkgs, '[]'],
+    'checkout-downstream-revision': [checkout_downstream_revision, '[]']
     }
 
 mx.update_commands(_fastr_suite, _commands)

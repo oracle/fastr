@@ -23,10 +23,10 @@ eval(expression({
 
 	.fastr.addHelpPath('/com/oracle/truffle/r/library/utils/Rd')
 
-	fastrRepoPath <- NULL
+	fastrRepoPath <- Sys.getenv("INSTALL_FASTR_PKGS_REPO_PATH")
 
 	install.fastr.packages <- function(pkgs, lib, INSTALL_opts=character(0)) {
-		if (is.null(fastrRepoPath) || !file.exists(fastrRepoPath)) {
+		if (is.null(fastrRepoPath) || fastrRepoPath == "" || !file.exists(fastrRepoPath)) {
 			workDir <- tempdir()
 			download.file('https://api.github.com/repos/oracle/fastr/tarball/master', file.path(workDir, 'fastr-repo.tar.gz'))
 			origFiles <- list.files(workDir)
