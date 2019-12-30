@@ -1,0 +1,226 @@
+#
+# Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 3 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 3 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# Hand-written Makeconf used for building with Labs LLVM Toolchain that is part of GraalVM
+# Environment variables starting with TOOLCHAIN_ are exported by FastR to any processes that
+# are started with system/system2 builtins including the package build during package installation
+
+# Notes to Sys Admins:
+# 
+# safe-forward-xyz is a wrapper that checks availability of tool xyz on $PATH and then simply executes
+# that tool. Example: "safe-forward-sed" can be replaced with just "sed" if you know that "sed"
+# is available your system. If there is no "sed" on your $PATH, "safe-forward-sed" will print
+# an error message with an explanation.
+#
+# Environment variables PKG_INCLUDE_FLAGS_OVERRIDE and PKG_LDFLAGS_OVERRIDE:
+# In GNU-R, these variables are expanded into this file during build time. In FastR, this file just refers
+# to those variables. This means that in order to configure flags, one can either export these variables,
+# or edit this files, which gives even finer control over flags and other things.
+
+# FastR development Notes for the LLVM version of this file:
+#  * 02 is removed as a workaround for Sulong issue (TODO: issue ID)
+#  * -undefined dynamic_lookup is not compatible with the LLVM bundling
+#  * TODOs:
+#    * replace system "ar" with one provided by the toolchain
+
+## This fails if it contains spaces, or if it is quoted
+include $(R_SHARE_DIR)/make/vars.mk
+
+AR = $(R_HOME)/bin/safe-forward-ar
+BLAS_LIBS = -L"$(R_HOME)/lib$(R_ARCH)" -lRblas
+C_VISIBILITY = 
+CC = "$(LABS_TOOLCHAIN_CC)"
+CFLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CPICFLAGS = -fPIC
+CPPFLAGS = -DFASTR -DNO_GNUR
+CXX = "$(LABS_TOOLCHAIN_CXX)"
+CXXCPP = $(CXX) -E
+CXXFLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXXPICFLAGS = -fPIC
+CXX98 = "$(LABS_TOOLCHAIN_CXX)"
+CXX98FLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXX98PICFLAGS = -fPIC
+CXX98STD = -std=gnu++98
+CXX11 = "$(LABS_TOOLCHAIN_CXX)"
+CXX11FLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXX11PICFLAGS = -fPIC
+CXX11STD = -std=gnu++11
+CXX14 = "$(LABS_TOOLCHAIN_CXX)"
+CXX14FLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXX14PICFLAGS = -fPIC
+CXX14STD = -std=gnu++14
+CXX17 = "$(LABS_TOOLCHAIN_CXX)"
+CXX17FLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXX17PICFLAGS = -fPIC
+CXX17STD = -std=gnu++17
+CXX_VISIBILITY = 
+DYLIB_EXT = .dylib
+DYLIB_LD = $(CC)
+DYLIB_LDFLAGS = "-Wl,-headerpad_max_install_names,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
+DYLIB_LINK = $(DYLIB_LD) $(DYLIB_LDFLAGS) $(LDFLAGS)
+ECHO = echo
+ECHO_C = \c
+ECHO_N = 
+ECHO_T = 
+F_VISIBILITY = 
+## FC is the compiler used for all Fortran as from R 3.6.0
+## FastR Note: the wrapper tries to use f2c, if it fails it uses the tool given as the first argument
+FC = "$(R_HOME)/bin/f2c-wrapper" "$(R_HOME)/bin/safe-forward-gfortran"
+FCFLAGS =  $(LTO)
+## additional libs needed when linking with $(FC), e.g. on some Oracle compilers
+FCLIBS_XTRA = 
+FFLAGS =  $(LTO)
+# FastR note: we add -L$(R_HOME)/lib, because those libraries are deployed with FastR in its lib directory
+FLIBS = -L"$(R_HOME)/lib" -lgfortran -lm -lquadmath
+FPICFLAGS = -fPIC
+FOUNDATION_CPPFLAGS = 
+FOUNDATION_LIBS = 
+JAR = $(JAVA_HOME)/bin/jar
+## JAVA_HOME might be used in the next three.
+## They are for packages 'JavaGD' and 'rJava'
+LAPACK_LIBS = -L"$(R_HOME)/lib$(R_ARCH)" -lRlapack
+LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" --L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c $(PKG_LDFLAGS_OVERRIDE)
+## we only need this is if it is external, as otherwise link to R
+LIBM = -lm
+LIBR0 = -lR 
+LIBR1 = 
+LIBS =  -lpcre -llzma -lbz2 -lz -licucore -ldl -lm -liconv
+## needed by R CMD config
+LIBnn = lib
+LIBTOOL = $(SHELL) "$(R_HOME)/bin/libtool"
+LTO = 
+## needed to build applications linking to static libR
+MAIN_LD = $(CC)
+MAIN_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c
+MAIN_LINK = $(MAIN_LD) $(MAIN_LDFLAGS) $(LDFLAGS)
+MKINSTALLDIRS = $(R_HOME)/bin/mkinstalldirs
+OBJC = $(CC)
+OBJCFLAGS = -fobjc-exceptions $(LTO)
+OBJC_LIBS = -lobjc 
+OBJCXX = $(CXX)
+R_ARCH = 
+RANLIB = ranlib
+SAFE_FFLAGS =  -msse2 -mfpmath=sse
+SED = $(R_HOME)/bin/safe-forward-sed
+SHELL = /bin/sh
+SHLIB_CFLAGS = 
+SHLIB_CXXFLAGS = 
+SHLIB_CXXLD = $(CXX)
+SHLIB_CXXLDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX98LD = $(CXX98) $(CXX98STD)
+SHLIB_CXX98LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX11LD = $(CXX11) $(CXX11STD)
+SHLIB_CXX11LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX14LD = $(CXX14) $(CXX14STD)
+SHLIB_CXX14LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX17LD = $(CXX17) $(CXX17STD)
+SHLIB_CXX17LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_EXT = .so
+SHLIB_FFLAGS = 
+SHLIB_LD = $(CC)
+SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
+SHLIB_LIBADD = 
+## We want to ensure libR is picked up from $(R_HOME)/lib
+## before e.g. /usr/local/lib if a version is already installed.
+SHLIB_LINK = $(SHLIB_LD) $(SHLIB_LDFLAGS) $(LIBR0) $(LDFLAGS)
+SHLIB_OPENMP_CFLAGS = 
+SHLIB_OPENMP_CXXFLAGS = 
+SHLIB_OPENMP_FFLAGS = 
+STRIP_STATIC_LIB = strip -S
+STRIP_SHARED_LIB = strip -x
+TCLTK_CPPFLAGS = 
+TCLTK_LIBS = 
+YACC = $(R_HOME)/safe-forward-yacc
+
+## Legacy settings:  no longer used by R as of 3.6.0
+## Setting FC often sets F77 (on Solaris make even if set)
+## so must follow FC in this file.
+F77 = $(FC)
+FCPICFLAGS = -fPIC
+F77_VISIBILITY = 
+SHLIB_FCLD = $(FC)
+SHLIB_FCLDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_OPENMP_FCFLAGS = 
+
+
+## for linking to libR.a
+STATIC_LIBR = #  "$(R_HOME)/lib$(R_ARCH)/libR.a"  $(BLAS_LIBS) $(FLIBS)  $(LIBINTL) -lreadline  $(LIBS)
+
+## These are recorded as macros for legacy use in packages
+## set on AIX, formerly for old glibc (-D__NO_MATH_INLINES)
+R_XTRA_CFLAGS = 
+##  was formerly set on HP-UX
+R_XTRA_CPPFLAGS =  -I"$(R_INCLUDE_DIR)" -DNDEBUG
+## currently unset
+R_XTRA_CXXFLAGS = 
+## used for gfortran in R > 3.6.0
+R_XTRA_FFLAGS = 
+
+## SHLIB_CFLAGS SHLIB_CXXFLAGS SHLIB_FFLAGS are apparently currently unused
+## SHLIB_CXXFLAGS is undocumented, there is no SHLIB_FCFLAGS
+ALL_CFLAGS =  $(PKG_CFLAGS) $(CPICFLAGS) $(SHLIB_CFLAGS) $(CFLAGS)
+ALL_CPPFLAGS =  -I"$(R_INCLUDE_DIR)" -DNDEBUG $(PKG_CPPFLAGS) $(CLINK_CPPFLAGS) $(CPPFLAGS)
+ALL_CXXFLAGS =  $(PKG_CXXFLAGS) $(CXXPICFLAGS) $(SHLIB_CXXFLAGS) $(CXXFLAGS)
+ALL_OBJCFLAGS = $(PKG_OBJCFLAGS) $(CPICFLAGS) $(SHLIB_CFLAGS) $(OBJCFLAGS)
+ALL_OBJCXXFLAGS = $(PKG_OBJCXXFLAGS) $(CXXPICFLAGS) $(SHLIB_CXXFLAGS) $(OBJCXXFLAGS)
+ALL_FFLAGS = -fno-optimize-sibling-calls $(PKG_FFLAGS) $(FPICFLAGS) $(SHLIB_FFLAGS) $(FFLAGS)
+## can be overridden by R CMD SHLIB
+P_FCFLAGS = $(PKG_FFLAGS)
+ALL_FCFLAGS = -fno-optimize-sibling-calls $(P_FCFLAGS) $(FPICFLAGS) $(SHLIB_FFLAGS) $(FCFLAGS)
+## LIBR here as a couple of packages use this without SHLIB_LINK
+ALL_LIBS = $(PKG_LIBS) $(SHLIB_LIBADD) $(LIBR) $(LIBINTL)
+
+.SUFFIXES:
+.SUFFIXES: .c .cc .cpp .d .f .f90 .f95 .m .mm .M .o
+
+.c.o:
+	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
+.c.d:
+	@echo "making $@ from $<"
+	@$(CC) -MM $(ALL_CPPFLAGS) $< > $@
+.cc.o:
+	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $@
+.cpp.o:
+	$(CXX) $(ALL_CPPFLAGS) $(ALL_CXXFLAGS) -c $< -o $@
+.cc.d:
+	@echo "making $@ from $<"
+	@$(CXX) -M $(ALL_CPPFLAGS) $< > $@
+.cpp.d:
+	@echo "making $@ from $<"
+	@$(CXX) -M $(ALL_CPPFLAGS) $< > $@
+.m.o:
+	$(OBJC) $(ALL_CPPFLAGS) $(ALL_OBJCFLAGS) -c $< -o $@
+.m.d:
+	@echo "making $@ from $<"
+	@gcc -MM $(ALL_CPPFLAGS) $< > $@
+.mm.o:
+	$(OBJCXX) $(ALL_CPPFLAGS) $(ALL_OBJCXXFLAGS) -c $< -o $@
+.M.o:
+	$(OBJCXX) $(ALL_CPPFLAGS) $(ALL_OBJCXXFLAGS) -c $< -o $@
+.f.o:
+	$(FC) $(ALL_FFLAGS) -c $< -o $@
+## @FCFLAGS_f9x@ are flags needed to recognise the extensions
+.f95.o:
+	$(FC) $(ALL_FCFLAGS) -c  $< -o $@
+.f90.o:
+	$(FC) $(ALL_FCFLAGS) -c  $< -o $@

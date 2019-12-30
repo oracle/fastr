@@ -8,10 +8,7 @@ then delving into individual scripts that patch and build parts of GNUR. Last se
 ## `mx build`
 
  * As of August 2018 requires LLVM <= 8
- * locates the module definition in `$(FASTR_R_HOME)/mx.fastr`
- * possibly loads the `env` file from `mx.fastr` (there is none, by default)
- * sets up binary suites, if any
- * discovers suites (fastr as primary, truffle)
+ * Uses the "mx" tool (https://github.com/graalvm/mx)
  * `post-init` (see function `mx_fastr_dist.mx_post_parse_cmd_line`)
  	* instantiation of distribution `FASTR_RELEASE<rffi>`
  		* NB: consult `mx.fastr/suite.py` for distributions definitions
@@ -22,14 +19,11 @@ then delving into individual scripts that patch and build parts of GNUR. Last se
 	 	* dependency resolution
 	 	* distribution archives: `[FASTR, FASTR_UNIT_TESTS, FASTR_UNIT_TESTS_NATIVE, R_FFI_PROCESSOR, TRUFFLE_R_PARSER_PROCESSOR, FASTR_RELEASE]`
 	 		* see `mx_fastr._fastr_suite.dists`
- * function `mx.build()`
- 	* attempts to parallelize the build (controlled by the `parallelize` argument of `mx build`)
- 		* currently 107 tasks
-	* building native projects: an instance of `mx.NativeProject` creates an instance `mx.NativeBuildTask`, 
+ * Note about building native projects
+		* native project is an instance of `mx.NativeProject`, it creates an instance of `mx.NativeBuildTask`,
 		* method `_build_run_args` creates the command line for `make`, such as:
 			* `['make', '-f', '/Users/zslajchrt/work/tests/graal/truffle/src/com.oracle.truffle.nfi.native/Makefile', '-j', '8']`
-			* `['make']` for the patched GNUR in `$(FASTR_R_HOME)/com.oracle.truffle.r.native`
-		
+
 ## Integrating GNUR
  
  The original GNUR distribution is needed for a couple of reasons:
@@ -50,7 +44,7 @@ then delving into individual scripts that patch and build parts of GNUR. Last se
  then merge the result back to the master branch. Any patches to those sources should be done on as usual
  (i.e. based off current master branch and merged back to master branch).
  
- Thera are many original GNUR files that are just taken without any modification from GNUR
+ There are many original GNUR files that are just taken without any modification from GNUR
  and copied to their respective location in the FastR directory layout (See the section *Building `run`* for details).
  
  Contrary to the previous build process, the current one does not remove the GNUR build when cleaning the project,
@@ -246,7 +240,6 @@ populates the following directories: `bin, doc, etc, share, include`.
 * Adds `Rclasspath.sh` to `bin/execRextras`
 * Updates `R_HOME_DIR` to FastR
 * Overrides `examples-header.R` and `examples-footer.R` in `share/R`
-* Records the FFI version to `etc/ffibuildtype`
 
 See `run/Makefile` for more info.
 

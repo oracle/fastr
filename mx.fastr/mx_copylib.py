@@ -69,15 +69,16 @@ def _copylib(lib, libpath, plain_libpath_base, target):
     else:
         source_libpath = real_libpath
     shutil.copyfile(source_libpath, os.path.join(target, os.path.basename(source_libpath)))
-    mx.log('copied ' + lib + ' library from ' + source_libpath + ' to ' + target + ', real_libpath=' + real_libpath)
+    mx.log('Copylib: copied ' + lib + ' library from ' + source_libpath + ' to ' + target + ', real_libpath=' + real_libpath)
     os.chdir(target)
-    mx.log('plain_libpath_base: ' + plain_libpath_base + ' libpath: ' + libpath + ' source_libpath: ' + source_libpath)
+    mx.log('Copylib: plain_libpath_base: ' + plain_libpath_base + ', libpath: ' + libpath + ', source_libpath: ' + source_libpath)
     if not has_rpath:
         if os.path.basename(real_libpath) != plain_libpath_base:
-            # create a symlink
+            # create a symlink, e.g. libgfortran.so -> libgfortran.so.3 (the real library, with version number)
+            # this also allows liking with simple -lgfortran
             if os.path.exists(plain_libpath_base):
                 os.remove(plain_libpath_base)
-            mx.log('ln -s ' + os.path.basename(real_libpath) + ' ' + plain_libpath_base)
+            mx.log('Copylib: ln -s ' + os.path.basename(real_libpath) + ' ' + plain_libpath_base)
             os.symlink(os.path.basename(real_libpath), plain_libpath_base)
         # On Darwin we change the id to use @rpath
         if platform.system() == 'Darwin':
@@ -105,20 +106,25 @@ def copylib(args):
     If PKG_LDFLAGS_OVERRIDE is unset, we assume the libraries are located in the system directories
     and do nothing.
     '''
+    mx.log('Running: mx copylib ' + ' '.join(args))
     if 'PKG_LDFLAGS_OVERRIDE' in os.environ:
         parts = os.environ['PKG_LDFLAGS_OVERRIDE'].split(' ')
         ext = 'dylib' if platform.system() == 'Darwin' else 'so'
-        lib_prefix = 'lib' + args[0] + '.'
+        lib_name = args[0]
+        lib_prefix = 'lib' + lib_name + '.'
         ver_env_key = 'FASTR_LIB' + args[0].upper() + '_VER'
         if ver_env_key in os.environ:
             lib_prefix += os.environ[ver_env_key] + '.'
         plain_libpath_base = lib_prefix + ext
         for part in parts:
             path = part.strip('"').lstrip('-L')
+            mx.log("Copylib: searching path '" + path + "' for library " + lib_name)
             if os.path.exists(path):
                 for f in os.listdir(path):
                     if f.startswith(lib_prefix):
-                        if os.path.exists(os.path.join(path, plain_libpath_base)):
+                        has_plain = os.path.exists(os.path.join(path, plain_libpath_base))
+                        mx.log("Copylib: found library " + lib_name + " as '" + f + "', plain (w/o version number) variant found: " + str(has_plain))
+                        if has_plain:
                             f = plain_libpath_base
                         target_dir = args[1]
                         target = os.path.join(path, f)
@@ -130,7 +136,7 @@ def copylib(args):
                                     # simply copy over the link to the system library
                                     os.symlink(link_target, os.path.join(target_dir, plain_libpath_base))
                                     return 0
-                            _copylib(args[0], target, plain_libpath_base, args[1])
+                            _copylib(lib_name, target, plain_libpath_base, target_dir)
                         return 0
 
     if 'FASTR_RELEASE' in os.environ:

@@ -24,6 +24,8 @@
 
 # Startup FastR (Rscript) using the mx tool (development)
 # This is exec'ed by the (generic) Rscript script in the parent directory.
+# NOTE: this is used only in the development build,
+# com.oracle.truffle.r.release/src/Rscript_legacy is used in the release
 
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ] ; do source="$(readlink "$source")"; done

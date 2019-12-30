@@ -1,0 +1,72 @@
+#
+# Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 3 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 3 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+### Default etc/Renviron file provided with FastR configured for generic MacOS
+###
+### ${R_HOME}/etc/Renviron
+###
+### Record R system environment variables.
+
+R_PLATFORM=${R_PLATFORM-'x86_64-apple-darwin18.2.0'}
+## Default printer paper size: first record if user set R_PAPERSIZE
+R_PAPERSIZE_USER=${R_PAPERSIZE}
+R_PAPERSIZE=${R_PAPERSIZE-'a4'}
+## Default print command
+R_PRINTCMD=${R_PRINTCMD-${R_HOME}/bin/safe-forward-lpr}
+# for Rd2pdf, reference manual
+R_RD4PDF=${R_RD4PDF-'times,inconsolata,hyper'}
+## used for options("texi2dvi")
+R_TEXI2DVICMD=${R_TEXI2DVICMD-${TEXI2DVI-${R_HOME}/bin/safe-forward-texi2dvi}}
+## used by INSTALL, untar() and installing grDevices
+R_GZIPCMD=${R_GZIPCMD-${R_HOME}/bin/safe-forward-gzip}
+## Default zip/unzip commands
+R_UNZIPCMD=${R_UNZIPCMD-${R_HOME}/bin/safe-forward-unzip}
+R_ZIPCMD=${R_ZIPCMD-${R_HOME}/bin/safe-forward-zip}
+R_BZIPCMD=${R_BZIPCMD-${R_HOME}/bin/safe-forward-bzip2}
+## Default browser
+R_BROWSER=${R_BROWSER-${R_HOME}/bin/safe-forward-open}
+## Default editor
+EDITOR=${EDITOR-${VISUAL-${R_HOME}/bin/safe-forward-vi}}
+## Default pager
+PAGER=${PAGER-${R_HOME}/bin/safe-forward-less}
+## Default PDF viewer
+R_PDFVIEWER=${R_PDFVIEWER-${R_HOME}/bin/safe-forward-open}
+## Used by libtool
+LN_S='ln -s'
+MAKE=${MAKE-${R_HOME}/bin/safe-forward-make}
+## Prefer a POSIX-compliant sed on e.g. Solaris
+## Note: SED environment variable is exported by R launcher, but not by Rscript and not when FastR is embedded in JVM
+SED=${SED-${R_HOME}/bin/safe-forward-sed}
+## Prefer a tar that can automagically read compressed archives
+## Used in R CMD INSTALL for binary packages
+TAR=${TAR-${R_HOME}/bin/safe-forward-tar}
+
+## System and compiler types.
+R_SYSTEM_ABI='osx,gcc,gxx,gfortran,?'
+
+## Build time note: com.oracle.truffle.r.native/run/Makefile appends the R_LIBS_USER to this file
+
+### Local Variables: ***
+### mode: sh ***
+### sh-indentation: 2 ***
+### End: ***

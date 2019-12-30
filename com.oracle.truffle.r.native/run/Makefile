@@ -50,7 +50,15 @@ DOC_FILES := $(wildcard $(GNUR_HOME_BINARY)/doc/*)
 
 SHARE_FILES := $(addprefix $(GNUR_HOME_BINARY)/share/,R Rd make java encodings)
 
-LLVM_TOOLS := $(wildcard $(FASTR_NATIVE_DIR)/llvm_tools/*)
+FASTR_TOOLS := $(wildcard $(FASTR_NATIVE_DIR)/run/fastr_tools/*)
+
+OS_NAME := $(shell uname -s)
+ifeq ($(OS_NAME),Darwin)
+	LIB_PATH_VAR := DYLD_FALLBACK_LIBRARY_PATH
+else
+	LIB_PATH_VAR := LD_LIBRARY_PATH
+endif
+
 
 all: rundirs rcmds includedir
 
@@ -75,70 +83,41 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	# for embedded support
 	cp Rclasspath.sh $(FASTR_BIN_DIR)/execRextras/Rclasspath
 	chmod +x $(FASTR_BIN_DIR)/exec/R $(FASTR_BIN_DIR)/execRextras/Rscript $(FASTR_BIN_DIR)/Rscript $(FASTR_BIN_DIR)/execRextras/Rclasspath
-	# update R_HOME_DIR to FastR, --help to -r-help because --help is handled by FastR, and pass args to Rcmd (esp. --jvm)
+	# Patches the R launcher taken over from GNU-R:
+	#  * update R_HOME_DIR to FastR,
+	#  * --help to -r-help because --help is handled by FastR,
+	#  * pass args to Rcmd (esp. --jvm)
+	#  * replace SED=/usr/bin/sed (or whatever the configure script provided) with our safe-foward-sed
 	(sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' | \
 	 sed -e 's/    -h.--help./    --r-help\)/' | \
+	 sed -e 's!SED=.*!SED=$$R_HOME/bin/safe-forward-sed!' | \
 	 sed -e 's!      exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!      FASTR_INTERNAL_ARGS=`echo "$${FASTR_INTERNAL_ARGS} $${args}" | $${SED} -e 's/^[[:space:]]*//' | $${SED} -e 's/[[:blank:]]*$$//'` exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!') < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
 	chmod +x $(FASTR_BIN_DIR)/R
 	touch $(FASTR_ETC_DIR)/ldpaths
-	cp $(shell uname)/Renviron $(FASTR_ETC_DIR)/Renviron
-	mkdir -p $(FASTR_ETC_DIR)/src/include
-	cp config.h.in $(FASTR_ETC_DIR)/src/include
-	cp Renviron.in $(FASTR_ETC_DIR)/Renviron.in
-	cp $(GNUR_HOME_BINARY_UNPACKED)/etc/ldpaths.in $(FASTR_ETC_DIR)/ldpaths.in
-	cp $(GNUR_HOME_BINARY)/etc/Makeconf Makeconf.etc
-	cp $(GNUR_HOME_BINARY)/etc/javaconf $(FASTR_ETC_DIR)/javaconf
-	cp $(GNUR_HOME_BINARY)/etc/repositories $(FASTR_ETC_DIR)/repositories
-	# ldpaths: create two versions: ldpaths.llvm (used also as default ldpaths) and ldpaths.native
-	# the llvm version adds the LLVM lib folder to the LD_LIBRARY_PATH
-	sed 's!export LD_LIBRARY_PATH!LD_LIBRARY_PATH="$$\{R_HOME\}/../llvm/native/lib/:$$\{LD_LIBRARY_PATH\}"; export LD_LIBRARY_PATH!' $(GNUR_HOME_BINARY)/etc/ldpaths > $(FASTR_ETC_DIR)/ldpaths
-	cp $(FASTR_ETC_DIR)/ldpaths $(FASTR_ETC_DIR)/ldpaths.llvm
-	cp $(GNUR_HOME_BINARY)/etc/ldpaths $(FASTR_ETC_DIR)/ldpaths.native
-	# the ed script adds -DFASTR to compiler options and removes JAVA related variables
-	ed Makeconf.etc < edMakeconf.etc
-	# Backup the current state of Makeconf.etc to allow users to switch back to the native toolchain
-	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf.native
-
+	#######
+	# FastR specific hand-written configuration files
+	cp fastr_etc/$(shell uname)/Makeconf.llvm $(FASTR_ETC_DIR)/Makeconf.llvm
+	cp fastr_etc/$(shell uname)/Makeconf.llvm $(FASTR_ETC_DIR)/Makeconf
+	cp fastr_etc/$(shell uname)/Makeconf.native $(FASTR_ETC_DIR)/Makeconf.native
+	cp fastr_etc/Shared/Makevars.site.debug $(FASTR_ETC_DIR)
+	cp fastr_etc/$(shell uname)/ldpaths.llvm $(FASTR_ETC_DIR)/ldpaths.llvm
+	cp fastr_etc/$(shell uname)/ldpaths.llvm $(FASTR_ETC_DIR)/ldpaths
+	cp fastr_etc/$(shell uname)/ldpaths.native $(FASTR_ETC_DIR)/ldpaths.native
+	cp fastr_etc/$(shell uname)/Renviron $(FASTR_ETC_DIR)/Renviron
+	echo "R_LIBS_USER=\$${R_LIBS_USER-'~/R/x86_64-pc-linux-gnu-library/fastr-$(GRAALVM_VERSION)-$(R_VERSION_MAJ_MIN)'}" >> $(FASTR_ETC_DIR)/Renviron
+	cp fastr_etc/Shared/native-packages $(FASTR_ETC_DIR)
+	cp fastr_etc/Shared/javaconf $(FASTR_ETC_DIR)/javaconf
+	# FastR uses different default CRAN mirror, set to a fixed MRAN snapshot
+	# Note: DEFAULT_CRAN_MIRROR file is FastR specific, GNU-R doesn't recognize this configuration file
 	echo $(DEFAULT_CRAN_MIRROR) > $(FASTR_ETC_DIR)/DEFAULT_CRAN_MIRROR
+	# Available R packages repositories configuration: taken directly from GNU-R
+	cp $(GNUR_HOME_BINARY)/etc/repositories $(FASTR_ETC_DIR)/repositories
+	# Additional tools provided by FastR copied to the "bin" directory
+	cp $(FASTR_TOOLS) $(FASTR_BIN_DIR)
+	$(GNUR_HOME_BINARY)/bin/Rscript gen-safe-forward-tools.R $(FASTR_BIN_DIR)
 
-	# Alter the configuration which is used for building R packages
-	# Create symlinks to the Labs LLVM tools inside FASTR_HOME/bin
-	# Copy our f2c-wrapper tool to FASTR_HOME/bin
-	# Change the variables like CC in FASTR_HOME/etc/Makevars to point to these tools
-	# TODO: ar tool
-	ed Makeconf.etc < edMakeconf.etc.llvm
-	sed -i -e 's/-fopenmp//' Makeconf.etc
-	sed -i -e 's~LIBR0 =~LIBR0 = -lR~' Makeconf.etc
-	sed -i -e 's~LDFLAGS =~LDFLAGS = -Wl,-rpath,$$\(R_HOME\)/lib/,-rpath,$$\(R_HOME\)/../llvm/native/lib -L$$\(R_HOME\)/lib -lf2c~' Makeconf.etc
-	sed -i -e 's~^CXXFLAGS =\(.*\)~CXXFLAGS = \1 $(FASTR_CXXFLAGS)~g' Makeconf.etc
-	# A workaround for a Sulong issue: TODO: the issue ID
-	sed -i -e 's/-O2//' Makeconf.etc
-	# the undefined option is not compatible with LLVM bundling
-	sed -i -e 's/-undefined dynamic_lookup//' Makeconf.etc
-
-	cp $(LLVM_TOOLS) $(FASTR_BIN_DIR)
-
-	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf.llvm
-	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
-	cp Makevars.site.debug $(FASTR_ETC_DIR)
-
-	## deploy helper script that can build native-image of FastR and update the launchers in GraalVM
-	cp install_r_native_image $(FASTR_BIN_DIR)
-	## prepare the configuration artefacts for the manual FastR configuration in GraalVM
-	cp configure_fastr $(FASTR_BIN_DIR)
-	chmod +x $(FASTR_BIN_DIR)/configure_fastr
-	cp configure.ac $(FASTR_ETC_DIR)
-	cp configure $(FASTR_ETC_DIR)
-	cp edMakeconf.etc $(FASTR_ETC_DIR)
-	cp edMakeconf.etc.llvm $(FASTR_ETC_DIR)
-	cp $(GNUR_HOME_BINARY_UNPACKED)/etc/Makeconf.in $(FASTR_ETC_DIR)
-	cp native-packages $(FASTR_ETC_DIR)
-	cp $(GNUR_HOME_BINARY_UNPACKED)/VERSION $(FASTR_ETC_DIR)
-	cp -R $(GNUR_HOME_BINARY_UNPACKED)/m4 $(FASTR_ETC_DIR)
-	cp -R $(GNUR_HOME_BINARY_UNPACKED)/tools $(FASTR_ETC_DIR)
-
-	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)
-	# TODO may need filtering
+	# TODO: these may also need some filtering
+	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)	
 	cp -r $(DOC_FILES) $(FASTR_DOC_DIR)
 	# override licence file to GPLv3
 	cp $(FASTR_R_HOME)/COPYING $(FASTR_DOC_DIR)
@@ -149,8 +128,6 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cat $(GNUR_HOME_BINARY_UNPACKED)/doc/COPYRIGHTS >> $(FASTR_DOC_DIR)/COPYRIGHTS
 	# overrides
 	cp examples-header.R examples-footer.R $(FASTR_SHARE_DIR)/R
-	# record the FFI version
-	bash -c "echo -n $(FASTR_RFFI) >$(FASTR_ETC_DIR)/ffibuildtype"
 
 includedir: $(FASTR_R_HOME)/include/Rinternals.h
 
