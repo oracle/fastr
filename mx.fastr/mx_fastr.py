@@ -306,6 +306,8 @@ class FastRGateTags:
     cran_pkgs_test = 'cran_pkgs_test'
     cran_pkgs_test_check_last = 'cran_pkgs_test_check_last'
 
+    recommended_load = 'recommended_load'
+
     gc_torture1 = 'gc_torture1'
     gc_torture5 = 'gc_torture5'
 
@@ -367,6 +369,24 @@ def _fastr_gate_runner(args, tasks):
 
     # ----------------------------------
     # Package tests:
+
+    with mx_gate.Task('Recommended load test', tasks, tags=[FastRGateTags.recommended_load]) as t:
+        if t:
+            # Note: this is a convenience mx gate job for testing the loading of recommended packages
+            # We also test the loading of recommended pkgs in the "graalvm-tests"
+            if not os.path.exists(os.path.join(_fastr_suite.dir, 'library', 'spatial')):
+                mx.abort('Recommended packages seem to be not installed in FastR. Did you forget to build with FASTR_RELEASE=true?')
+            # TODO: removed failing "survival", GR-20276
+            # TODO: removed failing "KernSmooth" and "cluster" on LLVM, GR-20406
+            pkgs = ['codetools', 'MASS', 'boot', 'class', 'cluster', 'lattice', 'nnet', 'spatial', 'Matrix', 'KernSmooth', 'foreign', 'nlme', 'rpart']
+            if os.environ.get('FASTR_RFFI') == 'llvm':
+                pkgs.remove('KernSmooth')
+                pkgs.remove('cluster')
+            # Creates code that looks like: require(codetools) && require(MASS) && ...
+            require_stmts = ' && '.join(['require(' + pkg + ')' for pkg in pkgs])
+            test_load = 'if (!(' + require_stmts + ')) q(status=1) else q(status=42)'
+            if run_r(['--vanilla', '-e', test_load], 'R', nonZeroIsFatal=False) != 42:
+                mx.abort("Loading of recommended packages failed")
 
     with mx_gate.Task('Internal pkg test', tasks, tags=[FastRGateTags.internal_pkgs_test]) as t:
         if t:
