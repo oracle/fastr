@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2012-2019   The R Core Team.
+ *  Copyright (C) 2012   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -166,7 +166,7 @@ SEXP call_dqags(SEXP);
 
 SEXP Rsm(SEXP x, SEXP stype, SEXP send);
 SEXP tukeyline(SEXP x, SEXP y, SEXP iter, SEXP call);
-SEXP runmed(SEXP sx, SEXP stype, SEXP sk, SEXP end, SEXP naAct, SEXP printLev);
+SEXP runmed(SEXP x, SEXP stype, SEXP sk, SEXP end, SEXP print_level);
 SEXP influence(SEXP mqr, SEXP do_coef, SEXP e, SEXP stol);
 
 SEXP pSmirnov2x(SEXP statistic, SEXP snx, SEXP sny);
@@ -178,9 +178,9 @@ SEXP ksmooth(SEXP x, SEXP y, SEXP snp, SEXP skrn, SEXP sbw);
 SEXP SplineCoef(SEXP method, SEXP x, SEXP y);
 SEXP SplineEval(SEXP xout, SEXP z);
 
-SEXP ApproxTest(SEXP x, SEXP y, SEXP method, SEXP f, SEXP na_rm);
+SEXP ApproxTest(SEXP x, SEXP y, SEXP method, SEXP sf);
 SEXP Approx(SEXP x, SEXP y, SEXP v, SEXP method,
-	    SEXP yleft, SEXP yright, SEXP f, SEXP na_rm);
+	    SEXP yleft, SEXP yright, SEXP sf);
 
 SEXP LogLin(SEXP dtab, SEXP conf, SEXP table, SEXP start,
 	    SEXP snmar, SEXP eps, SEXP iter);

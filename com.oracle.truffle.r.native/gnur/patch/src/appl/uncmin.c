@@ -3,6 +3,7 @@
  *  Copyright (C) 1999-2017   The R Core Team
  *  Copyright (C) 2003-2017   The R Foundation
  *  Copyright (C) 1997-1999   Saikat DebRoy
+ *  Copyright (C) 2019-2019   Oracle and/or its affiliates
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +18,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
  *  https://www.R-project.org/Licenses/
- *  USA
  */
 
 /* ../appl/uncmin.f
