@@ -39,6 +39,7 @@ export F2C_HOME= $(FASTR_R_HOME)/f2c
 
 $(info R_VERSION: $(R_VERSION))
 $(info GNUR_HOME: $(GNUR_HOME))
+$(info DEFAULT_CRAN_MIRROR: $(DEFAULT_CRAN_MIRROR))
 	
 # TODO: can be removed?
 ifndef FASTR_RFFI
@@ -49,8 +50,12 @@ ifndef GNUR_HOME_BINARY
 export GNUR_HOME_BINARY = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
 export BUILD_GNUR = "true"
 $(info GNUR_HOME_BINARY not set. Assuming the default location at $(GNUR_HOME_BINARY))
+else
+unexport BUILD_GNUR
+$(info Using cached build of GNU-R from $(GNUR_HOME_BINARY))
 endif
 export GNUR_HOME_BINARY_UNPACKED = $(FASTR_R_HOME)/libdownloads/R-$(R_VERSION)
+$(info GNUR_HOME_BINARY_UNPACKED: $(GNUR_HOME_BINARY_UNPACKED))
 
 # Completely accurate dependency analysis is very difficult for this project, so use a version number
 # to force a clean build, and elsewhere use sentinels to avoid rebuilding when we can't compute the
