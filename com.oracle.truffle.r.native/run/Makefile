@@ -86,7 +86,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp config.h.in $(FASTR_ETC_DIR)/src/include
 	cp Renviron.in $(FASTR_ETC_DIR)/Renviron.in
 	cp $(GNUR_HOME_BINARY_UNPACKED)/etc/ldpaths.in $(FASTR_ETC_DIR)/ldpaths.in
-	cp $(GNUR_HOME)/Makeconf Makeconf.etc
+	cp $(GNUR_HOME_BINARY)/etc/Makeconf Makeconf.etc
 	cp $(GNUR_HOME_BINARY)/etc/javaconf $(FASTR_ETC_DIR)/javaconf
 	cp $(GNUR_HOME_BINARY)/etc/repositories $(FASTR_ETC_DIR)/repositories
 	# ldpaths: create two versions: ldpaths.llvm (used also as default ldpaths) and ldpaths.native

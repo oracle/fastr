@@ -66,24 +66,33 @@ GNUR_CONFIG_FLAGS := $(GNUR_CONFIG_FLAGS) FFLAGS=-O2 $(FASTR_COMPILERS)
 
 config: $(PATCH_BUILD)/Makefile config_update
 
+# Updates the Makeconf file to contain -fpic flags if necessary.
+# This is the toplevel Makeconf file used to build GNU-R itself
+# and in FastR case the "patch-build" directory.
 ifeq ($(FORCE_PIC), true)
 config_update: Makeconf.done
 
 Makeconf.done: edMakeconf
 ifndef BUILD_GNUR
-	#copy Makeconf from GNUR_HOME_BINARY
+	# copy Makeconf from GNUR_HOME_BINARY - since this is binary distribution, it does not contain the
+	# Makeconf used to build the sources. We take the Makeconf from "etc" and hope that it works too.
 	cp $(GNUR_HOME_BINARY)/etc/Makeconf $(PATCH_BUILD)
 endif
+	# we already have Makeconf in "patch-build" if building GNU-R from sources?
 	ed $(PATCH_BUILD)/Makeconf < edMakeconf
 	touch Makeconf.done
-else
+
+else # FORCE_PIC is false
+
 config_update:
 ifndef BUILD_GNUR
-	#copy Makeconf from GNUR_HOME_BINARY
+	#copy Makeconf from GNUR_HOME_BINARY, see the comment next to the Makeconf.done target
 	cp $(GNUR_HOME_BINARY)/etc/Makeconf $(PATCH_BUILD)
 endif
+
 endif
 # end FORCE_PIC
+
 
 ifndef FASTR_RELEASE
 RECPKGS := "--without-recommended-packages"
