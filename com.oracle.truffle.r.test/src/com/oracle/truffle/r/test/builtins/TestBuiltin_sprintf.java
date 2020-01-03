@@ -115,7 +115,7 @@ public class TestBuiltin_sprintf extends TestBase {
 
     @Test
     public void testsprintf18() {
-        // FIXME %5g should mean 5 significant digits but we output six
+        // FIXME %5g should mean 5 significant digits and padded from left to 5 characters
         assertEval(Ignored.ImplementationError,
                         "argv <- list('%5g', structure(c(18, 18, 0, 14, 4, 12, 12, 0, 4, 8, 26, 23, 3, 18, 5, 8, 5, 3, 0, 5, 21, 0, 21, 0, 0), .Dim = c(5L, 5L), .Dimnames = list(NULL, c('', '', '', '', '')))); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
@@ -170,6 +170,17 @@ public class TestBuiltin_sprintf extends TestBase {
         assertEval("{ asdfgerta <- sprintf('%0.f', 1); }");
         assertEval("{ asdfgerta <- sprintf('%0.0f', 1); }");
         assertEval("{ asdfgerta <- sprintf('%.0f', 1); }");
+
+        // g/G behaves differently in Java vs C w.r.t. trailing zeroes after decimal point
+        assertEval("{ sprintf('%.3g', 4.0) }");
+        assertEval("{ sprintf('%+g', 4.0) }");
+        assertEval("{ sprintf('% g', 4.0) }");
+        assertEval("{ sprintf('%.3g', 4.33) }");
+        assertEval("{ sprintf('%+g', 4.33) }");
+        assertEval("{ sprintf('% g', 4.33) }");
+        assertEval("{ sprintf('%g', 4.3345423) }");
+
+        assertEval(Ignored.ImplementationError, "{ sprintf('%#g', 4.0) }");
     }
 
     @Test

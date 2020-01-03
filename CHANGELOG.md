@@ -6,7 +6,8 @@ Added missing R builtins and C APIs
 
 Bug fixes:
 
-* fixed GitHub Issue #123: Polyglot value is not an object
+* polyglot value is not an object (#123)
+* incorrect formatting for sprintf %g and %G: trailing zeroes (#126)
 * Rf_asS4
 
 # 19.3.0
