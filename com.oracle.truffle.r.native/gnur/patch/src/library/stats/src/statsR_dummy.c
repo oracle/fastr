@@ -152,9 +152,6 @@ SEXP deriv(SEXP args) UNIMPLEMENTED
 SEXP modelframe(SEXP call, SEXP op, SEXP args, SEXP rho) RINTERNAL_CODE
 SEXP modelmatrix(SEXP call, SEXP op, SEXP args, SEXP rho) RINTERNAL_CODE
 SEXP termsform(SEXP args) RINTERNAL_CODE
-SEXP do_fmin(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
-SEXP nlm(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
-SEXP zeroin2(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
 SEXP call_dqagi(SEXP x) UNIMPLEMENTED
 SEXP call_dqags(SEXP x) UNIMPLEMENTED
 

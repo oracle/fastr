@@ -561,21 +561,10 @@ public class CallAndExternalFunctions {
                 case "chisq_sim":
                     // TODO: uses PutRNG(), with rcont.c may become moderately difficult to port
                     return new UnimplementedExternal(name);
-                case "Rsm":
-                    return new UnimplementedExternal(name);
-                case "optim":
-                case "optimhess":
                 case "dqagi":
                 case "dqags":
-                case "nlm":
-                    // TODO: file optim.c uses Defn.h with non public RFFI API
-                    // It seems that Defn.h can be replaced with Rinternals.h
-                    // From GNUR R core it pulls few aux macros like F77_CALL, we can pull those
-                    // individually
-                    // Furthermore it requires to pull lbfgsb.c and linkpack (Appl/Linpack.h)
-                    // routines from core
+                case "Rsm":
                     return new UnimplementedExternal(name);
-
                 case "pp_sum":
                     return PPSumExternal.create();
                 case "intgrt_vec":
