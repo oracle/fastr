@@ -557,10 +557,6 @@ public class CallAndExternalFunctions {
                     // and then this
                     // becomes simple wrapper around it.
                     return new UnimplementedExternal(name);
-                case "Fisher_sim":
-                case "chisq_sim":
-                    // TODO: uses PutRNG(), with rcont.c may become moderately difficult to port
-                    return new UnimplementedExternal(name);
                 case "dqagi":
                 case "dqags":
                 case "Rsm":
