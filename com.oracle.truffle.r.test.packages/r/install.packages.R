@@ -350,7 +350,14 @@ set.repos <- function() {
 			repos[["CRAN"]] <- cran.mirror
 		} else if (name == "FASTR") {
 			# set the FastR internal repo
-			repos[["FASTR"]] <- paste0("file://", normalizePath("com.oracle.truffle.r.test.native/packages/repo"))
+			if (is.na(uri)) {
+				path <- normalizePath("com.oracle.truffle.r.test.native/packages/repo")
+				log.message("Setting FastR internal repo FASTR=", path)
+				repos[["FASTR"]] <- paste0("file://", path)
+			} else {
+				# explicitly set on command line
+				repos[["FASTR"]] <- uri
+			}
 		} else if (name == "SNAPSHOT") {
 			repos[["CRAN"]] <- get.default.cran.mirror()
 		} else {
@@ -359,10 +366,11 @@ set.repos <- function() {
 		}
 	}
 
-    if (("FASTR" %in% names(repos)) && !("CRAN" %in% names(repos))) { 
+    if (("FASTR" %in% names(repos)) && !("CRAN" %in% names(repos))) {
         log.message("'--repos FASTR' specified but no CRAN mirror set; setting 'CRAN=", get.default.cran.mirror(), "'\n", level=1)
         repos[["CRAN"]] <- get.default.cran.mirror()
     }
+	log.message("Setting option(repos = ", deparse(repos), ")")
 	options(repos = repos)
 }
 
@@ -975,7 +983,7 @@ parse.args <- function() {
             svalue <- strsplit(get.argvalue(), ",")[[1]]
 	        for (s in svalue) {
                 arg <- strsplit(s, "=", fixed=T)[[1]]
-                if (arg[[1]] == "dir") { 
+                if (arg[[1]] == "dir") {
                     assign(arg[[1]], normalizePath(arg[[2]]), envir=pkg.cache)
                 } else {
                     assign(arg[[1]], arg[[2]], envir=pkg.cache)
@@ -1015,7 +1023,7 @@ parse.args <- function() {
 			run.mode <- get.argvalue()
 			if (!(run.mode %in% c("system", "internal", "context"))) {
 				usage()
-			} 
+			}
 		    test.mode <<- run.mode
 		    install.mode <<- run.mode
 		} else if (a == "--pkg-filelist") {
@@ -1149,7 +1157,7 @@ get.initial.package.blacklist <- function() {
 
 do.find.top.pkgs <- function(n) {
     names <- if (n <= 100L) {
-        do.find.top.cranlogs(n) 
+        do.find.top.cranlogs(n)
     } else {
         do.find.top.rstudio(n)
     }
@@ -1220,7 +1228,7 @@ do.find.top.print.list <- function(names) {
             pkg <- avail.pkgs[pkgname, ]
             list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", pkg["Repository"])
             cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep = ",")
-        } 
+        }
 	}
 }
 
