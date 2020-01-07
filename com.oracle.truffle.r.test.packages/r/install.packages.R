@@ -306,13 +306,14 @@ abort <- function(msg) {
 }
 
 get.default.cran.mirror <- function() {
+    default.cran.mirror.path <- file.path(R.home(), "etc", "DEFAULT_CRAN_MIRROR")
     tryCatch({
-        con <- file("etc/DEFAULT_CRAN_MIRROR", "r");
+        con <- file(default.cran.mirror.path, "r");
         cran.mirror <<- readLines(con)[[1]]
         close(con)
         cran.mirror
     }, error = function(err) {
-        cat("ERROR while getting etc/DEFAULT_CRAN_MIRROR, are you running this in FastR home directory and did you build it?")
+        cat("ERROR while getting ", default.cran.mirror.path, ", are you using a proper R home directory?", sep="")
         print(err)
         quit("no", status=1)
     })
