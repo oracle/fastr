@@ -4,4 +4,4 @@ The conventions used:
   * Each OS has its own subdirectory, files shared across OSes are in "Shared" subdirectory.
   * Suffixes "llvm" and "native" distinguish versions for LLVM and NFI backend.
   * The "llvm" version is used as the default.
-  * When adding a file that has "llvm" and "native" specific versions, consider updating the `fastr.setToolchain` builtin.
+  * When adding a file that has "llvm" and "native" specific versions, consider updating the implementation of the `fastr.setToolchain` builtin.
