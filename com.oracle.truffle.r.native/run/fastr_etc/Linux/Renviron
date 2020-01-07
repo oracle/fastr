@@ -64,7 +64,8 @@ TAR=${TAR-${R_HOME}/bin/safe-forward-tar}
 ## System and compiler types.
 R_SYSTEM_ABI='linux,gcc,gxx,gfortran,?'
 
-## Build time note: com.oracle.truffle.r.native/run/Makefile appends the R_LIBS_USER to this file
+## FastR build time note: com.oracle.truffle.r.native/run/Makefile replaces the %%placeholders%% when deploying this file
+R_LIBS_USER=${R_LIBS_USER-'~/R/x86_64-pc-linux-gnu-library/fastr-%%GRAALVM_VERSION%%-%%R_VERSION_MAJ_MIN%%'}
 
 ### Local Variables: ***
 ### mode: sh ***

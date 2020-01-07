@@ -103,8 +103,8 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp fastr_etc/$(shell uname)/ldpaths.llvm $(FASTR_ETC_DIR)/ldpaths.llvm
 	cp fastr_etc/$(shell uname)/ldpaths.llvm $(FASTR_ETC_DIR)/ldpaths
 	cp fastr_etc/$(shell uname)/ldpaths.native $(FASTR_ETC_DIR)/ldpaths.native
-	cp fastr_etc/$(shell uname)/Renviron $(FASTR_ETC_DIR)/Renviron
-	echo "R_LIBS_USER=\$${R_LIBS_USER-'~/R/x86_64-pc-linux-gnu-library/fastr-$(GRAALVM_VERSION)-$(R_VERSION_MAJ_MIN)'}" >> $(FASTR_ETC_DIR)/Renviron
+	(sed 's/%%GRAALVM_VERSION%%/$(GRAALVM_VERSION)/' fastr_etc/$(shell uname)/Renviron | \
+	 sed 's/%%R_VERSION_MAJ_MIN%%/$(R_VERSION_MAJ_MIN)/' > $(FASTR_ETC_DIR)/Renviron)
 	cp fastr_etc/Shared/native-packages $(FASTR_ETC_DIR)
 	cp fastr_etc/Shared/javaconf $(FASTR_ETC_DIR)/javaconf
 	# FastR uses different default CRAN mirror, set to a fixed MRAN snapshot

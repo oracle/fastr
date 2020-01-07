@@ -39,6 +39,7 @@ export GNUR_HOME = $(TOPDIR)/gnur/patch-build
 export F2C_HOME= $(FASTR_R_HOME)/f2c
 
 $(info R_VERSION: $(R_VERSION))
+$(info GRAALVM_VERSION: $(GRAALVM_VERSION))
 $(info GNUR_HOME: $(GNUR_HOME))
 $(info DEFAULT_CRAN_MIRROR: $(DEFAULT_CRAN_MIRROR))
 	
