@@ -1,0 +1,10 @@
+Package: altreprffitests
+Type: Package
+Title: ALTREP framework tests
+Version: 1.0
+Date: 2019-12-10
+Author: FastR Tester
+Maintainer: FastR Tester <fastr@yahoogroups.com>
+Description: Tests the ALTREP framework
+License: GPL-2
+NeedsCompilation: yes

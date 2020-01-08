@@ -1,0 +1,81 @@
+PACKAGE_NAME <- "altreprffitests"
+
+is.altrep <- function(x) {
+    .Call("is_altrep", x)
+}
+
+#' @export 
+simple_vec_wrapper.create_instance <- function(data,
+                                               gen.Duplicate=F,
+                                               gen.Coerce=F,
+                                               gen.Elt=F,
+                                               gen.Sum=F,
+                                               gen.Min=F,
+                                               gen.Max=F,
+                                               gen.Get_region=F,
+                                               gen.Is_sorted=F
+                                               )
+{
+    if (missing(data)) {
+        stop("Missing data argument")
+    }
+
+    .Call("simple_vec_wrapper_create_instance", data, gen.Duplicate, gen.Coerce, gen.Elt,
+        gen.Sum, gen.Min, gen.Max, gen.Get_region, gen.Is_sorted)
+}
+
+#' @export 
+logging_vec_wrapper.create_instance <- function(data,
+                                               gen.Duplicate=F,
+                                               gen.Coerce=F,
+                                               gen.Elt=F,
+                                               gen.Sum=F,
+                                               gen.Min=F,
+                                               gen.Max=F,
+                                               gen.Get_region=F,
+                                               gen.Is_sorted=F
+                                               )
+{
+    if (missing(data)) {
+        stop("Missing data argument")
+    }
+
+    .Call("logging_vec_wrapper_create_instance", data, gen.Duplicate, gen.Coerce, gen.Elt,
+        gen.Sum, gen.Min, gen.Max, gen.Get_region, gen.Is_sorted)
+}
+
+logging_vec_wrapper.was_Duplicate_called <- function(instance) {
+    .Call("logging_vec_wrapper_was_method_called", instance, "Duplicate")
+}
+
+logging_vec_wrapper.was_Coerce_called <- function(instance) {
+    .Call("logging_vec_wrapper_was_method_called", instance, "Coerce")
+}
+
+logging_vec_wrapper.was_Elt_called <- function(instance) {
+    .Call("logging_vec_wrapper_was_method_called", instance, "Elt")
+}
+
+logging_vec_wrapper.was_Sum_called <- function(instance) {
+    .Call("logging_vec_wrapper_was_method_called", instance, "Sum")
+}
+
+logging_vec_wrapper.was_Min_called <- function(instance) {
+    .Call("logging_vec_wrapper_was_method_called", instance, "Min")
+}
+
+logging_vec_wrapper.was_Max_called <- function(instance) {
+    .Call("logging_vec_wrapper_was_method_called", instance, "Max")
+}
+
+logging_vec_wrapper.was_Get_region_called <- function(instance) {
+    .Call("logging_vec_wrapper_was_method_called", instance, "Get_region")
+}
+
+logging_vec_wrapper.was_Is_sorted_called <- function(instance) {
+    .Call("logging_vec_wrapper_was_method_called", instance, "Is_sorted")
+}
+
+logging_vec_wrapper.clear_called_methods <- function() {
+    .Call("logging_vec_wrapper_clear_called_methods")
+}
