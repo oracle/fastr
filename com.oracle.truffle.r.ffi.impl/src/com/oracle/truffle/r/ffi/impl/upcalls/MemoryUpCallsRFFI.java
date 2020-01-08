@@ -37,7 +37,7 @@ public interface MemoryUpCallsRFFI {
 
     Object R_MakeWeakRef(Object key, Object val, Object fin, long onexit);
 
-    Object R_MakeWeakRefC(Object key, Object val, long fin, long onexit);
+    Object R_MakeWeakRefC(Object key, Object val, @RFFICpointer Object finFunction, int onexit);
 
     Object R_WeakRefKey(Object w);
 
