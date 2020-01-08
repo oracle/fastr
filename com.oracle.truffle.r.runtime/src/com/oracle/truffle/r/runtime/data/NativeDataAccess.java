@@ -62,6 +62,7 @@ import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.ToNativeNodeGen;
+import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
@@ -742,6 +743,17 @@ public final class NativeDataAccess {
             assert mirror.getDataAddress() != 0;
             NativeMemory.putInt(mirror.dataAddress, index, value);
         }
+    }
+
+    // TODO: Nahradit tohle setNativeMirrorIntData?
+    public static void setData(RAltIntegerVec vector, int index, int value) {
+        long address = vector.invokeDataptr();
+        UnsafeAdapter.UNSAFE.putInt(address + (long) index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
+    }
+
+    // TODO: Nahradit metodou, ktera operuje s NativeMirror
+    public static int getData(RAltIntegerVec altIntVector, int index, long address) {
+        return UnsafeAdapter.UNSAFE.getInt(address + (long) index * Unsafe.ARRAY_INT_INDEX_SCALE);
     }
 
     static byte getData(RLogicalVector vector, byte[] data, int index) {

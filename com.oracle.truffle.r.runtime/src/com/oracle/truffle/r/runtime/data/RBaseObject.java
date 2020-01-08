@@ -56,6 +56,8 @@ public abstract class RBaseObject extends RTruffleBaseObject {
     public static final int CACHED_MASK = 1 << 5;
     public static final int ASCII_MASK = 1 << 6;
 
+    public static final int ALT_MASK_SHIFTED = 1 << 7;
+
     private int typedValueInfo;
 
     private NativeMirror nativeMirror;
@@ -100,15 +102,39 @@ public abstract class RBaseObject extends RTruffleBaseObject {
     }
 
     public final boolean isS4() {
-        return (getTypedValueInfo() & S4_MASK_SHIFTED) != 0;
+        return isMask(S4_MASK_SHIFTED);
     }
 
     public final void setS4() {
-        setTypedValueInfo(getTypedValueInfo() | S4_MASK_SHIFTED);
+        setMask(S4_MASK_SHIFTED);
     }
 
     public final void unsetS4() {
-        setTypedValueInfo(getTypedValueInfo() & ~S4_MASK_SHIFTED);
+        unsetMask(S4_MASK_SHIFTED);
+    }
+
+    public final boolean isAltRep() {
+        return isMask(ALT_MASK_SHIFTED);
+    }
+
+    public final void setAltRep() {
+        setMask(ALT_MASK_SHIFTED);
+    }
+
+    public final void unsetAltRep() {
+        unsetMask(ALT_MASK_SHIFTED);
+    }
+
+    private final boolean isMask(int mask) {
+        return (getTypedValueInfo() & mask) != 0;
+    }
+
+    private final void setMask(int mask) {
+        setTypedValueInfo(getTypedValueInfo() | mask);
+    }
+
+    private final void unsetMask(int mask) {
+        setTypedValueInfo(getTypedValueInfo() & ~mask);
     }
 
     /**

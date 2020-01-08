@@ -368,6 +368,7 @@ public final class RContext {
     public final DLL.ContextStateImpl stateDLL;
     public final GCTortureState gcTorture;
     public volatile EventLoopState eventLoopState;
+    public final AltRepContext altRepContext;
 
     public final RFFIUpCallTargets rffiUpCallTargets;
 
@@ -486,6 +487,7 @@ public final class RContext {
         this.rffiUpCallTargets = new RFFIUpCallTargets();
 
         this.gcTorture = GCTortureState.newContextState();
+        this.altRepContext = AltRepContext.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
         state.add(State.CONSTRUCTED);
 
