@@ -37,6 +37,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 @RBuiltin(name = "max", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE_SUMMARY)
@@ -52,6 +55,18 @@ public abstract class Max extends RBuiltinNode.Arg2 {
         casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
+    protected boolean isAltrep(Object object) {
+        return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
+    }
+
+    protected boolean isMaxMethodRegistered(Object object) {
+        if (object instanceof RAltIntegerVec) {
+            return ((RAltIntegerVec) object).getDescriptor().isMaxMethodRegistered();
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
@@ -62,7 +77,13 @@ public abstract class Max extends RBuiltinNode.Arg2 {
         return reduce.executeReduce(args.getArgument(0), naRm, false);
     }
 
-    @Specialization(replaces = "maxLengthOne")
+    @Specialization(guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "isMaxMethodRegistered(args.getArgument(0))"})
+    protected Object maxLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
+                                        @Cached("create()") AltrepUtilities.AltrepMaxMethodInvoker altrepMaxNode) {
+        return altrepMaxNode.execute(args.getArgument(0), naRm);
+    }
+
+    @Specialization(replaces = {"maxLengthOne", "maxLengthOneAltrep"})
     protected Object max(RArgsValuesAndNames args, boolean naRm,
                     @Cached("create()") Combine combine) {
         return reduce.executeReduce(combine.executeCombine(args, false), naRm, false);

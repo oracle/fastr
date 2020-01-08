@@ -37,6 +37,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 @RBuiltin(name = "min", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE_SUMMARY)
@@ -52,6 +55,18 @@ public abstract class Min extends RBuiltinNode.Arg2 {
         casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
+    protected boolean isAltrep(Object object) {
+        return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
+    }
+
+    protected boolean isMinMethodRegistered(Object object) {
+        if (object instanceof RAltIntegerVec) {
+            return ((RAltIntegerVec) object).getDescriptor().isMinMethodRegistered();
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
@@ -62,7 +77,13 @@ public abstract class Min extends RBuiltinNode.Arg2 {
         return reduce.executeReduce(args.getArgument(0), naRm, false);
     }
 
-    @Specialization(replaces = "minLengthOne")
+    @Specialization(guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "isMinMethodRegistered(args.getArgument(0))"})
+    protected Object minLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
+                                        @Cached("create()") AltrepUtilities.AltrepMinMethodInvoker altrepMinNode) {
+        return altrepMinNode.execute(args.getArgument(0), naRm);
+    }
+
+    @Specialization(replaces = {"minLengthOne", "minLengthOneAltrep"})
     protected Object min(RArgsValuesAndNames args, boolean naRm,
                     @Cached("create()") Combine combine) {
         return reduce.executeReduce(combine.executeCombine(args, false), naRm, false);

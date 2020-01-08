@@ -43,7 +43,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -75,6 +78,20 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
 
     protected boolean fullPrecision() {
         return RContext.getInstance().getOption(FullPrecisionSum);
+    }
+
+    protected boolean isAltrep(Object object) {
+        return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
+    }
+
+    protected boolean isSumMethodRegistered(Object object) {
+        assert object instanceof RBaseObject;
+        assert ((RBaseObject) object).isAltRep();
+        if (object instanceof RAltIntegerVec) {
+            return ((RAltIntegerVec) object).getDescriptor().isSumMethodRegistered();
+        } else {
+            return false;
+        }
     }
 
     @Child private MiscRFFI.ExactSumNode exactSumNode;
@@ -114,12 +131,35 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
         }
     }
 
-    @Specialization(replaces = "sumLengthOneRDoubleVector", guards = "args.getLength() == 1")
+    /**
+     * The behavior of this specialization for altrep instances is currently copied from GNU-R (summary.c) and is
+     * as follows:
+     * <ol>
+     *     <li>
+     *         If sum gets one altrep instance argument, it dispatches to Sum altrep method.
+     *     </li>
+     *     <li>
+     *         If sum gets more instances (both altrep instances and "normal" instances) it processess them with
+     *         <code>ITERATE_BY_REGION</code> and does not dispatch to Sum altrep method at all.
+     *     </li>
+     * </ol>
+     *
+     * Note that this behavior is same for S4 instances - when there is just one S4 instance argument, sum dispatches
+     * to corresponding method, if there are more S4 instances, no dispatching is done.
+     */
+    @Specialization(replaces = "sumLengthOneRDoubleVector",
+            guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "isSumMethodRegistered(args.getArgument(0))"})
+    protected Object sumLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
+                                        @Cached("create()") AltrepUtilities.AltrepSumMethodInvoker altrepSumNode) {
+        return altrepSumNode.execute(args.getArgument(0), naRm);
+    }
+
+    @Specialization(replaces = {"sumLengthOneRDoubleVector", "sumLengthOneAltrep"}, guards = "args.getLength() == 1")
     protected Object sumLengthOne(RArgsValuesAndNames args, boolean naRm) {
         return reduce.executeReduce(args.getArgument(0), naRm, false);
     }
 
-    @Specialization(replaces = {"sumLengthOneRDoubleVector", "sumLengthOne"})
+    @Specialization(replaces = {"sumLengthOneRDoubleVector", "sumLengthOneAltrep", "sumLengthOne"})
     protected Object sum(RArgsValuesAndNames args, boolean naRm,
                     @Cached("create()") Combine combine) {
         return reduce.executeReduce(combine.executeCombine(args, false), naRm, false);
