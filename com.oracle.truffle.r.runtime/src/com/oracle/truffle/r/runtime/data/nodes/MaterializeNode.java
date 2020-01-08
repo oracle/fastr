@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -56,6 +57,11 @@ public abstract class MaterializeNode extends Node {
 
     @Specialization
     protected RIntVector doList(RIntVector vec) {
+        return vec;
+    }
+
+    @Specialization
+    protected RAltIntegerVec doAltrepVector(RAltIntegerVec vec) {
         return vec;
     }
 
