@@ -38,8 +38,7 @@
 # or edit this files, which gives even finer control over flags and other things.
 
 # FastR development Notes for the LLVM version of this file:
-#  * 02 is removed as a workaround for Sulong issue (TODO: issue ID)
-#  * -undefined dynamic_lookup is not compatible with the LLVM bundling
+#  * 02 is removed as a workaround for Sulong issue (GR-20460, FastR issue: GR-20472)
 #  * TODOs:
 #    * replace system "ar" with one provided by the toolchain
 
@@ -76,7 +75,7 @@ CXX17STD = -std=gnu++17
 CXX_VISIBILITY = 
 DYLIB_EXT = .dylib
 DYLIB_LD = $(CC)
-DYLIB_LDFLAGS = "-Wl,-headerpad_max_install_names,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
+DYLIB_LDFLAGS = "-Wl,-headerpad_max_install_names,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
 DYLIB_LINK = $(DYLIB_LD) $(DYLIB_LDFLAGS) $(LDFLAGS)
 ECHO = echo
 ECHO_C = \c
@@ -126,19 +125,19 @@ SHELL = /bin/sh
 SHLIB_CFLAGS = 
 SHLIB_CXXFLAGS = 
 SHLIB_CXXLD = $(CXX)
-SHLIB_CXXLDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXXLDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_CXX98LD = $(CXX98) $(CXX98STD)
-SHLIB_CXX98LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX98LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_CXX11LD = $(CXX11) $(CXX11STD)
-SHLIB_CXX11LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX11LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_CXX14LD = $(CXX14) $(CXX14STD)
-SHLIB_CXX14LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX14LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_CXX17LD = $(CXX17) $(CXX17STD)
-SHLIB_CXX17LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_CXX17LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_EXT = .so
 SHLIB_FFLAGS = 
 SHLIB_LD = $(CC)
-SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
+SHLIB_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress# $(CFLAGS) $(CPICFLAGS)
 SHLIB_LIBADD = 
 ## We want to ensure libR is picked up from $(R_HOME)/lib
 ## before e.g. /usr/local/lib if a version is already installed.
@@ -159,7 +158,7 @@ F77 = $(FC)
 FCPICFLAGS = -fPIC
 F77_VISIBILITY = 
 SHLIB_FCLD = $(FC)
-SHLIB_FCLDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
+SHLIB_FCLDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -L"$(R_HOME)/lib" -undefined dynamic_lookup -L"$(R_HOME)/../llvm/native/lib" -lf2c -dynamiclib -Wl,-headerpad_max_install_names  -single_module -multiply_defined suppress
 SHLIB_OPENMP_FCFLAGS = 
 
 
