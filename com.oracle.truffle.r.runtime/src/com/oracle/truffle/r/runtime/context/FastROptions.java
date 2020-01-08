@@ -97,8 +97,6 @@ public class FastROptions {
     public static final OptionKey<Boolean> SearchPathForcePromises = new OptionKey<>(false);
     @Option(category = OptionCategory.EXPERT, help = "Load native code of packages, including builtin packages.") //
     public static final OptionKey<Boolean> LoadPackagesNativeCode = new OptionKey<>(!FastRConfig.ManagedMode);
-    @Option(category = OptionCategory.EXPERT, help = "Allow only one thread to enter native code of packages") //
-    public static final OptionKey<Boolean> SynchronizeNativeCode = new OptionKey<>(true);
     // Promises optimizations
     @Option(category = OptionCategory.INTERNAL, help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)") //
     public static final OptionKey<Boolean> EagerEval = new OptionKey<>(false);

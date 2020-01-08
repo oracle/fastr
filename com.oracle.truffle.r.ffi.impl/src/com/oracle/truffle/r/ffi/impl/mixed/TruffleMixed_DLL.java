@@ -238,7 +238,7 @@ public class TruffleMixed_DLL implements DLLRFFI {
     }
 
     public static final class MixedLLVM_Handle extends LLVM_Handle {
-        final LibHandle nfiLibHandle;
+        public final LibHandle nfiLibHandle;
 
         MixedLLVM_Handle(LLVM_Handle llvmLibHandle, LibHandle nfiLibHandle) {
             super(llvmLibHandle);

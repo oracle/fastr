@@ -43,12 +43,12 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
+import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLL;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -92,7 +92,6 @@ class UnsafeAdapter {
 
 public class TruffleNFI_Context extends RFFIContext {
 
-    @CompilationFinal private boolean hasAccessLock;
     private static ReentrantLock accessLock;
 
     public TruffleNFI_Context() {
@@ -322,6 +321,9 @@ public class TruffleNFI_Context extends RFFIContext {
     private DLLInfo rlibDLLInfo;
 
     private Object getLibRHandle() {
+        if (rlibDLLInfo.handle instanceof TruffleMixed_DLL.MixedLLVM_Handle) {
+            return ((NFIHandle) ((TruffleMixed_DLL.MixedLLVM_Handle) rlibDLLInfo.handle).nfiLibHandle).libHandle;
+        }
         return ((NFIHandle) rlibDLLInfo.handle).libHandle;
     }
 
@@ -336,9 +338,7 @@ public class TruffleNFI_Context extends RFFIContext {
         if (logEnabled()) {
             logDownCall("initialize");
         }
-        if (hasAccessLock) {
-            acquireLock();
-        }
+        acquireLock();
         try {
             String librffiPath = LibPaths.getBuiltinLibPath(context, "R");
             if (context.isInitial()) {
@@ -369,15 +369,12 @@ public class TruffleNFI_Context extends RFFIContext {
             if (logEnabled()) {
                 logDownCallReturn("initialize", null);
             }
-            if (hasAccessLock) {
-                releaseLock();
-            }
+            releaseLock();
         }
     }
 
-    private synchronized void initializeLock() {
-        hasAccessLock = RContext.getInstance().getOption(FastROptions.SynchronizeNativeCode);
-        if (hasAccessLock && accessLock == null) {
+    private static synchronized void initializeLock() {
+        if (accessLock == null) {
             accessLock = new ReentrantLock();
         }
     }
@@ -401,9 +398,7 @@ public class TruffleNFI_Context extends RFFIContext {
     public Object beforeDowncall(MaterializedFrame frame, RFFIFactory.Type rffiType) {
         Object tokenFromSuper = super.beforeDowncall(frame, RFFIFactory.Type.NFI);
         transientAllocations.push(new ArrayList<>());
-        if (hasAccessLock) {
-            acquireLock();
-        }
+        acquireLock();
         return new Object[]{tokenFromSuper, pushCallbacks()};
     }
 
@@ -425,9 +420,7 @@ public class TruffleNFI_Context extends RFFIContext {
         }
         RuntimeException lastUpCallEx = getLastUpCallException();
         setLastUpCallException(null);
-        if (hasAccessLock) {
-            releaseLock();
-        }
+        releaseLock();
         if (lastUpCallEx != null) {
             CompilerDirectives.transferToInterpreter();
             throw lastUpCallEx;
