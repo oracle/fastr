@@ -323,6 +323,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         int i = 0;
         char[] cs = fmt.toCharArray();
         StringBuilder sb = new StringBuilder();
+        StringBuilder tmpSb = new StringBuilder();
         int argc = 1;
 
         while (i < cs.length) {
@@ -348,40 +349,8 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
                     fi.alwaysSign = false;
                     args[fi.numArg - 1] = "NA";
                 }
-                // take care of width/precision being defined by args
-                int w = 0;
-                int p = 0;
-                if (fi.width >= 0 || fi.widthIsArg) {
-                    w = fi.widthIsArg ? intValue(args[fi.width - 1]) : fi.width;
-                }
-                if (fi.precision >= 0 || fi.precisionIsArg) {
-                    p = fi.precisionIsArg ? intValue(args[fi.precision - 1]) : fi.precision;
-                }
                 // which argument to print
                 sb.append(intString(fi.numArg)).append('$');
-                // flags
-                if (fi.adjustLeft) {
-                    sb.append('-');
-                }
-                if (fi.alwaysSign) {
-                    sb.append('+');
-                }
-                if (fi.alternate) {
-                    sb.append('#');
-                }
-                if (fi.padZero) {
-                    sb.append('0');
-                }
-                if (fi.spacePrefix) {
-                    sb.append(' ');
-                }
-                // width and precision
-                if (fi.width >= 0 || fi.widthIsArg) {
-                    sb.append(intString(w));
-                }
-                if (fi.precision >= 0 || fi.precisionIsArg) {
-                    sb.append('.').append(intString(p));
-                }
                 if (Character.toLowerCase(fi.conversion) == 'g' && arg instanceof Number && !(arg instanceof Double)) {
                     // Only for g/G type and numeric value other than doubles (including logical)
                     // the type is converted to 'd', which discards any decimal points even if
@@ -389,7 +358,32 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
                     // care of converting the value to Double (e.g. for 'f').
                     fi.conversion = 'd';
                 }
-                conversions[fi.numArg - 1] = fi.conversion;
+                if (Character.toLowerCase(fi.conversion) == 'g' && arg instanceof Double) {
+                    // C unlike Java removes trailing zeroes for g/G. To simulate this,
+                    // we convert the number to a string here like for NAs
+                    tmpSb.setLength(0);
+                    tmpSb.append('%');
+                    fi.appendFlags(args, tmpSb);
+                    tmpSb.append(fi.conversion);
+                    String formatted = String.format(tmpSb.toString(), arg);
+                    if (formatted.length() > 0) {
+                        int trailingZeroesIdx = formatted.length() - 1;
+                        boolean removedZeroes = false;
+                        while (trailingZeroesIdx >= 0 && formatted.charAt(trailingZeroesIdx) == '0') {
+                            trailingZeroesIdx--;
+                            removedZeroes = true;
+                        }
+                        if (removedZeroes && trailingZeroesIdx >= 0 && formatted.charAt(trailingZeroesIdx) == '.') {
+                            trailingZeroesIdx--;
+                        }
+                        formatted = formatted.substring(0, trailingZeroesIdx + 1);
+                    }
+                    fi.conversion = 's';
+                    args[fi.numArg - 1] = formatted;
+                } else {
+                    fi.appendFlags(args, sb);
+                    conversions[fi.numArg - 1] = fi.conversion;
+                }
             }
             sb.append(fi.conversion);
             i = fi.nextChar;
@@ -530,6 +524,40 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         boolean precisionIsArg;
         int nextChar;
         int argc;
+
+        public void appendFlags(Object[] args, StringBuilder buffer) {
+            int w = 0;
+            int p = 0;
+            // take care of width/precision being defined by args
+            if (width >= 0 || widthIsArg) {
+                w = widthIsArg ? intValue(args[width - 1]) : width;
+            }
+            if (precision >= 0 || precisionIsArg) {
+                p = precisionIsArg ? intValue(args[precision - 1]) : precision;
+            }
+            if (adjustLeft) {
+                buffer.append('-');
+            }
+            if (alwaysSign) {
+                buffer.append('+');
+            }
+            if (alternate) {
+                buffer.append('#');
+            }
+            if (padZero) {
+                buffer.append('0');
+            }
+            if (spacePrefix) {
+                buffer.append(' ');
+            }
+            // width and precision
+            if (width >= 0 || widthIsArg) {
+                buffer.append(intString(w));
+            }
+            if (precision >= 0 || precisionIsArg) {
+                buffer.append('.').append(intString(p));
+            }
+        }
     }
 
     //@formatter:off
