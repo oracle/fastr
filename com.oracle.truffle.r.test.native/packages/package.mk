@@ -56,3 +56,9 @@ clean:
 	rm -f $(PKG_TAR) $(RIN_R_FILES)
 	$(shell find $(PACKAGE) -name '*.o' -delete)
 	$(shell find $(PACKAGE) -name '*.so' -delete)
+
+# Disable built-in rules for *.c and *.cpp files (we do not want gcc or g++
+# to be run for any package).
+%.o: %.c 
+%.o: %.cpp
+
