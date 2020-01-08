@@ -47,6 +47,8 @@ import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.UnlockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.GetClassDefNode;
 import com.oracle.truffle.r.ffi.impl.nodes.INTEGERNode;
+import com.oracle.truffle.r.ffi.impl.nodes.IntegerGetRegionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.IntegerIsSortedNode;
 import com.oracle.truffle.r.ffi.impl.nodes.IsObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.LOGICALNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAARNode;
@@ -322,6 +324,34 @@ public interface StdUpCallsRFFI {
     @RFFICpointer
     @RFFIUpCallNode(COMPLEXNode.class)
     Object COMPLEX(Object x);
+
+    @RFFIUpCallNode(IntegerGetRegionNode.class)
+    long INTEGER_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
+
+    long REAL_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
+
+    long LOGICAL_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
+
+    long COMPLEX_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
+
+    long RAW_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
+
+    @RFFIUpCallNode(IntegerIsSortedNode.class)
+    int INTEGER_IS_SORTED(Object x);
+
+    int INTEGER_NO_NA(Object x);
+
+    int REAL_IS_SORTED(Object x);
+
+    int REAL_NO_NA(Object x);
+
+    int LOGICAL_IS_SORTED(Object x);
+
+    int LOGICAL_NO_NA(Object x);
+
+    int STRING_IS_SORTED(Object x);
+
+    int STRING_NO_NA(Object x);
 
     Object STRING_ELT(@RFFIResultOwner Object x, long i);
 

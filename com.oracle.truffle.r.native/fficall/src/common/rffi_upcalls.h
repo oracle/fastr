@@ -175,6 +175,19 @@ typedef int (*call_LEVELS)(SEXP x);
 typedef int (*call_SETLEVELS)(SEXP x, int v);
 typedef int *(*call_LOGICAL)(SEXP x);
 typedef int *(*call_INTEGER)(SEXP x);
+typedef R_xlen_t (*call_INTEGER_GET_REGION)(SEXP x, R_xlen_t start_idx, R_xlen_t size, int *buffer);
+typedef R_xlen_t (*call_REAL_GET_REGION)(SEXP x, R_xlen_t start_idx, R_xlen_t size, double *buffer);
+typedef R_xlen_t (*call_LOGICAL_GET_REGION)(SEXP x, R_xlen_t start_idx, R_xlen_t size, int *buffer);
+typedef R_xlen_t (*call_COMPLEX_GET_REGION)(SEXP x, R_xlen_t start_idx, R_xlen_t size, Rcomplex *buffer);
+typedef R_xlen_t (*call_RAW_GET_REGION)(SEXP x, R_xlen_t start_idx, R_xlen_t size, Rbyte *buffer);
+typedef int (*call_INTEGER_IS_SORTED)(SEXP x);
+typedef int (*call_REAL_IS_SORTED)(SEXP x);
+typedef int (*call_LOGICAL_IS_SORTED)(SEXP x);
+typedef int (*call_STRING_IS_SORTED)(SEXP x);
+typedef int (*call_INTEGER_NO_NA)(SEXP x);
+typedef int (*call_REAL_NO_NA)(SEXP x);
+typedef int (*call_LOGICAL_NO_NA)(SEXP x);
+typedef int (*call_STRING_NO_NA)(SEXP x);
 typedef void *(*call_FASTR_DATAPTR)(SEXP x);
 typedef Rbyte *(*call_RAW)(SEXP x);
 typedef double *(*call_REAL)(SEXP x);
@@ -414,6 +427,78 @@ typedef SEXP (*call_R_ParseVector)(SEXP text, int n, SEXP srcFile);
 typedef SEXPTYPE (*call_Rf_str2type)(const char *s);
 typedef SEXP (*call_octsize)(SEXP size);
 typedef int (*call_R_nchar)(SEXP string, nchar_type type_, Rboolean allowNA, Rboolean keepNA, const char* msg_name);
+
+// ==========================================================
+//                    ALTREP framework
+// ==========================================================
+
+// TODO: ???
+#include <Altrep.h>
+
+typedef int (*call_ALTREP)(SEXP x);
+typedef Rboolean (*call_R_altrep_inherits)(SEXP instance, R_altrep_class_t class_descriptor);
+typedef SEXP (*call_R_altrep_data1)(SEXP x);
+typedef SEXP (*call_R_altrep_data2)(SEXP x);
+typedef SEXP (*call_R_set_altrep_data1)(SEXP instance, SEXP data1);
+typedef SEXP (*call_R_set_altrep_data2)(SEXP instance, SEXP data2);
+typedef R_altrep_class_t (*call_R_make_altinteger_class)(const char *cname, const char *pname, DllInfo *info);
+typedef R_altrep_class_t (*call_R_make_altstring_class)(const char *cname, const char *pname, DllInfo *info);
+typedef R_altrep_class_t (*call_R_make_altreal_class)(const char *cname, const char *pname, DllInfo *info);
+typedef R_altrep_class_t (*call_R_make_altlogical_class)(const char *cname, const char *pname, DllInfo *info);
+typedef R_altrep_class_t (*call_R_make_altraw_class)(const char *cname, const char *pname, DllInfo *info);
+typedef R_altrep_class_t (*call_R_make_altcomplex_class)(const char *cname, const char *pname, DllInfo *info);
+// altrep class descriptor method setters
+typedef void (*call_R_set_altrep_UnserializeEX_method)(R_altrep_class_t class_descriptor, R_altrep_UnserializeEX_method_t method);
+typedef void (*call_R_set_altrep_Unserialize_method)(R_altrep_class_t class_descriptor, R_altrep_Unserialize_method_t method);
+typedef void (*call_R_set_altrep_Serialized_state_method)(R_altrep_class_t class_descriptor, R_altrep_Serialized_state_method_t method);
+typedef void (*call_R_set_altrep_DuplicateEX_method)(R_altrep_class_t class_descriptor, R_altrep_DuplicateEX_method_t method);
+typedef void (*call_R_set_altrep_Duplicate_method)(R_altrep_class_t class_descriptor, R_altrep_Duplicate_method_t method);
+typedef void (*call_R_set_altrep_Coerce_method)(R_altrep_class_t class_descriptor, R_altrep_Coerce_method_t method);
+typedef void (*call_R_set_altrep_Inspect_method)(R_altrep_class_t class_descriptor, R_altrep_Inspect_method_t method);
+typedef void (*call_R_set_altrep_Length_method)(R_altrep_class_t class_descriptor, R_altrep_Length_method_t method);
+// altvec class descriptor method setters
+typedef void (*call_R_set_altvec_Dataptr_method)(R_altrep_class_t class_descriptor, R_altvec_Dataptr_method_t method);
+typedef void (*call_R_set_altvec_Dataptr_or_null_method)(R_altrep_class_t class_descriptor, R_altvec_Dataptr_or_null_method_t method);
+typedef void (*call_R_set_altvec_Extract_subset_method)(R_altrep_class_t class_descriptor, R_altvec_Extract_subset_method_t method);
+// altinteger class descriptor method setters
+typedef void (*call_R_set_altinteger_Elt_method)(R_altrep_class_t class_descriptor, R_altinteger_Elt_method_t method);
+typedef void (*call_R_set_altinteger_Get_region_method)(R_altrep_class_t class_descriptor, R_altinteger_Get_region_method_t method);
+typedef void (*call_R_set_altinteger_Is_sorted_method)(R_altrep_class_t class_descriptor, R_altinteger_Is_sorted_method_t method);
+typedef void (*call_R_set_altinteger_No_NA_method)(R_altrep_class_t class_descriptor, R_altinteger_No_NA_method_t method);
+typedef void (*call_R_set_altinteger_Sum_method)(R_altrep_class_t class_descriptor, R_altinteger_Sum_method_t method);
+typedef void (*call_R_set_altinteger_Min_method)(R_altrep_class_t class_descriptor, R_altinteger_Min_method_t method);
+typedef void (*call_R_set_altinteger_Max_method)(R_altrep_class_t class_descriptor, R_altinteger_Max_method_t method);
+// altreal class descriptor method setters
+typedef void (*call_R_set_altreal_Elt_method)(R_altrep_class_t class_descriptor, R_altreal_Elt_method_t method);
+typedef void (*call_R_set_altreal_Get_region_method)(R_altrep_class_t class_descriptor, R_altreal_Get_region_method_t method);
+typedef void (*call_R_set_altreal_Is_sorted_method)(R_altrep_class_t class_descriptor, R_altreal_Is_sorted_method_t method);
+typedef void (*call_R_set_altreal_No_NA_method)(R_altrep_class_t class_descriptor, R_altreal_No_NA_method_t method);
+typedef void (*call_R_set_altreal_Sum_method)(R_altrep_class_t class_descriptor, R_altreal_Sum_method_t method);
+typedef void (*call_R_set_altreal_Min_method)(R_altrep_class_t class_descriptor, R_altreal_Min_method_t method);
+typedef void (*call_R_set_altreal_Max_method)(R_altrep_class_t class_descriptor, R_altreal_Max_method_t method);
+// altlogical class descriptor method setters
+typedef void (*call_R_set_altlogical_Elt_method)(R_altrep_class_t class_descriptor, R_altlogical_Elt_method_t method);
+typedef void (*call_R_set_altlogical_Get_region_method)(R_altrep_class_t class_descriptor, R_altlogical_Get_region_method_t method);
+typedef void (*call_R_set_altlogical_Is_sorted_method)(R_altrep_class_t class_descriptor, R_altlogical_Is_sorted_method_t method);
+typedef void (*call_R_set_altlogical_No_NA_method)(R_altrep_class_t class_descriptor, R_altlogical_No_NA_method_t method);
+typedef void (*call_R_set_altlogical_Sum_method)(R_altrep_class_t class_descriptor, R_altlogical_Sum_method_t method);
+// altraw class descriptor method setters
+typedef void (*call_R_set_altraw_Elt_method)(R_altrep_class_t class_descriptor, R_altraw_Elt_method_t method);
+typedef void (*call_R_set_altraw_Get_region_method)(R_altrep_class_t class_descriptor, R_altraw_Get_region_method_t method);
+// altcomplex class descriptor method setters
+typedef void (*call_R_set_altcomplex_Elt_method)(R_altrep_class_t class_descriptor, R_altcomplex_Elt_method_t method);
+typedef void (*call_R_set_altcomplex_Get_region_method)(R_altrep_class_t class_descriptor, R_altcomplex_Get_region_method_t method);
+// altstring class descriptor method setters
+typedef void (*call_R_set_altstring_Elt_method)(R_altrep_class_t class_descriptor, R_altstring_Elt_method_t method);
+typedef void (*call_R_set_altstring_Set_elt_method)(R_altrep_class_t class_descriptor, R_altstring_Set_elt_method_t method);
+typedef void (*call_R_set_altstring_Is_sorted_method)(R_altrep_class_t class_descriptor, R_altstring_Is_sorted_method_t method);
+typedef void (*call_R_set_altstring_No_NA_method)(R_altrep_class_t class_descriptor, R_altstring_No_NA_method_t method);
+
+typedef SEXP (*call_R_new_altrep)(SEXP class_descriptor, SEXP data1, SEXP data2);
+
+// ==========================================================
+//                 end of ALTREP framework
+// ==========================================================
 
 // connections
 
