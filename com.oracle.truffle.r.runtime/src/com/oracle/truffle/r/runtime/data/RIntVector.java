@@ -145,7 +145,12 @@ public final class RIntVector extends RAbstractNumericVector {
             case Integer:
                 return this;
             case Double:
-                return RClosures.createToDoubleVector(this, keepAttributes);
+                if (isSequence()) {
+                    RIntSeqVectorData seq = getSequence();
+                    return RDataFactory.createDoubleSequence(seq.getStart(), seq.getStride(), getLength());
+                } else {
+                    return RClosures.createToDoubleVector(this, keepAttributes);
+                }
             case Complex:
                 return RClosures.createToComplexVector(this, keepAttributes);
             case Character:
