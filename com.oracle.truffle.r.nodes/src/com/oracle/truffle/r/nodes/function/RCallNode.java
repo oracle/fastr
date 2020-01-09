@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -147,6 +147,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     public final SourceSection getSourceSection() {
         RDeparse.ensureSourceSection(this);
         return sourceSection;
+    }
+
+    @Override
+    public boolean isInstrumentable() {
+        // Note: we may pull this to RNode to make all nodes with INTERNAL source non-instrumentable
+        return sourceSection != RSyntaxNode.INTERNAL;
     }
 
     @Override
@@ -803,6 +809,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * Creates a call that reads its explicit arguments from the frame under given identifier. This
      * allows to invoke a function with argument(s) supplied by hand. Consider using
      * {@link com.oracle.truffle.r.nodes.function.call.RExplicitCallNode} instead.
+     *
+     * Explicit calls are assumed to be artificial, not directly representing any user visible R
+     * code, therefore they are not instrumentable.
      */
     public static RCallNode createExplicitCall(Object explicitArgsIdentifier) {
         return RCallNodeGen.create(RSyntaxNode.INTERNAL, explicitArgsIdentifier, null);
