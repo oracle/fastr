@@ -347,10 +347,10 @@ public final class NativeDataAccess {
                     if (element != materialized) {
                         elements[i] = ShareObjectNode.executeUncached(materialized);
                     }
-                    if (element instanceof RBaseObject) {
-                        UnsafeAdapter.UNSAFE.putLong(addr + (long) i * Long.BYTES, getPointer((RBaseObject) element));
+                    if (materialized instanceof RBaseObject) {
+                        UnsafeAdapter.UNSAFE.putLong(addr + (long) i * Long.BYTES, getPointer((RBaseObject) materialized));
                     } else {
-                        throw RInternalError.shouldNotReachHere();
+                        throw RInternalError.shouldNotReachHere(materialized == null ? "null" : materialized.getClass().getSimpleName());
                     }
                 }
             }

@@ -60,6 +60,7 @@ import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.
 import com.oracle.truffle.r.nodes.builtin.base.foreign.CallAndExternalFunctions;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.CallAndExternalFunctionsFactory;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.FortranAndCFunctions;
+import com.oracle.truffle.r.nodes.builtin.base.foreign.FortranAndCFunctions.DotFortran;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.FortranAndCFunctionsFactory;
 import com.oracle.truffle.r.nodes.builtin.base.infix.AccessField;
 import com.oracle.truffle.r.nodes.builtin.base.infix.AccessFieldNodeGen;
@@ -561,7 +562,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FormatC.class, FormatCNodeGen::create);
         add(FormatInfo.class, FormatInfoNodeGen::create);
         add(FortranAndCFunctions.DotC.class, FortranAndCFunctionsFactory.DotCNodeGen::create);
-        add(FortranAndCFunctions.Fortran.class, FortranAndCFunctionsFactory.FortranNodeGen::create);
+        add(DotFortran.class, FortranAndCFunctionsFactory.DotFortranNodeGen::create);
         add(FrameFunctions.MatchCall.class, FrameFunctionsFactory.MatchCallNodeGen::create);
         add(FrameFunctions.ParentFrame.class, FrameFunctionsFactory.ParentFrameNodeGen::create);
         add(PosToEnv.class, PosToEnv::create);

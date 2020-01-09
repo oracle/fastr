@@ -24,10 +24,6 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.context.RContext;
 import java.util.logging.Level;
@@ -117,7 +113,7 @@ public class RFFILog {
         sb.append(mode.printName);
         sb.append(':');
         sb.append(depthValue);
-        sb.append(']');
+        sb.append("] ");
         sb.append(name);
         sb.append('(');
         argsToString(mode, sb, args);
@@ -134,27 +130,13 @@ public class RFFILog {
             } else {
                 sb.append(", ");
             }
-            if (arg == null) {
-                sb.append("null");
-                continue;
-            }
-            sb.append(arg.getClass().getSimpleName()).append('(').append(arg.hashCode()).append(';');
-            InteropLibrary interop = InteropLibrary.getFactory().getUncached();
-            if (arg instanceof TruffleObject && interop.isPointer(arg)) {
-                try {
-                    sb.append("ptr:").append(Long.toHexString(interop.asPointer(arg)));
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere();
-                }
-            } else {
-                Utils.printDebugInfo(sb, arg);
-            }
             // Note: it makes sense to include native mirrors only once they have been create
             // already
+            String additional = "";
             if (mode.logNativeMirror && arg instanceof RBaseObject) {
-                sb.append(((RBaseObject) arg).getNativeMirror());
+                additional = ((RBaseObject) arg).getNativeMirror().toString();
             }
-            sb.append(')');
+            Utils.printDebugInfo(sb, arg, additional);
         }
     }
 

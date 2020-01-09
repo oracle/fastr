@@ -22,6 +22,15 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.r.launcher.RCmdOptions;
+import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.runtime.context.FastROptions;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,14 +39,6 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.r.launcher.RCmdOptions;
-import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
-import com.oracle.truffle.r.runtime.context.FastROptions;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 /**
  * Repository for environment variables, including those set by FastR itself, e.g.
@@ -48,6 +49,8 @@ import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
  * {@link #rHome(RContext)}.
  */
 public final class REnvVars implements RContext.ContextState {
+
+    private static final TruffleLogger LOG = RLogger.getLogger(REnvVars.class.getName());
 
     private final HashMap<String, String> envVars;
 
@@ -62,6 +65,7 @@ public final class REnvVars implements RContext.ContextState {
         String defaultPackages = cmdOptions.getString(RCmdOption.DEFAULT_PACKAGES);
         if (defaultPackages != null) {
             envVars.put("R_DEFAULT_PACKAGES", defaultPackages);
+            logFinest("Setting R_DEFAULT_PACKAGES to '%s'", defaultPackages);
         }
         // set the standard vars defined by R
         String home = rHome(context);
@@ -71,6 +75,8 @@ public final class REnvVars implements RContext.ContextState {
         safeReadEnvironFile(rHomeDir.resolve("etc").resolve("Renviron"));
 
         String internalArgs = System.getenv("FASTR_INTERNAL_ARGS");
+        internalArgs = internalArgs == null || internalArgs.isEmpty() ? null : internalArgs;
+
         // Allow host access in FastR subprocesses if allowed here
         if (context.getEnv().isHostLookupAllowed()) {
             if (internalArgs == null) {
@@ -81,7 +87,7 @@ public final class REnvVars implements RContext.ContextState {
         }
         // Forward some FastR options to FastR subprocesses
         String forwardedOptions = FastROptions.getForwardedOptions(context);
-        if (forwardedOptions != null) {
+        if (!forwardedOptions.isEmpty()) {
             if (internalArgs == null) {
                 internalArgs = forwardedOptions;
             } else {
@@ -107,15 +113,20 @@ public final class REnvVars implements RContext.ContextState {
         }
 
         if (!context.getStartParams().noRenviron()) {
-            String siteFile = envVars.get("R_ENVIRON");
-            if (siteFile == null) {
-                siteFile = rHomeDir.resolve("etc").resolve("Renviron.site").toString();
+            String siteFile = getFromEnv(envVars, "R_ENVIRON");
+            TruffleFile siteTruffleFile;
+            if (siteFile != null) {
+                logFinest("Site environment file is given by R_ENVIRON property: '%s'", siteFile);
+                siteTruffleFile = context.getSafeTruffleFile(siteFile);
+            } else {
+                siteTruffleFile = rHomeDir.resolve("etc").resolve("Renviron.site");
+                logFinest("Using the default site environmnet file: '%s'", siteTruffleFile);
             }
-            TruffleFile siteTruffleFile = context.getSafeTruffleFile(siteFile);
             if (siteTruffleFile.exists()) {
+                logFinest("Loading site environmnet file");
                 safeReadEnvironFile(siteTruffleFile);
             }
-            String userFilePath = envVars.get("R_ENVIRON_USER");
+            String userFilePath = getFromEnv(envVars, "R_ENVIRON_USER");
             if (userFilePath == null) {
                 String dotRenviron = ".Renviron";
                 userFilePath = context.getSafeTruffleFile((String) BaseRFFI.GetwdRootNode.create().getCallTarget().call()).resolve(dotRenviron).toString();
@@ -124,6 +135,7 @@ public final class REnvVars implements RContext.ContextState {
                 }
             }
             TruffleFile userFile = userFilePath != null ? context.getSafeTruffleFile(userFilePath) : null;
+            logFinest("User site file: '%s'.", userFile);
             if (userFile != null && userFile.exists()) {
                 safeReadEnvironFile(userFile);
             }
@@ -214,8 +226,8 @@ public final class REnvVars implements RContext.ContextState {
     }
 
     private String getEitherCase(String var) {
-        String val = envVars.get(var);
-        return val != null ? val : envVars.get(var.toUpperCase());
+        String val = getFromEnv(envVars, var);
+        return val != null ? val : getFromEnv(envVars, var.toUpperCase());
     }
 
     private static boolean isMacOS() {
@@ -253,6 +265,7 @@ public final class REnvVars implements RContext.ContextState {
         if (rHome.get() == null) {
             String home = System.getenv(R_HOME);
             if (home == null) {
+                logFinest("R_HOME environment variable was not found. Locating R_HOME.");
                 TruffleFile rHomePath = getRHomePath(ctx);
                 if (rHomePath == null) {
                     // Create RError directly to avoid R error reporting, which may not be
@@ -263,10 +276,13 @@ public final class REnvVars implements RContext.ContextState {
                                     "in {GraalVM}/languages/R in JDK11 based builds.", RError.NO_CALLER);
                 }
                 home = rHomePath.toString();
-            } else if (!validateRHome(ctx.getEnv().getInternalTruffleFile(home), markerFile())) {
-                throw new RError("The FastR home directory given in an environment variable R_HOME appears to be not valid FastR home directory. " +
-                                "FastR home is usually located in {GraalVM}/jre/languages/R in JDK8 based builds and " +
-                                "in {GraalVM}/languages/R in JDK11 based builds.", RError.NO_CALLER);
+            } else {
+                logFinest("R_HOME environment variable found: '%s'.", home);
+                if (!validateRHome(ctx.getEnv().getInternalTruffleFile(home), markerFile())) {
+                    throw new RError("The FastR home directory given in an environment variable R_HOME appears to be not valid FastR home directory. " +
+                                    "FastR home is usually located in {GraalVM}/jre/languages/R in JDK8 based builds and " +
+                                    "in {GraalVM}/languages/R in JDK11 based builds.", RError.NO_CALLER);
+                }
             }
             rHome.set(home);
         }
@@ -291,11 +307,14 @@ public final class REnvVars implements RContext.ContextState {
     private static TruffleFile getRHomePath(RContext ctx) {
         String truffleRHome = ctx.getLanguage().getRHome();
         if (truffleRHome == null) {
+            logFinest("Truffle API getLanguageHome gives null");
             return null;
         }
+        logFinest("Truffle API getLanguageHome returned '%s'.", truffleRHome);
         TruffleFile rHomePath = ctx.getEnv().getInternalTruffleFile(truffleRHome);
         String markerFile = markerFile();
         while (rHomePath != null) {
+            logFinest("Checking: '%s'.", rHomePath);
             if (validateRHome(rHomePath, markerFile)) {
                 return rHomePath;
             }
@@ -314,7 +333,23 @@ public final class REnvVars implements RContext.ContextState {
         }
         TruffleFile etc = rHomePath.resolve("etc");
         TruffleFile absMarkerFile = etc.resolve(markerFile);
-        return etc.exists() && etc.isDirectory() && absMarkerFile.exists() && isFastR(absMarkerFile);
+        if (!etc.exists()) {
+            logFinest("Validating R_HOME: the 'etc' directory doesn't exist.");
+            return false;
+        }
+        if (!etc.isDirectory()) {
+            logFinest("Validating R_HOME: 'etc' is not directory.");
+            return false;
+        }
+        if (!absMarkerFile.exists()) {
+            logFinest("Validating R_HOME: marker file doesn't exist.");
+            return false;
+        }
+        if (!isFastR(absMarkerFile)) {
+            logFinest("Validating R_HOME: marker file doesn't look like it belongs to FastR.");
+            return false;
+        }
+        return true;
     }
 
     private static boolean isFastR(TruffleFile makeconf) {
@@ -456,9 +491,25 @@ public final class REnvVars implements RContext.ContextState {
 
     private void safeReadEnvironFile(TruffleFile file) {
         try {
+            logFinest("Reading environment file: '%s'.", file);
             readEnvironFile(file);
         } catch (IOException ex) {
             RLogger.getLogger(REnvVars.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    private static void logFinest(String message) {
+        LOG.finest(message);
+    }
+
+    private static void logFinest(String fmt, Object arg) {
+        if (LOG.isLoggable(Level.FINEST)) {
+            LOG.finest(String.format(fmt, arg));
+        }
+    }
+
+    private static String getFromEnv(HashMap<String, String> env, String name) {
+        String result = env.get(name);
+        return result == null || result.isEmpty() ? null : result;
     }
 }

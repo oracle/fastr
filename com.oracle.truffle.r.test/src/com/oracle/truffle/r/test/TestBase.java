@@ -1178,40 +1178,8 @@ public class TestBase {
         return TestOutputManager.prepareResult(result, keepTrailingWhiteSpace);
     }
 
-    protected String fastRREPLEval(String input, ContextKind contextKind, long timeout, boolean allowHostAccess) {
-        assert contextKind != null;
-        microTestInfo.expression = input;
-        String result;
-        try {
-            beforeEval();
-            result = fastROutputManager.fastRSession.eval(this, input, contextKind, timeout, allowHostAccess);
-        } catch (Throwable e) {
-            String clazz;
-            if (e instanceof RInternalError && e.getCause() != null) {
-                clazz = e.getCause().getClass().getSimpleName();
-            } else {
-                clazz = e.getClass().getSimpleName();
-            }
-            Integer count = exceptionCounts.get(clazz);
-            exceptionCounts.put(clazz, count == null ? 1 : count + 1);
-            result = e.toString();
-            if (!ProcessFailedTests || ShowFailedTestsResults) {
-                e.printStackTrace();
-            }
-        }
-        if (fastROutputManager.outputFile != null) {
-            fastROutputManager.addTestResult(testElementName, input, result, keepTrailingWhiteSpace);
-        }
-        microTestInfo.fastROutput = result;
-        return TestOutputManager.prepareResult(result, keepTrailingWhiteSpace);
-    }
-
     public static boolean generatingExpected() {
         return expectedOutputManager.generate;
-    }
-
-    protected static boolean checkOnly() {
-        return expectedOutputManager.checkOnly;
     }
 
     /**

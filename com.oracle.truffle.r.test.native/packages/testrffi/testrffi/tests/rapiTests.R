@@ -81,3 +81,127 @@ assertEquals(0L, api.IS_S4_OBJECT(v))
 v <- api.Rf_asS4(v, TRUE, 0)
 # GnuR returns 16, FastR returns 1
 assertTrue(api.IS_S4_OBJECT(v) > 0)
+
+# ----------------------------------------------------------------------------------------
+# .C downcall interface
+
+dotC <- load.C(function(a = 'int*', b = 'double*') '
+    assert_equal_i(a[0], 33);
+    assert_equal_i(b[0], 2);
+    a[0] = 42;
+    b[0] = 42;
+')
+
+nontempA <- 33L
+nontempB <- 2.0
+res <- dotC(a = nontempA, b = nontempB)
+assertEquals(list(a = 42L, b = 42), res) # result has names and correct values
+assertEquals(33L, nontempA) # original vectors were not modified
+assertEquals(2.0, nontempB) # original vectors were not modified
+
+# non-vectors are passed as SEXPs to the .C and .Fortran interfaces
+# some seem to be supported: environments, closures
+# some produce deprecation warning: external pointers, symbols, expressions, language, ...
+dotC <- load.C(function(x = 'void*', res = 'int*') 'res[0] = TYPEOF((SEXP) x);')
+dummy <- 1L
+
+res <- dotC(new.env(), res = dummy)
+assertEquals(4L, res$res) # environment
+
+res <- dotC(function() 42L, res = dummy)
+assertEquals(3L, res$res) # function
+
+# lists: data pointer is passed to the native function
+dotC <- load.C(function(list = 'void*', res = 'int*') '
+    res[0] = TYPEOF(((SEXP*) list)[0]); // type of the first SEXP in the list
+')
+
+dummy <- 1L
+assertEquals(13L, dotC(list(2L), res = dummy)$res)
+assertEquals(14L, dotC(list(0.5), res = dummy)$res)
+
+# ----------------------------------------------------------------------------------------
+# .Call downcall interface
+dotCall <- load.Call(function(intv, realv, fun, str) '
+    assert_equal_i(TYPEOF(intv), 13);
+    assert_equal_i(TYPEOF(realv), 14);
+    assert_equal_i(TYPEOF(fun), 3);
+    assert_equal_i(TYPEOF(str), 16);
+    if (INTEGER(intv)[0] == 42) return realv;
+    else return str;
+')
+
+res <- dotCall(42L, 3.14, function() 42L, 'foo')
+assertEquals(3.14, res)
+
+res <- dotCall(1L, 3.14, function() 42L, 'foo')
+assertEquals('foo', res)
+
+# ----------------------------------------------------------------------------------------
+# .External downcall interface
+fun <- load.External('
+    assert_equal_i(TYPEOF(args), 2 /*pairlist*/);
+    assert_equal_i(TYPEOF(CAR(args)), 16 /*character: name of the C function*/);
+    return args; // checked on the R side...
+')
+actual_args <- fun('bar', arg1 = 'foo', arg2 = 42L)
+assertEquals('pairlist', typeof(actual_args))
+assertEquals('character', typeof(actual_args[[1L]]))    # 1st argument should be the name of the native function
+assertEquals(list('bar', arg1 = 'foo', arg2 = 42L), as.list(actual_args[-1L]))
+
+# ----------------------------------------------------------------------------------------
+# .External2 downcall interface
+fun <- load.External2('
+    SEXP res;
+    PROTECT(res = allocVector(VECSXP, 4));
+    SET_VECTOR_ELT(res, 0, call);
+    SET_VECTOR_ELT(res, 1, op);
+    SET_VECTOR_ELT(res, 2, args);
+    SET_VECTOR_ELT(res, 3, rho);
+    UNPROTECT(1);
+    return res; // checked on the R side...
+')
+
+all_args <- fun('bar', arg1 = 'foo', arg2 = 42L)
+
+# call: should be language object .External2(name, ...)
+# ignored: FastR passes string "call" relying on that fact that it is useless anyone and no-one relies on that
+ignore(assertEquals('language', typeof(all_args[[1L]])))
+ignore(assertEquals(as.symbol('.External2'), all_args[[1L]][[1L]]))
+
+assertEquals('builtin', typeof(all_args[[2L]]))  # op
+
+assertEquals('pairlist', typeof(all_args[[3L]])) # args: the same as with .External
+actual_args <- all_args[[3L]]
+assertEquals('character', typeof(actual_args[[1L]]))    # 1st argument should be the name of the native function
+assertEquals(list('bar', arg1 = 'foo', arg2 = 42L), as.list(actual_args[-1L]))
+
+assertEquals('environment', typeof(all_args[[4L]])) # rho: calling environment
+
+# ----------------------------------------------------------------------------------------
+# Downcall interfaces: call via external ptr and via the NativeSymbolInfo -- requires native functions declated in a package
+# Note: in case of GNU-R the external ptr is actually a pointer to R_RegisteredNativeSymbol, not to the C function itself
+# In case of External and External2, the first object in the args pair-list is the handle: i.e. external ptr or list of class NativeSymbolInfo
+
+fun <- function() 42L
+for (handle in list(testrffi:::C_rapi_dotC$address, testrffi:::C_rapi_dotC)) {
+    res <- .C(handle, arg1 = 42L, arg2 = 3.14, fun)
+    assertEquals(list(arg1 = 1L, arg2 = 0.5, fun), res)
+}
+
+for (handle in list(testrffi:::C_rapi_dotCall$address, testrffi:::C_rapi_dotCall)) {
+    res <- .Call(handle, arg1 = 42L, new.env())
+    assertEquals(13L + 4L, res) # TYPEOF(int) + TYPEOF(env)
+}
+
+for (handle in list(testrffi:::C_rapi_dotExternal$address, testrffi:::C_rapi_dotExternal)) {
+    args <- .External(handle, 'bar', arg1 = 'foo', arg2 = 42L)
+    assertEquals('pairlist', typeof(args))
+    assertEquals(list(handle, 'bar', arg1 = 'foo', arg2 = 42L), as.list(args))
+}
+
+for (handle in list(testrffi:::C_rapi_dotExternal2$address, testrffi:::C_rapi_dotExternal2)) {
+    args <- .External2(handle, 'bar', arg1 = 'foo', arg2 = 42L)
+    assertEquals('pairlist', typeof(args))
+    assertEquals(list(handle, 'bar', arg1 = 'foo', arg2 = 42L), as.list(args))
+}

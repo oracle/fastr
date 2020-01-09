@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
+import com.oracle.truffle.r.nodes.helpers.AccessListField;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -49,11 +50,6 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-interface Lookup {
-
-    RExternalBuiltinNode lookupBuiltin(RContext context, RList symbol);
-}
-
 /**
  * Locator for "builtin" package function implementations. The "builtin" packages contain many
  * functions that are called from R code via the FFI, e.g. {@code .Call}, but implemented internally
@@ -61,16 +57,24 @@ interface Lookup {
  * symbol, created when the package is loaded and stored in the namespace environment of the
  * package, that is a list-valued object. Evidently these "builtins" are somewhat similar to the
  * {@code .Primitive} and {@code .Internal} builtins and, similarly, most of these are
- * re-implemented in Java in FastR. The {@link Lookup#lookupBuiltin(RContext, RList)} method checks
- * the name in the list object and returns the {@link RExternalBuiltinNode} that implements the
- * function, or {@code null}. A {@code null} result implies that the builtin is not implemented in
- * Java, but called directly via the FFI interface, which is only possible for functions that use
- * the FFI in a way that FastR can handle.
+ * re-implemented in Java in FastR. The {@link #lookupBuiltin(String)} method checks the name in the
+ * list object and returns the {@link RExternalBuiltinNode} that implements the function, or
+ * {@code null}. A {@code null} result implies that the builtin is not implemented in Java, but
+ * called directly via the FFI interface, which is only possible for functions that use the FFI in a
+ * way that FastR can handle.
  *
  * This class also handles the "lookup" of the {@link NativeCallInfo} data for builtins that are
  * still implemented by native code.
  */
-abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
+abstract class LookupAdapter extends RBuiltinNode.Arg3 {
+
+    @Child private AccessListField getListField;
+
+    protected abstract RExternalBuiltinNode lookupBuiltin(String symbol);
+
+    protected RExternalBuiltinNode lookupBuiltinSlowPath(RList list) {
+        return lookupBuiltin(getSymbolNameSlowPath(list));
+    }
 
     protected static class UnimplementedExternal extends RExternalBuiltinNode {
         private final String name;
@@ -91,7 +95,15 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
 
     private static final String UNKNOWN_EXTERNAL_BUILTIN = "UNKNOWN_EXTERNAL_BUILTIN";
 
-    public static String lookupName(RList symbol) {
+    public String getSymbolName(RList list) {
+        if (getListField == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getListField = insert(AccessListField.create());
+        }
+        return RRuntime.asString(getListField.execute(list, "name"));
+    }
+
+    public static String getSymbolNameSlowPath(RList symbol) {
         CompilerAsserts.neverPartOfCompilation();
         if (symbol.getNames() != null) {
             RAbstractStringVector names = symbol.getNames();
@@ -105,13 +117,14 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
         return UNKNOWN_EXTERNAL_BUILTIN;
     }
 
-    @TruffleBoundary
-    protected static RuntimeException fallback(Lookup lookup, Object symbol) {
+    protected static RuntimeException fallback(RBaseNode node, Object symbol) {
+        CompilerDirectives.transferToInterpreter();
         String name = null;
+        LookupAdapter lookup = node instanceof LookupAdapter ? (LookupAdapter) node : null;
         if (symbol instanceof RList) {
-            name = lookupName((RList) symbol);
+            name = getSymbolNameSlowPath((RList) symbol);
             name = Utils.fastPathIdentityEquals(name, UNKNOWN_EXTERNAL_BUILTIN) ? null : name;
-            if (name != null && lookup.lookupBuiltin(RContext.getInstance(), (RList) symbol) != null) {
+            if (name != null && lookup != null && lookup.lookupBuiltinSlowPath((RList) symbol) != null) {
                 /*
                  * if we reach this point, then the cache saw a different value for f. the lists
                  * that contain the information about native calls are never expected to change.
@@ -119,7 +132,7 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
                 throw RInternalError.shouldNotReachHere("fallback reached for " + lookup + " " + name);
             }
         }
-        throw RError.nyi((RBaseNode) lookup, lookup + " specialization failure: " + (name == null ? "<unknown>" : name));
+        throw RError.nyi(node, node + " specialization failure: " + (name == null ? "<unknown>" : name));
     }
 
     public static String checkPackageArg(Object rPackage) {
@@ -138,23 +151,27 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
      * provided from R.
      */
     public static final class ExtractNativeCallInfoNode extends Node {
-        @Child private ExtractVectorNode nameExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        @Child private ExtractVectorNode addressExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private AccessListField nameExtract = AccessListField.create();
+        @Child private AccessListField addressExtract = AccessListField.create();
         @Child private ExtractVectorNode packageExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
-        @Child private ExtractVectorNode infoExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+        @Child private AccessListField infoExtract = AccessListField.create();
+
+        public static ExtractNativeCallInfoNode create() {
+            return new ExtractNativeCallInfoNode();
+        }
 
         protected NativeCallInfo execute(RList symbol) {
-            String name = RRuntime.asString(nameExtract.applyAccessField(symbol, "name"));
-            SymbolHandle address = ((RExternalPtr) addressExtract.applyAccessField(symbol, "address")).getAddr();
+            String name = RRuntime.asString(nameExtract.execute(symbol, "name"));
+            SymbolHandle address = ((RExternalPtr) addressExtract.execute(symbol, "address")).getAddr();
             // field name may be "package" or "dll", but always at (R) index 3
             RList packageList = (RList) packageExtract.apply(symbol, new Object[]{3}, RLogical.valueOf(false), RMissing.instance);
-            DLLInfo dllInfo = (DLLInfo) ((RExternalPtr) infoExtract.applyAccessField(packageList, "info")).getExternalObject();
+            DLLInfo dllInfo = (DLLInfo) ((RExternalPtr) infoExtract.execute(packageList, "info")).getExternalObject();
             return new NativeCallInfo(name, address, dllInfo);
         }
     }
 
-    protected static RExternalBuiltinNode getExternalModelBuiltinNode(RContext context, String name) {
-        return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(context, RandFunctionsNodes.class, "model.R"), name);
+    public static RExternalBuiltinNode getExternalModelBuiltinNode(RContext ctx, String name) {
+        return new RInternalCodeBuiltinNode("stats", RInternalCode.loadSourceRelativeTo(ctx, RandFunctionsNodes.class, "model.R"), name);
     }
 
     protected static final int CallNST = DLL.NativeSymbolType.Call.ordinal();
