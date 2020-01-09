@@ -41,6 +41,12 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     private static final String minMethodSignature = "(pointer, sint32):pointer";
     private static final String maxMethodSignature = "(pointer, sint32):pointer";
     private static final String isSortedMethodSignature = "(pointer):sint32";
+    private static final int eltMethodArgCount = 2;
+    private static final int getRegionMethodArgCount = 4;
+    private static final int sumMethodArgCount = 2;
+    private static final int minMethodArgCount = 2;
+    private static final int maxMethodArgCount = 2;
+    private static final int isSortedMethodArgCount = 1;
     private Object eltMethod;
     private Object getRegionMethod;
     private Object isSortedMethod;
@@ -156,7 +162,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("elt", instance, index);
         }
-        Object element = invokeNativeFunction(eltMethodInterop, eltMethod, eltMethodSignature, instance, index);
+        Object element = invokeNativeFunction(eltMethodInterop, eltMethod, eltMethodSignature, eltMethodArgCount, instance, index);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(element);
         }
@@ -173,7 +179,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("GetRegion", instance, fromIdx, size, buffer);
         }
-        Object copiedCount = invokeNativeFunction(methodInterop, getRegionMethod, getRegionMethodSignature, instance, fromIdx, size, buffer);
+        Object copiedCount = invokeNativeFunction(methodInterop, getRegionMethod, getRegionMethodSignature, getRegionMethodArgCount, instance, fromIdx, size, buffer);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(copiedCount);
         }
@@ -186,7 +192,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Sum", instance, naRm);
         }
-        Object sumVectorMirror = invokeNativeFunction(methodInterop, sumMethod, sumMethodSignature, instance, naRm);
+        Object sumVectorMirror = invokeNativeFunction(methodInterop, sumMethod, sumMethodSignature, sumMethodArgCount, instance, naRm);
         return convertNativeReturnValToIntOrDouble(sumVectorMirror);
     }
 
@@ -195,14 +201,14 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Min", instance, naRm);
         }
-        Object minVectorMirror = invokeNativeFunction(methodInterop, minMethod, minMethodSignature, instance, naRm);
+        Object minVectorMirror = invokeNativeFunction(methodInterop, minMethod, minMethodSignature, minMethodArgCount, instance, naRm);
         return convertNativeReturnValToIntOrDouble(minVectorMirror);
     }
 
     public Object invokeMaxMethod(Object instance, InteropLibrary methodInterop, boolean naRm) {
         methodInterop = methodInterop == null ? InteropLibrary.getFactory().getUncached(maxMethod) : methodInterop;
         logBeforeInteropExecute("Max", instance, naRm);
-        Object maxVectorMirror = invokeNativeFunction(methodInterop, maxMethod, maxMethodSignature, instance, naRm);
+        Object maxVectorMirror = invokeNativeFunction(methodInterop, maxMethod, maxMethodSignature, maxMethodArgCount, instance, naRm);
         return convertNativeReturnValToIntOrDouble(maxVectorMirror);
     }
 
@@ -211,7 +217,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Is_sorted", instance);
         }
-        Object sortedMode = invokeNativeFunction(methodInterop, isSortedMethod, isSortedMethodSignature, instance);
+        Object sortedMode = invokeNativeFunction(methodInterop, isSortedMethod, isSortedMethodSignature, isSortedMethodArgCount, instance);
         assert sortedMode instanceof Integer;
         return (int) sortedMode;
     }

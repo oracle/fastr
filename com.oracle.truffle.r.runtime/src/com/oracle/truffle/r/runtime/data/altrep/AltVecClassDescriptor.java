@@ -32,6 +32,7 @@ import java.util.logging.Level;
 public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
     // void * dataptr_method(SEXP instance, Rboolean writeabble)
     private static final String dataptrMethodSignature = "(pointer, sint32):pointer";
+    private static final int dataptrMethodArgCount = 2;
     private Object dataptrMethod;
     private Object dataptrOrNullMethod;
     private Object extractSubsetMethod;
@@ -64,6 +65,10 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
         return dataptrMethodSignature;
     }
 
+    public int getDataptrMethodArgCount() {
+        return dataptrMethodArgCount;
+    }
+
     public boolean isDataptrMethodRegistered() {
         return dataptrMethod != null;
     }
@@ -82,7 +87,7 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("dataptr", instance, writeabble);
         }
-        Object dataptr = invokeNativeFunction(dataptrMethodInterop, dataptrMethod, dataptrMethodSignature, instance, writeabble);
+        Object dataptr = invokeNativeFunction(dataptrMethodInterop, dataptrMethod, dataptrMethodSignature, dataptrMethodArgCount, instance, writeabble);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(dataptr);
         }

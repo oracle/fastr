@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data.altrep;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RType;
@@ -37,7 +39,9 @@ import java.util.logging.Level;
 
 public abstract class AltRepClassDescriptor extends RBaseObject {
     private final String lengthMethodSignature = "(pointer):sint32";
+    private final int lengthMethodArgCount = 1;
     private final String duplicateMethodSignature = "(pointer, sint32): pointer";
+    private final int duplicateMethodArgCount = 2;
     private String className;
     private String packageName;
     private Object dllInfo;
@@ -170,10 +174,10 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
      * @param instance Altrep instance. This is the "self" parameter that is passed to every altrep method.
      * @param args Rest of the arguments.
      */
-    static Object invokeNativeFunction(InteropLibrary interop, Object function, String functionSignature, Object instance, Object... args) {
+    static Object invokeNativeFunction(InteropLibrary interop, Object function, String functionSignature, int argLen, Object instance, Object... args) {
         assert instance instanceof RBaseObject;
         NativeDataAccess.NativeMirror mirror = wrapInNativeMirror((RBaseObject) instance);
-        Object[] allArgs = collectArguments(mirror, args);
+        Object[] allArgs = collectArguments(mirror, argLen, args);
         try {
             if (interop.isMemberInvocable(function, "bind")) {
                 // NFI case
@@ -190,7 +194,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
 
     public Object invokeDuplicateMethod(Object instance, InteropLibrary interop, boolean deep) {
         interop = interop == null ? InteropLibrary.getFactory().getUncached(duplicateMethod) : interop;
-        Object ret = invokeNativeFunction(interop, duplicateMethod, duplicateMethodSignature, instance, deep);
+        Object ret = invokeNativeFunction(interop, duplicateMethod, duplicateMethodSignature, duplicateMethodArgCount, instance, deep);
         // TODO: Return type checks?
         return ret;
     }
@@ -200,7 +204,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("lengthMethod", instance);
         }
-        Object ret = invokeNativeFunction(lengthMethodInterop, lengthMethod, lengthMethodSignature, instance);
+        Object ret = invokeNativeFunction(lengthMethodInterop, lengthMethod, lengthMethodSignature, lengthMethodArgCount, instance);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(ret);
         }
@@ -218,14 +222,11 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         }
     }
 
-    // TODO: explode loop? - potrebuje dostat konstanti delku
-    private static Object[] collectArguments(Object firstArg, Object... restOfArgs) {
-        Object[] newArgs = new Object[restOfArgs.length + 1];
+    private static Object[] collectArguments(Object firstArg, int argLen, Object... restOfArgs) {
+        CompilerAsserts.compilationConstant(argLen);
+        Object[] newArgs = new Object[argLen];
         newArgs[0] = firstArg;
-        int newArgsIdx = 1;
-        for (Object arg : restOfArgs) {
-            newArgs[newArgsIdx++] = arg;
-        }
+        System.arraycopy(restOfArgs, 0, newArgs, 1, argLen - 1);
         return newArgs;
     }
 

@@ -191,7 +191,7 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
             // Note that dataptrMethodInterop is not adopted here yet.
             InteropLibrary slowDataptrMethodInterop = InteropLibrary.getFactory().getUncached(descriptor.getDataptrMethod());
             Object dataptr = AltRepClassDescriptor.invokeNativeFunction(slowDataptrMethodInterop, descriptor.getDataptrMethod(),
-                    descriptor.getDataptrMethodSignature(), value, true);
+                    descriptor.getDataptrMethodSignature(), descriptor.getDataptrMethodArgCount(), value, true);
             return InteropLibrary.getFactory().create(dataptr);
         }
 
