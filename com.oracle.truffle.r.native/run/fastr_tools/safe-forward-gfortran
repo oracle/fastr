@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 3 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 3 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+# The purpose of this tool is to forward to gfortran, but before doing so
+# it checks that gfortran exists and if not prints out some message suggesting what to do.
+# We do not use the generic safe-forward-tool, because we expect gfortran to be by far the
+# most problematic tool and we want to provide some more gfortan specific guidance.
+
+if command -v gfortran>/dev/null; then
+  exec gfortran "$@"
+else
+  >&2 echo "R package installation or similar process tried to use the 'gfortran' tool, the Fortran compiler from the GNU Compiler Collection (GCC)."
+  >&2 echo "GFortran seems to be not available on your system."
+  >&2 echo
+  >&2 echo "****************************"
+  >&2 echo "TROUBLESHOOTING"
+  >&2 echo "If GFortran is not installed, install it in order to proceed."
+  >&2 echo "  * On Debian based Linux: apt install gfortran."
+  >&2 echo "  * On Oracle/Red Hat Linux: yum install gcc-gfortran."
+  >&2 echo "  * On MacOS: see https://gcc.gnu.org/wiki/GFortranBinaries."
+  >&2 echo "If GFortran is installed, but under a non-standard path, or if you would like to use another compatible Fortran compiler, then path to a fortran compiler can be configured in '$R_HOME/etc/Makeconf' (variable 'FC')."
+  exit 1
+fi

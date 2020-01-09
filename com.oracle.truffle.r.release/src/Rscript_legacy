@@ -117,4 +117,7 @@ fi
 # we can invoke FastR directly, but we do have to set R_HOME
 export R_HOME="${fastr_home}"
 
+# In GNU-R the Rscript is executable that seems to be setting up LD_LIBRARY_PATH like ldpaths under the hood:
+. "${fastr_home}/etc/ldpaths"
+
 exec "${fastr_home}/../../bin/java" -cp "$cp" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${jvm_args[@]}" com.oracle.truffle.r.launcher.RMain Rscript ${FASTR_INTERNAL_ARGS[@]} "${launcher_args[@]}"

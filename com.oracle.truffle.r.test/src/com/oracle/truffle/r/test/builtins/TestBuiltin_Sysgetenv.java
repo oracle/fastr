@@ -29,7 +29,7 @@ public class TestBuiltin_Sysgetenv extends TestBase {
 
     @Test
     public void testSysgetenv1() {
-        assertEval("argv <- list('EDITOR', ''); .Internal(Sys.getenv(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('R_PAPERSIZE', ''); .Internal(Sys.getenv(argv[[1]], argv[[2]])) %in% c('a4', 'letter')");
     }
 
     @Test

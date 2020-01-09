@@ -146,11 +146,12 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
             return;
         }
 
-        TruffleFile cc = toolchain.getToolPath("CC");
-        TruffleFile cxx = toolchain.getToolPath("CXX");
-
-        pEnv.put("TOOLCHAIN_CPP", cxx.toString());
-        pEnv.put("TOOLCHAIN_CC", cc.toString());
+        // exports, e.g., LABS_TOOLCHAIN_CC, which can then be used in etc/Makeconf
+        String[] tools = new String[]{"CC", "CXX", "LD"};
+        for (String tool : tools) {
+            TruffleFile path = toolchain.getToolPath(tool);
+            pEnv.put("LABS_TOOLCHAIN_" + tool, path.toString());
+        }
     }
 
     private static void warnNoToolchain() {

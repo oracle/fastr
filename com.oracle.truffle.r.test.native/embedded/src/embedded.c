@@ -61,7 +61,7 @@ static void checkError(int errorOccurred, const char* context) {
 
 static void source(const char* file) {
     FILE *f;
-    if (f = fopen(file, "r")){
+    if ((f = fopen(file, "r"))){
         fclose(f);
     } else {
         printf("File '%s' is not accessible. Are you running the program from within a directory that contains this file, e.g. 'obj'?\n", file);

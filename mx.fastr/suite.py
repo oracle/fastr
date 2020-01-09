@@ -297,6 +297,7 @@ suite = {
         # If FASTR_RFFI=='llvm', then this is set as CC/CXX in c.o.t.r.native/Makefile
         "LABS_LLVM_CC": "<toolchainGetToolPath:native,CC>",
         "LABS_LLVM_CXX": "<toolchainGetToolPath:native,CXX>",
+        "GRAALVM_VERSION": "<graalvm_version>",
       },
     },
 

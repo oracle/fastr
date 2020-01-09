@@ -25,7 +25,9 @@
 # In GnuR Rscript is an executable in the bin directory.
 # In FastR Rscript and R are combined in the same image. For consistency
 # Rscript is a script in the bin directory that simply invokes bin/execRextras/Rscript
-# N.B. This can't be in bin/exec as then it is treated as a sub0architecture
+# N.B. This can't be in bin/exec as then it is treated as a sub-architecture
+# NOTE: this is used only in the development build,
+# com.oracle.truffle.r.release/src/Rscript_legacy is used in the release
 
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ] ; do source="$(readlink "$source")"; done

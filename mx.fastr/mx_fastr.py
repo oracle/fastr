@@ -28,6 +28,7 @@ import tarfile
 import mx
 import mx_gate
 import mx_fastr_dists
+import mx_subst
 from mx_fastr_dists import FastRReleaseProject #pylint: disable=unused-import
 import mx_copylib
 import mx_fastr_edinclude
@@ -734,6 +735,7 @@ def nativebuild(args):
 
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
+    mx_subst.results_substitutions.register_no_arg('graalvm_version', mx.suite('sdk').release_version())
     if mx.suite("sulong", fatalIfMissing=False) and not _fastr_suite.isBinarySuite():
         # native.recommended runs FastR, it already has a build dependency to the FASTR distribution
         # if we are running with sulong we also need the SULONG distribution

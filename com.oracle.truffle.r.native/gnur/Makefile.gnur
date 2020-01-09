@@ -127,6 +127,7 @@ $(PATCH_BUILD):
 	(cp -R $(PATCH) $(PATCH_BUILD))
 	
 # Copy/link configured files from the original GNUR to patch-build
+# We will override most of those in com.oracle.truffle.r.native/run/Makefile
 $(PATCH_BUILD)/Makefile:
 	ln -s $(GNUR_HOME_BINARY_UNPACKED)/tools $(PATCH_BUILD)/tools
 	ln -s $(GNUR_HOME_BINARY_UNPACKED)/etc $(PATCH_BUILD)/etc
