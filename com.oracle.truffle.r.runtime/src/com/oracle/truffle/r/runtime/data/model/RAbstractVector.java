@@ -71,7 +71,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      */
     protected static volatile int fence;
 
-    protected boolean complete; // "complete" means: does not contain NAs
+    private boolean complete; // "complete" means: does not contain NAs
 
     protected RAbstractVector(boolean complete) {
         this.complete = complete;
@@ -430,7 +430,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
-    public final boolean isComplete() {
+    public boolean isComplete() {
         return complete;
     }
 
@@ -591,7 +591,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     protected boolean isResizedComplete(int newSize, boolean filledNAs) {
-        return complete && ((getLength() >= newSize) || !filledNAs);
+        return isComplete() && ((getLength() >= newSize) || !filledNAs);
     }
 
     // *internalCopyAndReport* methods do just the copy and report it to MemoryTracer. These should

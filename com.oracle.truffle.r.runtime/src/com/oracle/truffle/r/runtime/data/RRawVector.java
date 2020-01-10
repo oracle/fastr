@@ -119,7 +119,7 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
             NativeDataAccess.setDataLength(this, data, l);
         } finally {
             data = null;
-            complete = false;
+            setComplete(false);
         }
     }
 
@@ -172,7 +172,7 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
             return NativeDataAccess.allocateNativeContents(this, data, getLength());
         } finally {
             data = null;
-            complete = false;
+            setComplete(false);
         }
     }
 

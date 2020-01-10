@@ -88,7 +88,7 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
                     NativeDataAccess.setDataLength(this, data, l);
                 } finally {
                     assert NativeDataAccess.isAllocated(this);
-                    complete = false;
+                    setComplete(false);
                 }
             }
         } else {
@@ -211,7 +211,7 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
             return NativeDataAccess.allocateNativeContents(this, getInternalStore(), data.length);
         } finally {
             assert NativeDataAccess.isAllocated(this);
-            complete = false;
+            setComplete(false);
         }
     }
 

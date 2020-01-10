@@ -132,7 +132,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
                     NativeDataAccess.setDataLength(this, (CharSXPWrapper[]) data, l);
                 } finally {
                     assert NativeDataAccess.isAllocated(this);
-                    complete = false;
+                    setComplete(false);
                 }
             }
         } else {
@@ -274,7 +274,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
             return NativeDataAccess.allocateNativeContents(this, (CharSXPWrapper[]) getInternalStore(), getLength());
         } finally {
             assert NativeDataAccess.isAllocated(this);
-            complete = false;
+            setComplete(false);
         }
     }
 

@@ -87,7 +87,7 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
             NativeDataAccess.setDataLength(this, data, l);
         } finally {
             data = null;
-            complete = false;
+            setComplete(false);
         }
     }
 
@@ -195,7 +195,7 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
             return NativeDataAccess.allocateNativeContents(this, data, getLength());
         } finally {
             data = null;
-            complete = false;
+            setComplete(false);
         }
     }
 

@@ -206,12 +206,17 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     @Override
+    public boolean isComplete() {
+        return data.isComplete();
+    }
+
+    @Override
     public void setLength(int l) {
         try {
             NativeDataAccess.setDataLength(this, getArrayForNativeDataAccess(), l);
         } finally {
             data = null;
-            complete = false;
+            setComplete(false);
         }
     }
 
@@ -337,7 +342,7 @@ public final class RIntVector extends RAbstractNumericVector {
             data = new RIntNativeVectorData(this);
             return result;
         } finally {
-            complete = false;
+            setComplete(false);
         }
     }
 

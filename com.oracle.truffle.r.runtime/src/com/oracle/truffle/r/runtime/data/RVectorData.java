@@ -33,5 +33,4 @@ public abstract class RVectorData {
     public boolean isComplete() {
         return false;
     }
-
 }
