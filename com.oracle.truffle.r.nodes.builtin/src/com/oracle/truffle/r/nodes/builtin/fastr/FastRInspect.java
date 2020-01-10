@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,28 +28,39 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import java.io.IOException;
 
 /**
  * Just a convenient way to inspect values in the Java debugger from the R shell.
  */
-@RBuiltin(name = ".fastr.inspect", visibility = OFF, kind = PRIMITIVE, parameterNames = {"..."}, behavior = COMPLEX)
-public abstract class FastRInspect extends RBuiltinNode.Arg1 {
+@RBuiltin(name = ".fastr.inspect", visibility = OFF, kind = PRIMITIVE, parameterNames = {"...", "inspectVectorData"}, behavior = COMPLEX)
+public abstract class FastRInspect extends RBuiltinNode.Arg2 {
 
     static {
-        Casts.noCasts(FastRInspect.class);
+        Casts casts = new Casts(FastRInspect.class);
+        casts.arg("inspectVectorData").mapMissing(constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst();
     }
 
     @Specialization
-    public Object call(RArgsValuesAndNames args) {
+    public Object call(RArgsValuesAndNames args, byte inspectVectorData) {
         for (int i = 0; i < args.getLength(); i++) {
-            writeString(args.getArgument(i).getClass().getName(), true);
+            Object arg = args.getArgument(i);
+            if (RRuntime.fromLogical(inspectVectorData) && (arg instanceof RIntVector)) {
+                writeString(((RIntVector) arg).getData().getClass().getName(), true);
+            } else {
+                writeString(arg.getClass().getName(), true);
+            }
         }
         return RNull.instance;
     }
