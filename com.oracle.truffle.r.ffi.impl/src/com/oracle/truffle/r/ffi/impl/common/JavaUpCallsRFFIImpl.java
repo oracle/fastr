@@ -94,7 +94,6 @@ import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -2401,7 +2400,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object INTEGER(Object x) {
         // Note: there is no validation in GNU-R and so packages call this with all types of vectors
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RMaterializedVector.class));
+        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RAbstractAtomicVector.class));
     }
 
     @Override
