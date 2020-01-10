@@ -102,6 +102,9 @@ abstract class WriteIndexedVectorNode extends Node {
         VectorAccess rightAccess = right.slowPathAccess();
         try (RandomIterator leftIter = leftAccess.randomAccess(left); RandomIterator rightIter = rightAccess.randomAccess(right)) {
             write.apply(leftIter, leftAccess, positions, rightIter, rightAccess, right, positionTargetDimensions);
+            if (!(leftAccess.na.neverSeenNA() && rightAccess.na.neverSeenNA())) {
+                left.setComplete(false);
+            }
         }
     }
 }
