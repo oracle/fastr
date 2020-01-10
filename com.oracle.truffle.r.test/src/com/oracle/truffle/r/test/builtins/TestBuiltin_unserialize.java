@@ -106,9 +106,9 @@ public class TestBuiltin_unserialize extends TestBase {
         assertEval(template("s <- 1.1:10.1; attr(s, 'testattr') <- 'attrvalue'; unserialize(serialize(s, connection=NULL, version=%0))", VERSIONS));
 
         assertEvalFastR("v <- unserialize(serialize(1L:10L, connection=NULL, version=2)); .fastr.inspect(v)", "cat('com.oracle.truffle.r.runtime.data.RIntVector\n')");
-        assertEvalFastR("v <- unserialize(serialize(1L:10L, connection=NULL, version=3)); .fastr.inspect(v)", "cat('com.oracle.truffle.r.runtime.data.RIntSequence\n')");
+        assertEvalFastR("v <- unserialize(serialize(1L:10L, connection=NULL, version=3)); .fastr.inspect(v, inspectVectorData=T)", "cat('com.oracle.truffle.r.runtime.data.RIntSeqVectorData\n')");
         assertEvalFastR("v <- unserialize(serialize(1:10, connection=NULL, version=2)); .fastr.inspect(v)", "cat('com.oracle.truffle.r.runtime.data.RIntVector\n')");
-        assertEvalFastR("v <- unserialize(serialize(1:10, connection=NULL, version=3)); .fastr.inspect(v)", "cat('com.oracle.truffle.r.runtime.data.RIntSequence\n')");
+        assertEvalFastR("v <- unserialize(serialize(1:10, connection=NULL, version=3)); .fastr.inspect(v, inspectVectorData=T)", "cat('com.oracle.truffle.r.runtime.data.RIntSeqVectorData\n')");
         assertEvalFastR("v <- unserialize(serialize(1.1:10.1, connection=NULL, version=2)); .fastr.inspect(v)", "cat('com.oracle.truffle.r.runtime.data.RDoubleVector\n')");
         assertEvalFastR("v <- unserialize(serialize(1.1:10.1, connection=NULL, version=3)); .fastr.inspect(v)", "cat('com.oracle.truffle.r.runtime.data.RDoubleVector\n')");
 

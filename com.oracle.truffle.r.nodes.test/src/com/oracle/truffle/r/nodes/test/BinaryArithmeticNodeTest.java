@@ -402,7 +402,7 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
             BinaryArithmeticFactory factory = arithmetics[i];
             Object result = executeArithmetic(factory, left, right);
             if (expectedFold) {
-                assertThat("expected fold " + left + " <op> " + right, result instanceof RSequence);
+                assertThat("expected fold " + left + " <op> " + right, ((RAbstractVector) result).isSequence());
             } else {
                 assertThat("expected not fold" + left + " <op> " + right, !(result instanceof RSequence));
             }

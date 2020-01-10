@@ -654,7 +654,8 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testMatrix() {
         assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; matrix(ja, c(3, 2))", "matrix(1:6, c(3, 2))");
-        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; .fastr.inspect(matrix(ja, c(3, 2)))", "cat('com.oracle.truffle.r.runtime.data.RIntVector\n')");
+        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; .fastr.inspect(matrix(ja, c(3, 2)), inspectVectorData=TRUE)",
+                        "cat('com.oracle.truffle.r.runtime.data.RIntArrayVectorData\n')");
         assertEvalFastR(CREATE_TEST_ARRAYS + "matrix(ta$integerArray2, c(3, 2))", "v <- c(1, 1, 2, 2, 3, 3); dim(v) <- c(2, 3); matrix(v, c(3, 2))");
         assertEvalFastR(CREATE_TEST_ARRAYS + "matrix(ta$integerArray3, c(3, 2, 2))", "v <- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3); dim(v) <- c(2, 2, 3); matrix(v, c(3, 2, 2))");
     }
@@ -662,7 +663,8 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testArray() {
         assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; array(ja, c(3, 2))", "matrix(1:6, c(3, 2))");
-        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; .fastr.inspect(array(ja, c(3, 2)))", "cat('com.oracle.truffle.r.runtime.data.RIntVector\n')");
+        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; .fastr.inspect(array(ja, c(3, 2)), inspectVectorData=TRUE)",
+                        "cat('com.oracle.truffle.r.runtime.data.RIntArrayVectorData\n')");
         assertEvalFastR(CREATE_TEST_ARRAYS + "array(ta$integerArray2, c(3, 2))", "v <- c(1, 1, 2, 2, 3, 3); dim(v) <- c(2, 3); array(v, c(3, 2))");
         assertEvalFastR(CREATE_TEST_ARRAYS + "array(ta$integerArray3, c(3, 2, 2))", "v <- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3); dim(v) <- c(2, 2, 3); array(v, c(3, 2, 2))");
     }
@@ -1218,7 +1220,7 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testNoCopyOnCast() throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
-        testNoCopyOnCast("integer", "RToIntVectorClosure", new String[]{"fieldBooleanArray", "fieldDoubleArray", "fieldStringArray"});
+        testNoCopyOnCast("integer", "RIntVecClosureData", new String[]{"fieldBooleanArray", "fieldDoubleArray", "fieldStringArray"});
         testNoCopyOnCast("double", "RToDoubleVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldStringArray"});
         testNoCopyOnCast("complex", "RToComplexVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray", "fieldStringArray"});
         testNoCopyOnCast("character", "RToStringVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray"});
@@ -1233,10 +1235,10 @@ public class TestJavaInterop extends TestBase {
             } else {
                 assertEvalFastR(cmd, gnur);
             }
-            gnur = "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')";
-            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as." + type + "(as.vector(to$" + field + ")))", gnur);
-            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as.vector(as.vector(to$" + field + "), '" + type + "'))", gnur);
-            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as.vector(as." + type + "(to$" + field + "), '" + type + "'))", gnur);
+            gnur = "RIntVecClosureData".equals(closure) ? "cat('com.oracle.truffle.r.runtime.data." + closure + "\n')" : "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')";
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as." + type + "(as.vector(to$" + field + ")), inspectVectorData=TRUE)", gnur);
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as.vector(as.vector(to$" + field + "), '" + type + "'), inspectVectorData=TRUE)", gnur);
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as.vector(as." + type + "(to$" + field + "), '" + type + "'), inspectVectorData=TRUE)", gnur);
         }
     }
 
