@@ -120,9 +120,17 @@ class RIntForeignObjData extends RIntVectorData {
 
     private int getIntImpl(int index, InteropLibrary valueInterop, InteropLibrary interop) {
         try {
-            return valueInterop.asInt(interop.readArrayElement(foreign, index));
+            Object result = interop.readArrayElement(foreign, index);
+            if (valueInterop.isNull(result)) {
+                return RRuntime.INT_NA;
+            }
+            if (result instanceof Character) {
+                // rJava hack
+                return (Character) result;
+            }
+            return valueInterop.asInt(result);
         } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
-            throw RInternalError.shouldNotReachHere();
+            throw RInternalError.shouldNotReachHere(e);
         }
     }
 
