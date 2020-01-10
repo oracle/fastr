@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -272,14 +272,14 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
         Object dimName1 = RNull.instance;
         if (aDimNames != null && aDimNames.getLength() > 0) {
             dimName1 = aDimNames.getDataAt(0);
-            if (RSharingAttributeStorage.isShareable(dimName1) && !((RSharingAttributeStorage) dimName1).isShared()) {
+            if (dimName1 instanceof RSharingAttributeStorage && !((RSharingAttributeStorage) dimName1).isShared()) {
                 ((RSharingAttributeStorage) dimName1).incRefCount();
             }
         }
         Object dimName2 = RNull.instance;
         if (bDimNames != null && bDimNames.getLength() > 1) {
             dimName2 = bDimNames.getDataAt(1);
-            if (RSharingAttributeStorage.isShareable(dimName2) && !((RSharingAttributeStorage) dimName2).isShared()) {
+            if (dimName2 instanceof RSharingAttributeStorage && !((RSharingAttributeStorage) dimName2).isShared()) {
                 ((RSharingAttributeStorage) dimName2).incRefCount();
             }
         }

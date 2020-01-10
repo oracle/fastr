@@ -84,12 +84,18 @@ public class RIntVecClosureData extends RIntVectorData implements RClosure {
 
     @ExportMessage
     public int[] getReadonlyIntData() {
-        throw new RuntimeException("TODO?");
+        // XXX TODO throw new RuntimeException("TODO?");
+        return getIntDataCopy();
     }
 
     @ExportMessage
     public int[] getIntDataCopy() {
-        throw new RuntimeException("TODO?");
+        // XXX TODO throw new RuntimeException("TODO?");
+        int[] res = new int[getLength()];
+        for (int i = 0; i < res.length; i++) {
+            res[i] = getIntAt(i);
+        }
+        return res;
     }
 
     // TODO: the accesses may be done more efficiently with nodes and actually using the "store" in

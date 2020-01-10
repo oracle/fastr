@@ -1075,7 +1075,7 @@ public class RSerialize {
                 String tag = Utils.intern(tagSym.getName());
                 // this may convert a plain vector to a data.frame or factor
                 Object attrValue = pl.car();
-                if (RSharingAttributeStorage.isShareable(attrValue) && ((RSharingAttributeStorage) attrValue).isTemporary()) {
+                if (attrValue instanceof RSharingAttributeStorage && ((RSharingAttributeStorage) attrValue).isTemporary()) {
                     ((RSharingAttributeStorage) attrValue).incRefCount();
                 }
                 if (result instanceof RMaterializedVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {

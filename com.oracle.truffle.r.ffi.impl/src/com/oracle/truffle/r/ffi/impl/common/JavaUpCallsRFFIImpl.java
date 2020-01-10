@@ -621,7 +621,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         // which as it seems GNUR would just let proceede
         // Note 2: there is a hack in data.table that uses SET_NAMED(x,0) to make something mutable
         // so we allow and "support" this one specific use-case.
-        if (RSharingAttributeStorage.isShareable(x)) {
+        if (x instanceof RSharingAttributeStorage) {
             RSharingAttributeStorage r = (RSharingAttributeStorage) x;
             if (v >= 2) {
                 // we play it safe: if the caller wants this instance to be shared, they may expect

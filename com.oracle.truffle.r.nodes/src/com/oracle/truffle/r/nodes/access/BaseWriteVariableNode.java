@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,7 +96,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         // or
         // x<-c(1); f<-function() { x[[1]]<<-x[[1]] + 1; x }; a<-f(); b<-f(); c(a,b)
         if ((mode != Mode.INVISIBLE || isSuper)) {
-            if (isShareableProfile.profile(RSharingAttributeStorage.isShareable(value))) {
+            if (isShareableProfile.profile(value instanceof RSharingAttributeStorage)) {
 
                 // this comparison does not work consistently for boxing objects, so it's important
                 // to do the RShareable check first.
