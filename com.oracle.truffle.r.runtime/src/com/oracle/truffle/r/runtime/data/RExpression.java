@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
@@ -180,7 +181,7 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
         RExpression listCopy = new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
-            if (el instanceof RMaterializedVector) {
+            if (RRuntime.isMaterializedVector(el)) {
                 Object elCopy = ((RAbstractVector) el).deepCopy();
                 listCopy.updateDataAtAsObject(i, elCopy, null);
             }

@@ -96,11 +96,16 @@ public final class RIntVector extends RAbstractNumericVector {
         return RIntVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
     }
 
+    @Override
+    public boolean isMaterialized() {
+        return RIntVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
+    }
+
     public RIntVectorData getData() {
         return data;
     }
 
-    // TODO: method that break encapsulation of data
+    // TODO: method that breaks encapsulation of data
 
     @Override
     public boolean isSequence() {

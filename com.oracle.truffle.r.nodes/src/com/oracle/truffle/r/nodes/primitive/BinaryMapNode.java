@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
@@ -182,8 +183,8 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         this.fastLeftAccess = isGeneric ? null : left.access();
         this.fastRightAccess = isGeneric ? null : right.access();
         this.vectorNode = VectorMapBinaryInternalNode.create(resultType, argumentType);
-        boolean leftVectorImpl = RMaterializedVector.class.isAssignableFrom(leftClass);
-        boolean rightVectorImpl = RMaterializedVector.class.isAssignableFrom(rightClass);
+        boolean leftVectorImpl = RMaterializedVector.class.isAssignableFrom(leftClass) || ((left instanceof RIntVector) && ((RIntVector) left).isMaterialized());
+        boolean rightVectorImpl = RMaterializedVector.class.isAssignableFrom(rightClass) || ((right instanceof RIntVector) && ((RIntVector) right).isMaterialized());
         this.mayContainMetadata = leftVectorImpl || rightVectorImpl;
         this.mayFoldConstantTime = function.mayFoldConstantTime(left, right);
         this.leftIsNAProfile = mayFoldConstantTime ? ConditionProfile.createBinaryProfile() : null;

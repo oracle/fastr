@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
 public final class RFactor {
 
@@ -39,6 +38,6 @@ public final class RFactor {
     public static RAbstractVector getLevels(RIntVector factor) {
         Object attr = factor.getAttr(RRuntime.LEVELS_ATTR_KEY);
         // convert scalar to RAbstractVector if necessary
-        return attr instanceof RMaterializedVector ? (RAbstractVector) attr : (RAbstractVector) RRuntime.asAbstractVector(attr);
+        return RRuntime.isMaterializedVector(attr) ? (RAbstractVector) attr : (RAbstractVector) RRuntime.asAbstractVector(attr);
     }
 }

@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
@@ -70,7 +69,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
 
     protected boolean containsMetadata(RAbstractVector vector) {
-        return vector instanceof RMaterializedVector && hasDimNode.execute(vector) ||
+        return vector.isMaterialized() && hasDimNode.execute(vector) ||
                         (copyAllAttributes && vector.getAttributes() != null) ||
                         getDimNamesNode.getDimNames(vector) != null ||
                         getNamesNode.getNames(vector) != null;

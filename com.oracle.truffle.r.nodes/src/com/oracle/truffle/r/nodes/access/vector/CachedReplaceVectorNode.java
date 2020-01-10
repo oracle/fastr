@@ -63,7 +63,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 final class CachedReplaceVectorNode extends CachedVectorNode {
@@ -394,7 +393,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private static RAbstractVector resizeVector(RAbstractVector vector, int size) {
         RStringVector oldNames = vector.getNames();
         RAbstractVector res = vector.copyResized(size, true).materialize();
-        if (vector instanceof RMaterializedVector) {
+        if (vector.isMaterialized()) {
             res.copyAttributesFrom(vector);
         }
         res.setDimensionsNoCheck(null);

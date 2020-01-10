@@ -38,7 +38,6 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -116,7 +115,7 @@ final class UnaryMapVectorNode extends UnaryMapNode {
         super(scalarNode, operand, argumentType, resultType);
         this.fastOperandAccess = isGeneric ? null : operand.access();
         this.vectorNode = MapUnaryVectorInternalNode.create(resultType, argumentType);
-        boolean operandVector = operand instanceof RMaterializedVector;
+        boolean operandVector = operand.isMaterialized();
         this.mayContainMetadata = operandVector;
         this.mayFoldConstantTime = argumentType == operand.getRType() && scalarNode.mayFoldConstantTime(operandClass);
         this.mayShareOperand = operandVector;

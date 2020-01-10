@@ -65,6 +65,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
@@ -1042,6 +1043,16 @@ public class RRuntime {
         }
         CompilerDirectives.transferToInterpreter();
         throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "the foreign array " + object + " size " + size + " does not fit into a java integer");
+    }
+
+    public static boolean isMaterializedVector(Object o) {
+        if (o instanceof RMaterializedVector) {
+            return true;
+        }
+        if (o instanceof RIntVector) {
+            return ((RIntVector) o).isMaterialized();
+        }
+        return false;
     }
 
     /**

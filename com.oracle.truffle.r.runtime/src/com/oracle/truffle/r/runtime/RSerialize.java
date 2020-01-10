@@ -73,7 +73,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -1078,7 +1077,7 @@ public class RSerialize {
                 if (attrValue instanceof RSharingAttributeStorage && ((RSharingAttributeStorage) attrValue).isTemporary()) {
                     ((RSharingAttributeStorage) attrValue).incRefCount();
                 }
-                if (result instanceof RMaterializedVector && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
+                if (RRuntime.isMaterializedVector(result) && tag.equals(RRuntime.CLASS_ATTR_KEY)) {
                     RStringVector classes = (RStringVector) attrValue;
                     result = ((RAbstractVector) result).setClassAttr(classes);
                 } else {

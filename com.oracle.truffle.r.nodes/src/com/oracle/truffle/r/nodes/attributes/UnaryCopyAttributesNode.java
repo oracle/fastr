@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -66,7 +65,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left);
 
     protected boolean containsMetadata(RAbstractVector vector) {
-        return vector instanceof RMaterializedVector && hasDimNode.execute(vector) ||
+        return vector.isMaterialized() && hasDimNode.execute(vector) ||
                         (copyAllAttributes && vector.getAttributes() != null) ||
                         getNamesNode.getNames(vector) != null ||
                         getDimNamesNode.getDimNames(vector) != null;

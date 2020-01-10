@@ -27,7 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -133,7 +133,7 @@ public final class VectorReuse extends Node {
             }
         } else {
             if (!isShareableClass || !isTempOrNonShared) {
-                if (!RMaterializedVector.class.isAssignableFrom(clazz) && RAbstractVector.class.isAssignableFrom(clazz)) {
+                if (!RRuntime.isMaterializedVector(vector) && RAbstractVector.class.isAssignableFrom(clazz)) {
                     // materialization of non RMaterializedVector subclasses
                     // create a copy in materialize already
                     result = cast(vector).materialize();
