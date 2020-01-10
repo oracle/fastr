@@ -79,3 +79,11 @@ logging_vec_wrapper.was_Is_sorted_called <- function(instance) {
 logging_vec_wrapper.clear_called_methods <- function() {
     .Call("logging_vec_wrapper_clear_called_methods")
 }
+
+native_mem_vec.create_instance <- function(data_length) {
+    .Call("native_mem_vec_create_instance", data_length)
+}
+
+native_mem_vec.delete_instance <- function(instance) {
+    .Call("native_mem_vec_delete_instance", instance)
+}

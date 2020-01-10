@@ -116,4 +116,26 @@ private:
     static int Is_sorted(SEXP instnace);
 };
 
+
+/**
+ * Altrep class that allocates native heap memory in its "constructor" (R_new_altrep),
+ * and does not have any instance data.
+ * 
+ * This class is designed to have as low overhead for methods as possible.
+ * 
+ * Only one instance of this class should be used at one time, otherwise race
+ * conditions may appear.
+ */
+class NativeMemVec {
+public:
+    static SEXP createInstance(SEXP data_length);
+    static SEXP deleteInstance(SEXP instance);
+private:
+    static int *native_mem_ptr;
+    static int data_length;
+    static void * Dataptr(SEXP instance, Rboolean writeabble);
+    static R_xlen_t Length(SEXP instance);
+    static int Elt(SEXP instance, R_xlen_t idx);
+};
+
 #endif //ALTREP_CLASSES_HPP_

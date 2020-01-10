@@ -479,3 +479,43 @@ int LoggingRealVecWrapper::Is_sorted(SEXP instance)
     logMethodCall(Method::Is_sorted, instance);
     return SimpleRealVecWrapper::Is_sorted(instance);
 }
+
+
+int *NativeMemVec::native_mem_ptr = nullptr;
+int NativeMemVec::data_length = 0;
+
+SEXP NativeMemVec::createInstance(SEXP data_length)
+{
+    // Create descriptor
+    R_altrep_class_t descr = R_make_altinteger_class("NativeMemVec", "altreprffitests", NULL);
+    R_set_altrep_Length_method(descr, Length);
+    R_set_altvec_Dataptr_method(descr, Dataptr);
+    R_set_altinteger_Elt_method(descr, Elt);
+
+    // Allocate native memory
+    NativeMemVec::data_length = INTEGER_ELT(data_length, 0);
+    NativeMemVec::native_mem_ptr = new int[NativeMemVec::data_length];
+
+    return R_new_altrep(descr, R_NilValue, R_NilValue);
+}
+
+SEXP NativeMemVec::deleteInstance(SEXP instance)
+{
+    delete native_mem_ptr;
+    return R_NilValue;
+}
+
+void * NativeMemVec::Dataptr(SEXP instance, Rboolean writeabble)
+{
+    return (void *)native_mem_ptr;
+}
+
+R_xlen_t NativeMemVec::Length(SEXP instance)
+{
+    return data_length;
+}
+
+int NativeMemVec::Elt(SEXP instance, R_xlen_t idx)
+{
+    return native_mem_ptr[idx];
+}

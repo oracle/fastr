@@ -12,6 +12,8 @@ static const R_CallMethodDef CallEntries[] = {
         {"logging_vec_wrapper_create_instance", (DL_FUNC) &LoggingVecWrapper::createInstance, 9},
         {"logging_vec_wrapper_was_method_called", (DL_FUNC) &LoggingVecWrapper::wasMethodCalled, 2},
         {"logging_vec_wrapper_clear_called_methods", (DL_FUNC) &LoggingVecWrapper::clearCalledMethods, 0},
+        {"native_mem_vec_create_instance", (DL_FUNC) &NativeMemVec::createInstance, 1},
+        {"native_mem_vec_delete_instance", (DL_FUNC) &NativeMemVec::deleteInstance, 1},
         {"my_test", (DL_FUNC) &my_test, 0},
         {NULL, NULL, 0}
 };
