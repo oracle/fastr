@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -1051,6 +1052,16 @@ public class RRuntime {
         }
         if (o instanceof RIntVector) {
             return ((RIntVector) o).isMaterialized();
+        }
+        return false;
+    }
+
+    public static boolean isSequence(Object o) {
+        if (o instanceof RSequence) {
+            return true;
+        }
+        if (o instanceof RIntVector) {
+            return ((RIntVector) o).isSequence();
         }
         return false;
     }

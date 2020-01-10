@@ -1031,8 +1031,8 @@ public class RDeparse {
                             }
                         }
                         Object elem;
-                        if (vec instanceof RClosure) {
-                            elem = ((RClosure) vec).getDelegateDataAt(i);
+                        if (vec.isClosure()) {
+                            elem = vec.getClosure().getDelegateDataAt(i);
                         } else {
                             elem = vec.getDataAtAsObject(i);
                         }
@@ -1043,7 +1043,7 @@ public class RDeparse {
                         lbreak = listLinebreak(lbreak);
                     }
                     append(')');
-                    if (vec instanceof RClosure) {
+                    if (vec.isClosure()) {
                         append(")");
                     }
                 }

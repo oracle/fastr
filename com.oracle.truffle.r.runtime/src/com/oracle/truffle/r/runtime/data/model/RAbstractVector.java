@@ -950,7 +950,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         } else if (access.getType() == RType.List) {
             assert !vector.isComplete();
         }
-        if (vector.isComplete() && !(vector instanceof RSequence)) {
+        if (vector.isComplete() && !vector.isSequence()) {
             // check all vectors for completeness
             access.na.enable(true);
             try (SequentialIterator iter = access.access(vector)) {

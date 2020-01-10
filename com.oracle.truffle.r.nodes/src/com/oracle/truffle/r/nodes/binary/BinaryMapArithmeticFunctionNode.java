@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RSeq;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add;
@@ -214,14 +213,14 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
                 // result_start = left_start <op> right_start
                 // result_stride = left_stride <op> right_stride
                 // result_length = left_length = right_length
-                RSequence otherSequence = (RSequence) right;
-                return foldSequence((RSequence) left, otherSequence.getStartObject(), otherSequence.getStrideObject(), rightNACheck);
+                RSeq otherSequence = right.getSequence();
+                return foldSequence(left.getSequence(), otherSequence.getStartObject(), otherSequence.getStrideObject(), rightNACheck);
             }
-        } else if (right instanceof RSequence && arithmetic.isCommutative() && leftLength == 1) {
+        } else if (right.isSequence() && arithmetic.isCommutative() && leftLength == 1) {
             // result_start = right_start <op> left[[0]]
             // result_stride = right_stride
             // result_length = right_length
-            return foldSequence((RSequence) right, left.getDataAtAsObject(0), null, leftNACheck);
+            return foldSequence(right.getSequence(), left.getDataAtAsObject(0), null, leftNACheck);
         }
         return null;
     }
