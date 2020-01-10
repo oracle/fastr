@@ -95,7 +95,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return vectorCopy(operand, idata, uAccess.na.neverSeenNAOrNaN());
     }
 
-    @Specialization(guards = {"uAccess.supports(x)", "noClosure(x)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"uAccess.supports(x)", "noClosure(x)", "!isForeignIntVector(x)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractDoubleVector doAbstractVector(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile,
                     @Cached("x.access()") VectorAccess uAccess) {
@@ -103,13 +103,13 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return createResultVector(operand, uAccess);
     }
 
-    @Specialization(replaces = "doAbstractVector", guards = "noClosure(x)")
+    @Specialization(replaces = "doAbstractVector", guards = {"noClosure(x)", "!isForeignIntVector(x)"})
     protected RAbstractDoubleVector doAbstractVectorGeneric(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
         return doAbstractVector(x, operandTypeProfile, x.slowPathAccess());
     }
 
-    @Specialization(guards = {"useClosure(x)"})
+    @Specialization(guards = {"useClosure(x)", "!isForeignIntVector(x)"})
     public RAbstractDoubleVector doAbstractVectorClosure(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile,
                     @Cached("create()") NAProfile naProfile) {
@@ -211,6 +211,10 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     @Specialization
     protected RAbstractDoubleVector doForeignWrapper(RForeignStringWrapper operand) {
         return RClosures.createToDoubleVector(operand, true);
+    }
+
+    public boolean isForeignIntVector(RAbstractAtomicVector operand) {
+        return operand instanceof RIntVector && ((RIntVector) operand).isForeignWrapper();
     }
 
     public static CastDoubleNode create() {

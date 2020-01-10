@@ -127,7 +127,6 @@ public final class RIntVector extends RAbstractNumericVector {
         return (RIntVecClosureData) data;
     }
 
-    @Override
     public boolean isForeignWrapper() {
         return data instanceof RIntForeignObjData;
     }

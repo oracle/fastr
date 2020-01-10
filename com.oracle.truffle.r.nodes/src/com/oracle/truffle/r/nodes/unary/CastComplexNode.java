@@ -162,13 +162,13 @@ public abstract class CastComplexNode extends CastBaseNode {
         return ret;
     }
 
-    @Specialization(guards = {"uAccess.supports(operand)", "isAbstractAtomicVector(operand)"}, limit = "getGenericVectorAccessSize()")
+    @Specialization(guards = {"uAccess.supports(operand)", "isAbstractAtomicVector(operand)", "!isForeignIntVector(operand)"}, limit = "getGenericVectorAccessSize()")
     protected RComplexVector doAbstractVector(RAbstractAtomicVector operand,
                     @Cached("operand.access()") VectorAccess uAccess) {
         return createResultVector(operand, uAccess);
     }
 
-    @Specialization(replaces = "doAbstractVector", guards = "isAbstractAtomicVector(operand)")
+    @Specialization(replaces = "doAbstractVector", guards = {"isAbstractAtomicVector(operand)", "!isForeignIntVector(operand)"})
     protected RComplexVector doAbstractVectorGeneric(RAbstractAtomicVector operand) {
         return doAbstractVector(operand, operand.slowPathAccess());
     }
@@ -260,6 +260,10 @@ public abstract class CastComplexNode extends CastBaseNode {
     @Specialization
     protected RAbstractComplexVector doForeignWrapper(RForeignStringWrapper operand) {
         return RClosures.createToComplexVector(operand, true);
+    }
+
+    public boolean isForeignIntVector(RAbstractAtomicVector operand) {
+        return operand instanceof RIntVector && ((RIntVector) operand).isForeignWrapper();
     }
 
     public static CastComplexNode create() {

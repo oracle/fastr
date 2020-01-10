@@ -94,7 +94,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return factory().createStringSequence("", "", seq.getStart(), seq.getStride(), vector.getLength());
     }
 
-    @Specialization(guards = {"uAccess.supports(operandIn)", "handleAsAtomic(operandIn)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"uAccess.supports(operandIn)", "handleAsAtomic(operandIn)", "!isForeignIntVector(operandIn)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RStringVector doAbstractAtomicVector(RAbstractAtomicVector operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
                     @Cached("operandIn.access()") VectorAccess uAccess) {
@@ -111,7 +111,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return vectorCopy(operand, sdata);
     }
 
-    @Specialization(replaces = "doAbstractAtomicVector", guards = "handleAsAtomic(operandIn)")
+    @Specialization(replaces = "doAbstractAtomicVector", guards = {"handleAsAtomic(operandIn)", "!isForeignIntVector(operandIn)"})
     protected RStringVector doAbstractAtomicVectorGeneric(RAbstractAtomicVector operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile) {
         return doAbstractAtomicVector(operandIn, operandProfile, operandIn.slowPathAccess());
@@ -185,6 +185,10 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     protected boolean isForeignWrapper(Object value) {
         return value instanceof RForeignVectorWrapper;
+    }
+
+    public boolean isForeignIntVector(RAbstractContainer operand) {
+        return operand instanceof RIntVector && ((RIntVector) operand).isForeignWrapper();
     }
 
     protected boolean isIntSequence(RAbstractContainer c) {
