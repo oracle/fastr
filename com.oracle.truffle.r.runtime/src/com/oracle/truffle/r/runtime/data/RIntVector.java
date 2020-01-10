@@ -281,8 +281,8 @@ public final class RIntVector extends RAbstractNumericVector {
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RIntVectorDataLibrary lib = RIntVectorDataLibrary.getFactory().getUncached();
-        int value = lib.getIntAt(data, fromIndex);
-        lib.setIntAt(((RIntVector) fromVector).data, toIndex, value);
+        int value = lib.getIntAt(((RIntVector) fromVector).data, fromIndex);
+        lib.setIntAt(data, toIndex, value);
     }
 
     @CompilerDirectives.TruffleBoundary
