@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalar;
@@ -165,9 +166,15 @@ public abstract class FFIMaterializeNode extends Node {
 
     // No need to wrap other RObjects than sequences or scalars
 
-    @Specialization(guards = "!isRScalarVectorOrSequence(value)")
+    @Specialization(guards = "!isRScalarVectorOrSequenceOrRIntVector(value)")
     protected static Object wrap(RBaseObject value, @SuppressWarnings("unused") boolean protect) {
         return value;
+    }
+
+    @Specialization
+    protected static Object wrap(RIntVector value, @SuppressWarnings("unused") boolean protect) {
+        // TODO specialize only for sequences (and maybe some other)
+        return value.cachedMaterialize();
     }
 
     // Symbol holds the address as a field
@@ -197,8 +204,8 @@ public abstract class FFIMaterializeNode extends Node {
         return RRuntime.isForeignObject(value);
     }
 
-    protected static boolean isRScalarVectorOrSequence(RBaseObject value) {
-        return value instanceof RScalarVector || value instanceof RSequence;
+    protected static boolean isRScalarVectorOrSequenceOrRIntVector(RBaseObject value) {
+        return value instanceof RScalarVector || value instanceof RSequence || value instanceof RIntVector;
     }
 
     public static FFIMaterializeNode create() {
