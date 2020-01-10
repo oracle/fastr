@@ -365,7 +365,13 @@ public final class RIntVector extends RAbstractNumericVector {
 
         @Override
         public boolean supports(Object value) {
-            return super.supports(value) && dataLib.accepts(value);
+            if (!super.supports(value)) {
+                return false;
+            }
+            if (value instanceof RIntVector) {
+                return dataLib.accepts(((RIntVector) value).getData());
+            }
+            return false;
         }
 
         @Override
