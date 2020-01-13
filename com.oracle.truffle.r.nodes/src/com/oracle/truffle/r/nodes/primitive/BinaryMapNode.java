@@ -38,11 +38,11 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -203,7 +203,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
 
     @Override
     public boolean isSupported(RAbstractVector left, RAbstractVector right) {
-        return left.getClass() == leftClass && right.getClass() == rightClass && (isGeneric || fastLeftAccess.supports(left) && fastRightAccess.supports(right));
+        return getDataClass(left) == leftDataClass && getDataClass(right) == rightDataClass && (isGeneric || fastLeftAccess.supports(left) && fastRightAccess.supports(right));
     }
 
     @Override
@@ -587,6 +587,8 @@ public abstract class BinaryMapNode extends RBaseNode {
     @Child protected BinaryMapFunctionNode function;
     protected final Class<? extends RAbstractVector> leftClass;
     protected final Class<? extends RAbstractVector> rightClass;
+    protected final Class<?> leftDataClass;
+    protected final Class<?> rightDataClass;
     protected final RType argumentType;
     protected final RType resultType;
 
@@ -594,6 +596,8 @@ public abstract class BinaryMapNode extends RBaseNode {
         this.function = function;
         this.leftClass = left.getClass();
         this.rightClass = right.getClass();
+        this.leftDataClass = getDataClass(left);
+        this.rightDataClass = getDataClass(right);
         this.argumentType = argumentType;
         this.resultType = resultType;
     }
@@ -609,5 +613,9 @@ public abstract class BinaryMapNode extends RBaseNode {
     public abstract boolean isSupported(RAbstractVector left, RAbstractVector right);
 
     public abstract Object apply(RAbstractVector originalLeft, RAbstractVector originalRight);
+
+    protected static Class<?> getDataClass(RAbstractVector vec) {
+        return vec instanceof RIntVector ? ((RIntVector) vec).getData().getClass() : vec.getClass();
+    }
 
 }

@@ -30,7 +30,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RSeq;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.Operation;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
@@ -65,10 +64,10 @@ public class ScalarUnaryArithmeticNode extends UnaryMapNAFunctionNode {
     }
 
     @Override
-    public boolean mayFoldConstantTime(Class<? extends RAbstractVector> operandClass) {
+    public boolean mayFoldConstantTime(Class<?> operandClass) {
         if (arithmetic instanceof Plus) {
             return true;
-        } else if (arithmetic instanceof Negate && RSequence.class.isAssignableFrom(operandClass)) {
+        } else if (arithmetic instanceof Negate && RSeq.class.isAssignableFrom(operandClass)) {
             return true;
         }
         return false;
