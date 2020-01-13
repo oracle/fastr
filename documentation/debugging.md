@@ -1,4 +1,4 @@
-# Introduction
+# Debugging
 
 Since FastR is implemented atop the Truffle framework, it supports debugging of applications using NetBeans.
 This is a very convenient and more powerful way for debugging compared to R's browser function.
@@ -7,13 +7,13 @@ Unfortunately, FastR cannot support the RStudio debugger since it depends on Gnu
 
 This section describes how to debug R applications using NetBeans.
 
-# Pre-Requisites
+### Pre-Requisites
 
 * A recent NetBeans IDE (e.g. nightly build from http://bits.netbeans.org/download/trunk/nightly/latest/zip/).
 * The _Truffle Debugging Support_ Plugin for NetBeans.  
   Install this by starting NetBeans and selecting `Tools > Plugins > Available Plugins > Truffle Debugging Support`
 
-# Using the NetBeans Debugger
+## Using the NetBeans Debugger
 
 1. Start NetBeans and install a breakpoint.  
    Unfortunately, NetBeans does currently not have a suitable R source code editor.  
@@ -29,7 +29,7 @@ This section describes how to debug R applications using NetBeans.
 3. Run your application.  
    There are many ways to run your R application. The simplest one is using `source("file.R")`.
 
-# Additional Features
+## Additional Features
 
 The NetBeans debugger is source-location-based meaning that it assumes every source of an application resides somewhere in a source file.  
 However, R applications often run deserialized code or the code is created in some other way.
@@ -44,7 +44,6 @@ It will output something similar to
 which is the file containing the deparsed source code of `print`.  
 The generated source file is now associated with function print and a breakpoint can be installed.
 
-# Disclaimer
+### Disclaimer
 
 Since FastR is still in its development phase, debugging may not be possible in all cases.
-
