@@ -33,8 +33,8 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -71,7 +71,7 @@ public class RSubstitute {
         } else if (val instanceof RSymbol) {
             return RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) val).getName(), false);
         } else if (val instanceof RArgsValuesAndNames) {
-            throw RError.error(RError.SHOW_CALLER, Message.NO_DOT_DOT_DOT);
+            return RSyntaxConstant.createDummyConstant(RSyntaxNode.LAZY_DEPARSE, val);
         } else {
             // An actual value
             return RSyntaxConstant.createDummyConstant(RSyntaxNode.LAZY_DEPARSE, val);

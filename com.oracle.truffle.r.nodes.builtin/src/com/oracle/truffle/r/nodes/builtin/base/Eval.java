@@ -61,6 +61,7 @@ import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.opt.eval.AbstractCallInfoEvalNode;
 import com.oracle.truffle.r.nodes.function.opt.eval.ArgValueSupplierNode;
 import com.oracle.truffle.r.nodes.function.opt.eval.CallInfo;
+import com.oracle.truffle.r.nodes.function.opt.eval.CallInfo.EvalMode;
 import com.oracle.truffle.r.nodes.function.opt.eval.CallInfoEvalRootNode.FastPathDirectCallerNode;
 import com.oracle.truffle.r.nodes.function.opt.eval.CallInfoEvalRootNode.SlowPathDirectCallerNode;
 import com.oracle.truffle.r.nodes.function.opt.eval.CallInfoNode;
@@ -208,12 +209,12 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
         try {
             CallInfo callInfo = cachedCallInfoNode.execute(expr, environment);
-            if (callInfo == null) {
+            if (callInfo == null || callInfo.evalMode == EvalMode.SLOW) {
                 nullFunProfile.enter();
                 return doEvalLanguageSlowPath(frame, expr, environment, rCaller);
             }
 
-            return cachedCallInfoEvalNode.execute(frame, callInfo, rCaller);
+            return cachedCallInfoEvalNode.execute(frame, callInfo, rCaller, expr);
 
         } catch (ReturnException ret) {
             if (returnTopLevelProfile.profile(ret.getTarget() == rCaller)) {
@@ -350,10 +351,10 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             return CachedCallInfoEvalNodeGen.create();
         }
 
-        abstract Object execute(VirtualFrame frame, CallInfo functionInfo, RCaller rCaller);
+        abstract Object execute(VirtualFrame frame, CallInfo functionInfo, RCaller rCaller, RPairList expr);
 
         @Specialization(limit = "CACHE_SIZE", guards = {"cachedCallInfo.isCompatible(callInfo, otherInfoClassProfile)"})
-        Object evalFastPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller,
+        Object evalFastPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller, RPairList expr,
                         @SuppressWarnings("unused") @Cached("createClassProfile()") ValueProfile otherInfoClassProfile,
                         @SuppressWarnings("unused") @Cached("callInfo.getCachedCallInfo()") CallInfo.CachedCallInfo cachedCallInfo,
                         @Cached("new()") FastPathDirectCallerNode callNode,
@@ -368,7 +369,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, evalCaller);
 
             RArgsValuesAndNames args = callInfo.prepareArgumentsExploded(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNodes);
-            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, args);
+            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, expr);
 
             Object resultValue = callNode.execute(evalFrame, callInfo.function, args, caller,
                             materializedFrame);
@@ -380,7 +381,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         }
 
         @Specialization(replaces = "evalFastPath", guards = "callInfo.argsLen <= MAX_ARITY")
-        Object evalSlowPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller,
+        Object evalSlowPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller, RPairList expr,
                         @Cached("new()") SlowPathDirectCallerNode slowPathCallNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("new()") PromiseHelperNode promiseHelper,
@@ -390,7 +391,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, evalCaller);
             RArgsValuesAndNames args = callInfo.prepareArgumentsExploded(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNodes);
 
-            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, args);
+            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, expr);
 
             Object resultValue = slowPathCallNode.execute(evalFrame, materializedFrame, caller, callInfo.function, args);
 
@@ -400,7 +401,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         }
 
         @Specialization(replaces = "evalFastPath")
-        Object evalSlowPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller,
+        Object evalSlowPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller, RPairList expr,
                         @Cached("new()") SlowPathDirectCallerNode slowPathCallNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("new()") PromiseHelperNode promiseHelper,
@@ -410,7 +411,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, evalCaller);
             RArgsValuesAndNames args = callInfo.prepareArguments(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNode);
 
-            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, args);
+            RCaller caller = createCaller(callInfo, evalCaller, evalFrame, expr);
 
             Object resultValue = slowPathCallNode.execute(evalFrame, materializedFrame, caller, callInfo.function, args);
 
@@ -424,7 +425,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             SetVisibilityNode.executeSlowPath(frame, GetVisibilityNode.executeSlowPath(clonedFrame));
         }
 
-        private static RCaller createCaller(CallInfo callInfo, RCaller evalCaller, MaterializedFrame evalFrame, RArgsValuesAndNames args) {
+        private static RCaller createCaller(CallInfo callInfo, RCaller evalCaller, MaterializedFrame evalFrame, RPairList expr) {
             RCaller promiseCaller;
             if (callInfo.env == REnvironment.globalEnv(RContext.getInstance())) {
                 promiseCaller = RCaller.createForPromise(evalCaller, evalCaller);
@@ -432,7 +433,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
                 promiseCaller = RCaller.createForPromise(evalCaller, callInfo.env, evalCaller);
             }
 
-            return RCallerHelper.getExplicitCaller(evalFrame, callInfo.name, callInfo.function, args, promiseCaller);
+            return RCallerHelper.getExplicitCaller(evalFrame, expr, promiseCaller);
         }
 
         private MaterializedFrame getEvalFrame(VirtualFrame currentFrame, MaterializedFrame envFrame, RCaller caller) {

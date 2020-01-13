@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -62,6 +63,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -156,6 +158,9 @@ public final class RASTUtils {
                 // special case which GnuR handles as an unnamed symbol
                 return RSymbol.MISSING;
             }
+            if (value instanceof RArgsValuesAndNames) {
+                return createLanguageObjectFromFirstArg((RArgsValuesAndNames) value);
+            }
             return value;
         } else if (element instanceof RSyntaxLookup) {
             String id = ((RSyntaxLookup) element).getIdentifier();
@@ -163,8 +168,59 @@ public final class RASTUtils {
             return RDataFactory.createSymbol(id);
         } else {
             assert element instanceof RSyntaxCall || element instanceof RSyntaxFunction;
-            return RDataFactory.createLanguage(Closure.createLanguageClosure(((RSyntaxNode) element).asRNode()));
+
+            Object result = element instanceof RSyntaxCall ? createLanguageObjectFromVarArgsSyntaxCall((RSyntaxCall) element) : null;
+            return result != null ? result : RDataFactory.createLanguage(Closure.createLanguageClosure(((RSyntaxNode) element).asRNode()));
         }
+    }
+
+    private static Object createLanguageObjectFromVarArgsSyntaxCall(RSyntaxCall element) {
+        RSyntaxElement lhs = element.getSyntaxLHS();
+        RSyntaxElement[] args = element.getSyntaxArguments();
+
+        if (lhs instanceof RSyntaxConstant) {
+            Object lhsVal = ((RSyntaxConstant) lhs).getValue();
+            if (lhsVal instanceof RArgsValuesAndNames) {
+                return createLanguageObjectFromVarArgs((RArgsValuesAndNames) lhsVal, args);
+            }
+        }
+        return null;
+    }
+
+    private static Object createLanguageObjectFromVarArgs(RArgsValuesAndNames varArgs, RSyntaxElement... extraElems) {
+        Object[] lhsElems = varArgs.getArguments();
+
+        Object[] resultElems = new Object[lhsElems.length + extraElems.length];
+
+        for (int i = 0; i < lhsElems.length; i++) {
+            Object lhsElem = lhsElems[i];
+            if (lhsElem instanceof RPromise) {
+                resultElems[i] = createLanguageElement(((RPromise) lhsElem).getClosure().getSyntaxElement());
+            } else {
+                resultElems[i] = lhsElem;
+            }
+        }
+
+        for (int i = 0; i < extraElems.length; i++) {
+            resultElems[lhsElems.length + i] = createLanguageElement(extraElems[i]);
+        }
+
+        return RPairList.asPairList(RDataFactory.createList(resultElems), SEXPTYPE.VECSXP);
+    }
+
+    private static Object createLanguageObjectFromFirstArg(RArgsValuesAndNames varArgs) {
+        Object[] lhsElems = varArgs.getArguments();
+
+        if (lhsElems.length > 0) {
+            Object lhsElem = lhsElems[0];
+            if (lhsElem instanceof RPromise) {
+                return createLanguageElement(((RPromise) lhsElem).getClosure().getSyntaxElement());
+            } else {
+                return lhsElem;
+            }
+        }
+
+        return RNull.instance;
     }
 
     /**

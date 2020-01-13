@@ -553,6 +553,13 @@ public final class NativeDataAccess {
         return NativeMemory.getDouble(nativeMirror.dataAddress, +index * 2L + 1L);
     }
 
+    public static double getComplexNativeMirrorRawData(NativeMirror nativeMirror, int index) {
+        long address = nativeMirror.dataAddress.getAddress();
+        assert address != 0;
+        assert index < nativeMirror.length * 2;
+        return NativeMemory.getDouble(nativeMirror.dataAddress, index);
+    }
+
     public static CharSXPWrapper getStringNativeMirrorData(NativeMirror nativeMirror, int index) {
         assert nativeMirror.getDataAddress() != 0;
         assert index < nativeMirror.length;
@@ -890,7 +897,7 @@ public final class NativeDataAccess {
         if (noComplexNative.isValid() || data != null) {
             return data[index];
         } else {
-            return getDoubleNativeMirrorData(vector.getNativeMirror(), index);
+            return getComplexNativeMirrorRawData(vector.getNativeMirror(), index);
         }
     }
 

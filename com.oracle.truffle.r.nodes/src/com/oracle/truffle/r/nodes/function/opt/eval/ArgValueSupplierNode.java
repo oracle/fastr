@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairList.RPairListSnapshotNode;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
-import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
@@ -91,11 +90,10 @@ public abstract class ArgValueSupplierNode extends Node {
                     @Cached("createSymbolClosure(sym, i)") Closure cachedClosure) {
         Object arg;
         if (ArgumentsSignature.VARARG_NAME.equals(cachedSymName)) {
-            if (argBuilderState.varArgs == null) {
-                RPromise promise = RDataFactory.createPromise(PromiseState.Supplied, cachedClosure,
+            if (argBuilderState.varArgsPromise == null) {
+                argBuilderState.varArgsPromise = RDataFactory.createPromise(PromiseState.Supplied, cachedClosure,
                                 promiseEvalFrame);
-                argBuilderState.varArgs = (RArgsValuesAndNames) promiseHelper.evaluate(currentFrame, promise);
-
+                argBuilderState.varArgs = (RArgsValuesAndNames) promiseHelper.evaluate(currentFrame, argBuilderState.varArgsPromise);
             }
             arg = argBuilderState.varArgs;
         } else {

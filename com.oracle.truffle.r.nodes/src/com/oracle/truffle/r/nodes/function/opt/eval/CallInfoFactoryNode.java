@@ -63,12 +63,12 @@ public abstract class CallInfoFactoryNode extends Node {
                     @Cached("create()") BranchProfile ignoredProfile,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
         Object fun = readFunNode.execute(frameProfile.profile(env.getFrame(frameAccessProfile)));
-        if (!(fun instanceof RFunction) || ((RFunction) fun).isBuiltin()) {
-            // if (true) {
+        if (fun instanceof RFunction) {
+            return new CallInfo((RFunction) fun, funSym.getName(), argList, env, plLib);
+        } else {
             ignoredProfile.enter();
-            return null; // TODO: Try to handle builtins too
+            return null;
         }
-        return new CallInfo((RFunction) fun, funSym.getName(), argList, env, plLib);
     }
 
     @Specialization(replaces = "createFunctionInfoFromSymbolCached")
@@ -78,12 +78,12 @@ public abstract class CallInfoFactoryNode extends Node {
                     @Cached("create()") BranchProfile ignoredProfile,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
         Object fun = ReadVariableNode.lookupFunction(funSym.getName(), frameProfile.profile(env.getFrame(frameAccessProfile)));
-        if (!(fun instanceof RFunction) || ((RFunction) fun).isBuiltin()) {
-            // if (true) {
+        if (fun instanceof RFunction) {
+            return new CallInfo((RFunction) fun, funSym.getName(), argList, env, plLib);
+        } else {
             ignoredProfile.enter();
-            return null; // TODO: Try to handle builtins too
+            return null;
         }
-        return new CallInfo((RFunction) fun, funSym.getName(), argList, env, plLib);
     }
 
     @Specialization

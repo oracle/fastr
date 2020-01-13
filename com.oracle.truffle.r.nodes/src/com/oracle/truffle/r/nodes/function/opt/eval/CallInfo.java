@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -51,12 +52,25 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * A representation of a function call.
  */
 public final class CallInfo {
+
+    public enum EvalMode {
+        /**
+         * Evaluate in the slow path
+         */
+        SLOW,
+        /**
+         * Evaluate in the fast path
+         */
+        FAST
+    }
+
     public final RFunction function;
     public final String name;
     public final RPairList argList;
     public final REnvironment env;
     public final boolean noArgs;
     public final int argsLen;
+    public final EvalMode evalMode;
 
     public static final class CachedCallInfo {
 
@@ -87,6 +101,8 @@ public final class CallInfo {
             len = plLib.getLength(argList);
         }
         this.argsLen = len;
+
+        this.evalMode = function.isBuiltin() ? EvalMode.SLOW : EvalMode.FAST;
     }
 
     public CachedCallInfo getCachedCallInfo() {
@@ -157,6 +173,7 @@ public final class CallInfo {
 
     public static final class ArgumentBuilderState {
         public RArgsValuesAndNames varArgs;
+        public RPromise varArgsPromise;
         final boolean isFieldAccess;
 
         public ArgumentBuilderState(boolean isFieldAccess) {

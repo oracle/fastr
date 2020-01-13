@@ -106,7 +106,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "updateNamesVector", guards = {"!isNotObject.execute(namesArg)"})
-    protected RAbstractContainer updateNamesVectorGeneric(VirtualFrame frame, RAbstractVector container, Object namesArg,
+    protected RAbstractContainer updateNamesVectorGeneric(VirtualFrame frame, RAbstractContainer container, Object namesArg,
                     @Cached("createNonSharedGeneric()") VectorReuse vectorReuse) {
         return updateNamesVector(frame, container, namesArg, vectorReuse);
     }

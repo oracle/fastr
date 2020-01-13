@@ -28,19 +28,24 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.RCallNode.BuiltinCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -59,6 +64,8 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
     private static final RStringVector FORMULA_CLASS = RDataFactory.createStringVectorFromScalar(RRuntime.FORMULA_CLASS);
 
     @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
+    @Child private GetFixedPropertyNode getClassAttrNode;
+    @Child private GetFixedPropertyNode getEnvAttrNode;
     @Child private SetFixedAttributeNode setEnvAttrNode;
 
     static {
@@ -75,32 +82,73 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RPairList tilde(VirtualFrame frame, Object x, Object y) {
+    protected RPairList tilde(VirtualFrame frame, Object x, Object y,
+                    @Cached("create()") BranchProfile callNodeAttrsProfile) {
 
         if (setEnvAttrNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             setEnvAttrNode = insert(createSetEnvAttrNode());
         }
 
-        RCallNode call = createCall(x, y);
+        // The call syntax node constructed for the tilde builtin sometimes already contains the
+        // class attribute extending the "formula" class with another class, such as "quosure" from
+        // rlang. The call syntax node's class attribute must be propagated to the resulting
+        // language object.
+        BuiltinCallNode builtinCallNode = ((BuiltinCallNode) getParent());
+        DynamicObject callAttrs = builtinCallNode.getRSyntaxNode().getAttributes();
+
+        RCallNode call = createCall(x, y, callAttrs);
 
         // Do not cache the closure because formulas are usually not evaluated.
         RPairList lang = RDataFactory.createLanguage(Closure.createLanguageClosure(call));
-        setClassAttrNode.setAttr(lang, FORMULA_CLASS);
-        REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
-        setEnvAttrNode.setAttr(lang, env);
+
+        if (callAttrs != null) {
+            callNodeAttrsProfile.enter();
+
+            if (getClassAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getClassAttrNode = insert(GetFixedPropertyNode.create("class"));
+            }
+            Object classAttr = getClassAttrNode.execute(callAttrs);
+            if (classAttr != null) {
+                // We assume that the class attribute of the call syntax node already
+                // contains "formula". TODO: some assertion?
+                setClassAttrNode.setAttr(lang, classAttr);
+            } else {
+                setClassAttrNode.setAttr(lang, FORMULA_CLASS);
+            }
+
+            // Also the .Environment attribute must be passed from the call node on the result
+            if (getEnvAttrNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getEnvAttrNode = insert(GetFixedPropertyNode.create(RRuntime.DOT_ENVIRONMENT));
+            }
+            Object envAttr = getEnvAttrNode.execute(callAttrs);
+            if (envAttr != null) {
+                setEnvAttrNode.setAttr(lang, envAttr);
+            } else {
+                REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
+                setEnvAttrNode.setAttr(lang, env);
+            }
+
+        } else {
+            setClassAttrNode.setAttr(lang, FORMULA_CLASS);
+            REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
+            setEnvAttrNode.setAttr(lang, env);
+        }
+
         return lang;
     }
 
     @TruffleBoundary
-    private static RCallNode createCall(Object response, Object model) {
+    private static RCallNode createCall(Object response, Object model, DynamicObject callAttrs) {
         RCodeBuilder<RSyntaxNode> astBuilder = RContext.getASTBuilder();
 
         RSyntaxNode functionLookup = astBuilder.lookup(RSyntaxNode.LAZY_DEPARSE, "~", true);
         if (model == RMissing.instance) {
-            return (RCallNode) astBuilder.call(RSyntaxNode.LAZY_DEPARSE, functionLookup, getRep(response));
+            return (RCallNode) astBuilder.call(RSyntaxNode.LAZY_DEPARSE, functionLookup, getRep(response), callAttrs);
         }
-        return (RCallNode) astBuilder.call(RSyntaxNode.LAZY_DEPARSE, functionLookup, getRep(response), getRep(model));
+        return (RCallNode) astBuilder.call(RSyntaxNode.LAZY_DEPARSE, functionLookup, getRep(response), getRep(model), callAttrs);
     }
 
     private static RSyntaxNode getRep(Object o) {

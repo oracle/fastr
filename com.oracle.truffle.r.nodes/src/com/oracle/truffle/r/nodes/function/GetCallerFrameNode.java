@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.function.GetCallerFrameNodeFactory.GetCallerFr
 import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RCaller.UnwrapSysParentProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
@@ -52,6 +53,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public final class GetCallerFrameNode extends RBaseNode {
 
     @Child private GetCallerFrameInternalNode getCallerFrameInternal = GetCallerFrameInternalNodeGen.create();
+
+    private final UnwrapSysParentProfile unwrapSysParentProfile = new UnwrapSysParentProfile();
 
     private GetCallerFrameNode() {
     }
@@ -69,6 +72,7 @@ public final class GetCallerFrameNode extends RBaseNode {
         Object callerFrameObject = RArguments.getCallerFrame(frame);
         RCaller parent = RArguments.getCall(frame);
         RCaller grandParent = RCaller.unwrapPromiseCaller(parent).getPrevious();
+        grandParent = RCaller.getRegularOrSysParentCaller(grandParent, unwrapSysParentProfile);
         return getCallerFrameInternal.execute(frame, callerFrameObject, grandParent);
     }
 

@@ -325,6 +325,23 @@ public final class RCaller {
     }
 
     /**
+     * Given a caller, this method returns the closest non-promise (regular) caller or a promise
+     * caller holding the "sys-parent" environment in the logical parent branch of the caller.
+     */
+    public static RCaller getRegularOrSysParentCaller(RCaller callerIn, UnwrapSysParentProfile profile) {
+        RCaller caller = callerIn;
+        while (profile.firstPromiseProfile.profile(RCaller.isValidCaller(caller) && caller.isPromise())) {
+            if (caller.payload instanceof PromiseLogicalParent) {
+                profile.sysParentProfile.enter();
+                return caller;
+            } else {
+                caller = (RCaller) caller.payload;
+            }
+        }
+        return caller;
+    }
+
+    /**
      * If the {@link RCaller} instance {@link #isPromise()}, then it may have explicitly set the
      * "sys parent" environment, which overrides the result {@code parent.frame} would return if the
      * traversing of the call stack ends up selecting this {@link RCaller} as the result. I.e. in

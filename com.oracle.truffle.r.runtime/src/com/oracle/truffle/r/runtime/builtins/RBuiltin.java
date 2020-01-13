@@ -108,9 +108,10 @@ public @interface RBuiltin {
 
     /**
      * If {@code true} the runtime should lookup the '...' symbol in the caller frame to pass it to
-     * the builtin. The only example of {@code false} is builtin '~', where '...' among actual
+     * the builtin. The only examples of {@code false} are builtin '~', where '...' among actual
      * arguments is interpreted only on syntax level and should not case the actual lookup of '...'
-     * in the caller frame.
+     * in the caller frame, and also the 'substitute' builtin because of its peculiar handling of
+     * '...' and '...()'.
      */
     boolean lookupVarArgs() default true;
 

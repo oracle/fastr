@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = 0, behavior = COMPLEX)
+@RBuiltin(name = "substitute", kind = PRIMITIVE, parameterNames = {"expr", "env"}, nonEvalArgs = 0, lookupVarArgs = false, behavior = COMPLEX)
 public abstract class Substitute extends RBuiltinNode.Arg2 {
 
     @Child private Quote quote;

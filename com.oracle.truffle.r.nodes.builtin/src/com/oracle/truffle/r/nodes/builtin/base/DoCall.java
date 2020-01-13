@@ -173,7 +173,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         @Cached("create()") BranchProfile containsRSymbolProfile) {
             MaterializedFrame promiseFrame = frameProfile.profile(env.getFrame(frameAccessProfile)).materialize();
             RArgsValuesAndNames args = getArguments(languagesClosureCache, symbolsClosureCache, promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
-            RCaller caller = RCallerHelper.getExplicitCaller(ctx, virtualFrame, promiseFrame, env, funcName, func, args);
+            RCaller caller = RCallerHelper.getExplicitCaller(ctx, virtualFrame, promiseFrame, env, funcName, func, args, null);
             MaterializedFrame materializedFrame = virtualFrame.materialize();
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame);
 
@@ -195,7 +195,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
             MaterializedFrame promiseFrame = env.getFrame(frameAccessProfile).materialize();
             RArgsValuesAndNames args = getArguments(null, null, promiseFrame, quote, quoteProfile,
                             containsRSymbolProfile, argsAsList);
-            RCaller caller = RCallerHelper.getExplicitCaller(ctx, virtualFrame, promiseFrame, env, funcName, func, args);
+            RCaller caller = RCallerHelper.getExplicitCaller(ctx, virtualFrame, promiseFrame, env, funcName, func, args, null);
             MaterializedFrame materializedFrame = virtualFrame.materialize();
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame);
 

@@ -55,6 +55,12 @@ public abstract class MakeActiveBindingNode extends RBaseNode {
 
     @Specialization
     @TruffleBoundary
+    protected Object makeActiveBinding(RSymbol sym, RNull fun, REnvironment env, @Cached("create()") BranchProfile frameSlotBranchProfile) {
+        throw error(RError.Message.INVALID_ARG, "fun");
+    }
+
+    @Specialization
+    @TruffleBoundary
     protected Object makeActiveBinding(RSymbol sym, RFunction fun, REnvironment env, @Cached("create()") BranchProfile frameSlotBranchProfile) {
         String name = sym.getName();
         MaterializedFrame frame = env.getFrame();
