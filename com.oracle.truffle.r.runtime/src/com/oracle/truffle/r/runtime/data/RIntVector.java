@@ -67,6 +67,7 @@ public final class RIntVector extends RAbstractNumericVector {
         RIntVector result = new RIntVector();
         NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
+        result.data = new RIntNativeVectorData(result);
         return result;
     }
 
@@ -214,7 +215,7 @@ public final class RIntVector extends RAbstractNumericVector {
         try {
             NativeDataAccess.setDataLength(this, getArrayForNativeDataAccess(), l);
         } finally {
-            data = null;
+            data = new RIntNativeVectorData(this);
             setComplete(false);
         }
     }
@@ -226,7 +227,12 @@ public final class RIntVector extends RAbstractNumericVector {
 
     @Override
     public void setTrueLength(int l) {
-        NativeDataAccess.setTrueDataLength(this, l);
+        try {
+            NativeDataAccess.setTrueDataLength(this, l);
+        } finally {
+            data = new RIntNativeVectorData(this);
+            setComplete(false);
+        }
     }
 
     @Override
@@ -236,8 +242,11 @@ public final class RIntVector extends RAbstractNumericVector {
 
     @Override
     public int[] getInternalManagedData() {
+        if (data instanceof RIntNativeVectorData) {
+            return null;
+        }
         // TODO: get rid of this method
-        assert data instanceof RIntArrayVectorData;
+        assert data instanceof RIntArrayVectorData : data.getClass().getName();
         return ((RIntArrayVectorData) data).getReadonlyIntData();
     }
 
