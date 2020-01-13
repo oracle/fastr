@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -117,7 +117,7 @@ public class RSrcref {
      * . assert: srcfile was created from the {@link Source} associated with {@code ss} or is
      * {@code null} in which case it will be created from {@code ss}.
      */
-    public static com.oracle.truffle.r.runtime.data.RIntVector createLloc(RContext context, SourceSection ss, String path) {
+    public static RIntVector createLloc(RContext context, SourceSection ss, String path) {
         return createLloc(ss, createSrcfile(context, path, null));
     }
 
@@ -187,7 +187,7 @@ public class RSrcref {
     }
 
     @TruffleBoundary
-    public static com.oracle.truffle.r.runtime.data.RIntVector createLloc(SourceSection ss, REnvironment srcfile) {
+    public static RIntVector createLloc(SourceSection ss, REnvironment srcfile) {
         /*
          * TODO: it's unclear what the exact format is, experimentally it is (first line, first
          * column, last line, last column, first column, last column, first line, last line). the
@@ -208,7 +208,7 @@ public class RSrcref {
         llocData[5] = lastColumn;
         llocData[6] = startLine;
         llocData[7] = lastLine;
-        com.oracle.truffle.r.runtime.data.RIntVector lloc = RDataFactory.createIntVector(llocData, RDataFactory.COMPLETE_VECTOR);
+        RIntVector lloc = RDataFactory.createIntVector(llocData, RDataFactory.COMPLETE_VECTOR);
         lloc.setClassAttr(SRCREF_ATTR);
         lloc.setAttr(RRuntime.R_SRCFILE, srcfile);
         return lloc;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -976,7 +976,7 @@ public abstract class ConnectionFunctions {
             return buffer;
         }
 
-        private static com.oracle.truffle.r.runtime.data.RIntVector readInteger(RConnection con, int n, int size, boolean swap, boolean signed) throws IOException {
+        private static RIntVector readInteger(RConnection con, int n, int size, boolean swap, boolean signed) throws IOException {
             ByteBuffer buffer = fillBuffer(con, swap, n * size);
             int nInts = buffer.limit() / size;
             int[] data = new int[nInts];

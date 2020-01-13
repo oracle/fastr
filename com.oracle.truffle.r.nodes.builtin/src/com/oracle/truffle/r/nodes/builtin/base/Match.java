@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,19 +91,19 @@ public abstract class Match extends RBuiltinNode.Arg4 {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected com.oracle.truffle.r.runtime.data.RIntVector match(RNull x, RNull table, int nomatch, Object incomparables) {
+    protected RIntVector match(RNull x, RNull table, int nomatch, Object incomparables) {
         return RDataFactory.createIntVector(0);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected com.oracle.truffle.r.runtime.data.RIntVector match(RNull x, RAbstractVector table, int nomatch, Object incomparables) {
+    protected RIntVector match(RNull x, RAbstractVector table, int nomatch, Object incomparables) {
         return RDataFactory.createIntVector(0);
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected com.oracle.truffle.r.runtime.data.RIntVector match(RAbstractVector x, RNull table, int nomatch, Object incomparables,
+    protected RIntVector match(RAbstractVector x, RNull table, int nomatch, Object incomparables,
                     @Cached("createBinaryProfile()") ConditionProfile na) {
         int[] data = new int[x.getLength()];
         Arrays.fill(data, nomatch);
@@ -159,7 +159,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
 
     @Fallback
     @SuppressWarnings("unused")
-    protected com.oracle.truffle.r.runtime.data.RIntVector match(Object x, Object table, Object nomatch, Object incomparables) {
+    protected RIntVector match(Object x, Object table, Object nomatch, Object incomparables) {
         throw error(MATCH_VECTOR_ARGS);
     }
 

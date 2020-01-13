@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -127,7 +127,7 @@ public abstract class CumMax extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(replaces = "cummaxIntSequence")
-    protected com.oracle.truffle.r.runtime.data.RIntVector cummax(RIntVector v) {
+    protected RIntVector cummax(RIntVector v) {
         int[] cmaxV = new int[v.getLength()];
         na.enable(v);
         int max = v.getDataAt(0);

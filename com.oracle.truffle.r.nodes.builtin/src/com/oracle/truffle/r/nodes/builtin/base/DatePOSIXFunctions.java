@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -215,7 +215,7 @@ public class DatePOSIXFunctions {
             RList result = builder.finish();
             RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
-                ((com.oracle.truffle.r.runtime.data.RIntVector) result.getDataAt(5)).copyNamesFrom(x);
+                ((RIntVector) result.getDataAt(5)).copyNamesFrom(x);
             }
             return result;
         }
@@ -254,7 +254,7 @@ public class DatePOSIXFunctions {
             RList result = builder.finish();
             RStringVector xNames = getNamesNode.getNames(x);
             if (xNames != null) {
-                ((com.oracle.truffle.r.runtime.data.RIntVector) result.getDataAt(5)).copyNamesFrom(x);
+                ((RIntVector) result.getDataAt(5)).copyNamesFrom(x);
             }
             return result;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -312,7 +312,7 @@ public class CastBuilderTest {
     @Test
     public void testSizeWarning() {
         arg.defaultWarning(RError.Message.LENGTH_GT_1).asIntegerVector().shouldBe(singleElement());
-        com.oracle.truffle.r.runtime.data.RIntVector intVector = RDataFactory.createIntVector(new int[]{1, 2}, true);
+        RIntVector intVector = RDataFactory.createIntVector(new int[]{1, 2}, true);
         assertCastWarning(intVector, intVector, RError.Message.LENGTH_GT_1.message);
         testPipeline(NO_FILTER_EXPECT_EMPTY_SAMPLES);
     }
@@ -399,7 +399,7 @@ public class CastBuilderTest {
     public void testSingleElementWarningAndEmptyError() {
         arg.asIntegerVector().shouldBe(singleElement(), RError.Message.INVALID_USE, "y").mustBe(notEmpty(), RError.Message.ARGUMENT_EMPTY, 42);
 
-        com.oracle.truffle.r.runtime.data.RIntVector vec = RDataFactory.createIntVector(new int[]{1, 2}, true);
+        RIntVector vec = RDataFactory.createIntVector(new int[]{1, 2}, true);
         assertCastWarning(vec, vec, String.format(RError.Message.INVALID_USE.message, "y"));
         assertCastFail(RDataFactory.createIntVector(0), String.format(Message.ARGUMENT_EMPTY.message, 42));
         testPipeline();
@@ -576,7 +576,7 @@ public class CastBuilderTest {
 
         assertCastFail(1.0);
 
-        com.oracle.truffle.r.runtime.data.RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
+        RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
         Object res = cast(vec);
         assertTrue(res instanceof RAbstractDoubleVector);
         RAbstractDoubleVector dvec = (RAbstractDoubleVector) res;
@@ -585,7 +585,7 @@ public class CastBuilderTest {
         assertEquals(2, dvec.getDimensions()[0]);
         assertEquals(2, dvec.getDimensions()[1]);
 
-        com.oracle.truffle.r.runtime.data.RIntVector notSquare = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{1, 4});
+        RIntVector notSquare = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{1, 4});
         assertCastFail(notSquare);
     }
 
@@ -593,7 +593,7 @@ public class CastBuilderTest {
     public void testDimensionsFilter() {
         arg.asDoubleVector(true, true, true).mustBe(dimGt(1, 0));
 
-        com.oracle.truffle.r.runtime.data.RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
+        RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
         RDoubleVector doubleVec = RDataFactory.createDoubleVector(new double[]{0, 1, 2, 3}, true, new int[]{2, 2});
         assertVectorEquals(doubleVec, cast(vec));
     }

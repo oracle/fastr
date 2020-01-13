@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -160,7 +160,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"isIntegerPrecedence(args)", "args.getLength() > 1"})
-    protected com.oracle.truffle.r.runtime.data.RIntVector pMinMaxInt(boolean naRm, RArgsValuesAndNames args) {
+    protected RIntVector pMinMaxInt(boolean naRm, RArgsValuesAndNames args) {
         int maxLength = convertToVectorAndEnableNACheck(args, getIntegerCastNode());
         if (lengthProfile.profile(maxLength == 0)) {
             return RDataFactory.createEmptyIntVector();
@@ -202,7 +202,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"isLogicalPrecedence(args)", "args.getLength() != 1"})
-    protected com.oracle.truffle.r.runtime.data.RIntVector pMinMaxLogical(boolean naRm, RArgsValuesAndNames args) {
+    protected RIntVector pMinMaxLogical(boolean naRm, RArgsValuesAndNames args) {
         return pMinMaxInt(naRm, args);
     }
 

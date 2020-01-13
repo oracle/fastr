@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ public abstract class Row extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected com.oracle.truffle.r.runtime.data.RIntVector col(RIntVector x) {
+    protected RIntVector col(RIntVector x) {
         int nrows = x.getDataAt(0);
         int ncols = x.getDataAt(1);
         int[] result = new int[nrows * ncols];

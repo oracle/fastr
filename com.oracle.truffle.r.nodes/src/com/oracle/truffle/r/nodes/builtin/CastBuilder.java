@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -768,7 +768,7 @@ public final class CastBuilder {
             return new MapToValue<>(l);
         }
 
-        public static <T> MapToValue<T, com.oracle.truffle.r.runtime.data.RIntVector> emptyIntegerVector() {
+        public static <T> MapToValue<T, RIntVector> emptyIntegerVector() {
             return new MapToValue<>(RDataFactory.createEmptyIntVector());
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -346,7 +346,7 @@ public class SysFunctions {
                 res = umaskNode.umask(octmode);
                 setVisibilityNode.execute(frame, false);
             }
-            com.oracle.truffle.r.runtime.data.RIntVector rv = RDataFactory.createIntVectorFromScalar(res);
+            RIntVector rv = RDataFactory.createIntVectorFromScalar(res);
             setClassNode.setAttr(rv, RDataFactory.createStringVector("octmode"));
             return rv;
         }

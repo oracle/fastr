@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -228,7 +228,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                     if (RRuntime.isNA((int) value)) {
                         result.setComplete(false);
                     }
-                    ((com.oracle.truffle.r.runtime.data.RIntVector) result).setDataAt(store, i, (int) value);
+                    ((RIntVector) result).setDataAt(store, i, (int) value);
                 } else if (type == RType.Double && value instanceof Double) {
                     if (RRuntime.isNA((double) value)) {
                         result.setComplete(false);

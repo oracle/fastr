@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -198,7 +198,7 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected com.oracle.truffle.r.runtime.data.RIntVector spawn(RAbstractStringVector exprs, String kind) {
+        protected RIntVector spawn(RAbstractStringVector exprs, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
             if (RContext.getInstance().getOption(SharedContexts) && contextKind != ContextKind.SHARE_ALL) {
                 throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Only shared contexts are allowed");
@@ -587,7 +587,7 @@ public class FastRContext {
                 if (o instanceof Integer) {
                     id = (int) o;
                 } else {
-                    id = ((com.oracle.truffle.r.runtime.data.RIntVector) o).getDataAt(0);
+                    id = ((RIntVector) o).getDataAt(0);
                 }
                 Object res = RChannel.poll(id);
                 if (res != null) {

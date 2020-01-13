@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -133,7 +133,7 @@ public class SortFunctions {
         return RDataFactory.createDoubleVector(sort(data, decreasing), vec.isComplete());
     }
 
-    protected static com.oracle.truffle.r.runtime.data.RIntVector jdkSort(RIntVector vec, boolean decreasing) {
+    protected static RIntVector jdkSort(RIntVector vec, boolean decreasing) {
         int[] data = vec.materialize().getDataCopy();
         return RDataFactory.createIntVector(sort(data, decreasing), vec.isComplete());
     }
@@ -170,7 +170,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected com.oracle.truffle.r.runtime.data.RIntVector sort(RIntVector vec, boolean decreasing) {
+        protected RIntVector sort(RIntVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
@@ -211,7 +211,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected com.oracle.truffle.r.runtime.data.RIntVector qsort(RIntVector vec, boolean decreasing) {
+        protected RIntVector qsort(RIntVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
     }
@@ -232,7 +232,7 @@ public class SortFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected com.oracle.truffle.r.runtime.data.RIntVector sort(RIntVector vec, Object partial) {
+        protected RIntVector sort(RIntVector vec, Object partial) {
             return jdkSort(vec, false);
         }
 
@@ -262,10 +262,9 @@ public class SortFunctions {
 
     /**
      * This a helper function for the code in sort.R. It does NOT return the input vectors sorted,
-     * but returns an {@link com.oracle.truffle.r.runtime.data.RIntVector} of indices (positions)
-     * indicating the sort order (Or {@link RNull#instance} if no vectors). In short it is a special
-     * variant of {@code order}. For now we delegate to {@code order} and do not implement the
-     * {@code retgrp} argument.
+     * but returns an {@link RIntVector} of indices (positions) indicating the sort order (Or
+     * {@link RNull#instance} if no vectors). In short it is a special variant of {@code order}. For
+     * now we delegate to {@code order} and do not implement the {@code retgrp} argument.
      */
     @RBuiltin(name = "radixsort", kind = INTERNAL, parameterNames = {"na.last", "decreasing", "retgrp", "sortstr", "..."}, behavior = PURE)
     public abstract static class RadixSort extends RBuiltinNode.Arg5 {

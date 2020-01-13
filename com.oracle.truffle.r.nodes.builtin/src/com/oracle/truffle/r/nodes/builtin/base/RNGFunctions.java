@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,14 +106,14 @@ public class RNGFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected com.oracle.truffle.r.runtime.data.RIntVector doRNGkind(int kind, int normKind, int sampleKind) {
+        protected RIntVector doRNGkind(int kind, int normKind, int sampleKind) {
             RRNG.getRNGState();
-            com.oracle.truffle.r.runtime.data.RIntVector result = getCurrent();
+            RIntVector result = getCurrent();
             RRNG.doRNGKind(kind, normKind, sampleKind);
             return result;
         }
 
-        private static com.oracle.truffle.r.runtime.data.RIntVector getCurrent() {
+        private static RIntVector getCurrent() {
             return RDataFactory.createIntVector(new int[]{RRNG.currentKindAsInt(), RRNG.currentNormKindAsInt(), RRNG.currentSampleKindAsInt()}, RDataFactory.COMPLETE_VECTOR);
         }
     }

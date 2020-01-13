@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -524,7 +524,7 @@ public final class SpecialAttributesFunctions {
             int[] dims = new int[]{dim};
             verifyOneDimensions(xProfiled.getLength(), dim);
 
-            com.oracle.truffle.r.runtime.data.RIntVector dimVec = RDataFactory.createIntVector(dims, RDataFactory.COMPLETE_VECTOR);
+            RIntVector dimVec = RDataFactory.createIntVector(dims, RDataFactory.COMPLETE_VECTOR);
 
             DynamicObject attrs = xProfiled.getAttributes();
             if (attrs == null) {
@@ -631,7 +631,7 @@ public final class SpecialAttributesFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getReadonlyData = insert(GetReadonlyData.Int.create());
             }
-            com.oracle.truffle.r.runtime.data.RIntVector dims = (com.oracle.truffle.r.runtime.data.RIntVector) execute(x);
+            RIntVector dims = (RIntVector) execute(x);
             return nullDimsProfile.profile(dims == null) ? null : getReadonlyData.execute(dims);
         }
 
@@ -643,26 +643,26 @@ public final class SpecialAttributesFunctions {
             return dimensions != null && dimensions.length == 2;
         }
 
-        public static boolean isArray(com.oracle.truffle.r.runtime.data.RIntVector dimensions) {
+        public static boolean isArray(RIntVector dimensions) {
             return dimensions != null && dimensions.getLength() > 0;
         }
 
-        public static boolean isMatrix(com.oracle.truffle.r.runtime.data.RIntVector dimensions) {
+        public static boolean isMatrix(RIntVector dimensions) {
             return dimensions != null && dimensions.getLength() == 2;
         }
 
         public final boolean isArray(RAbstractVector vector) {
-            com.oracle.truffle.r.runtime.data.RIntVector dims = (com.oracle.truffle.r.runtime.data.RIntVector) execute(vector);
+            RIntVector dims = (RIntVector) execute(vector);
             return nullDimsProfile.profile(dims == null) ? false : dims.getLength() > 0;
         }
 
         public final boolean isMatrix(RAbstractVector vector) {
-            com.oracle.truffle.r.runtime.data.RIntVector dims = (com.oracle.truffle.r.runtime.data.RIntVector) execute(vector);
+            RIntVector dims = (RIntVector) execute(vector);
             return nullDimsProfile.profile(dims == null) ? false : dims.getLength() == 2;
         }
 
         public final boolean isSquareMatrix(RAbstractVector vector) {
-            com.oracle.truffle.r.runtime.data.RIntVector dims = (com.oracle.truffle.r.runtime.data.RIntVector) execute(vector);
+            RIntVector dims = (RIntVector) execute(vector);
             if (nullDimsProfile.profile(dims == null) || dims.getLength() != 2) {
                 return false;
             }
@@ -927,7 +927,7 @@ public final class SpecialAttributesFunctions {
 
             if (attrs == null) {
                 if (dimensions != null) {
-                    com.oracle.truffle.r.runtime.data.RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                    RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
                     if (dimNames != null) {
                         attrs = RAttributesLayout.createDimAndDimNames(dimensionsVector, dimNames);
                         if (names != null) {
@@ -954,7 +954,7 @@ public final class SpecialAttributesFunctions {
                 x.initAttributes(attrs);
             } else { // attrs != null
                 if (dimensions != null) {
-                    com.oracle.truffle.r.runtime.data.RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                    RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
                     x.setAttr(RRuntime.DIM_ATTR_KEY, dimensionsVector);
                 }
                 if (names != null) {

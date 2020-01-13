@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,15 +86,15 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return factory().createIntSequence(RRuntime.double2intNoCheck(operand.getStart()), RRuntime.double2intNoCheck(operand.getStride()), operand.getLength());
     }
 
-    private com.oracle.truffle.r.runtime.data.RIntVector vectorCopy(RAbstractVector operand, int[] idata, boolean isComplete) {
-        com.oracle.truffle.r.runtime.data.RIntVector ret = factory().createIntVector(idata, isComplete, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
+    private RIntVector vectorCopy(RAbstractVector operand, int[] idata, boolean isComplete) {
+        RIntVector ret = factory().createIntVector(idata, isComplete, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
     }
 
-    private com.oracle.truffle.r.runtime.data.RIntVector createResultVector(RAbstractVector operand, VectorAccess uAccess) {
+    private RIntVector createResultVector(RAbstractVector operand, VectorAccess uAccess) {
         int[] idata = new int[operand.getLength()];
         try (SequentialIterator sIter = uAccess.access(operand, getWarningContext())) {
             while (uAccess.next(sIter)) {
@@ -105,13 +105,13 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     @Specialization(guards = {"uAccess.supports(operand)", "noClosure(operand)"}, limit = "getGenericVectorAccessCacheSize()")
-    protected com.oracle.truffle.r.runtime.data.RIntVector doAbstractVector(RAbstractAtomicVector operand,
+    protected RIntVector doAbstractVector(RAbstractAtomicVector operand,
                     @Cached("operand.access()") VectorAccess uAccess) {
         return createResultVector(operand, uAccess);
     }
 
     @Specialization(replaces = "doAbstractVector", guards = "noClosure(operand)")
-    protected com.oracle.truffle.r.runtime.data.RIntVector doAbstractVectorGeneric(RAbstractAtomicVector operand) {
+    protected RIntVector doAbstractVectorGeneric(RAbstractAtomicVector operand) {
         return doAbstractVector(operand, operand.slowPathAccess());
     }
 
@@ -124,7 +124,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     @Specialization(guards = "uAccess.supports(list)", limit = "getVectorAccessCacheSize()")
-    protected com.oracle.truffle.r.runtime.data.RIntVector doList(RAbstractListVector list,
+    protected RIntVector doList(RAbstractListVector list,
                     @Cached("list.access()") VectorAccess uAccess) {
         int length = list.getLength();
         int[] result = new int[length];
@@ -160,7 +160,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
                 }
             }
         }
-        com.oracle.truffle.r.runtime.data.RIntVector ret = factory().createIntVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list), null);
+        RIntVector ret = factory().createIntVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list), null);
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(list);
         }
@@ -168,13 +168,13 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     @Specialization(replaces = "doList")
-    protected com.oracle.truffle.r.runtime.data.RIntVector doListGeneric(RAbstractListVector list) {
+    protected RIntVector doListGeneric(RAbstractListVector list) {
         return doList(list, list.slowPathAccess());
     }
 
     @Specialization(guards = "!pairList.isLanguage()")
-    protected com.oracle.truffle.r.runtime.data.RIntVector doPairList(RPairList pairList) {
-        return (com.oracle.truffle.r.runtime.data.RIntVector) castIntegerRecursive(pairList.toRList());
+    protected RIntVector doPairList(RPairList pairList) {
+        return (RIntVector) castIntegerRecursive(pairList.toRList());
     }
 
     @Specialization(guards = "isForeignObject(obj)")
@@ -195,8 +195,8 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     // TODO Should be type-variable and moved to CastNode
     @Specialization(guards = {"args.getLength() == 1", "isIntVector(args.getArgument(0))"})
-    protected com.oracle.truffle.r.runtime.data.RIntVector doRArgsValuesAndNames(RArgsValuesAndNames args) {
-        return (com.oracle.truffle.r.runtime.data.RIntVector) args.getArgument(0);
+    protected RIntVector doRArgsValuesAndNames(RArgsValuesAndNames args) {
+        return (RIntVector) args.getArgument(0);
     }
 
     protected boolean isForeignWrapper(Object value) {
@@ -219,7 +219,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     protected static boolean isIntVector(Object arg) {
-        return arg instanceof com.oracle.truffle.r.runtime.data.RIntVector;
+        return arg instanceof RIntVector;
     }
 
     public static CastIntegerNode create() {

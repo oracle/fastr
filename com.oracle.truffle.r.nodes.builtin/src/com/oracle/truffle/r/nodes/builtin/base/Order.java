@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,7 +84,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     private static final int[] SINCS = {1073790977, 268460033, 67121153, 16783361, 4197377, 1050113, 262913, 65921, 16577, 4193, 1073, 281, 77, 23, 8, 1, 0};
 
-    private com.oracle.truffle.r.runtime.data.RIntVector executeOrderVector1(RAbstractVector vIn, byte naLast, boolean dec) {
+    private RIntVector executeOrderVector1(RAbstractVector vIn, byte naLast, boolean dec) {
         RAbstractVector v = vectorProfile.profile(vIn);
         int n = v.getLength();
         reportWork(n);

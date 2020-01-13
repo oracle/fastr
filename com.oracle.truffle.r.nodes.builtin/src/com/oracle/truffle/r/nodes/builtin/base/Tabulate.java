@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -46,7 +46,7 @@ public abstract class Tabulate extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected com.oracle.truffle.r.runtime.data.RIntVector tabulate(RIntVector bin, int nBins) {
+    protected RIntVector tabulate(RIntVector bin, int nBins) {
         int[] ans = new int[nBins];
         loopProfile.profileCounted(bin.getLength());
         for (int i = 0; loopProfile.inject(i < bin.getLength()); i++) {

@@ -295,8 +295,8 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     @CompilerDirectives.TruffleBoundary
-    protected void copyAttributes(RIntVector materialized) {
-        materialized.copyAttributesFrom(this);
+    protected void copyAttributes(RIntVector materializedVec) {
+        materializedVec.copyAttributesFrom(this);
     }
 
     @Override

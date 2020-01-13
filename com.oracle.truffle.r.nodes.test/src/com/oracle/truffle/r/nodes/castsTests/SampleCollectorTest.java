@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -282,7 +282,7 @@ public class SampleCollectorTest {
     @Test
     public void testAndAsNegationOfOrFilter2() {
         // !(!A || !B) = A && B
-        arg.mustBe(instanceOf(RStringVector.class).not().or(instanceOf(com.oracle.truffle.r.runtime.data.RIntVector.class).not()).not());
+        arg.mustBe(instanceOf(RStringVector.class).not().or(instanceOf(RIntVector.class).not()).not());
         assertSamples(vector(RType.Character, ""), vector(RType.Character, nonEmptyString()), vector(RType.Character, RRuntime.STRING_NA), vector(RType.Integer, 0),
                         vector(RType.Integer, RRuntime.INT_NA), RNull.instance, RMissing.instance);
     }
@@ -295,14 +295,14 @@ public class SampleCollectorTest {
 
     @Test
     public void testOrFilter2() {
-        arg.mustBe(instanceOf(RStringVector.class).or(instanceOf(com.oracle.truffle.r.runtime.data.RIntVector.class).not()));
+        arg.mustBe(instanceOf(RStringVector.class).or(instanceOf(RIntVector.class).not()));
         assertSamples(vector(RType.Character, ""), vector(RType.Character, nonEmptyString()), vector(RType.Character, RRuntime.STRING_NA), vector(RType.Integer, 0),
                         vector(RType.Integer, RRuntime.INT_NA), RNull.instance, RMissing.instance);
     }
 
     @Test
     public void testNotOrFilter() {
-        arg.mustBe(instanceOf(RStringVector.class).or(instanceOf(com.oracle.truffle.r.runtime.data.RIntVector.class)).not());
+        arg.mustBe(instanceOf(RStringVector.class).or(instanceOf(RIntVector.class)).not());
         assertSamples(vector(RType.Character, ""), vector(RType.Character, nonEmptyString()), vector(RType.Character, RRuntime.STRING_NA), vector(RType.Integer, 0),
                         vector(RType.Integer, RRuntime.INT_NA), RNull.instance, RMissing.instance);
     }

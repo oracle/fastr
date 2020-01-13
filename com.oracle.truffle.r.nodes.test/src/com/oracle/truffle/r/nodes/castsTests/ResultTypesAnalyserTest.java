@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -290,7 +290,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAndAsNegationOfOrFilter2() {
         // !(!A || !B) = A && B
-        arg.mustBe(instanceOf(RStringVector.class).not().or(instanceOf(com.oracle.truffle.r.runtime.data.RIntVector.class).not()).not());
+        arg.mustBe(instanceOf(RStringVector.class).not().or(instanceOf(RIntVector.class).not()).not());
         // A and B are mutually exclusive, thus their conjunction is empty
         assertTypes(TypeExpr.NOTHING);
     }
@@ -303,8 +303,8 @@ public class ResultTypesAnalyserTest {
 
     @Test
     public void testOrFilter2() {
-        arg.mustBe(instanceOf(RStringVector.class).or(instanceOf(com.oracle.truffle.r.runtime.data.RIntVector.class).not()));
-        assertTypes(atom(RStringVector.class).or(atom(com.oracle.truffle.r.runtime.data.RIntVector.class).not()));
+        arg.mustBe(instanceOf(RStringVector.class).or(instanceOf(RIntVector.class).not()));
+        assertTypes(atom(RStringVector.class).or(atom(RIntVector.class).not()));
     }
 
     @Test
@@ -435,7 +435,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testReturnIf2() {
         arg.returnIf(nullValue(), emptyIntegerVector()).returnIf(missingValue(), emptyIntegerVector()).asIntegerVector();
-        assertTypes(atom(int.class).or(atom(RIntVector.class)).or(atom(com.oracle.truffle.r.runtime.data.RIntVector.class)), true);
+        assertTypes(atom(int.class).or(atom(RIntVector.class)).or(atom(RIntVector.class)), true);
     }
 
     @Test
