@@ -37,9 +37,6 @@
 # to those variables. This means that in order to configure flags, one can either export these variables,
 # or edit this files, which gives even finer control over flags and other things.
 
-# FastR development Notes for the LLVM version of this file:
-#  * 02 is removed as a workaround for Sulong issue (GR-20460, FastR issue: GR-20472)
-
 ## This fails if it contains spaces, or if it is quoted
 include $(R_SHARE_DIR)/make/vars.mk
 
@@ -47,27 +44,27 @@ AR = $(LABS_TOOLCHAIN_AR)
 BLAS_LIBS = -L"$(R_HOME)/lib$(R_ARCH)" -lRblas
 C_VISIBILITY = 
 CC = "$(LABS_TOOLCHAIN_CC)"
-CFLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CFLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CPICFLAGS = -fPIC
-CPPFLAGS = -DFASTR -DNO_GNUR
+CPPFLAGS = -O2 -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CXX = "$(LABS_TOOLCHAIN_CXX)"
 CXXCPP = $(CXX) -E
-CXXFLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXXFLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CXXPICFLAGS = -fPIC
 CXX98 = "$(LABS_TOOLCHAIN_CXX)"
-CXX98FLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXX98FLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CXX98PICFLAGS = -fPIC
 CXX98STD = -std=gnu++98
 CXX11 = "$(LABS_TOOLCHAIN_CXX)"
-CXX11FLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXX11FLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CXX11PICFLAGS = -fPIC
 CXX11STD = -std=gnu++11
 CXX14 = "$(LABS_TOOLCHAIN_CXX)"
-CXX14FLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXX14FLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CXX14PICFLAGS = -fPIC
 CXX14STD = -std=gnu++14
 CXX17 = "$(LABS_TOOLCHAIN_CXX)"
-CXX17FLAGS = $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
+CXX17FLAGS = -O2 $(LTO) -DFASTR -DNO_GNUR $(PKG_INCLUDE_FLAGS_OVERRIDE)
 CXX17PICFLAGS = -fPIC
 CXX17STD = -std=gnu++17
 CXX_VISIBILITY = 
@@ -83,15 +80,15 @@ F_VISIBILITY =
 ## FC is the compiler used for all Fortran as from R 3.6.0
 ## FastR Note: the wrapper tries to use f2c, if it fails it uses the tool given as the first argument
 FC = "$(R_HOME)/bin/f2c-wrapper" "$(R_HOME)/bin/safe-forward-gfortran"
-FCFLAGS =  $(LTO)
+FCFLAGS = -O2 $(LTO)
 ## additional libs needed when linking with $(FC), e.g. on some Oracle compilers
 FCLIBS_XTRA = 
-FFLAGS =  $(LTO)
+FFLAGS = -O2 $(LTO)
 # FastR note: we add -L$(R_HOME)/lib, because those libraries are deployed with FastR in its lib directory
-FLIBS = -L"$(R_HOME)/lib" -lgfortran -lm -lquadmath
+FLIBS = "-Wl,-rpath,$(R_HOME)/lib/" -L"$(R_HOME)/lib" -lgfortran -lm -lquadmath
 FPICFLAGS = -fPIC
 FOUNDATION_CPPFLAGS = 
-FOUNDATION_LIBS = 
+FOUNDATION_LIBS = -framework Foundation
 JAR = $(JAVA_HOME)/bin/jar
 ## JAVA_HOME might be used in the next three.
 ## They are for packages 'JavaGD' and 'rJava'
@@ -112,12 +109,12 @@ MAIN_LDFLAGS = "-Wl,-rpath,$(R_HOME)/lib/,-rpath,$(R_HOME)/../llvm/native/lib" -
 MAIN_LINK = $(MAIN_LD) $(MAIN_LDFLAGS) $(LDFLAGS)
 MKINSTALLDIRS = $(R_HOME)/bin/mkinstalldirs
 OBJC = $(CC)
-OBJCFLAGS = -fobjc-exceptions $(LTO)
+OBJCFLAGS = -O2 -fobjc-exceptions $(LTO)
 OBJC_LIBS = -lobjc 
 OBJCXX = $(CXX)
 R_ARCH = 
 RANLIB = $(LABS_TOOLCHAIN_RANLIB)
-SAFE_FFLAGS =  -msse2 -mfpmath=sse
+SAFE_FFLAGS = -O2 -msse2 -mfpmath=sse
 SED = $(R_HOME)/bin/safe-forward-sed
 SHELL = /bin/sh
 SHLIB_CFLAGS = 
