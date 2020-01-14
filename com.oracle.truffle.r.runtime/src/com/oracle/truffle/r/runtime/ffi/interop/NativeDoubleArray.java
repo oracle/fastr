@@ -36,6 +36,7 @@ import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import sun.misc.Unsafe;
 
 @ExportLibrary(InteropLibrary.class)
@@ -122,7 +123,7 @@ public final class NativeDoubleArray extends NativeArray<double[]> {
     @Override
     @TruffleBoundary
     protected long allocateNative() {
-        long nativeAddress = UNSAFE.allocateMemory(array.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+        long nativeAddress = NativeMemory.allocate(array.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, "NativeDoubleArray");
         UNSAFE.copyMemory(array, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, null, nativeAddress, array.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
         return nativeAddress;
     }

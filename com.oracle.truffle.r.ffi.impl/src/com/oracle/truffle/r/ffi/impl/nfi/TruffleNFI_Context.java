@@ -70,6 +70,7 @@ import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import sun.misc.Unsafe;
 
 class UnsafeAdapter {
@@ -239,7 +240,7 @@ public class TruffleNFI_Context extends RFFIContext {
     private void initCallbacks(RContext context) {
         if (context.getKind() == ContextKind.SHARE_NOTHING) {
             // create and fill a new callbacks table
-            callbacks = UnsafeAdapter.UNSAFE.allocateMemory(Callbacks.values().length * Unsafe.ARRAY_LONG_INDEX_SCALE);
+            callbacks = NativeMemory.allocate(Callbacks.values().length * Unsafe.ARRAY_LONG_INDEX_SCALE, "callbacks");
             InteropLibrary interop = InteropLibrary.getFactory().getUncached();
             Object addCallback;
             try {
@@ -383,7 +384,7 @@ public class TruffleNFI_Context extends RFFIContext {
     public void beforeDispose(RContext context) {
         switch (context.getKind()) {
             case SHARE_NOTHING:
-                UnsafeAdapter.UNSAFE.freeMemory(callbacks);
+                NativeMemory.free(callbacks, "callbacks");
                 break;
             case SHARE_ALL:
             case SHARE_PARENT_RO:
@@ -416,7 +417,7 @@ public class TruffleNFI_Context extends RFFIContext {
         super.afterDowncall(tokens[0], rffiType);
         popCallbacks((long) tokens[1]);
         for (Long ptr : transientAllocations.pop()) {
-            UnsafeAdapter.UNSAFE.freeMemory(ptr);
+            NativeMemory.free(ptr, "Rf_alloc");
         }
         RuntimeException lastUpCallEx = getLastUpCallException();
         setLastUpCallException(null);

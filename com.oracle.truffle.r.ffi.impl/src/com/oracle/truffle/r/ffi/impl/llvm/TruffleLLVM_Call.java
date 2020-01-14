@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -75,10 +76,10 @@ public final class TruffleLLVM_Call implements CallRFFI {
         private TruffleObject setCallbacksAddress;
         private TruffleObject callbacks;
 
-        public Object doubleArrayType;
-        public Object intArrayType;
-        public Object longArrayType;
-        public Object byteArrayType;
+        @CompilationFinal public Object doubleArrayType;
+        @CompilationFinal public Object intArrayType;
+        @CompilationFinal public Object longArrayType;
+        @CompilationFinal public Object byteArrayType;
 
         @Override
         public ContextState initialize(RContext contextA) {

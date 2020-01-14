@@ -22,19 +22,18 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 
 @ExportLibrary(InteropLibrary.class)
 public final class StringArrayWrapper implements TruffleObject {
 
-    long address;
+    private NativeMemoryWrapper nativeMemory;
     private final RStringVector vector;
     private NativeCharArray[] nativeCharArrays = null;
 
@@ -66,29 +65,28 @@ public final class StringArrayWrapper implements TruffleObject {
     @SuppressWarnings("static-method")
     @ExportMessage
     public boolean isPointer() {
-        return address != 0;
+        return nativeMemory != null;
     }
 
     @ExportMessage
     public void toNative() {
-        assert address == 0;
-        address = NativeDataAccess.allocateNativeStringArray(vector.getReadonlyStringData());
+        assert nativeMemory == null;
+        long address = NativeDataAccess.allocateNativeStringArray(vector.getReadonlyStringData());
+        nativeMemory = NativeMemory.wrapNativeMemory(address, this);
     }
 
     @ExportMessage
-    public long asPointer(@Cached("createBinaryProfile()") ConditionProfile isPointer) throws UnsupportedMessageException {
-        if (isPointer.profile(address != 0)) {
-            return address;
-        }
-        throw UnsupportedMessageException.create();
+    public long asPointer() {
+        assert nativeMemory != null;
+        return nativeMemory.getAddress();
     }
 
     public long getAddress() {
-        return address;
+        return nativeMemory.getAddress();
     }
 
     public RStringVector copyBackFromNative() {
-        if (address == 0) {
+        if (nativeMemory == null) {
             if (nativeCharArrays != null) {
                 String[] contents = new String[vector.getLength()];
                 for (int i = 0; i < contents.length; i++) {
@@ -99,7 +97,6 @@ public final class StringArrayWrapper implements TruffleObject {
                         contents[i] = nativeCharArray.getString();
                     }
                 }
-                address = 0;
                 RStringVector copy = new RStringVector(contents, false);
                 copy.copyAttributesFrom(vector);
                 return copy;
@@ -107,11 +104,14 @@ public final class StringArrayWrapper implements TruffleObject {
                 return vector;
             }
         } else {
-            String[] contents = NativeDataAccess.releaseNativeStringArray(address, vector.getLength());
-            address = 0;
-            RStringVector copy = new RStringVector(contents, false);
-            copy.copyAttributesFrom(vector);
-            return copy;
+            try {
+                String[] contents = NativeDataAccess.copyBackNativeStringArray(nativeMemory.getAddress(), vector.getLength());
+                RStringVector copy = new RStringVector(contents, false);
+                copy.copyAttributesFrom(vector);
+                return copy;
+            } finally {
+                nativeMemory.release();
+            }
         }
     }
 
@@ -130,5 +130,4 @@ public final class StringArrayWrapper implements TruffleObject {
         }
         return nativeCharArray;
     }
-
 }
