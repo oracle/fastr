@@ -22,15 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.ffi.interop;
 
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
-import static com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter.UNSAFE;
-
-import java.lang.ref.WeakReference;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 
 public abstract class NativeArray<T> extends NativeArrayExport {
 
     protected T array;
-    @SuppressWarnings("unused") private NativeMirror<T> nativeMirror;
+    @SuppressWarnings("unused") private NativeMemoryWrapper nativeMirror;
 
     protected NativeArray(T array) {
         this.array = array;
@@ -38,41 +36,21 @@ public abstract class NativeArray<T> extends NativeArrayExport {
 
     @Override
     protected final long nativeAddress() {
-        return (nativeMirror != null) ? nativeMirror.nativeAddress : 0L;
+        return (nativeMirror != null) ? nativeMirror.getAddress() : 0L;
     }
 
     @Override
     protected final long convertToNative() {
         if (nativeMirror == null) {
-            nativeMirror = new NativeMirror<>(this);
+            nativeMirror = NativeMemory.wrapNativeMemory(allocateNative(), this);
         }
-        return nativeMirror.nativeAddress;
+        return nativeMirror.getAddress();
     }
 
     public final T refresh() {
         if (nativeMirror != null) {
-            copyBackFromNative(nativeMirror.nativeAddress);
+            copyBackFromNative(nativeMirror.getAddress());
         }
         return array;
-    }
-
-    private static final class NativeMirror<T> extends WeakReference<NativeArray<T>> implements NativeDataAccess.Releasable {
-
-        /**
-         * If the array escapes the Truffle world via {@link #convertToNative()}, this value will be
-         * non-zero and is used exclusively thereafter.
-         */
-        final long nativeAddress;
-
-        NativeMirror(NativeArray<T> owner) {
-            super(owner, NativeDataAccess.nativeReferenceQueue());
-            nativeAddress = owner.allocateNative();
-            assert nativeAddress != 0;
-        }
-
-        @Override
-        public void release() {
-            UNSAFE.freeMemory(nativeAddress);
-        }
     }
 }
