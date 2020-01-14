@@ -125,6 +125,8 @@ private:
  * 
  * Only one instance of this class should be used at one time, otherwise race
  * conditions may appear.
+ * 
+ * TODO: This C++ version is currently not used.
  */
 class NativeMemVec {
 public:
