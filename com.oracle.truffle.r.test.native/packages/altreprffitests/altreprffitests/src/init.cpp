@@ -4,7 +4,7 @@
 #include "altrep_classes.hpp"
 
 static SEXP is_altrep(SEXP x);
-static SEXP my_test();
+SEXP my_test(SEXP vec);
 
 static const R_CallMethodDef CallEntries[] = {
         {"is_altrep", (DL_FUNC) &is_altrep, 1},
@@ -14,7 +14,7 @@ static const R_CallMethodDef CallEntries[] = {
         {"logging_vec_wrapper_clear_called_methods", (DL_FUNC) &LoggingVecWrapper::clearCalledMethods, 0},
         {"native_mem_vec_create_instance", (DL_FUNC) &NativeMemVec::createInstance, 1},
         {"native_mem_vec_delete_instance", (DL_FUNC) &NativeMemVec::deleteInstance, 1},
-        {"my_test", (DL_FUNC) &my_test, 0},
+        {"my_test", (DL_FUNC) &my_test, 1},
         {NULL, NULL, 0}
 };
 
@@ -28,22 +28,30 @@ static SEXP is_altrep(SEXP x)
     return ScalarLogical(ALTREP(x));
 }
 
-static SEXP my_test()
+/*static int my_elt_method(SEXP instance, R_xlen_t idx)
 {
-    SEXP data = PROTECT(allocVector(INTSXP, 5));
-    int sorted_mode = 0;
-    for (int i = 0; i < 2; i++) {
-        Args args;
-        if (i == 0) {
-            // Is_sorted = true
-            args = Args{FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE};
-        }
-        else {
-            // Is_sorted = false
-            args = Args{};
-        }
-        SEXP instance = VecWrapper::createInstanceFromArgs(data, args);
-        sorted_mode = INTEGER_IS_SORTED(instance);
-    }
-    return ScalarInteger(sorted_mode);
+    // instance should be NativeMirror
+    SEXP data1 = R_altrep_data1(instance);
+    return 42;
+}
+
+static void * my_dataptr_method(SEXP instance, Rboolean writeabble) {
+    return nullptr;
+}
+
+static R_xlen_t my_length_method(SEXP instance) {
+    return 42;
+}*/
+
+SEXP my_test(SEXP vec)
+{
+    /*R_altrep_class_t descr = R_make_altinteger_class("MyClassName", "MyPackageName", nullptr);
+    R_set_altinteger_Elt_method(descr, &my_elt_method);
+    R_set_altrep_Length_method(descr, &my_length_method);
+    R_set_altvec_Dataptr_method(descr, &my_dataptr_method);
+    SEXP instance = R_new_altrep(descr, R_NilValue, R_NilValue);
+    // invokeEltMethod --> invokeNativeFunction --> R_altrep_data1Call --> ...
+    int first_elt = INTEGER_ELT(instance, 0);*/
+
+    return R_NilValue;
 }
