@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -121,7 +121,7 @@ ifeq ($(OS_NAME),Darwin)
 		if [ -e $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so ] ; then \
 			install_name_tool -id @rpath/../library/$$pkgname/libs/$$pkgname.so $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
 			install_name_tool -add_rpath @loader_path/../../../lib/ $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
-			mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_R_HOME)/library/$$pkgname/libs; \
+			python $(FASTR_R_HOME)/mx.fastr/copylib updatelib $(FASTR_R_HOME)/library/$$pkgname/libs $(FASTR_R_HOME); \
 		fi \
 	done
 endif

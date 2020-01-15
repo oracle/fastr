@@ -30,7 +30,6 @@ import mx_gate
 import mx_fastr_dists
 import mx_subst
 from mx_fastr_dists import FastRReleaseProject #pylint: disable=unused-import
-import mx_copylib
 import mx_fastr_edinclude
 import mx_unittest
 
@@ -926,8 +925,6 @@ _commands = {
     'r-findtop' : [find_top, ['options']],
     'r-pkgcache' : [pkgcache, ['options']],
     'installpkgs' : [installpkgs, '[options]'],
-    'rcopylib' : [mx_copylib.copylib, '[]'],
-    'rupdatelib' : [mx_copylib.updatelib, '[]'],
     'edinclude' : [mx_fastr_edinclude.edinclude, '[]'],
     'gnu-r' : [gnu_r, '[]'],
     'gnu-rscript' : [gnu_rscript, '[]'],

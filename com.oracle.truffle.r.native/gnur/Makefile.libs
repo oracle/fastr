@@ -65,7 +65,7 @@ endif
 # file to indicate that the check has been done.
 rcopylib.done: 
 	for target in $(OTHER_LIB_TARGETS); do \
-		mx -p $(FASTR_R_HOME) rcopylib $$target $(FASTR_LIB_DIR) || exit 1; \
+		python $(FASTR_R_HOME)/mx.fastr/copylib.py copylib $$target $(FASTR_LIB_DIR) || exit 1; \
 	done
 	touch rcopylib.done
 

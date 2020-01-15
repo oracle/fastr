@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -103,7 +103,7 @@ ifeq ($(OS_NAME),Darwin)
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
 	install_name_tool -id @rpath/libR.dylibl $(LLVM_LIB)
 # check if we captured libpcre/libz, rpath those in libR
-	mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_LIB_DIR)
+	python $(FASTR_R_HOME)/mx.fastr/copylib.py updatelib $(FASTR_LIB_DIR) $(FASTR_R_HOME)
 else
 	# not Darwin:
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz $(F2C)
