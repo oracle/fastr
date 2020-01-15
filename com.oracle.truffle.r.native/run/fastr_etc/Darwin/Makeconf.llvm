@@ -39,13 +39,11 @@
 
 # FastR development Notes for the LLVM version of this file:
 #  * 02 is removed as a workaround for Sulong issue (GR-20460, FastR issue: GR-20472)
-#  * TODOs:
-#    * replace system "ar" with one provided by the toolchain
 
 ## This fails if it contains spaces, or if it is quoted
 include $(R_SHARE_DIR)/make/vars.mk
 
-AR = $(R_HOME)/bin/safe-forward-ar
+AR = $(LABS_TOOLCHAIN_AR)
 BLAS_LIBS = -L"$(R_HOME)/lib$(R_ARCH)" -lRblas
 C_VISIBILITY = 
 CC = "$(LABS_TOOLCHAIN_CC)"
@@ -118,7 +116,7 @@ OBJCFLAGS = -fobjc-exceptions $(LTO)
 OBJC_LIBS = -lobjc 
 OBJCXX = $(CXX)
 R_ARCH = 
-RANLIB = ranlib
+RANLIB = $(LABS_TOOLCHAIN_RANLIB)
 SAFE_FFLAGS =  -msse2 -mfpmath=sse
 SED = $(R_HOME)/bin/safe-forward-sed
 SHELL = /bin/sh

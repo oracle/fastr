@@ -113,7 +113,7 @@ OBJCFLAGS = -g -O2 -fobjc-exceptions $(LTO)
 OBJC_LIBS = -lobjc 
 OBJCXX = $(CXX)
 R_ARCH = 
-RANLIB = ranlib
+RANLIB = $(R_HOME)/bin/safe-forward-ranlib
 SAFE_FFLAGS = -O2 -msse2 -mfpmath=sse
 SED = $(R_HOME)/bin/safe-forward-sed
 SHELL = /bin/sh

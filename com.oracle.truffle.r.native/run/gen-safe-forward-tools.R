@@ -46,6 +46,7 @@ tools <- list(
   ),
   Makeconf = list(
     c('AR', 'ar'),
+    c('RANLIB', 'ranlib'),
     c('YACC', 'yacc'),
     c('CC', 'gcc'),
     c('CXX', 'g++')
