@@ -329,9 +329,10 @@ public final class VectorRFFIWrapper implements TruffleObject {
         @Specialization(limit = "1")
         protected static long get(RAltIntegerVec altIntVector,
                       @CachedLibrary("altIntVector.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInteropLibrary,
-                      @CachedLibrary(limit = "1") InteropLibrary dataptrInteropLibrary) {
-            return altIntVector.getDescriptor().invokeDataptrMethod(altIntVector, true,
-                    dataptrMethodInteropLibrary, dataptrInteropLibrary);
+                      @CachedLibrary(limit = "1") InteropLibrary dataptrInteropLibrary,
+                                  @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+            return altIntVector.getDescriptor().invokeDataptrMethodCached(altIntVector, true,
+                    dataptrMethodInteropLibrary, dataptrInteropLibrary, hasMirrorProfile);
         }
 
         @Specialization

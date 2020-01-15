@@ -6,6 +6,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
 
@@ -46,8 +47,9 @@ public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
 
         @Specialization(limit = "2")
         public int isSortedForAltIntVec(RAltIntegerVec altIntVec,
-                                        @CachedLibrary("altIntVec.getDescriptor().getIsSortedMethod()") InteropLibrary isSortedMethodInterop) {
-            return altIntVec.getDescriptor().invokeIsSortedMethod(altIntVec, isSortedMethodInterop);
+                                        @CachedLibrary("altIntVec.getDescriptor().getIsSortedMethod()") InteropLibrary isSortedMethodInterop,
+                                        @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+            return altIntVec.getDescriptor().invokeIsSortedMethodCached(altIntVec, isSortedMethodInterop, hasMirrorProfile);
         }
     }
 }

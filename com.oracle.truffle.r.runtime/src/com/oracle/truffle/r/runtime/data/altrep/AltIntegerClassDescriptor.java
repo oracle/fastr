@@ -24,12 +24,14 @@ package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 
 import java.util.logging.Level;
 
@@ -156,13 +158,47 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         return isSortedMethod != null;
     }
 
-    public int invokeEltMethod(Object instance, InteropLibrary eltMethodInterop, int index) {
+    @Override
+    public String toString() {
+        return "ALTINT class descriptor for " + super.toString();
+    }
+
+    public int invokeEltMethodUncached(Object instance, int index) {
+        InteropLibrary methodInterop = InteropLibrary.getFactory().getUncached(eltMethod);
+        ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
+        return invokeEltMethod(instance, index, methodInterop, hasMirrorProfile);
+    }
+
+    public int invokeEltMethodCached(Object instance, int index, InteropLibrary eltMethodInterop, ConditionProfile hasMirrorProfile) {
+        return invokeEltMethod(instance, index, eltMethodInterop, hasMirrorProfile);
+    }
+
+    public long invokeGetRegionMethodCached(Object instance, long fromIdx, long size, Object buffer, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
+        return invokeGetRegionMethod(instance, fromIdx, size, buffer, methodInterop, hasMirrorProfile);
+    }
+
+    public Object invokeSumMethodCached(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
+        return invokeSumMethod(instance, naRm, methodInterop, hasMirrorProfile);
+    }
+
+    public Object invokeMinMethodCached(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
+        return invokeMinMethod(instance, naRm, methodInterop, hasMirrorProfile);
+    }
+
+    public Object invokeMaxMethodCached(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
+        return invokeMaxMethod(instance, naRm, methodInterop, hasMirrorProfile);
+    }
+
+    public int invokeIsSortedMethodCached(Object instance, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
+        return invokeIsSortedMethod(instance, methodInterop, hasMirrorProfile);
+    }
+
+    private int invokeEltMethod(Object instance, int index, InteropLibrary eltMethodInterop, ConditionProfile hasMirrorProfile) {
         assert eltMethod != null;
-        eltMethodInterop = eltMethodInterop == null ? InteropLibrary.getFactory().getUncached(eltMethod) : eltMethodInterop;
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("elt", instance, index);
         }
-        Object element = invokeNativeFunction(eltMethodInterop, eltMethod, eltMethodSignature, eltMethodArgCount, instance, index);
+        Object element = invokeNativeFunction(eltMethodInterop, eltMethod, eltMethodSignature, eltMethodArgCount, hasMirrorProfile, instance, index);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(element);
         }
@@ -170,16 +206,15 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         return (int) element;
     }
 
-    public long invokeGetRegionMethod(Object instance, InteropLibrary methodInterop, long fromIdx, long size, Object buffer) {
+    private long invokeGetRegionMethod(Object instance, long fromIdx, long size, Object buffer, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
         assert getRegionMethod != null;
         if (buffer instanceof int[]) {
             throw RInternalError.shouldNotReachHere("Calls from managed code are unimplemented");
         }
-        methodInterop = methodInterop == null ? InteropLibrary.getFactory().getUncached(getRegionMethod) : methodInterop;
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("GetRegion", instance, fromIdx, size, buffer);
         }
-        Object copiedCount = invokeNativeFunction(methodInterop, getRegionMethod, getRegionMethodSignature, getRegionMethodArgCount, instance, fromIdx, size, buffer);
+        Object copiedCount = invokeNativeFunction(methodInterop, getRegionMethod, getRegionMethodSignature, getRegionMethodArgCount, hasMirrorProfile, instance, fromIdx, size, buffer);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(copiedCount);
         }
@@ -187,37 +222,35 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         return (long) copiedCount;
     }
 
-    public Object invokeSumMethod(Object instance, InteropLibrary methodInterop, boolean naRm) {
-        methodInterop = methodInterop == null ? InteropLibrary.getFactory().getUncached(sumMethod) : methodInterop;
+    private Object invokeSumMethod(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Sum", instance, naRm);
         }
-        Object sumVectorMirror = invokeNativeFunction(methodInterop, sumMethod, sumMethodSignature, sumMethodArgCount, instance, naRm);
+        Object sumVectorMirror = invokeNativeFunction(methodInterop, sumMethod, sumMethodSignature, sumMethodArgCount, hasMirrorProfile, instance, naRm);
         return convertNativeReturnValToIntOrDouble(sumVectorMirror);
     }
 
-    public Object invokeMinMethod(Object instance, InteropLibrary methodInterop, boolean naRm) {
-        methodInterop = methodInterop == null ? InteropLibrary.getFactory().getUncached(minMethod) : methodInterop;
+    private Object invokeMinMethod(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Min", instance, naRm);
         }
-        Object minVectorMirror = invokeNativeFunction(methodInterop, minMethod, minMethodSignature, minMethodArgCount, instance, naRm);
+        Object minVectorMirror = invokeNativeFunction(methodInterop, minMethod, minMethodSignature, minMethodArgCount, hasMirrorProfile, instance, naRm);
         return convertNativeReturnValToIntOrDouble(minVectorMirror);
     }
 
-    public Object invokeMaxMethod(Object instance, InteropLibrary methodInterop, boolean naRm) {
-        methodInterop = methodInterop == null ? InteropLibrary.getFactory().getUncached(maxMethod) : methodInterop;
-        logBeforeInteropExecute("Max", instance, naRm);
-        Object maxVectorMirror = invokeNativeFunction(methodInterop, maxMethod, maxMethodSignature, maxMethodArgCount, instance, naRm);
+    private Object invokeMaxMethod(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
+        if (logger.isLoggable(Level.FINER)) {
+            logBeforeInteropExecute("Max", instance, naRm);
+        }
+        Object maxVectorMirror = invokeNativeFunction(methodInterop, maxMethod, maxMethodSignature, maxMethodArgCount, hasMirrorProfile, instance, naRm);
         return convertNativeReturnValToIntOrDouble(maxVectorMirror);
     }
 
-    public int invokeIsSortedMethod(Object instance, InteropLibrary methodInterop) {
-        methodInterop = methodInterop == null ? InteropLibrary.getFactory().getUncached(isSortedMethod) : methodInterop;
+    private int invokeIsSortedMethod(Object instance, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Is_sorted", instance);
         }
-        Object sortedMode = invokeNativeFunction(methodInterop, isSortedMethod, isSortedMethodSignature, isSortedMethodArgCount, instance);
+        Object sortedMode = invokeNativeFunction(methodInterop, isSortedMethod, isSortedMethodSignature, isSortedMethodArgCount, hasMirrorProfile, instance);
         assert sortedMode instanceof Integer;
         return (int) sortedMode;
     }
@@ -233,11 +266,6 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         } else {
             throw RInternalError.shouldNotReachHere();
         }
-    }
-
-    @Override
-    public String toString() {
-        return "ALTINT class descriptor for " + super.toString();
     }
 
 }

@@ -1,9 +1,11 @@
 package com.oracle.truffle.r.runtime.data.altrep;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 
@@ -45,9 +47,10 @@ public class AltrepUtilities {
 
         @Specialization(limit = "3")
         Object doAltInt(RAltIntegerVec altIntVec, boolean deep,
-                        @CachedLibrary("altIntVec.getDescriptor().getDuplicateMethod()") InteropLibrary duplicateMethodInterop) {
+                        @CachedLibrary("altIntVec.getDescriptor().getDuplicateMethod()") InteropLibrary duplicateMethodInterop,
+                        @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert altIntVec.getDescriptor().isDuplicateMethodRegistered();
-            return altIntVec.getDescriptor().invokeDuplicateMethod(altIntVec, duplicateMethodInterop, deep);
+            return altIntVec.getDescriptor().invokeDuplicateMethodCached(altIntVec, deep, duplicateMethodInterop, hasMirrorProfile);
         }
     }
 
@@ -60,9 +63,10 @@ public class AltrepUtilities {
 
         @Specialization(limit = "3")
         Object doAltInt(RAltIntegerVec altIntVec, boolean naRm,
-                        @CachedLibrary("altIntVec.getDescriptor().getSumMethod()") InteropLibrary methodInterop) {
+                        @CachedLibrary("altIntVec.getDescriptor().getSumMethod()") InteropLibrary methodInterop,
+                        @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert altIntVec.getDescriptor().isSumMethodRegistered();
-            return altIntVec.getDescriptor().invokeSumMethod(altIntVec, methodInterop, naRm);
+            return altIntVec.getDescriptor().invokeSumMethodCached(altIntVec, naRm, methodInterop, hasMirrorProfile);
         }
     }
 
@@ -75,9 +79,10 @@ public class AltrepUtilities {
 
         @Specialization(limit = "3")
         Object doAltInt(RAltIntegerVec altIntVec, boolean naRm,
-                        @CachedLibrary("altIntVec.getDescriptor().getMaxMethod()") InteropLibrary methodInterop) {
+                        @CachedLibrary("altIntVec.getDescriptor().getMaxMethod()") InteropLibrary methodInterop,
+                        @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert altIntVec.getDescriptor().isMaxMethodRegistered();
-            return altIntVec.getDescriptor().invokeMaxMethod(altIntVec, methodInterop, naRm);
+            return altIntVec.getDescriptor().invokeMaxMethodCached(altIntVec, naRm, methodInterop, hasMirrorProfile);
         }
     }
 
@@ -90,9 +95,10 @@ public class AltrepUtilities {
 
         @Specialization(limit = "3")
         Object doAltInt(RAltIntegerVec altIntVec, boolean naRm,
-                        @CachedLibrary("altIntVec.getDescriptor().getMinMethod()") InteropLibrary methodInterop) {
+                        @CachedLibrary("altIntVec.getDescriptor().getMinMethod()") InteropLibrary methodInterop,
+                        @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert altIntVec.getDescriptor().isMinMethodRegistered();
-            return altIntVec.getDescriptor().invokeMinMethod(altIntVec, methodInterop, naRm);
+            return altIntVec.getDescriptor().invokeMinMethodCached(altIntVec, naRm, methodInterop, hasMirrorProfile);
         }
     }
 }

@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
@@ -42,22 +44,24 @@ public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
     @Specialization(guards = {"hasGetRegionMethodRegistered(altIntVec)"}, limit = "3")
     public long getRegionForAltIntegerVec(RAltIntegerVec altIntVec, long fromIdx, long size, Object buffer,
                                           @CachedLibrary("buffer") InteropLibrary bufferInterop,
-                                          @CachedLibrary("altIntVec.getDescriptor().getGetRegionMethod()") InteropLibrary methodInterop) {
+                                          @CachedLibrary("altIntVec.getDescriptor().getGetRegionMethod()") InteropLibrary methodInterop,
+                                          @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
         assert bufferInterop.isPointer(buffer);
-        return altIntVec.getDescriptor().invokeGetRegionMethod(altIntVec, methodInterop, fromIdx, size, buffer);
+        return altIntVec.getDescriptor().invokeGetRegionMethodCached(altIntVec, fromIdx, size, buffer, methodInterop, hasMirrorProfile);
     }
 
     @Specialization(limit = "3")
     public long getRegionForAltIntegerVecWithoutRegisteredMethod(RAltIntegerVec altIntVec, long fromIdx, long size,
                                                                  Object buffer,
                                                                  @CachedLibrary("buffer") InteropLibrary bufferInterop,
-                                                                 @CachedLibrary("altIntVec.getDescriptor().getEltMethod()") InteropLibrary eltMethodInterop) {
+                                                                 @CachedLibrary("altIntVec.getDescriptor().getEltMethod()") InteropLibrary eltMethodInterop,
+                                                                 @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
         assert bufferInterop.isPointer(buffer);
         AltIntegerClassDescriptor descriptor = altIntVec.getDescriptor();
         long copied = 0;
         for (long idx = fromIdx; idx < fromIdx + size; idx++) {
             try {
-                int value = descriptor.invokeEltMethod(altIntVec, eltMethodInterop, (int) idx);
+                int value = descriptor.invokeEltMethodCached(altIntVec, (int) idx, eltMethodInterop, hasMirrorProfile);
                 bufferInterop.writeArrayElement(buffer, idx, value);
                 copied++;
             } catch (Exception e) {

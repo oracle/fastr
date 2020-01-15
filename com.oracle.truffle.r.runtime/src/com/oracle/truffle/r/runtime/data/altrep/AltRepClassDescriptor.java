@@ -26,8 +26,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RType;
@@ -53,10 +52,8 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     private Object coerceMethod;
     private Object inspectMethod;
     private Object lengthMethod;
-    // TODO: Interop as a private field. (One interop for every method?)
     private static final TruffleLogger logger = RLogger.getLogger("altrep");
 
-    // TODO: Pridat nejakej check ze nekdo zaregistroval vsechny metody, ktery mel.
     AltRepClassDescriptor(String className, String packageName, Object dllInfo) {
         this.className = className;
         this.packageName = packageName;
@@ -169,14 +166,28 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         }
     }
 
+    public int invokeLengthMethodCached(Object instance, InteropLibrary lengthMethodInterop, ConditionProfile hasMirrorProfile) {
+        return invokeLengthMethod(instance, lengthMethodInterop, hasMirrorProfile);
+    }
+
+    public int invokeLengthMethodUncached(Object instance) {
+        ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
+        InteropLibrary lengthMethodInterop = InteropLibrary.getFactory().getUncached(lengthMethod);
+        return invokeLengthMethod(instance, lengthMethodInterop, hasMirrorProfile);
+    }
+
+    public Object invokeDuplicateMethodCached(Object instance, boolean deep, InteropLibrary interop, ConditionProfile hasMirrorProfile) {
+        return invokeDuplicateMethod(instance, deep, interop, hasMirrorProfile);
+    }
+
     /***
      *
      * @param instance Altrep instance. This is the "self" parameter that is passed to every altrep method.
      * @param args Rest of the arguments.
      */
-    static Object invokeNativeFunction(InteropLibrary interop, Object function, String functionSignature, int argLen, Object instance, Object... args) {
+    static Object invokeNativeFunction(InteropLibrary interop, Object function, String functionSignature, int argLen, ConditionProfile hasMirrorProfile, Object instance, Object... args) {
         assert instance instanceof RBaseObject;
-        NativeDataAccess.NativeMirror mirror = wrapInNativeMirror((RBaseObject) instance);
+        NativeDataAccess.NativeMirror mirror = wrapInNativeMirror((RBaseObject) instance, hasMirrorProfile);
         Object[] allArgs = collectArguments(mirror, argLen, args);
         try {
             if (interop.isMemberInvocable(function, "bind")) {
@@ -192,30 +203,9 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         }
     }
 
-    public Object invokeDuplicateMethod(Object instance, InteropLibrary interop, boolean deep) {
-        interop = interop == null ? InteropLibrary.getFactory().getUncached(duplicateMethod) : interop;
-        Object ret = invokeNativeFunction(interop, duplicateMethod, duplicateMethodSignature, duplicateMethodArgCount, instance, deep);
-        // TODO: Return type checks?
-        return ret;
-    }
-
-    public int invokeLengthMethod(Object instance, InteropLibrary lengthMethodInterop) {
-        lengthMethodInterop = lengthMethodInterop == null ? InteropLibrary.getFactory().getUncached(lengthMethod) : lengthMethodInterop;
-        if (logger.isLoggable(Level.FINER)) {
-            logBeforeInteropExecute("lengthMethod", instance);
-        }
-        Object ret = invokeNativeFunction(lengthMethodInterop, lengthMethod, lengthMethodSignature, lengthMethodArgCount, instance);
-        if (logger.isLoggable(Level.FINER)) {
-            logAfterInteropExecute(ret);
-        }
-        assert ret instanceof Long;
-        return ((Long) ret).intValue();
-    }
-
-    private static NativeDataAccess.NativeMirror wrapInNativeMirror(RBaseObject altrepInstance) {
+    private static NativeDataAccess.NativeMirror wrapInNativeMirror(RBaseObject altrepInstance, ConditionProfile hasMirrorProfile) {
         NativeDataAccess.NativeMirror mirror = altrepInstance.getNativeMirror();
-        // TODO: Binary condition profile
-        if (mirror == null) {
+        if (hasMirrorProfile.profile(mirror == null)) {
             return NativeDataAccess.createNativeMirror(altrepInstance);
         } else {
             return mirror;
@@ -228,6 +218,24 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         newArgs[0] = firstArg;
         System.arraycopy(restOfArgs, 0, newArgs, 1, argLen - 1);
         return newArgs;
+    }
+
+    private Object invokeDuplicateMethod(Object instance, boolean deep, InteropLibrary interop, ConditionProfile hasMirrorProfile) {
+        Object ret = invokeNativeFunction(interop, duplicateMethod, duplicateMethodSignature, duplicateMethodArgCount, hasMirrorProfile, instance, deep);
+        // TODO: Return type checks?
+        return ret;
+    }
+
+    private int invokeLengthMethod(Object instance, InteropLibrary lengthMethodInterop, ConditionProfile hasMirrorProfile) {
+        if (logger.isLoggable(Level.FINER)) {
+            logBeforeInteropExecute("lengthMethod", instance);
+        }
+        Object ret = invokeNativeFunction(lengthMethodInterop, lengthMethod, lengthMethodSignature, lengthMethodArgCount, hasMirrorProfile, instance);
+        if (logger.isLoggable(Level.FINER)) {
+            logAfterInteropExecute(ret);
+        }
+        assert ret instanceof Long;
+        return ((Long) ret).intValue();
     }
 
     @Override

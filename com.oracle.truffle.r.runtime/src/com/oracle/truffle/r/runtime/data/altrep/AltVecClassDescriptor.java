@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 
@@ -81,17 +82,28 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
         return extractSubsetMethod != null;
     }
 
+    public long invokeDataptrMethodCached(Object instance, boolean writeabble, InteropLibrary dataptrMethodInterop,
+                                          InteropLibrary dataptrInterop, ConditionProfile hasMirrorProfile) {
+        return invokeDataptrMethod(instance, writeabble, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
+    }
+
+    public long invokeDataptrMethodUncached(Object instance, boolean writeabble) {
+        InteropLibrary dataptrMethodInterop = InteropLibrary.getFactory().getUncached(dataptrMethod);
+        // TODO: getUncached with specified receiver?
+        InteropLibrary dataptrInterop = InteropLibrary.getFactory().getUncached();
+        ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
+        return invokeDataptrMethod(instance, writeabble, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
+    }
+
     // TODO: Bude vracet truffleobject co ma hasArrayElements
-    public long invokeDataptrMethod(Object instance, boolean writeabble, InteropLibrary dataptrMethodInterop, InteropLibrary dataptrInterop) {
-        dataptrMethodInterop = dataptrMethodInterop == null ? InteropLibrary.getFactory().getUncached(dataptrMethod) : dataptrMethodInterop;
+    private long invokeDataptrMethod(Object instance, boolean writeabble, InteropLibrary dataptrMethodInterop, InteropLibrary dataptrInterop, ConditionProfile hasMirrorProfile) {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("dataptr", instance, writeabble);
         }
-        Object dataptr = invokeNativeFunction(dataptrMethodInterop, dataptrMethod, dataptrMethodSignature, dataptrMethodArgCount, instance, writeabble);
+        Object dataptr = invokeNativeFunction(dataptrMethodInterop, dataptrMethod, dataptrMethodSignature, dataptrMethodArgCount, hasMirrorProfile, instance, writeabble); // TODO
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(dataptr);
         }
-        dataptrInterop = dataptrInterop == null ? InteropLibrary.getFactory().getUncached(dataptr) : dataptrInterop;
         try {
             // TODO: return DataptrWrapper(dataptr);
             if (!dataptrInterop.isPointer(dataptr)) {

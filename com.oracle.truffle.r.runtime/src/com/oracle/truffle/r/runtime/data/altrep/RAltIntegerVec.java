@@ -27,6 +27,7 @@ import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -39,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ExportLibrary(InteropLibrary.class)
 public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedVector {
-    private RAltRepData data;
+    private final RAltRepData data;
     private final AltIntegerClassDescriptor descriptor;
     private final FastPathAccess vectorAccess;
     private static final TruffleLogger logger = RLogger.getLogger("altrep");
@@ -54,7 +55,7 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
         this.descriptor = descriptor;
         assert hasDescriptorRegisteredNecessaryMethods(descriptor):
                 "Descriptor " + descriptor.toString() + " does not have registered all necessary methods";
-        this.cachedLength = descriptor.invokeLengthMethod(this, null);
+        this.cachedLength = descriptor.invokeLengthMethodUncached(this);
         this.vectorAccess = new FastPathAccess(this);
     }
 
@@ -106,10 +107,10 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
     @Override
     public int getDataAt(int index) {
         if (descriptor.isEltMethodRegistered()) {
-            return descriptor.invokeEltMethod(this, null, index);
+            return descriptor.invokeEltMethodUncached(this, index);
         } else {
             // Invoke uncached dataptr method
-            long address = descriptor.invokeDataptrMethod(this, true, null, null);
+            long address = descriptor.invokeDataptrMethodUncached(this, true);
             return NativeDataAccess.getData(this, index, address);
         }
     }
@@ -153,7 +154,7 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
     // Should not be called frequently.
     public long invokeDataptr() {
         // TODO: writeabble = true?
-        return descriptor.invokeDataptrMethod(this, true, null, null);
+        return descriptor.invokeDataptrMethodUncached(this, true);
     }
 
     private final SlowPathFromIntAccess SLOW_PATH_ACCESS = new SlowPathFromIntAccess() {
@@ -172,6 +173,7 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
 
     private static final class FastPathAccess extends FastPathFromIntAccess {
         private final boolean hasEltMethod;
+        private final ConditionProfile hasMirrorProfile = ConditionProfile.createBinaryProfile();
         @Child private InteropLibrary eltMethodInterop;
         //TODO: Cachovat si rovnou adresu?
         @Child private InteropLibrary dataptrMethodInterop;
@@ -186,12 +188,12 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
         }
 
         @CompilerDirectives.TruffleBoundary
-        private static InteropLibrary createDataptrInterop(RAltIntegerVec value) {
+        private InteropLibrary createDataptrInterop(RAltIntegerVec value) {
             AltIntegerClassDescriptor descriptor = value.getDescriptor();
             // Note that dataptrMethodInterop is not adopted here yet.
             InteropLibrary slowDataptrMethodInterop = InteropLibrary.getFactory().getUncached(descriptor.getDataptrMethod());
             Object dataptr = AltRepClassDescriptor.invokeNativeFunction(slowDataptrMethodInterop, descriptor.getDataptrMethod(),
-                    descriptor.getDataptrMethodSignature(), descriptor.getDataptrMethodArgCount(), value, true);
+                    descriptor.getDataptrMethodSignature(), descriptor.getDataptrMethodArgCount(), hasMirrorProfile, value, true);
             return InteropLibrary.getFactory().create(dataptr);
         }
 
@@ -215,9 +217,9 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
             RAltIntegerVec instance = getInstanceFromIterator(accessIter);
 
             if (hasEltMethod) {
-                return instance.getDescriptor().invokeEltMethod(instance, eltMethodInterop, index);
+                return instance.getDescriptor().invokeEltMethodCached(instance, index, eltMethodInterop, hasMirrorProfile);
             } else {
-                long address = instance.getDescriptor().invokeDataptrMethod(instance, true, dataptrMethodInterop, dataptrInterop);
+                long address = instance.getDescriptor().invokeDataptrMethodCached(instance, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
                 return NativeDataAccess.getData(instance, index, address);
             }
         }
