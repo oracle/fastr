@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -54,8 +54,12 @@ eval(expression({
     }
 
     untar.orig <- untar
-    untar <- function (tarfile, files = NULL, list = FALSE, exdir = ".", compressed = NA,
-        extras = NULL, verbose = FALSE, restore_times = TRUE, tar = Sys.getenv("TAR")) {
+    untar <- function (tarfile, files = NULL, list = FALSE, exdir = ".", 
+                       compressed = NA, extras = NULL, verbose = FALSE, 
+                       restore_times = TRUE, 
+                       support_old_tars = Sys.getenv("R_SUPPORT_OLD_TARS", FALSE), 
+                       tar = Sys.getenv("TAR")) 
+    {
 
         # if the argument "tar" is "Sys.getenv(R_INSTALL_TAR, ...)" we know we're decompressing package sources
         tarArg <- substitute(tar);
@@ -66,7 +70,11 @@ eval(expression({
             of <- dir(exdir, full.names = TRUE)
         }
 
-        result <- untar.orig(tarfile, files, list, exdir, compressed, extras, verbose, restore_times, tar)
+        result <- if (missing(compressed)) { 
+            untar.orig(tarfile, files=files, list=list, exdir=exdir, extras=extras, verbose=verbose, restore_times=restore_times, support_old_tars=support_old_tars, tar=tar) 
+        } else { 
+            untar.orig(tarfile, files=files, list=list, exdir=exdir, compressed=compressed, extras=extras, verbose=verbose, restore_times=restore_times, support_old_tars=support_old_tars, tar=tar) 
+        }
 
         if (patching) {
             nf <- dir(exdir, full.names = TRUE)
