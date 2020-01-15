@@ -178,6 +178,13 @@ public class REPL {
                 }
             }
         } catch (ExitException e) {
+            // e.g. when executing 'R -e "some err statement",
+            // we end up here after REPL.QUIT_EOF was invoked on EOF,
+            // in such a case the exit code is always hardcoded 0
+            // => we should check lastStatus too
+            if (e.code == 0 && lastStatus != 0) {
+                return lastStatus;
+            }
             return e.code;
         } catch (Throwable ex) {
             System.err.println("Unexpected error in REPL");
