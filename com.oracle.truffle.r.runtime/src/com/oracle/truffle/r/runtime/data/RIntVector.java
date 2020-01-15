@@ -22,20 +22,23 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import java.util.Arrays;
 
-public final class RIntVector extends RAbstractIntVector {
+public final class RIntVector extends RAbstractNumericVector {
 
     private RIntVectorData data;
 
@@ -86,7 +89,8 @@ public final class RIntVector extends RAbstractIntVector {
 
     @Override
     public boolean isShareable() {
-        // TODO: initially we retain even the behavior of "isShareable" forcing materialization where it may not be necessary
+        // TODO: initially we retain even the behavior of "isShareable" forcing materialization
+        // where it may not be necessary
         // Only Java array and native memory backed vectors "look like" shareable
         return RIntVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
     }
@@ -95,7 +99,7 @@ public final class RIntVector extends RAbstractIntVector {
         return data;
     }
 
-     // TODO: method that break encapsulation of data
+    // TODO: method that break encapsulation of data
 
     @Override
     public boolean isSequence() {
@@ -125,6 +129,7 @@ public final class RIntVector extends RAbstractIntVector {
 
     @Override
     protected boolean isScalarNA() {
+        assert getLength() == 1;
         return RRuntime.isNA(getDataAt(0));
     }
 
@@ -156,18 +161,15 @@ public final class RIntVector extends RAbstractIntVector {
         return data;
     }
 
-    @Override
     public int getDataAt(int index) {
         return data.getIntAt(index);
     }
 
-    @Override
     public int getDataAt(Object store, int index) {
         assert data == store;
         return ((RIntVectorData) store).getIntAt(index);
     }
 
-    @Override
     public void setDataAt(Object store, int index, int value) {
         assert data == store;
         ((RIntVectorData) store).setIntAt(index, value);
@@ -245,7 +247,8 @@ public final class RIntVector extends RAbstractIntVector {
         if (RIntVectorDataLibrary.getFactory().getUncached().isWriteable(data)) {
             return this;
         }
-        // To retain the semantics of the original materialize, for sequences and such we return new vector
+        // To retain the semantics of the original materialize, for sequences and such we return new
+        // vector
         return new RIntVector(getDataCopy(), isComplete());
     }
 
@@ -263,6 +266,45 @@ public final class RIntVector extends RAbstractIntVector {
         RIntVectorDataLibrary lib = RIntVectorDataLibrary.getFactory().getUncached();
         int value = lib.getIntAt(data, fromIndex);
         lib.setIntAt(((RIntVector) fromVector).data, toIndex, value);
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    protected void copyAttributes(RIntVector materialized) {
+        materialized.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RIntVector internalCopy() {
+        return RDataFactory.createIntVector(getDataCopy(), isComplete());
+    }
+
+    @Override
+    protected RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        int[] localData = getReadonlyData();
+        int[] newData = Arrays.copyOf(localData, size);
+        newData = resizeData(newData, localData, localData.length, fillNA);
+        return RDataFactory.createIntVector(newData, isResizedComplete(size, fillNA), dimensions);
+    }
+
+    protected static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
+            if (fillNA) {
+                for (int i = oldDataLength; i < newData.length; i++) {
+                    newData[i] = RRuntime.INT_NA;
+                }
+            } else {
+                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
+                    newData[i] = oldData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    public int[] getDataTemp() {
+        return (int[]) super.getDataTemp();
     }
 
     @Override
@@ -335,7 +377,8 @@ public final class RIntVector extends RAbstractIntVector {
         return SLOW_PATH_ACCESS;
     }
 
-    // TODO: Hack: we make sure the vector is either array or native, so that we can call NativeDataAccess methods
+    // TODO: Hack: we make sure the vector is either array or native, so that we can call
+    // NativeDataAccess methods
     private int[] getArrayForNativeDataAccess() {
         materializeData(RIntVectorDataLibrary.getFactory().getUncached());
         return data instanceof RIntArrayVectorData ? ((RIntArrayVectorData) data).getReadonlyIntData() : null;
