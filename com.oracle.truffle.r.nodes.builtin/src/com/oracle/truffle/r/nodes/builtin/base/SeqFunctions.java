@@ -66,8 +66,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -581,7 +579,7 @@ public final class SeqFunctions {
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
             int from = fromVec.getDataAt(0);
             int to = toVec.getDataAt(0);
-            RIntSequence result = createRIntSequence(from, to, directionProfile);
+            RIntVector result = createRIntSequence(from, to, directionProfile);
             return result;
         }
 
@@ -1123,7 +1121,7 @@ public final class SeqFunctions {
                 }
             }
             if (useInt) {
-                RIntSequence result = RDataFactory.createIntSequence((int) from, directionProfile.profile(from <= to) ? 1 : -1, length);
+                RIntVector result = RDataFactory.createIntSequence((int) from, directionProfile.profile(from <= to) ? 1 : -1, length);
                 return result;
             } else {
                 length = checkVecLength(from, to);
