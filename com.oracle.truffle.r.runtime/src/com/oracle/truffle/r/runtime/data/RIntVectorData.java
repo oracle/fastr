@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import static com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.notWriteableError;
+import static com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.notWriteableError;
 
 public abstract class RIntVectorData extends RVectorData {
     public abstract int getIntAt(int index);

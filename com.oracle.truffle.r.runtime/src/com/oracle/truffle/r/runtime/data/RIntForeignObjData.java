@@ -31,8 +31,8 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
 
 import java.util.Arrays;
 
