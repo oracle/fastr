@@ -105,17 +105,17 @@ public abstract class RIntVectorDataLibrary extends Library {
      */
     @SuppressWarnings("unused")
     public void setIntAt(RIntVectorData receiver, int index, int value, NACheck naCheck) {
-        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
+        throw notWriteableError(RIntVectorData.class, "setIntAt");
     }
 
     @SuppressWarnings("unused")
     public void setNext(RIntVectorData receiver, SeqIterator it, int value, NACheck naCheck) {
-        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
+        throw notWriteableError(RIntVectorData.class, "setIntAt");
     }
 
     @SuppressWarnings("unused")
     public void setAt(RIntVectorData receiver, RandomAccessIterator it, int index, int value, NACheck naCheck) {
-        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
+        throw notWriteableError(RIntVectorData.class, "setIntAt");
     }
 
     public final void setIntAt(RIntVectorData receiver, int index, int value) {
