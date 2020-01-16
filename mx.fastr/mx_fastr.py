@@ -377,9 +377,7 @@ def _fastr_gate_runner(args, tasks):
             # We also test the loading of recommended pkgs in the "graalvm-tests"
             if not os.path.exists(os.path.join(_fastr_suite.dir, 'library', 'spatial')):
                 mx.abort('Recommended packages seem to be not installed in FastR. Did you forget to build with FASTR_RELEASE=true?')
-            # TODO: removed failing "survival", GR-20276
-            # TODO: removed failing "KernSmooth" and "cluster" on LLVM, GR-20406
-            pkgs = ['codetools', 'MASS', 'boot', 'class', 'cluster', 'lattice', 'nnet', 'spatial', 'Matrix', 'KernSmooth', 'foreign', 'nlme', 'rpart']
+            pkgs = ['codetools', 'MASS', 'boot', 'class', 'cluster', 'lattice', 'nnet', 'spatial', 'Matrix', 'KernSmooth', 'foreign', 'nlme', 'rpart', 'survival']
             if os.environ.get('FASTR_RFFI') == 'llvm':
                 pkgs.remove('KernSmooth')
                 pkgs.remove('cluster')
