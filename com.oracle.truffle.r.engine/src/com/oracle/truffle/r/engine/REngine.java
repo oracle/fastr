@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -46,14 +47,22 @@ import com.oracle.truffle.r.launcher.StartupTiming;
 import com.oracle.truffle.r.library.graphics.RGraphics;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
+import com.oracle.truffle.r.nodes.control.AbstractBlockNode;
 import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
+import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
@@ -92,8 +101,13 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 import java.io.BufferedReader;
@@ -320,12 +334,93 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
+    public CallTarget parseToCallTargetWithArguments(Source source, List<String> argumentNames) throws ParseException {
+        // We create an artificial RFunction, whose body will be the the statement or statements
+        // wrapped in a block node. The function will take the given arguments and will be executed
+        // from an artificial RootNode via the RExplicitCallNode
+
+        // Body
+        List<RSyntaxNode> statements = parseSource(source);
+        RNode[] statementsAsNode = new RNode[statements.size()];
+        for (int i = 0; i < statementsAsNode.length; i++) {
+            statementsAsNode[i] = statements.get(i).asRNode();
+        }
+        RBaseNode body;
+        if (statementsAsNode.length == 1) {
+            body = statementsAsNode[0];
+        } else {
+            body = AbstractBlockNode.create(RSourceSectionNode.INTERNAL, RSyntaxLookup.createDummyLookup(RSourceSectionNode.INTERNAL, "{", true), statementsAsNode);
+        }
+
+        // Arguments
+        SaveArgumentsNode saveArguments;
+        FormalArguments formals;
+        AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[argumentNames.size()];
+        RNode[] init = new RNode[argumentNames.size()];
+        for (int i = 0; i < argAccessNodes.length; i++) {
+            AccessArgumentNode accessArg = AccessArgumentNode.create(i);
+            argAccessNodes[i] = accessArg;
+            String argName = argumentNames.get(i);
+            init[i] = WriteVariableNode.createArgSave(argName, accessArg);
+        }
+        saveArguments = new SaveArgumentsNode(init);
+        formals = FormalArguments.createForFunction(new RNode[argumentNames.size()], ArgumentsSignature.get(argumentNames.toArray(new String[0])));
+        for (AccessArgumentNode access : argAccessNodes) {
+            access.setFormals(formals);
+        }
+
+        // Create RFunction
+        FrameDescriptor descriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<as.function.default>", descriptor);
+        FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, REnvironment.globalEnv().getFrame());
+        TruffleRLanguage rLanguage = RContext.getInstance().getLanguage();
+        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(rLanguage, RSyntaxNode.INTERNAL, descriptor, null, saveArguments, (RSyntaxNode) body, formals, "from AsFunction",
+                        null);
+        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
+        RFunction fun = RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, getGlobalFrame());
+
+        // Create RootNode that uses RExplicitCallNode to invoke that function
+        RootNode root = new RootNodeWithArgs(rLanguage, fun, getGlobalFrame(), argumentNames.size());
+        return Truffle.getRuntime().createCallTarget(root);
+    }
+
+    private static final class RootNodeWithArgs extends RootNode {
+        private final RFunction fun;
+        private final MaterializedFrame globalEnv;
+        @Child private RExplicitCallNode callNode = RExplicitCallNode.create();
+        @Child private R2Foreign r2Foreign = R2Foreign.create();
+        @Children private Foreign2R[] foreign2R;
+
+        RootNodeWithArgs(TruffleLanguage<?> language, RFunction fun, MaterializedFrame globalEnv, int argsCount) {
+            super(language);
+            this.fun = fun;
+            this.globalEnv = globalEnv;
+            foreign2R = new Foreign2R[argsCount];
+            for (int i = 0; i < foreign2R.length; i++) {
+                foreign2R[i] = Foreign2R.create();
+            }
+        }
+
+        @ExplodeLoop
+        @Override
+        public Object execute(VirtualFrame frame) {
+            ArgumentsSignature signature = ArgumentsSignature.empty(frame.getArguments().length);
+            Object[] convertedArgs = new Object[foreign2R.length];
+            for (int i = 0; i < foreign2R.length; i++) {
+                convertedArgs[i] = foreign2R[i].convert(frame.getArguments()[i]);
+            }
+            RArgsValuesAndNames callArgs = new RArgsValuesAndNames(convertedArgs, signature);
+            return r2Foreign.execute(callNode.execute(globalEnv, fun, callArgs, RCaller.topLevel, globalEnv), true);
+        }
+    }
+
+    @Override
     public ExecutableNode parseToExecutableNode(Source source) throws ParseException {
         List<RSyntaxNode> list = parseSource(source);
         return new ExecutableNodeImpl(context.getLanguage(), list);
     }
 
-    private final class ExecutableNodeImpl extends ExecutableNode {
+    private static final class ExecutableNodeImpl extends ExecutableNode {
 
         @Child R2Foreign toForeignNode = R2Foreign.create();
         @Children final RNode[] statements;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,19 @@
  */
 package com.oracle.truffle.r.test.tck;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import com.oracle.truffle.r.test.tck.ParseWithArgsTesterInstrument.ParseWithArgsTestData;
 import com.oracle.truffle.r.test.tck.ToStringTesterInstrument.TestData;
 
 public class TruffleRLanguageTest extends TestBase {
@@ -58,4 +63,20 @@ public class TruffleRLanguageTest extends TestBase {
         assertEquals("FALSE", testData.falseAsString);
     }
 
+    @Test
+    public void testParseWithArgs() {
+        ParseWithArgsTestData testData = context.getEngine().getInstruments().get(ParseWithArgsTesterInstrument.ID).lookup(ParseWithArgsTestData.class);
+        context.eval("R", "1+1");   // to trigger the instrument
+
+        assertThat(testData.additionResult, instanceOf(RIntVector.class));
+        assertEquals(4, ((RIntVector) testData.additionResult).getDataAt(0));
+
+        assertThat(testData.sumResult, instanceOf(RIntVector.class));
+        assertEquals(6, ((RIntVector) testData.sumResult).getDataAt(0));
+
+        assertThat(testData.helloWorld, instanceOf(RStringVector.class));
+        assertEquals("Hello world", ((RStringVector) testData.helloWorld).getDataAt(0));
+        // assertEquals(RRuntime.LOGICAL_TRUE, ((RLogicalVector)
+        // testData.hasSysCallResult).getDataAt(0));
+    }
 }
