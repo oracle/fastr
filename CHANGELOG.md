@@ -2,7 +2,8 @@
 
 Added missing R builtins and C APIs
 
-* Subsetting an array by numeric/string matrix
+* subsetting an array by numeric/string matrix
+* ported all external C functions used by `nlm` (#100) and `fisher.test` from the `stats` base package
 
 Bug fixes:
 

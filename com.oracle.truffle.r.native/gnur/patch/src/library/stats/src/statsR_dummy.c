@@ -166,8 +166,5 @@ SEXP ApproxTest(SEXP x, SEXP y, SEXP method, SEXP sf) UNIMPLEMENTED
 SEXP Approx(SEXP x, SEXP y, SEXP v, SEXP method,
 	    SEXP yleft, SEXP yright, SEXP sf) UNIMPLEMENTED
 
-SEXP Fisher_sim(SEXP sr, SEXP sc, SEXP sB) UNIMPLEMENTED
-SEXP chisq_sim(SEXP sr, SEXP sc, SEXP sB, SEXP E) UNIMPLEMENTED
-
 SEXP stats_signrank_free(void) UNIMPLEMENTED
 SEXP stats_wilcox_free(void) UNIMPLEMENTED
