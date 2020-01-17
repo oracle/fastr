@@ -246,11 +246,6 @@ public final class NativeDataAccess {
         private NativeWrapperReference nativeWrapperRef;
 
         /**
-         * Indicates that the address points to memory not allocated by FastR.
-         */
-        private boolean external;
-
-        /**
          * Creates a new mirror with a specified native address as both ID and address. The buffer
          * will be freed when the Java object is collected.
          */
@@ -329,17 +324,25 @@ public final class NativeDataAccess {
             toNative.execute(this);
         }
 
-        @TruffleBoundary
-        long setDataAddress(long dataAddress) {
-            if (external) {
-                this.dataAddress = NativeMemory.wrapExternalNativeMemory(dataAddress, delegate);
-            } else {
-                this.dataAddress = NativeMemory.wrapNativeMemory(dataAddress, delegate);
-            }
+        public long setExternalDataAddress(long address) {
+            this.dataAddress = NativeMemory.wrapExternalNativeMemory(address, delegate);
             if (dataAddressToNativeMirrors != null) {
-                dataAddressToNativeMirrors.put(dataAddress, this);
+                addToAddressDebugMapping(address);
             }
-            return dataAddress;
+            return address;
+        }
+
+        long setDataAddress(long address) {
+            this.dataAddress = NativeMemory.wrapNativeMemory(address, delegate);
+            if (dataAddressToNativeMirrors != null) {
+                addToAddressDebugMapping(address);
+            }
+            return address;
+        }
+
+        @TruffleBoundary
+        private void addToAddressDebugMapping(long address) {
+            dataAddressToNativeMirrors.put(address, this);
         }
 
         @TruffleBoundary
@@ -350,7 +353,7 @@ public final class NativeDataAccess {
                 setDataAddress(NativeMemory.allocate(bytesCount, source));
                 UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress.getAddress(), bytesCount);
             } else {
-                setDataAddress(getEmptyDataAddress());
+                setExternalDataAddress(getEmptyDataAddress());
             }
             this.length = len;
 
@@ -1388,8 +1391,7 @@ public final class NativeDataAccess {
             noStringNative.invalidate();
         }
         NativeMirror mirror = obj.getNativeMirror();
-        mirror.external = true;
-        mirror.setDataAddress(address);
+        mirror.setExternalDataAddress(address);
         mirror.length = length;
     }
 
