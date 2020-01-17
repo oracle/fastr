@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -166,13 +167,19 @@ public abstract class FFIMaterializeNode extends Node {
 
     // No need to wrap other RObjects than sequences or scalars
 
-    @Specialization(guards = "!isRScalarVectorOrSequenceOrRIntVector(value)")
+    @Specialization(guards = "!isRScalarVectorOrSequenceOrHasVectorData(value)")
     protected static Object wrap(RBaseObject value, @SuppressWarnings("unused") boolean protect) {
         return value;
     }
 
     @Specialization
     protected static Object wrap(RIntVector value, @SuppressWarnings("unused") boolean protect) {
+        // TODO specialize only for sequences (and maybe some other)
+        return value.cachedMaterialize();
+    }
+
+    @Specialization
+    protected static Object wrap(RDoubleVector value, @SuppressWarnings("unused") boolean protect) {
         // TODO specialize only for sequences (and maybe some other)
         return value.cachedMaterialize();
     }
@@ -204,8 +211,8 @@ public abstract class FFIMaterializeNode extends Node {
         return RRuntime.isForeignObject(value);
     }
 
-    protected static boolean isRScalarVectorOrSequenceOrRIntVector(RBaseObject value) {
-        return value instanceof RScalarVector || value instanceof RSequence || value instanceof RIntVector;
+    protected static boolean isRScalarVectorOrSequenceOrHasVectorData(RBaseObject value) {
+        return value instanceof RScalarVector || value instanceof RSequence || value instanceof RIntVector || value instanceof RDoubleVector;
     }
 
     public static FFIMaterializeNode create() {

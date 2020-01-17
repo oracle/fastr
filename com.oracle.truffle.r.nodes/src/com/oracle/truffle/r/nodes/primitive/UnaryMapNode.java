@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -352,6 +353,11 @@ public abstract class UnaryMapNode extends RBaseNode {
     public abstract Object apply(RAbstractVector originalOperand);
 
     protected static Class<?> getDataClass(RAbstractVector vec) {
-        return vec instanceof RIntVector ? ((RIntVector) vec).getData().getClass() : vec.getClass();
+        if (vec instanceof RIntVector) {
+            return ((RIntVector) vec).getData().getClass();
+        } else if (vec instanceof RDoubleVector) {
+            return ((RDoubleVector) vec).getData().getClass();
+        }
+        return vec.getClass();
     }
 }

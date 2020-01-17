@@ -68,7 +68,7 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
     public RDoubleArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
         double[] newData = Arrays.copyOf(data, newSize);
         if (fillNA) {
-            Arrays.fill(newData, data.length, newData.length, RRuntime.INT_NA);
+            Arrays.fill(newData, data.length, newData.length, RRuntime.DOUBLE_NA);
         }
         return new RDoubleArrayVectorData(newData, complete);
     }

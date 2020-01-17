@@ -56,7 +56,7 @@ public abstract class FastRInspect extends RBuiltinNode.Arg2 {
     public Object call(RArgsValuesAndNames args, byte inspectVectorData) {
         for (int i = 0; i < args.getLength(); i++) {
             Object arg = args.getArgument(i);
-            if (RRuntime.fromLogical(inspectVectorData) && (arg instanceof RIntVector)) {
+            if (RRuntime.fromLogical(inspectVectorData) && RRuntime.hasVectorData(arg)) {
                 writeString(((RIntVector) arg).getData().getClass().getName(), true);
             } else {
                 writeString(arg.getClass().getName(), true);

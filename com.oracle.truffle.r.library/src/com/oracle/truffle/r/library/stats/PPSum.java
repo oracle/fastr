@@ -102,9 +102,9 @@ public abstract class PPSum {
 
             RDoubleVector result = (RDoubleVector) profiledXi.copyResized(nResult, false);
             assert result.getInternalStore() != null : "RVector.copyResized returned vector that is not backed by managed array, which is an assumption made by IntgrtVecNode";
-            double[] store = result.getInternalStore();
+            Object store = result.getInternalStore();
             for (int i = 0; i < n; i++) {
-                store[i + lag] = profiledX.getDataAt(i) + store[i];
+                result.setDataAt(store, i + lag, profiledX.getDataAt(i) + result.getDataAt(i));
             }
             return result;
         }

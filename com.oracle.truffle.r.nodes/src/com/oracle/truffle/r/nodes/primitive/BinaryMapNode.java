@@ -37,12 +37,12 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -183,8 +183,8 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         this.fastLeftAccess = isGeneric ? null : left.access();
         this.fastRightAccess = isGeneric ? null : right.access();
         this.vectorNode = VectorMapBinaryInternalNode.create(resultType, argumentType);
-        boolean leftVectorImpl = RMaterializedVector.class.isAssignableFrom(leftClass) || ((left instanceof RIntVector) && ((RIntVector) left).isMaterialized());
-        boolean rightVectorImpl = RMaterializedVector.class.isAssignableFrom(rightClass) || ((right instanceof RIntVector) && ((RIntVector) right).isMaterialized());
+        boolean leftVectorImpl = left.isMaterialized();
+        boolean rightVectorImpl = right.isMaterialized();
         this.mayContainMetadata = leftVectorImpl || rightVectorImpl;
         this.mayFoldConstantTime = function.mayFoldConstantTime(left, right);
         this.leftIsNAProfile = mayFoldConstantTime ? ConditionProfile.createBinaryProfile() : null;
@@ -615,7 +615,12 @@ public abstract class BinaryMapNode extends RBaseNode {
     public abstract Object apply(RAbstractVector originalLeft, RAbstractVector originalRight);
 
     protected static Class<?> getDataClass(RAbstractVector vec) {
-        return vec instanceof RIntVector ? ((RIntVector) vec).getData().getClass() : vec.getClass();
+        if (vec instanceof RIntVector) {
+            return ((RIntVector) vec).getData().getClass();
+        } else if (vec instanceof RDoubleVector) {
+            return ((RDoubleVector) vec).getData().getClass();
+        }
+        return vec.getClass();
     }
 
 }
