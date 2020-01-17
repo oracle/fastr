@@ -31,6 +31,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -66,6 +67,7 @@ import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.ClosureCache.SymbolClosureCache;
@@ -161,6 +163,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          */
         @Specialization(guards = {"getFrameDescriptor(env) == fd"}, limit = "getCacheSize(10)")
         public Object doFastPathInEvalFrame(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
+                        @CachedContext(TruffleRLanguage.class) RContext ctx,
                         @Cached("getFrameDescriptor(env)") @SuppressWarnings("unused") FrameDescriptor fd,
                         @Cached("create()") RExplicitCallNode explicitCallNode,
                         @Cached("create()") GetVisibilityNode getVisibilityNode,
@@ -170,7 +173,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         @Cached("create()") BranchProfile containsRSymbolProfile) {
             MaterializedFrame promiseFrame = frameProfile.profile(env.getFrame(frameAccessProfile)).materialize();
             RArgsValuesAndNames args = getArguments(languagesClosureCache, symbolsClosureCache, promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
-            RCaller caller = RCallerHelper.getExplicitCaller(virtualFrame, promiseFrame, env, funcName, func, args);
+            RCaller caller = RCallerHelper.getExplicitCaller(ctx, virtualFrame, promiseFrame, env, funcName, func, args);
             MaterializedFrame materializedFrame = virtualFrame.materialize();
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame);
 
@@ -185,13 +188,14 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          */
         @Specialization(replaces = "doFastPathInEvalFrame")
         public Object doSlowPathInEvalFrame(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
+                        @CachedContext(TruffleRLanguage.class) RContext ctx,
                         @Cached("create()") SlowPathExplicitCall slowPathExplicitCall,
                         @Cached("createBinaryProfile()") ConditionProfile quoteProfile,
                         @Cached("create()") BranchProfile containsRSymbolProfile) {
             MaterializedFrame promiseFrame = env.getFrame(frameAccessProfile).materialize();
             RArgsValuesAndNames args = getArguments(null, null, promiseFrame, quote, quoteProfile,
                             containsRSymbolProfile, argsAsList);
-            RCaller caller = RCallerHelper.getExplicitCaller(virtualFrame, promiseFrame, env, funcName, func, args);
+            RCaller caller = RCallerHelper.getExplicitCaller(ctx, virtualFrame, promiseFrame, env, funcName, func, args);
             MaterializedFrame materializedFrame = virtualFrame.materialize();
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame);
 

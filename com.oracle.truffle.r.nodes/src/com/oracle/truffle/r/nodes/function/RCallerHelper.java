@@ -163,9 +163,9 @@ public final class RCallerHelper {
         };
     }
 
-    public static RCaller getPromiseCallerForExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, REnvironment env) {
+    public static RCaller getPromiseCallerForExplicitCaller(RContext ctx, VirtualFrame virtualFrame, MaterializedFrame envFrame, REnvironment env) {
         RCaller currentCall = RArguments.getCall(virtualFrame);
-        RCaller originalPromiseCaller = REnvironment.globalEnv() == env ? RCaller.topLevel : currentCall;
+        RCaller originalPromiseCaller = REnvironment.globalEnv(ctx) == env ? RCaller.topLevel : currentCall;
         if (env instanceof REnvironment.Function) {
             originalPromiseCaller = RArguments.getCall(envFrame);
         } else if (env instanceof REnvironment.NewEnv) {
@@ -183,7 +183,7 @@ public final class RCallerHelper {
         // case of real promises, there may be not actual frame created for their evaluation:
         // see InlineCacheNode.
         RCaller promiseCaller;
-        if (env == REnvironment.globalEnv(RContext.getInstance())) {
+        if (env == REnvironment.globalEnv(ctx)) {
             promiseCaller = RCaller.createForPromise(originalPromiseCaller, currentCall);
         } else {
             promiseCaller = RCaller.createForPromise(originalPromiseCaller, env, currentCall);
@@ -229,10 +229,9 @@ public final class RCallerHelper {
      * @see RCaller
      * @see RArguments
      */
-    public static RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, REnvironment env, String funcName, RFunction func,
+    public static RCaller getExplicitCaller(RContext ctx, VirtualFrame virtualFrame, MaterializedFrame envFrame, REnvironment env, String funcName, RFunction func,
                     RArgsValuesAndNames args) {
-        RCaller fakePromiseCaller = getPromiseCallerForExplicitCaller(virtualFrame, envFrame, env);
-
+        RCaller fakePromiseCaller = getPromiseCallerForExplicitCaller(ctx, virtualFrame, envFrame, env);
         return getExplicitCaller(virtualFrame, funcName, func, args, fakePromiseCaller);
     }
 

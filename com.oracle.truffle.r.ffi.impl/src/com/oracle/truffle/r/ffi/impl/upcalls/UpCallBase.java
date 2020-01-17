@@ -22,6 +22,13 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 /**
@@ -37,5 +44,27 @@ public class UpCallBase implements RTruffleObject {
         System.err.println("ERROR: exception in up-call: " + ex.getClass().getSimpleName());
         System.err.println(ex.getMessage());
         return true;
+    }
+
+    @GenerateUncached
+    protected abstract static class CallNode extends Node {
+        public final Object call(CallTarget target, Object... args) {
+            return execute(target, args);
+        }
+
+        public abstract Object execute(CallTarget target, Object[] args);
+
+        @Specialization(guards = "cachedTarget == target", limit = "1")
+        protected Object doCall(@SuppressWarnings("unused") CallTarget target, Object[] args,
+                        @SuppressWarnings("unused") @Cached("target") CallTarget cachedTarget,
+                        @Cached("create(cachedTarget)") DirectCallNode callNode) {
+            return callNode.call(args);
+        }
+
+        @Specialization(replaces = "doCall")
+        protected Object doCallGeneric(CallTarget target, Object[] args,
+                        @Cached("create()") IndirectCallNode callNode) {
+            return callNode.call(target, args);
+        }
     }
 }

@@ -70,8 +70,8 @@
  * nodes being specialized for a given argument. Such a caching is guarded by the
  * {@link com.oracle.truffle.r.nodes.function.opt.eval.CallInfo.CachedCallInfo CachedCallInfo}
  * object used to determine if the input call info matches a cache entry (using
- * {@link com.oracle.truffle.r.nodes.function.opt.eval.CallInfo.CachedCallInfo#isCompatible(CallInfo)}
- * ).
+ * {@link com.oracle.truffle.r.nodes.function.opt.eval.CallInfo.CachedCallInfo#isCompatible(CallInfo, com.oracle.truffle.api.profiles.ValueProfile)}
+ * .
  * <p>
  * As soon as the PIC in {@code CachedCallInfoEvalNode} is full, arguments are prepared by
  * pre-allocated polymorphic

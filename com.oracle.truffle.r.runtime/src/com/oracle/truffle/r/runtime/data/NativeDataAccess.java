@@ -424,6 +424,7 @@ public final class NativeDataAccess {
                         @Cached("createBinaryProfile()") ConditionProfile hasID,
                         @Cached("createBinaryProfile()") ConditionProfile isCustomNativeMirror,
                         @Cached("createBinaryProfile()") ConditionProfile isInNative,
+                        @Cached("createBinaryProfile()") ConditionProfile registerNativeRefNopProfile,
                         @Cached BranchProfile refRegProfile,
                         @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             if (hasID.profile(mirror.id == 0)) {
@@ -435,7 +436,7 @@ public final class NativeDataAccess {
                 }
                 RContext rContext = ctxRef.get();
                 if (isInNative.profile(rContext.getStateRFFI().getCallDepth() > 0)) {
-                    rContext.getStateRFFI().registerReferenceUsedInNative(obj, refRegProfile);
+                    rContext.getStateRFFI().registerReferenceUsedInNative(obj, registerNativeRefNopProfile, refRegProfile);
                 }
                 logAndTrace(mirror.get(), mirror);
                 assert mirror.id != 0;
