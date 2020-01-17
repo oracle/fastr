@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.context;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -225,6 +226,13 @@ public interface Engine {
      * {@link org.graalvm.polyglot.Context} is responsible for actually invoking the call target.
      */
     CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException;
+
+    /**
+     * This is the external interface from the truffle language implementation. It is required to
+     * return a {@link CallTarget} which may be cached for future use, and it accepts given
+     * arguments.
+     */
+    CallTarget parseToCallTargetWithArguments(Source source, List<String> argumentNames) throws ParseException;
 
     /**
      * Returns ASTs representing given source. The node is meant to be inserted into existing AST
