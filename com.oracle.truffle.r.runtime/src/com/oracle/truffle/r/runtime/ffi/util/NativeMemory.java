@@ -94,7 +94,7 @@ public abstract class NativeMemory {
 
         protected NativeMemoryWrapper(long address, Object referent, ReferenceQueue<? super Object> q) {
             super(referent, q);
-            assert address != 0;
+            assert address != 0 : "MEMORY ERROR";
             this.address = address;
         }
 
@@ -139,7 +139,7 @@ public abstract class NativeMemory {
             super(address, owner, ResourcesCleaner.nativeReferenceQueue());
             // Assertion check: creating NativeMemoryWrapper for address that was not allocated via
             // NativeMemory.allocate
-            assert ALLOCATED == null || ALLOCATED.get(getAddress()) != null;
+            assert ALLOCATED == null || ALLOCATED.get(getAddress()) != null : "MEMORY ERROR: " + Long.toHexString(getAddress()) + " " + owner.getClass().getSimpleName();
             this.ownerInfo = NEEDS_DEBUG_INFO ? owner.getClass().getSimpleName() : null;
             try {
                 activeLock.lock();
@@ -153,7 +153,7 @@ public abstract class NativeMemory {
         private void addToActive() {
             // TODO: we should replace this with out PE safe hash-set implementation (GR-20634)
             boolean wasNotIn = active.add(this);
-            assert wasNotIn;
+            assert wasNotIn : "MEMORY ERROR";
         }
 
         @Override
@@ -161,7 +161,7 @@ public abstract class NativeMemory {
             NativeMemory.free(getAddress(), ownerInfo);
             try {
                 activeLock.lock();
-                assert active.contains(this);
+                assert active.contains(this) : "MEMORY ERROR";
                 active.remove(this);
             } finally {
                 activeLock.unlock();
@@ -176,6 +176,7 @@ public abstract class NativeMemory {
 
     // ------------------------------------------------------
     // Tracing, sanity debug checks, ...
+    // grep the output log for "MEMORY ERROR"
 
     private static final boolean MEMORY_CHECK = false; // check for leaks, double free, etc.
     private static final boolean PRINT_ALLOC_STACK_TRACE_IN_FREE_LOG = false;
@@ -226,7 +227,7 @@ public abstract class NativeMemory {
         if (ALLOCATED.isEmpty()) {
             System.out.println("No leaks detected!");
         } else {
-            System.out.println("LEAKS DETECTED:");
+            System.out.println("MEMORY ERROR: LEAKS DETECTED");
             for (Entry<Long, DebugInfo> item : ALLOCATED.entrySet()) {
                 if (PRINT_STACK_TRACES_IN_MEM_LEAKS_REPORT) {
                     System.out.println("\n\n-----");
@@ -281,14 +282,15 @@ public abstract class NativeMemory {
 
     @TruffleBoundary
     private static void logFreeStart(long address, Object debugInfo) {
-        System.out.printf("NativeMemory: going to free %14x (%s)\n", address, formatDebugInfo(debugInfo));
+        StringBuffer sb = new StringBuffer(String.format("NativeMemory: going to free %14x (%s)\n", address, formatDebugInfo(debugInfo)));
         if (PRINT_ALLOC_STACK_TRACE_IN_FREE_LOG) {
             DebugInfo origInfo = ALLOCATED.get(address);
             if (origInfo != null && origInfo.stackTrace != null) {
-                System.out.println("Alloc stack trace:\n" + shortStackTrace(origInfo.stackTrace));
-                System.out.println("-----");
+                sb.append("Alloc stack trace:\n").append(shortStackTrace(origInfo.stackTrace)).append("\n-----\n");
             }
         }
+        // printing everything at once, because this is run from the cleaner thread so otherwise the output may interleave with the main thread
+        System.out.println(sb.toString());
     }
 
     @TruffleBoundary
