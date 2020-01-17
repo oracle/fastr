@@ -26,6 +26,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import org.graalvm.collections.EconomicMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -127,10 +128,10 @@ public abstract class RFFIContext extends RFFI {
         }
     }
 
-    public final void registerReferenceUsedInNative(Object obj, BranchProfile profile) {
+    public final void registerReferenceUsedInNative(Object obj, ConditionProfile nopProfile, BranchProfile stackResizeProfile) {
         // RSymbols are cached and never freed anyway -- dictated by GNU-R
-        if (!(obj instanceof RSymbol)) {
-            rffiContextState.protectedNativeReferences.add(obj, profile);
+        if (nopProfile.profile(!(obj instanceof RSymbol))) {
+            rffiContextState.protectedNativeReferences.add(obj, stackResizeProfile);
         }
     }
 

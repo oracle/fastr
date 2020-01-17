@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
@@ -48,6 +49,7 @@ public abstract class UnprotectPtrNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     Object unprotect(RBaseObject x,
+                    @Cached("createBinaryProfile()") ConditionProfile registerNativeRefNopProfile,
                     @Cached BranchProfile registerNativeRefProfile,
                     @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
         RFFIContext ctx = ctxRef.get().getStateRFFI();
@@ -58,7 +60,7 @@ public abstract class UnprotectPtrNode extends FFIUpCallNode.Arg1 {
                 if (RFFILog.logEnabled()) {
                     RFFILog.logRObject("Unprotected: ", current);
                 }
-                ctx.registerReferenceUsedInNative(current, registerNativeRefProfile);
+                ctx.registerReferenceUsedInNative(current, registerNativeRefNopProfile, registerNativeRefProfile);
                 stack.remove(i);
                 return null;
             }

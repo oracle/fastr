@@ -161,17 +161,20 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
         abstract Object execute(Object downcallFrame, CallInfo callInfo);
 
-        @Specialization(limit = "CACHE_SIZE", guards = {"cachedCallInfo.isCompatible(callInfo)"})
+        @Specialization(limit = "CACHE_SIZE", guards = {"cachedCallInfo.isCompatible(callInfo, otherInfoClassProfile)"})
         Object evalFastPath(Object downcallFrame, CallInfo callInfo,
+                        @CachedContext(TruffleRLanguage.class) RContext ctx,
+                        @SuppressWarnings("unused") @Cached("createClassProfile()") ValueProfile otherInfoClassProfile,
+                        @Cached("createClassProfile()") ValueProfile downcallFrameClassProfile,
                         @SuppressWarnings("unused") @Cached("callInfo.getCachedCallInfo()") CallInfo.CachedCallInfo cachedCallInfo,
                         @Cached("new()") FastPathDirectCallerNode callNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("new()") PromiseHelperNode promiseHelper,
                         @Cached("createArgValueSupplierNodes(callInfo.argsLen, true)") ArgValueSupplierNode[] argValSupplierNodes) {
-            MaterializedFrame materializedFrame = (MaterializedFrame) downcallFrame;
+            MaterializedFrame materializedFrame = downcallFrameClassProfile.profile((MaterializedFrame) downcallFrame);
             MaterializedFrame promiseFrame = frameProfile.profile(callInfo.env.getFrame(frameAccessProfile)).materialize();
 
-            RCaller promiseCaller = RCallerHelper.getPromiseCallerForExplicitCaller(materializedFrame,
+            RCaller promiseCaller = RCallerHelper.getPromiseCallerForExplicitCaller(ctx, materializedFrame,
                             promiseFrame, callInfo.env);
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, promiseCaller);
             RArgsValuesAndNames args = callInfo.prepareArgumentsExploded(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNodes);
@@ -186,13 +189,15 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
         @Specialization(replaces = "evalFastPath", guards = "callInfo.argsLen <= MAX_ARITY")
         Object evalSlowPath(Object downcallFrame, CallInfo callInfo,
+                        @CachedContext(TruffleRLanguage.class) RContext ctx,
+                        @Cached("createClassProfile()") ValueProfile downcallFrameClassProfile,
                         @Cached("new()") SlowPathDirectCallerNode slowPathCallNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("new()") PromiseHelperNode promiseHelper,
                         @Cached("createGenericArgValueSupplierNodes(MAX_ARITY)") ArgValueSupplierNode[] argValSupplierNodes) {
-            MaterializedFrame materializedFrame = (MaterializedFrame) downcallFrame;
+            MaterializedFrame materializedFrame = downcallFrameClassProfile.profile((MaterializedFrame) downcallFrame);
             MaterializedFrame promiseFrame = frameProfile.profile(callInfo.env.getFrame(frameAccessProfile)).materialize();
-            RCaller promiseCaller = RCallerHelper.getPromiseCallerForExplicitCaller(materializedFrame, promiseFrame, callInfo.env);
+            RCaller promiseCaller = RCallerHelper.getPromiseCallerForExplicitCaller(ctx, materializedFrame, promiseFrame, callInfo.env);
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, promiseCaller);
             RArgsValuesAndNames args = callInfo.prepareArgumentsExploded(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNodes);
 
@@ -205,13 +210,15 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
         @Specialization(replaces = "evalFastPath")
         Object evalSlowPath(Object downcallFrame, CallInfo callInfo,
+                        @CachedContext(TruffleRLanguage.class) RContext ctx,
+                        @Cached("createClassProfile()") ValueProfile downcallFrameClassProfile,
                         @Cached("new()") SlowPathDirectCallerNode slowPathCallNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,
                         @Cached("new()") PromiseHelperNode promiseHelper,
                         @Cached("create(false)") ArgValueSupplierNode argValSupplierNode) {
-            MaterializedFrame materializedFrame = (MaterializedFrame) downcallFrame;
+            MaterializedFrame materializedFrame = downcallFrameClassProfile.profile((MaterializedFrame) downcallFrame);
             MaterializedFrame promiseFrame = frameProfile.profile(callInfo.env.getFrame(frameAccessProfile)).materialize();
-            RCaller promiseCaller = RCallerHelper.getPromiseCallerForExplicitCaller(materializedFrame, promiseFrame, callInfo.env);
+            RCaller promiseCaller = RCallerHelper.getPromiseCallerForExplicitCaller(ctx, materializedFrame, promiseFrame, callInfo.env);
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, promiseCaller);
             RArgsValuesAndNames args = callInfo.prepareArguments(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNode);
 

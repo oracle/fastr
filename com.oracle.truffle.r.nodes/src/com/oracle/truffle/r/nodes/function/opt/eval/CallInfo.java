@@ -23,13 +23,13 @@
 package com.oracle.truffle.r.nodes.function.opt.eval;
 
 import java.lang.ref.WeakReference;
-import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -68,9 +68,9 @@ public final class CallInfo {
             this.argsLen = argsLen;
         }
 
-        public boolean isCompatible(CallInfo other) {
+        public boolean isCompatible(CallInfo other, ValueProfile otherEnvClassProfile) {
             FrameDescriptor fd = fdRef.get();
-            return fd != null && other.env.getFrame().getFrameDescriptor() == fd && other.argsLen == this.argsLen;
+            return fd != null && otherEnvClassProfile.profile(other.env.getFrame()).getFrameDescriptor() == fd && other.argsLen == this.argsLen;
         }
 
     }
@@ -104,10 +104,12 @@ public final class CallInfo {
         Object[] names = new Object[argsLen];
         RBuiltinDescriptor rBuiltin = function.getRBuiltin();
         ArgumentBuilderState argBuilderState = new ArgumentBuilderState(rBuiltin != null ? rBuiltin.isFieldAccess() : false);
-        Iterator<RPairList> iterator = plLib.iterable(argList).iterator();
+        Object next = argList;
         for (int i = 0; i < argValSupplierNodes.length && i < argsLen; i++) {
+            RPairList curr = (RPairList) next;
             ArgValueSupplierNode argValSupplierNode = argValSupplierNodes[i];
-            handleArgument(currentFrame, promiseEvalFrame, plLib, promiseHelper, args, names, argBuilderState, iterator, i, argValSupplierNode);
+            handleArgument(currentFrame, promiseEvalFrame, plLib, promiseHelper, args, names, argBuilderState, curr, i, argValSupplierNode);
+            next = plLib.cdr(curr);
         }
 
         Object[] flattenedArgs = flattenArgs(args);
@@ -124,9 +126,11 @@ public final class CallInfo {
         Object[] names = new Object[argsLen];
         RBuiltinDescriptor rBuiltin = function.getRBuiltin();
         ArgumentBuilderState argBuilderState = new ArgumentBuilderState(rBuiltin != null ? rBuiltin.isFieldAccess() : false);
-        Iterator<RPairList> iterator = plLib.iterable(argList).iterator();
+        Object next = argList;
         for (int i = 0; i < argsLen; i++) {
-            handleArgument(currentFrame, promiseEvalFrame, plLib, promiseHelper, args, names, argBuilderState, iterator, i, argValSupplierNode);
+            RPairList curr = (RPairList) next;
+            handleArgument(currentFrame, promiseEvalFrame, plLib, promiseHelper, args, names, argBuilderState, curr, i, argValSupplierNode);
+            next = plLib.cdr(curr);
         }
 
         Object[] flattenedArgs = flattenArgs(args);
@@ -134,8 +138,7 @@ public final class CallInfo {
     }
 
     private static void handleArgument(MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame, RPairListLibrary plLib, PromiseHelperNode promiseHelper, Object[] args, Object[] names,
-                    ArgumentBuilderState argBuilderState, Iterator<RPairList> iterator, int i, ArgValueSupplierNode argBuilderNode) {
-        RPairList plt = iterator.next();
+                    ArgumentBuilderState argBuilderState, RPairList plt, int i, ArgValueSupplierNode argBuilderNode) {
         Object a = plLib.car(plt);
         args[i] = argBuilderNode.execute(a, i, argBuilderState, currentFrame, promiseEvalFrame, promiseHelper);
 

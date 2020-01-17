@@ -46,6 +46,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -351,8 +352,9 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
         abstract Object execute(VirtualFrame frame, CallInfo functionInfo, RCaller rCaller);
 
-        @Specialization(limit = "CACHE_SIZE", guards = {"cachedCallInfo.isCompatible(callInfo)"})
+        @Specialization(limit = "CACHE_SIZE", guards = {"cachedCallInfo.isCompatible(callInfo, otherInfoClassProfile)"})
         Object evalFastPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller,
+                        @SuppressWarnings("unused") @Cached("createClassProfile()") ValueProfile otherInfoClassProfile,
                         @SuppressWarnings("unused") @Cached("callInfo.getCachedCallInfo()") CallInfo.CachedCallInfo cachedCallInfo,
                         @Cached("new()") FastPathDirectCallerNode callNode,
                         @CachedLibrary(limit = "1") RPairListLibrary plLib,

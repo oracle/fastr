@@ -287,7 +287,6 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("import com.oracle.truffle.api.frame.VirtualFrame;\n");
             w.append("import com.oracle.truffle.api.Truffle;\n");
             w.append("import com.oracle.truffle.api.CallTarget;\n");
-            w.append("import com.oracle.truffle.api.nodes.IndirectCallNode;\n");
             w.append("import com.oracle.truffle.r.runtime.context.RFFIUpCallTargets;\n");
         }
         if (needsUnwrapImport) {
@@ -329,7 +328,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
         w.append("                @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,\n");
         if (needsCallTarget) {
-            w.append("                @Cached() IndirectCallNode callNode,\n");
+            w.append("                @Cached() com.oracle.truffle.r.ffi.impl.upcalls.UpCallBase.CallNode callNode,\n");
             w.append("                @Cached(value = \"createCallTarget(ctxRef.get())\", allowUncached = true) CallTarget callTarget,\n");
         } else if (needsNode) {
             if (nodeClass.getModifiers().contains(Modifier.ABSTRACT)) {
