@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -1050,10 +1051,15 @@ public class RRuntime {
         if (o instanceof RMaterializedVector) {
             return true;
         }
-        if (o instanceof RIntVector) {
-            return ((RIntVector) o).isMaterialized();
+        if (o instanceof RAbstractVector) {
+            return ((RAbstractVector) o).isMaterialized();
         }
         return false;
+    }
+
+    public static boolean hasVectorData(Object o) {
+        // TODO: for the time beeeing, until all vectors switch to RVectorData
+        return o instanceof RIntVector || o instanceof RDoubleVector;
     }
 
     public static boolean isSequence(Object o) {

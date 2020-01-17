@@ -55,8 +55,17 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    private RDoubleVector(RDoubleVectorData data) {
+        super(false);
+        this.data = data;
+    }
+
     private RDoubleVector() {
         super(false);
+    }
+
+    public static RDoubleVector createForeignWrapper(Object foreign) {
+        return new RDoubleVector(new RDoubleForeignObjData(foreign));
     }
 
     public RDoubleVectorData getData() {
@@ -93,6 +102,11 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
     @Override
     public boolean isComplete() {
         return data.isComplete();
+    }
+
+    @Override
+    public boolean isForeignWrapper() {
+        return data instanceof RDoubleForeignObjData;
     }
 
     @Override

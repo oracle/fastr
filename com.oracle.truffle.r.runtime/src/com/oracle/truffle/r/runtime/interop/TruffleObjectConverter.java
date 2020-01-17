@@ -33,8 +33,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -72,7 +72,7 @@ public final class TruffleObjectConverter {
                     case Integer:
                         return RIntVector.createForeignWrapper(obj);
                     case Double:
-                        return new RForeignDoubleWrapper(obj);
+                        return RDoubleVector.createForeignWrapper(obj);
                     case Character:
                         return new RForeignStringWrapper(obj);
                     case List:

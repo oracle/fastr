@@ -214,7 +214,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     public boolean isForeignIntVector(RAbstractAtomicVector operand) {
-        return operand instanceof RIntVector && ((RIntVector) operand).isForeignWrapper();
+        return RRuntime.hasVectorData(operand) && operand.isForeignWrapper();
     }
 
     public static CastDoubleNode create() {

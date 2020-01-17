@@ -738,7 +738,16 @@ public class TestJavaInterop extends TestBase {
 
         testConvertObjectArray("as.vector");
 
-        assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$longArrayMinMax)", toRVectorFromFieldValue(new TestArraysClass(), "longArrayMinMax"));
+        assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$longArrayMinMax)",
+                        "cat('[1] -9.223372e+18  2.000000e+00  9.223372e+18\nWarning messages:\n" +
+                                        "1: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
+                                        "  Possible precission loss by coercion of long -9223372036854775808 to double -9223372036854776000.000000\n" +
+                                        "2: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
+                                        "  Possible precission loss by coercion of long 9223372036854775807 to double 9223372036854776000.000000\n" +
+                                        "3: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
+                                        "  Possible precission loss by coercion of long -9223372036854775808 to double -9223372036854776000.000000\n" +
+                                        "4: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
+                                        "  Possible precission loss by coercion of long 9223372036854775807 to double 9223372036854776000.000000\n')");
 
         assertEvalFastR(Ignored.ImplementationError, "as.vector(new(java.type('java.lang.Integer[]'), 1))", "integer()");
 

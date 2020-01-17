@@ -212,7 +212,7 @@ public abstract class FFIMaterializeNode extends Node {
     }
 
     protected static boolean isRScalarVectorOrSequenceOrHasVectorData(RBaseObject value) {
-        return value instanceof RScalarVector || value instanceof RSequence || value instanceof RIntVector || value instanceof RDoubleVector;
+        return value instanceof RScalarVector || value instanceof RSequence || RRuntime.hasVectorData(value);
     }
 
     public static FFIMaterializeNode create() {

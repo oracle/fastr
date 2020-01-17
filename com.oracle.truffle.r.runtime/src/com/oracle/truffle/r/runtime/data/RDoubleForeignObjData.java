@@ -26,7 +26,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -34,6 +33,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
@@ -41,19 +41,18 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
 
 import java.util.Arrays;
 
-@ExportLibrary(RIntVectorDataLibrary.class)
-class RIntForeignObjData extends RIntVectorData {
+@ExportLibrary(RDoubleVectorDataLibrary.class)
+class RDoubleForeignObjData extends RDoubleVectorData {
     protected final Object foreign;
 
-    RIntForeignObjData(Object foreign) {
+    RDoubleForeignObjData(Object foreign) {
         this.foreign = foreign;
     }
 
     @Override
     @Ignore
-    public int getIntAt(int index) {
-        return getIntImpl(index, InteropLibrary.getFactory().getUncached(), InteropLibrary.getFactory().getUncached(), ValueProfile.getUncached(), ConditionProfile.getUncached(),
-                        ConditionProfile.getUncached());
+    public double getDoubleAt(int index) {
+        return getDoubleImpl(index, InteropLibrary.getFactory().getUncached(), InteropLibrary.getFactory().getUncached(), ValueProfile.getUncached(), ConditionProfile.getUncached());
     }
 
     @Override
@@ -73,12 +72,11 @@ class RIntForeignObjData extends RIntVectorData {
     }
 
     @ExportMessage
-    public RIntArrayVectorData materialize(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
+    public RDoubleArrayVectorData materialize(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
-                    @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
-                    @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return copy(false, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+                    @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
+        return copy(false, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
     }
 
     @ExportMessage
@@ -87,45 +85,42 @@ class RIntForeignObjData extends RIntVectorData {
     }
 
     @ExportMessage
-    public RIntArrayVectorData copy(@SuppressWarnings("unused") boolean deep,
+    public RDoubleArrayVectorData copy(@SuppressWarnings("unused") boolean deep,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
-                    @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
-                    @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return new RIntArrayVectorData(getReadonlyIntData(valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile), RDataFactory.INCOMPLETE_VECTOR);
+                    @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
+        return new RDoubleArrayVectorData(getReadonlyDoubleData(valueInterop, interop, resultProfile, unprecisseDoubleProfile), RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage
-    public RIntArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
+    public RDoubleArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
-                    @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
-                    @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
+                    @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
         int length = getLength(interop);
-        int[] newData = getDataAsArray(newSize, length, interop, valueInterop, resultProfile, isTruffleObjectProfile, isIntProfile);
+        double[] newData = getDataAsArray(newSize, length, interop, valueInterop, resultProfile, unprecisseDoubleProfile);
         if (fillNA) {
-            Arrays.fill(newData, length, newData.length, RRuntime.INT_NA);
+            Arrays.fill(newData, length, newData.length, RRuntime.DOUBLE_NA);
         }
-        return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
+        return new RDoubleArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     // TODO: this will be message exported by the generic VectorDataLibrary
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
+                    @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
+        dataLib.setDoubleAt((RDoubleVectorData) destination, index, getDoubleAt(index));
     }
 
     @ExportMessage
-    public int[] getReadonlyIntData(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
+    public double[] getReadonlyDoubleData(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
-                    @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
-                    @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
+                    @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
         int len = getLength(interop);
-        return getDataAsArray(len, len, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+        return getDataAsArray(len, len, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
     }
 
     @ExportMessage
@@ -138,64 +133,59 @@ class RIntForeignObjData extends RIntVectorData {
         return new RandomAccessIterator(foreign, getLength(interop));
     }
 
-    private int getIntImpl(int index, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile isTruffleObjectProfile, ConditionProfile isIntProfile) {
+    private double getDoubleImpl(int index, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile unprecisseDoubleProfile) {
         try {
             Object result = interop.readArrayElement(foreign, index);
-            if (isTruffleObjectProfile.profile(result instanceof TruffleObject)) {
-                if (valueInterop.isNumber(result)) {
-                    result = valueInterop.asInt(result);
-                } else if (valueInterop.isNull(result)) {
-                    return RRuntime.INT_NA;
-                } else {
-                    result = valueInterop.asString(result).charAt(0);
+            try {
+                return ((Number) resultProfile.profile(valueInterop.asDouble(result))).doubleValue();
+            } catch (UnsupportedMessageException e) {
+                if (interop.isNull(result)) {
+                    return RRuntime.DOUBLE_NA;
                 }
+                if (unprecisseDoubleProfile.profile(valueInterop.fitsInLong(result))) {
+                    Long l = valueInterop.asLong(result);
+                    double d = l.doubleValue();
+                    RError.warning(RError.SHOW_CALLER, RError.Message.PRECISSION_LOSS_BY_CONVERSION, l, d);
+                    return ((Long) valueInterop.asLong(result)).doubleValue();
+                }
+                throw RInternalError.shouldNotReachHere();
             }
-
-            if (isIntProfile.profile(result instanceof Number)) {
-                return ((Number) resultProfile.profile(result)).intValue();
-            } else {
-                return (Character) resultProfile.profile(result);
-            }
-        } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
+        } catch (UnsupportedMessageException | InvalidArrayIndexException | ClassCastException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
     }
 
     @ExportMessage
-    public int getIntAt(int index,
+    public double getDoubleAt(int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
-                    @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
-                    @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return getIntImpl(index, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+                    @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
+        return getDoubleImpl(index, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
     }
 
     @ExportMessage
-    public int getNext(SeqIterator it,
+    public double getNext(SeqIterator it,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
-                    @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
-                    @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return getIntImpl(it.getIndex(), valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+                    @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
+        return getDoubleImpl(it.getIndex(), valueInterop, interop, resultProfile, unprecisseDoubleProfile);
     }
 
     @ExportMessage
-    public int getAt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
+    public double getAt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
-                    @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
-                    @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return getIntImpl(index, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+                    @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
+        return getDoubleImpl(index, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
     }
 
-    private int[] getDataAsArray(int newLength, int length, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile isTruffleObjectProfile,
-                    ConditionProfile isIntProfile) {
-        int[] data = new int[newLength];
+    private double[] getDataAsArray(int newLength, int length, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile unprecisseDoubleProfile) {
+        double[] data = new double[newLength];
         for (int i = 0; i < Math.min(newLength, length); i++) {
-            data[i] = getIntAt(i, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+            data[i] = getDoubleAt(i, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
         }
         return data;
     }

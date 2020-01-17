@@ -89,6 +89,10 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return this instanceof RClosure;
     }
 
+    public boolean isForeignWrapper() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
     public RClosure getClosure() {
         return (RClosure) this;
     }
