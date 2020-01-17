@@ -59,6 +59,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
 public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
+    private static int activeContexts = 0;
+
     public String getRHome() {
         return getLanguageHome();
     }
@@ -103,6 +105,10 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         }
     }
 
+    public static boolean isAnyContextActive() {
+        return activeContexts > 0;
+    }
+
     private static boolean systemInitialized;
 
     @Override
@@ -112,6 +118,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected void initializeContext(RContext context) throws Exception {
+        activeContexts++;
         if (!systemInitialized) {
             initialize();
             systemInitialized = true;
@@ -135,6 +142,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected void disposeContext(RContext context) {
+        activeContexts--;
         context.dispose();
     }
 

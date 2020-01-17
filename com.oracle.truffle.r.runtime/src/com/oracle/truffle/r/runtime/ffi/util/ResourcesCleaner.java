@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 /**
  * Provides one unified reference queue for any {@link java.lang.ref.WeakReference}s holding to a
@@ -91,13 +92,12 @@ public class ResourcesCleaner {
                                             try {
                                                 ((Releasable) ref).release();
                                             } catch (Throwable ex) {
-                                                assert false : getDebugInfo(ex);
+                                                assert false : "MEMORY ERROR: " + getDebugInfo(ex);
                                             }
                                         }
                                     }
                                 } catch (InterruptedException ex) {
-                                    // TODO: some check that no FastR context is indeed active
-                                    // anymore
+                                    assert !TruffleRLanguage.isAnyContextActive() : "MEMORY ERROR";
                                 }
                             }
                         },
