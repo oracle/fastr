@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.instrumentation.StandardTags.CallTag;
+import com.oracle.truffle.api.instrumentation.StandardTags.RootBodyTag;
 import com.oracle.truffle.api.instrumentation.StandardTags.RootTag;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.nodes.BlockNode;
@@ -293,6 +294,13 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public boolean isTaggedWith(Node node, Class<?> tag) {
+        if (tag == RootBodyTag.class) {
+            // RootBodyNode marks the Root body including prolog/epilog.
+            // The only child of the RootBodyNode that is instrumentable should be the body.
+            // Any other child of RootBodyNode should not be instrumentable, e.g. SaveArgumentsNode,
+            // etc.
+            return node.getParent() instanceof RootBodyNode;
+        }
         if (node instanceof RootBodyNode) {
             return (tag == RootTag.class);
         }
