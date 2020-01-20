@@ -289,7 +289,8 @@ public abstract class NativeMemory {
                 sb.append("Alloc stack trace:\n").append(shortStackTrace(origInfo.stackTrace)).append("\n-----\n");
             }
         }
-        // printing everything at once, because this is run from the cleaner thread so otherwise the output may interleave with the main thread
+        // printing everything at once, because this is run from the cleaner thread so otherwise the
+        // output may interleave with the main thread
         System.out.println(sb.toString());
     }
 
