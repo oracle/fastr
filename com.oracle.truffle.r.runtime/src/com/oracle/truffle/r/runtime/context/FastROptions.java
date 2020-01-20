@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.context;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Option;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RError;
@@ -34,8 +35,10 @@ import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeDataInspector;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.options.OptionDescriptor;
 import org.graalvm.options.OptionDescriptors;
@@ -291,4 +294,60 @@ public class FastROptions {
         throw RInternalError.shouldNotReachHere();
     }
 
+    private Set<String> explicitPackages = null;
+    private boolean isLLVMDefault;
+
+    boolean isLLVMPackage(TruffleFile libPath) {
+        if (explicitPackages == null) {
+            initLLVMPackages();
+        }
+        if (explicitPackages.isEmpty()) {
+            return isLLVMDefault;
+        }
+
+        assert libPath != null;
+        String libName = libPath.getName();
+        libName = libName.substring(0, libName.lastIndexOf('.'));
+        return isLLVMPackage(libName);
+    }
+
+    boolean isLLVMPackage(String libName) {
+        if (explicitPackages == null) {
+            initLLVMPackages();
+        }
+        if (explicitPackages.isEmpty()) {
+            return isLLVMDefault;
+        }
+
+        boolean isExplicitPkg = explicitPackages.contains(libName);
+        return isExplicitPkg ^ isLLVMDefault;
+    }
+
+    private void initLLVMPackages() {
+        if ("llvm".equals(System.getenv().get("FASTR_RFFI"))) {
+            isLLVMDefault = true;
+            explicitPackages = java.util.Collections.emptySet();
+        } else {
+            String backendOpt = getValue(FastROptions.BackEnd);
+            String explicitPkgsOpt;
+            if ("native".equals(backendOpt)) {
+                isLLVMDefault = false;
+                explicitPkgsOpt = getValue(FastROptions.BackEndLLVM);
+            } else {
+                // llvm
+                isLLVMDefault = true;
+                explicitPkgsOpt = getValue(FastROptions.BackEndNative);
+            }
+
+            String[] explicitPkgsOptSplit = explicitPkgsOpt == null ? null : explicitPkgsOpt.split(",");
+            if (explicitPkgsOptSplit == null || explicitPkgsOptSplit.length == 0) {
+                explicitPackages = java.util.Collections.emptySet();
+            } else {
+                explicitPackages = new HashSet<>();
+                for (String pkg : explicitPkgsOptSplit) {
+                    explicitPackages.add(pkg);
+                }
+            }
+        }
+    }
 }
