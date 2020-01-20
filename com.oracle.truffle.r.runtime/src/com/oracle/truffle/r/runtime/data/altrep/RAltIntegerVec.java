@@ -28,6 +28,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -117,7 +118,8 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
 
     @Override
     public void setDataAt(Object store, int index, int value) {
-        NativeDataAccess.setData(this, index, value);
+        long address = descriptor.invokeDataptrMethodUncached(this, true);
+        NativeDataAccess.setData(this, address, index, value);
     }
 
     @Override
@@ -171,45 +173,32 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
         }
     };
 
+    /**
+     * Specializes on every separate instance. Note that we cannot have one FastPathAccess for two instances with
+     * same descriptor, because this descriptor may return different Dataptr or Elt for both instances (Dataptr or
+     * Elt methods may be dependent on instance data).
+     */
     private static final class FastPathAccess extends FastPathFromIntAccess {
         private final boolean hasEltMethod;
+        private final int instanceId;
         private final ConditionProfile hasMirrorProfile = ConditionProfile.createBinaryProfile();
         @Child private InteropLibrary eltMethodInterop;
-        //TODO: Cachovat si rovnou adresu?
-        @Child private InteropLibrary dataptrMethodInterop;
-        @Child private InteropLibrary dataptrInterop;
+        private final long dataptrAddr;
 
         FastPathAccess(RAltIntegerVec value) {
             super(value);
             this.hasEltMethod = value.getDescriptor().isEltMethodRegistered();
+            this.instanceId = value.hashCode();
             this.eltMethodInterop = hasEltMethod ? InteropLibrary.getFactory().create(value.getDescriptor().getEltMethod()) : null;
-            this.dataptrMethodInterop = hasEltMethod ? null : InteropLibrary.getFactory().create(value.getDescriptor().getDataptrMethod());
-            this.dataptrInterop = hasEltMethod ? null : createDataptrInterop(value);
+            this.dataptrAddr = hasEltMethod ? 0 : value.getDescriptor().invokeDataptrMethodUncached(value, true);
         }
 
-        @CompilerDirectives.TruffleBoundary
-        private InteropLibrary createDataptrInterop(RAltIntegerVec value) {
-            AltIntegerClassDescriptor descriptor = value.getDescriptor();
-            // Note that dataptrMethodInterop is not adopted here yet.
-            InteropLibrary slowDataptrMethodInterop = InteropLibrary.getFactory().getUncached(descriptor.getDataptrMethod());
-            Object dataptr = AltRepClassDescriptor.invokeNativeFunction(slowDataptrMethodInterop, descriptor.getDataptrMethod(),
-                    descriptor.getDataptrMethodSignature(), descriptor.getDataptrMethodArgCount(), hasMirrorProfile, value, true);
-            return InteropLibrary.getFactory().create(dataptr);
-        }
-
-        // TODO: Fix this (there should be more conditions).
         @Override
         public boolean supports(Object value) {
             if (!(value instanceof RAltIntegerVec)) {
                 return false;
             }
-
-            if (hasEltMethod) {
-                return super.supports(value) && ((RAltIntegerVec) value).getDescriptor().isEltMethodRegistered();
-            } else {
-                // Note that dataptrMethod must be registered.
-                return super.supports(value);
-            }
+            return instanceId == value.hashCode();
         }
 
         @Override
@@ -219,15 +208,18 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
             if (hasEltMethod) {
                 return instance.getDescriptor().invokeEltMethodCached(instance, index, eltMethodInterop, hasMirrorProfile);
             } else {
-                long address = instance.getDescriptor().invokeDataptrMethodCached(instance, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-                return NativeDataAccess.getData(instance, index, address);
+                return NativeDataAccess.getData(instance, index, dataptrAddr);
             }
         }
 
         @Override
         protected void setIntImpl(AccessIterator accessIter, int index, int value) {
             RAltIntegerVec instance = getInstanceFromIterator(accessIter);
-            NativeDataAccess.setData(instance, index, value);
+            if (dataptrAddr != 0) {
+                NativeDataAccess.setData(instance, dataptrAddr, index, value);
+            } else {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
 
         private RAltIntegerVec getInstanceFromIterator(AccessIterator accessIterator) {

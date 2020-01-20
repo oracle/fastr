@@ -745,13 +745,10 @@ public final class NativeDataAccess {
         }
     }
 
-    // TODO: Nahradit tohle setNativeMirrorIntData?
-    public static void setData(RAltIntegerVec vector, int index, int value) {
-        long address = vector.invokeDataptr();
+    public static void setData(RAltIntegerVec vector, long address, int index, int value) {
         UnsafeAdapter.UNSAFE.putInt(address + (long) index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
     }
 
-    // TODO: Nahradit metodou, ktera operuje s NativeMirror
     public static int getData(RAltIntegerVec altIntVector, int index, long address) {
         return UnsafeAdapter.UNSAFE.getInt(address + (long) index * Unsafe.ARRAY_INT_INDEX_SCALE);
     }

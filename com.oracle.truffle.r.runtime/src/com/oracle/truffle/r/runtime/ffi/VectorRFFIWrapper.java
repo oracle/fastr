@@ -539,11 +539,15 @@ public final class VectorRFFIWrapper implements TruffleObject {
             return vector;
         }
 
-        // TODO: Add naProfile?
         // TODO: Add other specializations
-        @Specialization
-        protected static Object doAltIntegerVector(RAltIntegerVec vector, int index, int value) {
-            vector.setDataAt(null, index, value);
+        @Specialization(limit = "1")
+        protected static Object doAltIntegerVector(RAltIntegerVec vector, int index, int value,
+                                                   @CachedLibrary("vector.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInterop,
+                                                   @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
+                                                   @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+            // TODO: Add dataptrAddrComputed binary profile.
+            long addr = vector.getDescriptor().invokeDataptrMethodCached(vector, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
+            NativeDataAccess.setData(vector, addr, index, value);
             return vector;
         }
 
