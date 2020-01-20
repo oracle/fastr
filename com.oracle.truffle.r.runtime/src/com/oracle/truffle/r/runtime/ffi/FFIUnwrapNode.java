@@ -56,7 +56,7 @@ public abstract class FFIUnwrapNode extends Node {
 
     @Specialization()
     public Object unwrap(NativeMirror x) {
-        return x.get();
+        return x.getDelegate();
     }
 
     @Specialization(guards = {"!isNativeMirror(x)", "interop.isPointer(x)"}, limit = "getInteropLibraryCacheSize()")
