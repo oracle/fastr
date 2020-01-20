@@ -324,15 +324,16 @@ public final class NativeDataAccess {
             toNative.execute(this);
         }
 
-        public long setExternalDataAddress(long address) {
+        public void setExternalDataAddress(long address) {
             this.dataAddress = NativeMemory.wrapExternalNativeMemory(address, delegate);
             if (dataAddressToNativeMirrors != null) {
                 addToAddressDebugMapping(address);
             }
-            return address;
         }
 
         long setDataAddress(long address) {
+            // use setExternalDataAddress for empty data address
+            assert address != getEmptyDataAddress();
             this.dataAddress = NativeMemory.wrapNativeMemory(address, delegate);
             if (dataAddressToNativeMirrors != null) {
                 addToAddressDebugMapping(address);
@@ -378,7 +379,7 @@ public final class NativeDataAccess {
         @TruffleBoundary
         void allocateNative(CharSXPWrapper[] wrappers) {
             if (wrappers.length == 0) {
-                setDataAddress(getEmptyDataAddress());
+                setExternalDataAddress(getEmptyDataAddress());
             } else {
                 long addr = setDataAddress(NativeMemory.allocate(wrappers.length * (long) Long.BYTES, "CharSXPWrapper"));
                 for (int i = 0; i < wrappers.length; i++) {
@@ -390,7 +391,7 @@ public final class NativeDataAccess {
         @TruffleBoundary
         void allocateNative(Object[] elements) {
             if (elements.length == 0) {
-                setDataAddress(getEmptyDataAddress());
+                setExternalDataAddress(getEmptyDataAddress());
             } else {
                 long addr = setDataAddress(NativeMemory.allocate(elements.length * (long) Long.BYTES, "SEXP array"));
                 for (int i = 0; i < elements.length; i++) {
