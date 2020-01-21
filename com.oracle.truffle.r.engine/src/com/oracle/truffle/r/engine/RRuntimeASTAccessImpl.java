@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -299,7 +299,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             // The only child of the RootBodyNode that is instrumentable should be the body.
             // Any other child of RootBodyNode should not be instrumentable, e.g. SaveArgumentsNode,
             // etc.
-            return node.getParent() instanceof RootBodyNode;
+            return RASTUtils.unwrapParent(node) instanceof RootBodyNode;
         }
         if (node instanceof RootBodyNode) {
             return (tag == RootTag.class);
