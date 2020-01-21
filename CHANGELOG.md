@@ -1,15 +1,40 @@
 # 20.0.0
 
+New features:
+
+* clean-up of the `Makeconf` files shipped with FastR in the `etc` directory:
+  * `Makeconf.llvm` makes use of the newly available tools in the Labs LLVM Toolchain (`ar` and `ranlib`)
+  * `Makeconf.native` contains only generic configuration for Linux/MacOS (with GCC toolchain installed)
+  * both files recognize following environment variables:
+    * `PKG_LDFLAGS_OVERRIDE` intended for adding library directories for the linker, but may contain any linker flags, e.g., `-L/path/to/library/which/is/not/in/my/os/default/search/path`
+    * `PKG_INCLUDE_FLAGS_OVERRIDE` intended for addding include directories, but may contain any compiler flags
+    * Note: `Makeconf.llvm` is also used as the default `Makeconf` file, you can change that by using `fastr.setToolchain('native')` (not a new feature in this release)
+    * Note: instead of exporting `PKG_LDFLAGS_OVERRIDE` or `PKG_INCLUDE_FLAGS_OVERRIDE`, you can also edit the Makeconf file
+* implement the "parse with named arguments" Truffle API available to Truffle instruments
+* use the `RootBodyTag` to tag function bodies for Truffle instrumentation
+
 Added missing R builtins and C APIs
 
 * subsetting an array by numeric/string matrix
 * ported all external C functions used by `nlm` (#100) and `fisher.test` from the `stats` base package
+* Rf_asS4 C API function #118
+* `serializeInfoFromConn` and `loadInfoFromConn2` internal builtins
 
 Bug fixes:
 
-* polyglot value is not an object (#123)
-* incorrect formatting for sprintf %g and %G: trailing zeroes (#126)
-* Rf_asS4
+* fixed: `polyglot.value` is not an object #123
+  * `polyglot.value` is now treated as explicit and not implicit class
+  * one of the implications is that internal generic dispatch works with `polyglot.value` #122
+* can't assign class to polyglot value #124
+* incorrect formatting for sprintf %g and %G: trailing zeroes #126
+* support for remote workers with fastRCluster package #113
+* bug in variable lookup when a package removes one of its variables using `rm` during `.onLoad`
+* Rf_eval: when the argument is a pair-list do not execute it like a language object
+* fixed cross-product (`%*%`) for scalar complex values
+* fixed `dirname('.')` and `dirname('/')` to give `'.'` and `'/'`
+* `list2env` handles duplicated elements correctly
+* properly propagate exit code from the launchers (`R` and `Rscript`)
+
 
 # 19.3.0
 
