@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,11 +52,18 @@ public final class TruffleMixed_Context extends RFFIContext {
     private final TruffleNFI_Context nfiContext;
 
     TruffleMixed_Context(RFFIContextState rffiContextState) {
-        super(rffiContextState, new TruffleMixed_C(), new BaseRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE, TruffleNFI_DownCallNodeFactory.INSTANCE), new TruffleMixed_Call(), new TruffleMixed_DLL(),
+        super(rffiContextState, new TruffleMixed_C(),
+                        createBaseDowncallNode(),
+                        new TruffleMixed_Call(),
+                        new TruffleMixed_DLL(),
                         new TruffleLLVM_UserRng(),
-                        new ZipRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
-                        new LapackRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new StatsRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
-                        new ToolsRFFI(), new REmbedRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new MiscRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE));
+                        new ZipRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
+                        new PCRERFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
+                        new LapackRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
+                        createStatsDowncallNode(),
+                        new ToolsRFFI(),
+                        new REmbedRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
+                        new MiscRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE));
         llvmContext = new TruffleLLVM_Context(rffiContextState) {
             @Override
             protected void addLibRToDLLContextState(RContext context, DLLInfo libR) {
@@ -73,6 +80,15 @@ public final class TruffleMixed_Context extends RFFIContext {
             }
         };
 
+    }
+
+    private static StatsRFFI createStatsDowncallNode() {
+        return new StatsRFFI(RContext.getInstance().isLLVMPackage("stats") ? TruffleLLVM_DownCallNodeFactory.INSTANCE : TruffleNFI_DownCallNodeFactory.INSTANCE);
+    }
+
+    private static BaseRFFI createBaseDowncallNode() {
+        return RContext.getInstance().isLLVMPackage("base") ? new BaseRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE, TruffleNFI_DownCallNodeFactory.INSTANCE)
+                        : new BaseRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE, TruffleNFI_DownCallNodeFactory.INSTANCE);
     }
 
     @Override

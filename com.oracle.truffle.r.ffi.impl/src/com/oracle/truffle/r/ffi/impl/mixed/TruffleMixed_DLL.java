@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,6 @@ package com.oracle.truffle.r.ffi.impl.mixed;
 
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage;
-import java.util.HashSet;
-import java.util.Set;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -38,7 +36,6 @@ import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLLFactory.TruffleMixed_
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLLFactory.TruffleMixed_DLSymNodeGen;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
-import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -51,47 +48,7 @@ public class TruffleMixed_DLL implements DLLRFFI {
     private final TruffleLLVM_DLL llvmDllRFFI = new TruffleLLVM_DLL();
     private final TruffleNFI_DLL nfiDllRFFI = new TruffleNFI_DLL();
 
-    private final Set<String> explicitPackages;
-    private final boolean isLLVMDefault;
-
     TruffleMixed_DLL() {
-        if ("llvm".equals(System.getenv().get("FASTR_RFFI"))) {
-            isLLVMDefault = true;
-            explicitPackages = java.util.Collections.emptySet();
-        } else {
-            String backendOpt = RContext.getInstance().getOption(FastROptions.BackEnd);
-            String explicitPkgsOpt;
-            if ("native".equals(backendOpt)) {
-                isLLVMDefault = false;
-                explicitPkgsOpt = RContext.getInstance().getOption(FastROptions.BackEndLLVM);
-            } else {
-                // llvm
-                isLLVMDefault = true;
-                explicitPkgsOpt = RContext.getInstance().getOption(FastROptions.BackEndNative);
-            }
-
-            String[] explicitPkgsOptSplit = explicitPkgsOpt == null ? null : explicitPkgsOpt.split(",");
-            if (explicitPkgsOptSplit == null || explicitPkgsOptSplit.length == 0) {
-                explicitPackages = java.util.Collections.emptySet();
-            } else {
-                explicitPackages = new HashSet<>();
-                for (String pkg : explicitPkgsOptSplit) {
-                    explicitPackages.add(pkg);
-                }
-            }
-        }
-    }
-
-    boolean isLLVMPackage(TruffleFile libPath) {
-        if (explicitPackages.isEmpty()) {
-            return isLLVMDefault;
-        }
-
-        assert libPath != null;
-        String libName = libPath.getName();
-        libName = libName.substring(0, libName.lastIndexOf('.'));
-        boolean isExplicitPkg = explicitPackages.contains(libName);
-        return isExplicitPkg ^ isLLVMDefault;
     }
 
     @Override
@@ -113,10 +70,8 @@ public class TruffleMixed_DLL implements DLLRFFI {
 
         private final DLOpenNode llvmDllOpenNode;
         private final DLOpenNode nfiDllOpenNode;
-        private final TruffleMixed_DLL dllRffi;
 
         TruffleMixed_DLOpenNode(TruffleMixed_DLL dllRffi) {
-            this.dllRffi = dllRffi;
             this.llvmDllOpenNode = dllRffi.llvmDllRFFI.createDLOpenNode();
             this.nfiDllOpenNode = dllRffi.nfiDllRFFI.createDLOpenNode();
         }
@@ -124,12 +79,13 @@ public class TruffleMixed_DLL implements DLLRFFI {
         @Specialization
         public LibHandle exec(String path, boolean local, boolean now,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) throws UnsatisfiedLinkError {
-            TruffleFile libPath = ctxRef.get().getSafeTruffleFile(path);
+            RContext context = ctxRef.get();
+            TruffleFile libPath = context.getSafeTruffleFile(path);
             if (!libPath.exists()) {
                 throw new UnsatisfiedLinkError(String.format("Shared library %s not found", path));
             }
 
-            boolean useLLVM = dllRffi.isLLVMPackage(libPath);
+            boolean useLLVM = context.isLLVMPackage(libPath);
 
             LibHandle nfiLibHandle = nfiDllOpenNode.execute(path, local, now);
             if (useLLVM) {
