@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -132,10 +132,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     @CompilationFinal private FrameSlot handlerStackSlot;
     @CompilationFinal private FrameSlot restartStackSlot;
 
-    /**
-     * Profiling for catching {@link ReturnException}s.
-     */
-    private final ConditionProfile returnTopLevelProfile = ConditionProfile.createBinaryProfile();
+    // Profiling for catching ReturnException thrown from an exit handler
+    @CompilationFinal private ConditionProfile returnTopLevelProfile;
 
     public static FunctionDefinitionNode create(TruffleRLanguage language, SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments,
                     RSyntaxNode body,
@@ -288,15 +286,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             }
             return result;
         } catch (ReturnException ex) {
-            if (returnTopLevelProfile.profile(ex.getTarget() == RArguments.getCall(frame))) {
-                Object result = ex.getResult();
-                if (CompilerDirectives.inInterpreter() && result == null) {
-                    throw RInternalError.shouldNotReachHere("invalid null from ReturnException.getResult() of " + this);
-                }
-                return result;
-            } else {
-                throw ex;
-            }
+            // here we just re-throw, the check whether this function is the target of the return is
+            // done in the function body node
+            throw ex;
         } catch (BreakException e) {
             breakProfile.enter();
             throw e;
@@ -391,7 +383,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                             }
                         }
                     } catch (ReturnException ex) {
-                        if (returnTopLevelProfile.profile(ex.getTarget() == RArguments.getCall(frame))) {
+                        if (profileReturnToTopLevel(ex.getTarget() == RArguments.getCall(frame))) {
                             return ex.getResult();
                         } else {
                             throw ex;
@@ -403,6 +395,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                 }
             }
         }
+    }
+
+    public boolean profileReturnToTopLevel(boolean condition) {
+        if (returnTopLevelProfile == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            returnTopLevelProfile = ConditionProfile.createBinaryProfile();
+        }
+        return returnTopLevelProfile.profile(condition);
     }
 
     private static RPairList getCurrentOnExitList(VirtualFrame frame, FrameSlot slot) {

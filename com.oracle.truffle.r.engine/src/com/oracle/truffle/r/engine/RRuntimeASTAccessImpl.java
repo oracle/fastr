@@ -299,7 +299,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             // The only child of the RootBodyNode that is instrumentable should be the body.
             // Any other child of RootBodyNode should not be instrumentable, e.g. SaveArgumentsNode,
             // etc.
-            return node.getParent() instanceof RootBodyNode;
+            return RASTUtils.unwrapParent(node) instanceof RootBodyNode;
         }
         if (node instanceof RootBodyNode) {
             return (tag == RootTag.class);
