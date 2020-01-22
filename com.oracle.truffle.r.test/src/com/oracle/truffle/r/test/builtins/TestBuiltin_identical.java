@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -287,7 +287,14 @@ public class TestBuiltin_identical extends TestBase {
     @Test
     public void testDoubles() {
         assertEval(template("identical(%0, num.eq=%1, single.NA=%2)", new String[][]{
-                        new String[]{"NA, NA", "NaN, NaN", "0/0, NaN", "0/-1, NaN"},
+                        new String[]{"NA_real_, NA_real_", "NaN, NaN", "0/0, NaN", "0/0, NA_real_", "0/-1, NaN"},
+                        new String[]{"T", "F"},
+                        new String[]{"T", "F"}
+        }));
+
+        assertEval(template("identical(%0, num.eq=%1, single.NA=%2)", new String[][]{
+                        new String[]{"c(NA_real_, NA_real_), c(NA_real_, NA_real_)", "c(NaN, NaN), c(NaN, NaN)", "c(0/0, 0/0), c(NaN, NaN)", "c(0/0, 0/0), c(NA_real_, NA_real_)",
+                                        "c(0/-1, 0/-1), c(NaN, NaN)"},
                         new String[]{"T", "F"},
                         new String[]{"T", "F"}
         }));
