@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -255,26 +255,7 @@ public final class Identical extends RBuiltinNode.Arg8 {
         @Specialization
         protected byte doInternalIdentical(double x, double y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref,
                         int depth) {
-            if (singleNA) {
-                if (RRuntime.isNA(x)) {
-                    return RRuntime.asLogical(RRuntime.isNA(y));
-                } else if (RRuntime.isNA(y)) {
-                    return RRuntime.LOGICAL_FALSE;
-                } else if (Double.isNaN(x)) {
-                    return RRuntime.asLogical(Double.isNaN(y));
-                } else if (Double.isNaN(y)) {
-                    return RRuntime.LOGICAL_FALSE;
-                }
-            }
-            if (numEq) {
-                if (!singleNA) {
-                    if (Double.isNaN(x) || Double.isNaN(y)) {
-                        return RRuntime.asLogical(Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y));
-                    }
-                }
-                return RRuntime.asLogical(x == y);
-            }
-            return RRuntime.asLogical(Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y));
+            return identical(x, y, numEq, singleNA);
         }
 
         @SuppressWarnings("unused")
@@ -338,12 +319,19 @@ public final class Identical extends RBuiltinNode.Arg8 {
                         boolean ignoreSrcref, int depth,
                         @Cached("createBinaryProfile()") ConditionProfile vecLengthProfile,
                         @Cached("createBinaryProfile()") ConditionProfile differentTypesProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile isDoubleProfile,
                         @Cached(value = "createOrGet(depth)", uncached = "getUncached()") IdenticalRecursiveAttrNode identicalRecursiveAttrNode) {
             if (vecLengthProfile.profile(x.getLength() != y.getLength()) || differentTypesProfile.profile(x.getRType() != y.getRType())) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
                 for (int i = 0; i < x.getLength(); i++) {
-                    if (!x.getDataAtAsObject(i).equals(y.getDataAtAsObject(i))) {
+                    Object xValue = x.getDataAtAsObject(i);
+                    Object yValue = y.getDataAtAsObject(i);
+                    if (isDoubleProfile.profile(xValue instanceof Double)) {
+                        if (identical((double) xValue, (double) yValue, numEq, singleNA) == RRuntime.LOGICAL_FALSE) {
+                            return RRuntime.LOGICAL_FALSE;
+                        }
+                    } else if (!xValue.equals(yValue)) {
                         return RRuntime.LOGICAL_FALSE;
                     }
                 }
@@ -500,6 +488,29 @@ public final class Identical extends RBuiltinNode.Arg8 {
 
         public static IdenticalInternal create() {
             return IdenticalInternalNodeGen.create();
+        }
+
+        private static byte identical(double x, double y, boolean numEq, boolean singleNA) {
+            if (singleNA) {
+                if (RRuntime.isNA(x)) {
+                    return RRuntime.asLogical(RRuntime.isNA(y));
+                } else if (RRuntime.isNA(y)) {
+                    return RRuntime.LOGICAL_FALSE;
+                } else if (Double.isNaN(x)) {
+                    return RRuntime.asLogical(Double.isNaN(y));
+                } else if (Double.isNaN(y)) {
+                    return RRuntime.LOGICAL_FALSE;
+                }
+            }
+            if (numEq) {
+                if (!singleNA) {
+                    if (Double.isNaN(x) || Double.isNaN(y)) {
+                        return RRuntime.asLogical(Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y));
+                    }
+                }
+                return RRuntime.asLogical(x == y);
+            }
+            return RRuntime.asLogical(Double.doubleToRawLongBits(x) == Double.doubleToRawLongBits(y));
         }
 
     }
