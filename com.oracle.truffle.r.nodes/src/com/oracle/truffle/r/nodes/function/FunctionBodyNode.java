@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,18 +23,22 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S4Args;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.RootBodyNode;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -46,6 +50,10 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
     @Child private SetupS3ArgsNode setupS3Args;
     @Child private SetupS4ArgsNode setupS4Args;
 
+    // Profiling for catching ReturnException
+    private final BranchProfile returnExceptionProfile = BranchProfile.create();
+    @CompilationFinal private ConditionProfile returnTopLevelProfile;
+
     public FunctionBodyNode(SaveArgumentsNode saveArguments, RNode body) {
         this.body = body;
         this.saveArguments = saveArguments;
@@ -53,9 +61,23 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
 
     @Override
     public Object visibleExecute(VirtualFrame frame) {
-        setupDispatchSlots(frame);
-        saveArguments.execute(frame);
-        return body.visibleExecute(frame);
+        try {
+            setupDispatchSlots(frame);
+            saveArguments.execute(frame);
+            return body.visibleExecute(frame);
+        } catch (ReturnException ex) {
+            returnExceptionProfile.enter();
+            if (profileReturnToTopLevel(ex.getTarget() == RArguments.getCall(frame))) {
+                Object result = ex.getResult();
+                if (CompilerDirectives.inInterpreter() && result == null) {
+                    throw RInternalError.shouldNotReachHere("invalid null from ReturnException.getResult() of " + this);
+                }
+                return result;
+            } else {
+                // re-thrown until it reaches its target
+                throw ex;
+            }
+        }
     }
 
     @Override
@@ -66,6 +88,14 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
     @Override
     public SourceSection getSourceSection() {
         return body.getSourceSection();
+    }
+
+    public boolean profileReturnToTopLevel(boolean condition) {
+        if (returnTopLevelProfile == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            returnTopLevelProfile = ConditionProfile.createBinaryProfile();
+        }
+        return returnTopLevelProfile.profile(condition);
     }
 
     private void setupDispatchSlots(VirtualFrame frame) {

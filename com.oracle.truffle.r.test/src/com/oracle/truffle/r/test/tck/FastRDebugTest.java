@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -589,6 +589,38 @@ public class FastRDebugTest {
         // Expected: assertLocation(3, 10, SuspendAnchor.AFTER, "bar <- 24", false, true, "x", 42);
         continueExecution();
 
+        performWork();
+        context.eval(source);
+        assertExecutedOK();
+    }
+
+    @Test
+    public void testStepOut() throws Throwable {
+        final Source source = sourceFromText("fnc <- function() {\n" +
+                        "  x <- 10L\n" +
+                        "  return(x + 10)\n" +
+                        "}\n" +
+                        "fnc() + fnc()\n",
+                        "test.r");
+        context.eval(source);
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.setSteppingFilter(SuspensionFilter.newBuilder().ignoreLanguageContextInitialization(true).build());
+            debuggerSession.suspendNextExecution();
+        });
+        assertLocation(1, "fnc <- function() {");
+        stepOver(1);
+        assertLocation(5, "fnc() + fnc()");
+        stepInto(1);
+        assertLocation(2, "x <- 10L");
+        stepOver(1);
+        assertLocation(3, "return(x + 10)");
+        stepOut();
+        assertLocation(5, "fnc()");
+        stepInto(1);
+        assertLocation(2, "x <- 10L");
+        continueExecution();
         performWork();
         context.eval(source);
         assertExecutedOK();

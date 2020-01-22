@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
@@ -75,7 +75,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object R_alloc(int n, int size) {
-        long result = UnsafeAdapter.UNSAFE.allocateMemory(n * size);
+        long result = NativeMemory.allocate(n * size, "R_alloc");
         getContext().transientAllocations.peek().add(result);
         return result;
     }

@@ -32,6 +32,7 @@ import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import sun.misc.Unsafe;
 
 /**
@@ -141,7 +142,7 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
     @TruffleBoundary
     @Override
     protected final long allocateNative() {
-        long nativeAddress = UNSAFE.allocateMemory(effectiveLength);
+        long nativeAddress = NativeMemory.allocate(effectiveLength, "NativeUInt8Array");
         UNSAFE.copyMemory(array, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, nativeAddress, array.length);
         if (fakesNullTermination()) {
             UNSAFE.putByte(nativeAddress + array.length, (byte) 0);
