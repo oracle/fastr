@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -20,12 +20,23 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
+
+# Note: this is a standanlone Python script not run in MX.
+# It is called from a Makefile, which itself is invoked by MX,
+# so by this script not being based on MX, we are avoiding a recursive MX invocaation.
+
 import os
 import platform
 import subprocess
 import shutil
-import mx
-import mx_fastr
+import sys
+
+def log(message):
+    print(message)  # pylint: disable=superfluous-parens
+
+def abort(message):
+    print("ERROR: " + message)  # pylint: disable=superfluous-parens
+    sys.exit(1)
 
 def _darwin_extract_realpath(lib, libpath):
     '''
@@ -40,7 +51,7 @@ def _darwin_extract_realpath(lib, libpath):
                 return parts[0].strip()
         return None
     except subprocess.CalledProcessError:
-        mx.abort('copylib: otool failed')
+        abort('copylib: otool failed')
 
 def _copylib(lib, libpath, plain_libpath_base, target):
     '''
@@ -61,7 +72,7 @@ def _copylib(lib, libpath, plain_libpath_base, target):
                     ix = line.find('lib' + lib + '.')
                     real_libpath = os.path.join(os.path.dirname(libpath), line[ix:])
         except subprocess.CalledProcessError:
-            mx.abort('copylib: otool failed')
+            abort('copylib: otool failed')
     # copy both files
     has_rpath = real_libpath.startswith('@rpath')
     if has_rpath:
@@ -69,26 +80,26 @@ def _copylib(lib, libpath, plain_libpath_base, target):
     else:
         source_libpath = real_libpath
     shutil.copyfile(source_libpath, os.path.join(target, os.path.basename(source_libpath)))
-    mx.log('Copylib: copied ' + lib + ' library from ' + source_libpath + ' to ' + target + ', real_libpath=' + real_libpath)
+    log('Copylib: copied ' + lib + ' library from ' + source_libpath + ' to ' + target + ', real_libpath=' + real_libpath)
     os.chdir(target)
-    mx.log('Copylib: plain_libpath_base: ' + plain_libpath_base + ', libpath: ' + libpath + ', source_libpath: ' + source_libpath)
+    log('Copylib: plain_libpath_base: ' + plain_libpath_base + ', libpath: ' + libpath + ', source_libpath: ' + source_libpath)
     if not has_rpath:
         if os.path.basename(real_libpath) != plain_libpath_base:
             # create a symlink, e.g. libgfortran.so -> libgfortran.so.3 (the real library, with version number)
             # this also allows liking with simple -lgfortran
             if os.path.exists(plain_libpath_base):
                 os.remove(plain_libpath_base)
-            mx.log('Copylib: ln -s ' + os.path.basename(real_libpath) + ' ' + plain_libpath_base)
+            log('Copylib: ln -s ' + os.path.basename(real_libpath) + ' ' + plain_libpath_base)
             os.symlink(os.path.basename(real_libpath), plain_libpath_base)
         # On Darwin we change the id to use @rpath
         if platform.system() == 'Darwin':
             try:
-                mx.log('install_name_tool -id @rpath/' + plain_libpath_base + ' ' + plain_libpath_base)
+                log('install_name_tool -id @rpath/' + plain_libpath_base + ' ' + plain_libpath_base)
                 subprocess.check_call(['install_name_tool', '-id', '@rpath/' + plain_libpath_base, plain_libpath_base])
-                mx.log('install_name_tool --add_rpath @loader_path/ ' + plain_libpath_base)
+                log('install_name_tool --add_rpath @loader_path/ ' + plain_libpath_base)
                 subprocess.check_call(['install_name_tool', '-add_rpath', '@loader_path/', plain_libpath_base])
             except subprocess.CalledProcessError:
-                mx.abort('copylib: install_name_tool failed')
+                abort('copylib: install_name_tool failed')
 
 def copylib(args):
     '''
@@ -106,7 +117,7 @@ def copylib(args):
     If PKG_LDFLAGS_OVERRIDE is unset, we assume the libraries are located in the system directories
     and do nothing.
     '''
-    mx.log('Running: mx copylib ' + ' '.join(args))
+    log('Running: mx copylib ' + ' '.join(args))
     if 'PKG_LDFLAGS_OVERRIDE' in os.environ:
         parts = os.environ['PKG_LDFLAGS_OVERRIDE'].split(' ')
         ext = 'dylib' if platform.system() == 'Darwin' else 'so'
@@ -118,12 +129,12 @@ def copylib(args):
         plain_libpath_base = lib_prefix + ext
         for part in parts:
             path = part.strip('"').lstrip('-L')
-            mx.log("Copylib: searching path '" + path + "' for library " + lib_name)
+            log("Copylib: searching path '" + path + "' for library " + lib_name)
             if os.path.exists(path):
                 for f in os.listdir(path):
                     if f.startswith(lib_prefix):
                         has_plain = os.path.exists(os.path.join(path, plain_libpath_base))
-                        mx.log("Copylib: found library " + lib_name + " as '" + f + "', plain (w/o version number) variant found: " + str(has_plain))
+                        log("Copylib: found library " + lib_name + " as '" + f + "', plain (w/o version number) variant found: " + str(has_plain))
                         if has_plain:
                             f = plain_libpath_base
                         target_dir = args[1]
@@ -131,7 +142,7 @@ def copylib(args):
                         if not os.path.exists(os.path.join(target_dir, f)):
                             if os.path.islink(target):
                                 link_target = os.path.join(path, os.readlink(target))
-                                mx.log('link target: ' + link_target)
+                                log('link target: ' + link_target)
                                 if link_target == '/usr/lib/libSystem.B.dylib' or link_target == '/usr/lib/libSystem.dylib':
                                     # simply copy over the link to the system library
                                     os.symlink(link_target, os.path.join(target_dir, plain_libpath_base))
@@ -140,16 +151,13 @@ def copylib(args):
                         return 0
 
     if 'FASTR_RELEASE' in os.environ:
-        # if args[0] == 'quadmath' and (mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris'):
-        if mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris':
-            return 0
         if os.environ.get('FASTR_RELEASE') == 'dev':
-            mx.log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
-            mx.log('the resulting FastR release build will not be portable to another system')
+            log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
+            log('the resulting FastR release build will not be portable to another system')
         else:
-            mx.abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
+            abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
 
-    mx.log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, assuming system location')
+    log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, assuming system location')
     return 0
 
 def updatelib(args):
@@ -159,11 +167,15 @@ def updatelib(args):
     args:
       0 directory containing libs to patch (and may also contain the patchees)
     '''
+    if len(args) != 2:
+        abort("updatelib: wrong number of arguments, provide 2 arguments: library directory to be patched and FastR home path")
+
     # These are not captured
     ignore_list = ['R', 'Rblas', 'Rlapack', 'jniboot']
 
-    fastr_libdir = os.path.join(mx_fastr._fastr_suite.dir, 'lib')
-
+    fastr_libdir = os.path.join(args[1], 'lib')
+    if not (os.path.exists(fastr_libdir) and os.path.exists(fastr_libdir)):
+        abort("updatelib: the second argument does not seem to be FastR home")
 
     def locally_built(name):
         for ignore in ignore_list:
@@ -204,4 +216,19 @@ def updatelib(args):
                     cmd = ['install_name_tool', '-change', real_libpath, '@rpath/' + cap_lib, targetlib]
                     subprocess.check_call(cmd)
             except subprocess.CalledProcessError:
-                mx.abort('update: install_name_tool failed')
+                abort('update: install_name_tool failed')
+
+def main(args):
+    def arg_error():
+        abort("copylib.py: expecting 'copylib' or 'updatelib' as the first argument")
+
+    if len(args) < 1:
+        arg_error()
+    command = args[0]
+    if command == "copylib":
+        copylib(args[1:])
+    elif command == "updatelib":
+        updatelib(args[1:])
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

@@ -101,7 +101,7 @@ The code extracted by all scripts and some other stuff is stored into `../platfo
 #### `Makefile.libs`
 
 * Copies the `Blas` and `lapack` libraries from `$(GNUR_HOME_BINARY)/src`. Also copies: `pcre`, `z`, `gfortran`, `quadmath` and `gcc_s` (from various system locations)
-* Invokes `mx rcopylib` to copy individual libraries. (The `rcopylib` function is in `mx.fastr/mx_copylib.py`).
+* Invokes the `mx.fastr/copylib.py` script to copy individual libraries. (The `rcopylib` function is in `mx.fastr/copylib.py`).
 * On OS X it uses `install_name_tool` to set the library paths
 * Note: `rcopylib.done`, a "sentinel" file, indicates that dependencies were checked (and possibly copied)
 * Note: `FASTR_LIB_DIR` contains binary dependencies (dynamic libraries) that are not found in the standard system locations
@@ -145,7 +145,7 @@ to the corresponding FFI subdirectory (except the `managed` FFI).
 Then the dynamic library `libR` is built from the object files made in the previous step, which are stored into `lib`.
 
 In the end, on Darwin, the installation paths of `libRblas.dylib`, `libRlapack.dylib` and `libR.dylib` are updated 
-using `install_name_tool`. Also the paths of `libpcre` and `libz` are updated using `mx rupdatelib` (defined in `mx.fastr/mx_copylib.py`).
+using `install_name_tool`. Also the paths of `libpcre` and `libz` are updated using `mx.fastr/copylib.py updatelib` command (defined in `mx.fastr/mx_copylib.py`).
 
 #### Building `common` FFI
 
