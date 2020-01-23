@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -2040,14 +2040,18 @@ public class TestBuiltin_operators extends TestBase {
     }
 
     private static final String[] INT_MAX_VALUES = new String[]{"2147483647L", "2147483648"};
+    private static final String[] INT_MAX_VALUES_VEC = new String[]{"c(2147483647L, 2147483647L)", "c(2147483648, 2147483648)"};
     // note that java's Integer.MIN_VALUE -2147483648 isn't an integer in GNUR
     private static final String[] INT_MIN_VALUES = new String[]{"-2147483647L", "-2147483648", "-2147483649"};
+    private static final String[] INT_MIN_VALUES_VEC = new String[]{"c(-2147483647L, -2147483647L)", "c(-2147483648, -2147483648)", "c(-2147483649, -2147483649)"};
 
     // borderline cases between integer and double
     @Test
     public void testColonIntAndDouble() {
         assertColon(INT_MAX_VALUES);
+        assertColon(INT_MAX_VALUES_VEC);
         assertColon(INT_MIN_VALUES);
+        assertColon(INT_MIN_VALUES_VEC);
     }
 
     private void assertColon(String[] parameters) {
