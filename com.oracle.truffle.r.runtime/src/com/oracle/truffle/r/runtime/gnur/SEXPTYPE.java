@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.closures.RToComplexVectorClosure;
-import com.oracle.truffle.r.runtime.data.closures.RToDoubleVectorClosure;
 import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -72,7 +71,7 @@ public enum SEXPTYPE {
     /* integer vectors */
     INTSXP(13, RIntVector.class, Integer.class),
     /* real vectors */
-    REALSXP(14, RDoubleVector.class, RDoubleSequence.class, Double.class, RToDoubleVectorClosure.class),
+    REALSXP(14, RDoubleVector.class, RDoubleSequence.class, Double.class),
     /* complex vectors */
     CPLXSXP(15, RComplexVector.class, RComplex.class, RToComplexVectorClosure.class),
     /* string vectors */

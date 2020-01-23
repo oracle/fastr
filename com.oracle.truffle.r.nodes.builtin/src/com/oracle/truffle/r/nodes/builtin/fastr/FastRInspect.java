@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import java.io.IOException;
@@ -57,7 +58,11 @@ public abstract class FastRInspect extends RBuiltinNode.Arg2 {
         for (int i = 0; i < args.getLength(); i++) {
             Object arg = args.getArgument(i);
             if (RRuntime.fromLogical(inspectVectorData) && RRuntime.hasVectorData(arg)) {
-                writeString(((RIntVector) arg).getData().getClass().getName(), true);
+                if (arg instanceof RIntVector) {
+                    writeString(((RIntVector) arg).getData().getClass().getName(), true);
+                } else if (arg instanceof RDoubleVector) {
+                    writeString(((RDoubleVector) arg).getData().getClass().getName(), true);
+                }
             } else {
                 writeString(arg.getClass().getName(), true);
             }

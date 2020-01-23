@@ -1230,7 +1230,7 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testNoCopyOnCast() throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
         testNoCopyOnCast("integer", "RIntVecClosureData", new String[]{"fieldBooleanArray", "fieldDoubleArray", "fieldStringArray"});
-        testNoCopyOnCast("double", "RToDoubleVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldStringArray"});
+        testNoCopyOnCast("double", "RDoubleVecClosureData", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldStringArray"});
         testNoCopyOnCast("complex", "RToComplexVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray", "fieldStringArray"});
         testNoCopyOnCast("character", "RToStringVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray"});
     }
@@ -1244,7 +1244,8 @@ public class TestJavaInterop extends TestBase {
             } else {
                 assertEvalFastR(cmd, gnur);
             }
-            gnur = "RIntVecClosureData".equals(closure) ? "cat('com.oracle.truffle.r.runtime.data." + closure + "\n')" : "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')";
+            gnur = "RIntVecClosureData".equals(closure) || "RDoubleVecClosureData".equals(closure) ? "cat('com.oracle.truffle.r.runtime.data." + closure + "\n')"
+                            : "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')";
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as." + type + "(as.vector(to$" + field + ")), inspectVectorData=TRUE)", gnur);
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as.vector(as.vector(to$" + field + "), '" + type + "'), inspectVectorData=TRUE)", gnur);
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as.vector(as." + type + "(to$" + field + "), '" + type + "'), inspectVectorData=TRUE)", gnur);

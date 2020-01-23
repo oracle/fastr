@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
 import java.util.Arrays;
@@ -66,6 +67,16 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     public static RDoubleVector createForeignWrapper(Object foreign) {
         return new RDoubleVector(new RDoubleForeignObjData(foreign));
+    }
+
+    public static RDoubleVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
+        RDoubleVector result = new RDoubleVector(new RDoubleVecClosureData(delegate));
+        if (keepAttrs) {
+            result.initAttributes(delegate.getAttributes());
+        } else {
+            RClosures.initRegAttributes(result, delegate);
+        }
+        return result;
     }
 
     public RDoubleVectorData getData() {
@@ -107,6 +118,16 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
     @Override
     public boolean isForeignWrapper() {
         return data instanceof RDoubleForeignObjData;
+    }
+
+    @Override
+    public boolean isClosure() {
+        return data instanceof RDoubleVecClosureData;
+    }
+
+    @Override
+    public RClosure getClosure() {
+        return (RDoubleVecClosureData) data;
     }
 
     @Override
