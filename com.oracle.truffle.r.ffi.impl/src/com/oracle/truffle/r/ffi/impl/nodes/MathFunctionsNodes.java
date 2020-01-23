@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -40,7 +38,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
-import com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter;
+import com.oracle.truffle.r.runtime.ffi.util.ReadDoublePointerNode;
+import com.oracle.truffle.r.runtime.ffi.util.ReadIntPointerNode;
+import com.oracle.truffle.r.runtime.ffi.util.WritePointerNode;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nmath.BesselFunctions;
 import com.oracle.truffle.r.runtime.nmath.Beta;
@@ -58,66 +58,17 @@ public final class MathFunctionsNodes {
     @GenerateUncached
     public abstract static class RfPnormBothNode extends FFIUpCallNode.Arg5 {
 
-        @Specialization(limit = "getInteropLibraryCacheSize()")
+        @Specialization
         protected Object evaluate(double x, Object cum, Object ccum, int lowerTail, int logP,
-                        @CachedLibrary("cum") InteropLibrary cumInterop,
-                        @CachedLibrary("ccum") InteropLibrary ccumInterop) {
+                        @Cached ReadDoublePointerNode readCumNode,
+                        @Cached WritePointerNode writeCumNode,
+                        @Cached WritePointerNode writeCCumNode) {
             // cum is R/W double* with size==1 and ccum is Writeonly double* with size==1
-            double[] cumArr = new double[1];
+            double[] cumArr = new double[]{readCumNode.read(cum)};
             double[] ccumArr = new double[1];
-            long cumPtr;
-            long ccumPtr;
-            if (cumInterop.hasArrayElements(cum)) {
-                cumPtr = 0L;
-                try {
-                    cumArr[0] = ((Number) cumInterop.readArrayElement(cum, 0)).doubleValue();
-                } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
-            } else {
-                if (!cumInterop.isPointer(cum)) {
-                    cumInterop.toNative(cum);
-                }
-                try {
-                    cumPtr = cumInterop.asPointer(cum);
-                    cumArr[0] = UnsafeAdapter.UNSAFE.getDouble(cumPtr);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
-                }
-            }
-
-            if (cumInterop.hasArrayElements(cum)) {
-                ccumPtr = 0L;
-            } else {
-                try {
-                    if (!ccumInterop.isPointer(ccum)) {
-                        ccumInterop.toNative(ccum);
-                    }
-                    ccumPtr = ccumInterop.asPointer(ccum);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
-                }
-            }
-
             PnormBoth.evaluate(x, cumArr, ccumArr, lowerTail != 0, logP != 0);
-            if (cumPtr != 0L) {
-                UnsafeAdapter.UNSAFE.putDouble(cumPtr, cumArr[0]);
-            } else {
-                try {
-                    cumInterop.writeArrayElement(cum, 0, cumArr[0]);
-                } catch (InteropException e) {
-                    throw RInternalError.shouldNotReachHere("WRITE message support expected");
-                }
-            }
-            if (ccumPtr != 0L) {
-                UnsafeAdapter.UNSAFE.putDouble(ccumPtr, ccumArr[0]);
-            } else {
-                try {
-                    ccumInterop.writeArrayElement(ccum, 0, ccumArr[0]);
-                } catch (InteropException e) {
-                    throw RInternalError.shouldNotReachHere("WRITE message support expected");
-                }
-            }
+            writeCumNode.write(cum, cumArr[0]);
+            writeCCumNode.write(ccum, ccumArr[0]);
             return RNull.instance;
         }
 
@@ -253,40 +204,13 @@ public final class MathFunctionsNodes {
     @GenerateUncached
     public abstract static class LGammafnSignNode extends FFIUpCallNode.Arg2 {
 
-        @Specialization(limit = "getInteropLibraryCacheSize()")
+        @Specialization
         protected Object evaluate(double a, Object sgn,
-                        @CachedLibrary("sgn") InteropLibrary sgnInterop) {
-            int[] sgnArr = new int[1];
-            long sgnPtr;
-            if (sgnInterop.hasArrayElements(sgn)) {
-                sgnPtr = 0L;
-                try {
-                    sgnArr[0] = ((Number) sgnInterop.readArrayElement(sgn, 0)).intValue();
-                } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
-            } else {
-                if (!sgnInterop.isPointer(sgn)) {
-                    sgnInterop.toNative(sgn);
-                }
-                try {
-                    sgnPtr = sgnInterop.asPointer(sgn);
-                    sgnArr[0] = UnsafeAdapter.UNSAFE.getInt(sgnPtr);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
-                }
-            }
-
+                        @Cached WritePointerNode writePointerNode,
+                        @Cached ReadIntPointerNode readIntPointerNode) {
+            int[] sgnArr = new int[]{readIntPointerNode.execute(sgn, 0)};
             double result = GammaFunctions.lgammafnSign(a, sgnArr);
-            if (sgnPtr != 0L) {
-                UnsafeAdapter.UNSAFE.putInt(sgnPtr, sgnArr[0]);
-            } else {
-                try {
-                    sgnInterop.writeArrayElement(sgn, 0, sgnArr[0]);
-                } catch (InteropException e) {
-                    throw RInternalError.shouldNotReachHere("WRITE message support expected");
-                }
-            }
+            writePointerNode.execute(sgn, 0, sgnArr[0]);
             return result;
         }
 
@@ -303,105 +227,23 @@ public final class MathFunctionsNodes {
     @GenerateUncached
     public abstract static class DpsiFnNode extends FFIUpCallNode.Arg7 {
 
-        @Specialization(limit = "getInteropLibraryCacheSize()")
+        @Specialization
         protected Object evaluate(double x, int n, int kode, @SuppressWarnings("unused") int m, Object ans, Object nz, Object ierr,
-                        @CachedLibrary("ans") InteropLibrary ansInterop,
-                        @CachedLibrary("nz") InteropLibrary nzInterop,
-                        @CachedLibrary("ierr") InteropLibrary ierrInterop) {
+                        @Cached ReadDoublePointerNode readAns,
+                        @Cached ReadIntPointerNode readNz,
+                        @Cached ReadIntPointerNode readIErr,
+                        @Cached WritePointerNode writeAns,
+                        @Cached WritePointerNode writeNz,
+                        @Cached WritePointerNode writeIErr) {
             // ans is R/W double* size==1 and nz is R/W int* size==1
             // ierr is R/W int* size==1
-            double ansIn;
-            int nzIn;
-            int ierrIn;
-            long ansPtr;
-            if (ansInterop.hasArrayElements(ans)) {
-                ansPtr = 0L;
-                try {
-                    ansIn = ((Number) ansInterop.readArrayElement(ans, 0)).doubleValue();
-                } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
-            } else {
-                if (!ansInterop.isPointer(ans)) {
-                    ansInterop.toNative(ans);
-                }
-                try {
-                    ansPtr = ansInterop.asPointer(ans);
-                    ansIn = UnsafeAdapter.UNSAFE.getDouble(ansPtr);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
-                }
-            }
-
-            long nzPtr;
-            if (nzInterop.hasArrayElements(nz)) {
-                nzPtr = 0L;
-
-                try {
-                    nzIn = ((Number) nzInterop.readArrayElement(nz, 0)).intValue();
-                } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
-            } else {
-                if (!nzInterop.isPointer(nz)) {
-                    nzInterop.toNative(nz);
-                }
-                try {
-                    nzPtr = nzInterop.asPointer(nz);
-                    nzIn = UnsafeAdapter.UNSAFE.getInt(nzPtr);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
-                }
-            }
-
-            long ierrPtr;
-            if (ierrInterop.hasArrayElements(ierr)) {
-                ierrPtr = 0L;
-                try {
-                    ierrIn = ((Number) ierrInterop.readArrayElement(ierr, 0)).intValue();
-                } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
-            } else {
-                if (!ierrInterop.isPointer(ierr)) {
-                    ierrInterop.toNative(ierr);
-                }
-                try {
-                    ierrPtr = ierrInterop.asPointer(ierr);
-                    ierrIn = UnsafeAdapter.UNSAFE.getInt(ierrPtr);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
-                }
-            }
-
+            double ansIn = readAns.read(ans);
+            int nzIn = readNz.read(nz);
+            int ierrIn = readIErr.read(ierr);
             GammaFunctions.DpsiFnResult result = GammaFunctions.dpsifn(x, n, kode, ansIn, nzIn, ierrIn);
-            if (ansPtr != 0L) {
-                UnsafeAdapter.UNSAFE.putDouble(ansPtr, result.ans);
-            } else {
-                try {
-                    ansInterop.writeArrayElement(ans, 0, result.ans);
-                } catch (InteropException e) {
-                    throw RInternalError.shouldNotReachHere("WRITE message support expected");
-                }
-            }
-            if (nzPtr != 0L) {
-                UnsafeAdapter.UNSAFE.putInt(nzPtr, result.nz);
-            } else {
-                try {
-                    nzInterop.writeArrayElement(nz, 0, result.nz);
-                } catch (InteropException e) {
-                    throw RInternalError.shouldNotReachHere("WRITE message support expected");
-                }
-            }
-            if (ierrPtr != 0L) {
-                UnsafeAdapter.UNSAFE.putInt(ierrPtr, result.ierr);
-            } else {
-                try {
-                    ierrInterop.writeArrayElement(ierr, 0, result.ierr);
-                } catch (InteropException e) {
-                    throw RInternalError.shouldNotReachHere("WRITE message support expected");
-                }
-            }
+            writeAns.write(ans, result.ans);
+            writeNz.write(nz, result.nz);
+            writeIErr.write(ierr, result.ierr);
             return RNull.instance;
         }
 

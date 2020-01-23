@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-import sun.misc.Unsafe;
+import static com.oracle.truffle.r.runtime.ffi.util.NativeMemory.OBJECT_HEADER_SIZE;
+import static com.oracle.truffle.r.runtime.ffi.util.NativeMemory.OBJECT_SIZE;
 
 /**
  * Support for the sizing of the objects that flow through the interpreter, i.e., mostly
@@ -55,8 +56,6 @@ public class RObjectSize {
     public static final int BYTE_SIZE = 1;
 
     private static final int CHAR_SIZE = 2;
-    private static final int OBJECT_SIZE = Unsafe.ARRAY_OBJECT_INDEX_SCALE;
-    private static final int OBJECT_HEADER_SIZE = Unsafe.ARRAY_BOOLEAN_BASE_OFFSET + OBJECT_SIZE * 2;
 
     /**
      * Returns an estimate of the size of the this object in bytes. This is a snapshot and the size

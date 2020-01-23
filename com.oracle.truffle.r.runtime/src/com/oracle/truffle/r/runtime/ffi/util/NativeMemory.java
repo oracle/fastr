@@ -29,9 +29,11 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
@@ -40,18 +42,40 @@ import org.graalvm.collections.EconomicSet;
 import sun.misc.Unsafe;
 
 /**
- * Thin layer abstraction over {@code sun.misc.Unsafe}.
- *
- * TODO: replace all usages of Unsafe with this (GR-20618)
+ * Thin layer abstraction over {@code sun.misc.Unsafe}. Raw native pointers can be wrapped using
+ * {@link #wrapNativeMemory(long, Object)} to ensure the clean-up of the memory once the owning
+ * object is collected.
  */
 public abstract class NativeMemory {
+
     private NativeMemory() {
         // only static members
     }
 
-    public static final Unsafe UNSAFE = initUnsafe();
+    public static final int OBJECT_SIZE = Unsafe.ARRAY_OBJECT_INDEX_SCALE;
+    public static final int OBJECT_HEADER_SIZE = Unsafe.ARRAY_BOOLEAN_BASE_OFFSET + OBJECT_SIZE * 2;
+
+    public enum ElementType {
+        BYTE(1, Unsafe.ARRAY_BYTE_BASE_OFFSET),
+        INT(Integer.BYTES, Unsafe.ARRAY_INT_BASE_OFFSET),
+        LONG(Long.BYTES, Unsafe.ARRAY_LONG_BASE_OFFSET),
+        DOUBLE(Double.BYTES, Unsafe.ARRAY_DOUBLE_BASE_OFFSET);
+
+        private final int bytes;
+        private final int offset;
+
+        ElementType(int bytes, int offset) {
+            this.bytes = bytes;
+            this.offset = offset;
+        }
+    }
+
+    private static final Unsafe UNSAFE = initUnsafe();
 
     private static Unsafe initUnsafe() {
+        assert Integer.BYTES == Unsafe.ARRAY_INT_INDEX_SCALE;
+        assert Double.BYTES == Unsafe.ARRAY_DOUBLE_INDEX_SCALE;
+        assert Long.BYTES == Unsafe.ARRAY_LONG_INDEX_SCALE;
         try {
             return Unsafe.getUnsafe();
         } catch (SecurityException se) {
@@ -72,6 +96,13 @@ public abstract class NativeMemory {
         return result;
     }
 
+    public static long allocate(ElementType type, long size, Object debugInfo) {
+        traceAllocateStart(size, debugInfo);
+        long result = UNSAFE.allocateMemory(size * type.bytes);
+        traceAllocate(result, size, debugInfo);
+        return result;
+    }
+
     public static void free(long address, Object debugInfo) {
         traceFree(address, debugInfo);
         UNSAFE.freeMemory(address);
@@ -82,8 +113,132 @@ public abstract class NativeMemory {
         return new FreeingNativeMemoryWrapper(address, owner);
     }
 
+    /**
+     * Allows to wrap native memory address in the same object as
+     * {@link #wrapNativeMemory(long, Object)}, but without cleaning-up the memory when the owning
+     * object is collected. This can be useful in places where {@link NativeMemoryWrapper} is
+     * expected but you do not have control over the life cycle of the given memory (i.e., it is
+     * externally owned).
+     */
     public static NativeMemoryWrapper wrapExternalNativeMemory(long address, Object owner) {
         return new ExternalNativeMemoryWrapper(address, owner);
+    }
+
+    public static void copyMemory(Object source, NativeMemoryWrapper destination, ElementType type, long elementsCount) {
+        copyMemory(source, type.offset, type.bytes, destination.getAddress(), elementsCount);
+    }
+
+    public static void copyMemory(Object source, long destination, ElementType type, long elementsCount) {
+        copyMemory(source, type.offset, type.bytes, destination, elementsCount);
+    }
+
+    private static void copyMemory(Object source, int elementBase, long elementSize, long destination, long elementsCount) {
+        // this takes relevant args as longs to make sure any calculations do not overflow
+        UNSAFE.copyMemory(source, elementBase, null, destination, elementSize * elementsCount);
+    }
+
+    public static void copyMemory(NativeMemoryWrapper source, Object destination, ElementType type, int elementsCount) {
+        copyMemory(source.getAddress(), type.offset, type.bytes, destination, elementsCount);
+    }
+
+    public static void copyMemory(long source, Object destination, ElementType type, int elementsCount) {
+        copyMemory(source, type.offset, type.bytes, destination, elementsCount);
+    }
+
+    private static void copyMemory(long source, int elementBase, int elementSize, Object destination, int elementsCount) {
+        // this takes relevant args as longs to make sure any calculations do not overflow
+        UNSAFE.copyMemory(null, source, destination, elementBase, (long) elementSize * (long) elementsCount);
+    }
+
+    public static void putByte(NativeMemoryWrapper address, long offset, byte value) {
+        putByte(address.getAddress(), offset, value);
+    }
+
+    public static void putByte(long address, long offset, byte value) {
+        UNSAFE.putByte(address + offset * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
+    }
+
+    public static void putInt(NativeMemoryWrapper address, long offset, int value) {
+        putInt(address.getAddress(), offset, value);
+    }
+
+    public static void putInt(long address, long offset, int value) {
+        UNSAFE.putInt(address + offset * Unsafe.ARRAY_INT_INDEX_SCALE, value);
+    }
+
+    public static void putLong(NativeMemoryWrapper address, long offset, long value) {
+        putLong(address.getAddress(), offset, value);
+    }
+
+    public static void putLong(long address, long offset, long value) {
+        UNSAFE.putLong(address + offset * Unsafe.ARRAY_LONG_INDEX_SCALE, value);
+    }
+
+    public static void putLong(long address, long value) {
+        putLong(address, 0, value);
+    }
+
+    public static void putDouble(NativeMemoryWrapper address, long offset, double value) {
+        putDouble(address.getAddress(), offset, value);
+    }
+
+    public static void putDouble(long address, long offset, double value) {
+        UNSAFE.putDouble(address + offset * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);
+    }
+
+    public static byte getByte(NativeMemoryWrapper dataAddress, long index) {
+        return getByte(dataAddress.getAddress(), index);
+    }
+
+    public static byte getByte(long dataAddress, long index) {
+        return UNSAFE.getByte(dataAddress + index * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+    }
+
+    public static int getInt(NativeMemoryWrapper dataAddress, long index) {
+        return getInt(dataAddress.getAddress(), index);
+    }
+
+    public static int getInt(long dataAddress, long index) {
+        return UNSAFE.getInt(dataAddress + index * Unsafe.ARRAY_INT_INDEX_SCALE);
+    }
+
+    public static long getLong(NativeMemoryWrapper dataAddress, long index) {
+        return getLong(dataAddress.getAddress(), index);
+    }
+
+    public static long getLong(long dataAddress, long index) {
+        return UNSAFE.getLong(dataAddress + index * Unsafe.ARRAY_LONG_INDEX_SCALE);
+    }
+
+    public static long getLong(long dataAddress) {
+        return getLong(dataAddress, 0);
+    }
+
+    public static double getDouble(NativeMemoryWrapper dataAddress, long index) {
+        return getDouble(dataAddress.getAddress(), +index);
+    }
+
+    public static double getDouble(long dataAddress, long index) {
+        return UNSAFE.getDouble(dataAddress + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+    }
+
+    /**
+     * Puts an integer, double, byte or long at given address with given offset. The offset is
+     * interpreted {@code index * size of the value type in bytes}.
+     */
+    public static void putValue(long address, long index, Object value) {
+        if (value instanceof Integer) {
+            NativeMemory.putInt(address, index, (Integer) value);
+        } else if (value instanceof Double) {
+            NativeMemory.putDouble(address, index, (Double) value);
+        } else if (value instanceof Byte) {
+            NativeMemory.putByte(address, index, (Byte) value);
+        } else if (value instanceof Long) {
+            NativeMemory.putLong(address, index, (Long) value);
+        } else {
+            CompilerDirectives.transferToInterpreter();
+            throw RInternalError.shouldNotReachHere(Objects.toString(value));
+        }
     }
 
     /**

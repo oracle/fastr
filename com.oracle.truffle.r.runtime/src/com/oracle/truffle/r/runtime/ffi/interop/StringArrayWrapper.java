@@ -20,17 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+package com.oracle.truffle.r.runtime.ffi.interop;
 
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
+import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(NativeTypeLibrary.class)
 public final class StringArrayWrapper implements TruffleObject {
 
     private NativeMemoryWrapper nativeMemory;
@@ -39,6 +46,18 @@ public final class StringArrayWrapper implements TruffleObject {
 
     public StringArrayWrapper(RStringVector vector) {
         this.vector = vector;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public boolean hasNativeType() {
+        return true;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public Object getNativeType(@CachedContext(TruffleRLanguage.class) RContext ctx) {
+        return ctx.getRFFI().getSulongArrayType(42L);
     }
 
     @SuppressWarnings("static-method")
@@ -97,7 +116,7 @@ public final class StringArrayWrapper implements TruffleObject {
                         contents[i] = nativeCharArray.getString();
                     }
                 }
-                RStringVector copy = new RStringVector(contents, false);
+                RStringVector copy = RDataFactory.createStringVector(contents, false);
                 copy.copyAttributesFrom(vector);
                 return copy;
             } else {
@@ -106,7 +125,7 @@ public final class StringArrayWrapper implements TruffleObject {
         } else {
             try {
                 String[] contents = NativeDataAccess.copyBackNativeStringArray(nativeMemory.getAddress(), vector.getLength());
-                RStringVector copy = new RStringVector(contents, false);
+                RStringVector copy = RDataFactory.createStringVector(contents, false);
                 copy.copyAttributesFrom(vector);
                 return copy;
             } finally {

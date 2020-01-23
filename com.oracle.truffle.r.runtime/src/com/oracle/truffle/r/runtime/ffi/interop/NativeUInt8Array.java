@@ -22,136 +22,89 @@
  */
 package com.oracle.truffle.r.runtime.ffi.interop;
 
-import static com.oracle.truffle.r.runtime.ffi.UnsafeAdapter.UNSAFE;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
-import com.oracle.truffle.r.runtime.RRuntime;
 
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
-import sun.misc.Unsafe;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 
 /**
  * Parent class of {@link NativeRawArray} and {@link NativeCharArray}, that holds the common logic
- * for a C type {@code uint8*}, that may or may not be {@code NULL} terminated (in the C domain),
- * and may escape into the native domain via an UNBOX message.
+ * for a C type {@code uint8*}, that may or may not be {@code NULL} terminated (in the C domain).
  *
- * N.B. Java never stores a {@code NULL} value in a String or the byte array from
- * {@link String#getBytes}.
- *
- * If {@link #fakesNullTermination()} is {@code true}, then {@link #read} returns 0, else it is an
- * error; similar for {@link #write}.
+ * The null termination is faked for Java arrays. If this object escapes to native code and we
+ * allocate native memory for it, then the native memory will be null terminated (and one byte
+ * longer).
  */
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(NativeTypeLibrary.class)
-public abstract class NativeUInt8Array extends NativeArray<byte[]> {
+public abstract class NativeUInt8Array extends NativeArray {
 
+    private byte[] array;
     private int effectiveLength;
 
     protected NativeUInt8Array(byte[] array, boolean nullTerminate) {
-        super(array);
+        this.array = array;
         this.effectiveLength = array.length + (nullTerminate ? 1 : 0);
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean hasArrayElements() {
-        return true;
-    }
-
-    @ExportMessage
-    long getArraySize() {
-        return array.length;
-    }
-
-    @ExportMessage
-    boolean isArrayElementReadable(long index) {
-        return index >= 0 && index < getArraySize();
-    }
-
-    @ExportMessage
-    Object readArrayElement(long index) {
-        return read(RRuntime.interopArrayIndexToInt(index, this));
-    }
-
-    @ExportMessage
-    boolean isArrayElementModifiable(long index) {
-        return index >= 0 && index < getArraySize();
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isArrayElementInsertable(@SuppressWarnings("unused") long index) {
-        return false;
-    }
-
-    @ExportMessage
-    void writeArrayElement(long index, Object value) {
-        write(RRuntime.interopArrayIndexToInt(index, this), (byte) value);
     }
 
     public boolean fakesNullTermination() {
         return array.length != effectiveLength;
     }
 
-    private void checkNativeIndex(int index) {
-        if (index < 0 || index >= effectiveLength) {
-            throw new ArrayIndexOutOfBoundsException(index);
-        }
-    }
-
-    protected void writeObject(int index, Object value) {
-        write(index, (byte) value);
-    }
-
-    void write(int index, byte value) {
-        long nativeAddress = nativeAddress();
-        if (nativeAddress != 0) {
-            checkNativeIndex(index);
-            UNSAFE.putByte(nativeAddress + index, value);
-        } else {
-            if (index == array.length && fakesNullTermination()) {
-                // ignore
-            } else {
-                array[index] = value;
-            }
-        }
-    }
-
-    byte read(int index) {
-        long nativeAddress = nativeAddress();
-        if (nativeAddress != 0) {
-            checkNativeIndex(index);
-            return UNSAFE.getByte(nativeAddress + index);
-        } else {
-            if (index == array.length && fakesNullTermination()) {
-                return (byte) 0;
-            }
-            return array[index];
-        }
-    }
-
-    int getSize() {
-        return array.length;
-    }
-
-    @TruffleBoundary
     @Override
-    protected final long allocateNative() {
-        long nativeAddress = NativeMemory.allocate(effectiveLength, "NativeUInt8Array");
-        UNSAFE.copyMemory(array, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, nativeAddress, array.length);
+    protected Object getArray() {
+        return array;
+    }
+
+    @Override
+    protected int getArrayLength() {
+        return effectiveLength;
+    }
+
+    @Override
+    protected void writeToNative(NativeMemoryWrapper nativeAddress, int index, Object value) {
+        NativeMemory.putByte(nativeAddress, index, (Byte) value);
+    }
+
+    @Override
+    protected void writeToArray(int index, Object value) {
+        if (!(index == array.length && fakesNullTermination())) {
+            array[index] = (byte) value;
+        }
+        // otherwise ignore overwrite of the terminating zero, maybe warn?
+    }
+
+    @Override
+    protected Object readFromNative(NativeMemoryWrapper nativeAddress, int index) {
+        return NativeMemory.getByte(nativeAddress, index);
+    }
+
+    @Override
+    protected Object readFromArray(int index) {
+        if (index == array.length && fakesNullTermination()) {
+            return (byte) 0;
+        }
+        return array[index];
+    }
+
+    @Override
+    protected final NativeMemoryWrapper allocateNative() {
+        long ptr = NativeMemory.allocate(effectiveLength, "NativeUInt8Array");
+        NativeMemoryWrapper nativeAddress = NativeMemory.wrapNativeMemory(ptr, this);
+        NativeMemory.copyMemory(array, nativeAddress, ElementType.BYTE, array.length);
         if (fakesNullTermination()) {
-            UNSAFE.putByte(nativeAddress + array.length, (byte) 0);
+            NativeMemory.putByte(nativeAddress, array.length, (byte) 0);
         }
         return nativeAddress;
     }
 
     public byte[] getValue() {
-        return refresh();
+        refresh();
+        return array;
     }
 
     public void setValue(byte[] newBytes, boolean isNullTerminated) {
@@ -159,16 +112,13 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
         effectiveLength = isNullTerminated ? array.length + 1 : array.length;
     }
 
-    @TruffleBoundary
     @Override
-    protected void copyBackFromNative(long nativeAddress) {
-        // copy back
-        UNSAFE.copyMemory(null, nativeAddress, array, Unsafe.ARRAY_BYTE_BASE_OFFSET, array.length);
+    protected void copyBackFromNative(NativeMemoryWrapper nativeAddress) {
+        NativeMemory.copyMemory(nativeAddress, array, ElementType.BYTE, array.length);
     }
 
     @Override
     protected Object getSulongArrayType(RContext ctx) {
         return ctx.getRFFI().getSulongArrayType((byte) 42);
     }
-
 }

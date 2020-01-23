@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,8 +107,9 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
-import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nmath.RMath;
@@ -116,8 +117,6 @@ import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
-
-import sun.misc.Unsafe;
 
 /**
  * This class provides a simple Java-based implementation of {@link UpCallsRFFI}, where all the
@@ -1464,7 +1463,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } catch (IOException e) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.ERROR_READING_CONNECTION, e.getMessage());
         }
-        UnsafeAdapter.UNSAFE.copyMemory(buf, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, bufAddress, Math.min(result, size));
+        NativeMemory.copyMemory(buf, bufAddress, ElementType.BYTE, Math.min(result, size));
         return result;
     }
 
@@ -1473,7 +1472,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public int R_WriteConnection(int fd, long bufAddress, int size) {
         // Workaround using Unsafe until GR-5927 is fixed
         byte[] buf = new byte[size];
-        UnsafeAdapter.UNSAFE.copyMemory(null, bufAddress, buf, Unsafe.ARRAY_BYTE_BASE_OFFSET, size);
+        NativeMemory.copyMemory(bufAddress, buf, ElementType.BYTE, size);
         try (BaseRConnection fromIndex = RConnection.fromIndex(fd)) {
             final ByteBuffer wrapped = ByteBuffer.wrap(buf);
             fromIndex.writeBin(wrapped);

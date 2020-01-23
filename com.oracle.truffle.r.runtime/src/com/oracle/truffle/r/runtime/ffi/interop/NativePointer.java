@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,46 +23,36 @@
 package com.oracle.truffle.r.runtime.ffi.interop;
 
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 /**
  * Created when a {@link RTruffleObject} subclass has no meaningful native representation,
- * nevertheless a {@code Message#TO_NATIVE} message is sent to it.
+ * nevertheless a {@code toNative} message is sent to it.
  */
 @ExportLibrary(InteropLibrary.class)
-public class NativePointer implements RTruffleObject {
+public final class NativePointer implements RTruffleObject {
 
-    /**
-     * This is used when an {@link RNull} is stored in memory (LLVM).
-     */
     public static final NativePointer NULL_NATIVEPOINTER = new NativePointer();
 
-    protected NativePointer() {
-    }
-
-    public static boolean isInstance(TruffleObject obj) {
-        return obj instanceof NativePointer;
+    private NativePointer() {
     }
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    final boolean isPointer() {
+    boolean isPointer() {
         return true;
     }
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    final long asPointer() {
+    long asPointer() {
         return 0;
     }
 
     @ExportMessage
-    final void toNative() {
-
+    void toNative() {
+        // nop
     }
-
 }
