@@ -749,6 +749,7 @@ public final class NativeDataAccess {
         UnsafeAdapter.UNSAFE.putInt(address + (long) index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
     }
 
+    // TODO: This method is currently used just as a wrapper for UnsafeAdapter.
     public static int getData(RAltIntegerVec altIntVector, int index, long address) {
         return UnsafeAdapter.UNSAFE.getInt(address + (long) index * Unsafe.ARRAY_INT_INDEX_SCALE);
     }

@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
@@ -233,6 +234,16 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         protected static boolean isNotStringOrComplex(Object value) {
             return !(value instanceof RStringVector || value instanceof RComplexVector);
+        }
+
+        protected static boolean isAltrep(Object value) {
+            return value instanceof RBaseObject && ((RBaseObject) value).isAltRep();
+        }
+
+        @Specialization(guards = "isAltrep(value)")
+        protected static Object doAltrep(Object value, int index,
+                                         @Cached(value = "create()", allowUncached = true) AltrepUtilities.AltrepReadArrayElement readArrayElementNode) {
+            return readArrayElementNode.execute(value, index);
         }
 
         @Specialization(guards = "isNotStringOrComplex(value)", limit = "getInteropLibraryCacheSize()")

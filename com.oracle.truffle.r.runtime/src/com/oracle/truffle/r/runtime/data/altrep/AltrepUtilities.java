@@ -7,6 +7,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 
 public class AltrepUtilities {
@@ -33,6 +34,17 @@ public class AltrepUtilities {
 
         if (object instanceof RAltIntegerVec) {
             return ((RAltIntegerVec) object).getDescriptor().isDuplicateMethodRegistered();
+        } else {
+            throw RInternalError.shouldNotReachHere("Unexpected altrep type");
+        }
+    }
+
+    public static boolean hasEltMethodRegistered(Object object) {
+        if (!isAltrep(object)) {
+            return false;
+        }
+        if (object instanceof RAltIntegerVec) {
+            return ((RAltIntegerVec) object).getDescriptor().isEltMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -99,6 +111,34 @@ public class AltrepUtilities {
                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert altIntVec.getDescriptor().isMinMethodRegistered();
             return altIntVec.getDescriptor().invokeMinMethodCached(altIntVec, naRm, methodInterop, hasMirrorProfile);
+        }
+    }
+
+    public abstract static class AltrepReadArrayElement extends Node {
+        public abstract Object execute(Object altrepVector, int index);
+
+        public static AltrepReadArrayElement create() {
+            return AltrepUtilitiesFactory.AltrepReadArrayElementNodeGen.create();
+        }
+
+        protected static boolean hasEltMethodRegistered(Object object) {
+            return AltrepUtilities.hasEltMethodRegistered(object);
+        }
+
+        @Specialization(guards = "hasEltMethodRegistered(altIntVec)", limit = "1")
+        Object doAltIntElt(RAltIntegerVec altIntVec, int index,
+                           @CachedLibrary("altIntVec.getDescriptor().getEltMethod()") InteropLibrary eltMethodInterop,
+                           @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+            return altIntVec.getDescriptor().invokeEltMethodCached(altIntVec, index, eltMethodInterop, hasMirrorProfile);
+        }
+
+        @Specialization(replaces = "doAltIntElt", limit = "1")
+        Object doAltIntWithoutElt(RAltIntegerVec altIntVec, int index,
+                                  @CachedLibrary("altIntVec.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInterop,
+                                  @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
+                                  @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+            long address = altIntVec.getDescriptor().invokeDataptrMethodCached(altIntVec, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
+            return NativeDataAccess.getData(altIntVec, index, address);
         }
     }
 }
