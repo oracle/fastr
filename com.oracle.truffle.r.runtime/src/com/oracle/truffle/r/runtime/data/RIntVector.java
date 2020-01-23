@@ -78,7 +78,7 @@ public final class RIntVector extends RAbstractNumericVector {
     public static RIntVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
         RIntVector result = new RIntVector(new RIntVecClosureData(delegate));
         if (keepAttrs) {
-            result.initAttributes(result.getAttributes());
+            result.initAttributes(delegate.getAttributes());
         } else {
             RClosures.initRegAttributes(result, delegate);
         }
