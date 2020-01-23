@@ -64,12 +64,12 @@ abstract class NativeFunctionMock implements TruffleObject {
 
     private void assertInstanceParameter(Object instanceParam) {
         Assert.assertTrue(instanceParam instanceof NativeDataAccess.NativeMirror);
-        RBaseObject mirroredObject = ((NativeDataAccess.NativeMirror) instanceParam).get();
+        RBaseObject mirroredObject = ((NativeDataAccess.NativeMirror) instanceParam).getDelegate();
         Assert.assertTrue(mirroredObject instanceof RAltIntegerVec);
     }
 
     private RAltIntegerVec unwrapInstanceParameter(Object instanceParam) {
-        return (RAltIntegerVec) ((NativeDataAccess.NativeMirror) instanceParam).get();
+        return (RAltIntegerVec) ((NativeDataAccess.NativeMirror) instanceParam).getDelegate();
     }
 
     protected abstract Object doExecute(RAltIntegerVec instance, Object... args);

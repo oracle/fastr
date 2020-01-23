@@ -257,7 +257,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
 
     private Object convertNativeReturnValToIntOrDouble(Object returnValueFromNative) {
         assert returnValueFromNative instanceof NativeDataAccess.NativeMirror;
-        RBaseObject returnValue = ((NativeDataAccess.NativeMirror) returnValueFromNative).get();
+        RBaseObject returnValue = ((NativeDataAccess.NativeMirror) returnValueFromNative).getDelegate();
         assert returnValue instanceof RAbstractIntVector || returnValue instanceof RAbstractDoubleVector;
         if (returnValue instanceof RAbstractIntVector) {
             return ((RAbstractIntVector) returnValue).getDataAt(0);
