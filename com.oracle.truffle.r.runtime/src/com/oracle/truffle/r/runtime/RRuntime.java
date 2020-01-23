@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -1010,7 +1009,7 @@ public class RRuntime {
         if (obj instanceof Integer) {
             return RDataFactory.createIntVectorFromScalar((int) obj);
         } else if (obj instanceof Double) {
-            return RDouble.valueOf((double) obj);
+            return RDataFactory.createDoubleVectorFromScalar((double) obj);
         } else if (obj instanceof Byte) {
             return RLogical.valueOf((byte) obj);
         } else if (obj instanceof String) {

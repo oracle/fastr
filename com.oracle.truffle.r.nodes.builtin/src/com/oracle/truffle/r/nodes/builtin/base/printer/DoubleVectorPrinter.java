@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,8 @@ import java.io.IOException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -379,7 +380,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
 
     @TruffleBoundary
     public static String encodeReal(double x, int digits, char cdec, int sciPen, String naString) {
-        RDouble value = RDouble.valueOf(x);
+        RDoubleVector value = RDataFactory.createDoubleVectorFromScalar(x);
         VectorAccess access = value.slowPathAccess();
         try (RandomIterator iter = access.randomAccess(value)) {
             DoubleVectorMetrics dm = formatDoubleVector(iter, access, 0, 1, 0, digits, sciPen, naString.length());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,7 +89,7 @@ public final class RLogical extends RAbstractLogicalVector implements RScalarVec
             case Integer:
                 return isNAProfile.profile(isNA()) ? RDataFactory.createIntVectorFromScalar(RRuntime.INT_NA) : RDataFactory.createIntVectorFromScalar(value);
             case Double:
-                return isNAProfile.profile(isNA()) ? RDouble.createNA() : RDouble.valueOf(value);
+                return isNAProfile.profile(isNA()) ? RDataFactory.createDoubleVectorFromScalar(RRuntime.DOUBLE_NA) : RDataFactory.createDoubleVectorFromScalar(value);
             case Complex:
                 return isNAProfile.profile(isNA()) ? RComplex.createNA() : RComplex.valueOf(value, 0.0);
             case Character:
