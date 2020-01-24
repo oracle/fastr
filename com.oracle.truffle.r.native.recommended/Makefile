@@ -121,7 +121,7 @@ ifeq ($(OS_NAME),Darwin)
 		if [ -e $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so ] ; then \
 			install_name_tool -id @rpath/../library/$$pkgname/libs/$$pkgname.so $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
 			install_name_tool -add_rpath @loader_path/../../../lib/ $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
-			python $(FASTR_R_HOME)/mx.fastr/copylib updatelib $(FASTR_R_HOME)/library/$$pkgname/libs $(FASTR_R_HOME); \
+			python $(FASTR_R_HOME)/mx.fastr/copylib.py updatelib $(FASTR_R_HOME)/library/$$pkgname/libs $(FASTR_R_HOME); \
 		fi \
 	done
 endif
