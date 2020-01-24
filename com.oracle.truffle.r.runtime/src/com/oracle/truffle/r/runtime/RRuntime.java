@@ -1065,8 +1065,8 @@ public class RRuntime {
         if (o instanceof RSequence) {
             return true;
         }
-        if (o instanceof RIntVector) {
-            return ((RIntVector) o).isSequence();
+        if (o instanceof RAbstractVector) {
+            return ((RAbstractVector) o).isSequence();
         }
         return false;
     }

@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RDoubleSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
@@ -80,10 +80,11 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return operand;
     }
 
-    @Specialization
-    protected RIntVector doDoubleSequence(RDoubleSequence operand) {
+    @Specialization(guards = "isDoubleSequence(operand)")
+    protected RIntVector doDoubleSequence(RDoubleVector operand) {
         // start and stride cannot be NA so no point checking
-        return factory().createIntSequence(RRuntime.double2intNoCheck(operand.getStart()), RRuntime.double2intNoCheck(operand.getStride()), operand.getLength());
+        RDoubleSeqVectorData seq = operand.getSequence();
+        return factory().createIntSequence(RRuntime.double2intNoCheck(seq.getStart()), RRuntime.double2intNoCheck(seq.getStride()), seq.getLength());
     }
 
     private RIntVector vectorCopy(RAbstractVector operand, int[] idata, boolean isComplete) {
@@ -104,13 +105,13 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return vectorCopy(operand, idata, uAccess.na.neverSeenNAOrNaN());
     }
 
-    @Specialization(guards = {"uAccess.supports(operand)", "noClosure(operand)", "!isForeignVector(operand)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"uAccess.supports(operand)", "noClosure(operand)", "!isForeignVector(operand)", "!isDoubleSequence(operand)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RIntVector doAbstractVector(RAbstractAtomicVector operand,
                     @Cached("operand.access()") VectorAccess uAccess) {
         return createResultVector(operand, uAccess);
     }
 
-    @Specialization(replaces = "doAbstractVector", guards = {"noClosure(operand)", "!isForeignVector(operand)"})
+    @Specialization(replaces = "doAbstractVector", guards = {"noClosure(operand)", "!isForeignVector(operand)", "!isDoubleSequence(operand)"})
     protected RIntVector doAbstractVectorGeneric(RAbstractAtomicVector operand) {
         return doAbstractVector(operand, operand.slowPathAccess());
     }
@@ -254,5 +255,9 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
 
     protected boolean noClosure(RAbstractAtomicVector x) {
         return !isForeignWrapper(x) && !isForeignVector(x) && !(x instanceof RIntVector) && (!useClosure() || x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
+    }
+
+    protected boolean isDoubleSequence(RAbstractAtomicVector x) {
+        return x instanceof RDoubleVector && x.isSequence();
     }
 }

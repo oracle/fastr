@@ -69,6 +69,10 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         return new RDoubleVector(new RDoubleForeignObjData(foreign));
     }
 
+    public static RDoubleVector createSequence(double start, double stride, int length) {
+        return new RDoubleVector(new RDoubleSeqVectorData(start, stride, length));
+    }
+
     public static RDoubleVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
         RDoubleVector result = new RDoubleVector(new RDoubleVecClosureData(delegate));
         if (keepAttrs) {
@@ -118,6 +122,16 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
     @Override
     public boolean isForeignWrapper() {
         return data instanceof RDoubleForeignObjData;
+    }
+
+    @Override
+    public boolean isSequence() {
+        return data instanceof RDoubleSeqVectorData;
+    }
+
+    @Override
+    public RDoubleSeqVectorData getSequence() {
+        return (RDoubleSeqVectorData) data;
     }
 
     @Override

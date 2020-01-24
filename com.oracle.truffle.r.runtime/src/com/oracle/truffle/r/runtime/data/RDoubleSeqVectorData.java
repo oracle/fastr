@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,13 +35,13 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
 
 import java.util.Arrays;
 
-@ExportLibrary(RIntVectorDataLibrary.class)
-public class RIntSeqVectorData extends RIntVectorData implements RSeq {
-    private final int start;
-    private final int stride;
+@ExportLibrary(RDoubleVectorDataLibrary.class)
+public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
+    private final double start;
+    private final double stride;
     private final int length;
 
-    public RIntSeqVectorData(int start, int stride, int length) {
+    public RDoubleSeqVectorData(double start, double stride, int length) {
         this.start = start;
         this.stride = stride;
         this.length = length;
@@ -57,28 +57,16 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
         return stride;
     }
 
-    public int getStart() {
+    public double getStart() {
         return start;
     }
 
-    public int getStride() {
+    public double getStride() {
         return stride;
     }
 
-    public int getEnd() {
+    public double getEnd() {
         return start + (getLength() - 1) * stride;
-    }
-
-    public int getIndexFor(int element) {
-        int first = Math.min(getStart(), getEnd());
-        int last = Math.max(getStart(), getEnd());
-        if (element < first || element > last) {
-            return -1;
-        }
-        if ((element - getStart()) % getStride() == 0) {
-            return (element - getStart()) / getStride();
-        }
-        return -1;
     }
 
     @ExportMessage
@@ -88,8 +76,8 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
-    public RIntArrayVectorData materialize() {
-        return new RIntArrayVectorData(getReadonlyIntData(), isComplete());
+    public RDoubleArrayVectorData materialize() {
+        return new RDoubleArrayVectorData(getReadonlyDoubleData(), isComplete());
     }
 
     @ExportMessage
@@ -98,24 +86,24 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
-    public RIntSeqVectorData copy(@SuppressWarnings("unused") boolean deep) {
-        return new RIntSeqVectorData(start, stride, length);
+    public RDoubleSeqVectorData copy(@SuppressWarnings("unused") boolean deep) {
+        return new RDoubleSeqVectorData(start, stride, length);
     }
 
     @ExportMessage
-    public RIntArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
-        int[] newData = getDataAsArray(newSize);
+    public RDoubleArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
+        double[] newData = getDataAsArray(newSize);
         if (fillNA) {
-            Arrays.fill(newData, length, newData.length, RRuntime.INT_NA);
+            Arrays.fill(newData, length, newData.length, RRuntime.DOUBLE_NA);
         }
-        return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
+        return new RDoubleArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     // TODO: this will be message exported by the generic VectorDataLibrary
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
+                    @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
+        dataLib.setDoubleAt((RDoubleVectorData) destination, index, getDoubleAt(index));
     }
 
     @ExportMessage
@@ -130,7 +118,7 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
-    public int[] getReadonlyIntData() {
+    public double[] getReadonlyDoubleData() {
         return getDataAsArray(length);
     }
 
@@ -146,19 +134,19 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
 
     @ExportMessage
     @Override
-    public int getIntAt(int index) {
+    public double getDoubleAt(int index) {
         assert index < length;
         return start + stride * index;
     }
 
     @ExportMessage
-    public int getNext(SeqIterator it) {
+    public double getNext(SeqIterator it) {
         IteratorData data = getStore(it);
         return data.start + data.stride * it.getIndex();
     }
 
     @ExportMessage
-    public int getAt(RandomAccessIterator it, int index) {
+    public double getAt(RandomAccessIterator it, int index) {
         IteratorData data = getStore(it);
         return data.start + data.stride * index;
     }
@@ -167,10 +155,10 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
         return (IteratorData) it.getStore();
     }
 
-    private int[] getDataAsArray(int newLength) {
-        int[] data = new int[newLength];
+    private double[] getDataAsArray(int newLength) {
+        double[] data = new double[newLength];
         for (int i = 0; i < Math.min(newLength, length); i++) {
-            data[i] = getIntAt(i);
+            data[i] = getDoubleAt(i);
         }
         return data;
     }
@@ -184,10 +172,10 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     // We use a fresh new class for the iterator data in order to help the escape analysis
     @ValueType
     private static final class IteratorData {
-        public final int start;
-        public final int stride;
+        public final double start;
+        public final double stride;
 
-        private IteratorData(int start, int stride) {
+        private IteratorData(double start, double stride) {
             this.start = start;
             this.stride = stride;
         }

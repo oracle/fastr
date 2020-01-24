@@ -518,18 +518,18 @@ public final class RDataFactory {
             return traceDataCreated(RIntVector.createSequence(start, stride, length));
         }
 
-        public final RDoubleSequence createAscendingRange(double start, double end) {
+        public final RDoubleVector createAscendingRange(double start, double end) {
             assert start <= end;
-            return traceDataCreated(new RDoubleSequence(start, 1, (int) ((end - start) + 1)));
+            return traceDataCreated(RDoubleVector.createSequence(start, 1, (int) ((end - start) + 1)));
         }
 
-        public final RDoubleSequence createDescendingRange(double start, double end) {
+        public final RDoubleVector createDescendingRange(double start, double end) {
             assert start > end;
-            return traceDataCreated(new RDoubleSequence(start, -1, (int) ((start - end) + 1)));
+            return traceDataCreated(RDoubleVector.createSequence(start, -1, (int) ((start - end) + 1)));
         }
 
-        public final RDoubleSequence createDoubleSequence(double start, double stride, int length) {
-            return traceDataCreated(new RDoubleSequence(start, stride, length));
+        public final RDoubleVector createDoubleSequence(double start, double stride, int length) {
+            return traceDataCreated(RDoubleVector.createSequence(start, stride, length));
         }
 
         public final RIntVector createEmptyIntVector() {
@@ -996,18 +996,18 @@ public final class RDataFactory {
         return (int) (r + 1 + FLT_EPSILON);
     }
 
-    public static RDoubleSequence createAscendingRange(double start, double end) {
+    public static RDoubleVector createAscendingRange(double start, double end) {
         assert start <= end;
-        return traceDataCreated(new RDoubleSequence(start, 1, effectiveLength(start, end)));
+        return traceDataCreated(RDoubleVector.createSequence(start, 1, effectiveLength(start, end)));
     }
 
-    public static RDoubleSequence createDescendingRange(double start, double end) {
+    public static RDoubleVector createDescendingRange(double start, double end) {
         assert start > end;
-        return traceDataCreated(new RDoubleSequence(start, -1, effectiveLength(start, end)));
+        return traceDataCreated(RDoubleVector.createSequence(start, -1, effectiveLength(start, end)));
     }
 
-    public static RDoubleSequence createDoubleSequence(double start, double stride, int length) {
-        return traceDataCreated(new RDoubleSequence(start, stride, length));
+    public static RDoubleVector createDoubleSequence(double start, double stride, int length) {
+        return traceDataCreated(RDoubleVector.createSequence(start, stride, length));
     }
 
     public static RIntVector createEmptyIntVector() {

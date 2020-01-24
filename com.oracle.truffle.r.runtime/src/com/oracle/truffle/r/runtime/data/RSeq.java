@@ -23,6 +23,11 @@
 
 package com.oracle.truffle.r.runtime.data;
 
+/**
+ * An {@link RSeq} only records the "length", "start" and "stride". The "stride" value is positive
+ * to indicate an ascending sequence and negative for a descending sequence. I.e., the "end" is
+ * computed and not stored.
+ */
 public interface RSeq {
     Object getStartObject();
 

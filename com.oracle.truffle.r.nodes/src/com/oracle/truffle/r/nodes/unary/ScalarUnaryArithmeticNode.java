@@ -27,7 +27,7 @@ import com.oracle.truffle.r.nodes.primitive.UnaryMapNAFunctionNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RDoubleSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -54,9 +54,9 @@ public class ScalarUnaryArithmeticNode extends UnaryMapNAFunctionNode {
                 int start = ((RIntSeqVectorData) seq).getStart();
                 int stride = ((RIntSeqVectorData) seq).getStride();
                 return RDataFactory.createIntSequence(applyInteger(start), applyInteger(stride), operandLength);
-            } else if (operand instanceof RDoubleSequence) {
-                double start = ((RDoubleSequence) operand).getStart();
-                double stride = ((RDoubleSequence) operand).getStride();
+            } else if (seq instanceof RDoubleSeqVectorData) {
+                double start = ((RDoubleSeqVectorData) seq).getStart();
+                double stride = ((RDoubleSeqVectorData) seq).getStride();
                 return RDataFactory.createDoubleSequence(applyDouble(start), applyDouble(stride), operandLength);
             }
         }
