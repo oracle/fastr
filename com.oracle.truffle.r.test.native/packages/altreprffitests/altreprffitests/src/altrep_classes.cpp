@@ -225,8 +225,8 @@ R_xlen_t SimpleRealVecWrapper::Get_region(SEXP instance, R_xlen_t from_idx, R_xl
     {
         return R_NaInt;
     }
-    int *data_ptr = INTEGER(data);
-    std::memcpy(buffer, data_ptr + from_idx, size * sizeof(int));
+    double *data_ptr = REAL(data);
+    std::memcpy(buffer, data_ptr + from_idx, size * sizeof(double));
     return size;
 }
 
