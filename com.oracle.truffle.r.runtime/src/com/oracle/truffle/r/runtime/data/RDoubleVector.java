@@ -229,20 +229,6 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         return data.getDoubleAt(index);
     }
 
-    // XXX who is using this?
-    public RDoubleVector copyResetData(double[] newData) {
-        boolean isComplete = true;
-        for (int i = 0; i < newData.length; i++) {
-            if (RRuntime.isNA(newData[i])) {
-                isComplete = false;
-                break;
-            }
-        }
-        RDoubleVector result = new RDoubleVector(newData, isComplete);
-        setAttributes(result);
-        return result;
-    }
-
     @Override
     public double[] getDataCopy() {
         return RDoubleVectorDataLibrary.getFactory().getUncached().getDoubleDataCopy(data);
