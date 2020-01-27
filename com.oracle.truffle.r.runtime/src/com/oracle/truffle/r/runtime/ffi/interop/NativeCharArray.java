@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,12 +29,14 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
 
 /**
  * A {@link TruffleObject} that represents an array of {@code unsigned char} values, that is
  * {@code NULL} terminated in the C domain.
  */
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(NativeTypeLibrary.class)
 public final class NativeCharArray extends NativeUInt8Array {
 
     public NativeCharArray(byte[] bytes) {
@@ -78,7 +80,7 @@ public final class NativeCharArray extends NativeUInt8Array {
         assert !fakesNullTermination() : "create the buffer string via createOutputBuffer()";
         byte[] mbuf = getValue();
         int i = 0;
-        while (mbuf[i] != 0 && i < mbuf.length) {
+        while (i < mbuf.length && mbuf[i] != 0) {
             i++;
         }
         return new String(mbuf, 0, i);

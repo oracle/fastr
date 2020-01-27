@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,8 +114,8 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
             (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI);
             for (Object obj : args) {
                 // TODO: can this ever happen in NFI?
-                if (obj instanceof NativeArray<?>) {
-                    ((NativeArray<?>) obj).refresh();
+                if (obj instanceof NativeArray) {
+                    ((NativeArray) obj).refresh();
                 }
             }
         }

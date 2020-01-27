@@ -22,117 +22,66 @@
  */
 package com.oracle.truffle.r.runtime.ffi.interop;
 
-import static com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter.UNSAFE;
-
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.InvalidArrayIndexException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.library.ExportMessage.Ignore;
-import com.oracle.truffle.r.runtime.RRuntime;
 
+import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
-import sun.misc.Unsafe;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 
 @ExportLibrary(InteropLibrary.class)
-public final class NativeDoubleArray extends NativeArray<double[]> {
+@ExportLibrary(NativeTypeLibrary.class)
+public final class NativeDoubleArray extends NativeArray {
+
+    private final double[] array;
 
     public NativeDoubleArray(double[] value) {
-        super(value);
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean hasArrayElements() {
-        return true;
-    }
-
-    @ExportMessage
-    long getArraySize() {
-        return array.length;
-    }
-
-    @ExportMessage
-    boolean isArrayElementReadable(long index) {
-        return index >= 0 && index < getArraySize();
-    }
-
-    @ExportMessage
-    Object readArrayElement(long index) {
-        return read(RRuntime.interopArrayIndexToInt(index, this));
-    }
-
-    @ExportMessage
-    boolean isArrayElementModifiable(long index) {
-        return index >= 0 && index < getArraySize();
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    boolean isArrayElementInsertable(@SuppressWarnings("unused") long index) {
-        return false;
-    }
-
-    @Ignore
-    void writeArrayElement(long index, Object value) throws UnsupportedMessageException, UnsupportedTypeException, InvalidArrayIndexException {
-        InteropLibrary.getFactory().getUncached().writeArrayElement(this, index, value);
-    }
-
-    @ExportMessage
-    static class WriteArrayElement {
-
-        @Specialization
-        static void withoutClosure(NativeDoubleArray arr, long index, Long value) {
-            arr.write(RRuntime.interopArrayIndexToInt(index, arr), value);
-        }
-
-        @Specialization
-        static void withClosure(NativeDoubleArray arr, long index, Integer value) {
-            arr.write(RRuntime.interopArrayIndexToInt(index, arr), value);
-        }
-
-        @Specialization
-        static void withClosure(NativeDoubleArray arr, long index, Double value) {
-            arr.write(RRuntime.interopArrayIndexToInt(index, arr), value);
-        }
-    }
-
-    double read(int index) {
-        long nativeAddress = nativeAddress();
-        if (nativeAddress != 0) {
-            return UNSAFE.getDouble(nativeAddress + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-        } else {
-            return array[index];
-        }
-    }
-
-    void write(int index, double nv) {
-        long nativeAddress = nativeAddress();
-        if (nativeAddress != 0) {
-            UNSAFE.putDouble(nativeAddress + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, nv);
-        } else {
-            array[index] = nv;
-        }
+        this.array = value;
     }
 
     @Override
-    @TruffleBoundary
-    protected long allocateNative() {
-        long nativeAddress = NativeMemory.allocate(array.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, "NativeDoubleArray");
-        UNSAFE.copyMemory(array, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, null, nativeAddress, array.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+    protected Object getArray() {
+        return array;
+    }
+
+    @Override
+    protected int getArrayLength() {
+        return array.length;
+    }
+
+    @Override
+    protected void writeToNative(NativeMemoryWrapper nativeAddress, int index, Object value) {
+        NativeMemory.putDouble(nativeAddress, index, (Double) value);
+    }
+
+    @Override
+    protected void writeToArray(int index, Object value) {
+        array[index] = (double) value;
+    }
+
+    @Override
+    protected Object readFromNative(NativeMemoryWrapper nativeAddress, int index) {
+        return NativeMemory.getDouble(nativeAddress, index);
+    }
+
+    @Override
+    protected Object readFromArray(int index) {
+        return array[index];
+    }
+
+    @Override
+    protected NativeMemoryWrapper allocateNative() {
+        long ptr = NativeMemory.allocate(array.length * Double.BYTES, "NativeDoubleArray");
+        NativeMemoryWrapper nativeAddress = NativeMemory.wrapNativeMemory(ptr, this);
+        NativeMemory.copyMemory(array, nativeAddress, ElementType.DOUBLE, array.length);
         return nativeAddress;
     }
 
     @Override
-    @TruffleBoundary
-    protected void copyBackFromNative(long nativeAddress) {
-        // copy back
-        UNSAFE.copyMemory(null, nativeAddress, array, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, array.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+    protected void copyBackFromNative(NativeMemoryWrapper nativeAddress) {
+        NativeMemory.copyMemory(nativeAddress, array, ElementType.DOUBLE, array.length);
     }
 
     @Override

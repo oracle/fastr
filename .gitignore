@@ -51,6 +51,7 @@ com.oracle.truffle.r.native/run/Makeconf.etc-e
 /deparse/
 /DEPARSE_ERROR
 /dumps/
+/graal_dumps/
 /Rpkgsource/*
 /install.cran.logs/
 /library/
@@ -162,3 +163,4 @@ lib.install.packages.gnur
 .Rproj.user
 com.oracle.truffle.r.test.native/packages/*/*/src/*.so
 com.oracle.truffle.r.test.native/packages/*/*/src/*.o
+tags

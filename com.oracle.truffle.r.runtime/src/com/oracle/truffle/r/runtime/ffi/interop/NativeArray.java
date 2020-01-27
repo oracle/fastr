@@ -22,35 +22,152 @@
  */
 package com.oracle.truffle.r.runtime.ffi.interop;
 
-import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 
-public abstract class NativeArray<T> extends NativeArrayExport {
+/**
+ * Wraps a Java array to make it look like an interop and native array. These objects can be sent to
+ * LLVM/NFI and they will mimic corresponding native array type. To make any changes made to this
+ * object either via interop or via pointer visible in the Java array, call {@link #refresh()}.
+ * Note: if you do not call {@link #refresh()} the changes may or may not be visible in the Java
+ * array.
+ */
+@ExportLibrary(InteropLibrary.class)
+@ExportLibrary(NativeTypeLibrary.class)
+public abstract class NativeArray implements RTruffleObject {
+    private NativeMemoryWrapper nativeMirror;
 
-    protected T array;
-    @SuppressWarnings("unused") private NativeMemoryWrapper nativeMirror;
-
-    protected NativeArray(T array) {
-        this.array = array;
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final boolean hasNativeType() {
+        return true;
     }
 
-    @Override
-    protected final long nativeAddress() {
-        return (nativeMirror != null) ? nativeMirror.getAddress() : 0L;
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final Object getNativeType(@CachedContext(TruffleRLanguage.class) RContext ctx) {
+        return getSulongArrayType(ctx);
     }
 
-    @Override
-    protected final long convertToNative() {
-        if (nativeMirror == null) {
-            nativeMirror = NativeMemory.wrapNativeMemory(allocateNative(), this);
-        }
-        return nativeMirror.getAddress();
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final boolean isPointer() {
+        return nativeAddress() != null;
     }
 
-    public final T refresh() {
+    @ExportMessage
+    public final long asPointer() throws UnsupportedMessageException {
         if (nativeMirror != null) {
-            copyBackFromNative(nativeMirror.getAddress());
+            return nativeMirror.getAddress();
         }
-        return array;
+        throw UnsupportedMessageException.create();
+    }
+
+    @ExportMessage
+    protected static class ToNative {
+        @Specialization(guards = "receiver.hasNativeAddress()")
+        static void doNothing(@SuppressWarnings("unused") NativeArray receiver) {
+        }
+
+        @Specialization(guards = "!receiver.hasNativeAddress()")
+        static void doToNative(NativeArray receiver) {
+            receiver.nativeMirror = receiver.allocateNative();
+        }
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    public final long getArraySize() {
+        return getArrayLength();
+    }
+
+    @ExportMessage
+    public final boolean isArrayElementReadable(long index) {
+        return index >= 0 && index < getArraySize();
+    }
+
+    @ExportMessage
+    public final boolean isArrayElementModifiable(long index) {
+        return index >= 0 && index < getArraySize();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final boolean isArrayElementInsertable(@SuppressWarnings("unused") long index) {
+        return false;
+    }
+
+    @ExportMessage
+    protected static class ReadArrayElement {
+        @Specialization(guards = "receiver.hasNativeAddress()")
+        static Object readFromNative(NativeArray receiver, long index) {
+            return receiver.readFromNative(receiver.nativeMirror, RRuntime.interopArrayIndexToInt(index, receiver));
+        }
+
+        @Specialization(guards = "!receiver.hasNativeAddress()")
+        static Object readFromArray(NativeArray receiver, long index) {
+            return receiver.readFromArray(RRuntime.interopArrayIndexToInt(index, receiver));
+        }
+    }
+
+    @ExportMessage
+    protected static class WriteArrayElement {
+        @Specialization(guards = "receiver.hasNativeAddress()")
+        static void writeToNative(NativeArray receiver, long index, Object value) {
+            receiver.writeToNative(receiver.nativeMirror, RRuntime.interopArrayIndexToInt(index, receiver), value);
+        }
+
+        @Specialization(guards = "!receiver.hasNativeAddress()")
+        static void writeToArray(NativeArray receiver, long index, Object value) {
+            receiver.writeToArray(RRuntime.interopArrayIndexToInt(index, receiver), value);
+        }
+    }
+
+    protected abstract int getArrayLength();
+
+    protected abstract Object getArray();
+
+    protected abstract Object readFromNative(NativeMemoryWrapper nativeAddress, int index);
+
+    protected abstract Object readFromArray(int index);
+
+    protected abstract void writeToNative(NativeMemoryWrapper nativeAddress, int index, Object value);
+
+    protected abstract void writeToArray(int index, Object value);
+
+    protected abstract NativeMemoryWrapper allocateNative();
+
+    protected abstract void copyBackFromNative(NativeMemoryWrapper nativeAddress);
+
+    protected abstract Object getSulongArrayType(RContext ctx);
+
+    protected final boolean hasNativeAddress() {
+        return nativeMirror != null;
+    }
+
+    protected final NativeMemoryWrapper nativeAddress() {
+        return nativeMirror;
+    }
+
+    public final Object refresh() {
+        if (nativeMirror != null) {
+            copyBackFromNative(nativeMirror);
+        }
+        return getArray();
     }
 }

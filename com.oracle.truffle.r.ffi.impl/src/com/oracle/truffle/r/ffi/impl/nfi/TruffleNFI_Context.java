@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
 import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
 import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
-import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
@@ -71,25 +70,6 @@ import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
-import sun.misc.Unsafe;
-
-class UnsafeAdapter {
-    public static final Unsafe UNSAFE = initUnsafe();
-
-    private static Unsafe initUnsafe() {
-        try {
-            return Unsafe.getUnsafe();
-        } catch (SecurityException se) {
-            try {
-                Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-                theUnsafe.setAccessible(true);
-                return (Unsafe) theUnsafe.get(Unsafe.class);
-            } catch (Exception e) {
-                throw new RuntimeException("exception while trying to get Unsafe", e);
-            }
-        }
-    }
-}
 
 public class TruffleNFI_Context extends RFFIContext {
 
@@ -240,7 +220,7 @@ public class TruffleNFI_Context extends RFFIContext {
     private void initCallbacks(RContext context) {
         if (context.getKind() == ContextKind.SHARE_NOTHING) {
             // create and fill a new callbacks table
-            callbacks = NativeMemory.allocate(Callbacks.values().length * Unsafe.ARRAY_LONG_INDEX_SCALE, "callbacks");
+            callbacks = NativeMemory.allocate(Callbacks.values().length * Long.BYTES, "callbacks");
             InteropLibrary interop = InteropLibrary.getFactory().getUncached();
             Object addCallback;
             try {
@@ -283,9 +263,9 @@ public class TruffleNFI_Context extends RFFIContext {
         assert callbacks != 0L;
         if (singleThreadOnly && callbacksAddressThread == Thread.currentThread().getId()) {
             // Fast path for contexts used only from a single thread
-            long oldCallbacks = UnsafeAdapter.UNSAFE.getLong(callbacksAddress);
+            long oldCallbacks = NativeMemory.getLong(callbacksAddress);
             assert callbacksAddress != 0L;
-            UnsafeAdapter.UNSAFE.putLong(callbacksAddress, callbacks);
+            NativeMemory.putLong(callbacksAddress, callbacks);
             return oldCallbacks;
         }
         // Slow path: cache the address, but reinitialize it if the thread has changed, without
@@ -299,10 +279,10 @@ public class TruffleNFI_Context extends RFFIContext {
             lastCallbacksAddress = initCallbacksAddress();
             lastCallbacksAddressThread = Thread.currentThread().getId();
         }
-        long oldCallbacks = UnsafeAdapter.UNSAFE.getLong(lastCallbacksAddress);
+        long oldCallbacks = NativeMemory.getLong(lastCallbacksAddress);
         assert lastCallbacksAddress != 0L;
         assert lastCallbacksAddressThread == Thread.currentThread().getId();
-        UnsafeAdapter.UNSAFE.putLong(lastCallbacksAddress, callbacks);
+        NativeMemory.putLong(lastCallbacksAddress, callbacks);
         return oldCallbacks;
     }
 
@@ -310,9 +290,9 @@ public class TruffleNFI_Context extends RFFIContext {
         if (beforeValue < 0) {
             return;
         }
-        assert !singleThreadOnly || UnsafeAdapter.UNSAFE.getLong(callbacksAddress) == callbacks : "invalid nesting of native calling contexts";
-        assert singleThreadOnly || UnsafeAdapter.UNSAFE.getLong(lastCallbacksAddress) == callbacks : "invalid nesting of native calling contexts";
-        UnsafeAdapter.UNSAFE.putLong(callbacksAddress, beforeValue);
+        assert !singleThreadOnly || NativeMemory.getLong(callbacksAddress) == callbacks : "invalid nesting of native calling contexts";
+        assert singleThreadOnly || NativeMemory.getLong(lastCallbacksAddress) == callbacks : "invalid nesting of native calling contexts";
+        NativeMemory.putLong(callbacksAddress, beforeValue);
     }
 
     protected void addLibRToDLLContextState(RContext context, DLLInfo libR) {
