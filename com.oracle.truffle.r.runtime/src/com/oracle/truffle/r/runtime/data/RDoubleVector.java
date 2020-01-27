@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -41,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
+@ExportLibrary(InteropLibrary.class)
 public final class RDoubleVector extends RAbstractDoubleVector implements RMaterializedVector, Shareable {
 
     private RDoubleVectorData data;
