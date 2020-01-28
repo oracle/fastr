@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,8 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 public final class TruffleObjectConverter {
+
+    public static final Object UNREADABLE = new Object();
 
     public static Node[] getSubNodes() {
         return new Node[]{getInterop(), Foreign2R.getUncached()};
@@ -186,9 +188,7 @@ public final class TruffleObjectConverter {
         @TruffleBoundary
         public Object getDataAt(int index) {
             try {
-                return (index < staticNamesLen)
-                                ? Foreign2R.getUncached().convert(getInterop().readMember(classDelegate, names.getDataAt(index)))
-                                : Foreign2R.getUncached().convert(getInterop().readMember(delegate, names.getDataAt(index)));
+                return (index < staticNamesLen) ? read(getInterop(), classDelegate, names, index) : read(getInterop(), delegate, names, index);
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
@@ -238,8 +238,8 @@ public final class TruffleObjectConverter {
                 try {
                     CompoundNamedListWrapper wrapper = (CompoundNamedListWrapper) accessIter.getStore();
                     return (index < wrapper.staticNamesLen)
-                                    ? foreign2r.convert(classDelegateInterop.readMember(wrapper.classDelegate, wrapper.names.getDataAt(index)))
-                                    : foreign2r.convert(delegateInterop.readMember(wrapper.delegate, wrapper.names.getDataAt(index)));
+                                    ? foreign2r.convert(read(classDelegateInterop, wrapper.classDelegate, wrapper.names, index))
+                                    : foreign2r.convert(read(delegateInterop, wrapper.delegate, wrapper.names, index));
                 } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
@@ -268,8 +268,8 @@ public final class TruffleObjectConverter {
                 CompoundNamedListWrapper vector = (CompoundNamedListWrapper) accessIter.getStore();
                 try {
                     return (index < vector.staticNamesLen)
-                                    ? Foreign2R.getUncached().convert(getInterop().readMember(vector.classDelegate, vector.names.getDataAt(index)))
-                                    : Foreign2R.getUncached().convert(getInterop().readMember(vector.delegate, vector.names.getDataAt(index)));
+                                    ? read(getInterop(), vector.classDelegate, vector.names, index)
+                                    : read(getInterop(), vector.delegate, vector.names, index);
                 } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
@@ -279,6 +279,15 @@ public final class TruffleObjectConverter {
         @Override
         public VectorAccess slowPathAccess() {
             return SLOW_PATH_ACCESS;
+        }
+    }
+
+    private static Object read(InteropLibrary interop, TruffleObject obj, RStringVector names, int index) throws UnsupportedMessageException, UnknownIdentifierException {
+        String memberName = names.getDataAt(index);
+        if (interop.isMemberReadable(obj, memberName)) {
+            return Foreign2R.getUncached().convert(interop.readMember(obj, memberName));
+        } else {
+            return UNREADABLE;
         }
     }
 
