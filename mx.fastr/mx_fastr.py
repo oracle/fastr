@@ -309,7 +309,7 @@ class FastRGateTags:
     recommended_load = 'recommended_load'
 
     gc_torture1 = 'gc_torture1'
-    gc_torture5 = 'gc_torture5'
+    gc_torture3 = 'gc_torture3'
 
 def _fastr_gate_runner(args, tasks):
     with mx_gate.Task('Setup no specials', tasks, tags=[FastRGateTags.no_specials]) as t:
@@ -328,9 +328,9 @@ def _fastr_gate_runner(args, tasks):
         if t:
             os.environ['FASTR_GCTORTURE'] = '1'
 
-    with mx_gate.Task('GCTorture5', tasks, tags=[FastRGateTags.gc_torture5]) as t:
+    with mx_gate.Task('GCTorture3', tasks, tags=[FastRGateTags.gc_torture3]) as t:
         if t:
-            os.environ['FASTR_GCTORTURE'] = '5'
+            os.environ['FASTR_GCTORTURE'] = '3'
 
     '''
     The specific additional gates tasks provided by FastR.
