@@ -1,0 +1,17 @@
+# Manually maintained list of packages that are OK to ignore when installing "suggests".
+# The name is the package and the values are regexps of suggests that can be ignored for that package
+#
+# This file will be eval'd and the result is assumed to be an R list containing the ignored suggests.
+# 
+# You can additionally use function 'ignore.all.but(...)' to negate a pattern.
+list(
+    rstudioapi = '*', # rstudioapi executes almost no real tests, it is mostly just test of install & load
+    glmnet = 'knitr',  # probably used for vignettes only
+    PerformanceAnalytics = ignore.all.but('testthat'), # not gated yet. We can run almost all tests except for few examples that use some suggests including data.table
+    shinyjs = 'V8',  # it fails when being installed, but it does not affect the tests result
+    quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
+    mboost = ignore.all.but('TH.data', 'survival', 'RColorBrewer'), # this pkg has only vignettes and grepping then gave these libs
+    quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
+    forcats = ignore.all.but('testthat'), # other suggested: ggplot2 and covcor not used in tests
+    sqldf = 'tcltk|RPostgreSQL|RJDBC|RH2' # tcltk not on CRAN, RPostgreSQL can't be installed, RH2 and RJDBC depend on rJava which can't be installed
+)

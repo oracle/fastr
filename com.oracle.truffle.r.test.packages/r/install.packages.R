@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -135,6 +135,7 @@ usage <- function() {
 					  "[--count-daily count]",
 					  "[--ok-only]",
 					  "[--important-pkgs file]",
+					  "[--ignore-suggests file]",
                       "[--pkg-pattern package-pattern] \n"))
 	quit(status=100)
 }
@@ -149,21 +150,22 @@ default.packages <- c("R", "base", "grid", "splines", "utils",
 		"compiler", "grDevices", "methods", "stats", "stats4",
 		"datasets", "graphics", "parallel", "tools", "tcltk")
 
-# manually maintained list of packages that are OK to ignore when installing "suggests"
-# the name is that package and the values are regexps of suggests that can be ignored for that package
-# if this configuration gets too complex or updated too often, we can move it to separate config file
-ignore.all.but <- function(...) structure(as.vector(list(...)), class='negation')
-ignore.suggests <- list(
-	rstudioapi = '*', # rstudioapi executes almost no real tests, it is mostly just test of install & load
-	glmnet = 'knitr',  # probably used for vignettes only
-	PerformanceAnalytics = ignore.all.but('testthat'), # not gated yet. We can run almost all tests except for few examples that use some suggests including data.table
-	shinyjs = 'V8',  # it fails when being installed, but it does not affect the tests result
-	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
-	mboost = ignore.all.but('TH.data', 'survival', 'RColorBrewer'), # this pkg has only vignettes and grepping then gave these libs
-	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
-	forcats = ignore.all.but('testthat'), # other suggested: ggplot2 and covcor not used in tests
-	sqldf = 'tcltk|RPostgreSQL|RJDBC|RH2' # tcltk not on CRAN, RPostgreSQL can't be installed, RH2 and RJDBC depend on rJava which can't be installed
-)
+# List of packages that are OK to ignore when installing "suggests".
+# The list will be loaded lazily from the path in 'ignore.suggests.file'.
+# Therefore, always use 'get.ignore.suggests'.
+ignore.suggests <- NULL
+
+get.ignore.suggests <- function() {
+    if (is.null(ignore.suggests)) {
+        if (!file.exists(ignore.suggests.file)) {
+            abort(paste0("Cannot load file suggested packages to ignore from '", ignore.suggests.file, "'."))
+        }
+        ignore.all.but <- function(...) structure(as.vector(list(...)), class='negation')
+        # eval in the current env such that 'ignore.all.but' is available
+        ignore.suggests <<- source(ignore.suggests.file, local=environment())
+    }
+    ignore.suggests
+}
 
 # manually maintained list of packages that need to be install with 'install.fastr.packages'
 overrides <- list(
@@ -667,7 +669,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 install.suggests <- function(pkgnames) {
 	for (pkgname in pkgnames) {
 		suggests <- install.order(avail.pkgs, avail.pkgs[pkgname, ], "suggests")
-		ignore.pattern <- ignore.suggests[[pkgname]]
+		ignore.pattern <- get.ignore.suggests()[[pkgname]]
 		if (!is.null(ignore.pattern)) {
 			ignore <- character(0)
 			for (i in seq_along(ignore.pattern)) {
@@ -1064,6 +1066,11 @@ parse.args <- function() {
 			if (is.na(important.pkg.table.file)) {
 				usage()
 			}
+		} else if (a == "--ignore-suggests") {
+			ignore.suggests.file <<- get.argvalue()
+			if (is.na(ignore.suggests.file)) {
+				usage()
+			}
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -1111,7 +1118,8 @@ cat.args <- function() {
 		cat("print.install.status:", print.install.status, "\n")
 		cat("use.installed.pkgs:", use.installed.pkgs, "\n")
 		cat("invert.pkgset:", invert.pkgset, "\n")
-		cat("testdir.path", testdir, "\n")
+		cat("testdir.path:", testdir, "\n")
+		cat("ignore.suggests.file:", ignore.suggests.file, "\n")
 		cat("pkg.cache: enabled=", pkg.cache$enabled, "; vm=", pkg.cache$vm, "; dir=", pkg.cache$dir, "; mode=", pkg.cache$mode, "; ignore=", pkg.cache$ignore, "\n")
 	}
 }
@@ -1332,6 +1340,7 @@ invert.pkgset <- F
 find.top.pkgs <- NA
 important.pkg.table.file <- NA
 important.pkg.table <- NULL
+ignore.suggests.file <- file.path(curScriptDir, "..", "ignore.suggests")
 
 if (!interactive()) {
     run()

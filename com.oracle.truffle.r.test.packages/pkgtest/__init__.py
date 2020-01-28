@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -107,6 +107,10 @@ def _installpkgs_script():
     return join(packages_test, 'r', 'install.packages.R')
 
 
+def _get_ignore_suggests_file():
+    return join(_packages_test_project_dir(), 'ignore.suggests')
+
+
 def commit_fastr_builtins():
     '''
     There are some FastR builtins which we also want to use in GnuR (i.e. 'install.fastr.packages').
@@ -178,6 +182,10 @@ def prepare_r_install_arguments(args):
     else:
         logging.info("No '--repos' specified, using default CRAN mirror: " + default_cran_mirror_url)
         args += [ "--repos", default_cran_mirror_url]
+
+    # add path to file containing suggests packages that are safe to ignore
+    args += ["--ignore-suggests", _get_ignore_suggests_file()]
+
     return args
 
 
@@ -483,7 +491,7 @@ def _get_test_outputs(rvm, pkg_name, test_info):
 
 
 def _args_to_forward_to_gnur(args):
-    forwarded_args = ['--repos', '--run-mode', '--cache-pkgs']
+    forwarded_args = ['--repos', '--run-mode', '--cache-pkgs', "--ignore-suggests"]
     result = []
     i = 0
     while i < len(args):
