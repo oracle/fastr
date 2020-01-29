@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import static com.oracle.truffle.r.test.library.fastr.Utils.errorIn;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
 import org.graalvm.polyglot.proxy.ProxyObject;
@@ -1866,47 +1867,6 @@ public class TestJavaInterop extends TestBase {
                 sb.append(';');
         }
         sb.append('\'');
-        return sb.toString();
-    }
-
-    private static String errorIn(String left, String right) {
-        return errorIn(left, right, false, false, "  ");
-    }
-
-    private static String errorIn(String left, String right, boolean warning, boolean onlyText, String sep) {
-        return errorIn(left, right, warning, onlyText, sep, true);
-    }
-
-    private static String errorIn(String left, String right, boolean warning, boolean onlyText, String sep, boolean breakLongContext) {
-        String errorIn;
-        if (warning) {
-            errorIn = "Warning message:\n";
-        } else {
-            errorIn = "Error in ";
-        }
-        String delim = " : ";
-
-        StringBuilder sb = new StringBuilder();
-        if (!onlyText) {
-            sb.append("cat('");
-        }
-        sb.append(errorIn);
-        sb.append(left.replaceAll("\\'", "\\\\\\'"));
-        sb.append(delim);
-        if (breakLongContext && errorIn.length() + left.length() + delim.length() + 1 + right.length() >= 75) {
-            sb.append("', '\n', '");
-        }
-        sb.append(right.replaceAll("\\'", "\\\\\\'"));
-        sb.append("', '\n");
-        if (!onlyText) {
-            if (sep != null) {
-                sb.append("', sep='");
-                sb.append(sep);
-                sb.append("')");
-            } else {
-                sb.append("')");
-            }
-        }
         return sb.toString();
     }
 

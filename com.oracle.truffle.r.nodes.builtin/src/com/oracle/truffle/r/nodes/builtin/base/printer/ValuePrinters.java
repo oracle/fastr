@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.interop.TruffleObjectConverter;
 
 final class ValuePrinters implements ValuePrinter<Object> {
 
@@ -107,6 +108,9 @@ final class ValuePrinters implements ValuePrinter<Object> {
                     printer = EnvironmentPrinter.INSTANCE;
                 } else if (x instanceof RPairList) {
                     printer = ((RPairList) x).isLanguage() ? LanguagePrinter.INSTANCE : PairListPrinter.INSTANCE;
+                } else if (x == TruffleObjectConverter.UNREADABLE) {
+                    assert !(x instanceof RBaseObject) : x;
+                    printer = UnreadableMemberPrinter.INSTANCE;
                 } else if (x instanceof TruffleObject) {
                     assert !(x instanceof RBaseObject) : x;
                     printer = TruffleObjectPrinter.INSTANCE;
