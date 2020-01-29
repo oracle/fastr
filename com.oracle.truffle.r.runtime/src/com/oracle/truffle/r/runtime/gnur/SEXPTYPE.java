@@ -45,6 +45,12 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RWeakRef;
+<<<<<<< HEAD
+=======
+import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
+import com.oracle.truffle.r.runtime.data.closures.RToComplexVectorClosure;
+import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
+>>>>>>> 956c890944... Add skeleton of altstring.
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 // Transcribed from GnuR src/include/Rinternals.h and src/main/serialize.c
@@ -70,7 +76,7 @@ public enum SEXPTYPE {
     /* complex vectors */
     CPLXSXP(15, RComplexVector.class, RComplex.class),
     /* string vectors */
-    STRSXP(16, RStringVector.class, String.class),
+    STRSXP(16, RStringVector.class, String.class, RAltStringVector.class),
     DOTSXP(17, RArgsValuesAndNames.class), /* dot-dot-dot object */
     ANYSXP(18), /* make "any" args work */
     VECSXP(19, RList.class), /* generic vectors */

@@ -573,12 +573,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public void SET_STRING_ELT(Object x, long i, Object v) {
-        RStringVector vector = guaranteeInstanceOf(x, RStringVector.class);
-        CharSXPWrapper element = guaranteeInstanceOf(v, CharSXPWrapper.class);
-        if (RRuntime.isNA(element.getContents())) {
-            vector.setComplete(false);
-        }
-        vector.setElement((int) i, element);
+        throw implementedAsNode();
     }
 
     @Override
@@ -594,9 +589,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object STRING_ELT(Object x, long i) {
-        RStringVector vector = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RStringVector.class);
-        vector.wrapStrings();
-        return vector.getWrappedDataAt((int) i);
+        throw implementedAsNode();
     }
 
     @Override

@@ -85,7 +85,9 @@ import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfAllocVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfFindFun;
+import com.oracle.truffle.r.ffi.impl.nodes.SetStringEltNode;
 import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
+import com.oracle.truffle.r.ffi.impl.nodes.StringEltNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TYPEOFNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.VectorElementGetterNode;
@@ -286,6 +288,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(LENGTHNode.class)
     int LENGTH(Object x);
 
+    @RFFIUpCallNode(SetStringEltNode.class)
     void SET_STRING_ELT(Object x, long i, Object v);
 
     void SETLENGTH(Object x, int l);
@@ -353,6 +356,7 @@ public interface StdUpCallsRFFI {
 
     int STRING_NO_NA(Object x);
 
+    @RFFIUpCallNode(StringEltNode.class)
     Object STRING_ELT(@RFFIResultOwner Object x, long i);
 
     @RFFIUpCallNode(value = VectorElementGetterNode.class)

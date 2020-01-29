@@ -7,8 +7,10 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
+import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 
 @GenerateUncached
 public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
@@ -30,8 +32,10 @@ public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
         throw RInternalError.unimplemented("newRealAltRep Not implemented");
     }
 
-    // TODO: specs for complex, string, logical and raw.
-    // ...
+    @Specialization
+    public Object newStringAltRep(AltStringClassDescriptor classDescriptor, Object data1, Object data2) {
+        return new RAltStringVector(classDescriptor, new RAltRepData(data1, data2), true);
+    }
 
     @Fallback
     public Object unknownAltrepType(Object classDescriptor, Object data1, Object data2) {
