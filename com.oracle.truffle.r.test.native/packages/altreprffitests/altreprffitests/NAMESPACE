@@ -15,5 +15,6 @@ export(
     logging_vec_wrapper.was_Get_region_called,
     logging_vec_wrapper.was_Is_sorted_called,
     logging_vec_wrapper.clear_called_methods,
-    generator_class.new
+    generator_class.new,
+    first_char_changer_class.new
 )

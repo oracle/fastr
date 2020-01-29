@@ -91,3 +91,7 @@ generator_class.new <- function(data_length, fn) {
     stopifnot( length(data_length) == 1)
     .Call("generator_class_new", as.integer(data_length), fn, parent.frame())
 }
+
+first_char_changer_class.new <- function(char_vec, replace_char) {
+    .Call("first_char_changer_class_new", char_vec, replace_char)
+}

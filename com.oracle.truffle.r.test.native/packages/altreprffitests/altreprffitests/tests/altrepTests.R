@@ -245,13 +245,22 @@ test_generator_class <- function() {
     stopifnot( acc == expected_acc)
 }
 
+test_first_char_changer_class <- function() {
+    char_vec <- c("ahoj", "karle")
+    instance <- first_char_changer_class.new(char_vec, "X")
+
+    stopifnot( instance[[1]] == "Xhoj")
+    stopifnot( instance[[2]] == "Xarle")
+}
+
 TESTS <- list(
     list("test_simple", test_simple),
     list("test_two_instances", test_two_instances),
     list("test_default_implementations", test_default_implementations),
     list("test_calls_to_altrep_methods", test_calls_to_altrep_methods),
     list("test_framework_behavior", test_framework_behavior),
-    list("test_generator_class", test_generator_class)
+    list("test_generator_class", test_generator_class),
+    list("test_first_char_changer_class", test_first_char_changer_class)
 )
 
 run_tests(TESTS)
