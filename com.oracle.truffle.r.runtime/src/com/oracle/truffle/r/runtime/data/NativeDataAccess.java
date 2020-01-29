@@ -745,15 +745,6 @@ public final class NativeDataAccess {
         }
     }
 
-    public static void setData(RAltIntegerVec vector, long address, int index, int value) {
-        UnsafeAdapter.UNSAFE.putInt(address + (long) index * Unsafe.ARRAY_INT_INDEX_SCALE, value);
-    }
-
-    // TODO: This method is currently used just as a wrapper for UnsafeAdapter.
-    public static int getData(RAltIntegerVec altIntVector, int index, long address) {
-        return UnsafeAdapter.UNSAFE.getInt(address + (long) index * Unsafe.ARRAY_INT_INDEX_SCALE);
-    }
-
     static byte getData(RLogicalVector vector, byte[] data, int index) {
         if (noLogicalNative.isValid() || data != null) {
             return data[index];

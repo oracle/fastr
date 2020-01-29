@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVect
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 @ExportLibrary(InteropLibrary.class)
 public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedVector {
@@ -112,14 +113,14 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
         } else {
             // Invoke uncached dataptr method
             long address = descriptor.invokeDataptrMethodUncached(this, true);
-            return NativeDataAccess.getData(this, index, address);
+            return NativeMemory.getInt(address, index);
         }
     }
 
     @Override
     public void setDataAt(Object store, int index, int value) {
         long address = descriptor.invokeDataptrMethodUncached(this, true);
-        NativeDataAccess.setData(this, address, index, value);
+        NativeMemory.putInt(address, index, value);
     }
 
     @Override
@@ -208,7 +209,7 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
             if (hasEltMethod) {
                 return instance.getDescriptor().invokeEltMethodCached(instance, index, eltMethodInterop, hasMirrorProfile);
             } else {
-                return NativeDataAccess.getData(instance, index, dataptrAddr);
+                return NativeMemory.getInt(dataptrAddr, index);
             }
         }
 
@@ -216,7 +217,7 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
         protected void setIntImpl(AccessIterator accessIter, int index, int value) {
             RAltIntegerVec instance = getInstanceFromIterator(accessIter);
             if (dataptrAddr != 0) {
-                NativeDataAccess.setData(instance, dataptrAddr, index, value);
+                NativeMemory.putInt(dataptrAddr, index, value);
             } else {
                 throw RInternalError.shouldNotReachHere();
             }

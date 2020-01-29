@@ -9,6 +9,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 public class AltrepUtilities {
     public static boolean isAltrep(Object object) {
@@ -138,7 +139,7 @@ public class AltrepUtilities {
                                   @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
                                   @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             long address = altIntVec.getDescriptor().invokeDataptrMethodCached(altIntVec, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-            return NativeDataAccess.getData(altIntVec, index, address);
+            return NativeMemory.getInt(address, index);
         }
     }
 }

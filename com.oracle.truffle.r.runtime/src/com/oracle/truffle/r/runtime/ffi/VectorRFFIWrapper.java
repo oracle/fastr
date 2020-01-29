@@ -64,6 +64,7 @@ import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(NativeTypeLibrary.class)
@@ -558,7 +559,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
                                                    @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             // TODO: Add dataptrAddrComputed binary profile.
             long addr = vector.getDescriptor().invokeDataptrMethodCached(vector, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-            NativeDataAccess.setData(vector, addr, index, value);
+            NativeMemory.putInt(addr, index, value);
             return vector;
         }
 
