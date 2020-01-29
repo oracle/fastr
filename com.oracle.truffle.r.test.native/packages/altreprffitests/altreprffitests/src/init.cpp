@@ -2,6 +2,7 @@
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
 #include "altrep_classes.hpp"
+#include "GeneratorClass.hpp"
 
 static SEXP is_altrep(SEXP x);
 extern "C" SEXP my_test(SEXP vec);
@@ -12,6 +13,7 @@ static const R_CallMethodDef CallEntries[] = {
         {"logging_vec_wrapper_create_instance", (DL_FUNC) &LoggingVecWrapper::createInstance, 9},
         {"logging_vec_wrapper_was_method_called", (DL_FUNC) &LoggingVecWrapper::wasMethodCalled, 2},
         {"logging_vec_wrapper_clear_called_methods", (DL_FUNC) &LoggingVecWrapper::clearCalledMethods, 0},
+        {"generator_class_new", (DL_FUNC)&GeneratorClass::createInstance, 3},
         {"my_test", (DL_FUNC) &my_test, 1},
         {NULL, NULL, 0}
 };

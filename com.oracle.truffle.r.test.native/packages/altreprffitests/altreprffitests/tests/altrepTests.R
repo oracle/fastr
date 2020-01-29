@@ -228,12 +228,30 @@ test_mmap <- function() {
     check_equal(mmap_instance, data)
 }
 
+#' See GeneratorClass.
+test_generator_class <- function() {
+    f <- function(idx) as.integer(idx + 1)
+    fn <- as.symbol("f")
+    LEN <- 10
+    instance <- generator_class.new(LEN, fn)
+
+    acc <- as.integer(0)
+    for (i in 1:length(instance)) {
+        # Every instance[[i]] calls f(i)
+        acc <- acc + instance[[i]]
+    }
+
+    expected_acc <- sum(1:LEN + 1)
+    stopifnot( acc == expected_acc)
+}
+
 TESTS <- list(
     list("test_simple", test_simple),
     list("test_two_instances", test_two_instances),
     list("test_default_implementations", test_default_implementations),
     list("test_calls_to_altrep_methods", test_calls_to_altrep_methods),
-    list("test_framework_behavior", test_framework_behavior)
+    list("test_framework_behavior", test_framework_behavior),
+    list("test_generator_class", test_generator_class)
 )
 
 run_tests(TESTS)

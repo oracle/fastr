@@ -4,7 +4,6 @@ is.altrep <- function(x) {
     .Call("is_altrep", x)
 }
 
-#' @export 
 simple_vec_wrapper.create_instance <- function(data,
                                                gen.Duplicate=F,
                                                gen.Coerce=F,
@@ -24,7 +23,6 @@ simple_vec_wrapper.create_instance <- function(data,
         gen.Sum, gen.Min, gen.Max, gen.Get_region, gen.Is_sorted)
 }
 
-#' @export 
 logging_vec_wrapper.create_instance <- function(data,
                                                gen.Duplicate=F,
                                                gen.Coerce=F,
@@ -86,4 +84,10 @@ native_mem_vec.create_instance <- function(data_length) {
 
 native_mem_vec.delete_instance <- function(instance) {
     .Call("native_mem_vec_delete_instance", instance)
+}
+
+generator_class.new <- function(data_length, fn) {
+    stopifnot( is.symbol(fn))
+    stopifnot( length(data_length) == 1)
+    .Call("generator_class_new", as.integer(data_length), fn, parent.frame())
 }
