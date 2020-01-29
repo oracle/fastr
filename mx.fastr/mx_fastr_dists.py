@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -115,35 +115,8 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         shutil.copy(join(fastr_dir, 'LICENSE'), output_dir)
         shutil.copy(join(fastr_dir, 'README.md'), output_dir)
 
-        # canonicalize R_HOME_DIR in bin/R
-        bin_dir = join(output_dir, 'bin')
-        rcmd = join(bin_dir, 'R')
-        # R is the generic shell script (taken essentially verbatim from GNU R)
-        with open(rcmd) as f:
-            lines = f.readlines()
-        with open(rcmd, 'w') as f:
-            for line in lines:
-                if line.startswith('R_HOME_DIR='):
-                    f.write(
-"""
-source="${BASH_SOURCE[0]}"
-while [ -h "$source" ] ; do
-  prev_source="$source"
-  source="$(readlink "$source")";
-  if [[ "$source" != /* ]]; then
-    # if the link was relative, it was relative to where it came from
-    dir="$( cd -P "$( dirname "$prev_source" )" && pwd )"
-    source="$dir/$source"
-  fi
-done
-r_bin="$( cd -P "$( dirname "$source" )" && pwd )"
-R_HOME_DIR="$( dirname "$r_bin" )"
-""")
-                elif line.strip() == "#!/bin/sh":
-                    f.write("#!/usr/bin/env bash\n")
-                else:
-                    f.write(line)
         # jar files for the launchers
+        bin_dir = join(output_dir, 'bin')
         jars_dir = join(bin_dir, 'fastr_jars')
         if not os.path.exists(jars_dir):
             os.mkdir(jars_dir)
