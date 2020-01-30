@@ -83,6 +83,23 @@ v <- api.Rf_asS4(v, TRUE, 0)
 assertTrue(api.IS_S4_OBJECT(v) > 0)
 
 # ----------------------------------------------------------------------------------------
+# PRENV: gives environment associated with given promise object
+# tricky thing in FastR is that we attempt to optimize promises
+
+getDotsPrenvC <- load.Call(function(env) '
+    SEXP dots = Rf_findVar(install("..."), env);
+    assert_equal_i(TYPEOF(CAR(dots)), 5); // PROMSXP
+    return PRENV(CAR(dots));
+')
+
+getDotsPrenv <- function(...) getDotsPrenvC(environment())
+
+assertEquals(globalenv(), getDotsPrenv(2L + 1L)) # expression
+assertEquals(globalenv(), getDotsPrenv(var))     # variable lookup
+assertEquals(globalenv(), getDotsPrenv(2L))      # constant
+assertEquals(globalenv(), getDotsPrenv(bar()))   # call
+
+# ----------------------------------------------------------------------------------------
 # .C downcall interface
 
 dotC <- load.C(function(a = 'int*', b = 'double*') '
