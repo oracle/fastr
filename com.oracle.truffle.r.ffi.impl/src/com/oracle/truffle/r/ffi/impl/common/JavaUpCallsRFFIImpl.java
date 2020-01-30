@@ -1423,252 +1423,244 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         throw implementedAsNode();
     }
 
-    private <T> T ensureNotNull(T object) {
-        if (object != null) {
-            return object;
-        } else {
-            throw new RInternalError("Null not expected (probably problem in AltRepContext?)");
-        }
-    }
-
     @Override
     public void R_set_altrep_Unserialize_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRepClassDescriptor;
-        ((AltRepClassDescriptor) classDescriptor).registerUnserializeMethod(method);
+        AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
+        classDescr.registerUnserializeMethod(method);
     }
 
     @Override
     public void R_set_altrep_Length_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRepClassDescriptor;
-        ((AltRepClassDescriptor) classDescriptor).registerLengthMethod(method);
+        AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
+        classDescr.registerLengthMethod(method);
     }
 
     @Override
     public void R_set_altrep_UnserializeEX_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRepClassDescriptor;
-        ((AltRepClassDescriptor) classDescriptor).registerUnserializeEXMethod(method);
+        AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
+        classDescr.registerUnserializeEXMethod(method);
     }
 
     @Override
     public void R_set_altrep_Serialized_state_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRepClassDescriptor;
-        ((AltRepClassDescriptor) classDescriptor).registerSerializedStateMethod(method);
+        AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
+        classDescr.registerSerializedStateMethod(method);
     }
 
     @Override
     public void R_set_altrep_Duplicate_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRepClassDescriptor;
-        ((AltRepClassDescriptor) classDescriptor).registerDuplicateMethod(method);
+        AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
+        classDescr.registerDuplicateMethod(method);
     }
 
     @Override
     public void R_set_altrep_DuplicateEX_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRepClassDescriptor;
-        ((AltRepClassDescriptor) classDescriptor).registerDuplicateEXMethod(method);
+        AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
+        classDescr.registerDuplicateEXMethod(method);
     }
 
     @Override
     public void R_set_altrep_Coerce_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRepClassDescriptor;
-        ((AltRepClassDescriptor) classDescriptor).registerCoerceMethod(method);
+        AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
+        classDescr.registerCoerceMethod(method);
     }
 
     @Override
     public void R_set_altrep_Inspect_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRepClassDescriptor;
-        ((AltRepClassDescriptor) classDescriptor).registerInspectMethod(method);
+        AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
+        classDescr.registerInspectMethod(method);
     }
 
     @Override
     public void R_set_altvec_Dataptr_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltVecClassDescriptor;
-        ((AltVecClassDescriptor) classDescriptor).registerDataptrMethod(method);
+        AltVecClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltVecClassDescriptor.class);
+        classDescr.registerDataptrMethod(method);
     }
 
     @Override
     public void R_set_altvec_Dataptr_or_null_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltVecClassDescriptor;
-        ((AltVecClassDescriptor) classDescriptor).registerDataptrOrNullMethod(method);
+        AltVecClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltVecClassDescriptor.class);
+        classDescr.registerDataptrOrNullMethod(method);
     }
 
     @Override
     public void R_set_altvec_Extract_subset_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltVecClassDescriptor;
-        ((AltVecClassDescriptor) classDescriptor).registerExtractSubsetMethod(method);
+        AltVecClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltVecClassDescriptor.class);
+        classDescr.registerExtractSubsetMethod(method);
     }
 
     @Override
     public void R_set_altinteger_Elt_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltIntegerClassDescriptor;
-        ((AltIntegerClassDescriptor) classDescriptor).registerEltMethod(method);
+        AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
+        classDescr.registerEltMethod(method);
     }
 
     @Override
     public void R_set_altinteger_Get_region_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltIntegerClassDescriptor;
-        ((AltIntegerClassDescriptor) classDescriptor).registerGetRegionMethod(method);
+        AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
+        classDescr.registerGetRegionMethod(method);
     }
 
     @Override
     public void R_set_altinteger_Is_sorted_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltIntegerClassDescriptor;
-        ((AltIntegerClassDescriptor) classDescriptor).registerIsSortedMethod(method);
+        AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
+        classDescr.registerIsSortedMethod(method);
     }
 
     @Override
     public void R_set_altinteger_No_NA_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltIntegerClassDescriptor;
-        ((AltIntegerClassDescriptor) classDescriptor).registerNoNAMethod(method);
+        AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
+        classDescr.registerNoNAMethod(method);
     }
 
     @Override
     public void R_set_altinteger_Sum_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltIntegerClassDescriptor;
-        ((AltIntegerClassDescriptor) classDescriptor).registerSumMethod(method);
+        AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
+        classDescr.registerSumMethod(method);
     }
 
     @Override
     public void R_set_altinteger_Min_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltIntegerClassDescriptor;
-        ((AltIntegerClassDescriptor) classDescriptor).registerMinMethod(method);
+        AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
+        classDescr.registerMinMethod(method);
     }
 
     @Override
     public void R_set_altinteger_Max_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltIntegerClassDescriptor;
-        ((AltIntegerClassDescriptor) classDescriptor).registerMaxMethod(method);
+        AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
+        classDescr.registerMaxMethod(method);
     }
 
     @Override
     public void R_set_altreal_Elt_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRealClassDescriptor;
-        ((AltRealClassDescriptor) classDescriptor).registerEltMethod(method);
+        AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
+        classDescr.registerEltMethod(method);
     }
 
     @Override
     public void R_set_altreal_Get_region_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRealClassDescriptor;
-        ((AltRealClassDescriptor) classDescriptor).registerGetRegionMethod(method);
+        AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
+        classDescr.registerGetRegionMethod(method);
     }
 
     @Override
     public void R_set_altreal_Is_sorted_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRealClassDescriptor;
-        ((AltRealClassDescriptor) classDescriptor).registerIsSortedMethod(method);
+        AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
+        classDescr.registerIsSortedMethod(method);
     }
 
     @Override
     public void R_set_altreal_No_NA_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRealClassDescriptor;
-        ((AltRealClassDescriptor) classDescriptor).registerNoNAMethod(method);
+        AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
+        classDescr.registerNoNAMethod(method);
     }
 
     @Override
     public void R_set_altreal_Sum_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRealClassDescriptor;
-        ((AltRealClassDescriptor) classDescriptor).registerSumMethod(method);
+        AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
+        classDescr.registerSumMethod(method);
     }
 
     @Override
     public void R_set_altreal_Min_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRealClassDescriptor;
-        ((AltRealClassDescriptor) classDescriptor).registerMinMethod(method);
+        AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
+        classDescr.registerMinMethod(method);
     }
 
     @Override
     public void R_set_altreal_Max_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRealClassDescriptor;
-        ((AltRealClassDescriptor) classDescriptor).registerMaxMethod(method);
+        AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
+        classDescr.registerMaxMethod(method);
     }
 
     @Override
     public void R_set_altlogical_Elt_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltLogicalClassDescriptor;
-        ((AltLogicalClassDescriptor) classDescriptor).registerEltMethod(method);
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        classDescr.registerEltMethod(method);
     }
 
     @Override
     public void R_set_altlogical_Get_region_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltLogicalClassDescriptor;
-        ((AltLogicalClassDescriptor) classDescriptor).registerGetRegionMethod(method);
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        classDescr.registerGetRegionMethod(method);
     }
 
     @Override
     public void R_set_altlogical_Is_sorted_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltLogicalClassDescriptor;
-        ((AltLogicalClassDescriptor) classDescriptor).registerIsSortedMethod(method);
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        classDescr.registerIsSortedMethod(method);
     }
 
     @Override
     public void R_set_altlogical_No_NA_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltLogicalClassDescriptor;
-        ((AltLogicalClassDescriptor) classDescriptor).registerNoNAMethod(method);
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        classDescr.registerNoNAMethod(method);
     }
 
     @Override
     public void R_set_altlogical_Sum_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltLogicalClassDescriptor;
-        ((AltLogicalClassDescriptor) classDescriptor).registerSumMethod(method);
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        classDescr.registerSumMethod(method);
     }
 
     @Override
     public void R_set_altlogical_Min_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltLogicalClassDescriptor;
-        ((AltLogicalClassDescriptor) classDescriptor).registerMinMethod(method);
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        classDescr.registerMinMethod(method);
     }
 
     @Override
     public void R_set_altlogical_Max_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltLogicalClassDescriptor;
-        ((AltLogicalClassDescriptor) classDescriptor).registerMaxMethod(method);
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        classDescr.registerMaxMethod(method);
     }
 
     @Override
     public void R_set_altraw_Elt_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRawClassDescriptor;
-        ((AltRawClassDescriptor) classDescriptor).registerEltMethod(method);
+        AltRawClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRawClassDescriptor.class);
+        classDescr.registerEltMethod(method);
     }
 
     @Override
     public void R_set_altraw_Get_region_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltRawClassDescriptor;
-        ((AltRawClassDescriptor) classDescriptor).registerGetRegionMethod(method);
+        AltRawClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRawClassDescriptor.class);
+        classDescr.registerGetRegionMethod(method);
     }
 
     @Override
     public void R_set_altcomplex_Elt_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltComplexClassDescriptor;
-        ((AltComplexClassDescriptor) classDescriptor).registerEltMethod(method);
+        AltComplexClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltComplexClassDescriptor.class);
+        classDescr.registerEltMethod(method);
     }
 
     @Override
     public void R_set_altcomplex_Get_region_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltComplexClassDescriptor;
-        ((AltComplexClassDescriptor) classDescriptor).registerGetRegionMethod(method);
+        AltComplexClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltComplexClassDescriptor.class);
+        classDescr.registerGetRegionMethod(method);
     }
 
     @Override
     public void R_set_altstring_Elt_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltStringClassDescriptor;
-        ((AltStringClassDescriptor) classDescriptor).registerEltMethod(method);
+        AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
+        classDescr.registerEltMethod(method);
     }
 
     @Override
     public void R_set_altstring_Set_elt_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltStringClassDescriptor;
-        ((AltStringClassDescriptor) classDescriptor).registerSetEltMethod(method);
+        AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
+        classDescr.registerSetEltMethod(method);
     }
 
     @Override
     public void R_set_altstring_Is_sorted_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltStringClassDescriptor;
-        ((AltStringClassDescriptor) classDescriptor).registerIsSortedMethod(method);
+        AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
+        classDescr.registerIsSortedMethod(method);
     }
 
     @Override
     public void R_set_altstring_No_NA_method(Object classDescriptor, Object method) {
-        assert classDescriptor instanceof AltStringClassDescriptor;
-        ((AltStringClassDescriptor) classDescriptor).registerNoNAMethod(method);
+        AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
+        classDescr.registerNoNAMethod(method);
     }
 
     @Override
