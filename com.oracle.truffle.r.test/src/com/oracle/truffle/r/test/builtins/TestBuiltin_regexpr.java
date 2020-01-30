@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -134,5 +134,9 @@ public class TestBuiltin_regexpr extends TestBase {
         assertEval("regexpr('\\\\)', 'abc()', fixed = FALSE)");
         assertEval(Output.IgnoreErrorMessage, "regexpr('(', 'abc()', fixed = FALSE)");
         assertEval("regexpr('\\\\(', 'abc()', fixed = FALSE)");
+
+        // pattern has capture groups, but data are empty:
+        assertEval("regexpr(structure('.*: (?<message>X*)', class = 'regex'), list(), perl=T)");
+        assertEval("regexpr(structure('^(?:ABC(?!_DEF))', class = 'regex'), list(), perl=T)");
     }
 }
