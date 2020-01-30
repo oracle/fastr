@@ -51,6 +51,14 @@ public class RAltStringVector extends RAbstractStringVector implements RAbstract
         return null;
     }
 
+    public RAltRepData getData() {
+        return data;
+    }
+
+    public void setData2(Object data2) {
+        data.setData2(data2);
+    }
+
     private static final class FastPathAccess extends FastPathVectorAccess.FastPathFromStringAccess {
         public FastPathAccess(RAltStringVector value) {
             super(value);

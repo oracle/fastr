@@ -1,6 +1,7 @@
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
 import com.oracle.truffle.r.ffi.impl.nodes.AltrepData1Node;
+import com.oracle.truffle.r.ffi.impl.nodes.AltrepData2Node;
 import com.oracle.truffle.r.ffi.impl.nodes.MakeAltComplexClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MakeAltIntegerClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MakeAltLogicalClassNode;
@@ -8,6 +9,8 @@ import com.oracle.truffle.r.ffi.impl.nodes.MakeAltRawClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MakeAltRealClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MakeAltStringClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NewAltRepNode;
+import com.oracle.truffle.r.ffi.impl.nodes.SetAltrepData1Node;
+import com.oracle.truffle.r.ffi.impl.nodes.SetAltrepData2Node;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
@@ -17,8 +20,11 @@ public interface AltRepUpCalls {
     boolean R_altrep_inherits(Object instance, Object classDescriptor);
     @RFFIUpCallNode(AltrepData1Node.class)
     Object R_altrep_data1(Object instance);
+    @RFFIUpCallNode(AltrepData2Node.class)
     Object R_altrep_data2(Object instance);
+    @RFFIUpCallNode(SetAltrepData1Node.class)
     void R_set_altrep_data1(Object instance, Object data1);
+    @RFFIUpCallNode(SetAltrepData2Node.class)
     void R_set_altrep_data2(Object instance, Object data2);
     @RFFIUpCallNode(MakeAltIntegerClassNode.class)
     Object R_make_altinteger_class(@RFFICstring(convert = false) Object className, @RFFICstring(convert = false) Object packageName, @RFFICpointer Object dllInfo);

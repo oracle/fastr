@@ -1358,9 +1358,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         throw implementedAsNode();
     }
 
-
-    private static final TruffleLogger altrepLogger = RLogger.getLogger("altrep");
-
     @Override
     public int ALTREP(Object x) {
         if (x instanceof RBaseObject) {
@@ -1383,32 +1380,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object R_altrep_data2(Object instance) {
-        if (instance instanceof RAltIntegerVec) {
-            altrepLogger.finer(() -> "R_altrep_data2(instance=" + instance + ")");
-            return ((RAltIntegerVec) instance).getData2();
-        } else {
-            throw new RInternalError("Cannot get altrep_data2");
-        }
+        throw implementedAsNode();
     }
 
     @Override
     public void R_set_altrep_data1(Object instance, Object data1) {
-        if (instance instanceof RAltIntegerVec) {
-            altrepLogger.finer(() -> "R_set_altrep_data1(instance=" + instance + ")");
-            ((RAltIntegerVec) instance).setData1(data1);
-        } else {
-            throw new RInternalError("Cannot set altrep_data1");
-        }
+        throw implementedAsNode();
     }
 
     @Override
     public void R_set_altrep_data2(Object instance, Object data2) {
-        if (instance instanceof RAltIntegerVec) {
-            altrepLogger.finer(() -> "R_set_altrep_data2(instance=" + instance + ")");
-            ((RAltIntegerVec) instance).setData2(data2);
-        } else {
-            throw new RInternalError("Cannot set altrep_data2");
-        }
+        throw implementedAsNode();
     }
 
     @Override
