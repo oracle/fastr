@@ -1085,3 +1085,8 @@ SEXP benchProtect(SEXP x, SEXP nn) {
   }
   return res > 10 ? R_NilValue : x;
 }
+
+SEXP testMissingArgWithATTRIB() {
+    return ATTRIB(R_MissingArg);
+}
+

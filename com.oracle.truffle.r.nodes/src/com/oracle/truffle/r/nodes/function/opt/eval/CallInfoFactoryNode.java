@@ -31,6 +31,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.function.opt.eval.CallInfo.EvalMode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -89,13 +90,13 @@ public abstract class CallInfoFactoryNode extends Node {
     @Specialization
     CallInfo createFunctionInfo(RFunction fun, @SuppressWarnings("unused") RNull argList, REnvironment env,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
-        return new CallInfo(fun, fun.getName(), null, env, plLib);
+        return new CallInfo(fun, fun.getName(), null, env, plLib, EvalMode.FAST);
     }
 
     @Specialization
     CallInfo createFunctionInfo(RFunction fun, RPairList argList, REnvironment env,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
-        return new CallInfo(fun, fun.getName(), argList, env, plLib);
+        return new CallInfo(fun, fun.getName(), argList, env, plLib, EvalMode.FAST);
     }
 
     @SuppressWarnings("unused")

@@ -65,7 +65,6 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
 
     @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
     @Child private GetFixedPropertyNode getClassAttrNode;
-    @Child private GetFixedPropertyNode getEnvAttrNode;
     @Child private SetFixedAttributeNode setEnvAttrNode;
 
     static {
@@ -83,7 +82,8 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RPairList tilde(VirtualFrame frame, Object x, Object y,
-                    @Cached("create()") BranchProfile callNodeAttrsProfile) {
+                    @Cached("create()") BranchProfile callNodeAttrsProfile,
+                    @Cached("create()") BranchProfile classDefinedProfile) {
 
         if (setEnvAttrNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -107,35 +107,18 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
 
             if (getClassAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getClassAttrNode = insert(GetFixedPropertyNode.create("class"));
+                getClassAttrNode = insert(GetFixedPropertyNode.createClass());
             }
             Object classAttr = getClassAttrNode.execute(callAttrs);
             if (classAttr != null) {
-                // We assume that the class attribute of the call syntax node already
-                // contains "formula". TODO: some assertion?
-                setClassAttrNode.setAttr(lang, classAttr);
-            } else {
-                setClassAttrNode.setAttr(lang, FORMULA_CLASS);
+                classDefinedProfile.enter();
+                return lang;
             }
-
-            // Also the .Environment attribute must be passed from the call node on the result
-            if (getEnvAttrNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getEnvAttrNode = insert(GetFixedPropertyNode.create(RRuntime.DOT_ENVIRONMENT));
-            }
-            Object envAttr = getEnvAttrNode.execute(callAttrs);
-            if (envAttr != null) {
-                setEnvAttrNode.setAttr(lang, envAttr);
-            } else {
-                REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
-                setEnvAttrNode.setAttr(lang, env);
-            }
-
-        } else {
-            setClassAttrNode.setAttr(lang, FORMULA_CLASS);
-            REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
-            setEnvAttrNode.setAttr(lang, env);
         }
+
+        setClassAttrNode.setAttr(lang, FORMULA_CLASS);
+        REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
+        setEnvAttrNode.setAttr(lang, env);
 
         return lang;
     }

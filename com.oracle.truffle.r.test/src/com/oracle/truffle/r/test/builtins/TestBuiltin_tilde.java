@@ -52,4 +52,11 @@ public class TestBuiltin_tilde extends TestBase {
         assertEval("do.call('~', list(quote(y), quote(0 + x)))");
     }
 
+    @Test
+    public void testTildeAttributes() {
+        assertEval("{ lan <- quote(a~b); class(lan) <- 'hoo'; attributes(eval(lan)) }");
+        assertEval("{ lan <- quote(a~b); attributes(eval(lan)) }");
+        assertEval("{ lan <- quote(a~b); class(lan) <- 'hoo'; attr(lan, '.Environment') <- 'fakeenv'; attributes(eval(lan)) }");
+        assertEval("{ lan <- quote(a~b); attr(lan, '.Environment') <- 'fakeenv'; attributes(eval(lan)) }");
+    }
 }

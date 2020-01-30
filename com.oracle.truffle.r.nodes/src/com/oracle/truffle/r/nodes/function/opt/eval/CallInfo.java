@@ -55,11 +55,11 @@ public final class CallInfo {
 
     public enum EvalMode {
         /**
-         * Evaluate in the slow path
+         * Evaluate in the slow path.
          */
         SLOW,
         /**
-         * Evaluate in the fast path
+         * Evaluate in the fast path.
          */
         FAST
     }
@@ -90,6 +90,10 @@ public final class CallInfo {
     }
 
     CallInfo(RFunction function, String name, RPairList argList, REnvironment env, RPairListLibrary plLib) {
+        this(function, name, argList, env, plLib, function.isBuiltin() ? EvalMode.SLOW : EvalMode.FAST);
+    }
+
+    CallInfo(RFunction function, String name, RPairList argList, REnvironment env, RPairListLibrary plLib, EvalMode evalMode) {
         this.function = function;
         this.name = name;
         this.argList = argList != null ? argList : RDataFactory.createPairList();
@@ -101,8 +105,7 @@ public final class CallInfo {
             len = plLib.getLength(argList);
         }
         this.argsLen = len;
-
-        this.evalMode = function.isBuiltin() ? EvalMode.SLOW : EvalMode.FAST;
+        this.evalMode = evalMode;
     }
 
     public CachedCallInfo getCachedCallInfo() {

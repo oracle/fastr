@@ -53,6 +53,7 @@ public abstract class MakeActiveBindingNode extends RBaseNode {
 
     public abstract Object executeObject(Object sym, Object fun, Object env);
 
+    @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
     protected Object makeActiveBinding(RSymbol sym, RNull fun, REnvironment env, @Cached("create()") BranchProfile frameSlotBranchProfile) {
