@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,9 @@ public class TestBuiltin_loadInfoFromConn2 extends TestBase {
 
     @Test
     public void testLoadInfoFromConn2() {
-        assertEval(template("{ con <- rawConnection(raw(0), 'r+'); a <- 42; save('a', file=con, version=%0); seek(con, 0); .Internal(loadInfoFromConn2(con))$version; }", VERSIONS));
+        assertEval(template("{ con <- rawConnection(raw(0), 'r+'); a <- 42; save('a', file=con, version=%0); seek(con, 0); " +
+                        "vi <- .Internal(loadInfoFromConn2(con)); vi$version; vi$writer_version; vi$min_reader_version; vi$format; vi$native_encoding }",
+                        VERSIONS));
     }
 
     @Test

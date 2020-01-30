@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -136,17 +136,50 @@ import java.util.logging.Level;
 public class RSerialize {
 
     public static final class VersionInfo {
-        public VersionInfo(int version, int writerVersion) {
+        private VersionInfo(int version, int writerVersion, int minReaderVersion, String format, String nativeEncoding) {
             this.version = version;
-            this.writerVersion = writerVersion;
+            this.writerVersion = new Version(writerVersion);
+            this.minReaderVersion = new Version(minReaderVersion);
+            this.format = format;
+            this.nativeEncoding = nativeEncoding;
         }
 
         private final int version;
-        private final int writerVersion;
+        private final Version writerVersion;
+        private final Version minReaderVersion;
+        private final String format;
+        private final String nativeEncoding;
 
         public RList toVector() {
-            RStringVector names = RDataFactory.createStringVector(new String[]{"version", "writer_version"}, RDataFactory.COMPLETE_VECTOR);
-            return RDataFactory.createList(new Object[]{version, writerVersion}, names);
+            RStringVector names;
+            if (nativeEncoding != null) {
+                names = RDataFactory.createStringVector(new String[]{"version", "writer_version", "min_reader_version", "format", "native_encoding"}, RDataFactory.COMPLETE_VECTOR);
+                return RDataFactory.createList(new Object[]{version, writerVersion.toString(), minReaderVersion.toString(), format, nativeEncoding}, names);
+            } else {
+                names = RDataFactory.createStringVector(new String[]{"version", "writer_version", "min_reader_version", "format"}, RDataFactory.COMPLETE_VECTOR);
+                return RDataFactory.createList(new Object[]{version, writerVersion.toString(), minReaderVersion.toString(), format}, names);
+            }
+        }
+
+        private static class Version {
+            private final int v;
+            private final int p;
+            private final int s;
+
+            public Version(int version) {
+                int ver = version;
+                this.v = ver / 65536;
+                ver = ver % 65536;
+                this.p = ver / 256;
+                ver = ver % 256;
+                this.s = ver;
+            }
+
+            @TruffleBoundary
+            @Override
+            public String toString() {
+                return String.format("%d.%d.%d", v, p, s);
+            }
         }
     }
 
@@ -446,8 +479,16 @@ public class RSerialize {
         private VersionInfo unserializeInfo() throws IOException {
             int version = stream.readInt();
             int writerVersion = stream.readInt();
-            // TODO: remaining info
-            return new VersionInfo(version, writerVersion);
+            int minReaderVersion = stream.readInt();
+            String ne = null;
+            if (version == 3) {
+                int nelen = stream.readInt();
+                ne = stream.readString(nelen);
+            }
+
+            // 'xdr' format hardcoded; so far it is the only supported
+            // and a formatError would already have been thrown from the c-tor
+            return new VersionInfo(version, writerVersion, minReaderVersion, "xdr", ne);
         }
 
         private Object unserialize() throws IOException {
@@ -455,7 +496,7 @@ public class RSerialize {
             @SuppressWarnings("unused")
             int writerVersion = stream.readInt();
             @SuppressWarnings("unused")
-            int releaseVersion = stream.readInt();
+            int minReaderVersion = stream.readInt();
 
             if (version != 3 && version != 2) {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unsupported serialization version " + version);
