@@ -64,10 +64,6 @@ ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
 endif
 
-# TODO: can we remove those?
-BLAS_TARGET := $(FASTR_LIB_DIR)/libRblas$(DYLIB_EXT)
-LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
-
 all: $(R_LIB)
 
 # use sentinels to avoid (usually unnecessary) rebuilds.
