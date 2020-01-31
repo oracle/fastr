@@ -111,7 +111,8 @@ public enum NativeFunction {
     initvar_obj("(env, sint32, pointer) : void", "Call_"),
     initvar_double("(sint32, double): void", "Call_"),
     initvar_string("(sint32, string): void", "Call_"),
-    initvar_int("(sint32, sint32) : void", "Call_");
+    initvar_int("(sint32, sint32) : void", "Call_"),
+    AltInteger_Is_sorted("(pointer):sint32");
 
     private final String callName;
     private final String signature;
