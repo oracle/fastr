@@ -73,12 +73,6 @@ GNUR_RECOMMENDED_TARS := $(foreach pkg, $(GNUR_RECOMMENDED_PKGNAMES),$(GNUR_RECO
 ## need to allow parallel installs
 INSTALL_OPTS = --pkglock --data-compress=xz --no-staged-install
 
-e :=
-c := )|(
-clist = $(subst $e $e,$c,$(strip $1))
-# This will create a string like "^((codetools)|(MASS)|...)$"
-GNUR_RECOMMENDED_PATTERN := "^(($(call clist,$(GNUR_RECOMMENDED_PKGNAMES))))$$"
-
 # in managed mode, we do nothing
 ifneq ($(FASTR_RFFI),managed)
 
@@ -107,7 +101,6 @@ install.recommended: $(GNUR_RECOMMENDED_TARS)
 else 
 
 $(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
-$(info GNUR_RECOMMENDED_PATTERN=$(GNUR_RECOMMENDED_PATTERN))
 
 %.ts: $(GNUR_RECOMMENDED_TAR_DIR)%.tgz
 	@echo Installing recommended package `basename $<`

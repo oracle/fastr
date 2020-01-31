@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -378,10 +378,6 @@ def _fastr_gate_runner(args, tasks):
             if not os.path.exists(os.path.join(_fastr_suite.dir, 'library', 'spatial')):
                 mx.abort('Recommended packages seem to be not installed in FastR. Did you forget to build with FASTR_RELEASE=true?')
             pkgs = ['codetools', 'MASS', 'boot', 'class', 'cluster', 'lattice', 'nnet', 'spatial', 'Matrix', 'KernSmooth', 'foreign', 'nlme', 'rpart', 'survival']
-            # TODO: removed failing "KernSmooth" and "cluster" on LLVM, GR-20406
-            if os.environ.get('FASTR_RFFI') == 'llvm':
-                pkgs.remove('KernSmooth')
-                pkgs.remove('cluster')
             # Creates code that looks like: require(codetools) && require(MASS) && ...
             require_stmts = ' && '.join(['require(' + pkg + ')' for pkg in pkgs])
             test_load = 'if (!(' + require_stmts + ')) q(status=1) else q(status=42)'
