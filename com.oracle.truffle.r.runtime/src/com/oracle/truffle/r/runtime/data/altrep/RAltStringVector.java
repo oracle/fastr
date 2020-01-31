@@ -1,5 +1,10 @@
 package com.oracle.truffle.r.runtime.data.altrep;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess;
@@ -33,12 +38,20 @@ public class RAltStringVector extends RAbstractStringVector implements RAbstract
 
     @Override
     public String getDataAt(int index) {
-        return null;
+        return invokeEltMethodUncached(index);
+    }
+
+    private String invokeEltMethodUncached(int index) {
+        Object elem = descriptor.invokeEltMethodUncached(this, index);
+        assert elem instanceof NativeDataAccess.NativeMirror;
+        RBaseObject delegate = ((NativeDataAccess.NativeMirror) elem).getDelegate();
+        assert delegate instanceof CharSXPWrapper;
+        return ((CharSXPWrapper) delegate).getContents();
     }
 
     @Override
     public int getLength() {
-        return 0;
+        return descriptor.invokeLengthMethodUncached(this);
     }
 
     @Override
@@ -51,6 +64,16 @@ public class RAltStringVector extends RAbstractStringVector implements RAbstract
         return null;
     }
 
+    @Override
+    public String toString() {
+        return "RAltStringVector";
+    }
+
+    @Override
+    public Object getInternalStore() {
+        return this;
+    }
+
     public RAltRepData getData() {
         return data;
     }
@@ -60,13 +83,54 @@ public class RAltStringVector extends RAbstractStringVector implements RAbstract
     }
 
     private static final class FastPathAccess extends FastPathVectorAccess.FastPathFromStringAccess {
+        private final ConditionProfile hasMirrorProfile = ConditionProfile.createBinaryProfile();
+        private final int instanceId;
+        @Child private InteropLibrary eltMethodInterop;
+
         public FastPathAccess(RAltStringVector value) {
             super(value);
+            this.eltMethodInterop = InteropLibrary.getFactory().create(value.getDescriptor().getEltMethod());
+            this.instanceId = value.hashCode();
+        }
+
+        // TODO: This uses same pattern as in RAltIntegerVec. Does this actually work?
+        @Override
+        public boolean supports(Object value) {
+            if (!(value instanceof RAltStringVector)) {
+                return false;
+            }
+            return instanceId == value.hashCode();
         }
 
         @Override
         protected String getStringImpl(AccessIterator accessIter, int index) {
-            return null;
+            Object elem = getDescriptorFromIterator(accessIter).invokeEltMethodCached(getInstanceFromIterator(accessIter), index,
+                    eltMethodInterop, hasMirrorProfile);
+            assert elem instanceof NativeDataAccess.NativeMirror || elem instanceof CharSXPWrapper;
+            if (elem instanceof NativeDataAccess.NativeMirror) {
+                RBaseObject delegate = ((NativeDataAccess.NativeMirror) elem).getDelegate();
+                assert delegate instanceof CharSXPWrapper;
+                return ((CharSXPWrapper) delegate).getContents();
+            } else {
+                return ((CharSXPWrapper) elem).getContents();
+            }
+        }
+
+        @Override
+        protected void setStringImpl(AccessIterator accessIter, int index, String value) {
+            getDescriptorFromIterator(accessIter).invokeSetEltMethodCached(
+                    getInstanceFromIterator(accessIter), index, value, eltMethodInterop, hasMirrorProfile
+            );
+        }
+
+        private AltStringClassDescriptor getDescriptorFromIterator(AccessIterator iterator) {
+            assert iterator.getStore() instanceof RAltStringVector;
+            return ((RAltStringVector) iterator.getStore()).getDescriptor();
+        }
+
+        private RAltStringVector getInstanceFromIterator(AccessIterator iterator) {
+            assert iterator.getStore() instanceof RAltStringVector;
+            return (RAltStringVector) iterator.getStore();
         }
     }
 }

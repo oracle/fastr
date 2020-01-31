@@ -100,6 +100,7 @@ import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltVecClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
+import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;

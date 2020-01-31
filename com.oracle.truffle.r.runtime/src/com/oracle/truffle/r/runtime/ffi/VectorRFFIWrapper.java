@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
@@ -313,6 +314,11 @@ public final class VectorRFFIWrapper implements TruffleObject {
             return ctx.getSulongArrayType(42);
         }
 
+        @Specialization
+        protected static Object doAltrepString(RAltStringVector vec, RFFIContext ctx) {
+            return ctx.getSulongArrayType(42L);
+        }
+
         @Fallback
         protected static Object others(@SuppressWarnings("unused") Object vec, @SuppressWarnings("unused") RFFIContext ctx) {
             CompilerDirectives.transferToInterpreter();
@@ -560,6 +566,24 @@ public final class VectorRFFIWrapper implements TruffleObject {
             // TODO: Add dataptrAddrComputed binary profile.
             long addr = vector.getDescriptor().invokeDataptrMethodCached(vector, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
             NativeMemory.putInt(addr, index, value);
+            return vector;
+        }
+
+        @Specialization(limit = "1")
+        protected static Object doAltStringVector(RAltStringVector vector, int index, long addr,
+                                                  @CachedLibrary("vector.getDescriptor().getSetEltMethod()") InteropLibrary setEltMethodInterop,
+                                                  @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+            Object value = NativeDataAccess.lookup(addr);
+            assert value instanceof CharSXPWrapper;
+            vector.getDescriptor().invokeSetEltMethodCached(vector, index, value, setEltMethodInterop, hasMirrorProfile);
+            return vector;
+        }
+
+        @Specialization(limit = "1")
+        protected static Object doAltStringVector(RAltStringVector vector, int index, CharSXPWrapper value,
+                                                  @CachedLibrary("vector.getDescriptor().getSetEltMethod()") InteropLibrary setEltMethodInterop,
+                                                  @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+            vector.getDescriptor().invokeSetEltMethodCached(vector, index, value, setEltMethodInterop, hasMirrorProfile);
             return vector;
         }
 
