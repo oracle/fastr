@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1085,3 +1085,8 @@ SEXP benchProtect(SEXP x, SEXP nn) {
   }
   return res > 10 ? R_NilValue : x;
 }
+
+SEXP testMissingArgWithATTRIB() {
+    return ATTRIB(R_MissingArg);
+}
+

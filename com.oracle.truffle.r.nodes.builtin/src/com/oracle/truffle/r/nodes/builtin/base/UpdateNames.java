@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,7 +106,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "updateNamesVector", guards = {"!isNotObject.execute(namesArg)"})
-    protected RAbstractContainer updateNamesVectorGeneric(VirtualFrame frame, RAbstractVector container, Object namesArg,
+    protected RAbstractContainer updateNamesVectorGeneric(VirtualFrame frame, RAbstractContainer container, Object namesArg,
                     @Cached("createNonSharedGeneric()") VectorReuse vectorReuse) {
         return updateNamesVector(frame, container, namesArg, vectorReuse);
     }

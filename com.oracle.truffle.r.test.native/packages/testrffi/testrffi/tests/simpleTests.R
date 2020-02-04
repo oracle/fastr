@@ -403,3 +403,5 @@ vec <- double(268435457)
 vec[[268435457]] <- 4.2
 stopifnot(!is.null(rffi.get_dataptr(vec)))
 stopifnot(vec[[268435457]] == 4.2)
+
+is.null(rffi.testMissingArgWithATTRIB())

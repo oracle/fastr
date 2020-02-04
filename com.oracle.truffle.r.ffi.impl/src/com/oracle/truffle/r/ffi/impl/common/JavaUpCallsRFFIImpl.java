@@ -502,6 +502,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR, dims);
             case CPLXSXP:
                 return RDataFactory.createComplexVector(new double[2 * (nrow * ncol)], RDataFactory.COMPLETE_VECTOR, dims);
+            case RAWSXP:
+                return RDataFactory.createRawVector(new byte[(nrow * ncol)], dims);
             default:
                 throw unimplemented();
         }

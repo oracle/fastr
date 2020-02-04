@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -151,5 +151,10 @@ public class TestBuiltin_substitute extends TestBase {
 
         assertEval("typeof(substitute())");
         assertEval("substitute(`:=`(a=3,b=3))");
+
+        // ...()
+        assertEval("{ f <- function(...) { substitute(...()) } ; f() }");
+        assertEval("{ f <- function(...) { substitute(...()) } ; f(x + z) }");
+        assertEval("{ f <- function(...) { substitute(...()) } ; f(x + z, z + y) }");
     }
 }

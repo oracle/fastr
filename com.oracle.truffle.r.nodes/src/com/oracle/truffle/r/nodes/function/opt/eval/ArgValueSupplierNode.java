@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairList.RPairListSnapshotNode;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
@@ -70,7 +71,18 @@ public abstract class ArgValueSupplierNode extends Node {
         return argBuilderState.isFieldAccess && i == 1;
     }
 
-    @Specialization(guards = {"isFieldAccessor(argBuilderState, i)"})
+    static boolean isEmptySymbol(RSymbol sym) {
+        return "".equals(sym.getName());
+    }
+
+    @Specialization(guards = {"isEmptySymbol(sym)"})
+    Object buildArgEmptySymbol(@SuppressWarnings("unused") RSymbol sym, @SuppressWarnings("unused") int i, @SuppressWarnings("unused") CallInfo.ArgumentBuilderState argBuilderState,
+                    @SuppressWarnings("unused") MaterializedFrame currentFrame,
+                    @SuppressWarnings("unused") MaterializedFrame promiseEvalFrame, @SuppressWarnings("unused") PromiseHelperNode promiseHelper) {
+        return REmpty.instance;
+    }
+
+    @Specialization(guards = {"!isEmptySymbol(sym)", "isFieldAccessor(argBuilderState, i)"})
     Object buildArgFieldAccess(RSymbol sym, @SuppressWarnings("unused") int i, @SuppressWarnings("unused") CallInfo.ArgumentBuilderState argBuilderState,
                     @SuppressWarnings("unused") MaterializedFrame currentFrame,
                     @SuppressWarnings("unused") MaterializedFrame promiseEvalFrame, @SuppressWarnings("unused") PromiseHelperNode promiseHelper) {
@@ -83,7 +95,7 @@ public abstract class ArgValueSupplierNode extends Node {
         return Closure.createPromiseClosure(CallInfo.wrapArgNode(i, lookupSyntaxNode));
     }
 
-    @Specialization(guards = {"sym.getName() == cachedSymName", "!isFieldAccessor(argBuilderState, i)"}, limit = "monoCacheSize")
+    @Specialization(guards = {"sym.getName() == cachedSymName", "!isEmptySymbol(sym)", "!isFieldAccessor(argBuilderState, i)"}, limit = "monoCacheSize")
     Object buildSymbolArgCached(@SuppressWarnings("unused") RSymbol sym, @SuppressWarnings("unused") int i, CallInfo.ArgumentBuilderState argBuilderState, MaterializedFrame currentFrame,
                     MaterializedFrame promiseEvalFrame,
                     PromiseHelperNode promiseHelper,
@@ -92,10 +104,9 @@ public abstract class ArgValueSupplierNode extends Node {
         Object arg;
         if (ArgumentsSignature.VARARG_NAME.equals(cachedSymName)) {
             if (argBuilderState.varArgs == null) {
-                RPromise promise = RDataFactory.createPromise(PromiseState.Supplied, cachedClosure,
+                RPromise varArgsPromise = RDataFactory.createPromise(PromiseState.Supplied, cachedClosure,
                                 promiseEvalFrame);
-                argBuilderState.varArgs = (RArgsValuesAndNames) promiseHelper.evaluate(currentFrame, promise);
-
+                argBuilderState.varArgs = (RArgsValuesAndNames) promiseHelper.evaluate(currentFrame, varArgsPromise);
             }
             arg = argBuilderState.varArgs;
         } else {
@@ -105,7 +116,7 @@ public abstract class ArgValueSupplierNode extends Node {
         return arg;
     }
 
-    @Specialization(replaces = "buildSymbolArgCached", guards = "!isFieldAccessor(argBuilderState, i)")
+    @Specialization(replaces = "buildSymbolArgCached", guards = {"!isEmptySymbol(sym)", "!isFieldAccessor(argBuilderState, i)"})
     Object buildSymbolArg(RSymbol sym, int i, CallInfo.ArgumentBuilderState argBuilderState, MaterializedFrame currentFrame, MaterializedFrame promiseEvalFrame,
                     PromiseHelperNode promiseHelper) {
         return buildSymbolArgCached(sym, i, argBuilderState, currentFrame, promiseEvalFrame, promiseHelper, sym.getName(), createSymbolClosure(sym, i));

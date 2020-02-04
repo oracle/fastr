@@ -48,6 +48,7 @@ import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.opt.eval.AbstractCallInfoEvalNode;
 import com.oracle.truffle.r.nodes.function.opt.eval.ArgValueSupplierNode;
 import com.oracle.truffle.r.nodes.function.opt.eval.CallInfo;
+import com.oracle.truffle.r.nodes.function.opt.eval.CallInfo.EvalMode;
 import com.oracle.truffle.r.nodes.function.opt.eval.CallInfoEvalRootNode.FastPathDirectCallerNode;
 import com.oracle.truffle.r.nodes.function.opt.eval.CallInfoEvalRootNode.SlowPathDirectCallerNode;
 import com.oracle.truffle.r.nodes.function.opt.eval.CallInfoNode;
@@ -159,10 +160,10 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
             return CachedCallInfoEvalNodeGen.create();
         }
 
-        abstract Object execute(Object downcallFrame, CallInfo callInfo);
+        abstract Object execute(Object downcallFrame, CallInfo callInfo, RPairList expr);
 
         @Specialization(limit = "CACHE_SIZE", guards = {"cachedCallInfo.isCompatible(callInfo, otherInfoClassProfile)"})
-        Object evalFastPath(Object downcallFrame, CallInfo callInfo,
+        Object evalFastPath(Object downcallFrame, CallInfo callInfo, RPairList expr,
                         @CachedContext(TruffleRLanguage.class) RContext ctx,
                         @SuppressWarnings("unused") @Cached("createClassProfile()") ValueProfile otherInfoClassProfile,
                         @Cached("createClassProfile()") ValueProfile downcallFrameClassProfile,
@@ -178,8 +179,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
                             promiseFrame, callInfo.env);
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, promiseCaller);
             RArgsValuesAndNames args = callInfo.prepareArgumentsExploded(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNodes);
-            RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, callInfo.name,
-                            callInfo.function, args, promiseCaller);
+            RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, expr, promiseCaller);
 
             Object resultValue = callNode.execute(evalFrame, callInfo.function, args, caller,
                             materializedFrame);
@@ -188,7 +188,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         }
 
         @Specialization(replaces = "evalFastPath", guards = "callInfo.argsLen <= MAX_ARITY")
-        Object evalSlowPath(Object downcallFrame, CallInfo callInfo,
+        Object evalSlowPath(Object downcallFrame, CallInfo callInfo, RPairList expr,
                         @CachedContext(TruffleRLanguage.class) RContext ctx,
                         @Cached("createClassProfile()") ValueProfile downcallFrameClassProfile,
                         @Cached("new()") SlowPathDirectCallerNode slowPathCallNode,
@@ -201,7 +201,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, promiseCaller);
             RArgsValuesAndNames args = callInfo.prepareArgumentsExploded(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNodes);
 
-            RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, callInfo.name, callInfo.function, args, promiseCaller);
+            RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, expr, promiseCaller);
 
             Object resultValue = slowPathCallNode.execute(evalFrame, materializedFrame, caller, callInfo.function, args);
             // setVisibility ???
@@ -209,7 +209,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         }
 
         @Specialization(replaces = "evalFastPath")
-        Object evalSlowPath(Object downcallFrame, CallInfo callInfo,
+        Object evalSlowPath(Object downcallFrame, CallInfo callInfo, RPairList expr,
                         @CachedContext(TruffleRLanguage.class) RContext ctx,
                         @Cached("createClassProfile()") ValueProfile downcallFrameClassProfile,
                         @Cached("new()") SlowPathDirectCallerNode slowPathCallNode,
@@ -222,7 +222,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
             MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame, promiseCaller);
             RArgsValuesAndNames args = callInfo.prepareArguments(materializedFrame, evalFrame, plLib, promiseHelper, argValSupplierNode);
 
-            RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, callInfo.name, callInfo.function, args, promiseCaller);
+            RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, expr, promiseCaller);
 
             Object resultValue = slowPathCallNode.execute(evalFrame, materializedFrame, caller, callInfo.function, args);
             // setVisibility ???
@@ -258,7 +258,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
         REnvironment env = getEnv(envArg, rContext);
         CallInfo cachedCallInfo = cachedCallInfoNode.execute(expr, env);
-        if (cachedCallInfo == null) {
+        if (cachedCallInfo == null || cachedCallInfo.evalMode == EvalMode.SLOW) {
             nullFunProfile.enter();
             return handleLanguageDefault(expr, envArg, rContext);
         }
@@ -269,7 +269,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         }
 
         try {
-            return cachedCallInfoEvalNode.execute(downcallFrame, cachedCallInfo);
+            return cachedCallInfoEvalNode.execute(downcallFrame, cachedCallInfo, expr);
         } catch (RuntimeException e) {
             throw e;
         }

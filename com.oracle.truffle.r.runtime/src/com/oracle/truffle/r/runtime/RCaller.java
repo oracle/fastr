@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -322,6 +322,23 @@ public final class RCaller {
             }
         }
         return null;
+    }
+
+    /**
+     * Given a caller, this method returns the closest non-promise (regular) caller or a promise
+     * caller holding the "sys-parent" environment in the logical parent branch of the caller.
+     */
+    public static RCaller getRegularOrSysParentCaller(RCaller callerIn, UnwrapSysParentProfile profile) {
+        RCaller caller = callerIn;
+        while (profile.firstPromiseProfile.profile(RCaller.isValidCaller(caller) && caller.isPromise())) {
+            if (caller.payload instanceof PromiseLogicalParent) {
+                profile.sysParentProfile.enter();
+                return caller;
+            } else {
+                caller = (RCaller) caller.payload;
+            }
+        }
+        return caller;
     }
 
     /**

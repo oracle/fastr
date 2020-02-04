@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,7 +66,9 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
@@ -227,9 +229,14 @@ public final class AttributesAccessNodes {
             return result;
         }
 
+        @Specialization
+        public RNull doMissing(@SuppressWarnings("unused") RMissing m) {
+            return RNull.instance;
+        }
+
         @Fallback
         public RNull doOthers(Object obj) {
-            if (obj == RNull.instance || RRuntime.isForeignObject(obj)) {
+            if (obj == RNull.instance || obj == REmpty.instance || RRuntime.isForeignObject(obj)) {
                 return RNull.instance;
             } else {
                 CompilerDirectives.transferToInterpreter();

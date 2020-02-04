@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.function.opt.eval.CallInfo.EvalMode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -63,12 +64,12 @@ public abstract class CallInfoFactoryNode extends Node {
                     @Cached("create()") BranchProfile ignoredProfile,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
         Object fun = readFunNode.execute(frameProfile.profile(env.getFrame(frameAccessProfile)));
-        if (!(fun instanceof RFunction) || ((RFunction) fun).isBuiltin()) {
-            // if (true) {
+        if (fun instanceof RFunction) {
+            return new CallInfo((RFunction) fun, funSym.getName(), argList, env, plLib);
+        } else {
             ignoredProfile.enter();
-            return null; // TODO: Try to handle builtins too
+            return null;
         }
-        return new CallInfo((RFunction) fun, funSym.getName(), argList, env, plLib);
     }
 
     @Specialization(replaces = "createFunctionInfoFromSymbolCached")
@@ -78,24 +79,24 @@ public abstract class CallInfoFactoryNode extends Node {
                     @Cached("create()") BranchProfile ignoredProfile,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
         Object fun = ReadVariableNode.lookupFunction(funSym.getName(), frameProfile.profile(env.getFrame(frameAccessProfile)));
-        if (!(fun instanceof RFunction) || ((RFunction) fun).isBuiltin()) {
-            // if (true) {
+        if (fun instanceof RFunction) {
+            return new CallInfo((RFunction) fun, funSym.getName(), argList, env, plLib);
+        } else {
             ignoredProfile.enter();
-            return null; // TODO: Try to handle builtins too
+            return null;
         }
-        return new CallInfo((RFunction) fun, funSym.getName(), argList, env, plLib);
     }
 
     @Specialization
     CallInfo createFunctionInfo(RFunction fun, @SuppressWarnings("unused") RNull argList, REnvironment env,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
-        return new CallInfo(fun, fun.getName(), null, env, plLib);
+        return new CallInfo(fun, fun.getName(), null, env, plLib, EvalMode.FAST);
     }
 
     @Specialization
     CallInfo createFunctionInfo(RFunction fun, RPairList argList, REnvironment env,
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
-        return new CallInfo(fun, fun.getName(), argList, env, plLib);
+        return new CallInfo(fun, fun.getName(), argList, env, plLib, EvalMode.FAST);
     }
 
     @SuppressWarnings("unused")

@@ -915,6 +915,22 @@ x <- fst(3); check(x, "fst");
 x <- fst(4); check(x, "global");
 endNoIterateFrames()
 
+
+# -----------------
+# environment function must return the correct environment when invoked from a promise evaluated by Rf_eval
+
+myenv <- new.env()
+myenv$aaavar <- 1
+
+foo <- function(foobar)    foobar
+bar <- function(barvar)    barvar
+boo <- function(boovar)    api.Rf_eval(quote(bar(foo(environment()))), myenv)
+fst <- function(fstvar)    boo(fstvar)
+
+retEnv <- fst(1)
+check(retEnv, "aaa")
+
+
 # ===============================================
 # More complex interaction: sys.frame and do.call and promises
 

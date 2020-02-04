@@ -327,3 +327,7 @@ rffi.benchProtect <- function(x, n) {
 rffi.test_lapplyWithForceAndCall <- function(list, fn, fa, ...) {
     .Call('test_lapplyWithForceAndCall', list, fn, fa, environment())
 }
+
+rffi.testMissingArgWithATTRIB <- function() {
+    .Call('testMissingArgWithATTRIB')
+}

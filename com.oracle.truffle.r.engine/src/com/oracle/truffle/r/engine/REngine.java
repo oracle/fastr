@@ -22,6 +22,16 @@
  */
 package com.oracle.truffle.r.engine;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.LoadProfiles;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -62,15 +72,12 @@ import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
-import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.ExitException;
-import static com.oracle.truffle.r.runtime.context.FastROptions.LoadProfiles;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -89,6 +96,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
@@ -100,6 +108,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -109,14 +118,6 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
@@ -148,6 +149,8 @@ final class REngine implements Engine, Engine.Timings {
      */
     private boolean suppressWarnings;
 
+    @CompilationFinal private RSyntaxNode replPrintCallNode;
+
     private REngine(RContext context) {
         this.context = context;
         this.childTimes = new long[]{0, 0};
@@ -166,6 +169,8 @@ final class REngine implements Engine, Engine.Timings {
             initializeNonShared();
         }
         context.stateRNG.initializeDotRandomSeed(context);
+
+        initReplPrintSyntaxCallNode();
     }
 
     private void initializeNonShared() {
@@ -772,7 +777,9 @@ final class REngine implements Engine, Engine.Timings {
             } else {
                 Object printMethod = REnvironment.globalEnv().findFunction("print");
                 RFunction function = (RFunction) evaluatePromise(printMethod);
-                CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RArgsValuesAndNames.EMPTY}, null);
+                RSyntaxNode printCall = ((REngine) RContext.getEngine()).replPrintCallNode;
+                CallRFunctionNode.executeSlowpath(function, RCaller.create(callingFrame, printCall), callingFrame,
+                                new Object[]{resultValue, RArgsValuesAndNames.EMPTY}, null);
             }
             UnShareObjectNode.unshare(resultValue);
         } else {
@@ -787,6 +794,12 @@ final class REngine implements Engine, Engine.Timings {
             }
             RContext.getInstance().getConsole().println(str);
         }
+    }
+
+    private void initReplPrintSyntaxCallNode() {
+        ParsedExpression parsedPrintExpr = parse(Source.newBuilder(RRuntime.R_LANGUAGE_ID, "(function (x, ...) UseMethod(\"print\"))(x)", "<parse>").build(), false);
+        RPairList printPL = (RPairList) parsedPrintExpr.getExpression().getDataAt(0);
+        replPrintCallNode = RASTUtils.createSyntaxNodeForRValue(printPL);
     }
 
     private static Object evaluatePromise(Object value) {

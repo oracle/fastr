@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNodeGen.RemoveT
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RPairList;
 
 @GenerateUncached
 public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode {
@@ -162,6 +163,11 @@ public abstract class RemoveFixedAttributeNode extends FixedAttributeAccessNode 
         @Override
         protected String getAttributeName() {
             return RRuntime.DIMNAMES_ATTR_KEY;
+        }
+
+        @Specialization(insertBefore = "removeAttrFromAttributable")
+        protected static void removeAttrFromAttributable(RPairList x) {
+            x.setNames(null);
         }
 
         @Override

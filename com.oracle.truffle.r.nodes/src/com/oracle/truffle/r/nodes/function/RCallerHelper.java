@@ -24,10 +24,11 @@ package com.oracle.truffle.r.nodes.function;
 
 import java.util.function.Supplier;
 
-import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -41,8 +42,10 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.RAttributableNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -68,6 +71,10 @@ public final class RCallerHelper {
         return createFromArgumentsInternal(function, arguments);
     }
 
+    public static Supplier<RSyntaxElement> createFromArguments(RFunction function, RArgsValuesAndNames arguments, DynamicObject attributes) {
+        return createFromArgumentsInternal(function, arguments, attributes);
+    }
+
     /**
      * @see #createFromArguments(RFunction, RArgsValuesAndNames)
      */
@@ -75,7 +82,15 @@ public final class RCallerHelper {
         return createFromArgumentsInternal(function, arguments);
     }
 
+    public static Supplier<RSyntaxElement> createFromArguments(String function, RArgsValuesAndNames arguments, DynamicObject attributes) {
+        return createFromArgumentsInternal(function, arguments, attributes);
+    }
+
     private static Supplier<RSyntaxElement> createFromArgumentsInternal(final Object function, final RArgsValuesAndNames arguments) {
+        return createFromArgumentsInternal(function, arguments, null);
+    }
+
+    private static Supplier<RSyntaxElement> createFromArgumentsInternal(final Object function, final RArgsValuesAndNames arguments, DynamicObject attributes) {
         return new Supplier<RSyntaxElement>() {
 
             RSyntaxElement syntaxNode = null;
@@ -113,6 +128,10 @@ public final class RCallerHelper {
                     }
                     Object replacedFunction = function instanceof String ? ReadVariableNode.wrap(RSyntaxNode.LAZY_DEPARSE, ReadVariableNode.createFunctionLookup((String) function)) : function;
                     syntaxNode = RASTUtils.createCall(replacedFunction, true, ArgumentsSignature.get(signature), syntaxArguments);
+                    if (attributes != null) {
+                        RAttributableNode syntaxNodeAttr = (RAttributableNode) syntaxNode;
+                        syntaxNodeAttr.setAttributes(attributes);
+                    }
                 }
                 return syntaxNode;
             }
@@ -207,14 +226,31 @@ public final class RCallerHelper {
         return validOrigCaller;
     }
 
-    public static RCaller getExplicitCaller(VirtualFrame virtualFrame, String funcName, RFunction func, RArgsValuesAndNames args, RCaller promiseParentCaller) {
+    public static RCaller getExplicitCaller(VirtualFrame virtualFrame, String funcName, RFunction func, RArgsValuesAndNames args, RCaller promiseParentCaller, DynamicObject attributes) {
         RCaller currentCall = RArguments.getCall(virtualFrame);
         Supplier<RSyntaxElement> callerSyntax;
         if (funcName != null) {
-            callerSyntax = RCallerHelper.createFromArguments(funcName, args);
+            callerSyntax = RCallerHelper.createFromArguments(funcName, args, attributes);
         } else {
-            callerSyntax = RCallerHelper.createFromArguments(func, args);
+            callerSyntax = RCallerHelper.createFromArguments(func, args, attributes);
         }
+        return RCaller.create(currentCall.getDepth() + 1, promiseParentCaller, callerSyntax);
+    }
+
+    public static RCaller getExplicitCaller(VirtualFrame virtualFrame, RPairList expr, RCaller promiseParentCaller) {
+        RCaller currentCall = RArguments.getCall(virtualFrame);
+        Supplier<RSyntaxElement> callerSyntax = new Supplier<RSyntaxElement>() {
+
+            RSyntaxElement syntaxNode = null;
+
+            @Override
+            public RSyntaxElement get() {
+                if (syntaxNode == null) {
+                    syntaxNode = expr.createNode();
+                }
+                return syntaxNode;
+            }
+        };
         return RCaller.create(currentCall.getDepth() + 1, promiseParentCaller, callerSyntax);
     }
 
@@ -230,9 +266,9 @@ public final class RCallerHelper {
      * @see RArguments
      */
     public static RCaller getExplicitCaller(RContext ctx, VirtualFrame virtualFrame, MaterializedFrame envFrame, REnvironment env, String funcName, RFunction func,
-                    RArgsValuesAndNames args) {
+                    RArgsValuesAndNames args, DynamicObject attributes) {
         RCaller fakePromiseCaller = getPromiseCallerForExplicitCaller(ctx, virtualFrame, envFrame, env);
-        return getExplicitCaller(virtualFrame, funcName, func, args, fakePromiseCaller);
+        return getExplicitCaller(virtualFrame, funcName, func, args, fakePromiseCaller, attributes);
     }
 
 }
