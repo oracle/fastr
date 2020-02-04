@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -55,7 +55,7 @@ public abstract class IntToUtf8 extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = "multiple")
-    protected RAbstractStringVector intToBitsMultiple(RAbstractIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
+    protected RAbstractStringVector intToBitsMultiple(RIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
                     @Cached("create()") NACheck na,
                     @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
 
@@ -79,7 +79,7 @@ public abstract class IntToUtf8 extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = "!multiple")
-    protected String intToBits(RAbstractIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
+    protected String intToBits(RIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
                     @Cached("create()") NACheck na,
                     @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
 

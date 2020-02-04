@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,9 +35,9 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -162,13 +162,13 @@ public abstract class CastComplexNode extends CastBaseNode {
         return ret;
     }
 
-    @Specialization(guards = {"uAccess.supports(operand)", "isAbstractAtomicVector(operand)"}, limit = "getGenericVectorAccessSize()")
+    @Specialization(guards = {"uAccess.supports(operand)", "isAbstractAtomicVector(operand)", "!isForeignIntVector(operand)"}, limit = "getGenericVectorAccessSize()")
     protected RComplexVector doAbstractVector(RAbstractAtomicVector operand,
                     @Cached("operand.access()") VectorAccess uAccess) {
         return createResultVector(operand, uAccess);
     }
 
-    @Specialization(replaces = "doAbstractVector", guards = "isAbstractAtomicVector(operand)")
+    @Specialization(replaces = "doAbstractVector", guards = {"isAbstractAtomicVector(operand)", "!isForeignIntVector(operand)"})
     protected RComplexVector doAbstractVectorGeneric(RAbstractAtomicVector operand) {
         return doAbstractVector(operand, operand.slowPathAccess());
     }
@@ -245,8 +245,10 @@ public abstract class CastComplexNode extends CastBaseNode {
         return RClosures.createToComplexVector(operand, true);
     }
 
-    @Specialization
-    protected RAbstractComplexVector doForeignWrapper(RForeignIntWrapper operand) {
+    @Specialization(guards = "operand.isForeignWrapper()")
+    protected RAbstractComplexVector doForeignWrapper(RIntVector operand) {
+        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
+        // specialization
         return RClosures.createToComplexVector(operand, true);
     }
 
@@ -258,6 +260,10 @@ public abstract class CastComplexNode extends CastBaseNode {
     @Specialization
     protected RAbstractComplexVector doForeignWrapper(RForeignStringWrapper operand) {
         return RClosures.createToComplexVector(operand, true);
+    }
+
+    public boolean isForeignIntVector(RAbstractAtomicVector operand) {
+        return operand instanceof RIntVector && ((RIntVector) operand).isForeignWrapper();
     }
 
     public static CastComplexNode create() {

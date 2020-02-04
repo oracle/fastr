@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -57,7 +56,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
                 RInteropFloat.class,
                 RInteropLong.class,
                 RInteropShort.class,
-                int.class, RAbstractIntVector.class,
+                int.class, RIntVector.class,
                 double.class, RAbstractDoubleVector.class,
                 String.class, RAbstractStringVector.class,
                 RRaw.class, RAbstractRawVector.class,
@@ -139,7 +138,7 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractIntVector toAbstractIntVector(int value) {
+    public static RIntVector toAbstractIntVector(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 

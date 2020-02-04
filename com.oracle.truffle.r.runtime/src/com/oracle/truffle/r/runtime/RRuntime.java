@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,13 +47,11 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -61,12 +59,14 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
@@ -257,52 +257,6 @@ public class RRuntime {
 
     public static boolean isNull(Object obj) {
         return obj == RNull.instance;
-    }
-
-    @TruffleBoundary
-    // TODO refactor this into RType so it is complete and more efficient
-    public static String classToString(Class<?> c) {
-        if (c == RLogical.class) {
-            return RType.Logical.getClazz();
-        } else if (c == RInteger.class) {
-            return RType.Integer.getClazz();
-        } else if (c == RDouble.class) {
-            return RType.Double.getClazz();
-        } else if (c == RComplex.class) {
-            return RType.Complex.getClazz();
-        } else if (c == RRaw.class) {
-            return RType.Raw.getClazz();
-        } else if (c == RString.class) {
-            return RType.Character.getClazz();
-        } else if (c == RFunction.class) {
-            return RType.Function.getClazz();
-        } else if (c == Object.class) {
-            return RType.Any.getClazz();
-        } else {
-            throw new RuntimeException("internal error, unknown class: " + c);
-        }
-    }
-
-    @TruffleBoundary
-    // TODO refactor this into RType so it is complete and more efficient
-    public static String classToStringCap(Class<?> c) {
-        if (c == RLogical.class) {
-            return "Logical";
-        } else if (c == RInteger.class) {
-            return "Integer";
-        } else if (c == RDouble.class) {
-            return "Numeric";
-        } else if (c == RComplex.class) {
-            return "Complex";
-        } else if (c == RRaw.class) {
-            return "Raw";
-        } else if (c == RString.class) {
-            return "Character";
-        } else if (c == Object.class) {
-            return "Any";
-        } else {
-            throw new RuntimeException("internal error, unknown class: " + c);
-        }
     }
 
     public static boolean isFinite(double d) {
@@ -941,8 +895,8 @@ public class RRuntime {
             return (byte) obj;
         } else if (obj instanceof String) {
             return string2logical((String) obj);
-        } else if (obj instanceof RAbstractIntVector) {
-            return int2logical(((RAbstractIntVector) obj).getDataAt(0));
+        } else if (obj instanceof RIntVector) {
+            return int2logical(((RIntVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractDoubleVector) {
             return double2logical(((RAbstractDoubleVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractLogicalVector) {
@@ -968,8 +922,8 @@ public class RRuntime {
             return logical2int((byte) obj);
         } else if (obj instanceof String) {
             return string2int((String) obj);
-        } else if (obj instanceof RAbstractIntVector) {
-            return ((RAbstractIntVector) obj).getDataAt(0);
+        } else if (obj instanceof RIntVector) {
+            return ((RIntVector) obj).getDataAt(0);
         } else if (obj instanceof RAbstractDoubleVector) {
             return double2int(((RAbstractDoubleVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractLogicalVector) {
@@ -998,7 +952,7 @@ public class RRuntime {
             case Numeric:
                 // Note: e.g. foo <- 3.4; exists("foo", mode = "integer") really gives TRUE
                 return obj instanceof Integer || obj instanceof Double ||
-                                obj instanceof RAbstractIntVector || obj instanceof RAbstractDoubleVector;
+                                obj instanceof RIntVector || obj instanceof RAbstractDoubleVector;
             case Complex:
                 return obj instanceof RAbstractComplexVector;
             case Character:
@@ -1050,14 +1004,10 @@ public class RRuntime {
         }
     }
 
-    /**
-     * Convert Java boxing classes to {@link RScalar} subclasses, which implement the proper
-     * {@link RAbstractVector} interfaces. This doesn't go through {@link RDataFactory}, but it
-     * increases polymorphism by not using the normal vector classes.
-     */
+    // TODO: should return RAbstractVector eventually once all RScalars are removed
     public static Object convertScalarVectors(Object obj) {
         if (obj instanceof Integer) {
-            return RInteger.valueOf((int) obj);
+            return RDataFactory.createIntVectorFromScalar((int) obj);
         } else if (obj instanceof Double) {
             return RDouble.valueOf((double) obj);
         } else if (obj instanceof Byte) {
@@ -1094,6 +1044,26 @@ public class RRuntime {
         }
         CompilerDirectives.transferToInterpreter();
         throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "the foreign array " + object + " size " + size + " does not fit into a java integer");
+    }
+
+    public static boolean isMaterializedVector(Object o) {
+        if (o instanceof RMaterializedVector) {
+            return true;
+        }
+        if (o instanceof RIntVector) {
+            return ((RIntVector) o).isMaterialized();
+        }
+        return false;
+    }
+
+    public static boolean isSequence(Object o) {
+        if (o instanceof RSequence) {
+            return true;
+        }
+        if (o instanceof RIntVector) {
+            return ((RIntVector) o).isSequence();
+        }
+        return false;
     }
 
     /**

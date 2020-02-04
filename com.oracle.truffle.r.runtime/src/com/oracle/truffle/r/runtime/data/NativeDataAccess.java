@@ -63,7 +63,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.NativeDataAccessFactory.ToNativeNodeGen;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
@@ -466,7 +465,7 @@ public final class NativeDataAccess {
     @TruffleBoundary
     private static void registerAllocationSite(Object arg, NativeMirror mirror) {
         String argInfo;
-        if (arg instanceof RMaterializedVector && ((RAbstractVector) arg).hasNativeMemoryData()) {
+        if (RRuntime.isMaterializedVector(arg) && ((RAbstractVector) arg).hasNativeMemoryData()) {
             // this must be vector created by fromNative factory method, it has data == null, but
             // does not have its address assigned yet
             argInfo = "[empty]";

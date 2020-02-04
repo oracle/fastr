@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -363,8 +363,8 @@ public final class GPar {
             } else if (value instanceof RAbstractDoubleVector) {
                 double realVal = getDataAtMod((RAbstractDoubleVector) value, index);
                 return RRuntime.isNA(realVal) ? RRuntime.INT_NA : (int) realVal;
-            } else if (value instanceof RAbstractIntVector) {
-                return getDataAtMod((RAbstractIntVector) value, index);
+            } else if (value instanceof RIntVector) {
+                return getDataAtMod((RIntVector) value, index);
             } else {
                 return RRuntime.INT_NA;
             }

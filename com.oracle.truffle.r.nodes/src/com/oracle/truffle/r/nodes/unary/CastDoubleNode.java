@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,9 +35,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
@@ -95,7 +95,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return vectorCopy(operand, idata, uAccess.na.neverSeenNAOrNaN());
     }
 
-    @Specialization(guards = {"uAccess.supports(x)", "noClosure(x)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"uAccess.supports(x)", "noClosure(x)", "!isForeignIntVector(x)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractDoubleVector doAbstractVector(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile,
                     @Cached("x.access()") VectorAccess uAccess) {
@@ -103,13 +103,13 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return createResultVector(operand, uAccess);
     }
 
-    @Specialization(replaces = "doAbstractVector", guards = "noClosure(x)")
+    @Specialization(replaces = "doAbstractVector", guards = {"noClosure(x)", "!isForeignIntVector(x)"})
     protected RAbstractDoubleVector doAbstractVectorGeneric(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
         return doAbstractVector(x, operandTypeProfile, x.slowPathAccess());
     }
 
-    @Specialization(guards = {"useClosure(x)"})
+    @Specialization(guards = {"useClosure(x)", "!isForeignIntVector(x)"})
     public RAbstractDoubleVector doAbstractVectorClosure(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile,
                     @Cached("create()") NAProfile naProfile) {
@@ -201,14 +201,20 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return RClosures.createToDoubleVector(operand, true);
     }
 
-    @Specialization
-    protected RAbstractDoubleVector doForeignWrapper(RForeignIntWrapper operand) {
+    @Specialization(guards = "operand.isForeignWrapper()")
+    protected RAbstractDoubleVector doForeignWrapper(RIntVector operand) {
+        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
+        // specialization
         return RClosures.createToDoubleVector(operand, true);
     }
 
     @Specialization
     protected RAbstractDoubleVector doForeignWrapper(RForeignStringWrapper operand) {
         return RClosures.createToDoubleVector(operand, true);
+    }
+
+    public boolean isForeignIntVector(RAbstractAtomicVector operand) {
+        return operand instanceof RIntVector && ((RIntVector) operand).isForeignWrapper();
     }
 
     public static CastDoubleNode create() {

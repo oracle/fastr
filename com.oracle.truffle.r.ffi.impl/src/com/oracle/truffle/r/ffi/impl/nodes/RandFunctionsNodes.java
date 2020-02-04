@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
@@ -198,13 +198,13 @@ public final class RandFunctionsNodes {
                 }
             }
 
-            RAbstractIntVector rNVector;
+            RIntVector rNVector;
             if (rNInterop.hasArrayElements(rN)) {
                 if (rNConvertForeign == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     rNConvertForeign = insert(ConvertForeignObjectNode.create());
                 }
-                rNVector = (RAbstractIntVector) rNConvertForeign.convert((TruffleObject) rN);
+                rNVector = (RIntVector) rNConvertForeign.convert((TruffleObject) rN);
             } else {
                 if (!rNInterop.isPointer(rN)) {
                     rNInterop.toNative(rN);
@@ -229,10 +229,10 @@ public final class RandFunctionsNodes {
 
     abstract static class DoRMultinomNode extends Node {
 
-        public abstract void execute(int n, RAbstractDoubleVector prob, int k, RAbstractIntVector rN);
+        public abstract void execute(int n, RAbstractDoubleVector prob, int k, RIntVector rN);
 
         @Specialization(guards = {"probAccess.supports(prob)", "rNAccess.supports(rN)"})
-        protected void doRMultinom(int n, RAbstractDoubleVector prob, int k, RAbstractIntVector rN,
+        protected void doRMultinom(int n, RAbstractDoubleVector prob, int k, RIntVector rN,
                         @Cached("prob.access()") VectorAccess probAccess,
                         @Cached("rN.access()") VectorAccess rNAccess,
                         @Cached() Rbinom rbinom) {
@@ -245,7 +245,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization(replaces = "doRMultinom")
-        protected void doGeneric(int n, RAbstractDoubleVector prob, int k, RAbstractIntVector rN,
+        protected void doGeneric(int n, RAbstractDoubleVector prob, int k, RIntVector rN,
                         @Cached() Rbinom rbinom) {
             doRMultinom(n, prob, k, rN, prob.slowPathAccess(), rN.slowPathAccess(), rbinom);
         }

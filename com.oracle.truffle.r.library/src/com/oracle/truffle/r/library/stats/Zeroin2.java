@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 public abstract class Zeroin2 extends RExternalBuiltinNode.Arg7 {
 
@@ -175,8 +175,8 @@ public abstract class Zeroin2 extends RExternalBuiltinNode.Arg7 {
 
                 RArgsValuesAndNames args = new RArgsValuesAndNames(new Object[]{b}, ArgumentsSignature.empty(1));
                 Object fRes = callNode.call(f.getEnclosingFrame(), f, args);
-                if (fRes instanceof RAbstractIntVector) {
-                    RAbstractIntVector vec = (RAbstractIntVector) fRes;
+                if (fRes instanceof RIntVector) {
+                    RIntVector vec = (RIntVector) fRes;
                     if (vec.getLength() == 1) {
                         fRes = vec.getDataAt(0);
                     }

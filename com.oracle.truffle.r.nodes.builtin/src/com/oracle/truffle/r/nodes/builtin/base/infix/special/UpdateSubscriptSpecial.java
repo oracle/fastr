@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
 
     protected abstract Object execute(VirtualFrame frame, Object vec, Object index, Object value);
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
     protected RIntVector setInt(RIntVector vector, int index, int value,
                     @Cached("vector.access()") VectorAccess access) {
         try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
@@ -58,12 +58,12 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         }
     }
 
-    @Specialization(replaces = "setInt", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    @Specialization(replaces = "setInt", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
     protected RIntVector setIntGeneric(RIntVector vector, int index, int value) {
         return setInt(vector, index, value, vector.slowPathAccess());
     }
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
     protected RDoubleVector setDouble(RDoubleVector vector, int index, double value,
                     @Cached("vector.access()") VectorAccess access) {
         try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
@@ -75,12 +75,12 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         }
     }
 
-    @Specialization(replaces = "setDouble", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    @Specialization(replaces = "setDouble", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
     protected RDoubleVector setDoubleGeneric(RDoubleVector vector, int index, double value) {
         return setDouble(vector, index, value, vector.slowPathAccess());
     }
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
     protected RStringVector setString(RStringVector vector, int index, String value,
                     @Cached("vector.access()") VectorAccess access) {
         try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
@@ -92,7 +92,7 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         }
     }
 
-    @Specialization(replaces = "setString", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    @Specialization(replaces = "setString", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
     protected RStringVector setStringGeneric(RStringVector vector, int index, String value) {
         return setString(vector, index, value, vector.slowPathAccess());
     }
@@ -111,7 +111,7 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         return setList(list, index, value, list.slowPathAccess());
     }
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
     protected RDoubleVector setDoubleIntIndexIntValue(RDoubleVector vector, int index, int value,
                     @Cached("vector.access()") VectorAccess access) {
         try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
@@ -125,7 +125,7 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         }
     }
 
-    @Specialization(replaces = "setDoubleIntIndexIntValue", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    @Specialization(replaces = "setDoubleIntIndexIntValue", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
     protected RDoubleVector setDoubleIntIndexIntValueGeneric(RDoubleVector vector, int index, int value) {
         return setDoubleIntIndexIntValue(vector, index, value, vector.slowPathAccess());
     }

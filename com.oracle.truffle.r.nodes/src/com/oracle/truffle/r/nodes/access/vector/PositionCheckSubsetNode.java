@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,6 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -40,12 +38,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -210,7 +206,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     @Specialization(/* contains = "doSequence" */)
-    protected RAbstractVector doInteger(PositionProfile profile, int dimensionLength, RAbstractIntVector position, int positionLength,
+    protected RAbstractVector doInteger(PositionProfile profile, int dimensionLength, RIntVector position, int positionLength,
                     @Cached("create()") BranchProfile seenZeroProfile,
                     @Cached("create()") BranchProfile seenPositiveProfile,
                     @Cached("create()") BranchProfile seenNegativeProfile,
@@ -259,9 +255,8 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     private final BranchProfile noZeroes = BranchProfile.create();
-    @CompilationFinal private boolean checkForScalarPosition = true;
 
-    private RAbstractVector doIntegerProfiled(PositionProfile profile, int dimensionLength, RAbstractIntVector intPosition, int positionLength, boolean hasSeenPositive, boolean hasSeenNegative,
+    private RAbstractVector doIntegerProfiled(PositionProfile profile, int dimensionLength, RIntVector intPosition, int positionLength, boolean hasSeenPositive, boolean hasSeenNegative,
                     boolean hasSeenNA, int outOfBoundsCount, int zeroCount, int maxOutOfBoundsIndex) {
         if (hasSeenPositive || hasSeenNA) {
             if (numPositions > 1 && outOfBoundsCount > 0) {
@@ -292,15 +287,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         }
     }
 
-    private RAbstractVector eliminateZerosAndOutOfBounds(RAbstractIntVector position, int positionLength, int dimensionLength, int outOfBoundsCount, int zeroCount, boolean hasSeenNA) {
-        if (checkForScalarPosition) {
-            if (position instanceof RInteger && outOfBoundsCount == 1) {
-                return RInteger.valueOf(RRuntime.INT_NA);
-            } else {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                checkForScalarPosition = false;
-            }
-        }
+    private RAbstractVector eliminateZerosAndOutOfBounds(RIntVector position, int positionLength, int dimensionLength, int outOfBoundsCount, int zeroCount, boolean hasSeenNA) {
         int[] newIndices = new int[positionLength - zeroCount];
         int newPositionIndex = 0;
         for (int i = 0; i < positionLength; i++) {
@@ -316,7 +303,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         return RDataFactory.createIntVector(newIndices, !hasSeenNA && outOfBoundsCount == 0);
     }
 
-    private static RAbstractVector transformNegative(PositionProfile statistics, int dimLength, RAbstractIntVector position, int positionLength, boolean hasZeros) {
+    private static RAbstractVector transformNegative(PositionProfile statistics, int dimLength, RIntVector position, int positionLength, boolean hasZeros) {
         byte[] mask = new byte[dimLength];
         Arrays.fill(mask, RRuntime.LOGICAL_TRUE);
         int allPositionsNum = dimLength;

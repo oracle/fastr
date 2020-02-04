@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -90,7 +90,7 @@ public final class RandFunctionsNodes {
         public int lengthOne(RAbstractVector vector,
                         @Cached("createNonPreserving()") CastIntegerNode castNode,
                         @Cached("create()") BranchProfile seenNA) {
-            int result = ((RAbstractIntVector) castNode.doCast(vector)).getDataAt(0);
+            int result = ((RIntVector) castNode.doCast(vector)).getDataAt(0);
             if (RRuntime.isNA(result) || result < 0) {
                 seenNA.enter();
                 throw RError.error(SHOW_CALLER, INVALID_UNNAMED_ARGUMENTS);
@@ -192,7 +192,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization(guards = {"aAccess.supports(a)", "bAccess.supports(b)", "cAccess.supports(c)"})
-        protected RAbstractIntVector cached(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
+        protected RIntVector cached(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
                         @Cached("createFunction()") RandFunction3_DoubleBase function,
                         @Cached("a.access()") VectorAccess aAccess,
                         @Cached("b.access()") VectorAccess bAccess,
@@ -231,7 +231,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization(replaces = "cached")
-        protected RAbstractIntVector generic(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
+        protected RIntVector generic(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
                         @Cached("createFunction()") RandFunction3_DoubleBase function) {
             return cached(length, a, b, c, randProvider, function, a.slowPathAccess(), b.slowPathAccess(), c.slowPathAccess());
         }

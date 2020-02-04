@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -130,7 +130,7 @@ public class SpecialsUtils {
         }
 
         @Specialization(guards = {"access.supports(value)", "value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
-        protected static int convertIntVector(RAbstractIntVector value,
+        protected static int convertIntVector(RIntVector value,
                         @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
                         @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode,
                         @Cached("value.access()") VectorAccess access) {
@@ -140,7 +140,7 @@ public class SpecialsUtils {
         }
 
         @Specialization(replaces = "convertIntVector", guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
-        protected static int convertIntVectorGeneric(RAbstractIntVector value,
+        protected static int convertIntVectorGeneric(RIntVector value,
                         @Cached("create()") ClassHierarchyNode hierarchyNode,
                         @Cached("create()") HasAttributesNode hasAttrsNode) {
             return convertIntVector(value, hierarchyNode, hasAttrsNode, value.slowPathAccess());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -115,7 +115,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     @Specialization(guards = "isFactor(factor)")
-    protected RLogicalVector asLogical(RAbstractIntVector factor) {
+    protected RLogicalVector asLogical(RIntVector factor) {
         byte[] data = new byte[factor.getLength()];
         Arrays.fill(data, RRuntime.LOGICAL_NA);
         return factory().createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR);
@@ -208,7 +208,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return CastLogicalNodeGen.create(false, false, false);
     }
 
-    protected boolean isFactor(RAbstractIntVector o) {
+    protected boolean isFactor(RIntVector o) {
         if (inheritsFactorCheck == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             inheritsFactorCheck = insert(InheritsCheckNode.create(RRuntime.CLASS_FACTOR));
@@ -217,7 +217,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     protected boolean useVectorAccess(RAbstractAtomicVector x) {
-        if (x instanceof RAbstractIntVector && isFactor((RAbstractIntVector) x)) {
+        if (x instanceof RIntVector && isFactor((RIntVector) x)) {
             return false;
         }
         return !(x instanceof RAbstractLogicalVector);

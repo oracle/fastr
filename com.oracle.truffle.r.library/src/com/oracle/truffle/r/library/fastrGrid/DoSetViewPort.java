@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -200,7 +200,7 @@ final class DoSetViewPort {
         // Firstly allocate the respected widths/heights and calculate how much space remains
         RList layoutAsList = asList(viewPort.getDataAt(ViewPort.VP_LAYOUT));
         int respect = RRuntime.asInteger(layoutAsList.getDataAt(ViewPort.LAYOUT_VRESPECT));
-        RAbstractIntVector layoutRespectMat = ((RAbstractIntVector) layoutAsList.getDataAt(ViewPort.LAYOUT_MRESPECT));
+        RIntVector layoutRespectMat = ((RIntVector) layoutAsList.getDataAt(ViewPort.LAYOUT_MRESPECT));
         if ((reducedHeight > 0 || reducedWidth > 0) && respect > 0) {
             double sumRelWidth = sumRelativeDimension(layoutWidths, relativeWidths, parentVPCtx, device, gpar, true);
             double sumRelHeight = sumRelativeDimension(layoutHeights, relativeHeights, parentVPCtx, device, gpar, false);
@@ -266,7 +266,7 @@ final class DoSetViewPort {
     }
 
     private static void allocateRelativeDim(LayoutSize layoutSize, RAbstractContainer layoutItems, double[] npcItems, boolean[] relativeItems, double reducedDim, int respect,
-                    RAbstractIntVector layoutRespectMat,
+                    RIntVector layoutRespectMat,
                     GridDevice device, GPar gpar, ViewPortContext parentVPCtx, boolean isWidth) {
         assert relativeItems.length == npcItems.length;
         UnitConversionContext layoutModeCtx = new UnitConversionContext(new Size(0, 0), parentVPCtx, device, gpar, 1, 0);
@@ -290,11 +290,11 @@ final class DoSetViewPort {
         }
     }
 
-    private static boolean rowColRespected(int respected, int rowOrCol, RAbstractIntVector layoutRespectMat, LayoutSize layoutSize, boolean isColumn) {
+    private static boolean rowColRespected(int respected, int rowOrCol, RIntVector layoutRespectMat, LayoutSize layoutSize, boolean isColumn) {
         return isColumn ? colRespected(respected, rowOrCol, layoutRespectMat, layoutSize) : rowRespected(respected, rowOrCol, layoutRespectMat, layoutSize);
     }
 
-    private static boolean rowRespected(int respected, int row, RAbstractIntVector layoutRespectMat, LayoutSize layoutSize) {
+    private static boolean rowRespected(int respected, int row, RIntVector layoutRespectMat, LayoutSize layoutSize) {
         if (respected == 1) {
             return true;
         }
@@ -306,7 +306,7 @@ final class DoSetViewPort {
         return false;
     }
 
-    private static boolean colRespected(int respected, int col, RAbstractIntVector layoutRespectMat, LayoutSize layoutSize) {
+    private static boolean colRespected(int respected, int col, RIntVector layoutRespectMat, LayoutSize layoutSize) {
         if (respected == 1) {
             return true;
         }
@@ -374,9 +374,9 @@ final class DoSetViewPort {
         Object rowObj = vp.getDataAt(ViewPort.VP_VALIDLPOSROW);
         int rowMin = 1;
         int rowMax = size.nrow;
-        if (rowObj instanceof RAbstractIntVector) {
-            rowMin = ((RAbstractIntVector) rowObj).getDataAt(0);
-            rowMax = ((RAbstractIntVector) rowObj).getDataAt(1);
+        if (rowObj instanceof RIntVector) {
+            rowMin = ((RIntVector) rowObj).getDataAt(0);
+            rowMax = ((RIntVector) rowObj).getDataAt(1);
             if (rowMin < 1 || rowMax > size.nrow) {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "invalid 'layout.pos.row'");
             }
@@ -384,9 +384,9 @@ final class DoSetViewPort {
         Object colObj = vp.getDataAt(ViewPort.VP_VALIDLPOSCOL);
         int colMin = 1;
         int colMax = size.ncol;
-        if (colObj instanceof RAbstractIntVector) {
-            colMin = ((RAbstractIntVector) colObj).getDataAt(0);
-            colMax = ((RAbstractIntVector) colObj).getDataAt(1);
+        if (colObj instanceof RIntVector) {
+            colMin = ((RIntVector) colObj).getDataAt(0);
+            colMax = ((RIntVector) colObj).getDataAt(1);
             if (colMin < 1 || colMax > size.ncol) {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "invalid 'layout.pos.row'");
             }

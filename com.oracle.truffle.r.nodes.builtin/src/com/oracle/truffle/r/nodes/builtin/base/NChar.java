@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,10 +42,9 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 // TODO interpret "type" and "allowNA" arguments
@@ -77,7 +76,7 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector ncharInt(RAbstractIntVector vector, String type, byte allowNA, byte keepNAIn,
+    protected RIntVector ncharInt(RIntVector vector, String type, byte allowNA, byte keepNAIn,
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                     @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
                     @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,

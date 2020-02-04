@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -98,14 +98,14 @@ public abstract class UpdateSubstr extends RBuiltinNode.Arg4 {
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg(arg)")
     @TruffleBoundary
-    protected RStringVector substrEmptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
+    protected RStringVector substrEmptyArg(RAbstractStringVector arg, RIntVector start, RIntVector stop, Object value) {
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg(arg)", "wrongParams(start, stop)"})
     @TruffleBoundary
-    protected RNull substrWrongParams(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, Object value) {
+    protected RNull substrWrongParams(RAbstractStringVector arg, RIntVector start, RIntVector stop, Object value) {
         RInternalError.shouldNotReachHere();
         return RNull.instance; // dummy
     }
@@ -113,20 +113,20 @@ public abstract class UpdateSubstr extends RBuiltinNode.Arg4 {
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)"})
     @TruffleBoundary
-    protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RNull value) {
+    protected RStringVector substr(RAbstractStringVector arg, RIntVector start, RIntVector stop, RNull value) {
         throw error(RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)", "!isRAbstractStringVector(value) || value.getLength() == 0"})
-    protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractVector value) {
+    protected RStringVector substr(RAbstractStringVector arg, RIntVector start, RIntVector stop, RAbstractVector value) {
         CompilerDirectives.transferToInterpreter();
         throw error(RError.Message.INVALID_UNNAMED_VALUE);
     }
 
     @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)", "value.getLength() > 0"})
     @TruffleBoundary
-    protected RStringVector substr(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop, RAbstractStringVector value) {
+    protected RStringVector substr(RAbstractStringVector arg, RIntVector start, RIntVector stop, RAbstractStringVector value) {
         String[] res = new String[arg.getLength()];
         na.enable(arg);
         na.enable(start);
@@ -148,7 +148,7 @@ public abstract class UpdateSubstr extends RBuiltinNode.Arg4 {
         return arg.getLength() == 0;
     }
 
-    protected boolean wrongParams(RAbstractIntVector start, RAbstractIntVector stop) {
+    protected boolean wrongParams(RIntVector start, RIntVector stop) {
         if (start.getLength() == 0 || stop.getLength() == 0) {
             throw error(RError.Message.INVALID_ARGUMENTS_NO_QUOTE, "substring");
         }

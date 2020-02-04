@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -72,7 +72,7 @@ final class GridUtils {
         return vec.getDataAt(idx % vec.getLength());
     }
 
-    static int getDataAtMod(RAbstractIntVector vec, int idx) {
+    static int getDataAtMod(RIntVector vec, int idx) {
         return vec.getDataAt(idx % vec.getLength());
     }
 
@@ -140,8 +140,8 @@ final class GridUtils {
     static double getDoubleAt(RAbstractVector vector, int index) {
         if (vector instanceof RAbstractDoubleVector) {
             return ((RAbstractDoubleVector) vector).getDataAt(index);
-        } else if (vector instanceof RAbstractIntVector) {
-            return ((RAbstractIntVector) vector).getDataAt(index);
+        } else if (vector instanceof RIntVector) {
+            return ((RIntVector) vector).getDataAt(index);
         }
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non double/integer value");
     }
@@ -155,9 +155,9 @@ final class GridUtils {
             }
         } else if (val instanceof Integer) {
             return (int) val;
-        } else if (val instanceof RAbstractIntVector) {
-            if (((RAbstractIntVector) val).getLength() > 0) {
-                return ((RAbstractIntVector) val).getDataAt(0);
+        } else if (val instanceof RIntVector) {
+            if (((RIntVector) val).getLength() > 0) {
+                return ((RIntVector) val).getDataAt(0);
             }
         }
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non double/integer value " + val.getClass().getSimpleName());
@@ -178,8 +178,8 @@ final class GridUtils {
     static int asInt(Object val, int cyclicIndex) {
         if (val instanceof Integer) {
             return (int) val;
-        } else if (val instanceof RAbstractIntVector) {
-            RAbstractIntVector vec = (RAbstractIntVector) val;
+        } else if (val instanceof RIntVector) {
+            RIntVector vec = (RIntVector) val;
             if (vec.getLength() > 0) {
                 return vec.getDataAt(cyclicIndex % vec.getLength());
             }
@@ -199,11 +199,11 @@ final class GridUtils {
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non character value " + val.getClass().getSimpleName());
     }
 
-    static RAbstractIntVector asIntVector(Object value) {
+    static RIntVector asIntVector(Object value) {
         if (value instanceof Integer) {
             return RDataFactory.createIntVectorFromScalar((Integer) value);
-        } else if (value instanceof RAbstractIntVector) {
-            return (RAbstractIntVector) value;
+        } else if (value instanceof RIntVector) {
+            return (RIntVector) value;
         }
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non integer value " + value.getClass().getSimpleName());
     }

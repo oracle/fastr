@@ -2,7 +2,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2012, The R Core Team
  * Copyright (c) 2004, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -208,11 +208,6 @@ public class BaseGammaFunctions {
         @Override
         public double applyDouble(double x, double deriv) {
             return GammaFunctions.psigamma(x, deriv);
-        }
-
-        @Override
-        public boolean mayFoldConstantTime(Class<? extends RAbstractVector> left, Class<? extends RAbstractVector> right) {
-            return false;
         }
 
         @Override

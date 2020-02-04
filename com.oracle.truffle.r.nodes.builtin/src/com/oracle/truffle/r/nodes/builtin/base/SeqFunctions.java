@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1998  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2015,  The R Core Team
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,14 +66,12 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
@@ -124,7 +122,7 @@ public final class SeqFunctions {
         }
 
         @Specialization
-        protected boolean isNumericNode(@SuppressWarnings("unused") RAbstractIntVector obj) {
+        protected boolean isNumericNode(@SuppressWarnings("unused") RIntVector obj) {
             return true;
         }
 
@@ -159,7 +157,7 @@ public final class SeqFunctions {
         }
 
         @Specialization
-        protected int getIntegralNumeric(RAbstractIntVector intVec) {
+        protected int getIntegralNumeric(RIntVector intVec) {
             return intVec.getDataAt(0);
         }
 
@@ -369,7 +367,7 @@ public final class SeqFunctions {
         }
 
         @Specialization(guards = "!hasClass(value)")
-        protected RIntSequence seq(Object value,
+        protected RIntVector seq(Object value,
                         @Cached("create()") RLengthNode length) {
             return RDataFactory.createIntSequence(1, 1, length.executeInteger(value));
         }
@@ -379,7 +377,7 @@ public final class SeqFunctions {
          * length depending on the class of the argument.
          */
         @Specialization(guards = "hasClass(value)")
-        protected RIntSequence seq(VirtualFrame frame, Object value,
+        protected RIntVector seq(VirtualFrame frame, Object value,
                         @Cached("createLengthResultCast()") CastNode resultCast,
                         @Cached("createLengthDispatcher()") RExplicitBaseEnvCallDispatcher dispatcher) {
             int result = (Integer) resultCast.doCast(dispatcher.call(frame, value));
@@ -418,7 +416,7 @@ public final class SeqFunctions {
         }
 
         @Specialization
-        protected RIntSequence seqLen(int length) {
+        protected RIntVector seqLen(int length) {
             return RDataFactory.createIntSequence(1, 1, length);
         }
     }
@@ -486,7 +484,7 @@ public final class SeqFunctions {
         // No matching args (special case)
 
         @Specialization
-        protected RIntSequence allMissing(RMissing from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
+        protected RIntVector allMissing(RMissing from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             // GNU R allows this and returns 1
             return RDataFactory.createIntSequence(1, 1, 1);
         }
@@ -512,7 +510,7 @@ public final class SeqFunctions {
          * but the value likely could not be coerced.
          */
         @Specialization(guards = {"!isMissing(from)", "getLength(from) > 1"})
-        protected RIntSequence lenSeqFromOneArg(Object from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
+        protected RIntVector lenSeqFromOneArg(Object from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             return RDataFactory.createIntSequence(1, 1, getLength(from));
         }
 
@@ -540,7 +538,7 @@ public final class SeqFunctions {
          * A length-1 INT. Return "1:from" (N.B. from may be negative)
          */
         @Specialization(guards = "fromVec.getLength() == 1")
-        protected RIntSequence seqFromOneArgInt(RAbstractIntVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
+        protected RIntVector seqFromOneArgInt(RIntVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             int from = validateIntParam(fromVec.getDataAt(0), "from");
             int len = from > 0 ? from : 2 - from;
             return RDataFactory.createIntSequence(1, from > 0 ? 1 : -1, len);
@@ -553,7 +551,7 @@ public final class SeqFunctions {
          * which would be incorrect as the result is different.
          */
         @Specialization(guards = {"!isMissing(from)", "getLength(from) == 1", "!isNumeric(from)"})
-        protected RIntSequence seqFromOneArgObj(Object from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
+        protected RIntVector seqFromOneArgObj(Object from, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             return RDataFactory.createIntSequence(1, 1, 1);
         }
 
@@ -577,11 +575,11 @@ public final class SeqFunctions {
         }
 
         @Specialization(guards = "validIntParams(fromVec, toVec)")
-        protected RAbstractVector seqLengthByMissingInt(RAbstractIntVector fromVec, RAbstractIntVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+        protected RAbstractVector seqLengthByMissingInt(RIntVector fromVec, RIntVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
             int from = fromVec.getDataAt(0);
             int to = toVec.getDataAt(0);
-            RIntSequence result = createRIntSequence(from, to, directionProfile);
+            RIntVector result = createRIntSequence(from, to, directionProfile);
             return result;
         }
 
@@ -626,12 +624,12 @@ public final class SeqFunctions {
         }
 
         @Specialization(guards = {"validIntParams(fromVec, toVec)", "validIntParam(byVec)", "byVec.getDataAt(0) != 0"})
-        protected RAbstractVector seqLengthMissing(RAbstractIntVector fromVec, RAbstractIntVector toVec, RAbstractIntVector byVec, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+        protected RAbstractVector seqLengthMissing(RIntVector fromVec, RIntVector toVec, RIntVector byVec, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
             int by = byVec.getDataAt(0);
             int from = fromVec.getDataAt(0);
             int to = toVec.getDataAt(0);
-            RIntSequence result;
+            RIntVector result;
             if (directionProfile.profile(from < to)) {
                 if (by < 0) {
                     throw error(RError.Message.WRONG_SIGN_IN_BY);
@@ -803,7 +801,7 @@ public final class SeqFunctions {
             }
 
             @Specialization
-            protected boolean isIntegralNumericNode(RAbstractIntVector intVec) {
+            protected boolean isIntegralNumericNode(RIntVector intVec) {
                 return intVec.getLength() == 1 && (checkLength ? intVec.getDataAt(0) >= 0 : true);
             }
 
@@ -976,11 +974,11 @@ public final class SeqFunctions {
             return from.getLength() == 1 && to.getLength() == 1 && isFinite(from.getDataAt(0)) && isFinite(to.getDataAt(0));
         }
 
-        public static boolean validIntParams(RAbstractIntVector from, RAbstractIntVector to) {
+        public static boolean validIntParams(RIntVector from, RIntVector to) {
             return validIntParam(from) && validIntParam(to);
         }
 
-        public static boolean validIntParam(RAbstractIntVector vec) {
+        public static boolean validIntParam(RIntVector vec) {
             return vec.getLength() == 1 && vec.getDataAt(0) != RRuntime.INT_NA;
         }
 
@@ -989,11 +987,11 @@ public final class SeqFunctions {
         }
 
         public static boolean isNumeric(Object obj) {
-            return obj instanceof Double || obj instanceof Integer || obj instanceof RAbstractDoubleVector || obj instanceof RAbstractIntVector;
+            return obj instanceof Double || obj instanceof Integer || obj instanceof RAbstractDoubleVector || obj instanceof RIntVector;
         }
 
         public static boolean isInt(Object obj) {
-            return obj instanceof Integer || obj instanceof RAbstractIntVector;
+            return obj instanceof Integer || obj instanceof RIntVector;
         }
 
         public static boolean isMissing(Object obj) {
@@ -1092,7 +1090,7 @@ public final class SeqFunctions {
         /**
          * Maps from {@code from} and {@code to} to the {@link RSequence} interface.
          */
-        private static RIntSequence createRIntSequence(int from, int to, ConditionProfile directionProfile) {
+        private static RIntVector createRIntSequence(int from, int to, ConditionProfile directionProfile) {
             if (directionProfile.profile(from <= to)) {
                 int length = to - from + 1;
                 return RDataFactory.createIntSequence(from, 1, length);
@@ -1123,7 +1121,7 @@ public final class SeqFunctions {
                 }
             }
             if (useInt) {
-                RIntSequence result = RDataFactory.createIntSequence((int) from, directionProfile.profile(from <= to) ? 1 : -1, length);
+                RIntVector result = RDataFactory.createIntSequence((int) from, directionProfile.profile(from <= to) ? 1 : -1, length);
                 return result;
             } else {
                 length = checkVecLength(from, to);

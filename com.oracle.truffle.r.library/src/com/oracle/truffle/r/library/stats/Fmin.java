@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 public final class Fmin extends RExternalBuiltinNode.Arg4 {
 
@@ -82,11 +82,11 @@ public final class Fmin extends RExternalBuiltinNode.Arg4 {
 
     private double callFun(VirtualFrame frame, RFunction fun, double x) {
         Object result = box(explicitCall(frame, fun, x));
-        if (getIsIntegerProfile().profile(result instanceof RAbstractIntVector)) {
-            if (((RAbstractIntVector) result).getLength() != 1) {
+        if (getIsIntegerProfile().profile(result instanceof RIntVector)) {
+            if (((RIntVector) result).getLength() != 1) {
                 throw badValueError();
             }
-            return ((RAbstractIntVector) result).getDataAt(0);
+            return ((RIntVector) result).getDataAt(0);
         } else if (result instanceof RAbstractDoubleVector) {
             if (((RAbstractDoubleVector) result).getLength() != 1) {
                 throw badValueError();

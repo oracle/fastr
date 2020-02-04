@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "col", kind = INTERNAL, parameterNames = {"dims"}, behavior = PURE)
 public abstract class Col extends RBuiltinNode.Arg1 {
@@ -46,7 +45,7 @@ public abstract class Col extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RIntVector col(RAbstractIntVector x) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector col(RIntVector x) {
         int nrows = x.getDataAt(0);
         int ncols = x.getDataAt(1);
         int[] result = new int[nrows * ncols];

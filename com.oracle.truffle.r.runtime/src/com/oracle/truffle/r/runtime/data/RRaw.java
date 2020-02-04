@@ -76,7 +76,7 @@ public final class RRaw extends RAbstractRawVector implements RScalarVector {
             case Raw:
                 return this;
             case Integer:
-                return RInteger.valueOf(value);
+                return RDataFactory.createIntVectorFromScalar(value);
             case Double:
                 return RDouble.valueOf(value);
             case Complex:

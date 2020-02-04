@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,14 +37,12 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -72,7 +70,7 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     protected boolean isSequence(RAbstractVector vec) {
-        return vec instanceof RSequence;
+        return vec.isSequence();
     }
 
     protected boolean isCharSXP(RAbstractListVector list) {
@@ -84,15 +82,16 @@ public abstract class MatchInternalNode extends RBaseNode {
         return true;
     }
 
-    @Specialization
+    @Specialization(guards = "table.isSequence()")
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector matchInSequence(RAbstractIntVector x, RIntSequence table, int nomatch) {
+    protected RIntVector matchInSequence(RIntVector x, RIntVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
 
+        RIntSeqVectorData seq = (RIntSeqVectorData) table.getData();
         for (int i = 0; i < result.length; i++) {
             int xx = x.getDataAt(i);
-            int index = table.getIndexFor(xx);
+            int index = seq.getIndexFor(xx);
             if (index != -1) {
                 result[i] = index + 1;
             } else {
@@ -104,7 +103,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization(guards = {"x.getLength() == 1", "!isSequence(table)"})
     @CompilerDirectives.TruffleBoundary
-    protected int matchSizeOne(RAbstractIntVector x, RAbstractIntVector table, int nomatch,
+    protected int matchSizeOne(RIntVector x, RIntVector table, int nomatch,
                     @Cached("create()") NAProfile naProfile,
                     @Cached("create()") BranchProfile foundProfile,
                     @Cached("create()") BranchProfile notFoundProfile) {
@@ -131,7 +130,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization(guards = {"x.getLength() != 1", "!isSequence(table)"})
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractIntVector x, RAbstractIntVector table, int nomatch) {
+    protected RIntVector match(RIntVector x, RIntVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapInt hashTable;
@@ -167,7 +166,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractDoubleVector x, RAbstractIntVector table, int nomatch) {
+    protected RIntVector match(RAbstractDoubleVector x, RIntVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapDouble hashTable;
@@ -203,7 +202,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractIntVector x, RAbstractDoubleVector table, int nomatch) {
+    protected RIntVector match(RIntVector x, RAbstractDoubleVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         NonRecursiveHashMapInt hashTable;
@@ -309,7 +308,7 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     @Specialization
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector match(RAbstractIntVector x, RAbstractLogicalVector table, int nomatch) {
+    protected RIntVector match(RIntVector x, RAbstractLogicalVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
         int[] values = {RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_NA};
@@ -539,9 +538,9 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractLogicalVector x, RAbstractIntVector table, int nomatch,
+    protected RIntVector match(RAbstractLogicalVector x, RIntVector table, int nomatch,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
-        return match((RAbstractIntVector) x.castSafe(RType.Integer, isNAProfile), table, nomatch);
+        return match((RIntVector) x.castSafe(RType.Integer, isNAProfile), table, nomatch);
     }
 
     @Specialization
@@ -563,7 +562,7 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractIntVector x, RAbstractComplexVector table, int nomatch,
+    protected RIntVector match(RIntVector x, RAbstractComplexVector table, int nomatch,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractComplexVector) x.castSafe(RType.Complex, isNAProfile), table, nomatch);
     }
@@ -622,7 +621,7 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractRawVector x, RAbstractIntVector table, int nomatch,
+    protected RIntVector match(RAbstractRawVector x, RIntVector table, int nomatch,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
     }
@@ -650,7 +649,7 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractIntVector x, RAbstractStringVector table, int nomatch,
+    protected RIntVector match(RIntVector x, RAbstractStringVector table, int nomatch,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), table, nomatch);
     }
@@ -662,7 +661,7 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractIntVector x, RAbstractRawVector table, int nomatch,
+    protected RIntVector match(RIntVector x, RAbstractRawVector table, int nomatch,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match((RAbstractStringVector) x.castSafe(RType.Character, isNAProfile), (RAbstractStringVector) table.castSafe(RType.Character, isNAProfile), nomatch);
     }
@@ -684,7 +683,7 @@ public abstract class MatchInternalNode extends RBaseNode {
     }
 
     @Specialization
-    protected RIntVector match(RAbstractComplexVector x, RAbstractIntVector table, int nomatch,
+    protected RIntVector match(RAbstractComplexVector x, RIntVector table, int nomatch,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
         return match(x, (RAbstractComplexVector) table.castSafe(RType.Complex, isNAProfile), nomatch);
     }

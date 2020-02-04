@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 @RBuiltin(name = "utf8ToInt", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
 public abstract class Utf8ToInt extends RBuiltinNode.Arg1 {
@@ -46,8 +46,8 @@ public abstract class Utf8ToInt extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RAbstractIntVector utf8ToInt(String value) {
-        RAbstractIntVector ret;
+    protected RIntVector utf8ToInt(String value) {
+        RIntVector ret;
         if (!RRuntime.isNA(value)) {
             int valueLen = value.length();
             int[] result = new int[valueLen];

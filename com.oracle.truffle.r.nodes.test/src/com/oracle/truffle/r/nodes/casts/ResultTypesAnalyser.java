@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,7 +83,6 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -91,7 +90,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -246,7 +245,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
         // cancel potential primitive types in the input
         TypeExpr noPrimInput = inputType.and(noPrimType);
         // the positive output type union
-        TypeExpr res = TypeExpr.union(RInteger.class, RLogical.class, RDouble.class, RString.class);
+        TypeExpr res = TypeExpr.union(RIntVector.class, RLogical.class, RDouble.class, RString.class);
         // intersect the to stop propagating the primitive types, such as String
         res = res.and(noPrimInput);
         // the output of the boxing is actually the union of the positive union with its negation
@@ -302,7 +301,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
     public TypeExpr visit(RTypeFilter<?> filter, TypeExpr previous) {
         switch (filter.getType()) {
             case Integer:
-                return visit(new TypeFilter<>(Integer.class, RAbstractIntVector.class), previous);
+                return visit(new TypeFilter<>(Integer.class, RIntVector.class), previous);
             case Double:
                 return visit(new TypeFilter<>(Double.class, RAbstractDoubleVector.class), previous);
             case Logical:

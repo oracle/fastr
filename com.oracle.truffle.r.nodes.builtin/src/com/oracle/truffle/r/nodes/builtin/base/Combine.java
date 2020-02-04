@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,7 +76,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -532,7 +531,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
 
         public Object cast(Object operand) {
             Object profiled = inputValueProfile.profile(operand);
-            if (profiled instanceof RMaterializedVector) {
+            if (RRuntime.isMaterializedVector(profiled)) {
                 RAbstractVector vector = (RAbstractVector) profiled;
                 if (vector.getAttributes() != null) {
                     if (extractNamesNode == null) {

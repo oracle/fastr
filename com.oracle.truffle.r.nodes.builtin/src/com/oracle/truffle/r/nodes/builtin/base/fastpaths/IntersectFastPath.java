@@ -33,7 +33,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
@@ -65,7 +65,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
             return NodeCost.NONE;
         }
 
-        private int[] execute(RAbstractIntVector x, int xLength, int yLength, RAbstractIntVector y) {
+        private int[] execute(RIntVector x, int xLength, int yLength, RIntVector y) {
             int[] result = EMPTY_INT_ARRAY;
             int maxResultLength = Math.min(xLength, yLength);
             int count = 0;
@@ -120,7 +120,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
             return resultLengthMatchProfile.profile(count == result.length) ? result : Arrays.copyOf(result, count);
         }
 
-        private int getNextValue(RAbstractIntVector vector, int pos, int oldValue) {
+        private int getNextValue(RIntVector vector, int pos, int oldValue) {
             int newValue = vector.getDataAt(pos);
             if (!isSorted && newValue < oldValue) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -130,7 +130,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
         }
     }
 
-    protected static int length(RAbstractIntVector v, Class<? extends RAbstractIntVector> clazz) {
+    protected static int length(RIntVector v, Class<? extends RIntVector> clazz) {
         return clazz.cast(v).getLength();
     }
 
@@ -140,11 +140,11 @@ public abstract class IntersectFastPath extends RFastPathNode {
 
     @Specialization(limit = "1", guards = {"x.getClass() == cached.xClass", "y.getClass() == cached.yClass", "length(x, cached.xClass) > 0",
                     "length(y, cached.yClass) > 0", "getLimit1Guard()"}, rewriteOn = IllegalArgumentException.class)
-    protected RAbstractIntVector intersectMaybeSorted(RAbstractIntVector x, RAbstractIntVector y,
+    protected RIntVector intersectMaybeSorted(RIntVector x, RIntVector y,
                     @Cached("new(x.getClass(), y.getClass())") IntersectMaybeSortedNode cached) {
         // apply the type profiles:
-        RAbstractIntVector profiledX = cached.xClass.cast(x);
-        RAbstractIntVector profiledY = cached.yClass.cast(y);
+        RIntVector profiledX = cached.xClass.cast(x);
+        RIntVector profiledY = cached.yClass.cast(y);
 
         int xLength = profiledX.getLength();
         int yLength = profiledY.getLength();
@@ -155,11 +155,11 @@ public abstract class IntersectFastPath extends RFastPathNode {
     }
 
     public static class IntersectMaybeSortedNode extends Node {
-        public final Class<? extends RAbstractIntVector> xClass;
-        public final Class<? extends RAbstractIntVector> yClass;
+        public final Class<? extends RIntVector> xClass;
+        public final Class<? extends RIntVector> yClass;
         @Child IntersectSortedNode intersect;
 
-        public IntersectMaybeSortedNode(Class<? extends RAbstractIntVector> xClass, Class<? extends RAbstractIntVector> yClass) {
+        public IntersectMaybeSortedNode(Class<? extends RIntVector> xClass, Class<? extends RIntVector> yClass) {
             this.xClass = xClass;
             this.yClass = yClass;
             this.intersect = createMaybeSorted();
@@ -171,11 +171,11 @@ public abstract class IntersectFastPath extends RFastPathNode {
     }
 
     @Specialization(limit = "1", guards = {"x.getClass() == cached.xClass", "y.getClass() == cached.yClass", "length(x, cached.xClass) > 0", "length(y, cached.yClass) > 0", "getLimit1Guard()"})
-    protected RAbstractIntVector intersect(RAbstractIntVector x, RAbstractIntVector y,
+    protected RIntVector intersect(RIntVector x, RIntVector y,
                     @Cached("new(x.getClass(), y.getClass())") IntersectNode cached) {
         // apply the type profiles:
-        RAbstractIntVector profiledX = cached.xClass.cast(x);
-        RAbstractIntVector profiledY = cached.yClass.cast(y);
+        RIntVector profiledX = cached.xClass.cast(x);
+        RIntVector profiledY = cached.yClass.cast(y);
 
         int xLength = profiledX.getLength();
         int yLength = profiledY.getLength();
@@ -183,7 +183,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
 
         int[] result;
         if (cached.isXSortedProfile.profile(isSorted(profiledX))) {
-            RAbstractIntVector tempY;
+            RIntVector tempY;
             if (cached.isYSortedProfile.profile(isSorted(profiledY))) {
                 tempY = profiledY;
             } else {
@@ -223,21 +223,21 @@ public abstract class IntersectFastPath extends RFastPathNode {
     }
 
     public static class IntersectNode extends Node {
-        public final Class<? extends RAbstractIntVector> xClass;
-        public final Class<? extends RAbstractIntVector> yClass;
+        public final Class<? extends RIntVector> xClass;
+        public final Class<? extends RIntVector> yClass;
         final ConditionProfile isXSortedProfile = ConditionProfile.createBinaryProfile();
         final ConditionProfile isYSortedProfile = ConditionProfile.createBinaryProfile();
         final ConditionProfile resultLengthMatchProfile = ConditionProfile.createBinaryProfile();
         @Child IntersectSortedNode intersect;
 
-        public IntersectNode(Class<? extends RAbstractIntVector> xClass, Class<? extends RAbstractIntVector> yClass) {
+        public IntersectNode(Class<? extends RIntVector> xClass, Class<? extends RIntVector> yClass) {
             this.xClass = xClass;
             this.yClass = yClass;
             this.intersect = createMaybeSorted();
         }
     }
 
-    private static boolean isSorted(RAbstractIntVector vector) {
+    private static boolean isSorted(RIntVector vector) {
         int length = vector.getLength();
         int lastValue = vector.getDataAt(0);
         for (int i = 1; i < length; i++) {

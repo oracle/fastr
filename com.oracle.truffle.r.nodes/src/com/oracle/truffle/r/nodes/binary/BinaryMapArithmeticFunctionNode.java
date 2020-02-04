@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,8 +30,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
+import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add;
@@ -62,8 +62,8 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
     }
 
     @Override
-    public boolean mayFoldConstantTime(Class<? extends RAbstractVector> leftClass, Class<? extends RAbstractVector> rightClass) {
-        return (isSequenceAddArithmetic() || isSequenceMulArithmetic()) && (RSequence.class.isAssignableFrom(leftClass) || RSequence.class.isAssignableFrom(rightClass));
+    public boolean mayFoldConstantTime(RAbstractVector left, RAbstractVector right) {
+        return (isSequenceAddArithmetic() || isSequenceMulArithmetic()) && (left.isSequence() || right.isSequence());
     }
 
     @Override
@@ -184,57 +184,57 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
     }
 
     private RAbstractVector sequenceMulOperation(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        if (left instanceof RSequence) {
+        if (left.isSequence()) {
             if (rightLength == 1) {
                 // result_start = left_start <op> right[[0]]
                 // result_stride = left_stride <op> right[[0]]
                 // result_length = left_length
                 Object firstValue = right.getDataAtAsObject(0);
-                return foldSequence((RSequence) left, firstValue, firstValue, rightNACheck);
+                return foldSequence(left.getSequence(), firstValue, firstValue, rightNACheck);
             }
-        } else if (right instanceof RSequence && arithmetic.isCommutative() && leftLength == 1) {
+        } else if (right.isSequence() && arithmetic.isCommutative() && leftLength == 1) {
             // result_start = right_start <op> left[[0]]
             // result_stride = right_stride <op> left[[0]]
             // result_length = right_length
             Object firstValue = left.getDataAtAsObject(0);
-            return foldSequence((RSequence) right, firstValue, firstValue, rightNACheck);
+            return foldSequence(right.getSequence(), firstValue, firstValue, rightNACheck);
         }
         return null;
     }
 
     private RAbstractVector sequenceAddOperation(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        if (left instanceof RSequence) {
+        if (left.isSequence()) {
             if (rightLength == 1) {
                 // result_start = left_start <op> right[[0]]
                 // result_stride = left_stride
                 // result_length = left_length
-                return foldSequence((RSequence) left, right.getDataAtAsObject(0), null, rightNACheck);
-            } else if (right instanceof RSequence && leftLength == rightLength) {
+                return foldSequence(left.getSequence(), right.getDataAtAsObject(0), null, rightNACheck);
+            } else if (right.isSequence() && leftLength == rightLength) {
                 // result_start = left_start <op> right_start
                 // result_stride = left_stride <op> right_stride
                 // result_length = left_length = right_length
-                RSequence otherSequence = (RSequence) right;
-                return foldSequence((RSequence) left, otherSequence.getStartObject(), otherSequence.getStrideObject(), rightNACheck);
+                RSeq otherSequence = right.getSequence();
+                return foldSequence(left.getSequence(), otherSequence.getStartObject(), otherSequence.getStrideObject(), rightNACheck);
             }
-        } else if (right instanceof RSequence && arithmetic.isCommutative() && leftLength == 1) {
+        } else if (right.isSequence() && arithmetic.isCommutative() && leftLength == 1) {
             // result_start = right_start <op> left[[0]]
             // result_stride = right_stride
             // result_length = right_length
-            return foldSequence((RSequence) right, left.getDataAtAsObject(0), null, leftNACheck);
+            return foldSequence(right.getSequence(), left.getDataAtAsObject(0), null, leftNACheck);
         }
         return null;
     }
 
-    private RAbstractVector foldSequence(RSequence sequence, Object otherStart, Object otherStride, NACheck otherNACheck) {
-        if (sequence instanceof RIntSequence) {
-            return foldIntSequence(sequence, otherStart, otherStride, otherNACheck);
+    private RAbstractVector foldSequence(RSeq sequence, Object otherStart, Object otherStride, NACheck otherNACheck) {
+        if (sequence instanceof RIntSeqVectorData) {
+            return foldIntSequence((RIntSeqVectorData) sequence, otherStart, otherStride, otherNACheck);
         } else if (sequence instanceof RDoubleSequence) {
             return foldDoubleSequence(sequence, otherStart, otherStride, otherNACheck);
         }
         return null;
     }
 
-    private RAbstractVector foldDoubleSequence(RSequence sequence, Object otherStart, Object otherStride, NACheck otherNACheck) {
+    private RAbstractVector foldDoubleSequence(RSeq sequence, Object otherStart, Object otherStride, NACheck otherNACheck) {
         double otherStartDouble = (double) otherStart;
         if (otherNACheck.check(otherStartDouble)) {
             return null;
@@ -274,7 +274,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         return RDataFactory.createDoubleVector(data, true);
     }
 
-    private RAbstractVector foldIntSequence(RSequence sequence, Object otherStart, Object otherStride, NACheck otherNACheck) {
+    private RAbstractVector foldIntSequence(RIntSeqVectorData sequence, Object otherStart, Object otherStride, NACheck otherNACheck) {
         int otherStartInt = (int) otherStart;
         if (otherNACheck.check(otherStartInt)) {
             return null;
@@ -286,9 +286,8 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         }
     }
 
-    private RAbstractVector foldIntSequenceDoubleResult(RSequence sequence, int otherStartInt, Object otherStride, NACheck otherNACheck) {
-        RIntSequence castSequence = (RIntSequence) sequence;
-        double newStart = applyDouble(castSequence.getStart(), otherStartInt);
+    private RAbstractVector foldIntSequenceDoubleResult(RIntSeqVectorData sequence, int otherStartInt, Object otherStride, NACheck otherNACheck) {
+        double newStart = applyDouble(sequence.getStart(), otherStartInt);
         resultNACheck.enable(arithmetic.introducesNA());
         if (resultNACheck.check(newStart)) {
             return null;
@@ -296,35 +295,34 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         double newStride;
         int otherStrideInt;
         if (otherStride == null) {
-            newStride = castSequence.getStride();
+            newStride = sequence.getStride();
             otherStrideInt = 0;
         } else {
             otherStrideInt = (int) otherStride;
             if (otherNACheck.check(otherStartInt)) {
                 return null;
             }
-            newStride = applyDouble(castSequence.getStride(), otherStrideInt);
+            newStride = applyDouble(sequence.getStride(), otherStrideInt);
             resultNACheck.enable(arithmetic.introducesNA());
             if (resultNACheck.check(newStride)) {
                 return null;
             }
         }
         if (finiteResult.profile(Double.isFinite(newStart) && Double.isFinite(newStride))) {
-            return RDataFactory.createDoubleSequence(newStart, newStride, castSequence.getLength());
+            return RDataFactory.createDoubleSequence(newStart, newStride, sequence.getLength());
         }
-        int len = castSequence.getLength();
+        int len = sequence.getLength();
         double[] data = new double[len];
         double otherVal = otherStartInt;
         for (int i = 0; i < len; i++) {
-            data[i] = applyDouble(castSequence.getDataAt(i), otherVal);
+            data[i] = applyDouble(sequence.getIntAt(i), otherVal);
             otherVal += otherStrideInt;
         }
         return RDataFactory.createDoubleVector(data, true);
     }
 
-    private RAbstractVector foldIntSequenceIntResult(RSequence sequence, int otherStartInt, Object otherStride, NACheck otherNACheck) {
-        RIntSequence castSequence = (RIntSequence) sequence;
-        int currentStart = castSequence.getStart();
+    private RAbstractVector foldIntSequenceIntResult(RIntSeqVectorData sequence, int otherStartInt, Object otherStride, NACheck otherNACheck) {
+        int currentStart = sequence.getStart();
         int newStart = applyInteger(currentStart, otherStartInt);
         resultNACheck.enable(arithmetic.introducesNA());
         if (resultNACheck.check(newStart)) {
@@ -333,18 +331,18 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
 
         int newStride;
         if (otherStride == null) {
-            newStride = castSequence.getStride();
+            newStride = sequence.getStride();
         } else {
             int otherStrideInt = (int) otherStride;
             if (otherNACheck.check(otherStartInt)) {
                 return null;
             }
-            newStride = applyInteger(castSequence.getStride(), otherStrideInt);
+            newStride = applyInteger(sequence.getStride(), otherStrideInt);
             resultNACheck.enable(arithmetic.introducesNA());
             if (resultNACheck.check(newStride)) {
                 return null;
             }
         }
-        return RDataFactory.createIntSequence(newStart, newStride, castSequence.getLength());
+        return RDataFactory.createIntSequence(newStart, newStride, sequence.getLength());
     }
 }

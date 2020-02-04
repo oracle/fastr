@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,11 +54,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
@@ -173,7 +172,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
             for (int i = 0; i < maxLength; i++) {
                 int result = semantics.getIntStart();
                 for (int j = 0; j < argValues.length; j++) {
-                    RAbstractIntVector vec = (RAbstractIntVector) argValues[j];
+                    RIntVector vec = (RIntVector) argValues[j];
                     na.enable(vec);
                     if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
                         warning(RError.Message.ARG_RECYCYLED);

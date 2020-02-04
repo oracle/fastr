@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -804,7 +804,7 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 if (dimNames != null) {
                     Object names = dimNames.getDataAt(1);
                     if (names != RNull.instance) {
-                        if (RSharingAttributeStorage.isShareable(names) && !((RSharingAttributeStorage) names).isShared()) {
+                        if (names instanceof RSharingAttributeStorage && !((RSharingAttributeStorage) names).isShared()) {
                             ((RSharingAttributeStorage) names).incRefCount();
                         }
                         newDimNames = RDataFactory.createList(new Object[]{names, names});
@@ -816,10 +816,10 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 Object namesX = dimNamesX != null && dimNamesX.getLength() >= 2 ? dimNamesX.getDataAt(1) : RNull.instance;
                 Object namesY = dimNamesY != null && dimNamesY.getLength() >= 2 ? dimNamesY.getDataAt(1) : RNull.instance;
                 if (namesX != RNull.instance || namesY != RNull.instance) {
-                    if (RSharingAttributeStorage.isShareable(namesX) && !((RSharingAttributeStorage) namesX).isShared()) {
+                    if (namesX instanceof RSharingAttributeStorage && !((RSharingAttributeStorage) namesX).isShared()) {
                         ((RSharingAttributeStorage) namesX).incRefCount();
                     }
-                    if (RSharingAttributeStorage.isShareable(namesY) && !((RSharingAttributeStorage) namesY).isShared()) {
+                    if (namesY instanceof RSharingAttributeStorage && !((RSharingAttributeStorage) namesY).isShared()) {
                         ((RSharingAttributeStorage) namesY).incRefCount();
                     }
                     newDimNames = RDataFactory.createList(new Object[]{namesX, namesY});

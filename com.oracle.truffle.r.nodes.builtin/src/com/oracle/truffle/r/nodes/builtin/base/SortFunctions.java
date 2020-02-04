@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,13 +50,12 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -134,7 +133,7 @@ public class SortFunctions {
         return RDataFactory.createDoubleVector(sort(data, decreasing), vec.isComplete());
     }
 
-    protected static RIntVector jdkSort(RAbstractIntVector vec, boolean decreasing) {
+    protected static RIntVector jdkSort(RIntVector vec, boolean decreasing) {
         int[] data = vec.materialize().getDataCopy();
         return RDataFactory.createIntVector(sort(data, decreasing), vec.isComplete());
     }
@@ -171,7 +170,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RIntVector sort(RAbstractIntVector vec, boolean decreasing) {
+        protected RIntVector sort(RIntVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
@@ -212,7 +211,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RIntVector qsort(RAbstractIntVector vec, boolean decreasing) {
+        protected RIntVector qsort(RIntVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
     }
@@ -233,7 +232,7 @@ public class SortFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RIntVector sort(RAbstractIntVector vec, Object partial) {
+        protected RIntVector sort(RIntVector vec, Object partial) {
             return jdkSort(vec, false);
         }
 

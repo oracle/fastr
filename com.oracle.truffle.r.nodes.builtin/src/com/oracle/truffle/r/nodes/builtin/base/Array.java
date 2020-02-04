@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -68,7 +68,7 @@ public abstract class Array extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = {"dataAccess.supports(data)", "dimAccess.supports(dim)"})
-    protected RAbstractVector arrayCached(RAbstractVector data, RAbstractIntVector dim, Object dimNames,
+    protected RAbstractVector arrayCached(RAbstractVector data, RIntVector dim, Object dimNames,
                     @Cached("data.access()") VectorAccess dataAccess,
                     @Cached("dim.access()") VectorAccess dimAccess,
                     @Cached("createNew(dataAccess.getType())") VectorAccess resultAccess,
@@ -124,7 +124,7 @@ public abstract class Array extends RBuiltinNode.Arg3 {
 
     @Specialization(replaces = "arrayCached")
     @TruffleBoundary
-    protected RAbstractVector arrayGeneric(RAbstractVector data, RAbstractIntVector dim, Object dimNames,
+    protected RAbstractVector arrayGeneric(RAbstractVector data, RIntVector dim, Object dimNames,
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("createBinaryProfile()") ConditionProfile isEmpty,
                     @Cached("create()") VectorFactory factory) {

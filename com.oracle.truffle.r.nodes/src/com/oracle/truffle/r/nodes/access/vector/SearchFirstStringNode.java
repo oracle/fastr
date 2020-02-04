@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -75,7 +75,7 @@ final class SearchFirstStringNode extends Node {
         }
     }
 
-    public RAbstractIntVector apply(RAbstractStringVector target, RAbstractStringVector elements, int notFoundStartIndex, RStringVector names) {
+    public RIntVector apply(RAbstractStringVector target, RAbstractStringVector elements, int notFoundStartIndex, RStringVector names) {
         RAbstractStringVector targetProfiled = targetClassProfile.profile(target);
         RAbstractStringVector elementsProfiled = elementsClassProfile.profile(elements);
 
@@ -109,7 +109,7 @@ final class SearchFirstStringNode extends Node {
 
     private int[] searchCached(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength, RStringVector names) {
         if (exactMatch) {
-            RAbstractIntVector genericResult = searchGeneric(target, targetLength, elements, elementsLength, -1, true, names);
+            RIntVector genericResult = searchGeneric(target, targetLength, elements, elementsLength, -1, true, names);
             if (genericResult != null) {
                 return genericResult.materialize().getReadonlyData();
             }
@@ -174,7 +174,7 @@ final class SearchFirstStringNode extends Node {
     private final BranchProfile notFoundProfile = BranchProfile.create();
     private final ConditionProfile hashingProfile = ConditionProfile.createBinaryProfile();
 
-    private RAbstractIntVector searchGeneric(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength, int notFoundStartIndex, boolean nullOnNotFound,
+    private RIntVector searchGeneric(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength, int notFoundStartIndex, boolean nullOnNotFound,
                     RStringVector names) {
         int[] indices = new int[elementsLength];
         boolean resultComplete = true;

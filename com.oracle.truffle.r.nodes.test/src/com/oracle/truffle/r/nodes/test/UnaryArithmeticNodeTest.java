@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
@@ -242,9 +241,13 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
             UnaryArithmeticFactory factory = arithmetics[i];
             Object result = executeArithmetic(factory, operand);
             if (expectedFold) {
-                assertThat(String.format("expected fold %s <op> ", operand), result instanceof RSequence || result == operand);
+                if (result instanceof RAbstractVector) {
+                    assertThat(String.format("expected fold %s <op> ", operand), ((RAbstractVector) result).isSequence() || result == operand);
+                } else {
+                    assertThat(String.format("expected fold %s <op> ", operand), result == operand);
+                }
             } else {
-                assertThat(String.format("expected not fold %s <op> ", operand), !(result instanceof RSequence));
+                assertThat(String.format("expected not fold %s <op> ", operand), (result instanceof RAbstractVector) && !((RAbstractVector) result).isSequence());
             }
         }
     }

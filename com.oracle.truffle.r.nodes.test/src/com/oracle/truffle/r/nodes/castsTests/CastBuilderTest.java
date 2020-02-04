@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,13 +98,11 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -658,7 +656,7 @@ public class CastBuilderTest {
     @Test
     public void testMustNotBeNAOnIntSequence() {
         arg.mustNotBeNA(RError.Message.GENERIC, "Error");
-        RIntSequence seq = RDataFactory.createIntSequence(1, 1, 1);
+        RIntVector seq = RDataFactory.createIntSequence(1, 1, 1);
         Object res = cast(seq);
         Assert.assertSame(seq, res);
     }
@@ -748,7 +746,7 @@ public class CastBuilderTest {
     public void testBlockingNull2() {
         // Here, the result for NULL in the 'instanceOf(RIntSequence.class)' filter is FALSE,
         // i.e. NULL does not pass through.
-        arg.mustBe(instanceOf(RIntSequence.class));
+        arg.mustBe(instanceOf(RIntVector.class));
         try {
             cast(RNull.instance);
             fail();
@@ -770,7 +768,7 @@ public class CastBuilderTest {
         // while in the 'integerValue()' filter the result is FALSE. The result of the
         // conjunction of the two filters by the 'and' operator is FALSE, i.e. NULL does not
         // pass through.
-        arg.mustBe(instanceOf(RIntSequence.class).not().and(integerValue()));
+        arg.mustBe(instanceOf(RIntVector.class).not().and(integerValue()));
         try {
             cast(RNull.instance);
             fail();
@@ -784,7 +782,7 @@ public class CastBuilderTest {
         // while in the 'singleElement()' filter the result is UNDEFINED. The result of the
         // conjunction of the two filters by the 'and' operator is UNDEFINED, i.e. NULL does not
         // pass through.
-        arg.asIntegerVector().mustBe(instanceOf(RIntSequence.class).and(singleElement()));
+        arg.asIntegerVector().mustBe(instanceOf(RIntVector.class).and(singleElement()));
         try {
             cast(RNull.instance);
             fail();
@@ -797,7 +795,7 @@ public class CastBuilderTest {
         // Here, the result for NULL in the 'instanceOf(RIntSequence.class).not()' filter is TRUE,
         // while in the 'stringValue()' filter the result is FALSE. The result of the
         // disjunction of the two filters by the 'or' operator is TRUE, i.e. NULL passes through.
-        arg.mustBe(instanceOf(RIntSequence.class).not().or(stringValue()));
+        arg.mustBe(instanceOf(RIntVector.class).not().or(stringValue()));
         Assert.assertEquals(RNull.instance, cast(RNull.instance));
     }
 
@@ -914,7 +912,7 @@ public class CastBuilderTest {
             arg.mustBe(integerValue());
             int[] array = new int[]{1, 2, 3};
             Object value = cast(RContext.getInstance().getEnv().asGuestValue(array));
-            assertTrue(value instanceof RAbstractIntVector);
+            assertTrue(value instanceof RIntVector);
         });
     }
 
@@ -924,7 +922,7 @@ public class CastBuilderTest {
             arg.mustBe(integerValue());
             List<Integer> list = Arrays.asList(1, 2, 3);
             Object value = cast(RContext.getInstance().getEnv().asGuestValue(list));
-            assertTrue(value instanceof RAbstractIntVector);
+            assertTrue(value instanceof RIntVector);
         });
     }
 

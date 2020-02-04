@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -323,7 +323,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
                 // temporary values are considered available to be reused and altered (e.g. as a
                 // result of arithmetic operation), which is what we do not want to happen to a
                 // value that we are saving as the promise result.
-                if (RSharingAttributeStorage.isShareable(obj)) {
+                if (obj instanceof RSharingAttributeStorage) {
                     RSharingAttributeStorage shareable = (RSharingAttributeStorage) obj;
                     if (shareable.isTemporary()) {
                         shareable.incRefCount();

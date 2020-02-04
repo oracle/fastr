@@ -34,9 +34,8 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -109,7 +108,7 @@ public final class PaletteExternals {
 
         @Specialization
         @TruffleBoundary
-        public RIntVector updatePalette(RAbstractVector palette) {
+        public com.oracle.truffle.r.runtime.data.RIntVector updatePalette(RAbstractVector palette) {
             GridState state = GridContext.getContext().getGridState();
             if (palette.getLength() > 0) {
                 // the argument is the new palette
@@ -122,7 +121,7 @@ public final class PaletteExternals {
             return getResult(state);
         }
 
-        private static RIntVector getResult(GridState state) {
+        private static com.oracle.truffle.r.runtime.data.RIntVector getResult(GridState state) {
             GridPalette palette = state.getPalette();
             int[] result = new int[palette.colors.length];
             boolean complete = true;
@@ -133,7 +132,7 @@ public final class PaletteExternals {
             return RDataFactory.createIntVector(result, complete);
         }
 
-        private static boolean areSame(RAbstractIntVector p1, GridPalette p2) {
+        private static boolean areSame(RIntVector p1, GridPalette p2) {
             GridColor[] p2Colors = p2.colors;
             if (p1.getLength() != p2Colors.length) {
                 return false;

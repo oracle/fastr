@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1994-9 W. N. Venables and B. D. Ripley
  * Copyright (c) 2007-2017, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -64,7 +64,7 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
     private final ValueProfile tieProfile = ValueProfile.createEqualityProfile();
 
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
-    RAbstractIntVector findMaxCol(RAbstractContainer x, int tieArg,
+    RIntVector findMaxCol(RAbstractContainer x, int tieArg,
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("create()") VectorFactory vectorFactory,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
@@ -127,7 +127,7 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "findMaxCol")
-    RAbstractIntVector findMaxColGeneric(RAbstractContainer x, int tie,
+    RIntVector findMaxColGeneric(RAbstractContainer x, int tie,
                     @Cached("create()") VectorFactory vectorFactory,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
         return findMaxCol(x, tie, x.slowPathAccess(), vectorFactory, getDimNode);

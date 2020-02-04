@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -36,8 +36,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class RClosures {
 
-    public static RAbstractIntVector createToIntVector(RAbstractVector vector, boolean keepAttributes) {
-        return new RToIntVectorClosure(vector, keepAttributes);
+    public static RIntVector createToIntVector(RAbstractVector vector, boolean keepAttributes) {
+        return RIntVector.createClosure(vector, keepAttributes);
     }
 
     public static RAbstractDoubleVector createToDoubleVector(RAbstractVector vector, boolean keepAttributes) {
@@ -54,11 +54,11 @@ public class RClosures {
 
     // Factor to vector
 
-    public static RAbstractVector createFactorToVector(RAbstractIntVector factor, boolean withNames, RAbstractVector levels) {
+    public static RAbstractVector createFactorToVector(RIntVector factor, boolean withNames, RAbstractVector levels) {
         return createFactorToVector(factor, withNames, levels, false);
     }
 
-    public static RAbstractVector createFactorToVector(RAbstractIntVector factor, boolean withNames, RAbstractVector levels, boolean keepAttributes) {
+    public static RAbstractVector createFactorToVector(RIntVector factor, boolean withNames, RAbstractVector levels, boolean keepAttributes) {
         if (levels instanceof RAbstractStringVector) {
             return new RFactorToStringVectorClosure(factor, (RAbstractStringVector) levels, withNames, keepAttributes);
         } else {
@@ -72,7 +72,7 @@ public class RClosures {
         return new RLogicalToListVectorClosure(vector, keepAttributes);
     }
 
-    public static RAbstractListVector createToListVector(RAbstractIntVector vector, boolean keepAttributes) {
+    public static RAbstractListVector createToListVector(RIntVector vector, boolean keepAttributes) {
         return new RIntToListVectorClosure(vector, keepAttributes);
     }
 
@@ -97,7 +97,7 @@ public class RClosures {
      * contract of closures is that there attributes are preserved even when
      * {@code keepAttributes == true}.
      */
-    static void initRegAttributes(RAbstractVector closure, RAbstractVector delegate) {
+    public static void initRegAttributes(RAbstractVector closure, RAbstractVector delegate) {
         closure.setNames(delegate.getNames());
         closure.setDimensions(delegate.getDimensions());
         closure.setDimNames(delegate.getDimNames());

@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 /**
  * Implements the {@code Rf_asReal} GNU R function (which is also used internally). The behavior is
@@ -61,7 +61,7 @@ public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization
-    protected double asReal(RAbstractIntVector obj) {
+    protected double asReal(RIntVector obj) {
         if (obj.getLength() == 0) {
             return RRuntime.DOUBLE_NA;
         }

@@ -38,8 +38,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+
 import java.nio.file.StandardOpenOption;
 
 public class ToolsText {
@@ -54,7 +55,7 @@ public class ToolsText {
 
         @Specialization
         @TruffleBoundary
-        protected Object doTabExpand(RAbstractStringVector strings, RAbstractIntVector starts) {
+        protected Object doTabExpand(RAbstractStringVector strings, RIntVector starts) {
             String[] data = new String[strings.getLength()];
             for (int i = 0; i < data.length; i++) {
                 String input = strings.getDataAt(i);

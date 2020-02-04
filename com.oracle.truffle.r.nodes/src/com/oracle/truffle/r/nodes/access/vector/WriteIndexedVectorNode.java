@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,8 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
@@ -41,10 +43,8 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -102,6 +102,9 @@ abstract class WriteIndexedVectorNode extends Node {
         VectorAccess rightAccess = right.slowPathAccess();
         try (RandomIterator leftIter = leftAccess.randomAccess(left); RandomIterator rightIter = rightAccess.randomAccess(right)) {
             write.apply(leftIter, leftAccess, positions, rightIter, rightAccess, right, positionTargetDimensions);
+            if (!(leftAccess.na.neverSeenNA() && rightAccess.na.neverSeenNA())) {
+                left.setComplete(false);
+            }
         }
     }
 }
@@ -177,7 +180,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
 
     /**
      * Positions is an array of instances of {@link RMissing} (What is that doing?), or
-     * {@link RAbstractIntVector}, or {@link RAbstractLogicalVector} (select only elements under
+     * {@link RIntVector}, or {@link RAbstractLogicalVector} (select only elements under
      * {@code TRUE} indexes). Each dimension must have one entry in this array.
      * 
      * The left vector is either the result of read (newly created vector to hold the result) or the
@@ -303,9 +306,9 @@ abstract class WriteIndexedVectorAccessNode extends Node {
      *
      * @throws SlowPathException
      */
-    @Specialization(rewriteOn = SlowPathException.class)
+    @Specialization(rewriteOn = SlowPathException.class, guards = "position.isSequence()")
     protected int doIntegerSequencePosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
-                    Object[] positions, RIntSequence position, int positionOffset, int positionLength,
+                    Object[] positions, RIntVector position, int positionOffset, int positionLength,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("create()") IntValueProfile startProfile,
                     @Cached("create()") IntValueProfile strideProfile,
@@ -313,8 +316,9 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                     @Cached("createCountingProfile()") LoopConditionProfile profile) throws SlowPathException {
         // skip NA check. sequences never contain NA values.
         int rightIndex = rightBase;
-        int start = startProfile.profile(position.getStart() - 1);
-        int stride = strideProfile.profile(position.getStride());
+        RIntSeqVectorData seq = (RIntSeqVectorData) position.getData();
+        int start = startProfile.profile(seq.getStart() - 1);
+        int stride = strideProfile.profile(seq.getStride());
         int end = start + positionLength * stride;
 
         if (start < 0 || end <= 0) {
@@ -339,7 +343,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
      */
     @Specialization(replaces = "doIntegerSequencePosition")
     protected int doIntegerPosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
-                    Object[] positions, RAbstractIntVector position, int positionOffset, int positionLength,
+                    Object[] positions, RIntVector position, int positionOffset, int positionLength,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
         getPositionNACheck().enable(position);

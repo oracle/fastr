@@ -33,12 +33,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.data.RBaseObject;
-import com.oracle.truffle.r.runtime.data.RDouble;
-import com.oracle.truffle.r.runtime.data.RInteger;
-import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RScalar;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
@@ -100,30 +94,6 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     public Object R_Home() {
         byte[] sbytes = REnvVars.rHome(RContext.getInstance()).getBytes();
         return new NativeCharArray(sbytes);
-    }
-
-    @Override
-    public Object Rf_findVar(Object symbolArg, Object envArg) {
-        Object v = super.Rf_findVar(symbolArg, envArg);
-        if (v instanceof RBaseObject) {
-            return v;
-        } else {
-            return wrapPrimitive(v);
-        }
-    }
-
-    private static RScalar wrapPrimitive(Object x) {
-        if (x instanceof Double) {
-            return RDouble.valueOf((double) x);
-        } else if (x instanceof Integer) {
-            return RInteger.valueOf((int) x);
-        } else if (x instanceof Byte) {
-            return RLogical.valueOf((byte) x);
-        } else if (x instanceof String) {
-            return RString.valueOf((String) x);
-        } else {
-            throw RInternalError.shouldNotReachHere();
-        }
     }
 
     public Object getCallback(int index) {

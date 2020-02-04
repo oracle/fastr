@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -81,12 +81,12 @@ public abstract class Format extends RBuiltinNode.Arg9 {
     public static final int JUSTIFY_CENTER = 2;
     public static final int JUSTIFY_NONE = 3;
 
-    private RAbstractIntVector castInteger(Object operand) {
+    private RIntVector castInteger(Object operand) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeGen.create(true, false, false));
         }
-        return (RAbstractIntVector) castInteger.doCast(operand);
+        return (RIntVector) castInteger.doCast(operand);
     }
 
     static {
@@ -149,7 +149,7 @@ public abstract class Format extends RBuiltinNode.Arg9 {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector format(RAbstractIntVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
+    protected RStringVector format(RIntVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
         String[] result = IntegerVectorPrinter.format(value, trim, width, getParameters(digits, scientific));
         return createResult(value, result);
     }

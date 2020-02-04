@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,10 +32,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 
 /**
  * Fast path check if a vector is already sorted. For now we simply return {@code FALSE}. This
@@ -51,14 +53,14 @@ public abstract class SortedFastPass extends RBuiltinNode.Arg3 {
         casts.arg("nalast").mustBe(numericValue(), INVALID_LOGICAL, "nalast").asLogicalVector().findFirst();
     }
 
-    @Specialization
-    protected byte isSorted(RIntSequence x, boolean decr, @SuppressWarnings("unused") byte nalast) {
-
-        if (decr) {
-            return RRuntime.asLogical(x.getStride() < 0);
-        } else {
-            return RRuntime.asLogical(x.getStride() >= 0);
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected byte isSorted(RIntVector x, boolean decr, byte nalast,
+                    @CachedLibrary("x.getData()") RIntVectorDataLibrary dataLib) {
+        if (RRuntime.isNA(nalast)) {
+            // TODO: we may add support for this into the library
+            return RRuntime.LOGICAL_FALSE;
         }
+        return RRuntime.asLogical(dataLib.isSorted(x.getData(), decr, RRuntime.fromLogical(nalast)));
     }
 
     @Fallback

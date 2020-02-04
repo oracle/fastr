@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
@@ -182,7 +182,7 @@ final class RFactorToStringVectorClosure extends RToStringVectorClosure {
     private final RAbstractStringVector levels;
     private final boolean withNames;
 
-    RFactorToStringVectorClosure(RAbstractIntVector vector, RAbstractStringVector levels, boolean withNames, boolean keepAttributes) {
+    RFactorToStringVectorClosure(RIntVector vector, RAbstractStringVector levels, boolean withNames, boolean keepAttributes) {
         super(vector, keepAttributes);
         this.levels = levels;
         this.withNames = withNames;

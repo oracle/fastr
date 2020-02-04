@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,12 +54,11 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -192,7 +191,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"oneVec(args)", "isFirstIntegerPrecedence(args)"})
     Object orderInt(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
-        RAbstractIntVector v = (RAbstractIntVector) castVector(args.getArgument(0));
+        RIntVector v = (RIntVector) castVector(args.getArgument(0));
         return executeOrderVector1(v, naLast, decreasing);
     }
 
@@ -205,7 +204,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
     @Specialization(guards = {"oneVec(args)", "isFirstLogicalPrecedence(args)"})
     Object orderLogical(byte naLast, boolean decreasing, RArgsValuesAndNames args,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
-        RAbstractIntVector v = (RAbstractIntVector) castVector(args.getArgument(0)).castSafe(RType.Integer, isNAProfile);
+        RIntVector v = (RIntVector) castVector(args.getArgument(0)).castSafe(RType.Integer, isNAProfile);
         return executeOrderVector1(v, naLast, decreasing);
     }
 
@@ -326,7 +325,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         public abstract Object execute(int[] v, Object dv, byte naLast, boolean dec, boolean sortNA);
 
         @Specialization
-        protected Object orderVector1(int[] indx, RAbstractIntVector dv, byte naLast, boolean decreasing, boolean sortNA) {
+        protected Object orderVector1(int[] indx, RIntVector dv, byte naLast, boolean decreasing, boolean sortNA) {
             if (indx.length < 2) {
                 return indx;
             }
@@ -510,7 +509,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             }
         }
 
-        private void sort(int[] indx, RAbstractIntVector dv, int lo, int hi, boolean dec) {
+        private void sort(int[] indx, RIntVector dv, int lo, int hi, boolean dec) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
@@ -719,7 +718,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected boolean doInt(RAbstractIntVector v, int idx) {
+        protected boolean doInt(RIntVector v, int idx) {
             return RRuntime.isNA(v.getDataAt(idx));
         }
 
@@ -772,7 +771,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected int icmp(RAbstractIntVector v, int i, int j, boolean naLast) {
+        protected int icmp(RIntVector v, int i, int j, boolean naLast) {
             int x = v.getDataAt(i);
             int y = v.getDataAt(j);
             boolean nax = RRuntime.isNA(x);

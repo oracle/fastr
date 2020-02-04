@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,16 +32,15 @@ import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
- * Contains helper nodes related to factors, special R class of {@link RAbstractIntVector}. Note:
- * there is also {@link InheritsCheckNode}, which can be used to check if something is a factor.
+ * Contains helper nodes related to factors, special R class of {@link RIntVector}. Note: there is
+ * also {@link InheritsCheckNode}, which can be used to check if something is a factor.
  */
 public final class RFactorNodes {
 
@@ -54,7 +53,7 @@ public final class RFactorNodes {
     public static final class GetOrdered extends Node {
         @Child private GetFixedAttributeNode isOrderedAccess = GetFixedAttributeNode.create(RRuntime.ORDERED_ATTR_KEY);
 
-        public boolean execute(RAbstractIntVector factor) {
+        public boolean execute(RIntVector factor) {
             Object value = isOrderedAccess.execute(factor);
             if (value instanceof RAbstractLogicalVector) {
                 RAbstractLogicalVector vec = (RAbstractLogicalVector) value;
@@ -85,12 +84,12 @@ public final class RFactorNodes {
          * Returns the levels as a string vector. If the 'levels' attribute is not a string vector a
          * cast is done. May return null, if the 'levels' attribute is not present.
          */
-        public RStringVector execute(RAbstractIntVector factor) {
+        public RStringVector execute(RIntVector factor) {
             Object attr = updateAttrValue.updateState(factor, attrAccess.execute(factor));
 
             // Convert scalars to vector if necessary
             RAbstractVector vec;
-            if (nonScalarLevels.profile(attr instanceof RMaterializedVector)) {
+            if (nonScalarLevels.profile(RRuntime.isMaterializedVector(attr))) {
                 vec = (RAbstractVector) attr;
             } else if (attr != null) {
                 vec = (RAbstractVector) RRuntime.asAbstractVector(attr);   // scalar to vector

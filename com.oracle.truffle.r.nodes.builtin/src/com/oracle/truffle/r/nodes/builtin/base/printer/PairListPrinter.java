@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -49,7 +49,7 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
     @Override
     @TruffleBoundary
     protected void printValue(RPairList s, PrintContext printCtx) throws IOException {
-        final RAbstractIntVector dims = Utils.<RAbstractIntVector> castTo(
+        final RIntVector dims = Utils.<RIntVector> castTo(
                         s.getAttr(RRuntime.DIM_ATTR_KEY));
 
         final int ns = s.getLength();
@@ -63,7 +63,7 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
                     pbuf = RRuntime.NULL;
                 } else if (tmp instanceof RAbstractLogicalVector) {
                     pbuf = "Logical," + ((RAbstractContainer) tmp).getLength();
-                } else if (tmp instanceof RAbstractIntVector) {
+                } else if (tmp instanceof RIntVector) {
                     pbuf = "Integer," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractDoubleVector) {
                     pbuf = "Numeric," + ((RAbstractContainer) tmp).getLength();

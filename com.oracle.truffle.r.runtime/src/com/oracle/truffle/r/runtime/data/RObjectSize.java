@@ -33,9 +33,9 @@ import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -169,7 +169,7 @@ public class RObjectSize {
             } else {
                 return OBJECT_HEADER_SIZE + seq.getDataAt(0).length() * CHAR_SIZE;
             }
-        } else if (obj instanceof RSequence) {
+        } else if (RRuntime.isSequence(obj)) {
             // count: start, stride, length
             return OBJECT_HEADER_SIZE + 2 * getElementSize((RAbstractVector) obj) + INT_SIZE + attributesSize;
         } else if (obj instanceof RAbstractStringVector) {
@@ -198,7 +198,7 @@ public class RObjectSize {
     private static int getElementSize(RAbstractVector vector) {
         if (vector instanceof RAbstractDoubleVector) {
             return DOUBLE_SIZE;
-        } else if (vector instanceof RAbstractIntVector) {
+        } else if (vector instanceof RIntVector) {
             return INT_SIZE;
         } else if (vector instanceof RAbstractLogicalVector || vector instanceof RAbstractRawVector) {
             return BYTE_SIZE;

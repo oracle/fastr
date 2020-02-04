@@ -55,7 +55,8 @@ public abstract class RSharingAttributeStorage extends RAttributable {
 
     }
 
-    public final boolean isShareable() {
+    public boolean isShareable() {
+        // TODO: For the period of the refactoring this is not a final method
         return this instanceof Shareable;
     }
 

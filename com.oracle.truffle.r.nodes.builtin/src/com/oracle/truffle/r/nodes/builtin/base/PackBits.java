@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -107,7 +107,7 @@ public abstract class PackBits extends RBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractVector packBits(RAbstractIntVector x, String type) {
+    protected RAbstractVector packBits(RIntVector x, String type) {
         checkLength(x.getLength(), type);
 
         BitSet bitSet = new BitSet();

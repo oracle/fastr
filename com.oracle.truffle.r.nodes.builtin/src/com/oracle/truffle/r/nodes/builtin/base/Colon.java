@@ -45,11 +45,10 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -90,7 +89,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RSequence colon(Object left, Object right) {
+    protected RAbstractVector colon(Object left, Object right) {
         return internal.execute(leftCast.doCast(left), rightCast.doCast(right));
     }
 
@@ -100,7 +99,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         private final NACheck leftNA = NACheck.create();
         private final NACheck rightNA = NACheck.create();
 
-        abstract RSequence execute(Object left, Object right);
+        abstract RAbstractVector execute(Object left, Object right);
 
         private void naCheck(boolean na) {
             if (na) {
@@ -113,7 +112,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         }
 
         @Specialization(guards = "left <= right")
-        protected RIntSequence colonAscending(int left, int right) {
+        protected RIntVector colonAscending(int left, int right) {
             leftNA.enable(left);
             rightNA.enable(right);
             naCheck(leftNA.check(left) || rightNA.check(right));
@@ -122,7 +121,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         }
 
         @Specialization(guards = "left > right")
-        protected RIntSequence colonDescending(int left, int right) {
+        protected RIntVector colonDescending(int left, int right) {
             leftNA.enable(left);
             rightNA.enable(right);
             naCheck(leftNA.check(left) || rightNA.check(right));
@@ -136,24 +135,24 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isNaN(right)")
-        protected RSequence colonRightNaN(int left, double right) {
+        protected RIntVector colonRightNaN(int left, double right) {
             throw error(Message.NA_OR_NAN);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isNaN(left)")
-        protected RSequence colonLeftNaN(double left, int right) {
+        protected RIntVector colonLeftNaN(double left, int right) {
             throw error(Message.NA_OR_NAN);
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = "isNaN(left) || isNaN(right)")
-        protected RSequence colonLeftOrRightNaN(double left, double right) {
+        protected RIntVector colonLeftOrRightNaN(double left, double right) {
             throw error(Message.NA_OR_NAN);
         }
 
         @Specialization(guards = {"!isNaN(left)", "asDouble(left) <= right"})
-        protected RSequence colonAscending(int left, double right,
+        protected RAbstractVector colonAscending(int left, double right,
                         @Cached("createBinaryProfile()") ConditionProfile isDouble) {
             leftNA.enable(left);
             naCheck(leftNA.check(left) || RRuntime.isNAorNaN(right));
@@ -166,7 +165,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         }
 
         @Specialization(guards = {"!isNaN(left)", "asDouble(left) > right"})
-        protected RSequence colonDescending(int left, double right,
+        protected RAbstractVector colonDescending(int left, double right,
                         @Cached("createBinaryProfile()") ConditionProfile isDouble) {
             leftNA.enable(left);
             naCheck(leftNA.check(left) || RRuntime.isNAorNaN(right));
@@ -247,7 +246,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         }
 
         @Specialization
-        protected int doSequence(RAbstractIntVector vector) {
+        protected int doSequence(RIntVector vector) {
             checkLength(vector.getLength());
             return vector.getDataAt(0);
         }

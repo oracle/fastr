@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -87,7 +88,7 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
                     NativeDataAccess.setDataLength(this, data, l);
                 } finally {
                     assert NativeDataAccess.isAllocated(this);
-                    complete = false;
+                    setComplete(false);
                 }
             }
         } else {
@@ -210,7 +211,7 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
             return NativeDataAccess.allocateNativeContents(this, getInternalStore(), data.length);
         } finally {
             assert NativeDataAccess.isAllocated(this);
-            complete = false;
+            setComplete(false);
         }
     }
 
@@ -238,7 +239,7 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
         RList listCopy = new RList(Arrays.copyOf(localData, localData.length), getDimensionsInternal(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
-            if (el instanceof RMaterializedVector) {
+            if (RRuntime.isMaterializedVector(el)) {
                 Object elCopy = ((RAbstractVector) el).deepCopy();
                 listCopy.updateDataAt(i, elCopy, null);
             }

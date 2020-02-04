@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1995--2015, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,6 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
@@ -43,7 +42,7 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"mergeAccess.supports(merge)", "whichAccess.supports(which)"})
-    protected RIntVector cutree(RAbstractIntVector merge, RAbstractIntVector which,
+    protected com.oracle.truffle.r.runtime.data.RIntVector cutree(RIntVector merge, RIntVector which,
                     @Cached("merge.access()") VectorAccess mergeAccess,
                     @Cached("which.access()") VectorAccess whichAccess,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
@@ -161,7 +160,7 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "cutree")
-    protected RIntVector cutreeGeneric(RAbstractIntVector merge, RAbstractIntVector which,
+    protected com.oracle.truffle.r.runtime.data.RIntVector cutreeGeneric(RIntVector merge, RIntVector which,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
         return cutree(merge, which, merge.slowPathAccess(), which.slowPathAccess(), getDimNode);
     }

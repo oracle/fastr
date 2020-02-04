@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.IsSpecialAttributeNodeGen;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
@@ -52,7 +53,6 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -61,7 +61,6 @@ import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
@@ -540,7 +539,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setDimsInVector(RAbstractVector x, RAbstractIntVector dims,
+        protected void setDimsInVector(RAbstractVector x, RIntVector dims,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createDim()") SetFixedPropertyNode setFixedPropertyNode,
                         @Cached("create()") ShareObjectNode updateRefCountNode) {
@@ -560,7 +559,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
-        protected void setDimsInContainerFallback(RAbstractContainer x, RAbstractIntVector dims,
+        protected void setDimsInContainerFallback(RAbstractContainer x, RIntVector dims,
                         @Cached("create()") SetDimAttributeNode setDimNode) {
             int[] dimsArr = dims.materialize().getDataCopy();
             setDimNode.setDimensions(x, dimsArr);
@@ -578,8 +577,8 @@ public final class SpecialAttributesFunctions {
             }
         }
 
-        public void verifyDimensions(int vectorLength, RAbstractIntVector dims) {
-            RAbstractIntVector dimsProfiled = dimArgClassProfile.profile(dims);
+        public void verifyDimensions(int vectorLength, RIntVector dims) {
+            RIntVector dimsProfiled = dimArgClassProfile.profile(dims);
             int dimLen = dims.getLength();
             verifyLoopProfile.profileCounted(dimLen);
             int length = 1;
@@ -1045,8 +1044,8 @@ public final class SpecialAttributesFunctions {
             if (rowNames == RNull.instance) {
                 return RNull.instance;
             } else {
-                if (rowNames instanceof RAbstractIntVector) {
-                    RAbstractIntVector vec = (RAbstractIntVector) rowNames;
+                if (rowNames instanceof RIntVector) {
+                    RIntVector vec = (RIntVector) rowNames;
                     if (vec.getLength() == 2 && RRuntime.isNA(vec.getDataAt(0))) {
                         return RDataFactory.createIntSequence(1, 1, Math.abs(vec.getDataAt(1)));
                     }
@@ -1130,7 +1129,7 @@ public final class SpecialAttributesFunctions {
                 for (int i = 0; i < classAttr.getLength(); i++) {
                     String attr = classAttr.getDataAt(i);
                     if (RRuntime.CLASS_FACTOR.equals(attr)) {
-                        if (!(vector instanceof RAbstractIntVector)) {
+                        if (!(vector instanceof RIntVector)) {
                             CompilerDirectives.transferToInterpreter();
                             throw error(RError.Message.ADDING_INVALID_CLASS, "factor");
                         }

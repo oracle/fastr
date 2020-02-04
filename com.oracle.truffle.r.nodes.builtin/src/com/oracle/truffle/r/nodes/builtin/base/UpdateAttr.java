@@ -58,7 +58,7 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
@@ -105,12 +105,12 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
         return updateDimNames.executeRAbstractContainer(container, o);
     }
 
-    private RAbstractIntVector castInteger(RAbstractVector vector) {
+    private RIntVector castInteger(RAbstractVector vector) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeGen.create(true, false, false));
         }
-        return (RAbstractIntVector) castInteger.doCast(vector);
+        return (RIntVector) castInteger.doCast(vector);
     }
 
     private RAbstractDoubleVector castDouble(Object o) {
@@ -209,7 +209,7 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
         RAbstractContainer result = vectorReuse.getMaterializedResult(container);
         // the name is interned, so identity comparison is sufficient
         if (Utils.identityEquals(internedName, RRuntime.DIM_ATTR_KEY)) {
-            RAbstractIntVector dimsVector = castInteger(castVector(value));
+            RIntVector dimsVector = castInteger(castVector(value));
             if (dimsVector.getLength() == 0) {
                 throw error(RError.Message.LENGTH_ZERO_DIM_INVALID);
             }

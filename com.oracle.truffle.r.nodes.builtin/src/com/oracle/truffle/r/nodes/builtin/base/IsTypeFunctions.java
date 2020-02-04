@@ -62,7 +62,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -298,7 +298,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isInteger(RAbstractIntVector value,
+        protected byte isInteger(RIntVector value,
                         @Cached("createIsFactorNode()") IsFactorNode isFactorNode,
                         @Cached("createBinaryProfile()") ConditionProfile isFactor) {
             if (isFactor.profile(isFactorNode.executeIsFactor(value))) {
@@ -442,7 +442,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isType(RAbstractIntVector value,
+        protected byte isType(RIntVector value,
                         @Cached("createBinaryProfile()") ConditionProfile profile) {
             return RRuntime.asLogical(!profile.profile(isFactor(value)));
         }

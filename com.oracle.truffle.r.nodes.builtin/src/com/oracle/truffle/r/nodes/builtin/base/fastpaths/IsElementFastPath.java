@@ -28,9 +28,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -85,15 +85,16 @@ public abstract class IsElementFastPath extends RFastPathNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = {"el.getLength() == 1", "set.getStride() >= 0"})
-    protected Byte isElementOneSequence(RAbstractDoubleVector el, RIntSequence set,
+    @Specialization(guards = {"set.isSequence()", "el.getLength() == 1", "set.getSequence().getStride() >= 0"})
+    protected Byte isElementOneSequence(RAbstractDoubleVector el, RIntVector set,
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
         double element = el.getDataAt(0);
-        return RRuntime.asLogical(profile.profile(element >= set.getStart() && element <= set.getEnd()));
+        RIntSeqVectorData seq = set.getSequence();
+        return RRuntime.asLogical(profile.profile(element >= seq.getStart() && element <= seq.getEnd()));
     }
 
-    @Specialization(replaces = "isElementOneSequence", guards = "el.getLength() == 1")
-    protected Byte iselementOne(RAbstractDoubleVector el, RAbstractIntVector set,
+    @Specialization(replaces = "isElementOneSequence", guards = {"!set.isSequence()", "el.getLength() == 1"})
+    protected Byte iselementOne(RAbstractDoubleVector el, RIntVector set,
                     @Cached("create()") NACheck na,
                     @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {

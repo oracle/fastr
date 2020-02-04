@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,7 +119,7 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
             NativeDataAccess.setDataLength(this, data, l);
         } finally {
             data = null;
-            complete = false;
+            setComplete(false);
         }
     }
 
@@ -172,7 +172,7 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
             return NativeDataAccess.allocateNativeContents(this, data, getLength());
         } finally {
             data = null;
-            complete = false;
+            setComplete(false);
         }
     }
 

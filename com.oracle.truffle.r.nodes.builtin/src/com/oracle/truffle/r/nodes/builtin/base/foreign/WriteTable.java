@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -83,7 +83,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
 
     @Specialization
     @TruffleBoundary
-    protected static Object writetable(Object xx, int file, int nr, int nc, Object rnames, String csep, String ceol, String cna, String dec, RAbstractIntVector quote, boolean qmethod) {
+    protected static Object writetable(Object xx, int file, int nr, int nc, Object rnames, String csep, String ceol, String cna, String dec, RIntVector quote, boolean qmethod) {
         char cdec = dec.charAt(0);
         boolean[] quoteCol = new boolean[nc];
         boolean quoteRn = false;
@@ -253,8 +253,8 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
             return RRuntime.isNA(((RAbstractLogicalVector) x).getDataAt(indx));
         } else if (x instanceof RAbstractDoubleVector) {
             return RRuntime.isNA(((RAbstractDoubleVector) x).getDataAt(indx));
-        } else if (x instanceof RAbstractIntVector) {
-            return RRuntime.isNA(((RAbstractIntVector) x).getDataAt(indx));
+        } else if (x instanceof RIntVector) {
+            return RRuntime.isNA(((RIntVector) x).getDataAt(indx));
         } else if (x instanceof RAbstractStringVector) {
             return RRuntime.isNA(((RAbstractStringVector) x).getDataAt(indx));
         } else if (x instanceof RAbstractComplexVector) {
@@ -271,8 +271,8 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
             RAbstractDoubleVector v = (RAbstractDoubleVector) x;
             return DoubleVectorPrinter.encodeReal(v.getDataAt(indx));
         }
-        if (x instanceof RAbstractIntVector) {
-            RAbstractIntVector v = (RAbstractIntVector) x;
+        if (x instanceof RIntVector) {
+            RIntVector v = (RIntVector) x;
             return RRuntime.intToString(v.getDataAt(indx));
         }
         if (x instanceof RAbstractLogicalVector) {

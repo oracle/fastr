@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -122,13 +122,13 @@ final class RLogicalToListVectorClosure extends RToListVectorClosure {
 }
 
 final class RIntToListVectorClosure extends RToListVectorClosure {
-    RIntToListVectorClosure(RAbstractIntVector vector, boolean keepAttributes) {
+    RIntToListVectorClosure(RIntVector vector, boolean keepAttributes) {
         super(vector, keepAttributes);
     }
 
     @Override
     public Integer getDataAt(int index) {
-        return ((RAbstractIntVector) vector).getDataAt(index);
+        return ((RIntVector) vector).getDataAt(index);
     }
 }
 

@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -54,9 +54,9 @@ final class PositionCharacterLookupNode extends RBaseNode {
         this.mode = mode;
     }
 
-    public RAbstractIntVector execute(RAbstractContainer target, RAbstractStringVector position, int notFoundStartIndex) {
+    public RIntVector execute(RAbstractContainer target, RAbstractStringVector position, int notFoundStartIndex) {
         // lookup names for single dimension case
-        RAbstractIntVector result;
+        RIntVector result;
         if (numPositions <= 1) {
             RStringVector names = getNamesNode.getNames(target);
             if (names == null) {

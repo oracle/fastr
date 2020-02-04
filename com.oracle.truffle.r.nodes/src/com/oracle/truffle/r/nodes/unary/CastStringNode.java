@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,9 +36,9 @@ import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -88,12 +88,13 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return vector;
     }
 
-    @Specialization
-    protected RStringSequence doIntSequence(RIntSequence vector) {
-        return factory().createStringSequence("", "", vector.getStart(), vector.getStride(), vector.getLength());
+    @Specialization(guards = "vector.isSequence()")
+    protected RStringSequence doIntSequence(RIntVector vector) {
+        RIntSeqVectorData seq = vector.getSequence();
+        return factory().createStringSequence("", "", seq.getStart(), seq.getStride(), vector.getLength());
     }
 
-    @Specialization(guards = {"uAccess.supports(operandIn)", "handleAsAtomic(operandIn)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"uAccess.supports(operandIn)", "handleAsAtomic(operandIn)", "!isForeignIntVector(operandIn)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RStringVector doAbstractAtomicVector(RAbstractAtomicVector operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
                     @Cached("operandIn.access()") VectorAccess uAccess) {
@@ -110,7 +111,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return vectorCopy(operand, sdata);
     }
 
-    @Specialization(replaces = "doAbstractAtomicVector", guards = "handleAsAtomic(operandIn)")
+    @Specialization(replaces = "doAbstractAtomicVector", guards = {"handleAsAtomic(operandIn)", "!isForeignIntVector(operandIn)"})
     protected RStringVector doAbstractAtomicVectorGeneric(RAbstractAtomicVector operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile) {
         return doAbstractAtomicVector(operandIn, operandProfile, operandIn.slowPathAccess());
@@ -170,8 +171,10 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return RClosures.createToStringVector(operand, true);
     }
 
-    @Specialization
-    protected RAbstractStringVector doForeignWrapper(RForeignIntWrapper operand) {
+    @Specialization(guards = "operand.isForeignWrapper()")
+    protected RAbstractStringVector doForeignWrapper(RIntVector operand) {
+        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
+        // specialization
         return RClosures.createToStringVector(operand, true);
     }
 
@@ -184,12 +187,16 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return value instanceof RForeignVectorWrapper;
     }
 
+    public boolean isForeignIntVector(RAbstractContainer operand) {
+        return operand instanceof RIntVector && ((RIntVector) operand).isForeignWrapper();
+    }
+
     protected boolean isIntSequence(RAbstractContainer c) {
-        return c instanceof RIntSequence;
+        return c instanceof RIntVector && ((RIntVector) c).isSequence();
     }
 
     protected boolean handleAsAtomic(RAbstractAtomicVector x) {
-        return !isForeignWrapper(x) && !(x instanceof RIntSequence || x instanceof RAbstractStringVector);
+        return !isForeignWrapper(x) && !(isIntSequence(x) || x instanceof RAbstractStringVector);
     }
 
     protected boolean handleAsNonAtomic(RAbstractContainer x) {

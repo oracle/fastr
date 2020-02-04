@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 public abstract class FirstIntNode extends CastNode {
 
@@ -52,7 +52,7 @@ public abstract class FirstIntNode extends CastNode {
     }
 
     @Specialization(replaces = "firstScalar")
-    protected int firstVector(RAbstractIntVector argument) {
+    protected int firstVector(RIntVector argument) {
         if (!lengthOneProfile.profile(argument.getLength() == 1)) {
             if (sizeWarning != null) {
                 RError.warning(this, sizeWarning, argumentName);

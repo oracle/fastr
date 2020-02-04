@@ -62,7 +62,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -167,14 +167,14 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
         public abstract RAbstractVector execute(VirtualFrame frame, Object... args);
 
         @Specialization
-        protected RAbstractVector rep(RAbstractVector xIn, RAbstractIntVector timesIn, int lengthOutIn, int eachIn,
+        protected RAbstractVector rep(RAbstractVector xIn, RIntVector timesIn, int lengthOutIn, int eachIn,
                         @Cached("createClassProfile()") ValueProfile xProfile,
                         @Cached("createClassProfile()") ValueProfile timesProfile,
                         @Cached("createEqualityProfile()") PrimitiveValueProfile lengthOutProfile,
                         @Cached("createEqualityProfile()") PrimitiveValueProfile eachProfile,
                         @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
             RAbstractVector x = xProfile.profile(xIn);
-            RAbstractIntVector times = timesProfile.profile(timesIn);
+            RIntVector times = timesProfile.profile(timesIn);
             int lengthOut = lengthOutProfile.profile(lengthOutIn);
             int each = eachProfile.profile(eachIn);
 
@@ -198,7 +198,7 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
             return repInternal(x, times, lengthOut, each, hasNamesProfile);
         }
 
-        private RAbstractVector repInternal(RAbstractVector x, RAbstractIntVector times, int lengthOut, int each, ConditionProfile hasNamesProfile) {
+        private RAbstractVector repInternal(RAbstractVector x, RIntVector times, int lengthOut, int each, ConditionProfile hasNamesProfile) {
             RAbstractVector input = x;
             if (each != 1) {
                 if (each <= 0) {
@@ -249,7 +249,7 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
         /**
          * Replicate the vector a given number of times.
          */
-        private RAbstractVector handleTimes(RAbstractVector x, RAbstractIntVector times) {
+        private RAbstractVector handleTimes(RAbstractVector x, RIntVector times) {
             if (oneTimeGiven.profile(times.getLength() == 1)) {
                 // only one times value is given
                 int howManyTimes = times.getDataAt(0);

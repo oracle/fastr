@@ -61,7 +61,7 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "attributes<-", kind = PRIMITIVE, parameterNames = {"obj", "value"}, behavior = PURE)
@@ -108,12 +108,12 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
         return updateDimNames.executeRAbstractContainer(container, o);
     }
 
-    private RAbstractIntVector castInteger(RAbstractVector vector) {
+    private RIntVector castInteger(RAbstractVector vector) {
         if (castInteger == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castInteger = insert(CastIntegerNodeGen.create(true, false, false));
         }
-        return (RAbstractIntVector) castInteger.doCast(vector);
+        return (RIntVector) castInteger.doCast(vector);
     }
 
     private RAbstractDoubleVector castDouble(RAbstractVector vector) {
@@ -200,7 +200,7 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
                 if (value == RNull.instance) {
                     setDimNode.setDimensions(result, null);
                 } else {
-                    RAbstractIntVector dimsVector = castInteger(castVector(value));
+                    RIntVector dimsVector = castInteger(castVector(value));
                     if (dimsVector.getLength() == 0) {
                         throw error(RError.Message.LENGTH_ZERO_DIM_INVALID);
                     }

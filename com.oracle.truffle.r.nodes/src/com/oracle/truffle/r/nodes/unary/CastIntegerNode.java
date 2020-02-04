@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,14 +38,12 @@ import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -78,12 +76,12 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     public abstract Object executeInt(Object o);
 
     @Specialization
-    protected RAbstractIntVector doIntVector(RAbstractIntVector operand) {
+    protected RIntVector doIntVector(RIntVector operand) {
         return operand;
     }
 
     @Specialization
-    protected RIntSequence doDoubleSequence(RDoubleSequence operand) {
+    protected RIntVector doDoubleSequence(RDoubleSequence operand) {
         // start and stride cannot be NA so no point checking
         return factory().createIntSequence(RRuntime.double2intNoCheck(operand.getStart()), RRuntime.double2intNoCheck(operand.getStride()), operand.getLength());
     }
@@ -118,11 +116,11 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     @Specialization(guards = {"useClosure(x)"})
-    public RAbstractIntVector doAbstractVectorClosure(RAbstractAtomicVector x,
+    public RIntVector doAbstractVectorClosure(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile,
                     @Cached("create()") NAProfile naProfile) {
         RAbstractAtomicVector operand = operandTypeProfile.profile(x);
-        return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
+        return (RIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
     }
 
     @Specialization(guards = "uAccess.supports(list)", limit = "getVectorAccessCacheSize()")
@@ -144,8 +142,8 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
                         int value = (Integer) castEntry;
                         result[i] = value;
                         seenNA = seenNA || RRuntime.isNA(value);
-                    } else if (castEntry instanceof RAbstractIntVector) {
-                        RAbstractIntVector intVector = (RAbstractIntVector) castEntry;
+                    } else if (castEntry instanceof RIntVector) {
+                        RIntVector intVector = (RIntVector) castEntry;
                         if (intVector.getLength() == 1) {
                             int value = intVector.getDataAt(0);
                             result[i] = value;
@@ -180,16 +178,16 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     @Specialization(guards = "isForeignObject(obj)")
-    protected RAbstractIntVector doForeignObject(TruffleObject obj,
+    protected RIntVector doForeignObject(TruffleObject obj,
                     @Cached("create()") ConvertForeignObjectNode convertForeign) {
         Object o = convertForeign.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
-            if (o instanceof RAbstractIntVector) {
-                return (RAbstractIntVector) o;
+            if (o instanceof RIntVector) {
+                return (RIntVector) o;
             }
             o = castIntegerRecursive(o);
-            if (o instanceof RAbstractIntVector) {
-                return (RAbstractIntVector) o;
+            if (o instanceof RIntVector) {
+                return (RIntVector) o;
             }
         }
         throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
@@ -206,17 +204,17 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     @Specialization
-    protected RAbstractIntVector doForeignWrapper(RForeignBooleanWrapper operand) {
+    protected RIntVector doForeignWrapper(RForeignBooleanWrapper operand) {
         return RClosures.createToIntVector(operand, true);
     }
 
     @Specialization
-    protected RAbstractIntVector doForeignWrapper(RForeignDoubleWrapper operand) {
+    protected RIntVector doForeignWrapper(RForeignDoubleWrapper operand) {
         return RClosures.createToIntVector(operand, true);
     }
 
     @Specialization
-    protected RAbstractIntVector doForeignWrapper(RForeignStringWrapper operand) {
+    protected RIntVector doForeignWrapper(RForeignStringWrapper operand) {
         return RClosures.createToIntVector(operand, true);
     }
 
@@ -245,10 +243,10 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     protected boolean useClosure(RAbstractAtomicVector x) {
-        return useClosure() && !isForeignWrapper(x) && !(x instanceof RAbstractIntVector) && !(x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
+        return useClosure() && !isForeignWrapper(x) && !(x instanceof RIntVector) && !(x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
     }
 
     protected boolean noClosure(RAbstractAtomicVector x) {
-        return !isForeignWrapper(x) && !(x instanceof RAbstractIntVector) && (!useClosure() || x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
+        return !isForeignWrapper(x) && !(x instanceof RIntVector) && (!useClosure() || x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
     }
 }

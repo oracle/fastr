@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,10 +47,9 @@ import static com.oracle.truffle.r.runtime.RError.Message.INVALID_SAMPLE_TYPE_IN
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 public class RNGFunctions {
@@ -129,7 +128,7 @@ public class RNGFunctions {
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
         @Specialization
-        protected RNull setSeed(VirtualFrame frame, RAbstractIntVector data) {
+        protected RNull setSeed(VirtualFrame frame, RIntVector data) {
             int[] arr = new int[data.getLength()];
             for (int i = 0; i < arr.length; i++) {
                 arr[i] = data.getDataAt(i);

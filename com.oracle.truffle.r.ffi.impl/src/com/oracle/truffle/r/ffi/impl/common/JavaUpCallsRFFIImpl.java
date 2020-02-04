@@ -94,7 +94,6 @@ import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -621,7 +620,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         // which as it seems GNUR would just let proceede
         // Note 2: there is a hack in data.table that uses SET_NAMED(x,0) to make something mutable
         // so we allow and "support" this one specific use-case.
-        if (RSharingAttributeStorage.isShareable(x)) {
+        if (x instanceof RSharingAttributeStorage) {
             RSharingAttributeStorage r = (RSharingAttributeStorage) x;
             if (v >= 2) {
                 // we play it safe: if the caller wants this instance to be shared, they may expect
@@ -2401,7 +2400,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object INTEGER(Object x) {
         // Note: there is no validation in GNU-R and so packages call this with all types of vectors
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RMaterializedVector.class));
+        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RAbstractAtomicVector.class));
     }
 
     @Override

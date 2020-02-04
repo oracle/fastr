@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -64,11 +64,11 @@ public final class FindFirstNodeBuilder {
         return create(Double.class, defaultValue);
     }
 
-    public PipelineStep<RAbstractIntVector, Integer> integerElement() {
+    public PipelineStep<RIntVector, Integer> integerElement() {
         return create(Integer.class, null);
     }
 
-    public PipelineStep<RAbstractIntVector, Integer> integerElement(int defaultValue) {
+    public PipelineStep<RIntVector, Integer> integerElement(int defaultValue) {
         return create(Integer.class, defaultValue);
     }
 

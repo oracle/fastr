@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -116,9 +116,9 @@ final class UnaryMapVectorNode extends UnaryMapNode {
         super(scalarNode, operand, argumentType, resultType);
         this.fastOperandAccess = isGeneric ? null : operand.access();
         this.vectorNode = MapUnaryVectorInternalNode.create(resultType, argumentType);
-        boolean operandVector = operand instanceof RMaterializedVector;
+        boolean operandVector = operand.isMaterialized();
         this.mayContainMetadata = operandVector;
-        this.mayFoldConstantTime = argumentType == operand.getRType() && scalarNode.mayFoldConstantTime(operandClass);
+        this.mayFoldConstantTime = argumentType == operand.getRType() && scalarNode.mayFoldConstantTime(dataClass);
         this.mayShareOperand = operandVector;
         this.isGeneric = isGeneric;
 
@@ -130,7 +130,7 @@ final class UnaryMapVectorNode extends UnaryMapNode {
 
     @Override
     public boolean isSupported(RAbstractVector operand) {
-        return operand.getClass() == operandClass && (isGeneric || fastOperandAccess.supports(operand));
+        return getDataClass(operand) == dataClass && (isGeneric || fastOperandAccess.supports(operand));
     }
 
     @Override
@@ -327,12 +327,14 @@ public abstract class UnaryMapNode extends RBaseNode {
 
     @Child protected UnaryMapFunctionNode function;
     protected final Class<? extends RAbstractVector> operandClass;
+    protected final Class<?> dataClass;
     protected final RType argumentType;
     protected final RType resultType;
 
     protected UnaryMapNode(UnaryMapFunctionNode function, RAbstractVector operand, RType argumentType, RType resultType) {
         this.function = function;
         this.operandClass = operand.getClass();
+        this.dataClass = getDataClass(operand);
         this.argumentType = argumentType;
         this.resultType = resultType;
     }
@@ -348,4 +350,8 @@ public abstract class UnaryMapNode extends RBaseNode {
     public abstract boolean isSupported(RAbstractVector operand);
 
     public abstract Object apply(RAbstractVector originalOperand);
+
+    protected static Class<?> getDataClass(RAbstractVector vec) {
+        return vec instanceof RIntVector ? ((RIntVector) vec).getData().getClass() : vec.getClass();
+    }
 }

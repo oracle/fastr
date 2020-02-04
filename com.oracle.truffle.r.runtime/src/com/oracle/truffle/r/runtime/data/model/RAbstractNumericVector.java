@@ -28,11 +28,12 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 /**
  * Provides interop messages for numeric vectors. <br>
  * <ul>
- * <li>{@link RAbstractIntVector}</li>
+ * <li>{@link RIntVector}</li>
  * <li>{@link RAbstractDoubleVector}</li>
  * <li>{@link RAbstractRawVector}</li>
  * </ul>

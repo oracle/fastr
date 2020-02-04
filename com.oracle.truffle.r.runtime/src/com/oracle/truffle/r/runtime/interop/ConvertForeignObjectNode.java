@@ -43,9 +43,9 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -398,7 +398,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                 }
             case Integer:
                 if (arrayInfo.isOneDim()) {
-                    return new RForeignIntWrapper(truffleObject);
+                    return RIntVector.createForeignWrapper(truffleObject);
                 } else {
                     if (arrayInfo.isRectMultiDim()) {
                         return getArrayToVectorNode().toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);

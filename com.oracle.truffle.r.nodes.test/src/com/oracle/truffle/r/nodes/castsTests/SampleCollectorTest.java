@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,12 +68,11 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -275,7 +274,7 @@ public class SampleCollectorTest {
     @Test
     public void testAndAsNegationOfOrFilter() {
         // !(!A || !B) = A && B
-        arg.mustBe(instanceOf(RAbstractStringVector.class).not().or(instanceOf(RAbstractIntVector.class).not()).not());
+        arg.mustBe(instanceOf(RAbstractStringVector.class).not().or(instanceOf(RIntVector.class).not()).not());
         assertSamples(vector(RType.Character, ""), vector(RType.Character, nonEmptyString()), vector(RType.Character, RRuntime.STRING_NA), vector(RType.Integer, 0),
                         vector(RType.Integer, RRuntime.INT_NA), RNull.instance, RMissing.instance);
     }
@@ -311,7 +310,7 @@ public class SampleCollectorTest {
     @Test
     public void testOrAsNegationOfAndFilter() {
         // !(!A && !B) = A || B
-        arg.mustBe(instanceOf(RAbstractStringVector.class).not().and(instanceOf(RAbstractIntVector.class).not()).not());
+        arg.mustBe(instanceOf(RAbstractStringVector.class).not().and(instanceOf(RIntVector.class).not()).not());
         assertSamples(vector(RType.Character, ""), vector(RType.Character, nonEmptyString()), vector(RType.Character, RRuntime.STRING_NA), vector(RType.Integer, 0),
                         vector(RType.Integer, RRuntime.INT_NA), RNull.instance, RMissing.instance);
     }

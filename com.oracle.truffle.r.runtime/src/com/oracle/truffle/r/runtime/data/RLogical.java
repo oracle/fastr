@@ -87,7 +87,7 @@ public final class RLogical extends RAbstractLogicalVector implements RScalarVec
             case Logical:
                 return this;
             case Integer:
-                return isNAProfile.profile(isNA()) ? RInteger.createNA() : RInteger.valueOf(value);
+                return isNAProfile.profile(isNA()) ? RDataFactory.createIntVectorFromScalar(RRuntime.INT_NA) : RDataFactory.createIntVectorFromScalar(value);
             case Double:
                 return isNAProfile.profile(isNA()) ? RDouble.createNA() : RDouble.valueOf(value);
             case Complex:

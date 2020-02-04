@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,7 +54,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
@@ -135,7 +135,7 @@ public final class CoerceNodes {
             if (RSharingAttributeStorage.isShareable(origin)) {
 
                 int v = getSharingLevel(origin);
-                if (RSharingAttributeStorage.isShareable(element)) {
+                if (element instanceof RSharingAttributeStorage) {
                     RSharingAttributeStorage r = (RSharingAttributeStorage) element;
                     if (v >= 2) {
                         // we play it safe: if the caller wants this instance to be shared, they may
@@ -164,7 +164,7 @@ public final class CoerceNodes {
         @Child private RFactorNodes.GetLevels getLevels = RFactorNodes.GetLevels.create();
 
         @Specialization
-        protected Object doFactor(RAbstractIntVector o) {
+        protected Object doFactor(RIntVector o) {
             if (!inheritsFactorNode.execute(o)) {
                 throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "attempting to coerce non-factor");
             }

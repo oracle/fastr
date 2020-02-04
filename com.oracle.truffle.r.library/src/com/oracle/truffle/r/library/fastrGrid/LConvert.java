@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
@@ -55,7 +55,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
 
     @Specialization
     @TruffleBoundary
-    Object doConvert(RAbstractVector units, RAbstractIntVector axisFromVec, RAbstractIntVector axisToVec, RAbstractIntVector unitToVec) {
+    Object doConvert(RAbstractVector units, RIntVector axisFromVec, RIntVector axisToVec, RIntVector unitToVec) {
 
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();
@@ -69,7 +69,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
         int length = Unit.getLength(units);
         double[] result = new double[length];
 
-        RAbstractIntVector unitIds = null;
+        RIntVector unitIds = null;
         if (isSimpleUnit(units)) {
             unitIds = GridUtils.asIntVector(units.getAttr(Unit.VALID_UNIT_ATTR));
         }

@@ -69,7 +69,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -1000,7 +1000,7 @@ abstract class CheckTypeNode extends RBaseNode {
     }
 
     @Specialization
-    boolean checkType(@SuppressWarnings("unused") RAbstractIntVector o) {
+    boolean checkType(@SuppressWarnings("unused") RIntVector o) {
         return type == RType.Integer || type == RType.Double;
     }
 

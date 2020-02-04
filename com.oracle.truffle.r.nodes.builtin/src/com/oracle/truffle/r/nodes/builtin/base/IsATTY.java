@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections.StdConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 
 @RBuiltin(name = "isatty", kind = INTERNAL, parameterNames = {"con"}, behavior = PURE)
 public abstract class IsATTY extends RBuiltinNode.Arg1 {
@@ -47,7 +47,7 @@ public abstract class IsATTY extends RBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    protected byte isATTYNonConnection(RAbstractIntVector con) {
+    protected byte isATTYNonConnection(RIntVector con) {
         if (con.getLength() == 1) {
             RStringVector clazz = ClassHierarchyNode.getClassHierarchy(con);
             for (int i = 0; i < clazz.getLength(); i++) {

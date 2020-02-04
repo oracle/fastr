@@ -24,6 +24,7 @@ package com.oracle.truffle.r.test.engine.interop;
 
 import static org.junit.Assert.assertFalse;
 
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -31,7 +32,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import org.graalvm.polyglot.Source;
@@ -247,8 +247,8 @@ public class REnvironmentInteropTest extends AbstractInteropTest {
     private static int getEnvIntValue(Object value) {
         if (value instanceof Integer) {
             return (int) value;
-        } else if (value instanceof RAbstractIntVector) {
-            return ((RAbstractIntVector) value).getDataAt(0);
+        } else if (value instanceof RIntVector) {
+            return ((RIntVector) value).getDataAt(0);
         }
         fail("unexpected value " + value);
         return -1;

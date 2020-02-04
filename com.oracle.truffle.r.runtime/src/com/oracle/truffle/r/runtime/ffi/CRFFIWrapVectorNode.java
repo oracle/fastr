@@ -30,8 +30,8 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.interop.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -49,7 +49,7 @@ public abstract class CRFFIWrapVectorNode extends Node {
     protected boolean isTemporary(Object vector) {
         // if the vector is temporary, we can re-use it. We turn it into native memory backed
         // vector, keep it so and reuse it as the result.
-        return vector instanceof RMaterializedVector && ((RAbstractVector) vector).isTemporary();
+        return RRuntime.isMaterializedVector(vector) && ((RAbstractVector) vector).isTemporary();
     }
 
     protected static boolean isStringVector(Object vector) {

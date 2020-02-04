@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -57,7 +57,7 @@ public class AttachFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected REnvironment doAttach(@SuppressWarnings("unused") RNull what, RAbstractIntVector pos, RAbstractStringVector name) {
+        protected REnvironment doAttach(@SuppressWarnings("unused") RNull what, RIntVector pos, RAbstractStringVector name) {
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             doAttachEnv(pos.getDataAt(0), env);
             return env;
@@ -65,7 +65,7 @@ public class AttachFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected REnvironment doAttach(REnvironment what, RAbstractIntVector pos, RAbstractStringVector name) {
+        protected REnvironment doAttach(REnvironment what, RIntVector pos, RAbstractStringVector name) {
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             RStringVector names = what.ls(true, null, false);
             for (int i = 0; i < names.getLength(); i++) {
@@ -80,7 +80,7 @@ public class AttachFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected REnvironment doAttach(RAbstractListVector what, RAbstractIntVector pos, RAbstractStringVector name) {
+        protected REnvironment doAttach(RAbstractListVector what, RIntVector pos, RAbstractStringVector name) {
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             RStringVector names = what.getNames();
             if (names != null) {
@@ -114,7 +114,7 @@ public class AttachFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object doDetach(RAbstractIntVector pos) {
+        protected Object doDetach(RIntVector pos) {
             try {
                 return REnvironment.detach(pos.getDataAt(0));
             } catch (DetachException ex) {

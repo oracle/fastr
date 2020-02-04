@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,11 +37,12 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -182,10 +183,10 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         this.fastLeftAccess = isGeneric ? null : left.access();
         this.fastRightAccess = isGeneric ? null : right.access();
         this.vectorNode = VectorMapBinaryInternalNode.create(resultType, argumentType);
-        boolean leftVectorImpl = RMaterializedVector.class.isAssignableFrom(leftClass);
-        boolean rightVectorImpl = RMaterializedVector.class.isAssignableFrom(rightClass);
+        boolean leftVectorImpl = RMaterializedVector.class.isAssignableFrom(leftClass) || ((left instanceof RIntVector) && ((RIntVector) left).isMaterialized());
+        boolean rightVectorImpl = RMaterializedVector.class.isAssignableFrom(rightClass) || ((right instanceof RIntVector) && ((RIntVector) right).isMaterialized());
         this.mayContainMetadata = leftVectorImpl || rightVectorImpl;
-        this.mayFoldConstantTime = function.mayFoldConstantTime(leftClass, rightClass);
+        this.mayFoldConstantTime = function.mayFoldConstantTime(left, right);
         this.leftIsNAProfile = mayFoldConstantTime ? ConditionProfile.createBinaryProfile() : null;
         this.rightIsNAProfile = mayFoldConstantTime ? ConditionProfile.createBinaryProfile() : null;
         this.mayShareLeft = left.getRType() == resultType && leftVectorImpl;
@@ -202,7 +203,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
 
     @Override
     public boolean isSupported(RAbstractVector left, RAbstractVector right) {
-        return left.getClass() == leftClass && right.getClass() == rightClass && (isGeneric || fastLeftAccess.supports(left) && fastRightAccess.supports(right));
+        return getDataClass(left) == leftDataClass && getDataClass(right) == rightDataClass && (isGeneric || fastLeftAccess.supports(left) && fastRightAccess.supports(right));
     }
 
     @Override
@@ -233,7 +234,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
                  */
                 return resultType.getEmpty();
             }
-            if (mayFoldConstantTime) {
+            if (mayFoldConstantTime && function.mayFoldConstantTime(left, right)) {
                 target = function.tryFoldConstantTime(left.castSafe(argumentType, leftIsNAProfile, false), leftLength, right.castSafe(argumentType, rightIsNAProfile, false), rightLength);
             }
             if (target == null) {
@@ -586,6 +587,8 @@ public abstract class BinaryMapNode extends RBaseNode {
     @Child protected BinaryMapFunctionNode function;
     protected final Class<? extends RAbstractVector> leftClass;
     protected final Class<? extends RAbstractVector> rightClass;
+    protected final Class<?> leftDataClass;
+    protected final Class<?> rightDataClass;
     protected final RType argumentType;
     protected final RType resultType;
 
@@ -593,6 +596,8 @@ public abstract class BinaryMapNode extends RBaseNode {
         this.function = function;
         this.leftClass = left.getClass();
         this.rightClass = right.getClass();
+        this.leftDataClass = getDataClass(left);
+        this.rightDataClass = getDataClass(right);
         this.argumentType = argumentType;
         this.resultType = resultType;
     }
@@ -608,5 +613,9 @@ public abstract class BinaryMapNode extends RBaseNode {
     public abstract boolean isSupported(RAbstractVector left, RAbstractVector right);
 
     public abstract Object apply(RAbstractVector originalLeft, RAbstractVector originalRight);
+
+    protected static Class<?> getDataClass(RAbstractVector vec) {
+        return vec instanceof RIntVector ? ((RIntVector) vec).getData().getClass() : vec.getClass();
+    }
 
 }

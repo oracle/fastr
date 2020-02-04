@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -234,7 +234,7 @@ public abstract class RBaseNode extends Node {
     }
 
     protected static boolean isRAbstractIntVector(Object value) {
-        return value instanceof RAbstractIntVector;
+        return value instanceof RIntVector;
     }
 
     protected static boolean isRAbstractComplexVector(Object value) {

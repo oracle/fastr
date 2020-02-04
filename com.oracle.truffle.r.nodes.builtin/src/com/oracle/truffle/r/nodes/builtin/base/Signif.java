@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
@@ -77,7 +77,7 @@ public abstract class Signif extends RBuiltinNode.Arg2 {
 
     // TODO: consider porting signif implementation from GNU R
     @Specialization(guards = {"xAccess.supports(x)", "digitsAccess.supports(digits)"}, limit = "getVectorAccessCacheSize()")
-    protected RAbstractDoubleVector signifDouble(RAbstractDoubleVector x, RAbstractIntVector digits,
+    protected RAbstractDoubleVector signifDouble(RAbstractDoubleVector x, RIntVector digits,
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("digits.access()") VectorAccess digitsAccess,
                     @Cached("create()") BranchProfile emptyProfile,
@@ -129,13 +129,13 @@ public abstract class Signif extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "signifDouble")
-    protected RAbstractDoubleVector signifDoubleGeneric(RAbstractDoubleVector x, RAbstractIntVector digits) {
+    protected RAbstractDoubleVector signifDoubleGeneric(RAbstractDoubleVector x, RIntVector digits) {
         return signifDouble(x, digits, x.slowPathAccess(), digits.slowPathAccess(),
                         BranchProfile.create(), BranchProfile.create(), ConditionProfile.createBinaryProfile());
     }
 
     @Specialization(guards = {"xAccess.supports(x)", "digitsAccess.supports(digits)"}, limit = "getVectorAccessCacheSize()")
-    protected RAbstractComplexVector signifComplex(RAbstractComplexVector x, RAbstractIntVector digits,
+    protected RAbstractComplexVector signifComplex(RAbstractComplexVector x, RIntVector digits,
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("digits.access()") VectorAccess digitsAccess,
                     @Cached("create()") BranchProfile emptyProfile,
@@ -195,7 +195,7 @@ public abstract class Signif extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "signifComplex")
-    protected RAbstractComplexVector signifComplexGeneric(RAbstractComplexVector x, RAbstractIntVector digits) {
+    protected RAbstractComplexVector signifComplexGeneric(RAbstractComplexVector x, RIntVector digits) {
         return signifComplex(x, digits, x.slowPathAccess(), digits.slowPathAccess(),
                         BranchProfile.create(), BranchProfile.create(), ConditionProfile.createBinaryProfile(), ConditionProfile.createBinaryProfile());
     }

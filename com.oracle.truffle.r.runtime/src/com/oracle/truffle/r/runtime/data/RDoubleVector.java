@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -117,7 +117,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
             NativeDataAccess.setDataLength(this, data, l);
         } finally {
             data = null;
-            complete = false;
+            setComplete(false);
         }
     }
 
@@ -158,7 +158,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         assert !this.isShared();
         NativeDataAccess.setData(this, data, index, value);
         if (valueNACheck.check(value)) {
-            complete = false;
+            setComplete(false);
         }
         assert !isComplete() || !RRuntime.isNA(value);
         return this;
@@ -189,7 +189,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
             return NativeDataAccess.allocateNativeContents(this, data, getLength());
         } finally {
             data = null;
-            complete = false;
+            setComplete(false);
         }
     }
 

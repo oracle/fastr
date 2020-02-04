@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2015, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -69,7 +69,7 @@ public class BitwiseFunctions {
         private final NACheck naCheckB = NACheck.create();
         private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
 
-        protected Object basicBit(RAbstractIntVector aVec, RAbstractIntVector bVec, Operation op) {
+        protected Object basicBit(RIntVector aVec, RIntVector bVec, Operation op) {
             naCheckA.enable(aVec);
             naCheckB.enable(bVec);
             int aLen = aVec.getLength();
@@ -142,7 +142,7 @@ public class BitwiseFunctions {
         }
 
         @Specialization
-        protected Object bitwAnd(RAbstractIntVector a, RAbstractIntVector b) {
+        protected Object bitwAnd(RIntVector a, RIntVector b) {
             return basicBit(a, b, Operation.AND);
         }
 
@@ -163,7 +163,7 @@ public class BitwiseFunctions {
         }
 
         @Specialization
-        protected Object bitwOr(RAbstractIntVector a, RAbstractIntVector b) {
+        protected Object bitwOr(RIntVector a, RIntVector b) {
             return basicBit(a, b, Operation.OR);
         }
 
@@ -184,7 +184,7 @@ public class BitwiseFunctions {
         }
 
         @Specialization
-        protected Object bitwXor(RAbstractIntVector a, RAbstractIntVector b) {
+        protected Object bitwXor(RIntVector a, RIntVector b) {
             return basicBit(a, b, Operation.XOR);
         }
 
@@ -206,19 +206,19 @@ public class BitwiseFunctions {
         }
 
         @Specialization
-        protected Object bitwShiftR(RAbstractIntVector a, RAbstractIntVector n) {
+        protected Object bitwShiftR(RIntVector a, RIntVector n) {
             return basicBit(a, n, Operation.SHIFTR);
         }
 
         @Specialization
         @SuppressWarnings("unused")
-        protected Object bitwShiftR(RAbstractIntVector a, RNull n) {
+        protected Object bitwShiftR(RIntVector a, RNull n) {
             return RDataFactory.createEmptyIntVector();
         }
 
         @Specialization
         @SuppressWarnings("unused")
-        protected Object bitwShiftRChar(RAbstractIntVector a, RAbstractStringVector n) {
+        protected Object bitwShiftRChar(RIntVector a, RAbstractStringVector n) {
             return makeNA(a.getLength());
         }
     }
@@ -235,13 +235,13 @@ public class BitwiseFunctions {
         }
 
         @Specialization
-        protected Object bitwShiftL(RAbstractIntVector a, RAbstractIntVector n) {
+        protected Object bitwShiftL(RIntVector a, RIntVector n) {
             return basicBit(a, n, Operation.SHIFTL);
         }
 
         @Specialization
         @SuppressWarnings("unused")
-        protected Object bitwShiftL(RAbstractIntVector a, RNull n) {
+        protected Object bitwShiftL(RIntVector a, RNull n) {
             return RDataFactory.createEmptyIntVector();
         }
     }
@@ -255,7 +255,7 @@ public class BitwiseFunctions {
         }
 
         @Specialization
-        protected Object bitwNot(RAbstractIntVector a,
+        protected Object bitwNot(RIntVector a,
                         @Cached("create()") NACheck naCheck) {
             int[] ans = new int[a.getLength()];
             naCheck.enable(a);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,36 +22,41 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.Arrays;
-
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
-public final class RIntVector extends RAbstractIntVector implements RMaterializedVector, Shareable {
+public final class RIntVector extends RAbstractNumericVector {
 
-    private int[] data;
+    private RIntVectorData data;
 
     RIntVector(int[] data, boolean complete) {
         super(complete);
-        this.data = data;
+        this.data = new RIntArrayVectorData(data, complete);
         assert RAbstractVector.verifyVector(this);
     }
 
     RIntVector(int[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
         this(data, complete);
         initDimsNamesDimNames(dims, names, dimNames);
+    }
+
+    private RIntVector(RIntVectorData data) {
+        super(false);
+        this.data = data;
     }
 
     private RIntVector() {
@@ -62,7 +67,82 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
         RIntVector result = new RIntVector();
         NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
+        result.data = new RIntNativeVectorData(result);
         return result;
+    }
+
+    public static RIntVector createSequence(int start, int stride, int length) {
+        return new RIntVector(new RIntSeqVectorData(start, stride, length));
+    }
+
+    public static RIntVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
+        RIntVector result = new RIntVector(new RIntVecClosureData(delegate));
+        if (keepAttrs) {
+            result.initAttributes(delegate.getAttributes());
+        } else {
+            RClosures.initRegAttributes(result, delegate);
+        }
+        return result;
+    }
+
+    public static RIntVector createForeignWrapper(Object foreign) {
+        return new RIntVector(new RIntForeignObjData(foreign));
+    }
+
+    @Override
+    public boolean isShareable() {
+        // TODO: initially we retain even the behavior of "isShareable" forcing materialization
+        // where it may not be necessary
+        // Only Java array and native memory backed vectors "look like" shareable
+        return RIntVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return RIntVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
+    }
+
+    public RIntVectorData getData() {
+        return data;
+    }
+
+    // TODO: method that breaks encapsulation of data
+
+    @Override
+    public boolean isSequence() {
+        return data instanceof RIntSeqVectorData;
+    }
+
+    @Override
+    public RIntSeqVectorData getSequence() {
+        return (RIntSeqVectorData) data;
+    }
+
+    @Override
+    public boolean isClosure() {
+        return data instanceof RIntVecClosureData;
+    }
+
+    @Override
+    public RClosure getClosure() {
+        return (RIntVecClosureData) data;
+    }
+
+    public boolean isForeignWrapper() {
+        return data instanceof RIntForeignObjData;
+    }
+
+    // ---------------------
+
+    @Override
+    protected boolean isScalarNA() {
+        assert getLength() == 1;
+        return RRuntime.isNA(getDataAt(0));
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.Integer;
     }
 
     @Override
@@ -71,7 +151,12 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
             case Integer:
                 return this;
             case Double:
-                return RClosures.createToDoubleVector(this, keepAttributes);
+                if (isSequence()) {
+                    RIntSeqVectorData seq = getSequence();
+                    return RDataFactory.createDoubleSequence(seq.getStart(), seq.getStride(), getLength());
+                } else {
+                    return RClosures.createToDoubleVector(this, keepAttributes);
+                }
             case Complex:
                 return RClosures.createToComplexVector(this, keepAttributes);
             case Character:
@@ -84,25 +169,22 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
     }
 
     @Override
-    public int[] getInternalStore() {
+    public Object getInternalStore() {
         return data;
     }
 
-    @Override
     public int getDataAt(int index) {
-        return NativeDataAccess.getData(this, data, index);
+        return data.getIntAt(index);
     }
 
-    @Override
     public int getDataAt(Object store, int index) {
         assert data == store;
-        return NativeDataAccess.getData(this, (int[]) store, index);
+        return ((RIntVectorData) store).getIntAt(index);
     }
 
-    @Override
     public void setDataAt(Object store, int index, int value) {
         assert data == store;
-        NativeDataAccess.setData(this, (int[]) store, index, value);
+        ((RIntVectorData) store).setIntAt(index, value);
     }
 
     public RIntVector copyResetData(int[] newData) {
@@ -120,16 +202,21 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
 
     @Override
     public int getLength() {
-        return NativeDataAccess.getDataLength(this, data);
+        return data.getLength();
+    }
+
+    @Override
+    public boolean isComplete() {
+        return data.isComplete();
     }
 
     @Override
     public void setLength(int l) {
         try {
-            NativeDataAccess.setDataLength(this, data, l);
+            NativeDataAccess.setDataLength(this, getArrayForNativeDataAccess(), l);
         } finally {
-            data = null;
-            complete = false;
+            data = new RIntNativeVectorData(this);
+            setComplete(false);
         }
     }
 
@@ -140,39 +227,38 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
 
     @Override
     public void setTrueLength(int l) {
-        NativeDataAccess.setTrueDataLength(this, l);
+        try {
+            NativeDataAccess.setTrueDataLength(this, l);
+        } finally {
+            data = new RIntNativeVectorData(this);
+            setComplete(false);
+        }
     }
 
     @Override
     public int[] getDataCopy() {
-        if (data != null) {
-            return Arrays.copyOf(data, data.length);
-        } else {
-            return NativeDataAccess.copyIntNativeData(getNativeMirror());
-        }
+        return RIntVectorDataLibrary.getFactory().getUncached().getIntDataCopy(data);
     }
 
     @Override
     public int[] getInternalManagedData() {
-        return data;
+        if (data instanceof RIntNativeVectorData) {
+            return null;
+        }
+        // TODO: get rid of this method
+        assert data instanceof RIntArrayVectorData : data.getClass().getName();
+        return ((RIntArrayVectorData) data).getReadonlyIntData();
     }
 
     @Override
     public int[] getReadonlyData() {
-        if (data != null) {
-            return data;
-        } else {
-            return NativeDataAccess.copyIntNativeData(getNativeMirror());
-        }
+        return RIntVectorDataLibrary.getFactory().getUncached().getReadonlyIntData(data);
     }
 
     private RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
         assert !this.isShared();
-
-        NativeDataAccess.setData(this, data, index, value);
-        if (valueNACheck.check(value)) {
-            setComplete(false);
-        }
+        assert !RRuntime.isNA(value) || valueNACheck.isEnabled();
+        RIntVectorDataLibrary.getFactory().getUncached().setIntAt(data, index, value, valueNACheck);
         assert !isComplete() || !RRuntime.isNA(value);
         return this;
     }
@@ -184,12 +270,67 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
 
     @Override
     public RIntVector materialize() {
-        return this;
+        if (RIntVectorDataLibrary.getFactory().getUncached().isWriteable(data)) {
+            return this;
+        }
+        // To retain the semantics of the original materialize, for sequences and such we return new
+        // vector
+        return new RIntVector(getDataCopy(), isComplete());
+    }
+
+    public void materializeData(RIntVectorDataLibrary dataLib) {
+        data = dataLib.materialize(data);
+    }
+
+    @Override
+    public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return new RIntVector(new int[newLength], newIsComplete);
     }
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        NativeDataAccess.setData(this, data, toIndex, ((RAbstractIntVector) fromVector).getDataAt(fromIndex));
+        RIntVectorDataLibrary lib = RIntVectorDataLibrary.getFactory().getUncached();
+        int value = lib.getIntAt(((RIntVector) fromVector).data, fromIndex);
+        lib.setIntAt(data, toIndex, value);
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    protected void copyAttributes(RIntVector materializedVec) {
+        materializedVec.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RIntVector internalCopy() {
+        return RDataFactory.createIntVector(getDataCopy(), isComplete());
+    }
+
+    @Override
+    protected RIntVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        int[] localData = getReadonlyData();
+        int[] newData = Arrays.copyOf(localData, size);
+        newData = resizeData(newData, localData, localData.length, fillNA);
+        return RDataFactory.createIntVector(newData, isResizedComplete(size, fillNA), dimensions);
+    }
+
+    protected static int[] resizeData(int[] newData, int[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
+            if (fillNA) {
+                for (int i = oldDataLength; i < newData.length; i++) {
+                    newData[i] = RRuntime.INT_NA;
+                }
+            } else {
+                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
+                    newData[i] = oldData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    public int[] getDataTemp() {
+        return (int[]) super.getDataTemp();
     }
 
     @Override
@@ -199,36 +340,57 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
 
     @Override
     public void setElement(int index, Object value) {
-        NativeDataAccess.setData(this, data, index, (int) value);
+        data.setIntAt(index, (Integer) value);
     }
 
     public long allocateNativeContents() {
         try {
-            return NativeDataAccess.allocateNativeContents(this, data, getLength());
+            data = RIntVectorDataLibrary.getFactory().getUncached().materialize(data);
+            long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
+            data = new RIntNativeVectorData(this);
+            return result;
         } finally {
-            data = null;
-            complete = false;
+            setComplete(false);
         }
+    }
+
+    private AtomicReference<RIntVector> materialized = new AtomicReference<>();
+
+    public Object cachedMaterialize() {
+        if (materialized.get() == null) {
+            materialized.compareAndSet(null, materialize());
+        }
+        return materialized.get();
     }
 
     private static final class FastPathAccess extends FastPathFromIntAccess {
 
+        @Child RIntVectorDataLibrary dataLib;
+
         FastPathAccess(RAbstractContainer value) {
             super(value);
+            dataLib = RIntVectorDataLibrary.getFactory().create(((RIntVector) value).data);
+        }
+
+        @Override
+        public boolean supports(Object value) {
+            if (!super.supports(value)) {
+                return false;
+            }
+            if (value instanceof RIntVector) {
+                return dataLib.accepts(((RIntVector) value).getData());
+            }
+            return false;
         }
 
         @Override
         public int getIntImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((int[]) accessIter.getStore())[index] : NativeDataAccess.getIntNativeMirrorData((NativeMirror) accessIter.getStore(), index);
+            return dataLib.getIntAt((RIntVectorData) accessIter.getStore(), index);
         }
 
         @Override
         protected void setIntImpl(AccessIterator accessIter, int index, int value) {
-            if (hasStore) {
-                ((int[]) accessIter.getStore())[index] = value;
-            } else {
-                NativeDataAccess.setNativeMirrorIntData((NativeMirror) accessIter.getStore(), index, value);
-            }
+            dataLib.setIntAt((RIntVectorData) accessIter.getStore(), index, value);
         }
     }
 
@@ -241,18 +403,25 @@ public final class RIntVector extends RAbstractIntVector implements RMaterialize
         @Override
         public int getIntImpl(AccessIterator accessIter, int index) {
             RIntVector vector = (RIntVector) accessIter.getStore();
-            return NativeDataAccess.getData(vector, vector.data, index);
+            return vector.getDataAt(index);
         }
 
         @Override
         protected void setIntImpl(AccessIterator accessIter, int index, int value) {
             RIntVector vector = (RIntVector) accessIter.getStore();
-            NativeDataAccess.setData(vector, vector.data, index, value);
+            vector.setDataAt(vector.getInternalStore(), index, value);
         }
     };
 
     @Override
     public VectorAccess slowPathAccess() {
         return SLOW_PATH_ACCESS;
+    }
+
+    // TODO: Hack: we make sure the vector is either array or native, so that we can call
+    // NativeDataAccess methods
+    private int[] getArrayForNativeDataAccess() {
+        materializeData(RIntVectorDataLibrary.getFactory().getUncached());
+        return data instanceof RIntArrayVectorData ? ((RIntArrayVectorData) data).getReadonlyIntData() : null;
     }
 }

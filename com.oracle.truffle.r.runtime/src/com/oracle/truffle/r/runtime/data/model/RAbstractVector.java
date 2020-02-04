@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,9 +48,11 @@ import com.oracle.truffle.r.runtime.data.RFFIAccess;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -69,10 +71,26 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      */
     protected static volatile int fence;
 
-    protected boolean complete; // "complete" means: does not contain NAs
+    private boolean complete; // "complete" means: does not contain NAs
 
     protected RAbstractVector(boolean complete) {
         this.complete = complete;
+    }
+
+    public boolean isSequence() {
+        return this instanceof RSequence;
+    }
+
+    public RSeq getSequence() {
+        return (RSeq) this;
+    }
+
+    public boolean isClosure() {
+        return this instanceof RClosure;
+    }
+
+    public RClosure getClosure() {
+        return (RClosure) this;
     }
 
     @SuppressWarnings("static-method")
@@ -189,8 +207,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      */
     @Override
     public RStringVector getNames() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             return null;
         }
         RStringVector names = getNamesFromAttrs();
@@ -232,7 +249,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
             if (value instanceof Integer) {
                 setDimensions(new int[]{(int) value});
             } else {
-                setDimensions(((RAbstractIntVector) value).materialize().getDataCopy());
+                setDimensions(((RIntVector) value).materialize().getDataCopy());
             }
         } else if (name.equals(RRuntime.DIMNAMES_ATTR_KEY)) {
             setDimNames((RList) value);
@@ -275,8 +292,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @Override
     public final void setNames(RStringVector newNames) {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             // should only be used on materialized vector
             throw RInternalError.shouldNotReachHere();
         }
@@ -309,8 +325,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @Override
     public final RList getDimNames() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             return null;
         }
         if (attributes == null) {
@@ -335,8 +350,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @Override
     public final void setDimNames(RList newDimNames) {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             // should only be used on materialized vector
             throw RInternalError.shouldNotReachHere();
         }
@@ -392,8 +406,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @Override
     public final Object getRowNames() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             return RNull.instance;
         }
         if (attributes == null) {
@@ -405,8 +418,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @Override
     public final void setRowNames(RAbstractVector newRowNames) {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             // should only be used on materialized vector
             throw RInternalError.shouldNotReachHere();
         }
@@ -418,7 +430,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
-    public final boolean isComplete() {
+    public boolean isComplete() {
         return complete;
     }
 
@@ -439,40 +451,35 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @Override
     public final boolean hasDimensions() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             return false;
         }
         return attributes == null ? false : attributes.containsKey(RRuntime.DIM_ATTR_KEY);
     }
 
     private boolean hasDimNames() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             return false;
         }
         return attributes == null ? false : attributes.containsKey(RRuntime.DIMNAMES_ATTR_KEY);
     }
 
     private boolean hasRowNames() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             return false;
         }
         return attributes == null ? false : attributes.containsKey(RRuntime.ROWNAMES_ATTR_KEY);
     }
 
     private boolean hasNames() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             return false;
         }
         return attributes == null ? false : attributes.containsKey(RRuntime.NAMES_ATTR_KEY);
     }
 
     public final boolean isMatrix() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             return false;
         }
         int[] dimensions = getDimensionsFromAttrs();
@@ -480,8 +487,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     public final boolean isArray() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             return false;
         }
         int[] dimensions = getDimensionsFromAttrs();
@@ -490,8 +496,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @Override
     public final int[] getDimensions() {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             return null;
         }
         return getDimensionsFromAttrs();
@@ -512,8 +517,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     @Override
     public final void setDimensions(int[] newDimensions) {
-        if (!isMaterialized()) {
-            assert !(this instanceof RMaterializedVector) : this.getClass().getSimpleName();
+        if (!(this instanceof RIntVector) && !isMaterialized()) {
             // should only be used on materialized vector
             throw RInternalError.shouldNotReachHere();
         }
@@ -587,7 +591,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     protected boolean isResizedComplete(int newSize, boolean filledNAs) {
-        return complete && ((getLength() >= newSize) || !filledNAs);
+        return isComplete() && ((getLength() >= newSize) || !filledNAs);
     }
 
     // *internalCopyAndReport* methods do just the copy and report it to MemoryTracer. These should
@@ -946,7 +950,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         } else if (access.getType() == RType.List) {
             assert !vector.isComplete();
         }
-        if (vector.isComplete() && !(vector instanceof RSequence)) {
+        if (vector.isComplete() && !vector.isSequence()) {
             // check all vectors for completeness
             access.na.enable(true);
             try (SequentialIterator iter = access.access(vector)) {

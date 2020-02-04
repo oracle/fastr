@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,18 +26,18 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 public abstract class SetDiffFastPath extends RFastPathNode {
 
-    @Specialization(guards = {"x.getStride() == 1", "y.getClass() == yClass"}, limit = "getCacheSize(3)")
-    protected static Object cached(RIntSequence x, RAbstractIntVector y,
-                    @Cached("y.getClass()") Class<? extends RAbstractIntVector> yClass) {
-        RAbstractIntVector profiledY = yClass.cast(y);
+    @Specialization(guards = {"isSequenceStride1(x)", "y.getClass() == yClass"}, limit = "getCacheSize(3)")
+    protected static Object cached(RIntVector x, RIntVector y,
+                    @Cached("y.getClass()") Class<? extends RIntVector> yClass) {
+        RIntVector profiledY = yClass.cast(y);
         int xLength = x.getLength();
-        int xStart = x.getStart();
+        int xStart = ((RIntSeqVectorData) x.getData()).getStart();
         int yLength = profiledY.getLength();
         boolean[] excluded = new boolean[xLength];
 
@@ -64,9 +64,13 @@ public abstract class SetDiffFastPath extends RFastPathNode {
         return RDataFactory.createIntVector(result, true);
     }
 
-    @Specialization(guards = {"x.getStride() == 1"}, replaces = "cached")
-    protected static Object generic(RIntSequence x, RAbstractIntVector y) {
+    @Specialization(guards = {"isSequenceStride1(x)"}, replaces = "cached")
+    protected static Object generic(RIntVector x, RIntVector y) {
         return cached(x, y, y.getClass());
+    }
+
+    protected static boolean isSequenceStride1(RIntVector vec) {
+        return vec.isSequence() && ((RIntSeqVectorData) vec.getData()).getStride() == 1;
     }
 
     @Fallback

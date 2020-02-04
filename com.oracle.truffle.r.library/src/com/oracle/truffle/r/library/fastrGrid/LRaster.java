@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,12 +33,11 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -83,8 +82,8 @@ public abstract class LRaster extends RExternalBuiltinNode.Arg8 {
         }
 
         int[] pixels;
-        if (raster instanceof RAbstractIntVector && isNativeRaster(raster)) {
-            RIntVector rasterVec = ((RAbstractIntVector) raster).materialize();
+        if (raster instanceof RIntVector && isNativeRaster(raster)) {
+            com.oracle.truffle.r.runtime.data.RIntVector rasterVec = ((RIntVector) raster).materialize();
             pixels = rasterVec.getDataTemp();
         } else {
             int rasterLen = raster.getLength();
@@ -95,10 +94,10 @@ public abstract class LRaster extends RExternalBuiltinNode.Arg8 {
         }
 
         Object dimsObj = raster.getAttr(RRuntime.DIM_ATTR_KEY);
-        if (!(dimsObj instanceof RAbstractIntVector)) {
+        if (!(dimsObj instanceof RIntVector)) {
             throw RInternalError.shouldNotReachHere("Dims attribute should always be integer vector.");
         }
-        RAbstractIntVector dims = (RAbstractIntVector) dimsObj;
+        RIntVector dims = (RIntVector) dimsObj;
         if (dims.getLength() != 2) {
             throw error(Message.GENERIC, "L_raster dims attribute is not of size 2");
         }

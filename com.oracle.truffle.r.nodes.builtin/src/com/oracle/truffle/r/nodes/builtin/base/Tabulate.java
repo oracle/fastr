@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 
 @RBuiltin(name = "tabulate", kind = INTERNAL, parameterNames = {"bin", "nbins"}, behavior = PURE)
 public abstract class Tabulate extends RBuiltinNode.Arg2 {
@@ -47,7 +46,7 @@ public abstract class Tabulate extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RIntVector tabulate(RAbstractIntVector bin, int nBins) {
+    protected RIntVector tabulate(RIntVector bin, int nBins) {
         int[] ans = new int[nBins];
         loopProfile.profileCounted(bin.getLength());
         for (int i = 0; loopProfile.inject(i < bin.getLength()); i++) {

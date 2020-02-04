@@ -43,11 +43,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -85,17 +84,18 @@ public abstract class CumMin extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(RAbstractIntVector emptyVec,
+    protected RAbstractVector cumEmpty(RIntVector emptyVec,
                     @Cached("create()") GetNamesAttributeNode getNames) {
         return RDataFactory.createIntVector(new int[0], true, getNames.getNames(emptyVec));
     }
 
-    @Specialization
-    protected RAbstractIntVector cumminIntSequence(RIntSequence v,
+    @Specialization(guards = "v.isSequence()")
+    protected RIntVector cumminIntSequence(RIntVector v,
                     @Cached("createBinaryProfile()") ConditionProfile negativeStrideProfile) {
-        if (negativeStrideProfile.profile(v.getStride() > 0)) {
+        RIntSeqVectorData seq = (RIntSeqVectorData) v.getData();
+        if (negativeStrideProfile.profile(seq.getStride() > 0)) {
             // all numbers are bigger than the first one
-            return RDataFactory.createIntSequence(v.getStart(), 0, v.getLength());
+            return RDataFactory.createIntSequence(seq.getStart(), 0, v.getLength());
         } else {
             return v;
         }
@@ -127,7 +127,7 @@ public abstract class CumMin extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(replaces = "cumminIntSequence")
-    protected RIntVector cummin(RAbstractIntVector v) {
+    protected com.oracle.truffle.r.runtime.data.RIntVector cummin(RIntVector v) {
         int[] cminV = new int[v.getLength()];
         na.enable(v);
         int min = v.getDataAt(0);
