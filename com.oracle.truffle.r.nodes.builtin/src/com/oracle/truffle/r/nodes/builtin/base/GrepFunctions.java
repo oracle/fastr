@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -876,8 +876,9 @@ public class GrepFunctions {
                 String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" :
                                             // "chars";
                 boolean hasCaptureResult = false;
-                int[] result = new int[vector.getLength()];
-                int[] matchLength = new int[vector.getLength()];
+                int vectorLen = vector.getLength();
+                int[] result = new int[vectorLen];
+                int[] matchLength = new int[vectorLen];
                 String[] captureNames = null;
                 int[] captureStart = null;
                 int[] captureLength = null;
@@ -885,7 +886,16 @@ public class GrepFunctions {
                     // emtpy pattern
                     Arrays.fill(result, 1);
                 } else {
-                    for (int i = 0; i < vector.getLength(); i++) {
+                    if (vectorLen == 0) {
+                        String[] namesOrNull = getPatternCaptureNames(common, pattern, ignoreCase, perl, fixed);
+                        if (namesOrNull != null && namesOrNull.length > 0) {
+                            hasCaptureResult = true;
+                            captureNames = namesOrNull;
+                            captureStart = new int[0];
+                            captureLength = new int[0];
+                        }
+                    }
+                    for (int i = 0; i < vectorLen; i++) {
                         Info res = getInfo(common, pattern, vector.getDataAt(i), ignoreCase, perl, fixed, true).get(0);
                         result[i] = res.index;
                         matchLength[i] = res.size;
@@ -895,15 +905,15 @@ public class GrepFunctions {
                                 // first time we see captures
                                 captureNames = res.captureNames;
                                 // length of res.captureNames gives the max amount of captures
-                                captureStart = new int[captureNames.length * vector.getLength()];
-                                captureLength = new int[captureNames.length * vector.getLength()];
+                                captureStart = new int[captureNames.length * vectorLen];
+                                captureLength = new int[captureNames.length * vectorLen];
                             }
                             for (int j = 0; j < res.captureStart.length; j++) {
                                 // well, res.captureStart might be shorter then
                                 // res.captureNames (but never more then by 1?),
                                 // just ignore the remaining (zero) elements in captureStart
-                                captureStart[j * vector.getLength() + i] = res.captureStart[j];
-                                captureLength[j * vector.getLength() + i] = res.captureLength[j];
+                                captureStart[j * vectorLen + i] = res.captureStart[j];
+                                captureLength[j * vectorLen + i] = res.captureLength[j];
                             }
                         } else if (res.hasCaptureResult) {
                             // no capture for this part of the vector, but even then
@@ -911,10 +921,10 @@ public class GrepFunctions {
                             hasCaptureResult = true;
                             captureNames = res.captureNames;
                             if (captureStart == null) {
-                                captureStart = new int[captureNames.length * vector.getLength()];
-                                captureLength = new int[captureNames.length * vector.getLength()];
+                                captureStart = new int[captureNames.length * vectorLen];
+                                captureLength = new int[captureNames.length * vectorLen];
                             }
-                            setNoCaptureValues(captureStart, captureLength, captureNames.length, vector.getLength(), i);
+                            setNoCaptureValues(captureStart, captureLength, captureNames.length, vectorLen, i);
                         }
                     }
                 }
@@ -926,10 +936,10 @@ public class GrepFunctions {
                 }
                 if (hasCaptureResult) {
                     RStringVector captureNamesVec = RDataFactory.createStringVector(captureNames, RDataFactory.COMPLETE_VECTOR);
-                    RIntVector captureStartVec = RDataFactory.createIntVector(captureStart, RDataFactory.COMPLETE_VECTOR, new int[]{vector.getLength(), captureNames.length});
+                    RIntVector captureStartVec = RDataFactory.createIntVector(captureStart, RDataFactory.COMPLETE_VECTOR, new int[]{vectorLen, captureNames.length});
                     setDimNamesAttrNode.setAttr(captureStartVec, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
                     setCaptureStartAttrNode.setAttr(ret, captureStartVec);
-                    RIntVector captureLengthVec = RDataFactory.createIntVector(captureLength, RDataFactory.COMPLETE_VECTOR, new int[]{vector.getLength(), captureNames.length});
+                    RIntVector captureLengthVec = RDataFactory.createIntVector(captureLength, RDataFactory.COMPLETE_VECTOR, new int[]{vectorLen, captureNames.length});
                     setDimNamesAttrNode.setAttr(captureLengthVec, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
                     setCaptureLengthAttrNode.setAttr(ret, captureLengthVec);
                     setCaptureNamesAttrNode.setAttr(ret, captureNamesVec);
@@ -938,6 +948,18 @@ public class GrepFunctions {
             } catch (PatternSyntaxException e) {
                 throw error(Message.INVALID_REGEXP_REASON, patternArg, e.getMessage());
             }
+        }
+
+        protected String[] getPatternCaptureNames(CommonCodeNode common, String pattern, boolean ignoreCase, boolean perl, boolean fixed) {
+            if (fixed || !perl) {
+                return null;
+            }
+            PCRERFFI.Result pcre = common.compilePerlPattern(pattern, ignoreCase);
+            int maxCaptureCount = getCaptureCountNode.execute(pcre.result, 0);
+            if (maxCaptureCount < 0) {
+                throw error(Message.PCRE_FULLINFO_RETURNED, maxCaptureCount);
+            }
+            return getCaptureNamesNode.execute(pcre.result, 0, maxCaptureCount);
         }
 
         protected List<Info> getInfo(CommonCodeNode common, String pattern, String text, boolean ignoreCase, boolean perl, boolean fixed) {

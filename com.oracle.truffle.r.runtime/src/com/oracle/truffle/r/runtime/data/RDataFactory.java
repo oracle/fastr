@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1210,12 +1210,12 @@ public final class RDataFactory {
         return traceDataCreated(new RPromise(state, env, closure));
     }
 
-    public static RPromise createEvaluatedPromise(PromiseState state, Closure closure, Object argumentValue) {
-        return traceDataCreated(new RPromise(state, closure, argumentValue));
+    public static RPromise createEvaluatedPromise(PromiseState state, Closure closure, Object argumentValue, MaterializedFrame frame) {
+        return traceDataCreated(new RPromise(state, closure, argumentValue, frame));
     }
 
     public static RPromise createEvaluatedPromise(Closure closure, Object value) {
-        return traceDataCreated(new RPromise(PromiseState.Explicit, closure, value));
+        return traceDataCreated(new RPromise(PromiseState.Explicit, closure, value, null));
     }
 
     public static RPromise createEagerPromise(PromiseState state, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -147,15 +147,16 @@ public class RPromise extends RBaseObject {
     }
 
     /**
-     * This creates a new tuple (expr, null, null, value), which is already evaluated.
+     * This creates a new tuple (expr, env, null, value), which is already evaluated. Note: we still
+     * need to keep the execution environment, because it can be accessed via R API {@code PRENV},
+     * and the environment can indeed be used for tidy evaluation.
      */
-    RPromise(PromiseState state, Closure closure, Object value) {
+    RPromise(PromiseState state, Closure closure, Object value, MaterializedFrame execFrame) {
         assert value != null;
         this.state = state.bits;
         this.closure = closure;
         this.value = value;
-        // Not needed as already evaluated:
-        this.execFrame = null;
+        this.execFrame = execFrame;
     }
 
     @SuppressWarnings("static-method")
@@ -313,11 +314,10 @@ public class RPromise extends RBaseObject {
     }
 
     /**
-     * Promises to constants can be optimized, which means that they only hold the value, but do not
-     * need to keep the frame and will never need the frame.
+     * Promises to constants can be optimized, which means that they only hold the value.
      */
     public boolean isOptimized() {
-        return this.execFrame == null;
+        return value != null && this.closure.getExpr() instanceof RSyntaxConstant;
     }
 
     /**
