@@ -144,6 +144,11 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
         public RSyntaxElement[] getSyntaxArguments() {
             return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(LAZY_DEPARSE, "X", false), RSyntaxLookup.createDummyLookup(LAZY_DEPARSE, "i", false)};
         }
+
+        @Override
+        public boolean mustBeEvaluatedEagerily() {
+            return true;
+        }
     }
 
     public abstract static class LapplyInternalNode extends RBaseNode implements InternalRSyntaxNodeChildren {

@@ -93,4 +93,8 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
     public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.expectByte(execute(frame));
     }
+
+    public boolean mustBeEvaluatedEagerily() {
+        return false;
+    }
 }

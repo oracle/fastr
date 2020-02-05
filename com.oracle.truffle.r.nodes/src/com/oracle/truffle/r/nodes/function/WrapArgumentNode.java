@@ -100,4 +100,10 @@ public final class WrapArgumentNode extends WrapArgumentBaseNode {
             return new WrapArgumentNode(operand, index);
         }
     }
+
+    @Override
+    public boolean mustBeEvaluatedEagerily() {
+        return operand.mustBeEvaluatedEagerily();
+    }
+
 }

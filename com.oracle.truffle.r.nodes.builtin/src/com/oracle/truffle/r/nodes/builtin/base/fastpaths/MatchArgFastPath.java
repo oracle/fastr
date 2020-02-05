@@ -295,9 +295,15 @@ public abstract class MatchArgFastPath extends RFastPathNode {
     }
 
     @Specialization(limit = "1", guards = "cache.choicesValue.isSupported(frame, arg)")
-    protected Object matchArg(VirtualFrame frame, RPromise arg, @SuppressWarnings("unused") RMissing choices, Object severalOK,
+    protected Object matchPromiseArg(VirtualFrame frame, RPromise arg, @SuppressWarnings("unused") RMissing choices, Object severalOK,
                     @Cached("new(frame, arg)") MatchArgNode cache) {
         return cache.internal.castAndExecute(frame, cache.promiseHelper.evaluate(frame, arg), cache.choicesValue.execute(frame), severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
+    }
+
+    @Specialization(guards = "!isRPromise(arg)")
+    protected Object matchNonPromiseArg(VirtualFrame frame, Object arg, @SuppressWarnings("unused") RMissing choices, Object severalOK,
+                    @Cached("createInternal()") MatchArgInternal internal) {
+        return internal.castAndExecute(frame, arg, arg, severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
     }
 
     public static final class MatchArgNode extends Node {
@@ -316,11 +322,21 @@ public abstract class MatchArgFastPath extends RFastPathNode {
         return value instanceof RMissing;
     }
 
+    protected static boolean isRPromise(Object value) {
+        return value instanceof RPromise;
+    }
+
     @Specialization(guards = "!isRMissing(choices)")
-    protected Object matchArg(VirtualFrame frame, RPromise arg, Object choices, Object severalOK,
+    protected Object matchPromiseArg(VirtualFrame frame, RPromise arg, Object choices, Object severalOK,
                     @Cached("createInternal()") MatchArgInternal internal,
                     @Cached("new()") PromiseHelperNode promiseHelper) {
         return internal.castAndExecute(frame, promiseHelper.evaluate(frame, arg), choices, severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
+    }
+
+    @Specialization(guards = {"!isRMissing(choices)", "!isRPromise(arg)"})
+    protected Object matchNonPromiseArg(VirtualFrame frame, Object arg, Object choices, Object severalOK,
+                    @Cached("createInternal()") MatchArgInternal internal) {
+        return internal.castAndExecute(frame, arg, choices, severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
     }
 
     @SuppressWarnings("unused")
