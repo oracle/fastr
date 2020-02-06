@@ -84,13 +84,12 @@ done
       exit 2
     fi
     res=0
-    for lib in libgfortran.so.3 libquadmath.so.0 libgcc_s.so.1; do
+    for lib in libgfortran.so.5 libquadmath.so.0 libgcc_s.so.1; do
       if ! ldconfig -p | grep --quiet $lib; then
-        echo "Error: could not find gfortran3 runtime library: $lib"
-        echo "Please install the gfortran3 runtime libraries:"
-        echo "    On Debian based systems: apt-get install libgfortran3"
-        echo "    On Oracle Linux 7: yum install libgfortran"
-        echo "    On Oracle Linux 8: yum install compat-libgfortran-48"
+        echo "Error: could not find gfortran5 runtime library: $lib"
+        echo "Please install the gfortran5 runtime libraries:"
+        echo "    On Debian based systems: apt-get install libgfortran-8-dev"
+        echo "    On Oracle Linux 8: yum install libgfortran"
         res=1
         break
       fi
@@ -99,18 +98,9 @@ done
       echo "Error: could not find OpenMP runtime library: libgomp.so.1"
       echo "Please install the OpenMP runtime library runtime libraries:"
       echo "    On Debian based systems: apt-get install libgomp1"
-      echo "    On Oracle Linux 7 and 8: yum install libgomp"
+      echo "    On Oracle Linux 8: yum install libgomp"
       echo "    Note: Oracle Linux 8 should contain libgomp by default"
       res=1
-    fi
-    if which gfortran > /dev/null 2> /dev/null; then
-      echo "Note: if you intend to install R packages you may need additional packages."
-      echo "The following packages should cover the most commonly used R packages:"
-      echo "    On Debian based systems: apt-get install build-essential gfortran libxml2 libc++-dev"
-      echo "    On Oracle Linux 7 and 8: yum groupinstall 'Development Tools'"
-      if [[ $res != 0 ]]; then
-        echo "Caution: you still need to install gfortran3 runtime libraries on all systems where this version is not the default (Ubuntu 18 or higher, Oracle Linux 8 or higher)."
-      fi
     fi
     if [[ $res != 0 ]]; then
       echo "The basic configuration of FastR failed."
@@ -120,6 +110,11 @@ done
       exit 1
     else
       echo "The basic configuration of FastR was successfull."
+      echo ""
+      echo "Note: if you intend to install R packages you may need additional dependencies."
+      echo "The following packages should cover the most commonly used R packages:"
+      echo "    On Debian based systems: apt-get install build-essential gfortran libxml2 libc++-dev"
+      echo "    On Oracle Linux 8: yum groupinstall 'Development Tools'"
     fi
   elif [[ "$OSTYPE" == "darwin"* ]]; then
 
