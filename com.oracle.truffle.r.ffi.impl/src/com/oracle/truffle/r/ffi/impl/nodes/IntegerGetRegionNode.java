@@ -29,10 +29,12 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.ffi.impl.llvm.AltrepLLVMDownCallNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 @GenerateUncached
 public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
@@ -43,16 +45,19 @@ public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
 
     @Specialization(guards = {"hasGetRegionMethodRegistered(altIntVec)"}, limit = "3")
     public long getRegionForAltIntegerVec(RAltIntegerVec altIntVec, long fromIdx, long size, Object buffer,
-                                          @CachedLibrary("buffer") InteropLibrary bufferInterop,
-                                          @CachedLibrary("altIntVec.getDescriptor().getGetRegionMethod()") InteropLibrary methodInterop,
-                                          @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-        assert bufferInterop.isPointer(buffer);
-        return altIntVec.getDescriptor().invokeGetRegionMethodCached(altIntVec, fromIdx, size, buffer, methodInterop, hasMirrorProfile);
+                                          @Cached(value = "create()", allowUncached = true) AltrepLLVMDownCallNode downCallNode) {
+        Object count = downCallNode.call(NativeFunction.AltInteger_Get_region, altIntVec, fromIdx, size, buffer);
+        // TODO: Better return
+        assert count instanceof Integer || count instanceof Long;
+        if (count instanceof Integer) {
+            return ((Integer) count).longValue();
+        } else {
+            return (long) count;
+        }
     }
 
     @Specialization(limit = "3")
-    public long getRegionForAltIntegerVecWithoutRegisteredMethod(RAltIntegerVec altIntVec, long fromIdx, long size,
-                                                                 Object buffer,
+    public long getRegionForAltIntegerVecWithoutRegisteredMethod(RAltIntegerVec altIntVec, long fromIdx, long size, Object buffer,
                                                                  @CachedLibrary("buffer") InteropLibrary bufferInterop,
                                                                  @CachedLibrary("altIntVec.getDescriptor().getEltMethod()") InteropLibrary eltMethodInterop,
                                                                  @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {

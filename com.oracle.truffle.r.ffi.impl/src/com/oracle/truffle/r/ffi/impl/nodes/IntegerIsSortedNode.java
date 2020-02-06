@@ -18,7 +18,7 @@ public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
 
     @Specialization(guards = {"isIsSortedMethodRegistered(altIntVec)"})
     public int isSortedForAltIntVec(RAltIntegerVec altIntVec,
-                                    @Cached(value = "createDispatchNode()", allowUncached = true) IsSortedDispatchNode dispatchNode) {
+                                    @Cached("createDispatchNode()") IsSortedDispatchNode dispatchNode) {
         return (int) dispatchNode.executeObject(altIntVec);
     }
 
@@ -39,14 +39,15 @@ public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
         return IntegerIsSortedNode.IsSortedDispatchNode.create();
     }
 
+    @GenerateUncached
     static abstract class IsSortedDispatchNode extends FFIUpCallNode.Arg1 {
         public static IsSortedDispatchNode create() {
             return IntegerIsSortedNodeGen.IsSortedDispatchNodeGen.create();
         }
 
-        @Specialization(limit = "2")
+        @Specialization
         public int isSortedForAltIntVec(RAltIntegerVec altIntVec,
-                                        @Cached("create(altIntVec.getDescriptor())") AltrepLLVMDownCallNode altrepLLVMDownCallNode) {
+                                        @Cached(value = "create()", allowUncached = true) AltrepLLVMDownCallNode altrepLLVMDownCallNode) {
             Object ret = altrepLLVMDownCallNode.call(NativeFunction.AltInteger_Is_sorted, altIntVec);
             assert ret instanceof Integer;
             return (int) ret;
