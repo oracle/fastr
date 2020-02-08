@@ -2,11 +2,8 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
-import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -30,7 +27,7 @@ public abstract class AltrepLLVMDownCallNode extends DownCallNode {
     // TODO: Use descriptorHandle instead of descriptor
     // TODO: Add CompilationFinal
     private AltRepClassDescriptor descriptor;
-    @CompilationFinal private ConditionProfile[] hasMirrorProfiles;
+    @CompilationFinal(dimensions = 1) private ConditionProfile[] hasMirrorProfiles;
 
     public static AltrepLLVMDownCallNode create() {
         return AltrepLLVMDownCallNodeGen.create();
@@ -82,6 +79,8 @@ public abstract class AltrepLLVMDownCallNode extends DownCallNode {
                 args[i] = wrapInNativeMirror((RBaseObject) args[i], hasMirrorProfiles[i]);
             }
         }
+
+        // TODO: Add RContext.getRFFIContext.beforeDownCall, and afterDownCall
         return 0;
     }
 
