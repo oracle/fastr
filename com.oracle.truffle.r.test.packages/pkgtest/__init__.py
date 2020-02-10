@@ -40,12 +40,63 @@ from .output_filter import select_filters_for_package
 from .fuzzy_compare import fuzzy_compare
 from .util import *
 
+class RVM(object):
+    def __init__(self, rvm_id, name):
+        self.id = rvm_id
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return "RVM(id=%s, name=%s)" % (self.id, self.name)
+    
+    def __eq__(self, other):
+        if isinstance(other, RVM):
+            return self.id == other.id
+        return False
+
+    @staticmethod
+    def create_dir(testdir):
+        shutil.rmtree(testdir, ignore_errors=True)
+        # Note: The existence check still makes sense because 'shutil.rmtree' won't do anything if 'testdir' is a symlink.
+        if not os.path.exists(testdir):
+            os.mkdir(testdir)
+        return testdir
+
+    @staticmethod
+    def get_default_testdir(suffix):
+        return join(get_fastr_repo_dir(), 'test.' + suffix)
+
+    def get_testdir(self):
+        '''Determines the path to the test output directory depending on the 
+        provided R runtime and considering the arguments.
+        '''
+        opts = get_opts()
+        attr_name = self.id + "_testdir"
+        if hasattr(opts, attr_name):
+            return getattr(opts, attr_name)
+
+        # default:
+        return RVM.get_default_testdir(self.id)
+
+    def create_testdir(self):
+        'Actually creates the testdir on the file system.'
+        return RVM.create_dir(self.get_testdir())
+
+
+RVM_FASTR = RVM('fastr', 'FastR')
+RVM_GNUR = RVM('gnur', 'GnuR')
+
+
 def _create_tmpdir(rvm):
+    if not isinstance(rvm, RVM):
+        raise TypeError("Expected object of type 'RVM' but got '%s'" % str(type(rvm)))
     tmp_dir = os.environ.pop("TMPDIR", None)
     if tmp_dir:
-        install_tmp = join(tmp_dir, "install.tmp." + rvm)
+        install_tmp = join(tmp_dir, "install.tmp." + rvm.id)
     else:
-        install_tmp = join(get_fastr_repo_dir(), "install.tmp." + rvm)
+        install_tmp = join(get_fastr_repo_dir(), "install.tmp." + rvm.id)
     shutil.rmtree(install_tmp, ignore_errors=True)
     os.makedirs(install_tmp)
     return install_tmp
@@ -56,7 +107,9 @@ def _create_libinstall(rvm, test_installed):
     Create lib.install.packages.<rvm>/install.tmp.<rvm>/test.<rvm> for <rvm>: fastr or gnur
     If use_installed_pkgs is True, assume lib.install exists and is populated (development)
     '''
-    libinstall = join(get_fastr_repo_dir(), "lib.install.packages." + rvm)
+    if not isinstance(rvm, RVM):
+        raise TypeError("Expected object of type 'RVM' but got '%s'" % str(type(rvm)))
+    libinstall = join(get_fastr_repo_dir(), "lib.install.packages." + rvm.id)
     if not test_installed:
         # make sure its empty
         shutil.rmtree(libinstall, ignore_errors=True)
@@ -65,17 +118,8 @@ def _create_libinstall(rvm, test_installed):
         else:
             os.mkdir(libinstall)
     install_tmp = _create_tmpdir(rvm)
-    _create_testdot(rvm)
+    rvm.create_testdir()
     return libinstall, install_tmp
-
-
-def _create_testdot(rvm):
-    testdir = join(get_fastr_repo_dir(), "test." + rvm)
-    shutil.rmtree(testdir, ignore_errors=True)
-    # Note: The existence check still makes sense because 'shutil.rmtree' won't do anything if 'testdir' is a symlink.
-    if not os.path.exists(testdir):
-        os.mkdir(testdir)
-    return testdir
 
 
 def _find_subdir(root, name, fatalIfMissing=True):
@@ -164,6 +208,15 @@ def prepare_r_install_arguments(args):
         args += ["--verbose"]
     elif verbosity_level > 1:
         args += ["--very-verbose"]
+    
+    # install and test the packages, unless just listing versions
+    if not '--list-versions' in args:
+        args += ['--run-tests']
+        args += ['--test-mode', 'system']
+        args += ['--test-executable', get_fastr_rscript()]
+        args += ['--testdir', get_opts().fastr_testdir]
+        if not '--print-install-status' in args:
+            args += ['--print-install-status']
 
     # get default CRAN mirror from our FastR home
     default_cran_mirror_url = "CRAN=" + get_default_cran_mirror()
@@ -227,8 +280,8 @@ def pkgtest(args):
     common_install_args = prepare_r_install_and_test_arguments(unknown_args)
 
     test_installed = '--no-install' in common_install_args
-    fastr_libinstall, fastr_install_tmp = _create_libinstall('fastr', test_installed)
-    gnur_libinstall, gnur_install_tmp = _create_libinstall('gnur', test_installed)
+    fastr_libinstall, fastr_install_tmp = _create_libinstall(RVM_FASTR, test_installed)
+    gnur_libinstall, gnur_install_tmp = _create_libinstall(RVM_GNUR, test_installed)
 
     common_install_args = list(common_install_args)
 
@@ -277,10 +330,10 @@ def pkgtest(args):
                 rc = rc | 2
             logging.info('{0}: {1}'.format(pkg, test_status.status))
 
-        diffdir = _create_testdot('diffs')
+        diffdir = RVM.create_dir(RVM.get_default_testdir('diffs'))
         for pkg, _ in out.test_info.items():
             diff_file = join(diffdir, pkg)
-            subprocess.call(['diff', '-r', _pkg_testdir('fastr', pkg), _pkg_testdir('gnur', pkg)],
+            subprocess.call(['diff', '-r', _pkg_testdir(RVM_FASTR, pkg), _pkg_testdir(RVM_GNUR, pkg)],
                             stdout=open(diff_file, 'w'))
 
     shutil.rmtree(fastr_install_tmp, ignore_errors=True)
@@ -352,7 +405,7 @@ class OutputCapture:
                 begin_end = test_match.group(1)
                 pkg_name = test_match.group(2)
                 if begin_end == "END":
-                    _get_test_outputs('fastr', pkg_name, self.test_info)
+                    _get_test_outputs(RVM_FASTR, pkg_name, self.test_info)
             else:
                 time_match = re.match(self.time_pattern, data)
                 if time_match:
@@ -449,7 +502,12 @@ class PkgTestStatus(TestStatus):
 
 
 def _pkg_testdir(rvm, pkg_name):
-    return join(get_fastr_repo_dir(), 'test.' + rvm, pkg_name)
+    '''
+    Returns the path to the package-specific test directory like "test.fastr/pkg_name"
+    '''
+    if not isinstance(rvm, RVM):
+        raise TypeError("Expected object of type 'RVM' but got '%s'" % str(type(rvm)))
+    return join(rvm.get_testdir(), pkg_name)
 
 
 def get_pkg_test_status(test_info, pkg_name):
@@ -491,7 +549,7 @@ def _get_test_outputs(rvm, pkg_name, test_info):
 
 
 def _args_to_forward_to_gnur(args):
-    forwarded_args = ['--repos', '--run-mode', '--cache-pkgs', "--ignore-suggests"]
+    forwarded_args = ['--repos', '--run-mode', '--cache-pkgs', '--test-mode', "--ignore-suggests"]
     result = []
     i = 0
     while i < len(args):
@@ -524,6 +582,7 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     args = list(forwarded_args)
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
+    args += ['--test-executable', get_gnur_rscript()]
     args += ['--ignore-blacklist']
     args += ['--testdir', get_opts().gnur_testdir]
     log_step('BEGIN', 'install/test', 'GnuR')
@@ -545,7 +604,7 @@ def _set_test_status(fastr_test_info):
 
     gnur_test_info = dict()
     for pkg, _ in fastr_test_info.items():
-        _get_test_outputs('gnur', pkg, gnur_test_info)
+        _get_test_outputs(RVM_GNUR, pkg, gnur_test_info)
 
     # gnur is definitive so drive off that
     for pkg in list(gnur_test_info.keys()):
@@ -651,8 +710,8 @@ def _set_test_status(fastr_test_info):
                     fastr_testfile_status.status = "FAILED"
                     fastr_testfile_status.set_report(n_tests_passed, 0, n_tests_failed)
                     logging.info("{0}: FastR output mismatch: {1}".format(pkg, gnur_test_output_relpath))
-                    logging.info("    output mismatch file: {0}".format(join(_pkg_testdir('fastr', pkg), gnur_test_output_relpath)))
-                    logging.info("    output mismatch file: {0}".format(join(_pkg_testdir('gnur', pkg), gnur_test_output_relpath)))
+                    logging.info("    output mismatch file: {0}".format(join(_pkg_testdir(RVM_FASTR, pkg), gnur_test_output_relpath)))
+                    logging.info("    output mismatch file: {0}".format(join(_pkg_testdir(RVM_GNUR, pkg), gnur_test_output_relpath)))
                 else:
                     fastr_testfile_status.status = "OK"
                     fastr_testfile_status.set_report(n_tests_passed, 0, n_tests_failed)
@@ -662,12 +721,12 @@ def _set_test_status(fastr_test_info):
             fastr_test_status.set_status_code("OK")
 
         # write out a file with the test status for each output (that exists)
-        with open(join(_pkg_testdir('fastr', pkg), 'testfile_status'), 'w') as f:
+        with open(join(_pkg_testdir(RVM_FASTR, pkg), 'testfile_status'), 'w') as f:
             f.write('# <file path> <tests passed> <tests skipped> <tests failed>\n')
             for fastr_relpath, fastr_testfile_status in fastr_outputs.items():
                 logging.info("generating testfile_status for {0}".format(fastr_relpath))
                 relpath = fastr_relpath
-                test_output_file = join(_pkg_testdir('fastr', pkg), relpath)
+                test_output_file = join(_pkg_testdir(RVM_FASTR, pkg), relpath)
 
                 if os.path.exists(test_output_file):
                     ok, skipped, failed = fastr_testfile_status.get_report()
@@ -676,7 +735,7 @@ def _set_test_status(fastr_test_info):
                     # In case of status == "FAILED", also try suffix ".fail" because we just do not know if the test
                     # failed and finished or just never finished.
                     relpath_fail = fastr_relpath + ".fail"
-                    test_output_file_fail = join(_pkg_testdir('fastr', pkg), relpath_fail)
+                    test_output_file_fail = join(_pkg_testdir(RVM_FASTR, pkg), relpath_fail)
                     if os.path.exists(test_output_file_fail):
                         ok, skipped, failed = fastr_testfile_status.get_report()
                         f.write("{0} {1} {2} {3} {4}\n".format(relpath_fail, ok, skipped, failed, fastr_testfile_status.test_time))
@@ -686,7 +745,7 @@ def _set_test_status(fastr_test_info):
                     logging.info("File {0} does not exist".format(test_output_file))
 
 
-        with open(join(_pkg_testdir('fastr', pkg), 'test_time'), 'w') as f:
+        with open(join(_pkg_testdir(RVM_FASTR, pkg), 'test_time'), 'w') as f:
             f.write(str(fastr_test_status.test_time))
 
         logging.info('END checking ' + pkg)
@@ -845,18 +904,18 @@ def pkgtest_check(args):
     #     return 1
 
     pkg_name = _opts.pkg_name
-    fastr_testdir = _pkg_testdir("fastr", pkg_name)
+    fastr_testdir = _pkg_testdir(RVM_FASTR, pkg_name)
     if not os.path.isdir(fastr_testdir):
         print("test directory '%s' does not exist" % fastr_testdir)
         return 1
 
-    gnur_testdir = _pkg_testdir("gnur", pkg_name)
+    gnur_testdir = _pkg_testdir(RVM_GNUR, pkg_name)
     if not os.path.isdir(gnur_testdir):
         print("test directory '%s' does not exist" % gnur_testdir)
         return 1
 
     fastr_test_info = dict()
-    _get_test_outputs("fastr", pkg_name, fastr_test_info)
+    _get_test_outputs(RVM_FASTR, pkg_name, fastr_test_info)
     return _set_test_status(fastr_test_info)
 
 
@@ -997,9 +1056,9 @@ def pkgcache(args):
     if 'fastr' in _opts.vm:
         if 'fastr' in library_spec:
             fastr_libinstall = ensure_dir(library_spec['fastr'])
-            fastr_install_tmp = _create_tmpdir('fastr')
+            fastr_install_tmp = _create_tmpdir(RVM_FASTR)
         else:
-            fastr_libinstall, fastr_install_tmp = _create_libinstall('fastr', False)
+            fastr_libinstall, fastr_install_tmp = _create_libinstall(RVM_FASTR, False)
 
         env = os.environ.copy()
         env["TMPDIR"] = fastr_install_tmp
@@ -1025,9 +1084,9 @@ def pkgcache(args):
     if 'gnur' in _opts.vm:
         if 'gnur' in library_spec:
             gnur_libinstall = ensure_dir(library_spec['gnur'])
-            gnur_install_tmp = _create_tmpdir('gnur')
+            gnur_install_tmp = _create_tmpdir(RVM_GNUR)
         else:
-            gnur_libinstall, gnur_install_tmp = _create_libinstall('gnur', False)
+            gnur_libinstall, gnur_install_tmp = _create_libinstall(RVM_GNUR, False)
 
         env = os.environ.copy()
         env["TMPDIR"] = gnur_install_tmp

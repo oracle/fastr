@@ -120,6 +120,7 @@ usage <- function() {
 					  "[--install-dependents-first]",
 					  "[--run-mode mode]",
 					  "[--test-mode mode]",
+					  "[--test-executable path_to_rscript]",
 					  "[--install-mode mode]",
 					  "[--pkg-filelist file]",
 					  "[--find-top100]",
@@ -198,7 +199,7 @@ choice.depends <- function(pkg, choice=c("direct","suggests")) {
 
 # provides JVM args when running the tests
 fastr.test.jvm.args <- function() {
-    mx.args.file <- "com.oracle.truffle.r.test.packages/test.mx.args"
+    mx.args.file <- file.path(curScriptDir, "..", "test.mx.args")
     tryCatch({
         if (file.exists(mx.args.file)) {
             opts <- paste0('"', paste0(readLines(mx.args.file), collapse=" "), '"')
@@ -850,30 +851,11 @@ install.pkg <- function(pkgname) {
 	return(success)
 }
 
-# when testing under graalvm, fastr is not built so we must use the (assumed) sibling gnur repo
-check_graalvm <- function() {
-	if (!is.na(Sys.getenv('FASTR_GRAALVM', unset=NA)) || !is.na(Sys.getenv('GRAALVM_FASTR', unset=NA))) {
-		normalizePath(Sys.glob(file.path("..", 'gnur', 'gnur', 'R-*')))
-	} else {
-		NA
-	}
-}
-
-gnu_rscript <- function() {
-	gnurHomeBin <- Sys.getenv("GNUR_HOME_BINARY")
-	if (gnurHomeBin == "") {
-		gnur_dir <- check_graalvm()
-		if (!is.na(gnur_dir)) {
-			file.path(gnur_dir, 'bin', 'Rscript')
-		} else {
-			rv <- R.Version()
-			dirv <- paste0('R-', rv$major, '.', rv$minor)
-			gnurHome <- "libdownloads"
-			file.path(gnurHome, dirv, 'bin', 'Rscript')
-		}
-	} else {
-		file.path(gnurHomeBin, 'bin', 'Rscript')
-	}
+get.test.executable <- function() {
+    if (is.na(test.executable)) {
+        stop("You want to run tests but did not provide the path to the Rscript binary")
+    }
+    test.executable
 }
 
 check.create.dir <- function(name) {
@@ -926,15 +908,12 @@ is.fastr <- function() {
 }
 
 system.test <- function(pkgname, pkgEnv) {
-	script <- normalizePath("com.oracle.truffle.r.test.packages/r/test.package.R")
+	script <- normalizePath(file.path(curScriptDir, "test.package.R"))
     options <- character(0)
-	if (is.fastr()) {
-		rscript = file.path(R.home(), "bin", "Rscript")
-	} else {
+	if (!is.fastr()) {
         # GnuR's Rscript command does not load the 'methods' package by default.
         # But the examples are assumed to be run in a shell where the package is on the search path.
 	    options <- paste0("--default-packages=", paste0(initial.packages, collapse=","))
-        rscript = gnu_rscript()
 	}
 	args <- c(options, script, pkgname, file.path(testdir, pkgname), lib.install)
 	# we want to stop tests that hang, but some packages have many tests
@@ -947,9 +926,9 @@ system.test <- function(pkgname, pkgEnv) {
             )
 	env <- c(pkgEnv, genEnv)
         if(Sys.getenv("FASTR_GCTORTURE") == "") {
-            rc <- system2(rscript, args, env=env, timeout=1200)
+            rc <- system2(get.test.executable(), args, env=env, timeout=1200)
         } else {
-            rc <- system2(rscript, args, env=env)
+            rc <- system2(get.test.executable(), args, env=env)
         }
 	rc
 }
@@ -1024,6 +1003,8 @@ parse.args <- function() {
 			if (!(test.mode %in% c("system", "internal", "context"))) {
 				usage()
 			}
+		} else if (a == "--test-executable") {
+			test.executable <<- get.argvalue()
 		} else if (a == "--install-mode") {
 			install.mode <<- get.argvalue()
 			if (!(install.mode %in% c("system", "internal", "context"))) {
@@ -1113,6 +1094,7 @@ cat.args <- function() {
 		cat("random.count:", random.count, "\n")
 		cat("count.daily:", count.daily, "\n")
 		cat("test.mode:", test.mode, "\n")
+		cat("test.executable:", test.executable, "\n")
 		cat("install.mode:", install.mode, "\n")
 		cat("run.tests:", run.tests, "\n")
 		cat("print.install.status:", print.install.status, "\n")
@@ -1332,6 +1314,7 @@ random.count <- NA
 count.daily <- NA
 install.mode <- "internal"
 test.mode <- "system"
+test.executable <- NA
 run.tests <- FALSE
 gnur <- FALSE
 list.versions <- FALSE
