@@ -136,6 +136,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") BranchProfile seenNegativeProfile,
                     @Cached("create()") BranchProfile seenNegativeZeroProfile,
                     @Cached("create()") BranchProfile seenOutOfBounds,
+                    @Cached("create()") BranchProfile seenInf,
                     @Cached("create()") NullProfile hasNamesProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
                     @Cached("create()") GetNamesAttributeNode getNamesNode,
@@ -151,44 +152,51 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         lengthProfile.profileCounted(positionLength);
         for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
             double positionValue = position.getDataAt(i);
-            int intPositionValue = RRuntime.double2intNoCheck(positionValue);
-
-            if (intPositionValue > 0) {
-                seenPositiveProfile.enter();
-                hasSeenPositive = true;
-                if (intPositionValue > dimensionLength) {
-                    seenOutOfBounds.enter();
-                    outOfBoundsCount++;
-                    maxOutOfBoundsIndex = Math.max(maxOutOfBoundsIndex, intPositionValue);
-                }
-            } else if (intPositionValue == 0) {
-                seenZeroProfile.enter();
-                if (positionValue < 0) {
-                    seenNegativeZeroProfile.enter();
-                    /*
-                     * It seems that the range ]-2:0[ is all translated to -1. So much for
-                     * continuous math properties.
-                     */
-                    hasSeenNegative = true;
-                    intPositionValue = -1;
-                } else if (positionNACheck.checkNAorNaN(positionValue)) {
-                    hasSeenNA = true;
-                    intPositionValue = RRuntime.INT_NA;
-                } else {
-                    zeroCount++;
-                }
+            int intPositionValue;
+            if (Double.isInfinite(positionValue)) {
+                seenInf.enter();
+                hasSeenNA = true;
+                intPositionValue = RRuntime.INT_NA;
             } else {
-                seenNegativeProfile.enter();
-                assert positionValue < 0;
-                hasSeenNegative = true;
-                if (-positionValue > dimensionLength) {
-                    seenOutOfBounds.enter();
-                    outOfBoundsCount++;
-                    /*
-                     * We need to decrement the value to ensure that the later nodes see that the
-                     * value is actually out of bounds.
-                     */
-                    intPositionValue--;
+                intPositionValue = RRuntime.double2intNoCheck(positionValue);
+
+                if (intPositionValue > 0) {
+                    seenPositiveProfile.enter();
+                    hasSeenPositive = true;
+                    if (intPositionValue > dimensionLength) {
+                        seenOutOfBounds.enter();
+                        outOfBoundsCount++;
+                        maxOutOfBoundsIndex = Math.max(maxOutOfBoundsIndex, intPositionValue);
+                    }
+                } else if (intPositionValue == 0) {
+                    seenZeroProfile.enter();
+                    if (positionValue < 0) {
+                        seenNegativeZeroProfile.enter();
+                        /*
+                         * It seems that the range ]-2:0[ is all translated to -1. So much for
+                         * continuous math properties.
+                         */
+                        hasSeenNegative = true;
+                        intPositionValue = -1;
+                    } else if (positionNACheck.checkNAorNaN(positionValue)) {
+                        hasSeenNA = true;
+                        intPositionValue = RRuntime.INT_NA;
+                    } else {
+                        zeroCount++;
+                    }
+                } else {
+                    seenNegativeProfile.enter();
+                    assert positionValue < 0;
+                    hasSeenNegative = true;
+                    if (-positionValue > dimensionLength) {
+                        seenOutOfBounds.enter();
+                        outOfBoundsCount++;
+                        /*
+                         * We need to decrement the value to ensure that the later nodes see that
+                         * the value is actually out of bounds.
+                         */
+                        intPositionValue--;
+                    }
                 }
             }
             intPosition[i] = intPositionValue;

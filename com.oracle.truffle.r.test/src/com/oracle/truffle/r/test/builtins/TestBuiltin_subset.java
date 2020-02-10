@@ -222,4 +222,12 @@ public class TestBuiltin_subset extends TestBase {
         // multidimensional subset does not transfer the srcref attr
         assertEval("attributes(structure(1:4, dim=c(2,2), srcref=list('a', 'b', 'c', 'd'))[1,1])");
     }
+
+    @Test
+    public void testInfiniteIndex() {
+        assertEval("{ aaa <- c(1,2); aaa[-Inf] }");
+        assertEval("{ aaa <- c(1,2); aaa[Inf] }");
+        assertEval("{ aaa <- c(1,2); aaa[c(Inf, 1)] }");
+        assertEval("{ aaa <- c(1,2); aaa[c(-Inf, 1)] }");
+    }
 }
