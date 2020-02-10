@@ -198,7 +198,7 @@ choice.depends <- function(pkg, choice=c("direct","suggests")) {
 
 # provides JVM args when running the tests
 fastr.test.jvm.args <- function() {
-    mx.args.file <- "com.oracle.truffle.r.test.packages/test.mx.args"
+    mx.args.file <- file.path(curScriptDir, "..", "test.mx.args")
     tryCatch({
         if (file.exists(mx.args.file)) {
             opts <- paste0('"', paste0(readLines(mx.args.file), collapse=" "), '"')
@@ -926,7 +926,7 @@ is.fastr <- function() {
 }
 
 system.test <- function(pkgname, pkgEnv) {
-	script <- normalizePath("com.oracle.truffle.r.test.packages/r/test.package.R")
+	script <- normalizePath(file.path(curScriptDir, "test.package.R"))
     options <- character(0)
 	if (is.fastr()) {
 		rscript = file.path(R.home(), "bin", "Rscript")
