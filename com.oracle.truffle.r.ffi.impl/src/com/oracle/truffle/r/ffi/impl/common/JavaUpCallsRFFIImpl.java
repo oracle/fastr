@@ -280,6 +280,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             String nameKey = name.getName();
             Object value = env.get(nameKey);
             if (value != null) {
+                if (value instanceof EagerPromise) {
+                    EagerPromise promise = (EagerPromise) value;
+                    Object result = promise.getEagerValue();
+                    Object wrapped = FFIMaterializeNode.uncachedMaterialize(result);
+                    return wrapped;
+                }
                 if (value instanceof RPromise && ((RPromise) value).isOptimized()) {
                     // From the point of view of RFFI, optimized promises (i.e. promises with null
                     // env) should not show up
@@ -309,7 +315,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 return res;
             }
             if (!inherits) {
-                // simgle frame lookup
+                // single frame lookup
                 break;
             }
             env = env.getParent();

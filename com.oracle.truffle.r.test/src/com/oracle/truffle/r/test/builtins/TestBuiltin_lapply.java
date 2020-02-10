@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -63,6 +63,8 @@ public class TestBuiltin_lapply extends TestBase {
         assertEval(Output.IgnoreErrorContext, "f <- function(...) { .Internal(lapply(X=function() {print('test')}, FUN=function(x){x})) }; f()");
         assertEval(Ignored.ImplementationError, "f <- function(...) { .Internal(lapply(X=c(function() {print('test1')}, function() {print('test2')}), FUN=function(x){x})) }; f()");
         assertEval(Output.IgnoreErrorContext, "f <- function(...) { .Internal(lapply(X=environment(), FUN=function(x){x})) }; f()");
+
+        assertEval("{res <- lapply(1:3, function(x) { function() x }); res[[1]](); res[[2]](); res[[3]]()}");
     }
 
     @Test
