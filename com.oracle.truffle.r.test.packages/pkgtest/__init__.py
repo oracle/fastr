@@ -502,6 +502,9 @@ class PkgTestStatus(TestStatus):
 
 
 def _pkg_testdir(rvm, pkg_name):
+    '''
+    Returns the path to the package-specific test directory like "test.fastr/pkg_name"
+    '''
     if not isinstance(rvm, RVM):
         raise TypeError("Expected object of type 'RVM' but got '%s'" % str(type(rvm)))
     return join(rvm.get_testdir(), pkg_name)
