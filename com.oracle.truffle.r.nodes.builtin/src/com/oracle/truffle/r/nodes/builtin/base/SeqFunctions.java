@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -1125,7 +1125,7 @@ public final class SeqFunctions {
                 return result;
             } else {
                 length = checkVecLength(from, to);
-                RDoubleSequence result = RDataFactory.createDoubleSequence(from, directionProfile.profile(from <= to) ? 1 : -1, length);
+                RDoubleVector result = RDataFactory.createDoubleSequence(from, directionProfile.profile(from <= to) ? 1 : -1, length);
                 return result;
             }
         }

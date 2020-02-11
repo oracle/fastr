@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -40,8 +41,8 @@ public class RClosures {
         return RIntVector.createClosure(vector, keepAttributes);
     }
 
-    public static RAbstractDoubleVector createToDoubleVector(RAbstractVector vector, boolean keepAttributes) {
-        return new RToDoubleVectorClosure(vector, keepAttributes);
+    public static RDoubleVector createToDoubleVector(RAbstractVector vector, boolean keepAttributes) {
+        return RDoubleVector.createClosure(vector, keepAttributes);
     }
 
     public static RAbstractComplexVector createToComplexVector(RAbstractVector vector, boolean keepAttributes) {

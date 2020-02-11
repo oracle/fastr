@@ -22,30 +22,35 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.Arrays;
-
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
+@ExportLibrary(InteropLibrary.class)
 public final class RDoubleVector extends RAbstractDoubleVector implements RMaterializedVector, Shareable {
 
-    private double[] data;
+    private RDoubleVectorData data;
 
     RDoubleVector(double[] data, boolean complete) {
         super(complete);
-        this.data = data;
+        this.data = new RDoubleArrayVectorData(data, complete);
         assert RAbstractVector.verifyVector(this);
     }
 
@@ -54,16 +59,97 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    private RDoubleVector(RDoubleVectorData data) {
+        super(false);
+        this.data = data;
+    }
+
     private RDoubleVector() {
         super(false);
+    }
+
+    public static RDoubleVector createForeignWrapper(Object foreign) {
+        return new RDoubleVector(new RDoubleForeignObjData(foreign));
+    }
+
+    public static RDoubleVector createSequence(double start, double stride, int length) {
+        return new RDoubleVector(new RDoubleSeqVectorData(start, stride, length));
+    }
+
+    public static RDoubleVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
+        RDoubleVector result = new RDoubleVector(new RDoubleVecClosureData(delegate));
+        if (keepAttrs) {
+            result.initAttributes(delegate.getAttributes());
+        } else {
+            RClosures.initRegAttributes(result, delegate);
+        }
+        return result;
+    }
+
+    public RDoubleVectorData getData() {
+        return data;
     }
 
     static RDoubleVector fromNative(long address, int length) {
         RDoubleVector result = new RDoubleVector();
         NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
-        assert result.data == null;
+        result.data = new RDoubleNativeVectorData(result);
         return result;
+    }
+
+    @Override
+    public boolean isShareable() {
+        // TODO: initially we retain even the behavior of "isShareable" forcing materialization
+        // where it may not be necessary
+        // Only Java array and native memory backed vectors "look like" shareable
+        return RDoubleVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
+    }
+
+    @Override
+    public boolean isMaterialized() {
+        return RDoubleVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
+    }
+
+    @Override
+    protected boolean isScalarNA() {
+        assert getLength() == 1;
+        return RRuntime.isNA(getDataAt(0));
+    }
+
+    @Override
+    public boolean isComplete() {
+        return data.isComplete();
+    }
+
+    @Override
+    public boolean isForeignWrapper() {
+        return data instanceof RDoubleForeignObjData;
+    }
+
+    @Override
+    public boolean isSequence() {
+        return data instanceof RDoubleSeqVectorData;
+    }
+
+    @Override
+    public RDoubleSeqVectorData getSequence() {
+        return (RDoubleSeqVectorData) data;
+    }
+
+    @Override
+    public boolean isClosure() {
+        return data instanceof RDoubleVecClosureData;
+    }
+
+    @Override
+    public RClosure getClosure() {
+        return (RDoubleVecClosureData) data;
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.Double;
     }
 
     @Override
@@ -86,37 +172,42 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     @Override
     public double[] getInternalManagedData() {
-        return data;
+        if (data instanceof RDoubleNativeVectorData) {
+            return null;
+        }
+        // TODO: get rid of this method
+        assert data instanceof RDoubleArrayVectorData : data.getClass().getName();
+        return ((RDoubleArrayVectorData) data).getReadonlyDoubleData();
     }
 
     @Override
-    public double[] getInternalStore() {
+    public Object getInternalStore() {
         return data;
     }
 
     @Override
     public void setDataAt(Object store, int index, double value) {
         assert data == store;
-        NativeDataAccess.setData(this, (double[]) store, index, value);
+        ((RDoubleVectorData) store).setDoubleAt(index, value);
     }
 
     @Override
     public double getDataAt(Object store, int index) {
         assert data == store;
-        return NativeDataAccess.getData(this, (double[]) store, index);
+        return ((RDoubleVectorData) store).getDoubleAt(index);
     }
 
     @Override
     public int getLength() {
-        return NativeDataAccess.getDataLength(this, data);
+        return data.getLength();
     }
 
     @Override
     public void setLength(int l) {
         try {
-            NativeDataAccess.setDataLength(this, data, l);
+            NativeDataAccess.setDataLength(this, getArrayForNativeDataAccess(), l);
         } finally {
-            data = null;
+            data = new RDoubleNativeVectorData(this);
             setComplete(false);
         }
     }
@@ -128,38 +219,33 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     @Override
     public void setTrueLength(int l) {
-        NativeDataAccess.setTrueDataLength(this, l);
+        try {
+            NativeDataAccess.setTrueDataLength(this, l);
+        } finally {
+            data = new RDoubleNativeVectorData(this);
+            setComplete(false);
+        }
     }
 
     @Override
     public double getDataAt(int index) {
-        return NativeDataAccess.getData(this, data, index);
+        return data.getDoubleAt(index);
     }
 
     @Override
     public double[] getDataCopy() {
-        if (data != null) {
-            return Arrays.copyOf(data, data.length);
-        } else {
-            return NativeDataAccess.copyDoubleNativeData(getNativeMirror());
-        }
+        return RDoubleVectorDataLibrary.getFactory().getUncached().getDoubleDataCopy(data);
     }
 
     @Override
     public double[] getReadonlyData() {
-        if (data != null) {
-            return data;
-        } else {
-            return NativeDataAccess.copyDoubleNativeData(getNativeMirror());
-        }
+        return RDoubleVectorDataLibrary.getFactory().getUncached().getReadonlyDoubleData(data);
     }
 
     private RDoubleVector updateDataAt(int index, double value, NACheck valueNACheck) {
         assert !this.isShared();
-        NativeDataAccess.setData(this, data, index, value);
-        if (valueNACheck.check(value)) {
-            setComplete(false);
-        }
+        assert !RRuntime.isNA(value) || valueNACheck.isEnabled();
+        RDoubleVectorDataLibrary.getFactory().getUncached().setDoubleAt(data, index, value, valueNACheck);
         assert !isComplete() || !RRuntime.isNA(value);
         return this;
     }
@@ -171,12 +257,67 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     @Override
     public RDoubleVector materialize() {
-        return this;
+        if (RDoubleVectorDataLibrary.getFactory().getUncached().isWriteable(data)) {
+            return this;
+        }
+        // To retain the semantics of the original materialize, for sequences and such we return new
+        // vector
+        return new RDoubleVector(getDataCopy(), isComplete());
+    }
+
+    public void materializeData(RDoubleVectorDataLibrary dataLib) {
+        data = dataLib.materialize(data);
+    }
+
+    @Override
+    public RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return new RDoubleVector(new double[newLength], newIsComplete);
     }
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        NativeDataAccess.setData(this, data, toIndex, ((RAbstractDoubleVector) fromVector).getDataAt(fromIndex));
+        RDoubleVectorDataLibrary lib = RDoubleVectorDataLibrary.getFactory().getUncached();
+        double value = lib.getDoubleAt(((RDoubleVector) fromVector).data, fromIndex);
+        lib.setDoubleAt(data, toIndex, value);
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    protected void copyAttributes(RIntVector materializedVec) {
+        materializedVec.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RDoubleVector internalCopy() {
+        return RDataFactory.createDoubleVector(getDataCopy(), isComplete());
+    }
+
+    @Override
+    protected RDoubleVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        double[] localData = getReadonlyData();
+        double[] newData = Arrays.copyOf(localData, size);
+        newData = resizeData(newData, localData, localData.length, fillNA);
+        return RDataFactory.createDoubleVector(newData, isResizedComplete(size, fillNA), dimensions);
+    }
+
+    protected static double[] resizeData(double[] newData, double[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
+            if (fillNA) {
+                for (int i = oldDataLength; i < newData.length; i++) {
+                    newData[i] = RRuntime.DOUBLE_NA;
+                }
+            } else {
+                assert oldData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
+                    newData[i] = oldData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    public double[] getDataTemp() {
+        return super.getDataTemp();
     }
 
     @Override
@@ -184,33 +325,59 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         return getDataAt(index);
     }
 
+    @Override
+    public void setElement(int index, Object value) {
+        data.setDoubleAt(index, (Double) value);
+    }
+
     public long allocateNativeContents() {
         try {
-            return NativeDataAccess.allocateNativeContents(this, data, getLength());
+            data = RDoubleVectorDataLibrary.getFactory().getUncached().materialize(data);
+            long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
+            data = new RDoubleNativeVectorData(this);
+            return result;
         } finally {
-            data = null;
             setComplete(false);
         }
     }
 
+    private AtomicReference<RDoubleVector> materialized = new AtomicReference<>();
+
+    public Object cachedMaterialize() {
+        if (materialized.get() == null) {
+            materialized.compareAndSet(null, materialize());
+        }
+        return materialized.get();
+    }
+
     private static final class FastPathAccess extends FastPathFromDoubleAccess {
+
+        @Child RDoubleVectorDataLibrary dataLib;
 
         FastPathAccess(RAbstractContainer value) {
             super(value);
+            dataLib = RDoubleVectorDataLibrary.getFactory().create(((RDoubleVector) value).data);
         }
 
         @Override
-        protected double getDoubleImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((double[]) accessIter.getStore())[index] : NativeDataAccess.getDoubleNativeMirrorData((NativeMirror) accessIter.getStore(), index);
+        public boolean supports(Object value) {
+            if (!super.supports(value)) {
+                return false;
+            }
+            if (value instanceof RDoubleVector) {
+                return dataLib.accepts(((RDoubleVector) value).getData());
+            }
+            return false;
+        }
+
+        @Override
+        public double getDoubleImpl(AccessIterator accessIter, int index) {
+            return dataLib.getDoubleAt((RDoubleVectorData) accessIter.getStore(), index);
         }
 
         @Override
         protected void setDoubleImpl(AccessIterator accessIter, int index, double value) {
-            if (hasStore) {
-                ((double[]) accessIter.getStore())[index] = value;
-            } else {
-                NativeDataAccess.setNativeMirrorDoubleData((NativeMirror) accessIter.getStore(), index, value);
-            }
+            dataLib.setDoubleAt((RDoubleVectorData) accessIter.getStore(), index, value);
         }
     }
 
@@ -221,20 +388,27 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     private static final SlowPathFromDoubleAccess SLOW_PATH_ACCESS = new SlowPathFromDoubleAccess() {
         @Override
-        protected double getDoubleImpl(AccessIterator accessIter, int index) {
+        public double getDoubleImpl(AccessIterator accessIter, int index) {
             RDoubleVector vector = (RDoubleVector) accessIter.getStore();
-            return NativeDataAccess.getData(vector, vector.data, index);
+            return vector.getDataAt(index);
         }
 
         @Override
         protected void setDoubleImpl(AccessIterator accessIter, int index, double value) {
             RDoubleVector vector = (RDoubleVector) accessIter.getStore();
-            NativeDataAccess.setData(vector, vector.data, index, value);
+            vector.setDataAt(vector.getInternalStore(), index, value);
         }
     };
 
     @Override
     public VectorAccess slowPathAccess() {
         return SLOW_PATH_ACCESS;
+    }
+
+    // TODO: Hack: we make sure the vector is either array or native, so that we can call
+    // NativeDataAccess methods
+    private double[] getArrayForNativeDataAccess() {
+        materializeData(RDoubleVectorDataLibrary.getFactory().getUncached());
+        return data instanceof RDoubleArrayVectorData ? ((RDoubleArrayVectorData) data).getReadonlyDoubleData() : null;
     }
 }

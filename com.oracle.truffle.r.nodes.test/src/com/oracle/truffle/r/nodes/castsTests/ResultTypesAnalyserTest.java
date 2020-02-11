@@ -75,7 +75,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -167,7 +166,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testBoxPrimitive() {
         arg.boxPrimitive();
-        TypeExpr expected = TypeExpr.union(RIntVector.class, RLogical.class, RDouble.class, RString.class);
+        TypeExpr expected = TypeExpr.union(RIntVector.class, RLogical.class, RDoubleVector.class, RString.class);
         expected = expected.or((expected.not().and(atom(String.class).not()).and(atom(Double.class).not()).and(atom(Integer.class).not()).and(atom(Byte.class).not())));
         assertTypes(expected);
     }

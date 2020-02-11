@@ -34,8 +34,8 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 
@@ -94,7 +95,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return factory().createStringSequence("", "", seq.getStart(), seq.getStride(), vector.getLength());
     }
 
-    @Specialization(guards = {"uAccess.supports(operandIn)", "handleAsAtomic(operandIn)", "!isForeignIntVector(operandIn)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"uAccess.supports(operandIn)", "handleAsAtomic(operandIn)", "!isForeignVector(operandIn)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RStringVector doAbstractAtomicVector(RAbstractAtomicVector operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
                     @Cached("operandIn.access()") VectorAccess uAccess) {
@@ -111,7 +112,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return vectorCopy(operand, sdata);
     }
 
-    @Specialization(replaces = "doAbstractAtomicVector", guards = {"handleAsAtomic(operandIn)", "!isForeignIntVector(operandIn)"})
+    @Specialization(replaces = "doAbstractAtomicVector", guards = {"handleAsAtomic(operandIn)", "!isForeignVector(operandIn)"})
     protected RStringVector doAbstractAtomicVectorGeneric(RAbstractAtomicVector operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile) {
         return doAbstractAtomicVector(operandIn, operandProfile, operandIn.slowPathAccess());
@@ -178,8 +179,10 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return RClosures.createToStringVector(operand, true);
     }
 
-    @Specialization
-    protected RAbstractStringVector doForeignWrapper(RForeignDoubleWrapper operand) {
+    @Specialization(guards = "operand.isForeignWrapper()")
+    protected RAbstractStringVector doForeignWrapper(RDoubleVector operand) {
+        // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
+        // specialization
         return RClosures.createToStringVector(operand, true);
     }
 
@@ -187,8 +190,8 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return value instanceof RForeignVectorWrapper;
     }
 
-    public boolean isForeignIntVector(RAbstractContainer operand) {
-        return operand instanceof RIntVector && ((RIntVector) operand).isForeignWrapper();
+    public boolean isForeignVector(RAbstractVector operand) {
+        return RRuntime.hasVectorData(operand) && operand.isForeignWrapper();
     }
 
     protected boolean isIntSequence(RAbstractContainer c) {

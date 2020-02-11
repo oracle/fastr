@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -39,6 +41,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
+@ExportLibrary(InteropLibrary.class)
 public final class RIntVector extends RAbstractNumericVector {
 
     private RIntVectorData data;
@@ -128,6 +131,7 @@ public final class RIntVector extends RAbstractNumericVector {
         return (RIntVecClosureData) data;
     }
 
+    @Override
     public boolean isForeignWrapper() {
         return data instanceof RIntForeignObjData;
     }

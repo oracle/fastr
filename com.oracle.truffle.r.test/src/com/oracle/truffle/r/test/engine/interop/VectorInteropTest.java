@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,8 +39,8 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
@@ -136,8 +136,8 @@ public class VectorInteropTest extends AbstractInteropTest {
         // double
         testRNARTOTIN(RDataFactory.createDoubleVector(new double[]{42, RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR), 42.0);
         testRNARTOTIN(RClosures.createToDoubleVector(RDataFactory.createIntVector(new int[]{42, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true), 42.0);
-        testRNARTOTIN(new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{42, RRuntime.DOUBLE_NA})), 42.0);
-        testRNARTOTIN(new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new Double[]{42.0, null})), 42.0);
+        testRNARTOTIN(RDoubleVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new double[]{42, RRuntime.DOUBLE_NA})), 42.0);
+        testRNARTOTIN(RDoubleVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new Double[]{42.0, null})), 42.0);
         getInterop().isNull(RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR));
 
         // string
@@ -232,13 +232,13 @@ public class VectorInteropTest extends AbstractInteropTest {
                         RClosures.createToDoubleVector(RDataFactory.createIntVector(new int[]{1, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true),
                         RClosures.createToDoubleVector(RDataFactory.createEmptyIntVector(), true),
                         // double foreign wrapper
-                        new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{1})),
-                        new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{1, 2, 3})),
-                        new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(
+                        RDoubleVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new double[]{1})),
+                        RDoubleVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new double[]{1, 2, 3})),
+                        RDoubleVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(
                                         new double[]{Byte.MAX_VALUE, Short.MAX_VALUE, Integer.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, Long.MAX_VALUE})),
-                        new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{RRuntime.DOUBLE_NA})),
-                        new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{1, RRuntime.DOUBLE_NA})),
-                        new RForeignDoubleWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new double[]{})),
+                        RDoubleVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new double[]{RRuntime.DOUBLE_NA})),
+                        RDoubleVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new double[]{1, RRuntime.DOUBLE_NA})),
+                        RDoubleVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new double[]{})),
 
                         // string array
                         RDataFactory.createStringVector(new String[]{"test1"}, true),

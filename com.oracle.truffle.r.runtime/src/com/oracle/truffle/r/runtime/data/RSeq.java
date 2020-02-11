@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,11 @@
 
 package com.oracle.truffle.r.runtime.data;
 
+/**
+ * An {@link RSeq} only records the "length", "start" and "stride". The "stride" value is positive
+ * to indicate an ascending sequence and negative for a descending sequence. I.e., the "end" is
+ * computed and not stored.
+ */
 public interface RSeq {
     Object getStartObject();
 

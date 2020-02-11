@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -70,7 +70,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * {@link RandFunction3_DoubleBase}, {@link RandFunction2_Double} or {@link RandFunction1_Double}.
  */
 public final class RandFunctionsNodes {
-    private static final RDouble DUMMY_VECTOR = RDouble.valueOf(1);
+    private static final RDoubleVector DUMMY_VECTOR = RDataFactory.createDoubleVectorFromScalar(1);
 
     private RandFunctionsNodes() {
         // static class

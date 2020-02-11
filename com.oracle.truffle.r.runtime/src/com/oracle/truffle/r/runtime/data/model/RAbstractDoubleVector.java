@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ public abstract class RAbstractDoubleVector extends RAbstractNumericVector {
     }
 
     @Override
-    public final RType getRType() {
+    public RType getRType() {
         return RType.Double;
     }
 
@@ -132,7 +132,7 @@ public abstract class RAbstractDoubleVector extends RAbstractNumericVector {
     }
 
     @Override
-    public final RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
+    public RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
     }
 

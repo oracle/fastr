@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,13 +24,11 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -50,7 +48,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.closures.RToComplexVectorClosure;
-import com.oracle.truffle.r.runtime.data.closures.RToDoubleVectorClosure;
 import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -73,7 +70,7 @@ public enum SEXPTYPE {
     /* integer vectors */
     INTSXP(13, RIntVector.class, Integer.class),
     /* real vectors */
-    REALSXP(14, RDoubleVector.class, RDoubleSequence.class, Double.class, RForeignDoubleWrapper.class, RToDoubleVectorClosure.class),
+    REALSXP(14, RDoubleVector.class, Double.class),
     /* complex vectors */
     CPLXSXP(15, RComplexVector.class, RComplex.class, RToComplexVectorClosure.class),
     /* string vectors */

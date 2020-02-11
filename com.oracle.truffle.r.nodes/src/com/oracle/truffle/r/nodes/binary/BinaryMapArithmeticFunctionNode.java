@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RDoubleSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -228,7 +228,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
     private RAbstractVector foldSequence(RSeq sequence, Object otherStart, Object otherStride, NACheck otherNACheck) {
         if (sequence instanceof RIntSeqVectorData) {
             return foldIntSequence((RIntSeqVectorData) sequence, otherStart, otherStride, otherNACheck);
-        } else if (sequence instanceof RDoubleSequence) {
+        } else if (sequence instanceof RDoubleSeqVectorData) {
             return foldDoubleSequence(sequence, otherStart, otherStride, otherNACheck);
         }
         return null;
@@ -239,7 +239,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         if (otherNACheck.check(otherStartDouble)) {
             return null;
         }
-        RDoubleSequence castSequence = (RDoubleSequence) sequence;
+        RDoubleSeqVectorData castSequence = (RDoubleSeqVectorData) sequence;
         double newStart = applyDouble(castSequence.getStart(), otherStartDouble);
         resultNACheck.enable(arithmetic.introducesNA());
         if (resultNACheck.check(newStart)) {
@@ -268,7 +268,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         double[] data = new double[len];
         double otherVal = otherStartDouble;
         for (int i = 0; i < len; i++) {
-            data[i] = applyDouble(castSequence.getDataAt(i), otherVal);
+            data[i] = applyDouble(castSequence.getDoubleAt(i), otherVal);
             otherVal += otherStrideDouble;
         }
         return RDataFactory.createDoubleVector(data, true);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,12 @@
 
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.library.GenerateLibrary;
 import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import static com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.notWriteableError;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 // TODO: add "assertions" library, possible checks:
@@ -40,59 +41,6 @@ public abstract class RIntVectorDataLibrary extends Library {
 
     public static LibraryFactory<RIntVectorDataLibrary> getFactory() {
         return FACTORY;
-    }
-
-    // Iterators and exceptions: to be moved to RVectorDataLibrary
-
-    public static RInternalError notWriteableError(Class<?> dataClass, String method) {
-        CompilerDirectives.transferToInterpreter();
-        throw RInternalError.shouldNotReachHere(String.format("RVectorData class '%s' is not writeable, it must be materialized before writing. Method: '%s'", dataClass.getSimpleName(), method));
-    }
-
-    public abstract static class Iterator {
-        private final Object store;
-        private final int length;
-
-        protected Iterator(Object store, int length) {
-            this.store = store;
-            this.length = length;
-        }
-
-        // Note: intentionally package private
-        final Object getStore() {
-            return store;
-        }
-
-        public final int getLength() {
-            return length;
-        }
-    }
-
-    public static final class SeqIterator extends Iterator {
-        private int index;
-
-        protected SeqIterator(Object store, int length) {
-            super(store, length);
-            index = -1;
-        }
-
-        public boolean next() {
-            return ++index < getLength();
-        }
-
-        public void nextWithWrap() {
-            // TODO
-        }
-
-        public int getIndex() {
-            return index;
-        }
-    }
-
-    public static final class RandomAccessIterator extends Iterator {
-        protected RandomAccessIterator(Object store, int length) {
-            super(store, length);
-        }
     }
 
     // ---------------------------------------------------------------------
@@ -157,17 +105,17 @@ public abstract class RIntVectorDataLibrary extends Library {
      */
     @SuppressWarnings("unused")
     public void setIntAt(RIntVectorData receiver, int index, int value, NACheck naCheck) {
-        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
+        throw notWriteableError(RIntVectorData.class, "setIntAt");
     }
 
     @SuppressWarnings("unused")
     public void setNext(RIntVectorData receiver, SeqIterator it, int value, NACheck naCheck) {
-        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
+        throw notWriteableError(RIntVectorData.class, "setIntAt");
     }
 
     @SuppressWarnings("unused")
     public void setAt(RIntVectorData receiver, RandomAccessIterator it, int index, int value, NACheck naCheck) {
-        throw notWriteableError(RIntSeqVectorData.class, "setIntAt");
+        throw notWriteableError(RIntVectorData.class, "setIntAt");
     }
 
     public final void setIntAt(RIntVectorData receiver, int index, int value) {

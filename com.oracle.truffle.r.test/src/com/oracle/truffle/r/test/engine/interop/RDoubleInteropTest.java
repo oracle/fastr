@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,8 @@ package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import org.junit.Test;
 
 public class RDoubleInteropTest extends AbstractInteropTest {
@@ -37,8 +38,8 @@ public class RDoubleInteropTest extends AbstractInteropTest {
 
     @Override
     protected boolean isNull(TruffleObject obj) {
-        assert obj instanceof RDouble;
-        return ((RDouble) obj).isNA();
+        assert obj instanceof RDoubleVector && ((RDoubleVector) obj).getLength() == 1;
+        return RRuntime.isNA(((RDoubleVector) obj).getDataAt(0));
     }
 
     @Override
@@ -58,12 +59,12 @@ public class RDoubleInteropTest extends AbstractInteropTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RDouble.valueOf(1.1), RDouble.createNA()};
+        return new TruffleObject[]{RDataFactory.createDoubleVectorFromScalar(1.1), RDataFactory.createDoubleVectorFromScalar(RRuntime.DOUBLE_NA)};
     }
 
     @Override
     protected Object getUnboxed(TruffleObject obj) {
-        double unboxed = ((RDouble) obj).getValue();
+        double unboxed = ((RDoubleVector) obj).getDataAt(0);
         return RRuntime.isNA(unboxed) ? null : unboxed;
     }
 

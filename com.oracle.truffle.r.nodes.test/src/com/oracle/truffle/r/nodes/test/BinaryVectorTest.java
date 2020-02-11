@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@ import org.junit.experimental.theories.DataPoint;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -49,7 +48,7 @@ public class BinaryVectorTest extends TestBase {
 
     @DataPoint public static final RAbstractVector PRIMITIVE_LOGICAL = RLogical.valueOf((byte) 1);
     @DataPoint public static final RAbstractVector PRIMITIVE_INTEGER = RDataFactory.createIntVectorFromScalar(42);
-    @DataPoint public static final RAbstractVector PRIMITIVE_DOUBLE = RDouble.valueOf(42d);
+    @DataPoint public static final RAbstractVector PRIMITIVE_DOUBLE = RDataFactory.createDoubleVectorFromScalar(42d);
     @DataPoint public static final RAbstractVector PRIMITIVE_COMPLEX = RComplex.valueOf(1.0, 1.0);
 
     @DataPoint public static final RAbstractVector EMPTY_LOGICAL = createEmptyLogicalVector();

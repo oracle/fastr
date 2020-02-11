@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,8 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(RIntVectorDataLibrary.class)

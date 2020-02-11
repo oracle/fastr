@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,7 +54,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean isNull(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
+    public final boolean isNull(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
         if (!isScalar.profile(isScalar())) {
             return false;
         }
@@ -62,7 +62,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean isNumber() {
+    public final boolean isNumber() {
         if (!isScalar()) {
             return false;
         }
@@ -70,7 +70,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean fitsInByte() {
+    public final boolean fitsInByte() {
         if (!isNumber()) {
             return false;
         }
@@ -79,7 +79,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final byte asByte(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+    public final byte asByte(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
         if (!isNumber.profile(isNumber())) {
             throw UnsupportedMessageException.create();
         }
@@ -88,7 +88,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean fitsInShort() {
+    public final boolean fitsInShort() {
         if (!isNumber()) {
             return false;
         }
@@ -97,7 +97,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final short asShort(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+    public final short asShort(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
         if (!isNumber.profile(isNumber())) {
             throw UnsupportedMessageException.create();
         }
@@ -106,7 +106,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean fitsInInt() {
+    public final boolean fitsInInt() {
         if (!isNumber()) {
             return false;
         }
@@ -115,7 +115,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final int asInt(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+    public final int asInt(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
         if (!isNumber.profile(isNumber())) {
             throw UnsupportedMessageException.create();
         }
@@ -124,7 +124,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean fitsInLong() {
+    public final boolean fitsInLong() {
         if (!isNumber()) {
             return false;
         }
@@ -133,7 +133,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final long asLong(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+    public final long asLong(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
         if (!isNumber.profile(isNumber())) {
             throw UnsupportedMessageException.create();
         }
@@ -142,7 +142,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean fitsInFloat() {
+    public final boolean fitsInFloat() {
         if (!isNumber()) {
             return false;
         }
@@ -151,7 +151,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final float asFloat(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+    public final float asFloat(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
         if (!isNumber.profile(isNumber())) {
             throw UnsupportedMessageException.create();
         }
@@ -160,7 +160,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean fitsInDouble() {
+    public final boolean fitsInDouble() {
         if (!isNumber()) {
             return false;
         }
@@ -169,7 +169,7 @@ public abstract class RAbstractNumericVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final double asDouble(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
+    public final double asDouble(@Cached.Shared("isNumber") @Cached("createBinaryProfile()") ConditionProfile isNumber) throws UnsupportedMessageException {
         if (!isNumber.profile(isNumber())) {
             throw UnsupportedMessageException.create();
         }
