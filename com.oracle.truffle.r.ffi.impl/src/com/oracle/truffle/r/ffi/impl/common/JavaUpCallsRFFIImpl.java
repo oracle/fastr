@@ -280,22 +280,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             String nameKey = name.getName();
             Object value = env.get(nameKey);
             if (value != null) {
-                if (value instanceof EagerPromise) {
-                    EagerPromise promise = (EagerPromise) value;
-                    Object result = promise.getEagerValue();
-                    Object wrapped = FFIMaterializeNode.uncachedMaterialize(result);
-                    return wrapped;
-                }
-                if (value instanceof RPromise && ((RPromise) value).isOptimized()) {
-                    // From the point of view of RFFI, optimized promises (i.e. promises with null
-                    // env) should not show up
+                if (value instanceof RPromise) {
                     RPromise promise = (RPromise) value;
-                    Object result = promise.getRawValue();
-                    Object wrapped = FFIMaterializeNode.uncachedMaterialize(result);
-                    if (wrapped != result) {
-                        promise.updateValue(wrapped);
-                    }
-                    return wrapped;
+                    // The calling site in native code should not get a promise with a null frame
+                    // that could be an issue when PRENV is then called on the promise. The only
+                    // exception is EagerPromise for which there is special handling in PRENV
+                    // reconstructing the original frame via EagetPromise.materialize().
+                    assert promise instanceof EagerPromise || promise.getFrame() != null;
+                    return promise;
                 }
                 if (value instanceof RArgsValuesAndNames) {
                     RArgsValuesAndNames argsValsNames = (RArgsValuesAndNames) value;
