@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,13 +121,15 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
     private final int wrapIndex;
 
     private final Assumption allArgPromisesCanOptimize;
+    private final boolean alwaysForce;
 
-    public OptForcedEagerPromiseNode(RPromiseFactory factory, int wrapIndex, Assumption allArgPromisesCanOptimize) {
+    public OptForcedEagerPromiseNode(RPromiseFactory factory, int wrapIndex, Assumption allArgPromisesCanOptimize, boolean alwaysForce) {
         super(null);
         this.factory = factory;
         this.wrapIndex = wrapIndex;
         this.expr = (RNode) factory.getExpr();
         this.allArgPromisesCanOptimize = allArgPromisesCanOptimize;
+        this.alwaysForce = alwaysForce;
     }
 
     /**
@@ -142,7 +144,7 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
         RCaller currentCaller = RArguments.getCall(frame);
         boolean previousEvalEagerOnly = currentCaller.evaluateOnlyEagerPromises();
         try {
-            currentCaller.setEvaluateOnlyEagerPromises(true);
+            currentCaller.setEvaluateOnlyEagerPromises(!alwaysForce);
 
             // need to unwrap as re-wrapping happens when the value is retrieved (otherwise ref
             // count update happens twice)
@@ -162,6 +164,7 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
                 nonPromiseProfile.enter();
             }
         } catch (CannotOptimizePromise ex) {
+            assert !alwaysForce;
             allArgPromisesCanOptimize.invalidate();
             if (previousEvalEagerOnly) {
                 // no point in continuing executing this node, which checks this assumption as the
@@ -177,10 +180,11 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
             return getFallback().execute(frame);
         }
         RCaller call = RCaller.unwrapPromiseCaller(currentCaller, unwrapCallerProfile);
+        EagerFeedback feedback = alwaysForce ? null : this;
         if (CompilerDirectives.inInterpreter()) {
-            return factory.createEagerSuppliedPromise(value, allArgPromisesCanOptimize, call, this, wrapIndex, frame.materialize());
+            return factory.createEagerSuppliedPromise(value, allArgPromisesCanOptimize, call, feedback, wrapIndex, frame.materialize());
         }
-        return factory.createEagerSuppliedPromise(value, allArgPromisesCanOptimize, call, this, wrapIndex, null);
+        return factory.createEagerSuppliedPromise(value, allArgPromisesCanOptimize, call, feedback, wrapIndex, null);
     }
 
     @Override

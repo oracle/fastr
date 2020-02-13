@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,6 +57,7 @@ public class TestBuiltin_rapply extends TestBase {
         assertEval("rapply(list(NA), function(x) {2*x})");
         assertEval("rapply(list(NULL), function(x) {2*x}, how=\"list\")");
         assertEval("rapply(list(NULL), function(x) {2*x}, how=\"replace\")");
+        assertEval("{res <- rapply(list(1,2,3), function(x) function() x); res[[1]](); res[[2]](); res[[3]]()}");
     }
 
     @Test

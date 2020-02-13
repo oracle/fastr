@@ -104,7 +104,7 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
      * case of events that may cause modifications to the global state, which is a measure to
      * preserve correctness. Forced evaluation requested by this method is never cancelled.
      */
-    public boolean foceEagerEvaluation() {
+    public boolean forceEagerEvaluation() {
         return false;
     }
 }

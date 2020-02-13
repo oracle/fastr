@@ -118,10 +118,10 @@ public abstract class PromiseNode extends RNode {
         if (arg instanceof WrapArgumentNode) {
             wrapIndex = ((WrapArgumentNode) arg).getIndex();
         }
-        boolean alwaysEager = expr != null && expr.foceEagerEvaluation();
+        boolean alwaysEager = expr != null && expr.forceEagerEvaluation();
         if (forcedEager || alwaysEager) {
             Assumption assumption = alwaysEager ? AlwaysValidAssumption.INSTANCE : allArgPromisesCanOptimize;
-            return new OptForcedEagerPromiseNode(factory, wrapIndex, assumption);
+            return new OptForcedEagerPromiseNode(factory, wrapIndex, assumption, alwaysEager);
         } else {
             Object optimizableConstant = getOptimizableConstant(expr);
             if (optimizableConstant != null) {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -137,6 +137,11 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
         @Override
         public RSyntaxElement[] getSyntaxArguments() {
             return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(LAZY_DEPARSE, "object", false), RSyntaxLookup.createDummyLookup(LAZY_DEPARSE, "i", false)};
+        }
+
+        @Override
+        public boolean forceEagerEvaluation() {
+            return true;
         }
     }
 
