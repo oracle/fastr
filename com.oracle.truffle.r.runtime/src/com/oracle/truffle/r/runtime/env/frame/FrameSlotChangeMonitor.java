@@ -268,9 +268,9 @@ public final class FrameSlotChangeMonitor {
             }
             Frame next = RArguments.getEnclosingFrame(current);
             /*
-             * The following assertion must be put behind a comment as the initialization procedure
-             * of the processx package breaks it by changing the parent environment of the current
-             * one, i.e. by executing:
+             * The following condition used to be an assertion, but it was turned into a condition
+             * as the initialization procedure of the processx package breaks it by changing the
+             * parent environment of the current one, i.e. by executing:
              *
              * env <- environment(); parent.env(env) <- baseenv()
              *
@@ -280,11 +280,9 @@ public final class FrameSlotChangeMonitor {
              * considered extremely dangerous. The builtin parent.env<- can also be removed in the
              * near future.
              */
-            // assert isEnclosingFrameDescriptor(current, next) : "the enclosing frame descriptor
-            // assumptions do
-            // not match the actual enclosing frame descriptor: " + getMetaData(current).name + " ->
-            // " +
-            // getMetaData(next).name;
+            if (!isEnclosingFrameDescriptor(current, next)) {
+                return null;
+            }
             if (next == null) {
                 // leave "current" if we hit the empty env
                 break;
@@ -310,14 +308,12 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
-    // An unused method due to the commented out assertion above
-
-    // private static boolean isEnclosingFrameDescriptor(Frame current, Frame next) {
-    // assert current != null;
-    // FrameDescriptorMetaData metaData = getMetaData(current);
-    // FrameDescriptor nextDesc = next == null ? null : handleBaseNamespaceEnv(next);
-    // return metaData.getEnclosingFrameDescriptor() == nextDesc;
-    // }
+    private static boolean isEnclosingFrameDescriptor(Frame current, Frame next) {
+        assert current != null;
+        FrameDescriptorMetaData metaData = getMetaData(current);
+        FrameDescriptor nextDesc = next == null ? null : handleBaseNamespaceEnv(next);
+        return metaData.getEnclosingFrameDescriptor() == nextDesc;
+    }
 
     private static synchronized void invalidateNames(FrameDescriptorMetaData metaData, Collection<Object> identifiers) {
         if (metaData.previousLookups.removeAll(identifiers)) {
