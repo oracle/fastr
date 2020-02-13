@@ -146,7 +146,7 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
         }
 
         @Override
-        public boolean mustBeEvaluatedEagerily() {
+        public boolean foceEagerEvaluation() {
             return true;
         }
     }

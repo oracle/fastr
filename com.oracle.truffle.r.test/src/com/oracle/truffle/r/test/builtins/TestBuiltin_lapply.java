@@ -65,6 +65,11 @@ public class TestBuiltin_lapply extends TestBase {
         assertEval(Output.IgnoreErrorContext, "f <- function(...) { .Internal(lapply(X=environment(), FUN=function(x){x})) }; f()");
 
         assertEval("{res <- lapply(1:3, function(x) { function() x }); res[[1]](); res[[2]](); res[[3]]()}");
+        // with fast-path that does not evaluate its arg
+        assertEval("lapply(list('a'), match.arg, c('a'))");
+        // with a builtin that does not evaluate its arg
+        // TODO: the full result is expression(X[[i]], ...) in GNU-R vs expression(X[[i]]) in FastR
+        assertEval("lapply(list(2), expression)[[1]][[1]]");
     }
 
     @Test

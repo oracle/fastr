@@ -300,12 +300,6 @@ public abstract class MatchArgFastPath extends RFastPathNode {
         return cache.internal.castAndExecute(frame, cache.promiseHelper.evaluate(frame, arg), cache.choicesValue.execute(frame), severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
     }
 
-    @Specialization(guards = "!isRPromise(arg)")
-    protected Object matchNonPromiseArg(VirtualFrame frame, Object arg, @SuppressWarnings("unused") RMissing choices, Object severalOK,
-                    @Cached("createInternal()") MatchArgInternal internal) {
-        return internal.castAndExecute(frame, arg, arg, severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
-    }
-
     public static final class MatchArgNode extends Node {
         @Child public MatchArgChoices choicesValue;
         @Child public MatchArgInternal internal;

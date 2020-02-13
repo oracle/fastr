@@ -36,6 +36,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.api.utilities.AlwaysValidAssumption;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -111,17 +112,16 @@ public abstract class PromiseNode extends RNode {
 
         // For ARG_DEFAULT, expr == defaultExpr!
         RNode arg = (RNode) factory.getExpr();
-        if (arg.mustBeEvaluatedEagerily()) {
-            return arg;
-        }
 
         RNode expr = (RNode) RASTUtils.unwrap(arg);
         int wrapIndex = ArgumentStatePush.INVALID_INDEX;
         if (arg instanceof WrapArgumentNode) {
             wrapIndex = ((WrapArgumentNode) arg).getIndex();
         }
-        if (forcedEager) {
-            return new OptForcedEagerPromiseNode(factory, wrapIndex, allArgPromisesCanOptimize);
+        boolean alwaysEager = expr != null && expr.foceEagerEvaluation();
+        if (forcedEager || alwaysEager) {
+            Assumption assumption = alwaysEager ? AlwaysValidAssumption.INSTANCE : allArgPromisesCanOptimize;
+            return new OptForcedEagerPromiseNode(factory, wrapIndex, assumption);
         } else {
             Object optimizableConstant = getOptimizableConstant(expr);
             if (optimizableConstant != null) {
