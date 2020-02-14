@@ -66,6 +66,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(NativeTypeLibrary.class)
@@ -571,19 +572,26 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         @Specialization(limit = "1")
         protected static Object doAltStringVector(RAltStringVector vector, int index, long addr,
-                                                  @CachedLibrary("vector.getDescriptor().getSetEltMethod()") InteropLibrary setEltMethodInterop,
+                                                  @CachedLibrary("vector.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInterop,
+                                                  @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
                                                   @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             Object value = NativeDataAccess.lookup(addr);
             assert value instanceof CharSXPWrapper;
-            vector.getDescriptor().invokeSetEltMethodCached(vector, index, value, setEltMethodInterop, hasMirrorProfile);
+            long dataptrAddr = vector.getDescriptor().invokeDataptrMethodCached(vector, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
+            byte[] valueBytes = ((CharSXPWrapper) value).getContents().getBytes();
+            NativeMemory.copyMemory(valueBytes, dataptrAddr, ElementType.BYTE, valueBytes.length);
             return vector;
         }
 
         @Specialization(limit = "1")
         protected static Object doAltStringVector(RAltStringVector vector, int index, CharSXPWrapper value,
-                                                  @CachedLibrary("vector.getDescriptor().getSetEltMethod()") InteropLibrary setEltMethodInterop,
+                                                  @CachedLibrary("vector.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInterop,
+                                                  @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
                                                   @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            vector.getDescriptor().invokeSetEltMethodCached(vector, index, value, setEltMethodInterop, hasMirrorProfile);
+            vector.getDescriptor().invokeSetEltMethodCached(vector, index, value, dataptrMethodInterop, hasMirrorProfile);
+            long dataptrAddr = vector.getDescriptor().invokeDataptrMethodCached(vector, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
+            byte[] valueBytes = value.getContents().getBytes();
+            NativeMemory.copyMemory(valueBytes, dataptrAddr, ElementType.BYTE, valueBytes.length);
             return vector;
         }
 

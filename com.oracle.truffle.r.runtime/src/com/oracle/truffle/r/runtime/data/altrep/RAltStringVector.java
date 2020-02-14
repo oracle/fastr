@@ -27,8 +27,8 @@ public class RAltStringVector extends RAbstractStringVector implements RAbstract
     }
 
     private static boolean hasDescriptorRegisteredNecessaryMethods(AltStringClassDescriptor descriptor) {
-        return descriptor.isEltMethodRegistered() && descriptor.isSetEltMethodRegistered()
-                && descriptor.isLengthMethodRegistered();
+        return descriptor.isDataptrMethodRegistered() && descriptor.isEltMethodRegistered() &&
+                descriptor.isSetEltMethodRegistered() && descriptor.isLengthMethodRegistered();
             /* TODO: && descriptor.isUnserializeMethodRegistered(); */
     }
 

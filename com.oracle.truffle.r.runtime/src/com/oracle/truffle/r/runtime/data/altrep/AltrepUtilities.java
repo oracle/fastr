@@ -115,6 +115,9 @@ public class AltrepUtilities {
         }
     }
 
+    /**
+     *
+     */
     public abstract static class AltrepReadArrayElement extends Node {
         public abstract Object execute(Object altrepVector, int index);
 
@@ -140,6 +143,13 @@ public class AltrepUtilities {
                                   @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             long address = altIntVec.getDescriptor().invokeDataptrMethodCached(altIntVec, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
             return NativeMemory.getInt(address, index);
+        }
+
+        @Specialization(limit = "3")
+        Object doAltString(RAltStringVector altStringVector, int index,
+                           @CachedLibrary("altStringVector.getDescriptor().getEltMethod()") InteropLibrary eltMethodInterop,
+                           @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+            return altStringVector.getDescriptor().invokeEltMethodCached(altStringVector, index, eltMethodInterop, hasMirrorProfile);
         }
     }
 }
