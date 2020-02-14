@@ -25,7 +25,7 @@
 # It has to be built separately from the "native" project that contains
 # the packages because that is built first and before FastR is completely built
 # N.B. As this takes quite a while the building is conditional on the
-# FASTR_RELEASE environment variable
+# FASTR_RELEASE and FASTR_NO_RECOMMENDED environment variables
 
 FASTR_R_HOME := $(abspath $(VPATH)/..)
 NATIVE_PROJECT_DIR := $(FASTR_R_HOME)/com.oracle.truffle.r.native

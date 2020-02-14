@@ -1,4 +1,4 @@
-## Introduction
+# Cast Pipelines
 
 Cast Pipelines (CP) are used to convert, validate and analyze input arguments of FastR builtins. The aim is to make the code in builtin specializations cleaner by relieving them from the burden of repeated argument handling that often leads to duplicate boilerplate code. Besides that, the declarative nature of CP allows for static analysis of pipelines, which is used to diagnose builtins by a special tool (mx rbdiag).
 

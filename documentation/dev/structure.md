@@ -6,6 +6,5 @@ has support for automatically generating the IDE project metadata via the `idein
 do not be surprised that it will compile some Java classes. It does this to gather information about Java annotation processors that is necessary for
 correct rebuilding within the IDE.
 
-The majority of the projects are "Java" projects, but any project with `native` in its name contains native code, e.g. C code, and is (ultimately) built
-using `make`. `mx` handles this transparently. Note, however, that editing and building the native code in an IDE requires support for C development to have
-been installed. E.g. for Eclipse, the CDE plugin.
+The majority of the projects are "Java" projects, but any project with `native` in its name contains native code, e.g. C code, and is (ultimately) built using `make`. `mx` handles this transparently and invokes the `Makefiles` during `mx build`.  Moreover, `mx` exports some environment variables that are may be used by those `Makefile`s,
+therefore invoking the `Makefile`s manually may no work correctly.

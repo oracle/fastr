@@ -44,13 +44,15 @@ LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 # at a minimum we need to know where libpcre/libz/libgfortran/libquadmath are located,
 # to keep the Java side simpler, we (may) copy them to $(FASTR_LIB_DIR) unless
 # they were found in the standard system locations
+ifdef FASTR_RELEASE
 ifeq ($(OSNAME), Linux)
-  OTHER_LIB_TARGETS = pcre z gfortran quadmath gcc_s
+  FASTR_CAPTURE_DEPENDENCIES ?= pcre z gfortran quadmath gcc_s
 else ifeq ($(OSNAME), Darwin)
-  OTHER_LIB_TARGETS = pcre z
+  FASTR_CAPTURE_DEPENDENCIES ?= pcre z
 else
   $(error OS $(OSNAME) is not supported)
 endif
+endif # FASTR_RELEASE
 
 .PHONY: all
 
@@ -78,12 +80,12 @@ endif
 # what versions of the libs (if any) will be copied, so we use a sentinel
 # file to indicate that the check has been done.
 rcopylib.done: 
-	for target in $(OTHER_LIB_TARGETS); do \
+	for target in $(FASTR_CAPTURE_DEPENDENCIES); do \
 		python $(FASTR_R_HOME)/mx.fastr/copylib.py copylib $$target $(FASTR_LIB_DIR) || exit 1; \
 	done
 	touch rcopylib.done
 
 clean:
 	rm -f $(BLAS_TARGET) $(LAPACK_TARGET)
-	rm -f $(foreach target,$(OTHER_LIB_TARGETS),$(wildcard $(FASTR_LIB_DIR)/lib$(target).*))
+	rm -f $(foreach target,$(FASTR_CAPTURE_DEPENDENCIES),$(wildcard $(FASTR_LIB_DIR)/lib$(target).*))
 	rm -f rcopylib.done

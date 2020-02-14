@@ -1,10 +1,12 @@
-Objects in FastR can be in three states: _temporary_, _non-shared_ and _shared_, this is handled through `RShareable` interface. Once an object is written into a frame (a variable) its state is transitioned from _temporary_ to _non-shared_ or from _non-shared_ to _shared_, this transition does not take place if LSH == RHS, e.g. `a <- a`. If some code is about to alter a _shared_ object, it must make a copy. _Temporary_ objects can be altered freely. _Non-shared_ objects can be altered in place in replacement functions, but otherwise should be copied as well. With this schema we can implement value semantics and avoid some expensive copying.
+# Vector Sharing
+
+Objects in FastR can be in three states: _temporary_, _non-shared_ and _shared_, this is handled through `RSharingAttributeStorage` class. Once an object is written into a frame (a variable) its state is transitioned from _temporary_ to _non-shared_ or from _non-shared_ to _shared_, this transition does not take place if LSH == RHS, e.g. `a <- a`. If some code is about to alter a _shared_ object, it must make a copy. _Temporary_ objects can be altered freely. _Non-shared_ objects can be altered in place in replacement functions, but otherwise should be copied as well. With this schema we can implement value semantics and avoid some expensive copying.
 
 Summary of the states: Temporary -> Non shared (at most one reference) -> Shared (may be referenced 2 or more places)
 
 ### Reference counting for parameters
 
-TODO: to be documented.
+See the documentation of [function calls](functions.md) for details.
 
 ### Replacement functions
 

@@ -1,11 +1,7 @@
 # FastR Documentation
 
-## Index
-
-[Limitations](Limitations.md)
-
-[For Developers](dev/Index.md)
-
-[Debugging](debugging.md)
-
-[Graphics support](graphics.md)
+* [Limitations](Limitations.md)
+* [Debugging](debugging.md)
+* [Graphics support](graphics.md)
+* [For Developers](dev/Index.md)
+  * [Building FastR](dev/building.md)

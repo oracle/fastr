@@ -1,4 +1,4 @@
-# Introduction
+# FastR Testing
 
 Testing of FastR has two aspects: unit tests and package tests. Unit tests are small snippets of R code intended to test a specific aspects of R, typically one of the builtin functions. These are managed using the Java JUnit framework and all tests must pass before a change is pushed to external repository. Package testing uses the standard GNU R package test machinery and, currently, no packages
 are tested before a change is pushed to external repository. Note, however, that the unit tests do test the installation of the "recommended" packages that are distributed with GNU R, plus some internal packages, e.g. `testrffi` for testing the R FFI interface.

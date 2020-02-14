@@ -30,14 +30,11 @@ relevant fixes and improvements.
 * nmaths library (dunif, punif, ...), which is rewritten to Java in FastR
 * changes in GNU-R's own tests, which are used in "gnurtests" package
 
-File `share/R/examples-footer.R` may occasionally change.
-FastR copy is in `com.oracle.truffle.r.native/run/examples-footer.R`.
+Check files that were copied from GNU-R and adapted:
 
-Following files are taken from GNU-R and modified.
-See the comments inside the FastR version of that files.
-
-* `com.oracle.truffle.r.native/run/configure.ac`
-* `com.oracle.truffle.r.native/run/Renviron.in`
+* `com.oracle.truffle.r.native/run/examples-footer.R` -> `GNUR/share/R/examples-footer.R`
+* files `*_overrides.R` override functions from base packages, e.g., `tools_overrides.R`
+* `com.oracle.truffle.r.native/run/fastr_tools/R` -> `GNUR/src/scripts/R.sh.in`
 
 Regenerate the expected output for new GNU-R version:
 
@@ -46,7 +43,7 @@ rm ./com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/ExpectedTestOutput.
 mx rtestgen
 ```
 
-Run Renjin tests on new GNU-R: ./libdownloads/R-3.6.1/Rscript ../r-apptests/renjin/
+Run Renjin tests on new GNU-R: ./libdownloads/R-3.6.1/Rscript ../r-apptests/renjin/driver.R
 
 Tips:
 

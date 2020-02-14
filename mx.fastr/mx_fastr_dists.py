@@ -55,12 +55,11 @@ class FastRReleaseProject(FastRProjectAdapter):  # pylint: disable=too-many-ance
 
     def getResults(self):
         results = []
-        if 'FASTR_RELEASE' in os.environ:
-            for rdir in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
-                self._get_files(rdir, results)
-            results.append(join(self.dir, 'LICENSE'))
-            results.append(join(self.dir, 'COPYRIGHT'))
-            results.append(join(self.dir, 'README.md'))
+        for rdir in ['bin', 'include', 'lib', 'library', 'etc', 'share', 'doc']:
+            self._get_files(rdir, results)
+        results.append(join(self.dir, 'LICENSE'))
+        results.append(join(self.dir, 'COPYRIGHT'))
+        results.append(join(self.dir, 'README.md'))
         return results
 
     def getBuildTask(self, args):
@@ -77,9 +76,6 @@ class ReleaseBuildTask(mx.NativeBuildTask):
             targetFile.write(LauncherTemplate(open(source).read()).substitute(dictionary))
 
     def build(self):
-        if 'FASTR_RELEASE' not in os.environ:
-            mx.log('FastR: set FASTR_RELEASE to update release project')
-            return
         # copy the release directories
         output_dir = self.subject.dir
         fastr_dir = _fastr_suite.dir
@@ -162,7 +158,7 @@ class FastRArchiveParticipant:
         return False
 
     def __closing__(self):
-        if "FASTR_RELEASE" in self.dist.name and 'FASTR_RELEASE' in os.environ:
+        if "FASTR_RELEASE" in self.dist.name:
             assert isinstance(self.dist.deps[0], FastRReleaseProject)
             release_project = self.dist.deps[0]
             # the files copied in can be confused as source files by
@@ -179,12 +175,11 @@ def mx_post_parse_cmd_line(opts):
 
 
 def mx_register_dynamic_suite_constituents(register_project, register_distribution):
-    rffi = mx.get_env('FASTR_RFFI', '')
     fastr_release_distribution = mx.JARDistribution(
         suite=_fastr_suite,
-        name="FASTR_RELEASE" + rffi,
+        name="FASTR_RELEASE",
         subDir=None,
-        path="mxbuild/dists/<os>/<arch>/{rffi}/fastr-release.jar".format(rffi=rffi),
+        path="mxbuild/dists/<os>/<arch>/fastr-release.jar",
         sourcesPath=None,
         deps=["com.oracle.truffle.r.release"],
         mainClass=None,
@@ -198,7 +193,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
 
     fastr_graalvm_release = mx.NativeTARDistribution(
         suite=_fastr_suite,
-        name="FASTR_GRAALVM_RELEASE" + rffi,
+        name="FASTR_GRAALVM_RELEASE",
         deps=["com.oracle.truffle.r.release"],
         path=None,
         excludedLibs=[],
@@ -206,91 +201,88 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
         theLicense=None,
         relpath=True,
         output=None,
-        overlaps=["FASTR_RELEASE" + rffi]
+        overlaps=["FASTR_RELEASE"]
     )
 
     register_distribution(fastr_release_distribution)
     register_distribution(fastr_graalvm_release)
 
-    if mx.get_env('FASTR_RELEASE') == 'true':
-        fastr_graalvm_release_support = mx.LayoutTARDistribution(
-            suite=_fastr_suite,
-            name="FASTR_GRAALVM_SUPPORT" + rffi,
-            deps=[],
-            layout={
-                "./": [
-                    {
-                        "source_type": "extracted-dependency",
-                        "dependency": "FASTR_GRAALVM_RELEASE" + rffi,
-                        "path": "*",
-                        "exclude": [
-                            "COPYRIGHT",
-                            "LICENSE",
-                            "README.md",
-                            "bin/Rscript",
-                            "bin/fastr_jars",
-                            "bin/exec/R",
-                        ],
-                    },
-                    {
-                        "source_type": "extracted-dependency",
-                        "dependency": "FASTR_GRAALVM_RELEASE" + rffi,
-                        "path": "bin/fastr_jars/*",
-                        "exclude": [
-                            "bin/fastr_jars/fastr.jar",
-                            "bin/fastr_jars/truffle*",
-                            "bin/fastr_jars/graal-sdk*",
-                        ],
-                    },
-                    "dependency:fastr:FASTR_LAUNCHER",
-                ],
-                "LICENSE_FASTR" : "file:LICENSE",
-                "3rd_party_licenses_fastr.txt" : "file:3rd_party_licenses.txt",
-                "README_FASTR": "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE{rffi}/README.md".format(rffi=rffi),
-                "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_legacy",
-                "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_legacy",
-                "native-image.properties": "file:mx.fastr/native-image.properties",
-            },
-            path=None,
-            platformDependent=True,
-            theLicense=None
-        )
-        fastr_graalvm_release_support.description = "FastR support distribution for the GraalVM"
-        register_distribution(fastr_graalvm_release_support)
-
-
-if mx.get_env('FASTR_RELEASE') == 'true' and mx.get_env('FASTR_RFFI') in (None, ''):
-    mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
+    fastr_graalvm_release_support = mx.LayoutTARDistribution(
         suite=_fastr_suite,
-        name='FastR',
-        short_name='R',
-        license_files=['LICENSE_FASTR'],
-        third_party_license_files=['3rd_party_licenses_fastr.txt'],
-        dependencies=['Truffle', 'Sulong', 'LLVM.org toolchain'],
-        truffle_jars=['fastr:FASTR'],
-        support_distributions=['fastr:FASTR_GRAALVM_SUPPORT'],
-        provided_executables=[
-            'bin/Rscript',
-            'bin/R',
-        ],
-        include_in_polyglot=False,
-        post_install_msg="NOTES:\n---------------\n" +
-             "FastR needs a system-dependent configuration because it links with some system libraries. " +
-             "A generic configuration that works out of the box on most Linux distributions is provided by default. " +
-             "If you are on another system (e.g., MacOS), wish to fine-tune the configuration to your system, or should you encounter any " +
-             "issues when running FastR or during R packages installation, try running the following script that adjusts " +
-             "the configuration to your system: \n" +
-             "    ${graalvm_languages_dir}/R/bin/configure_fastr\n\n" +
-             "The user specific library directory was not created automatically. " +
-             "You can either create the directory manually or edit file ${graalvm_languages_dir}/R/etc/Renviron to change it to any desired location. " +
-             "Without the user specific library directory, users will need write permission for the GraalVM home directory in order to install R packages. " +
-             "\n\n" +
-             "The R component comes without native image by default. If you wish to build the native image, " +
-             "which provides faster startup, but slightly slower peak performance, then run the following:\n" +
-             "    ${graalvm_languages_dir}/R/bin/install_r_native_image\n\n" +
-             "The native image is then used by default. Pass '--jvm' flag to the R or Rscript launcher to " +
-             "use JVM instead of the native image. Note that the native image is not stable yet and is intended for evaluation " +
-             "purposes and experiments. Some features may not work in the native image mode, most notably some Rcpp based packages. " +
-             "The native image can be uninstalled using the installation script with 'uninstall' argument.\n\n" +
-             "See http://www.graalvm.org/docs/reference-manual/languages/r for more."
-    ))
+        name="FASTR_GRAALVM_SUPPORT",
+        deps=[],
+        layout={
+            "./": [
+                {
+                    "source_type": "extracted-dependency",
+                    "dependency": "FASTR_GRAALVM_RELEASE",
+                    "path": "*",
+                    "exclude": [
+                        "COPYRIGHT",
+                        "LICENSE",
+                        "README.md",
+                        "bin/Rscript",
+                        "bin/fastr_jars",
+                        "bin/exec/R",
+                    ],
+                },
+                {
+                    "source_type": "extracted-dependency",
+                    "dependency": "FASTR_GRAALVM_RELEASE",
+                    "path": "bin/fastr_jars/*",
+                    "exclude": [
+                        "bin/fastr_jars/fastr.jar",
+                        "bin/fastr_jars/truffle*",
+                        "bin/fastr_jars/graal-sdk*",
+                    ],
+                },
+                "dependency:fastr:FASTR_LAUNCHER",
+            ],
+            "LICENSE_FASTR" : "file:LICENSE",
+            "3rd_party_licenses_fastr.txt" : "file:3rd_party_licenses.txt",
+            "README_FASTR": "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/README.md",
+            "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_legacy",
+            "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_legacy",
+            "native-image.properties": "file:mx.fastr/native-image.properties",
+        },
+        path=None,
+        platformDependent=True,
+        theLicense=None
+    )
+    fastr_graalvm_release_support.description = "FastR support distribution for the GraalVM"
+    register_distribution(fastr_graalvm_release_support)
+
+mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
+    suite=_fastr_suite,
+    name='FastR',
+    short_name='R',
+    license_files=['LICENSE_FASTR'],
+    third_party_license_files=['3rd_party_licenses_fastr.txt'],
+    dependencies=['Truffle', 'Sulong', 'LLVM.org toolchain'],
+    truffle_jars=['fastr:FASTR'],
+    support_distributions=['fastr:FASTR_GRAALVM_SUPPORT'],
+    provided_executables=[
+        'bin/Rscript',
+        'bin/R',
+    ],
+    include_in_polyglot=False,
+    post_install_msg="NOTES:\n---------------\n" +
+            "FastR needs a system-dependent configuration because it links with some system libraries. " +
+            "A generic configuration that works out of the box on most Linux distributions is provided by default. " +
+            "If you are on another system (e.g., MacOS), wish to fine-tune the configuration to your system, or should you encounter any " +
+            "issues when running FastR or during R packages installation, try running the following script that adjusts " +
+            "the configuration to your system: \n" +
+            "    ${graalvm_languages_dir}/R/bin/configure_fastr\n\n" +
+            "The user specific library directory was not created automatically. " +
+            "You can either create the directory manually or edit file ${graalvm_languages_dir}/R/etc/Renviron to change it to any desired location. " +
+            "Without the user specific library directory, users will need write permission for the GraalVM home directory in order to install R packages. " +
+            "\n\n" +
+            "The R component comes without native image by default. If you wish to build the native image, " +
+            "which provides faster startup, but slightly slower peak performance, then run the following:\n" +
+            "    ${graalvm_languages_dir}/R/bin/install_r_native_image\n\n" +
+            "The native image is then used by default. Pass '--jvm' flag to the R or Rscript launcher to " +
+            "use JVM instead of the native image. Note that the native image is not stable yet and is intended for evaluation " +
+            "purposes and experiments. Some features may not work in the native image mode, most notably some Rcpp based packages. " +
+            "The native image can be uninstalled using the installation script with 'uninstall' argument.\n\n" +
+            "See http://www.graalvm.org/docs/reference-manual/languages/r for more."
+))
