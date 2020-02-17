@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,9 +79,9 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
             assert expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
             FrameSlotChangeMonitor.setObject(frame, onExitSlot, RDataFactory.createPairList());
         } else {
-            // if optimized then avaluated already true,
-            // otherwise he expresion has to be evaluated exactly at this point
-            assert expr.isOptimized() || !expr.isEvaluated() : "promise cannot already be evaluated";
+            // if optimized then evaluated is already true,
+            // otherwise the expression has to be evaluated exactly at this point
+            assert expr.isOptimized() || !expr.isEvaluated() : "promise cannot be evaluated anymore";
             Object value;
             try {
                 value = FrameSlotChangeMonitor.getObject(onExitSlot, frame);

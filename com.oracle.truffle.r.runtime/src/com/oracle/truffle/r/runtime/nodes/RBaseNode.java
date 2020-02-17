@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -175,6 +175,20 @@ public abstract class RBaseNode extends Node {
         } else {
             return null;
         }
+    }
+
+    /**
+     * If this node happens to be a value of an argument, then the promise for that argument will
+     * always be forced. See
+     * {@link com.oracle.truffle.r.runtime.builtins.FastPathFactory#forcedEagerPromise(int)}, which
+     * allows functions to choose which arguments should be forced eagerly.
+     *
+     * Note: the eagerness requested by {@code FastPathFactory#forcedEagerPromise} is cancelled in
+     * case of events that may cause modifications to the global state, which is a measure to
+     * preserve correctness. Forced evaluation requested by this method is never cancelled.
+     */
+    public boolean forceEagerEvaluation() {
+        return false;
     }
 
     @Override

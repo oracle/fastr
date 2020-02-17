@@ -93,18 +93,4 @@ public abstract class RNode extends RBaseNodeWithWarnings implements RInstrument
     public byte executeByte(VirtualFrame frame) throws UnexpectedResultException {
         return RTypesGen.expectByte(execute(frame));
     }
-
-    /**
-     * If this node happens to be a value of an argument, then the promise for that argument will
-     * always be forced. See
-     * {@link com.oracle.truffle.r.runtime.builtins.FastPathFactory#forcedEagerPromise(int)}, which
-     * allows functions to choose which arguments should be forced eagerly.
-     *
-     * Note: the eagerness requested by {@code FastPathFactory#forcedEagerPromise} is cancelled in
-     * case of events that may cause modifications to the global state, which is a measure to
-     * preserve correctness. Forced evaluation requested by this method is never cancelled.
-     */
-    public boolean forceEagerEvaluation() {
-        return false;
-    }
 }

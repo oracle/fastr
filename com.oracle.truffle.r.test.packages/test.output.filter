@@ -83,6 +83,7 @@ gnurtest => D-3/  OpenMP SIMD is not supported in this build of R
 # --------
 # glmnet, ROCR: graphics related issue, we don't implement graphics yet, just ignore
 glmnet => D+1/Error in get("par.postscript", pos = "CheckExEnv") :
+glmnet => D/Warning: from glmnet Fortran code
 ROCR => D+1/Error in get("par.postscript", pos = "CheckExEnv") :
 
 # --------

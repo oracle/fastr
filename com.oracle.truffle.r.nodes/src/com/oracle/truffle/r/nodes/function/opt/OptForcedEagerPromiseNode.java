@@ -180,11 +180,14 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
             return getFallback().execute(frame);
         }
         RCaller call = RCaller.unwrapPromiseCaller(currentCaller, unwrapCallerProfile);
-        EagerFeedback feedback = alwaysForce ? null : this;
-        if (CompilerDirectives.inInterpreter()) {
-            return factory.createEagerSuppliedPromise(value, allArgPromisesCanOptimize, call, feedback, wrapIndex, frame.materialize());
+        if (alwaysForce) {
+            return factory.createEvaluatedPromise(value);
         }
-        return factory.createEagerSuppliedPromise(value, allArgPromisesCanOptimize, call, feedback, wrapIndex, null);
+
+        if (CompilerDirectives.inInterpreter()) {
+            return factory.createEagerSuppliedPromise(value, allArgPromisesCanOptimize, call, this, wrapIndex, frame.materialize());
+        }
+        return factory.createEagerSuppliedPromise(value, allArgPromisesCanOptimize, call, this, wrapIndex, null);
     }
 
     @Override

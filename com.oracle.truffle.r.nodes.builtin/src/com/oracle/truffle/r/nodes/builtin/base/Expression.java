@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,7 @@ public abstract class Expression extends RBuiltinNode.Arg1 {
     }
 
     private Object convert(RPromise promise) {
-        if (isEvaluatedProfile.profile(promise.isEvaluated())) {
+        if (isEvaluatedProfile.profile(promise.isEvaluated() && !promise.isForced())) {
             return promise.getValue();
         } else {
             return RASTUtils.createLanguageElement(promise.getRep().asRSyntaxNode());
