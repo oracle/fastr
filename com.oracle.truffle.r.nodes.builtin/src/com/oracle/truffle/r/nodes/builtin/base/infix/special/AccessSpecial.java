@@ -51,15 +51,21 @@ public abstract class AccessSpecial extends IndexingSpecialCommon implements Sub
 
     public abstract int executeInteger(RIntVector vec, int index);
 
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"simpleVector(vector)"}, limit = "getGenericVectorAccessCacheSize()")
     protected int accessInt(RIntVector vector, int index,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        if (!isValidIndexCached(dataLib, vector, index)) {
+            throw RSpecialFactory.throwFullCallNeeded();
+        }
         return dataLib.getIntAt(vector.getData(), index - 1);
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"simpleVector(vector)"}, limit = "getGenericVectorAccessCacheSize()")
     protected double accessDouble(RAbstractDoubleVector vector, int index,
                                   @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        if (!isValidIndexCached(dataLib, vector, index)) {
+            throw RSpecialFactory.throwFullCallNeeded();
+        }
         return dataLib.getDoubleAt(vector.getData(), index - 1);
     }
 

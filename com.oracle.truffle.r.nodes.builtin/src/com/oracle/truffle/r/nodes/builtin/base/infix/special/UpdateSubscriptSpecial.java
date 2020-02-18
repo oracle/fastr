@@ -52,18 +52,23 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
 
     protected abstract Object execute(VirtualFrame frame, Object vec, Object index, Object value);
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndexCached(dataLib, vector, index)",
-                    "dataLib.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()"}, limit = "getGenericVectorAccessCacheSize()")
     protected RIntVector setInt(RIntVector vector, int index, int value,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        if (!isValidIndexCached(dataLib, vector, index) || !dataLib.isWriteable(vector.getData())) {
+            throw RSpecialFactory.throwFullCallNeeded(value);
+        }
         dataLib.setIntAt(vector.getData(), index - 1, value);
         return vector;
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndexCached(dataLib, vector, index)",
+    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()",
             "dataLib.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")
     protected RDoubleVector setInt(RDoubleVector vector, int index, int value,
                                 @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        if (!isValidIndexCached(dataLib, vector, index) || !dataLib.isWriteable(vector.getData())) {
+            throw RSpecialFactory.throwFullCallNeeded(value);
+        }
         dataLib.setDoubleAt(vector.getData(), index - 1, value);
         return vector;
     }
