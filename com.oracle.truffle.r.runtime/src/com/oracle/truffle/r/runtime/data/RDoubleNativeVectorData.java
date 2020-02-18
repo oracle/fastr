@@ -22,16 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@ExportLibrary(RDoubleVectorDataLibrary.class)
 @ExportLibrary(VectorDataLibrary.class)
-public class RDoubleNativeVectorData extends RDoubleVectorData {
+public class RDoubleNativeVectorData implements TruffleObject {
     // We need the vector, so that we can easily use the existing NativeDataAccess methods
     // TODO: this field should be replaced with address/length fields and
     // the address/length fields and logic should be removed from NativeMirror
@@ -42,25 +41,18 @@ public class RDoubleNativeVectorData extends RDoubleVectorData {
         this.vec = vec;
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
-    @Override
+    @ExportMessage
     public int getLength() {
         return NativeDataAccess.getDataLength(vec, null);
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage
     public RDoubleNativeVectorData materialize() {
         return this;
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage
     public boolean isWriteable() {
-        return true;
-    }
-
-    @ExportMessage(library = VectorDataLibrary.class)
-    public boolean isMaterialized() {
         return true;
     }
 
@@ -75,15 +67,8 @@ public class RDoubleNativeVectorData extends RDoubleVectorData {
         return copy(deep).copyResized(newSize, deep, fillNA);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt(destination, index, getDoubleAt(index));
-    }
-
     @ExportMessage
-    public double[] getReadonlyDoubleData() {
+    public double[] getDoubleDataCopy() {
         return NativeDataAccess.copyDoubleNativeData(vec.getNativeMirror());
     }
 
@@ -100,22 +85,25 @@ public class RDoubleNativeVectorData extends RDoubleVectorData {
     }
 
     @ExportMessage
-    @Override
+    public Object getDataAtAsObject(int index) {
+        return getDoubleAt(index);
+    }
+
+    @ExportMessage
     public double getDoubleAt(int index) {
         return NativeDataAccess.getData(vec, null, index);
     }
 
     @ExportMessage
-    public double getNext(SeqIterator it) {
+    public double getNextDouble(SeqIterator it) {
         return NativeDataAccess.getData(vec, null, it.getIndex());
     }
 
     @ExportMessage
-    public double getAt(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
+    public double getDouble(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
         return NativeDataAccess.getData(vec, null, index);
     }
 
-    @Override
     @ExportMessage
     public void setDoubleAt(int index, double value, @SuppressWarnings("unused") NACheck naCheck) {
         NativeDataAccess.setData(vec, null, index, value);
@@ -127,12 +115,12 @@ public class RDoubleNativeVectorData extends RDoubleVectorData {
     }
 
     @ExportMessage
-    public void setNext(SeqIterator it, double value, @SuppressWarnings("unused") NACheck naCheck) {
+    public void setNextDouble(SeqIterator it, double value, @SuppressWarnings("unused") NACheck naCheck) {
         NativeDataAccess.setData(vec, null, it.getIndex(), value);
     }
 
     @ExportMessage
-    public void setAt(@SuppressWarnings("unused") RandomAccessIterator it, int index, double value, @SuppressWarnings("unused") NACheck naCheck) {
+    public void setDouble(@SuppressWarnings("unused") RandomAccessIterator it, int index, double value, @SuppressWarnings("unused") NACheck naCheck) {
         NativeDataAccess.setData(vec, null, index, value);
     }
 }

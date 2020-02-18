@@ -25,19 +25,18 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.Iterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 
 import java.util.Arrays;
 
-@ExportLibrary(RDoubleVectorDataLibrary.class)
 @ExportLibrary(VectorDataLibrary.class)
-public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
+public class RDoubleSeqVectorData implements RSeq, TruffleObject {
     private final double start;
     private final double stride;
     private final int length;
@@ -70,16 +69,15 @@ public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
         return start + (getLength() - 1) * stride;
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
+    @ExportMessage
     @Override
     public int getLength() {
         return length;
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage
     public RDoubleArrayVectorData materialize() {
-        return new RDoubleArrayVectorData(getReadonlyDoubleData(), isComplete());
+        return new RDoubleArrayVectorData(getDoubleDataCopy(), isComplete());
     }
 
     @ExportMessage
@@ -96,16 +94,7 @@ public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
         return new RDoubleArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt(destination, index, getDoubleAt(index));
-    }
-
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
-    @Override
+    @ExportMessage
     public boolean isComplete() {
         return true;
     }
@@ -116,7 +105,7 @@ public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
     }
 
     @ExportMessage
-    public double[] getReadonlyDoubleData() {
+    public double[] getDoubleDataCopy() {
         return getDataAsArray(length);
     }
 
@@ -131,20 +120,24 @@ public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
     }
 
     @ExportMessage
-    @Override
+    public Object getDataAtAsObject(int index) {
+        return getDoubleAt(index);
+    }
+
+    @ExportMessage
     public double getDoubleAt(int index) {
         assert index < length;
         return start + stride * index;
     }
 
     @ExportMessage
-    public double getNext(SeqIterator it) {
+    public double getNextDouble(SeqIterator it) {
         IteratorData data = getStore(it);
         return data.start + data.stride * it.getIndex();
     }
 
     @ExportMessage
-    public double getAt(RandomAccessIterator it, int index) {
+    public double getDouble(RandomAccessIterator it, int index) {
         IteratorData data = getStore(it);
         return data.start + data.stride * index;
     }

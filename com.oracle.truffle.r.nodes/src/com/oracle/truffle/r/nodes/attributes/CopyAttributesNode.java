@@ -74,7 +74,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
 
     protected boolean containsMetadata(VectorDataLibrary library, RAbstractVector vector) {
-        return library.isMaterialized(vector.getData()) && hasDimNode.execute(vector) ||
+        return library.isWriteable(vector.getData()) && hasDimNode.execute(vector) ||
                         (copyAllAttributes && vector.getAttributes() != null) ||
                         getDimNamesNode.getDimNames(vector) != null ||
                         getNamesNode.getNames(vector) != null;

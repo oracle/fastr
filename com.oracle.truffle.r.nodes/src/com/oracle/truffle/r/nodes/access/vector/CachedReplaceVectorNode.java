@@ -54,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -173,9 +172,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
         return false;
     }
-
-    // XXX hack
-    @Child private RIntVectorDataLibrary intVectorLibrary = RIntVectorDataLibrary.getFactory().createDispatched(DSLConfig.getVectorAccessCacheSize());
 
     @Child private AbstractContainerLibrary containerLibrary = AbstractContainerLibrary.getFactory().createDispatched(DSLConfig.getVectorAccessCacheSize());
     @Child private VectorDataLibrary vectorLibrary = VectorDataLibrary.getFactory().createDispatched(DSLConfig.getVectorAccessCacheSize());

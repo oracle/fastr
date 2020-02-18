@@ -22,20 +22,19 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.Iterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
 
-@ExportLibrary(RIntVectorDataLibrary.class)
 @ExportLibrary(VectorDataLibrary.class)
-class RIntArrayVectorData extends RIntVectorData {
+class RIntArrayVectorData implements TruffleObject {
     private final int[] data;
     private boolean complete;
 
@@ -44,25 +43,18 @@ class RIntArrayVectorData extends RIntVectorData {
         this.complete = complete;
     }
 
-    @ExportMessage(library = RIntVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
-    @Override
+    @ExportMessage
     public int getLength() {
         return data.length;
     }
 
-    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage
     public RIntArrayVectorData materialize() {
         return this;
     }
 
-    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage
     public boolean isWriteable() {
-        return true;
-    }
-
-    @ExportMessage(library = VectorDataLibrary.class)
-    public boolean isMaterialized() {
         return true;
     }
 
@@ -80,16 +72,7 @@ class RIntArrayVectorData extends RIntVectorData {
         return new RIntArrayVectorData(newData, complete);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt(destination, index, data[index]);
-    }
-
-    @ExportMessage(library = RIntVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
-    @Override
+    @ExportMessage
     public boolean isComplete() {
         return complete;
     }
@@ -114,23 +97,26 @@ class RIntArrayVectorData extends RIntVectorData {
         return new RandomAccessIterator(data, data.length);
     }
 
-    @Override
+    @ExportMessage
+    public Object getDataAtAsObject(int index) {
+        return getIntAt(index);
+    }
+
     @ExportMessage
     public int getIntAt(int index) {
         return data[index];
     }
 
     @ExportMessage
-    public int getNext(SeqIterator it) {
+    public int getNextInt(SeqIterator it) {
         return getStore(it)[it.getIndex()];
     }
 
     @ExportMessage
-    public int getAt(RandomAccessIterator it, int index) {
+    public int getInt(RandomAccessIterator it, int index) {
         return getStore(it)[index];
     }
 
-    @Override
     @ExportMessage
     public void setIntAt(int index, int value, NACheck naCheck) {
         updateComplete(value, naCheck);
@@ -143,13 +129,13 @@ class RIntArrayVectorData extends RIntVectorData {
     }
 
     @ExportMessage
-    public void setNext(SeqIterator it, int value, NACheck naCheck) {
+    public void setNextInt(SeqIterator it, int value, NACheck naCheck) {
         updateComplete(value, naCheck);
         getStore(it)[it.getIndex()] = value;
     }
 
     @ExportMessage
-    public void setAt(RandomAccessIterator it, int index, int value, NACheck naCheck) {
+    public void setInt(RandomAccessIterator it, int index, int value, NACheck naCheck) {
         updateComplete(value, naCheck);
         getStore(it)[index] = value;
     }

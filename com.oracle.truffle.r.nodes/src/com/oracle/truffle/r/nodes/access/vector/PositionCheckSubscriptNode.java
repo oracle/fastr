@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -91,7 +90,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
     @Specialization(limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector doInteger(PositionProfile profile, int dimSize, RIntVector position, int positionLength,
                     @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
-                    @CachedLibrary("position.getData()") RIntVectorDataLibrary positionLibrary) {
+                    @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary) {
         if (positionLength != 1) {
             error.enter();
             Message message;

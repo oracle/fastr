@@ -31,40 +31,24 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 
 import java.util.Arrays;
 
-@ExportLibrary(RIntVectorDataLibrary.class)
 @ExportLibrary(VectorDataLibrary.class)
-class RIntForeignObjData extends RIntVectorData {
+class RIntForeignObjData implements TruffleObject {
     protected final Object foreign;
 
     RIntForeignObjData(Object foreign) {
         this.foreign = foreign;
     }
 
-    @Override
-    @Ignore
-    public int getIntAt(int index) {
-        return getIntImpl(index, InteropLibrary.getFactory().getUncached(), InteropLibrary.getFactory().getUncached(), ValueProfile.getUncached(), ConditionProfile.getUncached(),
-                        ConditionProfile.getUncached());
-    }
-
-    @Ignore
-    @Override
-    public int getLength() {
-        return getLength(InteropLibrary.getFactory().getUncached());
-    }
-
-    @ExportMessage(library = RIntVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
+    @ExportMessage
     public int getLength(@CachedLibrary("this.foreign") InteropLibrary interop) {
         try {
             long result = interop.getArraySize(foreign);
@@ -74,7 +58,7 @@ class RIntForeignObjData extends RIntVectorData {
         }
     }
 
-    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage
     public RIntArrayVectorData materialize(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
@@ -83,7 +67,7 @@ class RIntForeignObjData extends RIntVectorData {
         return copy(false, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
     }
 
-    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage
     public boolean isWriteable() {
         return false;
     }
@@ -95,7 +79,7 @@ class RIntForeignObjData extends RIntVectorData {
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
                     @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return new RIntArrayVectorData(getReadonlyIntData(valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile), RDataFactory.INCOMPLETE_VECTOR);
+        return new RIntArrayVectorData(getIntDataCopy(valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile), RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage
@@ -113,15 +97,8 @@ class RIntForeignObjData extends RIntVectorData {
         return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt(destination, index, getIntAt(index));
-    }
-
     @ExportMessage
-    public int[] getReadonlyIntData(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
+    public int[] getIntDataCopy(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
@@ -164,6 +141,16 @@ class RIntForeignObjData extends RIntVectorData {
     }
 
     @ExportMessage
+    public Object getDataAtAsObject(int index,
+                        @CachedLibrary(limit = "5") InteropLibrary valueInterop,
+                        @CachedLibrary("this.foreign") InteropLibrary interop,
+                        @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
+                        @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
+                        @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
+        return getIntImpl(index, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+    }
+
+    @ExportMessage
     public int getIntAt(int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
@@ -174,7 +161,7 @@ class RIntForeignObjData extends RIntVectorData {
     }
 
     @ExportMessage
-    public int getNext(SeqIterator it,
+    public int getNextInt(SeqIterator it,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
@@ -184,7 +171,7 @@ class RIntForeignObjData extends RIntVectorData {
     }
 
     @ExportMessage
-    public int getAt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
+    public int getInt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,

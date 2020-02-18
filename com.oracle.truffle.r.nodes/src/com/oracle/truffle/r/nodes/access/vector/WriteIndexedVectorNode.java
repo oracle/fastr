@@ -37,6 +37,7 @@ import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
@@ -47,7 +48,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -285,7 +285,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                     @Cached("create()") AlwaysOnBranchProfile outOfBounds,
                     @Cached("createCountingProfile()") LoopConditionProfile profile,
                     @Cached("createBinaryProfile()") ConditionProfile incModProfile,
-                    @CachedLibrary("position") RIntVectorDataLibrary positionLibrary,
+                    @CachedLibrary("position") VectorDataLibrary positionLibrary,
                     @CachedLibrary("getPosition(positions)") AbstractContainerLibrary positionsLibrary) {
         getPositionNACheck().enable(!params.skipNA && !positionLibrary.isComplete(position));
 
@@ -366,7 +366,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
                     // @CachedLibrary("position") AbstractContainerLibrary positionLibrary,
-                    @CachedLibrary("position.getData()") RIntVectorDataLibrary positionLibrary,
+                    @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary,
                     @CachedLibrary("getPosition(positions)") AbstractContainerLibrary positionsLibrary) {
         getPositionNACheck().enable(positionLibrary, position);
         int rightIndex = rightBase;

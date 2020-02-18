@@ -28,6 +28,7 @@ import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @GenerateLibrary
 @DefaultExport(DefaultRContainerDataLibrary.class)
@@ -44,15 +45,26 @@ public abstract class AbstractContainerLibrary extends Library {
         throw RInternalError.shouldNotReachHere();
     }
 
+    /**
+     * If this method returns {@code true}, then it is guaranteed that this data does not contain any {@code NA} value. If this method returns {@code false}, then this data may or may not contain {@code NA} values.
+     */
     @SuppressWarnings("unused")
     public boolean isComplete(Object container) {
         throw RInternalError.shouldNotReachHere();
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Transforms this vector into another that is writeable. This is deprecated legacy method, use {@link #materializeData(Object)} instead.
+     */
     public abstract RAbstractContainer materialize(Object container);
+
+    /**
+     * After this operation is performed the vector must be able to handle operations that write into the vector data.
+     */
+    public void materializeData(Object container) {
+        throw RInternalError.unimplemented("TODO");
+    }
 
     @SuppressWarnings("unused")
     public abstract RAbstractContainer copy(Object container);
-
 }

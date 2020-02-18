@@ -37,7 +37,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 
 /**
  * Fast path check if a vector is already sorted. For now we simply return {@code FALSE}. This
@@ -55,7 +55,7 @@ public abstract class SortedFastPass extends RBuiltinNode.Arg3 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected byte isSorted(RIntVector x, boolean decr, byte nalast,
-                    @CachedLibrary("x.getData()") RIntVectorDataLibrary dataLib) {
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
         if (RRuntime.isNA(nalast)) {
             // TODO: we may add support for this into the library
             return RRuntime.LOGICAL_FALSE;

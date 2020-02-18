@@ -26,44 +26,30 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 
 import java.util.Arrays;
 
-@ExportLibrary(RDoubleVectorDataLibrary.class)
 @ExportLibrary(VectorDataLibrary.class)
-class RDoubleForeignObjData extends RDoubleVectorData {
+class RDoubleForeignObjData implements TruffleObject {
     protected final Object foreign;
 
     RDoubleForeignObjData(Object foreign) {
         this.foreign = foreign;
     }
 
-    @Override
-    @Ignore
-    public double getDoubleAt(int index) {
-        return getDoubleImpl(index, InteropLibrary.getFactory().getUncached(), InteropLibrary.getFactory().getUncached(), ValueProfile.getUncached(), ConditionProfile.getUncached());
-    }
-
-    @Override
-    @Ignore
-    public int getLength() {
-        return getLength(InteropLibrary.getFactory().getUncached());
-    }
-
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
+    @ExportMessage
     public int getLength(@CachedLibrary("this.foreign") InteropLibrary interop) {
         try {
             long result = interop.getArraySize(foreign);
@@ -73,7 +59,7 @@ class RDoubleForeignObjData extends RDoubleVectorData {
         }
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage
     public RDoubleArrayVectorData materialize(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
@@ -81,7 +67,7 @@ class RDoubleForeignObjData extends RDoubleVectorData {
         return copy(false, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage
     public boolean isWriteable() {
         return false;
     }
@@ -92,7 +78,7 @@ class RDoubleForeignObjData extends RDoubleVectorData {
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
-        return new RDoubleArrayVectorData(getReadonlyDoubleData(valueInterop, interop, resultProfile, unprecisseDoubleProfile), RDataFactory.INCOMPLETE_VECTOR);
+        return new RDoubleArrayVectorData(getDoubleDataCopy(valueInterop, interop, resultProfile, unprecisseDoubleProfile), RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage
@@ -109,15 +95,8 @@ class RDoubleForeignObjData extends RDoubleVectorData {
         return new RDoubleArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt(destination, index, getDoubleAt(index));
-    }
-
     @ExportMessage
-    public double[] getReadonlyDoubleData(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
+    public double[] getDoubleDataCopy(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
@@ -158,6 +137,15 @@ class RDoubleForeignObjData extends RDoubleVectorData {
     }
 
     @ExportMessage
+    public Object getDataAtAsObject(int index,
+                              @CachedLibrary(limit = "5") InteropLibrary valueInterop,
+                              @CachedLibrary("this.foreign") InteropLibrary interop,
+                              @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
+                              @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
+        return getDoubleAt(index, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
+    }
+
+    @ExportMessage
     public double getDoubleAt(int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
@@ -167,7 +155,7 @@ class RDoubleForeignObjData extends RDoubleVectorData {
     }
 
     @ExportMessage
-    public double getNext(SeqIterator it,
+    public double getNextDouble(SeqIterator it,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
@@ -176,7 +164,7 @@ class RDoubleForeignObjData extends RDoubleVectorData {
     }
 
     @ExportMessage
-    public double getAt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
+    public double getDouble(@SuppressWarnings("unused") RandomAccessIterator it, int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,

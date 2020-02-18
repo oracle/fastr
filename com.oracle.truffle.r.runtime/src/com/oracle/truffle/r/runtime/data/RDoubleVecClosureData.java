@@ -23,55 +23,43 @@
 
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
-@ExportLibrary(RDoubleVectorDataLibrary.class)
 @ExportLibrary(VectorDataLibrary.class)
-public class RDoubleVecClosureData extends RDoubleVectorData implements RClosure {
+public class RDoubleVecClosureData implements RClosure, TruffleObject {
     private final RAbstractVector vector;
 
     public RDoubleVecClosureData(RAbstractVector vector) {
         this.vector = vector;
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
-    @Override
+    @ExportMessage
     public int getLength() {
         return vector.getLength();
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage
     public RDoubleArrayVectorData materialize() {
-        return new RDoubleArrayVectorData(getReadonlyDoubleData(), isComplete());
+        return new RDoubleArrayVectorData(getReadonlyDoubleData(), false);
     }
 
-    @SuppressWarnings("unused")
     @ExportMessage
     public RDoubleVecClosureData copy(@SuppressWarnings("unused") boolean deep) {
         // TODO deep
         return new RDoubleVecClosureData(this.vector);
     }
 
-    @SuppressWarnings("unused")
     @ExportMessage
     public RDoubleArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
         throw new RuntimeException("TODO?");
-    }
-
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt(destination, index, getDoubleAt(index));
     }
 
     @ExportMessage
@@ -102,7 +90,11 @@ public class RDoubleVecClosureData extends RDoubleVectorData implements RClosure
     }
 
     @ExportMessage
-    @Override
+    public Object getDataAtAsObject(int index) {
+        return getDoubleAt(index);
+    }
+
+    @ExportMessage
     public double getDoubleAt(int index) {
         VectorAccess access = vector.slowPathAccess();
         RandomIterator it = access.randomAccess(vector);
@@ -110,12 +102,12 @@ public class RDoubleVecClosureData extends RDoubleVectorData implements RClosure
     }
 
     @ExportMessage
-    public double getNext(SeqIterator it) {
+    public double getNextDouble(SeqIterator it) {
         return getDoubleAt(it.getIndex());
     }
 
     @ExportMessage
-    public double getAt(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
+    public double getDouble(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
         return getDoubleAt(index);
     }
 

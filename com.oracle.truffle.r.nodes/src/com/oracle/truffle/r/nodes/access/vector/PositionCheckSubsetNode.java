@@ -41,12 +41,11 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -147,9 +146,9 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
                     @Cached("create()") GetNamesAttributeNode getNamesNode,
                     @Cached("create()") SetNamesAttributeNode setNamesNode,
-                    @CachedLibrary("position.getData()") RDoubleVectorDataLibrary positionLibrary) {
+                    @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary) {
         int[] intPosition = new int[positionLength];
-        positionNACheck.enable(positionLibrary, position);
+        positionNACheck.enable(positionLibrary, position.getData());
         boolean hasSeenPositive = false;
         boolean hasSeenNegative = false;
         boolean hasSeenNA = false;
@@ -230,7 +229,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("createBinaryProfile()") ConditionProfile seenNegativeFlagProfile,
                     @Cached("create()") BranchProfile seenOutOfBounds,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
-                    @CachedLibrary("position.getData()") RIntVectorDataLibrary positionLibrary) {
+                    @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary) {
 
         positionNACheck.enable(positionLibrary, position);
         boolean hasSeenPositive = false;

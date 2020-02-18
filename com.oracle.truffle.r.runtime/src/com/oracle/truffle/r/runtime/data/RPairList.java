@@ -705,10 +705,15 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
         }
     }
 
-    @Override
     @ExportMessage
+    @Override
     public RPairList materialize() {
         return this;
+    }
+
+    @ExportMessage
+    void materializeData() {
+        // nop
     }
 
     @Override

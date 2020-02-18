@@ -58,7 +58,7 @@ public class DefaultRContainerDataLibrary {
     static class Materialize {
 
         @Specialization(guards = "isRIntVector(vector)", limit = "getGenericVectorAccessCacheSize()")
-        static RAbstractVector materializeInt(RAbstractVector vector, @CachedLibrary("vector.getData()") RIntVectorDataLibrary library) {
+        static RAbstractVector materializeInt(RAbstractVector vector, @CachedLibrary("vector.getData()") VectorDataLibrary library) {
             if (library.isWriteable(vector.getData())) {
                 return vector;
             }
@@ -66,7 +66,7 @@ public class DefaultRContainerDataLibrary {
         }
 
         @Specialization(guards = "isRDoubleVector(vector)", limit = "getGenericVectorAccessCacheSize()")
-        static RAbstractVector materializeDouble(RAbstractVector vector, @CachedLibrary("vector.getData()") RDoubleVectorDataLibrary library) {
+        static RAbstractVector materializeDouble(RAbstractVector vector, @CachedLibrary("vector.getData()") VectorDataLibrary library) {
             if (library.isWriteable(vector.getData())) {
                 return vector;
             }
@@ -77,7 +77,6 @@ public class DefaultRContainerDataLibrary {
         static RAbstractVector materialize(RAbstractVector vector) {
             return vector.materialize();
         }
-
     }
 
     // XXX TODO is this temporary?
@@ -88,12 +87,12 @@ public class DefaultRContainerDataLibrary {
     static class Copy {
 
         @Specialization(guards = "isRIntVector(vector)", limit = "getGenericVectorAccessCacheSize()")
-        static RAbstractVector copyInt(RAbstractVector vector, @CachedLibrary("vector.getData()") RIntVectorDataLibrary library) {
+        static RAbstractVector copyInt(RAbstractVector vector, @CachedLibrary("vector.getData()") VectorDataLibrary library) {
             return ((RIntVector) vector).copy(library);
         }
 
         @Specialization(guards = "isRDoubleVector(vector)", limit = "getGenericVectorAccessCacheSize()")
-        static RAbstractVector copyDouble(RAbstractVector vector, @CachedLibrary("vector.getData()") RDoubleVectorDataLibrary library) {
+        static RAbstractVector copyDouble(RAbstractVector vector, @CachedLibrary("vector.getData()") VectorDataLibrary library) {
             return ((RDoubleVector) vector).copy(library);
         }
 

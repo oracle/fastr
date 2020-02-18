@@ -25,19 +25,18 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.Iterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 
 import java.util.Arrays;
 
-@ExportLibrary(RIntVectorDataLibrary.class)
 @ExportLibrary(VectorDataLibrary.class)
-public class RIntSeqVectorData extends RIntVectorData implements RSeq {
+public class RIntSeqVectorData implements RSeq, TruffleObject {
     private final int start;
     private final int stride;
     private final int length;
@@ -82,16 +81,15 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
         return -1;
     }
 
-    @ExportMessage(library = RIntVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
+    @ExportMessage
     @Override
     public int getLength() {
         return length;
     }
 
-    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage
     public RIntArrayVectorData materialize() {
-        return new RIntArrayVectorData(getReadonlyIntData(), isComplete());
+        return new RIntArrayVectorData(getIntDataCopy(), isComplete());
     }
 
     @ExportMessage
@@ -108,15 +106,7 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
         return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt(destination, index, getIntAt(index));
-    }
-
-    @ExportMessage(library = RIntVectorDataLibrary.class)
-    @Override
+    @ExportMessage
     public boolean isComplete() {
         return true;
     }
@@ -127,7 +117,7 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
-    public int[] getReadonlyIntData() {
+    public int[] getIntDataCopy() {
         return getDataAsArray(length);
     }
 
@@ -142,20 +132,24 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
-    @Override
+    public Object getDataAtAsObject(int index) {
+        return getIntAt(index);
+    }
+
+    @ExportMessage
     public int getIntAt(int index) {
         assert index < length;
         return start + stride * index;
     }
 
     @ExportMessage
-    public int getNext(SeqIterator it) {
+    public int getNextInt(SeqIterator it) {
         IteratorData data = getStore(it);
         return data.start + data.stride * it.getIndex();
     }
 
     @ExportMessage
-    public int getAt(RandomAccessIterator it, int index) {
+    public int getInt(RandomAccessIterator it, int index) {
         IteratorData data = getStore(it);
         return data.start + data.stride * index;
     }

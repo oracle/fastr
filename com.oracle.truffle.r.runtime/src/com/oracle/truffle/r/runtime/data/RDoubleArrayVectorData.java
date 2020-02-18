@@ -22,20 +22,19 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.Iterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
 
-@ExportLibrary(RDoubleVectorDataLibrary.class)
 @ExportLibrary(VectorDataLibrary.class)
-class RDoubleArrayVectorData extends RDoubleVectorData {
+class RDoubleArrayVectorData implements TruffleObject {
     private final double[] data;
     private boolean complete;
 
@@ -44,25 +43,18 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
         this.complete = complete;
     }
 
-    @Override
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
+    @ExportMessage
     public int getLength() {
         return data.length;
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage
     public RDoubleArrayVectorData materialize() {
         return this;
     }
 
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage
     public boolean isWriteable() {
-        return true;
-    }
-
-    @ExportMessage(library = VectorDataLibrary.class)
-    public boolean isMaterialized() {
         return true;
     }
 
@@ -80,16 +72,7 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
         return new RDoubleArrayVectorData(newData, complete);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt(destination, index, data[index]);
-    }
-
-    @ExportMessage(library = RDoubleVectorDataLibrary.class)
-    @ExportMessage(library = VectorDataLibrary.class)
-    @Override
+    @ExportMessage
     public boolean isComplete() {
         return complete;
     }
@@ -114,23 +97,26 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
         return new RandomAccessIterator(data, data.length);
     }
 
-    @Override
+    @ExportMessage
+    public Object getDataAtAsObject(int index) {
+        return getDoubleAt(index);
+    }
+
     @ExportMessage
     public double getDoubleAt(int index) {
         return data[index];
     }
 
     @ExportMessage
-    public double getNext(SeqIterator it) {
+    public double getNextDouble(SeqIterator it) {
         return getStore(it)[it.getIndex()];
     }
 
     @ExportMessage
-    public double getAt(RandomAccessIterator it, int index) {
+    public double getDouble(RandomAccessIterator it, int index) {
         return getStore(it)[index];
     }
 
-    @Override
     @ExportMessage
     public void setDoubleAt(int index, double value, NACheck naCheck) {
         updateComplete(value, naCheck);
@@ -143,13 +129,13 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
     }
 
     @ExportMessage
-    public void setNext(SeqIterator it, double value, NACheck naCheck) {
+    public void setNextDouble(SeqIterator it, double value, NACheck naCheck) {
         updateComplete(value, naCheck);
         getStore(it)[it.getIndex()] = value;
     }
 
     @ExportMessage
-    public void setAt(RandomAccessIterator it, int index, double value, NACheck naCheck) {
+    public void setDouble(RandomAccessIterator it, int index, double value, NACheck naCheck) {
         updateComplete(value, naCheck);
         getStore(it)[index] = value;
     }
