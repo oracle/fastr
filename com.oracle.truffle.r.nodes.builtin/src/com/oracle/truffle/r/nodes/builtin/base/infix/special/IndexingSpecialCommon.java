@@ -51,6 +51,10 @@ abstract class IndexingSpecialCommon extends Node {
         return index >= 1 && index <= vectorLibrary.getLength(vector.getData());
     }
 
+    protected static boolean isValidIndexCached(VectorDataLibrary library, RAbstractVector vector, int index) {
+        return index >= 1 && index <= library.getLength(vector.getData());
+    }
+
     /**
      * Checks if the value is single element that can be put into a list or vector as is, because in
      * the case of vectors on the LSH of update we take each element and put it into the RHS of the

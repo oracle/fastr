@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.SubIn
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -50,46 +51,22 @@ public abstract class AccessSpecial extends IndexingSpecialCommon implements Sub
 
     public abstract int executeInteger(RIntVector vec, int index);
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
     protected int accessInt(RIntVector vector, int index,
-                    @Cached("vector.access()") VectorAccess access,
-                    @CachedLibrary("vector") AbstractContainerLibrary library) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(library, vector)) {
-            return access.getInt(iter, index - 1);
-        }
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        return dataLib.getIntAt(vector.getData(), index - 1);
     }
 
-    @Specialization(replaces = "accessInt", guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected int accessIntGeneric(RIntVector vector, int index) {
-        return accessInt(vector, index, vector.slowPathAccess(), AbstractContainerLibrary.getFactory().getUncached());
-    }
-
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
     protected double accessDouble(RAbstractDoubleVector vector, int index,
-                    @Cached("vector.access()") VectorAccess access,
-                    @CachedLibrary("vector") AbstractContainerLibrary library) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(library, vector)) {
-            return access.getDouble(iter, index - 1);
-        }
+                                  @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        return dataLib.getDoubleAt(vector.getData(), index - 1);
     }
 
-    @Specialization(replaces = "accessDouble", guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected double accessDoubleGeneric(RAbstractDoubleVector vector, int index) {
-        return accessDouble(vector, index, vector.slowPathAccess(), AbstractContainerLibrary.getFactory().getUncached());
-    }
-
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
     protected String accessString(RAbstractStringVector vector, int index,
-                    @Cached("vector.access()") VectorAccess access,
-                    @CachedLibrary("vector") AbstractContainerLibrary library) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(library, vector)) {
-            return access.getString(iter, index - 1);
-        }
-    }
-
-    @Specialization(replaces = "accessString", guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected String accessStringGeneric(RAbstractStringVector vector, int index) {
-        return accessString(vector, index, vector.slowPathAccess(), AbstractContainerLibrary.getFactory().getUncached());
+                                  @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        return dataLib.getStringAt(vector.getData(), index - 1);
     }
 
     @SuppressWarnings("unused")
