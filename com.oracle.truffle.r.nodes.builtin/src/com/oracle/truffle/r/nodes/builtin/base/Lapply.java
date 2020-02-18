@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -143,6 +143,11 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
         @Override
         public RSyntaxElement[] getSyntaxArguments() {
             return new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(LAZY_DEPARSE, "X", false), RSyntaxLookup.createDummyLookup(LAZY_DEPARSE, "i", false)};
+        }
+
+        @Override
+        public boolean forceEagerEvaluation() {
+            return true;
         }
     }
 

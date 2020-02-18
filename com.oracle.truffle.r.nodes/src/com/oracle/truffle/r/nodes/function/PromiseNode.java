@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.api.utilities.AlwaysValidAssumption;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -111,13 +112,16 @@ public abstract class PromiseNode extends RNode {
 
         // For ARG_DEFAULT, expr == defaultExpr!
         RNode arg = (RNode) factory.getExpr();
+
         RNode expr = (RNode) RASTUtils.unwrap(arg);
         int wrapIndex = ArgumentStatePush.INVALID_INDEX;
         if (arg instanceof WrapArgumentNode) {
             wrapIndex = ((WrapArgumentNode) arg).getIndex();
         }
-        if (forcedEager) {
-            return new OptForcedEagerPromiseNode(factory, wrapIndex, allArgPromisesCanOptimize);
+        boolean alwaysEager = expr != null && expr.forceEagerEvaluation();
+        if (forcedEager || alwaysEager) {
+            Assumption assumption = alwaysEager ? AlwaysValidAssumption.INSTANCE : allArgPromisesCanOptimize;
+            return new OptForcedEagerPromiseNode(factory, wrapIndex, assumption, alwaysEager);
         } else {
             Object optimizableConstant = getOptimizableConstant(expr);
             if (optimizableConstant != null) {

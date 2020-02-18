@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -221,5 +221,13 @@ public class TestBuiltin_subset extends TestBase {
         assertEval("attributes(structure(1:4, dim=c(2,2), srcref=list('a', 'b', 'c', 'd'))[c(1,2)])");
         // multidimensional subset does not transfer the srcref attr
         assertEval("attributes(structure(1:4, dim=c(2,2), srcref=list('a', 'b', 'c', 'd'))[1,1])");
+    }
+
+    @Test
+    public void testInfiniteIndex() {
+        assertEval("{ aaa <- c(1,2); aaa[-Inf] }");
+        assertEval("{ aaa <- c(1,2); aaa[Inf] }");
+        assertEval("{ aaa <- c(1,2); aaa[c(Inf, 1)] }");
+        assertEval("{ aaa <- c(1,2); aaa[c(-Inf, 1)] }");
     }
 }

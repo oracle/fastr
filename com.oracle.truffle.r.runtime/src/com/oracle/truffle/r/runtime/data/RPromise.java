@@ -361,6 +361,10 @@ public class RPromise extends RBaseObject {
         return (state & UNDER_EVALUATION_BIT) != 0;
     }
 
+    public final boolean isForced() {
+        return this.closure.getExpr().forceEagerEvaluation();
+    }
+
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
@@ -509,6 +513,10 @@ public class RPromise extends RBaseObject {
          */
         public RPromise createPromise(MaterializedFrame frame) {
             return RDataFactory.createPromise(state, exprClosure, frame);
+        }
+
+        public RPromise createEvaluatedPromise(Object value) {
+            return RDataFactory.createEvaluatedPromise(exprClosure, value);
         }
 
         /**
