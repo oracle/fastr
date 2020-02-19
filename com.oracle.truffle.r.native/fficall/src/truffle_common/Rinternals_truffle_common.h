@@ -71,6 +71,7 @@
 #define NO_FASTR_REDEFINE
 #include <rffiutils.h>
 
+
 // these two functions are here just to handle casting void* to void function pointers...
 DL_FUNC R_ExternalPtrAddrFn(SEXP s) {
     return (DL_FUNC) R_ExternalPtrAddr(s);

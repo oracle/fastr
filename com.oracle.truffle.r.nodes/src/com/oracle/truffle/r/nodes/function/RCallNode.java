@@ -64,6 +64,7 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode.WithSideEffect;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNodeGen.FunctionDispatchNodeGen;
@@ -1019,10 +1020,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         private final RBuiltinDescriptor builtinDescriptor;
         private final boolean explicitArgs;
         private final boolean pure;
+        private final boolean hasAspect;
 
         public BuiltinCallNode(RBuiltinNode builtin, RBuiltinDescriptor builtinDescriptor, FormalArguments formalArguments, RCallNode originalCall, boolean explicitArgs) {
             super(originalCall);
             this.builtin = builtin;
+            this.hasAspect = builtin instanceof RBuiltinNode.WithSideEffect;
             this.builtinDescriptor = builtinDescriptor;
             this.explicitArgs = explicitArgs;
             this.formals = formalArguments;
@@ -1154,12 +1157,21 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             if (!pure) {
                 RArguments.getCall(frame).checkEagerPromiseOnly();
             }
-
-            Object result = builtin.call(frame, forceArgPromises(frame, orderedArguments.getArguments()));
-            assert result != null : "builtins cannot return 'null': " + builtinDescriptor.getName();
-            assert !(result instanceof RConnection) : "builtins cannot return connection': " + builtinDescriptor.getName();
-            visibility.execute(frame, builtinDescriptor.getVisibility());
-            return result;
+            Object savedReturn = null;
+            if (hasAspect) {
+                savedReturn = ((WithSideEffect) builtin).beforeCall(frame, currentFunction, orderedArguments, s3Args);
+            }
+            try {
+                Object result = builtin.call(frame, forceArgPromises(frame, orderedArguments.getArguments()));
+                assert result != null : "builtins cannot return 'null': " + builtinDescriptor.getName();
+                assert !(result instanceof RConnection) : "builtins cannot return connection': " + builtinDescriptor.getName();
+                visibility.execute(frame, builtinDescriptor.getVisibility());
+                return result;
+            } finally {
+                if (hasAspect) {
+                    ((WithSideEffect) builtin).afterCall(frame, currentFunction, orderedArguments, s3Args, savedReturn);
+                }
+            }
         }
     }
 

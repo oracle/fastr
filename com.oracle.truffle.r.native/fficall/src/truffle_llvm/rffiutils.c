@@ -22,7 +22,7 @@
  */
 #include <rffiutils.h>
 
-void checkExitCall() {
+int checkExitCall() {
 }
 
 SEXP unimplemented(const char *name) {

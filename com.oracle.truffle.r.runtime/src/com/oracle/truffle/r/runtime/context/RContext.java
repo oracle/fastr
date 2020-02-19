@@ -38,6 +38,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -45,11 +46,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
 import org.graalvm.options.OptionKey;
 
@@ -87,6 +92,7 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.Utils;
@@ -99,6 +105,7 @@ import com.oracle.truffle.r.runtime.data.LanguageClosureCache;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
@@ -108,8 +115,6 @@ import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
-import java.nio.file.NoSuchFileException;
-import java.util.logging.Level;
 
 /**
  * Encapsulates the runtime state ("context") of an R session. All access to that state from the
@@ -265,7 +270,7 @@ public final class RContext {
     private final int multiSlotIndex;
     private TruffleContext truffleContext;
 
-    private Executor executor;
+    private ExecutorService executor;
 
     private final InputStream stdin;
     private final OutputStreamWriter stdout;
@@ -366,7 +371,8 @@ public final class RContext {
 
     // Context specific state required for libraries, the initialization is handled lazily by the
     // concrete library.
-    public Object gridContext = null;
+    @CompilationFinal public Object gridContext = null;
+    public final AtomicBoolean interruptResize = new AtomicBoolean(false);
     public boolean internalGraphicsInitialized = false;
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
@@ -914,6 +920,11 @@ public final class RContext {
         executor.execute(action);
     }
 
+    public <V> Future<V> submit(Callable<V> action) {
+        assert hasExecutor() : "Cannot run RContext#schedule() when there is no executor.";
+        return executor.submit(action);
+    }
+
     @Override
     public String toString() {
         return "context: " + id;
@@ -1187,4 +1198,17 @@ public final class RContext {
     public static int getInitialPid() {
         return initialPid;
     }
+
+    /**
+     * Check whether we are running as a display list callback and whether there is a new repaint
+     * request. If so, break the playing back of the display list for the waiting repaint request to
+     * be processed.
+     */
+    public static void checkPendingRepaintRequest() {
+        RContext rCtx = RContext.getInstance();
+        if (rCtx.getStateRFFI().rffiContextState.primFunBeingDispatched && rCtx.interruptResize.get()) {
+            throw new ReturnException(RUnboundValue.instance, null);
+        }
+    }
+
 }

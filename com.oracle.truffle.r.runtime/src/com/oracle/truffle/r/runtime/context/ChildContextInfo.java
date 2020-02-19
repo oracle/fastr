@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.TruffleContext;
@@ -63,7 +64,7 @@ public final class ChildContextInfo {
     private final int id;
     private final int multiSlotInd;
     private TruffleContext truffleContext;
-    public Executor executor;
+    public ExecutorService executor;
 
     private ChildContextInfo(RStartParams startParams, Map<String, String> env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr,
                     int id,

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,12 +36,6 @@ int R_cairoCdynload(int local, int now)
 {
 	unimplemented("R_cairoCdynload");
     return 0;
-}
-
-SEXP do_X11(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-	unimplemented("do_X11");
-    return R_NilValue;
 }
 
 SEXP do_saveplot(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -137,15 +131,10 @@ SEXP R_getS4DataSlot(SEXP obj, SEXPTYPE type) {
 }
 
 void Rf_checkArityCall(SEXP a, SEXP b, SEXP c) {
-	unimplemented("Rf_checkArityCall");
+	//unimplemented("Rf_checkArityCall");
 }
 
 SEXP NewEnvironment(SEXP a, SEXP b, SEXP c) {
-	unimplemented("NewEnvironment");
-	return NULL;
-}
-
-CCODE PRIMFUN(SEXP x) {
 	unimplemented("NewEnvironment");
 	return NULL;
 }
@@ -199,6 +188,7 @@ void R_GE_VText(double x, double y, const char * const s, cetype_t enc,
 
 double R_GE_VStrWidth(const char *s, cetype_t enc, const pGEcontext gc, pGEDevDesc dd) {
     unimplemented("R_GE_VStrWidth");	    		
+    return 0;
 }
 
 void genptry(int n, double *p, double *ptry, double scale, void *ex) {
@@ -219,3 +209,10 @@ Rwchar_t Rf_utf8toucs32(wchar_t high, const char *s) {
     unimplemented("Rf_utf8toucs32");	
 	return 0;
 }
+
+int DispatchOrEval(SEXP call, SEXP op, const char *generic, SEXP args,
+		   SEXP rho, SEXP *ans, int dropmissing, int argsevald) {
+    unimplemented("DispatchOrEval");	
+	return 0;
+}
+

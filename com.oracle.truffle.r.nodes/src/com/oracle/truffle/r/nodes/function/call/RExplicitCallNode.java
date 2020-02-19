@@ -24,10 +24,13 @@ package com.oracle.truffle.r.nodes.function.call;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
@@ -56,15 +59,32 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
 
     public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame);
 
-    @CompilationFinal private FrameSlot argsFrameSlot;
+    static FrameSlot initArgsFrameSlot(FrameDescriptor frameDesc) {
+        return FrameSlotChangeMonitor.findOrAddFrameSlot(frameDesc, RFrameSlot.ExplicitCallArgs, FrameSlotKind.Object);
+    }
 
-    @Specialization
-    protected Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame,
-                    @Cached("createExplicitCall()") RCallBaseNode call) {
-        if (argsFrameSlot == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.ExplicitCallArgs, FrameSlotKind.Object);
+    @Specialization(guards = "cachedFrameDesc == frame.getFrameDescriptor()", limit = "1")
+    protected Object doFastCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame,
+                    @SuppressWarnings("unused") @Cached("frame.getFrameDescriptor()") FrameDescriptor cachedFrameDesc,
+                    @Cached("createExplicitCall()") RCallBaseNode call,
+                    @Cached("initArgsFrameSlot(cachedFrameDesc)") FrameSlot argsFrameSlot) {
+        try {
+            FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, new ExplicitArgs(args, caller, callerFrame));
+            return call.execute(frame, function);
+        } finally {
+            FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, null);
         }
+    }
+
+    @Specialization(replaces = "doFastCall")
+    protected Object doSlowCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame,
+                    @Cached("createExplicitCall()") RCallBaseNode call) {
+        return slowPathCall(frame.materialize(), function, args, caller, callerFrame, call);
+    }
+
+    @TruffleBoundary
+    private static Object slowPathCall(MaterializedFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame, RCallBaseNode call) {
+        FrameSlot argsFrameSlot = initArgsFrameSlot(frame.getFrameDescriptor());
         try {
             FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, new ExplicitArgs(args, caller, callerFrame));
             return call.execute(frame, function);

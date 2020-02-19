@@ -558,11 +558,6 @@ SEXP api_R_ExternalPtrProtected(SEXP x) {
     return R_ExternalPtrProtected(x);
 }
 
-SEXP api_R_SetExternalPtrAddr(SEXP x, SEXP addr) {
-    R_SetExternalPtrAddr(x, INTEGER_VALUE(addr));
-    return R_NilValue;
-}
-
 SEXP api_R_SetExternalPtrTag(SEXP x, SEXP tag) {
     R_SetExternalPtrTag(x, tag);
     return R_NilValue;

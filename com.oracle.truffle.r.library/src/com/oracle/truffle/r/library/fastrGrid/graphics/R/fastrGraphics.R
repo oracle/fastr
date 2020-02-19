@@ -194,4 +194,10 @@ if (.fastr.option('UseInternalGridGraphics')) {
         xyinch <- graphicsWarning("xyinch");
         yinch <- graphicsWarning("yinch");
     }), asNamespace("graphics"))
+} else {
+	eval(expression({
+		.javaGD.resize <- function(devNr = dev.cur()) {
+    		.fastr.javaGDresizeCall(devNr)
+		}
+	}), asNamespace("graphics"))
 }

@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  * Aggregation of all the FFI upcall interfaces.
  */
 @RFFIUpCallRoot
-public interface UpCallsRFFI extends StdUpCallsRFFI, IDEUpCallsRFFI, VariableUpCallsRFFI, DLLUpCallsRFFI, MemoryUpCallsRFFI, FastRUpCalls {
+public interface UpCallsRFFI extends StdUpCallsRFFI, IDEUpCallsRFFI, VariableUpCallsRFFI, DLLUpCallsRFFI, MemoryUpCallsRFFI, FastRUpCalls, JavaGDUpCalls {
 
     // methods in here are not considered by FFIUpCallsIndexCodeGen
 

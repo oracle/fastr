@@ -972,10 +972,13 @@ public class RDeparse {
                 append(vec.getRType().getClazz() + "(0)");
             } else if (vec instanceof RAbstractRawVector) {
                 append("as.raw(c(");
+                RStringVector name = vec.getNames();
                 for (int i = 0; i < len; i++) {
                     if (nicename || showname) {
-                        append(vec.getNames().getDataAt(i));
-                        append(" = ");
+                        if (name != null) {
+                            append(name.getDataAt(i));
+                            append(" = ");
+                        }
                         vecElement2buff(vec.getDataAtAsObject(i), false);
                     } else {
                         vecElement2buff(vec.getDataAtAsObject(i), false);

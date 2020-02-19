@@ -36,6 +36,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.AsCharacterFactor;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
+import com.oracle.truffle.r.ffi.impl.nodes.DispatchPrimFunNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DoMakeClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfDuplicated;
@@ -974,4 +975,6 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(MakeActiveBindingNode.class)
     void R_MakeActiveBinding(Object sym, Object fun, Object env);
 
+    @RFFIUpCallNode(DispatchPrimFunNode.class)
+    Object DispatchPRIMFUN(Object call, Object op, Object args, Object rho);
 }

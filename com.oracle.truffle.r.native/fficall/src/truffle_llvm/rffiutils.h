@@ -35,7 +35,7 @@ extern int dispatchHandlers();
 char *ensure_truffle_chararray(const char *x);
 void *ensure_string(const char *x);
 void *ensure_function(void *fptr);
-void checkExitCall();
+int checkExitCall();
 SEXP unimplemented(const char *name);
 
 #endif /* RFFIUTILS_H */

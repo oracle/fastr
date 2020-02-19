@@ -1679,14 +1679,16 @@ void GEText(double x, double y, const char * const str, cetype_t enc,
     /*
      * If the fontfamily is a Hershey font family, call R_GE_VText
      */
-    int vfontcode = VFontFamilyCode(gc->fontfamily);
-    if (vfontcode >= 100) {
-	R_GE_VText(x, y, str, enc, xc, yc, rot, gc, dd);
-    } else if (vfontcode >= 0) {
-	gc->fontfamily[7] = (char) vfontcode;
-	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
-	R_GE_VText(x, y, str, enc, xc, yc, rot, gc, dd);
-    } else {
+// Commented out by FastR until R_GE_VText is implemented
+//    int vfontcode = VFontFamilyCode(gc->fontfamily);
+//    if (vfontcode >= 100) {
+//	R_GE_VText(x, y, str, enc, xc, yc, rot, gc, dd);
+//    } else if (vfontcode >= 0) {
+//	gc->fontfamily[7] = (char) vfontcode;
+//	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
+//	R_GE_VText(x, y, str, enc, xc, yc, rot, gc, dd);
+//    } else 
+	{
 	/* PR#7397: this seemed to reset R_Visible */
 	Rboolean savevis = R_Visible;
 	int noMetricInfo = -1;
@@ -2433,20 +2435,29 @@ void GEMetricInfo(int c, const pGEcontext gc,
 	static double last_cex = 0.0, last_ps = 0.0,
 	    a = 0.0 , d = 0.0, w = 0.0;
 	static char last_family[201];
-	if (dd == last_dd && dd->dev->close == last_close && abs(c) == 77
+	/* FastR note: Despite the comment above the dd->dev->close comparison does not 
+	 * ensure that dd and last_dd point to the same device as last_dd may point to
+	 * a new device of the SAME type as that of the last_dd while occupying the same 
+	 * memory. Then dd->dev->close and last_close would be the same and the metric info 
+	 * for the last device would be used for the new device.
+	 * As a workaround, the caching is moved to JavaGD's metric info routine in jGDTalk.c.
+	 */
+/*	if (dd == last_dd && dd->dev->close == last_close && abs(c) == 77
 	    && gc->cex == last_cex && gc->ps == last_ps
 	    && gc->fontface == last_face
 	    && streql(gc->fontfamily, last_family)) {
 	    *ascent = a; *descent = d; *width = w; return;
 	}
+*/
 	dd->dev->metricInfo(c, gc, ascent, descent, width, dd->dev);
-	if(abs(c) == 77) {
+/*	if(abs(c) == 77) {
 	    last_dd = dd;  last_close = dd->dev->close;
             last_cex = gc->cex; last_ps = gc->ps;
 	    last_face = gc->fontface;
 	    strcpy(last_family, gc->fontfamily);
 	    a = *ascent; d = *descent; w = *width;
 	}
+*/
     }
 }
 
@@ -2459,14 +2470,17 @@ double GEStrWidth(const char *str, cetype_t enc, const pGEcontext gc, pGEDevDesc
     /*
      * If the fontfamily is a Hershey font family, call R_GE_VStrWidth
      */
-    int vfontcode = VFontFamilyCode(gc->fontfamily);
-    if (vfontcode >= 100)
-	return R_GE_VStrWidth(str, enc, gc, dd);
-    else if (vfontcode >= 0) {
-	gc->fontfamily[7] = (char) vfontcode;
-	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
-	return R_GE_VStrWidth(str, enc, gc, dd);
-    } else {
+// Commented out by FastR until R_GE_VStrWidth is implemented
+//    int vfontcode = VFontFamilyCode(gc->fontfamily);
+//    if (vfontcode >= 100)
+//	return R_GE_VStrWidth(str, enc, gc, dd);
+//    else 
+//	if (vfontcode >= 0) {
+//	gc->fontfamily[7] = (char) vfontcode;
+//	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
+//	return R_GE_VStrWidth(str, enc, gc, dd);
+//    } else 
+    {
 	double w;
 	char *sbuf = NULL;
 	w = 0;
@@ -2519,14 +2533,17 @@ double GEStrHeight(const char *str, cetype_t enc, const pGEcontext gc, pGEDevDes
     /*
      * If the fontfamily is a Hershey font family, call R_GE_VStrHeight
      */
-    int vfontcode = VFontFamilyCode(gc->fontfamily);
-    if (vfontcode >= 100)
-	return R_GE_VStrHeight(str, enc, gc, dd);
-    else if (vfontcode >= 0) {
-	gc->fontfamily[7] = (char) vfontcode;
-	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
-	return R_GE_VStrHeight(str, enc, gc, dd);
-    } else {
+// Commented out by FastR until R_GE_VStrHeight is implemented
+//    int vfontcode = VFontFamilyCode(gc->fontfamily);
+//    if (vfontcode >= 100)
+//	return R_GE_VStrHeight(str, enc, gc, dd);
+//    else 
+//	if (vfontcode >= 0) {
+//	gc->fontfamily[7] = (char) vfontcode;
+//	gc->fontface = VFontFaceCode(vfontcode, gc->fontface);
+//	return R_GE_VStrHeight(str, enc, gc, dd);
+ //   } else 
+ 	{
 	double h;
 	const char *s;
 	double asc, dsc, wid;
@@ -2804,8 +2821,12 @@ void GErecordGraphicOperation(SEXP op, SEXP args, pGEDevDesc dd)
     SEXP lastOperation = dd->DLlastElt;
     if (dd->displayListOn) {
 	SEXP newOperation = list2(op, args);
+	SET_NAMED(newOperation, 2);
 	if (lastOperation == R_NilValue) {
 	    dd->displayList = CONS(newOperation, R_NilValue);
+		// In FastR, in constract to GNUR, display lists are not intrinsically protected from
+		// garbage collecting, so we have to explicitly preserve and release them.
+		R_PreserveObject(dd->displayList);
 	    dd->DLlastElt = dd->displayList;
 	} else {
 	    SETCDR(lastOperation, CONS(newOperation, R_NilValue));
@@ -2826,6 +2847,9 @@ void GEinitDisplayList(pGEDevDesc dd)
      * can maintain a plot history
      */
     dd->savedSnapshot = GEcreateSnapshot(dd);
+	// In FastR, in constract to GNUR, saved snapshots are not intrinsically protected from
+	// garbage collecting, so we have to explicitly preserve and release them.
+	R_PreserveObject(dd->savedSnapshot);
     /* Get each graphics system to save state required for
      * replaying the display list
      */
@@ -2860,7 +2884,8 @@ void GEplayDisplayList(pGEDevDesc dd)
     if (this == 0) return;
     theList = dd->displayList;
     if (theList == R_NilValue) return;
-
+    // FastR: PROTECT had to be moved here as theList was used before being protected
+    PROTECT(theList = duplicate(theList));
     /* Get each graphics system to restore state required for
      * replaying the display list
      */
@@ -2869,7 +2894,6 @@ void GEplayDisplayList(pGEDevDesc dd)
 	    (dd->gesd[i]->callback)(GE_RestoreState, dd, theList);
     /* Play the display list
      */
-    PROTECT(theList);
     plotok = 1;
     if (theList != R_NilValue) {
 	savePalette(TRUE);
@@ -2879,14 +2903,20 @@ void GEplayDisplayList(pGEDevDesc dd)
 	    SEXP theOperation = CAR(theList);
 	    SEXP op = CAR(theOperation);
 	    SEXP args = CADR(theOperation);
-	    if (TYPEOF(op) == BUILTINSXP || TYPEOF(op) == SPECIALSXP) {
-	    	PRIMFUN(op) (R_NilValue, op, args, R_NilValue);
-		/* Check with each graphics system that the plotting went ok
-		 */
-		if (!GEcheckState(dd)) {
-		    warning(_("display list redraw incomplete"));
-		    plotok = 0;
-		}
+	    int tp = TYPEOF(op);
+	    // FastR: The condition is extended with CLOSXP to allow for non-primitive builtins,
+	    // such as recordGraphics
+	    if (tp == BUILTINSXP || tp == SPECIALSXP || tp == CLOSXP) {
+	    	SEXP res = PRIMFUN(op) (R_NilValue, op, args, R_NilValue);
+			/* Check with each graphics system that the plotting went ok
+			 */
+			if (!GEcheckState(dd)) {
+		    	warning(_("display list redraw incomplete"));
+		    	plotok = 0;
+			} else if (res == R_UnboundValue) {
+				// FastR specific: R_UnboundValue signals breaking the playback
+	    		plotok = 0;
+			}
 	    } else {
 	    	warning(_("invalid display list"));
 	    	plotok = 0;
@@ -2914,9 +2944,15 @@ void GEcopyDisplayList(int fromDevice)
     int i;
 
     tmp = gd->displayList;
-    if(!isNull(tmp)) tmp = duplicate(tmp);
+    if(!isNull(tmp)) {
+    	tmp = duplicate(tmp);
+		R_ReleaseObject(gd->displayList); // FastR specific
+    }
     dd->displayList = tmp;
     dd->DLlastElt = lastElt(dd->displayList);
+
+	R_PreserveObject(dd->displayList); // FastR specific
+
     /* Get each registered graphics system to copy system state
      * information from the "from" device to the current device
      */
@@ -3021,7 +3057,11 @@ void GEplaySnapshot(SEXP snapshot, pGEDevDesc dd)
 	    (dd->gesd[i]->callback)(GE_RestoreSnapshotState, dd, snapshot);
     /* Replay the display list
      */
+    if (!isNull(dd->displayList)) {
+    	R_ReleaseObject(dd->displayList); // FastR specific
+    }
     dd->displayList = duplicate(VECTOR_ELT(snapshot, 0));
+	R_PreserveObject(dd->displayList); // FastR specific
     dd->DLlastElt = lastElt(dd->displayList);
     GEplayDisplayList(dd);
     if (!dd->displayListOn) GEinitDisplayList(dd);

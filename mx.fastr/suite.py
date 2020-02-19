@@ -74,6 +74,14 @@ suite = {
         "version" : "1.8",
       },
     },
+    "BATIK-ALL-1.12" : {
+      "sha1" : "4df3c69c7851a45dfe46c124b495051301418431",
+      "maven" : {
+        "groupId" : "org.apache.xmlgraphics",
+        "artifactId" : "batik-all",
+        "version" : "1.12",
+      },
+    },
   },
 
   "projects" : {
@@ -247,7 +255,9 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
          "com.oracle.truffle.r.ffi.processor",
-         "com.oracle.truffle.r.nodes"
+         "com.oracle.truffle.r.nodes",
+         "org.rosuda.javaGD",
+         'BATIK-ALL-1.12',
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "8+",
@@ -328,6 +338,17 @@ suite = {
       "workingSets" : "FastR",
       "jacoco" : "include",
 
+    },
+
+    "org.rosuda.javaGD" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+         "com.oracle.truffle.r.nodes",
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "8+",
+      "workingSets" : "FastR",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.release" : {

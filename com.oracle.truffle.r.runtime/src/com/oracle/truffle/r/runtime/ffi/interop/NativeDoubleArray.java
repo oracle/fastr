@@ -37,12 +37,22 @@ public final class NativeDoubleArray extends NativeArray {
 
     private final double[] array;
 
+    public NativeDoubleArray(long address, int size) {
+        this.array = new double[size];
+        this.nativeMirror = NativeMemory.wrapExternalNativeMemory(address, this);
+        refresh();
+    }
+
     public NativeDoubleArray(double[] value) {
         this.array = value;
     }
 
     @Override
     protected Object getArray() {
+        return array;
+    }
+
+    public double[] getDoubleArray() {
         return array;
     }
 

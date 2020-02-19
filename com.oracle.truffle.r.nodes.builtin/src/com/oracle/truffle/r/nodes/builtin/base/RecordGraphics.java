@@ -31,13 +31,20 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.ffi.MiscRFFI.AbstractAfterGraphicsOpNode;
+import com.oracle.truffle.r.runtime.ffi.MiscRFFI.AbstractBeforeGraphicsOpNode;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * The {@code expr} parameter is supposed to be R graphics code, e.g. {@code rect(4,2,...);}, which
@@ -53,6 +60,9 @@ public abstract class RecordGraphics extends RBuiltinNode.Arg3 {
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
     @Child private RList2EnvNode list2EnvNode = RList2EnvNode.create();
 
+    @Child private AbstractBeforeGraphicsOpNode beforeGraphicsOpNode = RFFIFactory.getMiscRFFI().createBeforeGraphicsOpNode();
+    @Child private AbstractAfterGraphicsOpNode afterGraphicsOpNode = RFFIFactory.getMiscRFFI().createAfterGraphicsOpNode();
+
     static {
         Casts casts = new Casts(RecordGraphics.class);
         casts.arg("expr").mustBe(instanceOf(RPairList.class).or(instanceOf(RExpression.class)));
@@ -67,9 +77,18 @@ public abstract class RecordGraphics extends RBuiltinNode.Arg3 {
     @Specialization(guards = "expr.isLanguage()")
     protected Object doEval(VirtualFrame frame, RPairList expr, RList list, REnvironment env) {
         RCaller rCaller = RCaller.create(frame, getOriginalCall());
+
+        int savedReturn = beforeGraphicsOpNode.execute();
         try {
             return RContext.getEngine().eval(expr, createEnv(list, env), rCaller);
         } finally {
+            RFunction currentFunction = RArguments.getFunction(frame);
+            RPairList opCall = RDataFactory.createPairList(expr, RDataFactory.createPairList(list, RDataFactory.createPairList(env)));
+            int res = afterGraphicsOpNode.execute(currentFunction, opCall, savedReturn);
+            if (res < 0) {
+                throw RInternalError.shouldNotReachHere("invalid graphics state");
+            }
+
             visibility.executeAfterCall(frame, rCaller);
         }
     }

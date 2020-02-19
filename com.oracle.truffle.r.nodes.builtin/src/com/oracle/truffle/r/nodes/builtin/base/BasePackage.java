@@ -127,6 +127,7 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRInteropFactory.FastRInterop
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInteropFactory.FastRInteropClearExceptionNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInteropFactory.FastRInteropGetExceptionNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInteropFactory.FastRInteropTryNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRJavaGDResize;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRLibPaths;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRLibPathsNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastROptionBuiltin;
@@ -485,6 +486,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRPatchPackage.class, FastRPatchPackageNodeGen::create);
         add(FastRDispatchNativeHandlers.class, FastRDispatchNativeHandlers::new);
         add(FastRInitEventLoop.class, FastRInitEventLoopNodeGen::create);
+        add(FastRJavaGDResize.class, FastRJavaGDResize::new);
         add(FastRSetBreakpoint.class, FastRSetBreakpointNodeGen::create);
         add(FastRAddHelpPath.class, FastRAddHelpPath::create);
         add(FastRHelpPath.class, FastRHelpPathNodeGen::create);

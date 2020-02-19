@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
+
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.runtime.context.RContext;
+
 /**
  * Miscellaneous methods implemented in native code.
  *
@@ -61,11 +66,113 @@ public final class MiscRFFI {
         }
     }
 
+    public static abstract class AbstractBeforeGraphicsOpNode extends NativeCallNode {
+
+        protected AbstractBeforeGraphicsOpNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode());
+        }
+
+        public abstract int execute();
+
+    }
+
+    public static final class DefaultBeforeGraphicsOpNode extends AbstractBeforeGraphicsOpNode {
+
+        private DefaultBeforeGraphicsOpNode(DownCallNodeFactory parent) {
+            super(parent);
+        }
+
+        @Override
+        public int execute() {
+            RContext.checkPendingRepaintRequest();
+            return (int) call(NativeFunction.before_graphics_op);
+        }
+
+    }
+
+    public static final class DummyBeforeGraphicsOpNode extends AbstractBeforeGraphicsOpNode {
+
+        private DummyBeforeGraphicsOpNode(DownCallNodeFactory parent) {
+            super(parent);
+        }
+
+        @Override
+        public int execute() {
+            return 0;
+        }
+
+    }
+
+    public static abstract class AbstractAfterGraphicsOpNode extends NativeCallNode {
+
+        private AbstractAfterGraphicsOpNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode());
+        }
+
+        public abstract int execute(Object op, Object args, int record);
+
+    }
+
+    public static final class DefaultAfterGraphicsOpNode extends AbstractAfterGraphicsOpNode {
+
+        @Child protected FFIToNativeMirrorNode opToNativeMirrorNode = FFIToNativeMirrorNode.create();
+        @Child protected FFIToNativeMirrorNode argsToNativeMirrorNode = FFIToNativeMirrorNode.create();
+
+        private DefaultAfterGraphicsOpNode(DownCallNodeFactory parent) {
+            super(parent);
+        }
+
+        @Override
+        public int execute(Object op, Object args, int record) {
+            return (int) call(NativeFunction.after_graphics_op, opToNativeMirrorNode.execute(op), argsToNativeMirrorNode.execute(args), record);
+        }
+
+    }
+
+    public static final class DummyAfterGraphicsOpNode extends AbstractAfterGraphicsOpNode {
+
+        private DummyAfterGraphicsOpNode(DownCallNodeFactory parent) {
+            super(parent);
+        }
+
+        @Override
+        public int execute(Object op, Object args, int record) {
+            return 0;
+        }
+
+    }
+
+    public static final class JavaGDResizeCallNode extends NativeCallNode {
+        @Child protected FFIMaterializeNode materializeNode = FFIMaterializeNode.create();
+        @Child protected FFIToNativeMirrorNode opToNativeMirrorNode = FFIToNativeMirrorNode.create();
+
+        private JavaGDResizeCallNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode());
+        }
+
+        public Object execute(VirtualFrame frame, Object dev) {
+            return call(frame, NativeFunction.javaGDresizeCall, opToNativeMirrorNode.execute(materializeNode.execute(dev, false)));
+        }
+
+    }
+
     public ExactSumNode createExactSumNode() {
         return new ExactSumNode(downCallNodeFactory);
     }
 
     public DqrlsNode createDqrlsNode() {
         return new DqrlsNode(downCallNodeFactory);
+    }
+
+    public AbstractBeforeGraphicsOpNode createBeforeGraphicsOpNode() {
+        return RContext.getInstance().getOption(UseInternalGridGraphics) ? new DummyBeforeGraphicsOpNode(downCallNodeFactory) : new DefaultBeforeGraphicsOpNode(downCallNodeFactory);
+    }
+
+    public AbstractAfterGraphicsOpNode createAfterGraphicsOpNode() {
+        return RContext.getInstance().getOption(UseInternalGridGraphics) ? new DummyAfterGraphicsOpNode(downCallNodeFactory) : new DefaultAfterGraphicsOpNode(downCallNodeFactory);
+    }
+
+    public JavaGDResizeCallNode createJavaGDResizeCallNode() {
+        return new JavaGDResizeCallNode(downCallNodeFactory);
     }
 }

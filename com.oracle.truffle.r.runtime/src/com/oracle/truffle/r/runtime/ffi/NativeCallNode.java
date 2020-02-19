@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 
 /**
@@ -36,6 +37,10 @@ public class NativeCallNode extends Node {
     }
 
     protected Object call(NativeFunction f, Object... args) {
-        return downCallNode.call(f, args);
+        return call(null, f, args);
+    }
+
+    protected Object call(VirtualFrame frame, NativeFunction f, Object... args) {
+        return downCallNode.call(frame, f, args);
     }
 }

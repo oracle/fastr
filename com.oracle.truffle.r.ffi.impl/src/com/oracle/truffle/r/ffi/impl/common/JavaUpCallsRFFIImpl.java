@@ -41,6 +41,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.ffi.impl.javaGD.JavaGDContext;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -613,9 +614,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public void SET_NAMED_FASTR(Object x, int v) {
         // Note: In GNUR this is a macro that sets the sxpinfo.named regardless of whether it makes
-        // sense to name the actual value, for compatibilty we simply ignore values that are not
-        // RShareable, e.g. RSymbol. However we ignore and report attemps to decrease the ref-count,
-        // which as it seems GNUR would just let proceede
+        // sense to name the actual value, for compatibility we simply ignore values that are not
+        // RShareable, e.g. RSymbol. However we ignore and report attempts to decrease the
+        // ref-count,
+        // which as it seems GNUR would just let proceed
         // Note 2: there is a hack in data.table that uses SET_NAMED(x,0) to make something mutable
         // so we allow and "support" this one specific use-case.
         if (x instanceof RSharingAttributeStorage) {
@@ -866,7 +868,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public void Rf_gsetVar(Object symbol, Object value, Object rho) {
         guaranteeInstanceOf(symbol, RSymbol.class);
         REnvironment baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
-        guarantee(rho == baseEnv);
+        guarantee(rho == RNull.instance || rho == baseEnv);
         try {
             baseEnv.put(((RSymbol) symbol).getName(), value);
         } catch (PutException e) {
@@ -2454,4 +2456,147 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         }
         return guaranteeInstanceOf(obj, clazz);
     }
+
+    private static JavaGDContext getJavaGDContext(RContext ctx) {
+        assert ctx.gridContext != null;
+        return (JavaGDContext) ctx.gridContext;
+    }
+
+    @Override
+    public void gdOpen(int gdId, String deviceName, double w, double h) {
+        JavaGDContext.getContext(RContext.getInstance()).newGD(gdId, deviceName).gdOpen(w, h);
+    }
+
+    @Override
+    public void gdClose(int gdId, RContext ctx) {
+        getJavaGDContext(ctx).removeGD(gdId).gdClose();
+    }
+
+    @Override
+    @TruffleBoundary
+    public void gdActivate(int gdId, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdActivate();
+    }
+
+    @Override
+    @TruffleBoundary
+    public void gdcSetColor(int gdId, int cc, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdcSetColor(cc);
+    }
+
+    @Override
+    public void gdcSetFill(int gdId, int cc, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdcSetFill(cc);
+    }
+
+    @Override
+    public void gdcSetLine(int gdId, double lwd, int lty, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdcSetLine(lwd, lty);
+    }
+
+    @Override
+    public void gdcSetFont(int gdId, double cex, double ps, double lineheight, int fontface, String fontfamily, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdcSetFont(cex, ps, lineheight, fontface, fontfamily);
+    }
+
+    @Override
+    public void gdNewPage(int gdId, int devId, int pageNumber, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdNewPage(devId, pageNumber);
+    }
+
+    @Override
+    public void gdCircle(int gdId, double x, double y, double r, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdCircle(x, y, r);
+    }
+
+    @Override
+    public void gdClip(int gdId, double x0, double x1, double y0, double y1, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdClip(x0, x1, y0, y1);
+    }
+
+    @Override
+    public void gdDeactivate(int gdId, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdDeactivate();
+    }
+
+    @Override
+    public void gdHold(int gdId, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdHold();
+    }
+
+    @Override
+    @TruffleBoundary
+    public void gdFlush(int gdId, int flush, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdFlush(flush != 0);
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object gdLocator(int gdId, RContext ctx) {
+        return getJavaGDContext(ctx).getGD(gdId).gdLocator();
+    }
+
+    @Override
+    public void gdLine(int gdId, double x1, double y1, double x2, double y2, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdLine(x1, y1, x2, y2);
+    }
+
+    @Override
+    @TruffleBoundary
+    public void gdMode(int gdId, int mode, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdMode(mode);
+    }
+
+    @Override
+    public void gdPath(int gdId, int npoly, Object nper, int n, Object x, Object y, int winding, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdPath(npoly, (int[]) nper, (double[]) x, (double[]) y, winding != 0);
+    }
+
+    @Override
+    public void gdPolygon(int gdId, int n, Object x, Object y, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdPolygon(n, (double[]) x, (double[]) y);
+    }
+
+    @Override
+    public void gdPolyline(int gdId, int n, Object x, Object y, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdPolyline(n, (double[]) x, (double[]) y);
+    }
+
+    @Override
+    public void gdRect(int gdId, double x0, double y0, double x1, double y1, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdRect(x0, y0, x1, y1);
+    }
+
+    @Override
+    public Object gdSize(int gdId, RContext ctx) {
+        return getJavaGDContext(ctx).getGD(gdId).gdSize();
+    }
+
+    @Override
+    @TruffleBoundary
+    public double getStrWidth(int gdId, String str, RContext ctx) {
+        return getJavaGDContext(ctx).getGD(gdId).gdStrWidth(str);
+    }
+
+    @Override
+    public void gdText(int gdId, double x, double y, String str, double rot, double hadj, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdText(x, y, str, rot, hadj);
+    }
+
+    @Override
+    public void gdRaster(int gdId, int img_w, int img_h, Object img, double x, double y, double w, double h, double rot, int interpolate, RContext ctx) {
+        getJavaGDContext(ctx).getGD(gdId).gdRaster((byte[]) img, img_w, img_h, x, y, w, h, rot, interpolate != 0);
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object gdMetricInfo(int gdId, int ch, RContext ctx) {
+        return getJavaGDContext(ctx).getGD(gdId).gdMetricInfo(ch);
+    }
+
+    @Override
+    public Object DispatchPRIMFUN(Object call, Object op, Object args, Object rho) {
+        throw implementedAsNode();
+    }
+
 }

@@ -36,6 +36,8 @@ import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -69,9 +71,9 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Specialization
-        protected Object doCall(NativeFunction f, Object[] args,
+        protected Object doCall(Frame frame, NativeFunction f, Object[] args,
                         @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-            return doCallImpl(f, args, ctxRef);
+            return doCallImpl(frame, f, args, ctxRef);
         }
 
         @Override
@@ -89,7 +91,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Override
-        protected Object beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args) {
+        protected Object beforeCall(Frame frame, NativeFunction nativeFunction, TruffleObject function, Object[] args) {
             // Report unsupported functions at invocation time
             if (function instanceof DummyFunctionObject) {
                 throw Managed_RFFIFactory.unsupported(((DummyFunctionObject) function).function.getCallName());
@@ -98,7 +100,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Override
-        protected void afterCall(Object before, NativeFunction function, TruffleObject target, Object[] args) {
+        protected void afterCall(Frame frame, Object before, NativeFunction function, TruffleObject target, Object[] args) {
             // nop
         }
     }

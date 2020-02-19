@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import java.util.function.Function;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -47,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import java.util.function.Function;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 
 /**
  * Converts values that can live on the FastR side to values that can be sent to the native code,
@@ -84,6 +86,11 @@ public abstract class FFIMaterializeNode extends Node {
     @Specialization
     protected static Object wrap(double value, @SuppressWarnings("unused") boolean protect) {
         return RDataFactory.createDoubleVectorFromScalar(value);
+    }
+
+    @Specialization
+    protected static Object wrap(double[] value, @SuppressWarnings("unused") boolean protect) {
+        return new NativeDoubleArray(value);
     }
 
     @Specialization

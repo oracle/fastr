@@ -107,6 +107,8 @@ public abstract class RFFIContext extends RFFI {
         public final Collections.ArrayListObj<RBaseObject> protectStack = new Collections.ArrayListObj<>(1000);
 
         public MaterializedFrame currentDowncallFrame = null;
+
+        public boolean primFunBeingDispatched;
     }
 
     /**
@@ -115,7 +117,7 @@ public abstract class RFFIContext extends RFFI {
      * not collect anything that may be not reachable anymore, including the result of the last
      * up-call and including the objects popped off the PROTECT/UNPROTECT stack! Moreover, some
      * R-API functions are known to be not calling GC, therefore people may (and do) count on them
-     * not removing unreachable references, this is specifically true for {@code UPROTECT} and its
+     * not removing unreachable references, this is specifically true for {@code UNPROTECT} and its
      * variants and for macros like {@code INTEGER}. This behavior is required e.g. for
      * {@code C_parseRd}. We keep a list of all the objects that may not be reachable anymore, but
      * must not be collected, because no garbage collecting R-API function has been called since

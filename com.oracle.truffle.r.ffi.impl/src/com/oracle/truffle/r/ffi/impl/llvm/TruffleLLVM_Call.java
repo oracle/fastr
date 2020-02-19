@@ -56,8 +56,10 @@ import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
 public final class TruffleLLVM_Call implements CallRFFI {
 
@@ -141,6 +143,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
     private enum INIT_VAR_FUN {
         DOUBLE,
         INT,
+        STRING,
         OBJ;
 
         private final String funName;
@@ -175,6 +178,8 @@ public final class TruffleLLVM_Call implements CallRFFI {
                     interop.execute(INIT_VAR_FUN.DOUBLE.symbolHandle.asTruffleObject(), i, value);
                 } else if (value instanceof Integer) {
                     interop.execute(INIT_VAR_FUN.INT.symbolHandle.asTruffleObject(), i, value);
+                } else if (value instanceof String) {
+                    interop.execute(INIT_VAR_FUN.STRING.symbolHandle.asTruffleObject(), i, new NativeCharArray((String) value));
                 } else if (value instanceof TruffleObject) {
                     try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap()) {
                         interop.execute(INIT_VAR_FUN.OBJ.symbolHandle.asTruffleObject(), i, ffiWrap.wrapUncached(value));

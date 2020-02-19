@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
  * @see FastRInitEventLoop
  */
 @RBuiltin(name = ".fastr.dispatchNativeHandlers", kind = PRIMITIVE, behavior = COMPLEX, parameterNames = {})
-public class FastRDispatchNativeHandlers extends RBuiltinNode.Arg0 {
+public final class FastRDispatchNativeHandlers extends RBuiltinNode.Arg0 {
 
     static {
         Casts.noCasts(FastRDispatchNativeHandlers.class);
