@@ -23,9 +23,12 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
@@ -39,16 +42,19 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @ExportLibrary(RIntVectorDataLibrary.class)
 public class RAltIntVectorData extends RIntVectorData {
     private final RAltRepData data;
-    private final AltIntegerClassDescriptor descriptor;
-    // TODO: This is ugly quickfix for sake of improving performance of benchmarks
-    private final int cachedLength;
+    protected final AltIntegerClassDescriptor descriptor;
+    private RIntVector vector;
 
-    public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data) {
+    public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data, RIntVector vector) {
         this.data = data;
         this.descriptor = descriptor;
+        this.vector = vector;
         assert hasDescriptorRegisteredNecessaryMethods(descriptor):
                 "Descriptor " + descriptor.toString() + " does not have registered all necessary methods";
-        this.cachedLength = descriptor.invokeLengthMethodUncached(this);
+    }
+
+    public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data) {
+        this(descriptor, data, null);
     }
 
     private boolean hasDescriptorRegisteredNecessaryMethods(AltIntegerClassDescriptor descriptor) {
@@ -78,6 +84,10 @@ public class RAltIntVectorData extends RIntVectorData {
 
     public void setData2(Object data2) {
         data.setData2(data2);
+    }
+
+    public void setVector(RIntVector vector) {
+        this.vector = vector;
     }
 
     @Override
@@ -117,10 +127,16 @@ public class RAltIntVectorData extends RIntVectorData {
     }
 
     @Override
-    @ExportMessage
+    @Ignore
     public int getLength() {
-        // TODO
-        return cachedLength;
+        return getLength(InteropLibrary.getFactory().getUncached(), ConditionProfile.getUncached());
+    }
+
+    @ExportMessage(limit = "3")
+    public int getLength(@CachedLibrary("this.descriptor.getLengthMethod()") InteropLibrary lengthMethodInterop,
+                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+        assert vector != null;
+        return descriptor.invokeLengthMethodCached(vector, lengthMethodInterop, hasMirrorProfile);
     }
 
     @ExportMessage
@@ -153,13 +169,13 @@ public class RAltIntVectorData extends RIntVectorData {
     @ExportMessage
     public SeqIterator iterator() {
         // TODO: Use different store.
-        return new SeqIterator(this, cachedLength);
+        return new SeqIterator(this, getLength());
     }
 
     @ExportMessage
     public RandomAccessIterator randomAccessIterator() {
         // TODO: Use different store.
-        return new RandomAccessIterator(this, cachedLength);
+        return new RandomAccessIterator(this, getLength());
     }
 
     @ExportMessage
