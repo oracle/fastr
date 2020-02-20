@@ -103,7 +103,7 @@ public class RAltIntVectorData extends RIntVectorData {
     @Override
     public int getIntAt(int index) {
         if (descriptor.isEltMethodRegistered()) {
-            return descriptor.invokeEltMethodUncached(this, index);
+            return descriptor.invokeEltMethodUncached(vector, index);
         } else {
             // Invoke uncached dataptr method
             long address = invokeDataptrMethod();
