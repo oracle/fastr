@@ -54,17 +54,20 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVectorData;
+import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
+import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 
@@ -311,7 +314,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected static Object doAltrepInt(@SuppressWarnings("unused") RAltIntegerVec vec, RFFIContext ctx) {
+        protected static Object doAltrepInt(@SuppressWarnings("unused") RAltIntVectorData vec, RFFIContext ctx) {
             return ctx.getSulongArrayType(42);
         }
 
@@ -333,24 +336,36 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         public abstract long execute(Object vector);
 
+        protected static boolean isAltrep(Object object) {
+            return AltrepUtilities.isAltrep(object);
+        }
+
+        protected static AltIntegerClassDescriptor getDescriptorFromVec(RIntVector altIntVec) {
+            return ((RAltIntVectorData) altIntVec.getData()).getDescriptor();
+        }
+
         @Specialization
         @TruffleBoundary
         protected static long get(RList list) {
             return list.allocateNativeContents();
         }
 
-        @Specialization
+        @Specialization(guards = "!isAltrep(vector)")
         @TruffleBoundary
         protected static long get(RIntVector vector) {
             return vector.allocateNativeContents();
         }
 
-        @Specialization(limit = "1")
-        protected static long get(RAltIntegerVec altIntVector,
-                      @CachedLibrary("altIntVector.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInteropLibrary,
-                      @CachedLibrary(limit = "1") InteropLibrary dataptrInteropLibrary,
+        @Specialization(guards = "isAltrep(altIntVector)", limit = "1")
+        protected static long get(RIntVector altIntVector,
+                                  @CachedLibrary("altIntVector.getData()") RIntVectorDataLibrary altIntVecDataLibrary,
+                                  @CachedLibrary("getDescriptorFromVec(altIntVector).getDataptrMethod()") InteropLibrary dataptrMethodInteropLibrary,
+                                  @CachedLibrary(limit = "1") InteropLibrary dataptrInteropLibrary,
                                   @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            return altIntVector.getDescriptor().invokeDataptrMethodCached(altIntVector, true,
+            // This should invoke Dataptr
+            altIntVector.materializeData(altIntVecDataLibrary);
+            // TODO: dataptrAddr should be cached
+            return ((RAltIntVectorData) altIntVector.getData()).getDescriptor().invokeDataptrMethodCached(altIntVector, true,
                     dataptrMethodInteropLibrary, dataptrInteropLibrary, hasMirrorProfile);
         }
 
@@ -560,7 +575,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         // TODO: Add other specializations
         @Specialization(limit = "1")
-        protected static Object doAltIntegerVector(RAltIntegerVec vector, int index, int value,
+        protected static Object doAltIntegerVector(RAltIntVectorData vector, int index, int value,
                                                    @CachedLibrary("vector.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInterop,
                                                    @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
                                                    @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {

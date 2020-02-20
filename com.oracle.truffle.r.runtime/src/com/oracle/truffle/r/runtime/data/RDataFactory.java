@@ -49,6 +49,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
+import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
@@ -982,6 +984,10 @@ public final class RDataFactory {
 
     public static RIntVector createIntSequence(int start, int stride, int length) {
         return traceDataCreated(RIntVector.createSequence(start, stride, length));
+    }
+
+    public static RIntVector createAltIntVector(AltIntegerClassDescriptor descriptor, RAltRepData altRepData) {
+        return traceDataCreated(RIntVector.createAltInt(descriptor, altRepData));
     }
 
     private static final double FLT_EPSILON = 1.19209290e-7;

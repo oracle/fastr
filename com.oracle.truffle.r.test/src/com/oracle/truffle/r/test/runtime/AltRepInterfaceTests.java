@@ -11,7 +11,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
-import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
+import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.test.TestBase;
 import org.junit.Assert;
@@ -26,7 +26,7 @@ public class AltRepInterfaceTests extends TestBase {
     @Test
     public void trivialLengthMethodTest() {
         SimpleDescriptorWrapper simpleDescriptorWrapper = new SimpleDescriptorWrapper();
-        RAltIntegerVec altIntVec = simpleDescriptorWrapper.getInstance();
+        RAltIntVectorData altIntVec = simpleDescriptorWrapper.getInstance();
         int actualLength = altIntVec.getLength();
         Assert.assertEquals(simpleDescriptorWrapper.getExpectedLength(), actualLength);
         Assert.assertTrue(simpleDescriptorWrapper.getLengthMethod().wasCalled());
@@ -35,7 +35,7 @@ public class AltRepInterfaceTests extends TestBase {
     @Test
     public void intVecWrapperLengthMethodTest() {
         IntVectorDescriptorWrapper intVectorDescriptorWrapper = new IntVectorDescriptorWrapper();
-        RAltIntegerVec altIntVec = intVectorDescriptorWrapper.getInstance();
+        RAltIntVectorData altIntVec = intVectorDescriptorWrapper.getInstance();
         int actualLength = altIntVec.getLength();
         Assert.assertEquals(intVectorDescriptorWrapper.getExpectedLength(), actualLength);
         Assert.assertTrue(intVectorDescriptorWrapper.getLengthMethod().wasCalled());
@@ -56,7 +56,7 @@ abstract class NativeFunctionMock implements TruffleObject {
     Object execute(Object[] args) {
         Assert.assertTrue(args.length >= 1);
         assertInstanceParameter(args[0]);
-        RAltIntegerVec instance = unwrapInstanceParameter(args[0]);
+        RAltIntVectorData instance = unwrapInstanceParameter(args[0]);
         setCalled();
         Object[] argsWithoutFirstArg = Arrays.copyOfRange(args, 1, args.length);
         return doExecute(instance, argsWithoutFirstArg);
@@ -65,14 +65,16 @@ abstract class NativeFunctionMock implements TruffleObject {
     private void assertInstanceParameter(Object instanceParam) {
         Assert.assertTrue(instanceParam instanceof NativeDataAccess.NativeMirror);
         RBaseObject mirroredObject = ((NativeDataAccess.NativeMirror) instanceParam).getDelegate();
-        Assert.assertTrue(mirroredObject instanceof RAltIntegerVec);
+        Assert.assertTrue(mirroredObject instanceof RIntVector);
     }
 
-    private RAltIntegerVec unwrapInstanceParameter(Object instanceParam) {
-        return (RAltIntegerVec) ((NativeDataAccess.NativeMirror) instanceParam).getDelegate();
+    private RAltIntVectorData unwrapInstanceParameter(Object instanceParam) {
+        RBaseObject delegate = ((NativeDataAccess.NativeMirror) instanceParam).getDelegate();
+        assert delegate instanceof RIntVector;
+        return (RAltIntVectorData) ((RIntVector) delegate).getData();
     }
 
-    protected abstract Object doExecute(RAltIntegerVec instance, Object... args);
+    protected abstract Object doExecute(RAltIntVectorData instance, Object... args);
 
     public boolean wasCalled() {
         return called;
@@ -89,7 +91,7 @@ class SimpleDescriptorWrapper {
     private Elt eltMethod = new Elt();
     private Sum sumMethod = new Sum();
     private AltIntegerClassDescriptor descriptor = createDescriptor();
-    private RAltIntegerVec instance = new RAltIntegerVec(descriptor, new RAltRepData(RNull.instance, RNull.instance), true);
+    private RAltIntVectorData instance = new RAltIntVectorData(descriptor, new RAltRepData(RNull.instance, RNull.instance));
 
     private AltIntegerClassDescriptor createDescriptor() {
         AltIntegerClassDescriptor descriptor = new AltIntegerClassDescriptor(SimpleDescriptorWrapper.class.getSimpleName(),
@@ -121,7 +123,7 @@ class SimpleDescriptorWrapper {
         return sumMethod;
     }
 
-    public RAltIntegerVec getInstance() {
+    public RAltIntVectorData getInstance() {
         return instance;
     }
 
@@ -131,7 +133,7 @@ class SimpleDescriptorWrapper {
 
     static final class Sum extends NativeFunctionMock {
         @Override
-        protected Object doExecute(RAltIntegerVec instance, Object... args) {
+        protected Object doExecute(RAltIntVectorData instance, Object... args) {
             Assert.assertEquals(1, args.length);
             return 42;
         }
@@ -139,7 +141,7 @@ class SimpleDescriptorWrapper {
 
     static final class Elt extends NativeFunctionMock {
         @Override
-        protected Object doExecute(RAltIntegerVec instance, Object... args) {
+        protected Object doExecute(RAltIntVectorData instance, Object... args) {
             Assert.assertEquals(1, args.length);
             return 1;
         }
@@ -147,14 +149,14 @@ class SimpleDescriptorWrapper {
 
     static final class Dataptr extends NativeFunctionMock {
         @Override
-        protected Object doExecute(RAltIntegerVec instance, Object... args) {
+        protected Object doExecute(RAltIntVectorData instance, Object... args) {
             return (long)0xdef00023;
         }
     }
 
     static final class Length extends NativeFunctionMock {
         @Override
-        protected Object doExecute(RAltIntegerVec instance, Object... args) {
+        protected Object doExecute(RAltIntVectorData instance, Object... args) {
             return AltRepInterfaceTests.VEC_LENGTH;
         }
     }
@@ -166,12 +168,12 @@ class IntVectorDescriptorWrapper {
     private final Length lengthMethod = new Length();
     private final Elt eltMethod = new Elt();
     private final AltIntegerClassDescriptor descriptor = createDescriptor();
-    private final RAltIntegerVec instance;
+    private final RAltIntVectorData instance;
 
     IntVectorDescriptorWrapper() {
         RIntVector wrappedVector = createIntVector();
         RAltRepData data = new RAltRepData(wrappedVector, RNull.instance);
-        instance = new RAltIntegerVec(descriptor, data, true);
+        instance = new RAltIntVectorData(descriptor, data);
     }
 
     private static RIntVector createIntVector() {
@@ -191,7 +193,7 @@ class IntVectorDescriptorWrapper {
         return descriptor;
     }
 
-    public RAltIntegerVec getInstance() {
+    public RAltIntVectorData getInstance() {
         return instance;
     }
 
@@ -207,31 +209,31 @@ class IntVectorDescriptorWrapper {
         return descriptor;
     }
 
-    private static void checkInstanceData(RAltIntegerVec instance) {
+    private static void checkInstanceData(RAltIntVectorData instance) {
         Assert.assertTrue(instance.getData1() instanceof RIntVector);
         Assert.assertEquals(vecLength, ((RIntVector) instance.getData1()).getLength());
     }
 
-    private static RIntVector getInstanceData(RAltIntegerVec instance) {
+    private static RIntVector getInstanceData(RAltIntVectorData instance) {
         checkInstanceData(instance);
         return (RIntVector) instance.getData1();
     }
 
-    private static long executeDataptr(RAltIntegerVec instance) {
+    private static long executeDataptr(RAltIntVectorData instance) {
         return getInstanceData(instance).allocateNativeContents();
     }
 
-    private static long executeLength(RAltIntegerVec instance) {
+    private static long executeLength(RAltIntVectorData instance) {
         return getInstanceData(instance).getLength();
     }
 
-    private static int executeElt(RAltIntegerVec instance, int idx) {
+    private static int executeElt(RAltIntVectorData instance, int idx) {
         return getInstanceData(instance).getDataAt(idx);
     }
 
     static final class Dataptr extends NativeFunctionMock {
         @Override
-        protected Object doExecute(RAltIntegerVec instance, Object... args) {
+        protected Object doExecute(RAltIntVectorData instance, Object... args) {
             Assert.assertEquals(1, args.length);
             return executeDataptr(instance);
         }
@@ -239,7 +241,7 @@ class IntVectorDescriptorWrapper {
 
     static final class Length extends NativeFunctionMock {
         @Override
-        protected Object doExecute(RAltIntegerVec instance, Object... args) {
+        protected Object doExecute(RAltIntVectorData instance, Object... args) {
             Assert.assertEquals(0, args.length);
             return executeLength(instance);
         }
@@ -247,7 +249,7 @@ class IntVectorDescriptorWrapper {
 
     static final class Elt extends NativeFunctionMock {
         @Override
-        protected Object doExecute(RAltIntegerVec instance, Object... args) {
+        protected Object doExecute(RAltIntVectorData instance, Object... args) {
             Assert.assertEquals(1, args.length);
             Assert.assertTrue(args[0] instanceof Integer);
             return executeElt(instance, (int) args[0]);

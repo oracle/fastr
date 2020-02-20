@@ -5,8 +5,10 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.ffi.impl.llvm.AltrepLLVMDownCallNode;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
-import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 @GenerateUncached
@@ -16,8 +18,8 @@ public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
         return IntegerIsSortedNodeGen.create();
     }
 
-    @Specialization(guards = {"isIsSortedMethodRegistered(altIntVec)"})
-    public int isSortedForAltIntVec(RAltIntegerVec altIntVec,
+    @Specialization(guards = {"isAltrep(altIntVec)", "isIsSortedMethodRegistered(altIntVec)"})
+    public int isSortedForAltIntVec(RIntVector altIntVec,
                                     @Cached("createDispatchNode()") IsSortedDispatchNode dispatchNode) {
         return (int) dispatchNode.executeObject(altIntVec);
     }
@@ -27,9 +29,13 @@ public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
         return AltrepSortedness.UNKNOWN_SORTEDNESS.getValue();
     }
 
+    protected static boolean isAltrep(Object object) {
+        return AltrepUtilities.isAltrep(object);
+    }
+
     protected static boolean isIsSortedMethodRegistered(Object x) {
-        if (x instanceof RAltIntegerVec) {
-            return ((RAltIntegerVec) x).getDescriptor().isIsSortedMethodRegistered();
+        if (x instanceof RAltIntVectorData) {
+            return ((RAltIntVectorData) x).getDescriptor().isIsSortedMethodRegistered();
         } else {
             return false;
         }
@@ -46,7 +52,7 @@ public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
         }
 
         @Specialization
-        public int isSortedForAltIntVec(RAltIntegerVec altIntVec,
+        public int isSortedForAltIntVec(RAltIntVectorData altIntVec,
                                         @Cached(value = "create()", allowUncached = true) AltrepLLVMDownCallNode altrepLLVMDownCallNode) {
             Object ret = altrepLLVMDownCallNode.call(NativeFunction.AltInteger_Is_sorted, altIntVec);
             assert ret instanceof Integer;

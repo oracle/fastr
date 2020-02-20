@@ -7,8 +7,9 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 public class AltrepUtilities {
@@ -16,13 +17,18 @@ public class AltrepUtilities {
         return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
     }
 
+    private static RAltIntVectorData getAltIntVectorData(RIntVector altIntVector) {
+        assert altIntVector.isAltRep();
+        return (RAltIntVectorData) altIntVector.getData();
+    }
+
     public static boolean hasCoerceMethodRegistered(Object object) {
         if (!isAltrep(object)) {
             return false;
         }
 
-        if (object instanceof RAltIntegerVec) {
-            return ((RAltIntegerVec) object).getDescriptor().isCoerceMethodRegistered();
+        if (object instanceof RIntVector) {
+            return getAltIntVectorData((RIntVector) object).getDescriptor().isCoerceMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -33,8 +39,8 @@ public class AltrepUtilities {
             return false;
         }
 
-        if (object instanceof RAltIntegerVec) {
-            return ((RAltIntegerVec) object).getDescriptor().isDuplicateMethodRegistered();
+        if (object instanceof RIntVector) {
+            return getAltIntVectorData((RIntVector) object).getDescriptor().isDuplicateMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -44,8 +50,44 @@ public class AltrepUtilities {
         if (!isAltrep(object)) {
             return false;
         }
-        if (object instanceof RAltIntegerVec) {
-            return ((RAltIntegerVec) object).getDescriptor().isEltMethodRegistered();
+        if (object instanceof RIntVector) {
+            return getAltIntVectorData((RIntVector) object).getDescriptor().isEltMethodRegistered();
+        } else {
+            throw RInternalError.shouldNotReachHere("Unexpected altrep type");
+        }
+    }
+
+    public static boolean hasMaxMethodRegistered(Object object) {
+        if (!isAltrep(object)) {
+            return false;
+        }
+
+        if (object instanceof RIntVector) {
+            return getAltIntVectorData((RIntVector) object).getDescriptor().isMaxMethodRegistered();
+        } else {
+            throw RInternalError.shouldNotReachHere("Unexpected altrep type");
+        }
+    }
+
+    public static boolean hasMinMethodRegistered(Object object) {
+        if (!isAltrep(object)) {
+            return false;
+        }
+
+        if (object instanceof RIntVector) {
+            return getAltIntVectorData((RIntVector) object).getDescriptor().isMinMethodRegistered();
+        } else {
+            throw RInternalError.shouldNotReachHere("Unexpected altrep type");
+        }
+    }
+
+    public static boolean hasSumMethodRegistered(Object object) {
+        if (!isAltrep(object)) {
+            return false;
+        }
+
+        if (object instanceof RIntVector) {
+            return getAltIntVectorData((RIntVector) object).getDescriptor().isSumMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -59,7 +101,7 @@ public class AltrepUtilities {
         }
 
         @Specialization(limit = "3")
-        Object doAltInt(RAltIntegerVec altIntVec, boolean deep,
+        Object doAltInt(RAltIntVectorData altIntVec, boolean deep,
                         @CachedLibrary("altIntVec.getDescriptor().getDuplicateMethod()") InteropLibrary duplicateMethodInterop,
                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert altIntVec.getDescriptor().isDuplicateMethodRegistered();
@@ -75,7 +117,7 @@ public class AltrepUtilities {
         }
 
         @Specialization(limit = "3")
-        Object doAltInt(RAltIntegerVec altIntVec, boolean naRm,
+        Object doAltInt(RAltIntVectorData altIntVec, boolean naRm,
                         @CachedLibrary("altIntVec.getDescriptor().getSumMethod()") InteropLibrary methodInterop,
                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert altIntVec.getDescriptor().isSumMethodRegistered();
@@ -91,7 +133,7 @@ public class AltrepUtilities {
         }
 
         @Specialization(limit = "3")
-        Object doAltInt(RAltIntegerVec altIntVec, boolean naRm,
+        Object doAltInt(RAltIntVectorData altIntVec, boolean naRm,
                         @CachedLibrary("altIntVec.getDescriptor().getMaxMethod()") InteropLibrary methodInterop,
                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert altIntVec.getDescriptor().isMaxMethodRegistered();
@@ -107,7 +149,7 @@ public class AltrepUtilities {
         }
 
         @Specialization(limit = "3")
-        Object doAltInt(RAltIntegerVec altIntVec, boolean naRm,
+        Object doAltInt(RAltIntVectorData altIntVec, boolean naRm,
                         @CachedLibrary("altIntVec.getDescriptor().getMinMethod()") InteropLibrary methodInterop,
                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert altIntVec.getDescriptor().isMinMethodRegistered();
@@ -130,14 +172,14 @@ public class AltrepUtilities {
         }
 
         @Specialization(guards = "hasEltMethodRegistered(altIntVec)", limit = "1")
-        Object doAltIntElt(RAltIntegerVec altIntVec, int index,
+        Object doAltIntElt(RAltIntVectorData altIntVec, int index,
                            @CachedLibrary("altIntVec.getDescriptor().getEltMethod()") InteropLibrary eltMethodInterop,
                            @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             return altIntVec.getDescriptor().invokeEltMethodCached(altIntVec, index, eltMethodInterop, hasMirrorProfile);
         }
 
         @Specialization(replaces = "doAltIntElt", limit = "1")
-        Object doAltIntWithoutElt(RAltIntegerVec altIntVec, int index,
+        Object doAltIntWithoutElt(RAltIntVectorData altIntVec, int index,
                                   @CachedLibrary("altIntVec.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInterop,
                                   @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
                                   @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {

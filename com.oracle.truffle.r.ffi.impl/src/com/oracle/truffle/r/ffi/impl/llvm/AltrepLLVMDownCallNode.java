@@ -15,9 +15,11 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVectorData;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
-import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
+import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -59,9 +61,12 @@ public abstract class AltrepLLVMDownCallNode extends DownCallNode {
     }
 
     private static AltRepClassDescriptor getDescriptorFromAltrepObj(RBaseObject altrepObject) {
-        // TODO: We could benefit here from some common type for all altreps
-        if (altrepObject instanceof RAltIntegerVec) {
-            return ((RAltIntegerVec) altrepObject).getDescriptor();
+        assert altrepObject.isAltRep();
+
+        if (altrepObject instanceof RIntVector) {
+            RIntVectorData data = ((RIntVector) altrepObject).getData();
+            assert data instanceof RAltIntVectorData;
+            return ((RAltIntVectorData) data).getDescriptor();
         } else if (altrepObject instanceof RAltStringVector) {
             return ((RAltStringVector) altrepObject).getDescriptor();
         } else {

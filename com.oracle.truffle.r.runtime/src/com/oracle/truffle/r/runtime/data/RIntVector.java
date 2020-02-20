@@ -33,6 +33,8 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -89,6 +91,10 @@ public final class RIntVector extends RAbstractNumericVector {
 
     public static RIntVector createSequence(int start, int stride, int length) {
         return new RIntVector(new RIntSeqVectorData(start, stride, length), length);
+    }
+
+    public static RIntVector createAltInt(AltIntegerClassDescriptor descriptor, RAltRepData altrepData) {
+        return new RIntVector(new RAltIntVectorData(descriptor, altrepData));
     }
 
     public static RIntVector createClosure(RAbstractVector delegate, boolean keepAttrs) {

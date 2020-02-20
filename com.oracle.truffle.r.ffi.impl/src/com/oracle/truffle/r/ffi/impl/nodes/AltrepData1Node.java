@@ -5,10 +5,13 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVectorData;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
-import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
+import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 
 @GenerateUncached
 public abstract class AltrepData1Node extends FFIUpCallNode.Arg1 {
@@ -16,9 +19,9 @@ public abstract class AltrepData1Node extends FFIUpCallNode.Arg1 {
         return AltrepData1NodeGen.create();
     }
 
-    @Specialization(limit = "3")
-    public Object doAltInt(RAltIntegerVec altIntVec,
-                                 @CachedLibrary("getPairListDataFromVec(altIntVec)") RPairListLibrary pairListLibrary) {
+    @Specialization(limit = "3", guards = "isAltrep(altIntVec)")
+    public Object doAltInt(RIntVector altIntVec,
+                           @CachedLibrary("getPairListDataFromVec(altIntVec)") RPairListLibrary pairListLibrary) {
         return pairListLibrary.car(getPairListDataFromVec(altIntVec));
     }
 
@@ -33,8 +36,14 @@ public abstract class AltrepData1Node extends FFIUpCallNode.Arg1 {
         throw RInternalError.shouldNotReachHere("Unknown type " + object.getClass().getSimpleName() + " for R_altrep_data1");
     }
 
-    protected static RPairList getPairListDataFromVec(RAltIntegerVec altIntVec) {
-        return altIntVec.getData().getDataPairList();
+    protected static boolean isAltrep(Object object) {
+        return AltrepUtilities.isAltrep(object);
+    }
+
+    protected static RPairList getPairListDataFromVec(RIntVector altIntVec) {
+        RIntVectorData data = altIntVec.getData();
+        assert data instanceof RAltIntVectorData;
+        return ((RAltIntVectorData) data).getData().getDataPairList();
     }
 
     protected static RPairList getPairListDataFromVec(RAltStringVector altStringVec) {

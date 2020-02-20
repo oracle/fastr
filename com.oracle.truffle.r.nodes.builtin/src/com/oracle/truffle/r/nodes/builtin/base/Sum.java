@@ -43,10 +43,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -81,17 +79,11 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
     }
 
     protected boolean isAltrep(Object object) {
-        return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
+        return AltrepUtilities.isAltrep(object);
     }
 
     protected boolean isSumMethodRegistered(Object object) {
-        assert object instanceof RBaseObject;
-        assert ((RBaseObject) object).isAltRep();
-        if (object instanceof RAltIntegerVec) {
-            return ((RAltIntegerVec) object).getDescriptor().isSumMethodRegistered();
-        } else {
-            return false;
-        }
+        return AltrepUtilities.hasSumMethodRegistered(object);
     }
 
     @Child private MiscRFFI.ExactSumNode exactSumNode;

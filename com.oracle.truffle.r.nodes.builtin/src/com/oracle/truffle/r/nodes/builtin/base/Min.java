@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
+import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 @RBuiltin(name = "min", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE_SUMMARY)
@@ -56,15 +56,11 @@ public abstract class Min extends RBuiltinNode.Arg2 {
     }
 
     protected boolean isAltrep(Object object) {
-        return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
+        return AltrepUtilities.isAltrep(object);
     }
 
     protected boolean isMinMethodRegistered(Object object) {
-        if (object instanceof RAltIntegerVec) {
-            return ((RAltIntegerVec) object).getDescriptor().isMinMethodRegistered();
-        } else {
-            return false;
-        }
+        return AltrepUtilities.hasMinMethodRegistered(object);
     }
 
     @Override

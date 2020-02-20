@@ -20,45 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data.altrep;
+package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RLogger;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
-import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@ExportLibrary(InteropLibrary.class)
-public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedVector {
+@ExportLibrary(RIntVectorDataLibrary.class)
+public class RAltIntVectorData extends RIntVectorData {
     private final RAltRepData data;
     private final AltIntegerClassDescriptor descriptor;
-    private final FastPathAccess vectorAccess;
-    private static final TruffleLogger logger = RLogger.getLogger("altrep");
-    // TODO: quickfix
+    // TODO: This is ugly quickfix for sake of improving performance of benchmarks
     private final int cachedLength;
 
-    public RAltIntegerVec(AltIntegerClassDescriptor descriptor, RAltRepData data, boolean complete) {
-        // TODO: Should complete = true?
-        super(complete);
-        setAltRep();
+    public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data) {
         this.data = data;
         this.descriptor = descriptor;
         assert hasDescriptorRegisteredNecessaryMethods(descriptor):
                 "Descriptor " + descriptor.toString() + " does not have registered all necessary methods";
         this.cachedLength = descriptor.invokeLengthMethodUncached(this);
-        this.vectorAccess = new FastPathAccess(this);
     }
 
     private boolean hasDescriptorRegisteredNecessaryMethods(AltIntegerClassDescriptor descriptor) {
@@ -90,24 +80,16 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
         data.setData2(data2);
     }
 
-    /**
-     * This message overrides the default message in @link RAbstractNumericVector - becuase the aforementioned
-     * message calls getLength which in turn invokes length native function which again calls getLength.
-     * This problem occurs only with LLVM backend.
-     */
-    @ExportMessage
-    final boolean isNull() {
-        return false;
-    }
-
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         return "AltIntegerVector: data={" + data.toString() + "}";
     }
 
-    // Should not be called frequently
+    // TODO: Implement with copy of FastPathAccess
+    @ExportMessage
     @Override
-    public int getDataAt(int index) {
+    public int getIntAt(int index) {
         if (descriptor.isEltMethodRegistered()) {
             return descriptor.invokeEltMethodUncached(this, index);
         } else {
@@ -117,62 +99,80 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
         }
     }
 
+    @ExportMessage
     @Override
-    public void setDataAt(Object store, int index, int value) {
+    public void setIntAt(int index, int value, @SuppressWarnings("unused") NACheck naCheck) {
         long address = descriptor.invokeDataptrMethodUncached(this, true);
         NativeMemory.putInt(address, index, value);
     }
 
+    @ExportMessage
+    public RIntArrayVectorData materialize() {
+        // TODO: TOhle by chtelo implementovat pomoci Dataptr
+        int[] newData = new int[getLength()];
+        for (int i = 0; i < getLength(); i++) {
+            newData[i] = getIntAt(i);
+        }
+        return new RIntArrayVectorData(newData, true);
+    }
+
     @Override
+    @ExportMessage
     public int getLength() {
+        // TODO
         return cachedLength;
     }
 
+    @ExportMessage
+    public boolean isWriteable() {
+        // TODO
+        return false;
+    }
+
+    @ExportMessage
+    public RAltIntVectorData copy(boolean deep) {
+        throw RInternalError.unimplemented("RAltIntVectorData.copy");
+    }
+
+    @ExportMessage
+    public RIntArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
+        throw RInternalError.unimplemented("RAltIntVectorData.copyResized");
+    }
+
+    @ExportMessage
     @Override
-    public RIntVector materialize() {
-        // TODO: Implement iteration with FastPath access
-        int[] newData = new int[getLength()];
-        for (int i = 0; i < getLength(); i++) {
-            newData[i] = getDataAt(i);
-        }
-        return RDataFactory.createIntVector(newData, true);
+    public boolean isComplete() {
+        return true;
     }
 
-    @Override
-    public Object getInternalStore() {
-        // Vratit deskriptor a neco jako this
-        return this;
+    @ExportMessage
+    public int[] getReadonlyIntData() {
+        throw RInternalError.unimplemented("RAltIntVectorData.getReadonlyIntData");
     }
 
-    @Override
-    public VectorAccess access() {
-        return vectorAccess;
+    @ExportMessage
+    public SeqIterator iterator() {
+        // TODO: Use different store.
+        return new SeqIterator(this, cachedLength);
     }
 
-    @Override
-    public VectorAccess slowPathAccess() {
-        return SLOW_PATH_ACCESS;
+    @ExportMessage
+    public RandomAccessIterator randomAccessIterator() {
+        // TODO: Use different store.
+        return new RandomAccessIterator(this, cachedLength);
     }
 
-    // Should not be called frequently.
-    public long invokeDataptr() {
-        // TODO: writeabble = true?
-        return descriptor.invokeDataptrMethodUncached(this, true);
+    @ExportMessage
+    public int getNext(SeqIterator it) {
+        assert this == it.getStore();
+        return getIntAt(it.getIndex());
     }
 
-    private final SlowPathFromIntAccess SLOW_PATH_ACCESS = new SlowPathFromIntAccess() {
-        @Override
-        protected int getIntImpl(AccessIterator accessIter, int index) {
-            RAltIntegerVec vector = (RAltIntegerVec) accessIter.getStore();
-            return vector.getDataAt(index);
-        }
-
-        @Override
-        protected void setIntImpl(AccessIterator accessIter, int index, int value) {
-            RAltIntegerVec vector = (RAltIntegerVec) accessIter.getStore();
-            vector.setDataAt(null, index, value);
-        }
-    };
+    @ExportMessage
+    public int getAt(RandomAccessIterator it, int index) {
+        assert this == it.getStore();
+        return getIntAt(index);
+    }
 
     /**
      * Specializes on every separate instance. Note that we cannot have one FastPathAccess for two instances with
@@ -186,7 +186,7 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
         @Child private InteropLibrary eltMethodInterop;
         private final long dataptrAddr;
 
-        FastPathAccess(RAltIntegerVec value) {
+        FastPathAccess(RAltIntVectorData value) {
             super(value);
             this.hasEltMethod = value.getDescriptor().isEltMethodRegistered();
             this.instanceId = value.hashCode();
@@ -196,7 +196,7 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
 
         @Override
         public boolean supports(Object value) {
-            if (!(value instanceof RAltIntegerVec)) {
+            if (!(value instanceof RAltIntVectorData)) {
                 return false;
             }
             return instanceId == value.hashCode();
@@ -204,7 +204,7 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
 
         @Override
         public int getIntImpl(AccessIterator accessIter, int index) {
-            RAltIntegerVec instance = getInstanceFromIterator(accessIter);
+            RAltIntVectorData instance = getInstanceFromIterator(accessIter);
 
             if (hasEltMethod) {
                 return instance.getDescriptor().invokeEltMethodCached(instance, index, eltMethodInterop, hasMirrorProfile);
@@ -215,7 +215,7 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
 
         @Override
         protected void setIntImpl(AccessIterator accessIter, int index, int value) {
-            RAltIntegerVec instance = getInstanceFromIterator(accessIter);
+            RAltIntVectorData instance = getInstanceFromIterator(accessIter);
             if (dataptrAddr != 0) {
                 NativeMemory.putInt(dataptrAddr, index, value);
             } else {
@@ -223,10 +223,10 @@ public class RAltIntegerVec extends RAbstractIntVector implements RMaterializedV
             }
         }
 
-        private RAltIntegerVec getInstanceFromIterator(AccessIterator accessIterator) {
+        private RAltIntVectorData getInstanceFromIterator(AccessIterator accessIterator) {
             Object store = accessIterator.getStore();
-            assert store instanceof RAltIntegerVec;
-            return (RAltIntegerVec) store;
+            assert store instanceof RAltIntVectorData;
+            return (RAltIntVectorData) store;
         }
     }
 }

@@ -31,9 +31,11 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.llvm.AltrepLLVMDownCallNode;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
-import com.oracle.truffle.r.runtime.data.altrep.RAltIntegerVec;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVectorData;
+import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 @GenerateUncached
@@ -43,8 +45,8 @@ public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
         return IntegerGetRegionNodeGen.create();
     }
 
-    @Specialization(guards = {"hasGetRegionMethodRegistered(altIntVec)"}, limit = "3")
-    public long getRegionForAltIntegerVec(RAltIntegerVec altIntVec, long fromIdx, long size, Object buffer,
+    @Specialization(guards = {"isAltrep(altIntVec)", "hasGetRegionMethodRegistered(altIntVec)"}, limit = "3")
+    public long getRegionForAltIntegerVec(RIntVector altIntVec, long fromIdx, long size, Object buffer,
                                           @Cached(value = "create()", allowUncached = true) AltrepLLVMDownCallNode downCallNode) {
         Object count = downCallNode.call(NativeFunction.AltInteger_Get_region, altIntVec, fromIdx, size, buffer);
         // TODO: Better return
@@ -56,17 +58,15 @@ public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
         }
     }
 
-    @Specialization(limit = "3")
-    public long getRegionForAltIntegerVecWithoutRegisteredMethod(RAltIntegerVec altIntVec, long fromIdx, long size, Object buffer,
+    @Specialization(limit = "3", guards = {"isAltrep(altIntVec)", "!hasGetRegionMethodRegistered(altIntVec)"})
+    public long getRegionForAltIntegerVecWithoutRegisteredMethod(RIntVector altIntVec, long fromIdx, long size, Object buffer,
                                                                  @CachedLibrary("buffer") InteropLibrary bufferInterop,
-                                                                 @CachedLibrary("altIntVec.getDescriptor().getEltMethod()") InteropLibrary eltMethodInterop,
-                                                                 @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+                                                                 @CachedLibrary("altIntVec.getData()") RIntVectorDataLibrary altIntVecDataLibrary) {
         assert bufferInterop.isPointer(buffer);
-        AltIntegerClassDescriptor descriptor = altIntVec.getDescriptor();
         long copied = 0;
         for (long idx = fromIdx; idx < fromIdx + size; idx++) {
             try {
-                int value = descriptor.invokeEltMethodCached(altIntVec, (int) idx, eltMethodInterop, hasMirrorProfile);
+                int value = altIntVecDataLibrary.getIntAt(altIntVec.getData(), (int) idx);
                 bufferInterop.writeArrayElement(buffer, idx, value);
                 copied++;
             } catch (Exception e) {
@@ -76,14 +76,15 @@ public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
         return copied;
     }
 
-    @Specialization(limit = "3")
-    public long getRegionForNormalIntVector(RAbstractIntVector intVector, long fromIdx, long size, Object buffer,
-                                         @CachedLibrary("buffer") InteropLibrary bufferInterop) {
+    @Specialization(guards = "!isAltrep(intVector)", limit = "3")
+    public long getRegionForNormalIntVector(RIntVector intVector, long fromIdx, long size, Object buffer,
+                                            @CachedLibrary("buffer") InteropLibrary bufferInterop,
+                                            @CachedLibrary("intVector.getData()") RIntVectorDataLibrary dataLibrary) {
         assert bufferInterop.isPointer(buffer);
         long copied = 0;
         for (long idx = fromIdx; idx < fromIdx + size; idx++) {
             try {
-                int value = intVector.getDataAt((int) idx);
+                int value = dataLibrary.getIntAt(intVector.getData(), (int) fromIdx);
                 bufferInterop.writeArrayElement(buffer, idx, value);
                 copied++;
             } catch (Exception e) {
@@ -98,7 +99,11 @@ public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
         throw RInternalError.shouldNotReachHere("Type error: Unexpected type:" + x.getClass());
     }
 
-    protected static boolean hasGetRegionMethodRegistered(RAltIntegerVec altIntVec) {
-        return altIntVec.getDescriptor().isGetRegionMethodRegistered();
+    protected static boolean isAltrep(Object object) {
+        return AltrepUtilities.isAltrep(object);
+    }
+
+    protected static boolean hasGetRegionMethodRegistered(RIntVector altIntVec) {
+        return ((RAltIntVectorData) altIntVec.getData()).getDescriptor().isGetRegionMethodRegistered();
     }
 }
