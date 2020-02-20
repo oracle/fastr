@@ -44,11 +44,13 @@ public class RAltIntVectorData extends RIntVectorData {
     private final RAltRepData data;
     protected final AltIntegerClassDescriptor descriptor;
     private RIntVector vector;
+    private boolean dataptrCalled;
 
     public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data, RIntVector vector) {
         this.data = data;
         this.descriptor = descriptor;
         this.vector = vector;
+        this.dataptrCalled = false;
         assert hasDescriptorRegisteredNecessaryMethods(descriptor):
                 "Descriptor " + descriptor.toString() + " does not have registered all necessary methods";
     }
@@ -104,15 +106,21 @@ public class RAltIntVectorData extends RIntVectorData {
             return descriptor.invokeEltMethodUncached(this, index);
         } else {
             // Invoke uncached dataptr method
-            long address = descriptor.invokeDataptrMethodUncached(this, true);
+            long address = invokeDataptrMethod();
             return NativeMemory.getInt(address, index);
         }
+    }
+
+    private long invokeDataptrMethod() {
+        // TODO: Exception handling?
+        dataptrCalled = true;
+        return descriptor.invokeDataptrMethodUncached(vector, true);
     }
 
     @ExportMessage
     @Override
     public void setIntAt(int index, int value, @SuppressWarnings("unused") NACheck naCheck) {
-        long address = descriptor.invokeDataptrMethodUncached(this, true);
+        long address = invokeDataptrMethod();
         NativeMemory.putInt(address, index, value);
     }
 
@@ -141,8 +149,7 @@ public class RAltIntVectorData extends RIntVectorData {
 
     @ExportMessage
     public boolean isWriteable() {
-        // TODO
-        return false;
+        return dataptrCalled;
     }
 
     @ExportMessage
