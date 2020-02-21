@@ -22,13 +22,12 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
+import org.junit.After;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestStackBuiltins extends TestBase {
-
-    // TODO: re-check the NewRVersionMigration ignored tests after GR-18931 is fixed
 
     private static final String[] FRAME_FUNCTIONS = {
                     "sys.nframe()",
@@ -38,9 +37,20 @@ public class TestStackBuiltins extends TestBase {
                     "{ e <- parent.frame(); e$n}", "{ e <- parent.frame(2); e$n}"
     };
 
+    public static final String DONT_KEEP_SOURCE = "options(keep.source = FALSE);";
+    public static final String KEEP_SOURCE = "options(keep.source = TRUE);";
+
     @Test
     public void testErrors() {
         assertEval("parent.frame(-1)");
+    }
+
+    @Override
+    @After
+    public void afterTest() {
+        // Restore the keep.source option
+        assertEval(KEEP_SOURCE);
+        super.afterTest();
     }
 
     @Test
@@ -48,20 +58,18 @@ public class TestStackBuiltins extends TestBase {
         assertEval(template("n <- 100; %0", FRAME_FUNCTIONS));
         assertEval(template("n <- 100; f <- function() { n <- 101; %0 }; f()", FRAME_FUNCTIONS));
         assertEval(template("n <- 100; g <- function() { n <- 101; f() }; f <- function()  { n <- 102; %0 }; g()", FRAME_FUNCTIONS));
-        assertEval(Ignored.NewRVersionMigration, template("n <- 100; f <- function() { n <- 101; %0 }; ident <- function(x) { n <- 102; x }; ident(f())", FRAME_FUNCTIONS));
-        assertEval(Ignored.NewRVersionMigration, template("n <- 100; f <- function() { n <- 101; %0 }; ident <- function(x) { n <- 102; x }; ident(ident(ident(f())))", FRAME_FUNCTIONS));
-        assertEval(Ignored.NewRVersionMigration,
-                        template("n <- 100; g <- function() { n <- 101; f() }; f <- function() { n <- 102; %0 }; ident <- function(x) { n <- 103; x }; ident(g())", FRAME_FUNCTIONS));
-        assertEval(Ignored.NewRVersionMigration,
-                        template("n <- 100; g <- function() { n <- 101; ident(f()) }; f <- function() { n <- 102; %0 }; ident <- function(x) { n <- 103; x}; ident(g())", FRAME_FUNCTIONS));
-        assertEval(Ignored.NewRVersionMigration,
-                        template("n <- 100; g <- function() { n <- 101; ident(f()) }; f <- function() { n <- 102; ident(%0) }; ident <- function(x) { n <- 103; x }; ident(g())", FRAME_FUNCTIONS));
+        assertEval(template(DONT_KEEP_SOURCE + "n <- 100; f <- function() { n <- 101; %0 }; ident <- function(x) { n <- 102; x }; ident(f())", FRAME_FUNCTIONS));
+        assertEval(template(DONT_KEEP_SOURCE + "n <- 100; f <- function() { n <- 101; %0 }; ident <- function(x) { n <- 102; x }; ident(ident(ident(f())))", FRAME_FUNCTIONS));
+        assertEval(template(DONT_KEEP_SOURCE + "n <- 100; g <- function() { n <- 101; f() }; f <- function() { n <- 102; %0 }; ident <- function(x) { n <- 103; x }; ident(g())", FRAME_FUNCTIONS));
+        assertEval(template(DONT_KEEP_SOURCE + "n <- 100; g <- function() { n <- 101; ident(f()) }; f <- function() { n <- 102; %0 }; ident <- function(x) { n <- 103; x}; ident(g())",
+                        FRAME_FUNCTIONS));
+        assertEval(template(DONT_KEEP_SOURCE + "n <- 100; g <- function() { n <- 101; ident(f()) }; f <- function() { n <- 102; ident(%0) }; ident <- function(x) { n <- 103; x }; ident(g())",
+                        FRAME_FUNCTIONS));
     }
 
     @Test
     public void testTry() {
-        assertEval(Ignored.NewRVersionMigration,
-                        /* Output.IgnoreWhitespace, */template("n <- 100; f <- function() { n <- 101; %0 }; ident <- function(x) { n <- 102; x }; ident(try(f()))", FRAME_FUNCTIONS));
+        assertEval(/* Output.IgnoreWhitespace, */template(DONT_KEEP_SOURCE + "n <- 100; f <- function() { n <- 101; %0 }; ident <- function(x) { n <- 102; x }; ident(try(f()))", FRAME_FUNCTIONS));
         assertEval("tryCatch(cat('Hello\\n'))");
         assertEval("tryCatch(print.default('Hello'))");
     }
