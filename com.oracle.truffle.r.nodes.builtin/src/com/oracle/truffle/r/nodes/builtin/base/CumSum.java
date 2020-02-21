@@ -38,6 +38,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -48,6 +49,8 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -55,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "cumsum", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
 public abstract class CumSum extends RBuiltinNode.Arg1 {
@@ -98,88 +102,80 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
         return RDataFactory.createIntVector(new int[0], true, extractNamesNode.execute(x));
     }
 
-    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
+    @Specialization(limit = "getVectorAccessCacheSize()")
     protected RIntVector cumsumInt(RIntVector x,
-                    @Cached("x.access()") VectorAccess xAccess) {
-        try (SequentialIterator iter = xAccess.access(x)) {
-            int[] array = new int[xAccess.getLength(iter)];
-            int prev = 0;
-            while (xAccess.next(iter)) {
-                int value = xAccess.getInt(iter);
-                if (xAccess.na.check(value)) {
-                    Arrays.fill(array, iter.getIndex(), array.length, RRuntime.INT_NA);
-                    break;
-                }
-                prev = add.op(prev, value);
-                // integer addition can introduce NAs
-                if (add.introducesNA() && RRuntime.isNA(prev)) {
-                    Arrays.fill(array, iter.getIndex(), array.length, RRuntime.INT_NA);
-                    break;
-                }
-                array[iter.getIndex()] = prev;
+                    @Cached NACheck naCheck,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+        Object xData = x.getData();
+        naCheck.enable(xDataLib, xData);
+        SeqIterator iter = xDataLib.iterator(xData);
+        int[] array = new int[iter.getLength()];
+        int prev = 0;
+        while (xDataLib.next(xData, iter)) {
+            int value = xDataLib.getNextInt(xData, iter);
+            if (naCheck.check(value)) {
+                Arrays.fill(array, iter.getIndex(), array.length, RRuntime.INT_NA);
+                break;
             }
-            return RDataFactory.createIntVector(array, xAccess.na.neverSeenNA() && !add.introducesNA(), extractNamesNode.execute(x));
+            prev = add.op(prev, value);
+            // integer addition can introduce NAs
+            if (add.introducesNA() && RRuntime.isNA(prev)) {
+                Arrays.fill(array, iter.getIndex(), array.length, RRuntime.INT_NA);
+                break;
+            }
+            array[iter.getIndex()] = prev;
         }
+        return RDataFactory.createIntVector(array, naCheck.neverSeenNA() && !add.introducesNA(), extractNamesNode.execute(x));
     }
 
-    @Specialization(replaces = "cumsumInt")
-    protected RIntVector cumsumIntGeneric(RIntVector x) {
-        return cumsumInt(x, x.slowPathAccess());
-    }
-
-    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
+    @Specialization(limit = "getVectorAccessCacheSize()")
     protected RDoubleVector cumsumDouble(RAbstractDoubleVector x,
-                    @Cached("x.access()") VectorAccess xAccess) {
-        try (SequentialIterator iter = xAccess.access(x)) {
-            double[] array = new double[xAccess.getLength(iter)];
-            double prev = 0;
-            while (xAccess.next(iter)) {
-                double value = xAccess.getDouble(iter);
-                if (xAccess.na.check(value)) {
-                    Arrays.fill(array, iter.getIndex(), array.length, RRuntime.DOUBLE_NA);
-                    break;
-                }
-                if (xAccess.na.checkNAorNaN(value)) {
-                    Arrays.fill(array, iter.getIndex(), array.length, Double.NaN);
-                    break;
-                }
-                prev = add.op(prev, value);
-                assert !RRuntime.isNA(prev) : "double addition should not introduce NAs";
-                array[iter.getIndex()] = prev;
+                    @Cached NACheck naCheck,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+        Object xData = x.getData();
+        naCheck.enable(xDataLib, xData);
+        SeqIterator iter = xDataLib.iterator(xData);
+        double[] array = new double[iter.getLength()];
+        double prev = 0;
+        while (xDataLib.next(xData, iter)) {
+            double value = xDataLib.getNextDouble(xData, iter);
+            if (naCheck.check(value)) {
+                Arrays.fill(array, iter.getIndex(), array.length, RRuntime.DOUBLE_NA);
+                break;
             }
-            return RDataFactory.createDoubleVector(array, xAccess.na.neverSeenNA(), extractNamesNode.execute(x));
+            if (naCheck.checkNAorNaN(value)) {
+                Arrays.fill(array, iter.getIndex(), array.length, Double.NaN);
+                break;
+            }
+            prev = add.op(prev, value);
+            assert !RRuntime.isNA(prev) : "double addition should not introduce NAs";
+            array[iter.getIndex()] = prev;
         }
+        return RDataFactory.createDoubleVector(array, naCheck.neverSeenNA(), extractNamesNode.execute(x));
     }
 
-    @Specialization(replaces = "cumsumDouble")
-    protected RDoubleVector cumsumDoubleGeneric(RAbstractDoubleVector x) {
-        return cumsumDouble(x, x.slowPathAccess());
-    }
-
-    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
+    @Specialization(limit = "getVectorAccessCacheSize()")
     protected RComplexVector cumsumComplex(RAbstractComplexVector x,
-                    @Cached("x.access()") VectorAccess xAccess) {
-        try (SequentialIterator iter = xAccess.access(x)) {
-            double[] array = new double[xAccess.getLength(iter) * 2];
-            RComplex prev = RDataFactory.createComplex(0, 0);
-            while (xAccess.next(iter)) {
-                double real = xAccess.getComplexR(iter);
-                double imag = xAccess.getComplexI(iter);
-                if (xAccess.na.check(real, imag)) {
-                    Arrays.fill(array, 2 * iter.getIndex(), array.length, RRuntime.DOUBLE_NA);
-                    break;
-                }
-                prev = add.op(prev.getRealPart(), prev.getImaginaryPart(), real, imag);
-                assert !RRuntime.isNA(prev) : "complex addition should not introduce NAs";
-                array[iter.getIndex() * 2] = prev.getRealPart();
-                array[iter.getIndex() * 2 + 1] = prev.getImaginaryPart();
+                    @Cached NACheck naCheck,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+        Object xData = x.getData();
+        naCheck.enable(xDataLib, xData);
+        SeqIterator iter = xDataLib.iterator(xData);
+        double[] array = new double[iter.getLength() * 2];
+        RComplex prev = RDataFactory.createComplex(0, 0);
+        while (xDataLib.next(xData, iter)) {
+            RComplex curr = xDataLib.getNextComplex(xData, iter);
+            double real = curr.getRealPart();
+            double imag = curr.getImaginaryPart();
+            if (naCheck.check(real, imag)) {
+                Arrays.fill(array, 2 * iter.getIndex(), array.length, RRuntime.DOUBLE_NA);
+                break;
             }
-            return RDataFactory.createComplexVector(array, xAccess.na.neverSeenNA(), extractNamesNode.execute(x));
+            prev = add.op(prev.getRealPart(), prev.getImaginaryPart(), real, imag);
+            assert !RRuntime.isNA(prev) : "complex addition should not introduce NAs";
+            array[iter.getIndex() * 2] = prev.getRealPart();
+            array[iter.getIndex() * 2 + 1] = prev.getImaginaryPart();
         }
-    }
-
-    @Specialization(replaces = "cumsumComplex")
-    protected RComplexVector cumsumComplexGeneric(RAbstractComplexVector x) {
-        return cumsumComplex(x, x.slowPathAccess());
+        return RDataFactory.createComplexVector(array, naCheck.neverSeenNA(), extractNamesNode.execute(x));
     }
 }

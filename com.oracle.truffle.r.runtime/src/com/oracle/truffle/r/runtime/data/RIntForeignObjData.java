@@ -32,9 +32,11 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 
@@ -46,6 +48,11 @@ class RIntForeignObjData implements TruffleObject {
 
     RIntForeignObjData(Object foreign) {
         this.foreign = foreign;
+    }
+
+    @ExportMessage
+    public final RType getType() {
+        return RType.Integer;
     }
 
     @ExportMessage
@@ -107,17 +114,29 @@ class RIntForeignObjData implements TruffleObject {
         return getDataAsArray(len, len, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
     }
 
+    // Read access to the elements:
+
     @ExportMessage
-    public SeqIterator iterator(@CachedLibrary("this.foreign") InteropLibrary interop) {
-        return new SeqIterator(foreign, getLength(interop));
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                    @CachedLibrary("this.foreign") InteropLibrary interop) {
+        SeqIterator it = new SeqIterator(foreign, getLength(interop));
+        it.initLoopConditionProfile(loopProfile);
+        return it;
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator(@CachedLibrary("this.foreign") InteropLibrary interop) {
-        return new RandomAccessIterator(foreign, getLength(interop));
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
-    private int getIntImpl(int index, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile isTruffleObjectProfile, ConditionProfile isIntProfile) {
+    @ExportMessage
+    public RandomAccessIterator randomAccessIterator() {
+        return new RandomAccessIterator(foreign);
+    }
+
+    private static int getIntImpl(Object foreign, int index, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile isTruffleObjectProfile,
+                    ConditionProfile isIntProfile) {
         try {
             Object result = interop.readArrayElement(foreign, index);
             if (isTruffleObjectProfile.profile(result instanceof TruffleObject)) {
@@ -141,23 +160,13 @@ class RIntForeignObjData implements TruffleObject {
     }
 
     @ExportMessage
-    public Object getDataAtAsObject(int index,
-                        @CachedLibrary(limit = "5") InteropLibrary valueInterop,
-                        @CachedLibrary("this.foreign") InteropLibrary interop,
-                        @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
-                        @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
-                        @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return getIntImpl(index, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
-    }
-
-    @ExportMessage
     public int getIntAt(int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
                     @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return getIntImpl(index, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+        return getIntImpl(foreign, index, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
     }
 
     @ExportMessage
@@ -167,18 +176,20 @@ class RIntForeignObjData implements TruffleObject {
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
                     @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return getIntImpl(it.getIndex(), valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+        return getIntImpl(it.getStore(), it.getIndex(), valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
     }
 
     @ExportMessage
-    public int getInt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
+    public int getInt(RandomAccessIterator it, int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
                     @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return getIntImpl(index, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+        return getIntImpl(it.getStore(), index, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
     }
+
+    // Utility methods:
 
     private int[] getDataAsArray(int newLength, int length, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile isTruffleObjectProfile,
                     ConditionProfile isIntProfile) {

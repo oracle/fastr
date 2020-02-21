@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -42,9 +43,11 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.ops.na.NAOrNaNCheck;
 
 @ImportStatic(DSLConfig.class)
 @RBuiltin(name = "anyNA", kind = PRIMITIVE, parameterNames = {"x", "recursive"}, dispatch = INTERNAL_GENERIC, behavior = PURE_SUMMARY)
@@ -109,20 +112,21 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
+    @Specialization(limit = "getVectorAccessCacheSize()")
     protected byte anyNACached(RAbstractAtomicVector x, @SuppressWarnings("unused") boolean recursive,
-                    @Cached("x.access()") VectorAccess xAccess) {
-        switch (xAccess.getType()) {
+                    @Cached NAOrNaNCheck nanCheck,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+        Object xData = x.getData();
+        switch (xDataLib.getType(xData)) {
             case Logical:
             case Integer:
             case Character:
                 // shortcut when we know there's no NAs
-                if (!x.isComplete()) {
-                    try (SequentialIterator iter = xAccess.access(x)) {
-                        while (xAccess.next(iter)) {
-                            if (xAccess.isNA(iter)) {
-                                return RRuntime.LOGICAL_TRUE;
-                            }
+                if (!xDataLib.isComplete(xData)) {
+                    SeqIterator iter = xDataLib.iterator(xData);
+                    while (xDataLib.next(xData, iter)) {
+                        if (xDataLib.isNextNA(xData, iter, NACheck.getEnabled())) {
+                            return RRuntime.LOGICAL_TRUE;
                         }
                     }
                 }
@@ -130,32 +134,24 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
             case Raw:
                 return RRuntime.LOGICAL_FALSE;
             case Double:
-                // we need to check for NaNs
-                try (SequentialIterator iter = xAccess.access(x)) {
-                    while (xAccess.next(iter)) {
-                        if (xAccess.na.checkNAorNaN(xAccess.getDouble(iter))) {
-                            return RRuntime.LOGICAL_TRUE;
-                        }
+                SeqIterator iterDouble = xDataLib.iterator(xData);
+                while (xDataLib.next(xData, iterDouble)) {
+                    if (nanCheck.checkNAorNaN(xDataLib.getNextDouble(xData, iterDouble))) {
+                        return RRuntime.LOGICAL_TRUE;
                     }
                 }
                 break;
             case Complex:
-                // we need to check for NaNs
-                try (SequentialIterator iter = xAccess.access(x)) {
-                    while (xAccess.next(iter)) {
-                        if (xAccess.na.checkNAorNaN(xAccess.getComplexR(iter)) || xAccess.na.checkNAorNaN(xAccess.getComplexR(iter))) {
-                            return RRuntime.LOGICAL_TRUE;
-                        }
+                SeqIterator iterCmplx = xDataLib.iterator(xData);
+                while (xDataLib.next(xData, iterCmplx)) {
+                    RComplex val = xDataLib.getNextComplex(xData, iterCmplx);
+                    if (nanCheck.checkNAorNaN(val.getRealPart()) || nanCheck.checkNAorNaN(val.getImaginaryPart())) {
+                        return RRuntime.LOGICAL_TRUE;
                     }
                 }
                 break;
         }
         return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization(replaces = "anyNACached")
-    protected byte anyNAGeneric(RAbstractAtomicVector x, boolean recursive) {
-        return anyNACached(x, recursive, x.slowPathAccess());
     }
 
     protected AnyNA createRecursive() {

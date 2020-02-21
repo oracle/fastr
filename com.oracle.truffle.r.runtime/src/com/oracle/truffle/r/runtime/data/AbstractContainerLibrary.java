@@ -46,7 +46,9 @@ public abstract class AbstractContainerLibrary extends Library {
     }
 
     /**
-     * If this method returns {@code true}, then it is guaranteed that this data does not contain any {@code NA} value. If this method returns {@code false}, then this data may or may not contain {@code NA} values.
+     * If this method returns {@code true}, then it is guaranteed that this data does not contain
+     * any {@code NA} value. If this method returns {@code false}, then this data may or may not
+     * contain {@code NA} values.
      */
     @SuppressWarnings("unused")
     public boolean isComplete(Object container) {
@@ -54,12 +56,14 @@ public abstract class AbstractContainerLibrary extends Library {
     }
 
     /**
-     * Transforms this vector into another that is writeable. This is deprecated legacy method, use {@link #materializeData(Object)} instead.
+     * Transforms this vector into another that is writeable. This is deprecated legacy method, use
+     * {@link #materializeData(Object)} instead.
      */
     public abstract RAbstractContainer materialize(Object container);
 
     /**
-     * After this operation is performed the vector must be able to handle operations that write into the vector data.
+     * After this operation is performed the vector must be able to handle operations that write
+     * into the vector data.
      */
     public void materializeData(Object container) {
         throw RInternalError.unimplemented("TODO");

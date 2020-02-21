@@ -63,9 +63,9 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
     }
 
     @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()",
-            "dataLib.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")
+                    "dataLib.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")
     protected RDoubleVector setInt(RDoubleVector vector, int index, int value,
-                                @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         if (!isValidIndexCached(dataLib, vector, index) || !dataLib.isWriteable(vector.getData())) {
             throw RSpecialFactory.throwFullCallNeeded(value);
         }

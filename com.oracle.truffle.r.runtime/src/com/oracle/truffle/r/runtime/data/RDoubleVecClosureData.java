@@ -23,9 +23,13 @@
 
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
@@ -39,6 +43,11 @@ public class RDoubleVecClosureData implements RClosure, TruffleObject {
 
     public RDoubleVecClosureData(RAbstractVector vector) {
         this.vector = vector;
+    }
+
+    @ExportMessage
+    public final RType getType() {
+        return RType.Double;
     }
 
     @ExportMessage
@@ -76,22 +85,26 @@ public class RDoubleVecClosureData implements RClosure, TruffleObject {
         return res;
     }
 
+    // Read access to the elements:
     // TODO: the accesses may be done more efficiently with nodes and actually using the "store" in
     // the iterator object
 
     @ExportMessage
-    public SeqIterator iterator() {
-        return new SeqIterator(null, getLength());
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(null, getLength());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
     @ExportMessage
     public RandomAccessIterator randomAccessIterator() {
-        return new RandomAccessIterator(null, getLength());
-    }
-
-    @ExportMessage
-    public Object getDataAtAsObject(int index) {
-        return getDoubleAt(index);
+        return new RandomAccessIterator(null);
     }
 
     @ExportMessage

@@ -62,7 +62,7 @@ public abstract class AccessSpecial extends IndexingSpecialCommon implements Sub
 
     @Specialization(guards = {"simpleVector(vector)"}, limit = "getGenericVectorAccessCacheSize()")
     protected double accessDouble(RAbstractDoubleVector vector, int index,
-                                  @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         if (!isValidIndexCached(dataLib, vector, index)) {
             throw RSpecialFactory.throwFullCallNeeded();
         }
@@ -71,7 +71,7 @@ public abstract class AccessSpecial extends IndexingSpecialCommon implements Sub
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
     protected String accessString(RAbstractStringVector vector, int index,
-                                  @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         return dataLib.getStringAt(vector.getData(), index - 1);
     }
 

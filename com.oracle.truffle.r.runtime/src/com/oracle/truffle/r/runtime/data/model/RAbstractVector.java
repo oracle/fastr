@@ -66,7 +66,12 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @ExportLibrary(InteropLibrary.class)
 public abstract class RAbstractVector extends RAbstractContainer implements RFFIAccess {
 
-    protected Object data;
+    /**
+     * Debugging aid: changing to {@code false} turns off all "complete" flag optimizations and all
+     * vectors will be always "incomplete". Use to check if a bug is caused by wrong "complete"
+     * flag.
+     */
+    public static final boolean ENABLE_COMPLETE = true;
 
     /**
      * Dummy volatile field that can be used to create memory barrier.
@@ -76,12 +81,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     private boolean complete; // "complete" means: does not contain NAs
 
     protected RAbstractVector(boolean complete) {
-        this.complete = complete;
-        data = this;
-    }
-
-    public final Object getData() {
-        return data;
+        this.complete = complete && ENABLE_COMPLETE;
     }
 
     public boolean isSequence() {
@@ -208,7 +208,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     public void setComplete(boolean complete) {
-        this.complete = complete;
+        this.complete = complete && ENABLE_COMPLETE;
         assert RAbstractVector.verifyVector(this);
     }
 
@@ -441,8 +441,8 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
-    public boolean isComplete() {
-        return complete;
+    public final boolean isComplete() {
+        return complete && ENABLE_COMPLETE;
     }
 
     // Tagging interface for vectors with array based data. Make sure that an implementation also is
@@ -820,7 +820,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     private RAbstractVector resize(int size, boolean resetAll) {
-        this.complete = this.complete && getLength() >= size;
+        setComplete(this.complete && getLength() >= size);
         RStringVector oldNames = UpdateShareableChildValue.update(this, this.getNamesFromAttrs());
         RAbstractVector res = copyResized(size, true);
         if (this.isShared()) {

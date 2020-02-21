@@ -141,7 +141,7 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
     }
 
     @Override
-    public Object getDataCopy() {
+    public Object[] getDataCopy() {
         throw RInternalError.shouldNotReachHere();
     }
 

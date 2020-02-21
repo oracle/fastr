@@ -31,6 +31,16 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
+    protected Object data;
+
+    public RAbstractContainer() {
+        this.data = this;
+    }
+
+    public final Object getData() {
+        return data;
+    }
+
     public abstract boolean isComplete();
 
     public abstract int getLength();

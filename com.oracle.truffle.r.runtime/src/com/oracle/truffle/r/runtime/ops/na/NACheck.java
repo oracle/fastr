@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.ops.na;
 
 import static com.oracle.truffle.r.runtime.RRuntime.isNA;
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -137,7 +138,12 @@ public final class NACheck {
     }
 
     public static NACheck create() {
-        return new NACheck();
+        if (ENABLE_COMPLETE) {
+            return new NACheck();
+        } else {
+            // enabled check if always checking NA and always says that it has seen NA/NaN
+            return ENABLED;
+        }
     }
 
     public void enable(boolean value) {

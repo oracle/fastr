@@ -62,7 +62,7 @@ public class DefaultRContainerDataLibrary {
             if (library.isWriteable(vector.getData())) {
                 return vector;
             }
-            return new RIntVector(library.materialize(vector.getData()));
+            return new RIntVector(library.materialize(vector.getData()), library.getLength(vector.getData()));
         }
 
         @Specialization(guards = "isRDoubleVector(vector)", limit = "getGenericVectorAccessCacheSize()")
@@ -70,7 +70,7 @@ public class DefaultRContainerDataLibrary {
             if (library.isWriteable(vector.getData())) {
                 return vector;
             }
-            return new RDoubleVector(library.materialize(vector.getData()));
+            return new RDoubleVector(library.materialize(vector.getData()), library.getLength(vector.getData()));
         }
 
         @Specialization(guards = "!isRIntVector(vector) || !isRDoubleVector(vector)")

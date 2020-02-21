@@ -22,11 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
+import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
@@ -39,6 +48,11 @@ public class RDoubleNativeVectorData implements TruffleObject {
 
     public RDoubleNativeVectorData(RDoubleVector vec) {
         this.vec = vec;
+    }
+
+    @ExportMessage
+    public final RType getType() {
+        return RType.Double;
     }
 
     @ExportMessage
@@ -72,21 +86,25 @@ public class RDoubleNativeVectorData implements TruffleObject {
         return NativeDataAccess.copyDoubleNativeData(vec.getNativeMirror());
     }
 
+    // Read access to the elements:
     // TODO: actually use the store in the iterator, which should be just the "address" (Long)
 
     @ExportMessage
-    public SeqIterator iterator() {
-        return new SeqIterator(vec, NativeDataAccess.getDataLength(vec, null));
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(vec, NativeDataAccess.getDataLength(vec, null));
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
     @ExportMessage
     public RandomAccessIterator randomAccessIterator() {
-        return new RandomAccessIterator(vec, NativeDataAccess.getDataLength(vec, null));
-    }
-
-    @ExportMessage
-    public Object getDataAtAsObject(int index) {
-        return getDoubleAt(index);
+        return new RandomAccessIterator(vec);
     }
 
     @ExportMessage
@@ -104,23 +122,30 @@ public class RDoubleNativeVectorData implements TruffleObject {
         return NativeDataAccess.getData(vec, null, index);
     }
 
+    // Write access to the elements:
+
     @ExportMessage
-    public void setDoubleAt(int index, double value, @SuppressWarnings("unused") NACheck naCheck) {
+    public SeqWriteIterator writeIterator(@SuppressWarnings("unused") boolean inputIsComplete) {
+        return new SeqWriteIterator(null, getLength(), false);
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator(@SuppressWarnings("unused") boolean inputIsComplete) {
+        return new RandomAccessWriteIterator(null, false);
+    }
+
+    @ExportMessage
+    public void setDoubleAt(int index, double value, @SuppressWarnings("unused") InputNACheck naCheck) {
         NativeDataAccess.setData(vec, null, index, value);
     }
 
     @ExportMessage
-    public void setDataAtAsObject(int index, Object value, @SuppressWarnings("unused") NACheck naCheck) {
-        NativeDataAccess.setData(vec, null, index, (double) value);
-    }
-
-    @ExportMessage
-    public void setNextDouble(SeqIterator it, double value, @SuppressWarnings("unused") NACheck naCheck) {
+    public void setNextDouble(SeqWriteIterator it, double value) {
         NativeDataAccess.setData(vec, null, it.getIndex(), value);
     }
 
     @ExportMessage
-    public void setDouble(@SuppressWarnings("unused") RandomAccessIterator it, int index, double value, @SuppressWarnings("unused") NACheck naCheck) {
+    public void setDouble(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, double value) {
         NativeDataAccess.setData(vec, null, index, value);
     }
 }

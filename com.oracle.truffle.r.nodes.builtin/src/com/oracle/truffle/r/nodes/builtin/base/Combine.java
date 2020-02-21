@@ -85,6 +85,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ImportStatic({RRuntime.class, DSLConfig.class})
@@ -374,7 +375,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
             return 0;
         } else {
             naCheck.enable(true);
-            library.setDataAtAsObject(result.getData(), pos, element, naCheck);
+            library.setDataAtAsObject(result.getData(), pos, element, InputNACheck.fromNACheck(naCheck));
             return 1;
         }
     }

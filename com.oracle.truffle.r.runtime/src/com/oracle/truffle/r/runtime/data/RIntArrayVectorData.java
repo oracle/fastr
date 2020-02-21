@@ -22,25 +22,49 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.data.VectorDataLibrary.initInputNACheck;
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
+
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 
 import java.util.Arrays;
 
 @ExportLibrary(VectorDataLibrary.class)
-class RIntArrayVectorData implements TruffleObject {
+class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     private final int[] data;
-    private boolean complete;
+    // this flag is used only to initialize the complete flag in the owner,
+    // from then on, we read/write the owner's complete flag
+    private final boolean dataInitiallyComplete;
+    private RIntVector owner;
 
     RIntArrayVectorData(int[] data, boolean complete) {
         this.data = data;
-        this.complete = complete;
+        this.dataInitiallyComplete = complete && ENABLE_COMPLETE;
+    }
+
+    @Override
+    public void setOwner(RAbstractVector newOwner) {
+        owner = (RIntVector) newOwner;
+        owner.setComplete(dataInitiallyComplete);
+    }
+
+    @ExportMessage
+    public final RType getType() {
+        return RType.Integer;
     }
 
     @ExportMessage
@@ -60,7 +84,7 @@ class RIntArrayVectorData implements TruffleObject {
 
     @ExportMessage
     public RIntArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
-        return new RIntArrayVectorData(Arrays.copyOf(data, data.length), complete);
+        return new RIntArrayVectorData(Arrays.copyOf(data, data.length), isComplete());
     }
 
     @ExportMessage
@@ -69,12 +93,12 @@ class RIntArrayVectorData implements TruffleObject {
         if (fillNA) {
             Arrays.fill(newData, data.length, newData.length, RRuntime.INT_NA);
         }
-        return new RIntArrayVectorData(newData, complete);
+        return new RIntArrayVectorData(newData, isComplete());
     }
 
     @ExportMessage
     public boolean isComplete() {
-        return complete;
+        return owner != null && owner.isComplete() && ENABLE_COMPLETE;
     }
 
     @ExportMessage
@@ -87,19 +111,24 @@ class RIntArrayVectorData implements TruffleObject {
         return Arrays.copyOf(data, data.length);
     }
 
+    // Read access to the elements:
+
     @ExportMessage
-    public SeqIterator iterator() {
-        return new SeqIterator(data, data.length);
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(data, data.length);
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
     @ExportMessage
     public RandomAccessIterator randomAccessIterator() {
-        return new RandomAccessIterator(data, data.length);
-    }
-
-    @ExportMessage
-    public Object getDataAtAsObject(int index) {
-        return getIntAt(index);
+        return new RandomAccessIterator(data);
     }
 
     @ExportMessage
@@ -117,34 +146,62 @@ class RIntArrayVectorData implements TruffleObject {
         return getStore(it)[index];
     }
 
+    // Write access to the elements:
+
     @ExportMessage
-    public void setIntAt(int index, int value, NACheck naCheck) {
-        updateComplete(value, naCheck);
-        data[index] = value;
+    public SeqWriteIterator writeIterator(boolean inputIsComplete, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        initInputNACheck(naCheck, inputIsComplete, isComplete());
+        return new SeqWriteIterator(data, data.length, inputIsComplete);
     }
 
     @ExportMessage
-    public void setDataAtAsObject(int index, Object value, NACheck naCheck) {
-        setIntAt(index, (int) value, naCheck);
+    public RandomAccessWriteIterator randomAccessWriteIterator(boolean inputIsComplete, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        initInputNACheck(naCheck, inputIsComplete, isComplete());
+        return new RandomAccessWriteIterator(data, inputIsComplete);
     }
 
     @ExportMessage
-    public void setNextInt(SeqIterator it, int value, NACheck naCheck) {
-        updateComplete(value, naCheck);
-        getStore(it)[it.getIndex()] = value;
+    public void commitWriteIterator(SeqWriteIterator iterator, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        iterator.commit();
+        commitWrites(naCheck, iterator.inputIsComplete);
     }
 
     @ExportMessage
-    public void setInt(RandomAccessIterator it, int index, int value, NACheck naCheck) {
-        updateComplete(value, naCheck);
-        getStore(it)[index] = value;
+    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        iterator.commit();
+        commitWrites(naCheck, iterator.inputIsComplete);
     }
 
-    private void updateComplete(int value, NACheck naCheck) {
-        if (naCheck.check(value)) {
-            this.complete = false;
+    private void commitWrites(InputNACheck naCheck, boolean inputIsComplete) {
+        if (naCheck.needsResettingCompleteFlag() && !inputIsComplete) {
+            owner.setComplete(false);
         }
     }
+
+    @ExportMessage
+    public void setIntAt(int index, int value, InputNACheck naCheck) {
+        naCheck.check(value);
+        data[index] = value;
+        if (naCheck.needsResettingCompleteFlag()) {
+            owner.setComplete(false);
+        }
+    }
+
+    @ExportMessage
+    public void setNextInt(SeqWriteIterator it, int value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        naCheck.check(value);
+        getStore(it)[it.getIndex()] = value;
+        // complete flag will be updated in commit method
+    }
+
+    @ExportMessage
+    public void setInt(RandomAccessWriteIterator it, int index, int value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        naCheck.check(value);
+        getStore(it)[index] = value;
+        // complete flag will be updated in commit method
+    }
+
+    // Utility methods:
 
     private static int[] getStore(Iterator it) {
         return (int[]) it.getStore();

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.attributes;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+import static com.oracle.truffle.r.runtime.DSLConfig.getGenericVectorAccessCacheSize;
 import static com.oracle.truffle.r.runtime.RError.Message.LENGTH_ZERO_DIM_INVALID;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -31,6 +32,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -40,7 +42,10 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.IsSpecialAttributeNodeGen;
+import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
@@ -480,8 +485,7 @@ public final class SpecialAttributesFunctions {
     public abstract static class SetDimAttributeNode extends SetSpecialAttributeNode {
 
         private final ConditionProfile nullDimProfile = ConditionProfile.createBinaryProfile();
-        private final ValueProfile contArgClassProfile = ValueProfile.createClassProfile();
-        private final ValueProfile dimArgClassProfile = ValueProfile.createClassProfile();
+        @Child private VectorDataLibrary dimArgDataLib = VectorDataLibrary.getFactory().createDispatched(getGenericVectorAccessCacheSize());
         private final LoopConditionProfile verifyLoopProfile = LoopConditionProfile.createCountingProfile();
         @Child private CastNode castValue = newCastBuilder().asIntegerVector().mustBe(notEmpty(), LENGTH_ZERO_DIM_INVALID).buildCastNode();
 
@@ -514,23 +518,22 @@ public final class SpecialAttributesFunctions {
             setDimNamesNode.setDimNames(x, null);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization(insertBefore = "setAttrInAttributable", limit = "getGenericVectorAccessCacheSize()")
         protected void setOneDimInVector(RAbstractVector x, int dim,
+                        @CachedLibrary("x") AbstractContainerLibrary vecLib,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createDim()") SetFixedPropertyNode setFixedPropertyNode,
                         @Cached("create()") ShareObjectNode updateRefCountNode) {
-            RAbstractContainer xProfiled = contArgClassProfile.profile(x);
-
             int[] dims = new int[]{dim};
-            verifyOneDimensions(xProfiled.getLength(), dim);
+            verifyOneDimensions(vecLib.getLength(x), dim);
 
             RIntVector dimVec = RDataFactory.createIntVector(dims, RDataFactory.COMPLETE_VECTOR);
 
-            DynamicObject attrs = xProfiled.getAttributes();
+            DynamicObject attrs = x.getAttributes();
             if (attrs == null) {
                 attrNullProfile.enter();
                 attrs = RAttributesLayout.createDim(dimVec);
-                xProfiled.initAttributes(attrs);
+                x.initAttributes(attrs);
                 updateRefCountNode.execute(dimVec);
                 return;
             }
@@ -538,19 +541,19 @@ public final class SpecialAttributesFunctions {
             super.setAttrInAttributable(x, dimVec, attrNullProfile, setFixedPropertyNode, updateRefCountNode);
         }
 
-        @Specialization(insertBefore = "setAttrInAttributable")
+        @Specialization(insertBefore = "setAttrInAttributable", limit = "getGenericVectorAccessCacheSize()")
         protected void setDimsInVector(RAbstractVector x, RIntVector dims,
+                        @CachedLibrary("x") AbstractContainerLibrary vecLib,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createDim()") SetFixedPropertyNode setFixedPropertyNode,
                         @Cached("create()") ShareObjectNode updateRefCountNode) {
-            RAbstractContainer xProfiled = contArgClassProfile.profile(x);
-            verifyDimensions(xProfiled.getLength(), dims);
+            verifyDimensions(vecLib.getLength(x), dims);
 
-            DynamicObject attrs = xProfiled.getAttributes();
+            DynamicObject attrs = x.getAttributes();
             if (attrs == null) {
                 attrNullProfile.enter();
                 attrs = RAttributesLayout.createDim(dims);
-                xProfiled.initAttributes(attrs);
+                x.initAttributes(attrs);
                 updateRefCountNode.execute(dims);
                 return;
             }
@@ -578,12 +581,12 @@ public final class SpecialAttributesFunctions {
         }
 
         public void verifyDimensions(int vectorLength, RIntVector dims) {
-            RIntVector dimsProfiled = dimArgClassProfile.profile(dims);
-            int dimLen = dims.getLength();
+            Object dimsData = dims.getData();
+            int dimLen = dimArgDataLib.getLength(dimsData);
             verifyLoopProfile.profileCounted(dimLen);
             int length = 1;
             for (int i = 0; i < dimLen; i++) {
-                int dim = dimsProfiled.getDataAt(i);
+                int dim = dimArgDataLib.getIntAt(dimsData, i);
                 if (RRuntime.isNA(dim)) {
                     throw error(RError.Message.DIMS_CONTAIN_NA);
                 } else if (dim < 0) {

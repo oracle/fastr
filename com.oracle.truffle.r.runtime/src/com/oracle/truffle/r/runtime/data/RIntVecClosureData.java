@@ -23,9 +23,13 @@
 
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
@@ -42,18 +46,18 @@ public class RIntVecClosureData implements RClosure, TruffleObject {
     }
 
     @ExportMessage
+    public final RType getType() {
+        return RType.Integer;
+    }
+
+    @ExportMessage
     public int getLength() {
         return vector.getLength();
     }
 
     @ExportMessage
-    public boolean isComplete() {
-        return false;
-    }
-
-    @ExportMessage
     public RIntArrayVectorData materialize() {
-        return new RIntArrayVectorData(getIntDataCopy(), isComplete());
+        return new RIntArrayVectorData(getIntDataCopy(), false);
     }
 
     @ExportMessage
@@ -80,13 +84,21 @@ public class RIntVecClosureData implements RClosure, TruffleObject {
     // the iterator object
 
     @ExportMessage
-    public SeqIterator iterator() {
-        return new SeqIterator(null, getLength());
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(null, getLength());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
     @ExportMessage
     public RandomAccessIterator randomAccessIterator() {
-        return new RandomAccessIterator(null, getLength());
+        return new RandomAccessIterator(null);
     }
 
     @ExportMessage

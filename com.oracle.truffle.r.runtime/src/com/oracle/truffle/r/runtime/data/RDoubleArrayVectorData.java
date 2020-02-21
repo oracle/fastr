@@ -22,25 +22,49 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.data.VectorDataLibrary.initInputNACheck;
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
+
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 
 import java.util.Arrays;
 
 @ExportLibrary(VectorDataLibrary.class)
-class RDoubleArrayVectorData implements TruffleObject {
+class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     private final double[] data;
-    private boolean complete;
+    // this flag is used only to initialize the complete flag in the owner,
+    // from then on, we read/write the owner's complete flag
+    private final boolean dataInitiallyComplete;
+    private RDoubleVector owner;
 
     RDoubleArrayVectorData(double[] data, boolean complete) {
         this.data = data;
-        this.complete = complete;
+        this.dataInitiallyComplete = complete && ENABLE_COMPLETE;
+    }
+
+    @Override
+    public void setOwner(RAbstractVector newOwner) {
+        owner = (RDoubleVector) newOwner;
+        owner.setComplete(dataInitiallyComplete);
+    }
+
+    @ExportMessage
+    public final RType getType() {
+        return RType.Double;
     }
 
     @ExportMessage
@@ -60,7 +84,7 @@ class RDoubleArrayVectorData implements TruffleObject {
 
     @ExportMessage
     public RDoubleArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
-        return new RDoubleArrayVectorData(Arrays.copyOf(data, data.length), complete);
+        return new RDoubleArrayVectorData(Arrays.copyOf(data, data.length), isComplete());
     }
 
     @ExportMessage
@@ -69,12 +93,12 @@ class RDoubleArrayVectorData implements TruffleObject {
         if (fillNA) {
             Arrays.fill(newData, data.length, newData.length, RRuntime.DOUBLE_NA);
         }
-        return new RDoubleArrayVectorData(newData, complete);
+        return new RDoubleArrayVectorData(newData, isComplete());
     }
 
     @ExportMessage
     public boolean isComplete() {
-        return complete;
+        return owner.isComplete() && ENABLE_COMPLETE;
     }
 
     @ExportMessage
@@ -87,19 +111,24 @@ class RDoubleArrayVectorData implements TruffleObject {
         return Arrays.copyOf(data, data.length);
     }
 
+    // Read access to the elements:
+
     @ExportMessage
-    public SeqIterator iterator() {
-        return new SeqIterator(data, data.length);
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(data, data.length);
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
     @ExportMessage
     public RandomAccessIterator randomAccessIterator() {
-        return new RandomAccessIterator(data, data.length);
-    }
-
-    @ExportMessage
-    public Object getDataAtAsObject(int index) {
-        return getDoubleAt(index);
+        return new RandomAccessIterator(data);
     }
 
     @ExportMessage
@@ -117,33 +146,57 @@ class RDoubleArrayVectorData implements TruffleObject {
         return getStore(it)[index];
     }
 
+    // Write access to the elements:
+
     @ExportMessage
-    public void setDoubleAt(int index, double value, NACheck naCheck) {
-        updateComplete(value, naCheck);
+    public SeqWriteIterator writeIterator(boolean inputIsComplete, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        initInputNACheck(naCheck, inputIsComplete, isComplete());
+        return new SeqWriteIterator(data, data.length, inputIsComplete);
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator(boolean inputIsComplete, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        initInputNACheck(naCheck, inputIsComplete, isComplete());
+        return new RandomAccessWriteIterator(data, inputIsComplete);
+    }
+
+    @ExportMessage
+    public void commitWriteIterator(SeqWriteIterator iterator, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        iterator.commit();
+        commitWrites(naCheck, iterator.inputIsComplete);
+    }
+
+    @ExportMessage
+    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        iterator.commit();
+        commitWrites(naCheck, iterator.inputIsComplete);
+    }
+
+    private void commitWrites(InputNACheck naCheck, boolean inputIsComplete) {
+        if (naCheck.needsResettingCompleteFlag() && !inputIsComplete) {
+            owner.setComplete(false);
+        }
+    }
+
+    @ExportMessage
+    public void setDoubleAt(int index, double value, InputNACheck naCheck) {
+        naCheck.check(value);
         data[index] = value;
+        if (naCheck.needsResettingCompleteFlag()) {
+            owner.setComplete(false);
+        }
     }
 
     @ExportMessage
-    public void setDataAtAsObject(int index, Object value, NACheck naCheck) {
-        setDoubleAt(index, (double) value, naCheck);
-    }
-
-    @ExportMessage
-    public void setNextDouble(SeqIterator it, double value, NACheck naCheck) {
-        updateComplete(value, naCheck);
+    public void setNextDouble(SeqWriteIterator it, double value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        naCheck.check(value);
         getStore(it)[it.getIndex()] = value;
     }
 
     @ExportMessage
-    public void setDouble(RandomAccessIterator it, int index, double value, NACheck naCheck) {
-        updateComplete(value, naCheck);
+    public void setDouble(RandomAccessWriteIterator it, int index, double value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+        naCheck.check(value);
         getStore(it)[index] = value;
-    }
-
-    private void updateComplete(double value, NACheck naCheck) {
-        if (naCheck.check(value)) {
-            this.complete = false;
-        }
     }
 
     private static double[] getStore(Iterator it) {

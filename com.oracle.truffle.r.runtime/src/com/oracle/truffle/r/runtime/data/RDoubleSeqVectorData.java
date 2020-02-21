@@ -23,12 +23,18 @@
 
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
@@ -45,6 +51,11 @@ public class RDoubleSeqVectorData implements RSeq, TruffleObject {
         this.start = start;
         this.stride = stride;
         this.length = length;
+    }
+
+    @ExportMessage
+    public final RType getType() {
+        return RType.Double;
     }
 
     @Override
@@ -96,7 +107,7 @@ public class RDoubleSeqVectorData implements RSeq, TruffleObject {
 
     @ExportMessage
     public boolean isComplete() {
-        return true;
+        return ENABLE_COMPLETE;
     }
 
     @ExportMessage
@@ -109,14 +120,24 @@ public class RDoubleSeqVectorData implements RSeq, TruffleObject {
         return getDataAsArray(length);
     }
 
+    // Read access to the elements:
+
     @ExportMessage
-    public SeqIterator iterator() {
-        return new SeqIterator(new IteratorData(start, stride), length);
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(new IteratorData(start, stride), length);
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
     @ExportMessage
     public RandomAccessIterator randomAccessIterator() {
-        return new RandomAccessIterator(new IteratorData(start, stride), length);
+        return new RandomAccessIterator(new IteratorData(start, stride));
     }
 
     @ExportMessage
