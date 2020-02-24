@@ -883,7 +883,8 @@ public class DLL {
                     return SYMBOL_NOT_FOUND;
                 }
                 return dlSymNode.execute(dllInfo.handle, mName);
-            } catch (UnsatisfiedLinkError ex) {
+            } catch (UnsatisfiedLinkError | IllegalStateException ex) {
+                // Catching IllegalStateException is a workaround for GR-21471
                 dllInfo.unsuccessfulLookups.add(mName);
                 return SYMBOL_NOT_FOUND;
             }
