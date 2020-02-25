@@ -341,6 +341,16 @@ def _fastr_gate_runner(args, tasks):
             new_env['R_DEFAULT_PACKAGES'] = 'base'
             run_r(['-q', '-e', 'extSoftVersion()'], 'R', env=new_env)
 
+    with mx_gate.Task('LibsInfo', tasks, tags=[mx_gate.Tags.always]) as t:
+        if t:
+            mx.log("Libraries captured in FASTR_HOME/lib:")
+            lib_dir = os.path.join(_fastr_suite.dir, 'lib')
+            for f in os.listdir(lib_dir):
+                full_path = os.path.join(lib_dir, f)
+                mx.run(['file', full_path], nonZeroIsFatal=False)
+                mx.run(['objdump', '-s', '--section', '.comment', full_path], nonZeroIsFatal=False)
+                mx.log('------')
+
     # ---------------------------------
     # Style checks:
 
