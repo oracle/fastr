@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -129,12 +129,19 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         @Override
         public SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError {
             assert handle instanceof LLVM_Handle && ((LLVM_Handle) handle).getRFFIType() == Type.LLVM;
+            Object llvmHandle = ((LLVM_Handle) handle).handle;
             try {
-                Object result = interop.readMember(((LLVM_Handle) handle).handle, symbol);
+                // Following code is disabled because of GR-21497
+                // if (!interop.isMemberReadable(llvmHandle, symbol)) {
+                // CompilerDirectives.transferToInterpreter();
+                // throw new UnsatisfiedLinkError();
+                // }
+                Object result = interop.readMember(llvmHandle, symbol);
                 return new SymbolHandle(result);
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere("LibHandle does not support readMember operation");
-            } catch (UnknownIdentifierException e) {
+            } catch (UnknownIdentifierException | IllegalStateException e) {
+                // Catching IllegalStateException is a workaround for GR-21497
                 CompilerDirectives.transferToInterpreter();
                 throw new UnsatisfiedLinkError();
             }
