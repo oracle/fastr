@@ -1,3 +1,9 @@
+# 20.1.0
+
+Bug fixes:
+
+* `dyn.load` did not work with relative paths
+
 # 20.0.0
 
 New features:

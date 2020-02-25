@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,7 +74,8 @@ public class TruffleNFI_DLL implements DLLRFFI {
         try {
             String libName = DLL.libName(ctx, path);
             Env env = RContext.getInstance().getEnv();
-            TruffleObject libHandle = (TruffleObject) env.parseInternal(Source.newBuilder("nfi", prepareLibraryOpen(path, local, now), path).build()).call();
+            String fullPath = ctx.getSafeTruffleFile(path).getAbsoluteFile().toString();
+            TruffleObject libHandle = (TruffleObject) env.parseInternal(Source.newBuilder("nfi", prepareLibraryOpen(fullPath, local, now), path).build()).call();
             return new NFIHandle(libName, libHandle);
         } finally {
             if (notifyStateRFFI) {
