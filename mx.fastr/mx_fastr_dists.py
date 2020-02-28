@@ -207,6 +207,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
     register_distribution(fastr_release_distribution)
     register_distribution(fastr_graalvm_release)
 
+
     fastr_graalvm_release_support = mx.LayoutTARDistribution(
         suite=_fastr_suite,
         name="FASTR_GRAALVM_SUPPORT",
@@ -266,6 +267,17 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
         'bin/R',
     ],
     include_in_polyglot=False,
+    launcher_configs=[
+        mx_sdk.LanguageLauncherConfig(
+            destination='bin/RMain',
+            jar_distributions=['fastr:FASTR_LAUNCHER'],
+            main_class='com.oracle.truffle.r.launcher.RMain',
+            build_args=[],
+            language='R',
+            is_main_launcher=False,
+            default_symlinks=False,
+        )
+    ],
     post_install_msg="NOTES:\n---------------\n" +
             "FastR needs a system-dependent configuration because it links with some system libraries. " +
             "A generic configuration that works out of the box on most Linux distributions is provided by default. " +
