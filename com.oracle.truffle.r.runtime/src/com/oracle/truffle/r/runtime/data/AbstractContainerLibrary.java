@@ -28,7 +28,6 @@ import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @GenerateLibrary
 @DefaultExport(DefaultRContainerDataLibrary.class)
@@ -65,7 +64,7 @@ public abstract class AbstractContainerLibrary extends Library {
      * After this operation is performed the vector must be able to handle operations that write
      * into the vector data.
      */
-    public void materializeData(Object container) {
+    public void materializeData(@SuppressWarnings("unused") Object container) {
         throw RInternalError.unimplemented("TODO");
     }
 

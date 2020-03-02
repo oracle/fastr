@@ -366,11 +366,11 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
             named = named || !item.isNullTag();
             len++;
         }
-        Object[] data = new Object[len];
+        Object[] listData = new Object[len];
         String[] names = named ? new String[len] : null;
         int i = 0;
         for (RPairList plt : this) {
-            data[i] = plt.car();
+            listData[i] = plt.car();
             if (named) {
                 Object ptag = plt.getTag();
                 if (RRuntime.isNull(ptag)) {
@@ -384,7 +384,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
             }
             i++;
         }
-        RList result = named ? RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR)) : RDataFactory.createList(data);
+        RList result = named ? RDataFactory.createList(listData, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR)) : RDataFactory.createList(listData);
         DynamicObject attrs = getAttributes();
         if (attrs != null) {
             DynamicObject resultAttrs = result.initAttributes();
@@ -758,13 +758,13 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
             if (!hasNames) {
                 return null;
             }
-            String[] data = new String[length];
+            String[] listData = new String[length];
             current = this;
             int i = 0;
             while (true) {
                 Object name = current.getTag();
                 assert name == RNull.instance || name instanceof RSymbol;
-                data[i] = name == RNull.instance ? "" : ((RSymbol) name).getName();
+                listData[i] = name == RNull.instance ? "" : ((RSymbol) name).getName();
                 Object next = current.cdr();
                 if (RRuntime.isNull(next)) {
                     break;
@@ -773,7 +773,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
                 i++;
             }
             // there can never be NAs in the names
-            return RDataFactory.createStringVector(data, true);
+            return RDataFactory.createStringVector(listData, true);
         }
     }
 

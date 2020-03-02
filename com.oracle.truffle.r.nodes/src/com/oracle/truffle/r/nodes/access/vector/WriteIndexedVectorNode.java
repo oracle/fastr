@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import static com.oracle.truffle.r.runtime.data.VectorDataLibrary.transferElementSameType;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
@@ -56,8 +54,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 // TODO:
@@ -66,8 +62,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 // 3. check the performance of the micros: is the complete flag write pushed out of the loop?
 
 /**
- * Delegates to {@link WriteIndexedVectorAccessNode} and only takes care of caching the
- * {@link VectorAccess} for the vectors and fallback to slow path {@link VectorAccess} if necessary.
+ * Delegates to {@link WriteIndexedVectorAccessNode}.
  *
  * @see WriteIndexedVectorNode
  */
@@ -379,7 +374,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
     @Specialization(replaces = "doIntegerSequencePosition", limit = "getGenericVectorAccessCacheSize()")
     protected int doIntegerPosition(RandomAccessWriteIterator leftIter, VectorDataLibrary leftDataLib, Object leftData, int leftBase, int leftLength, Object targetDimensions,
                     @SuppressWarnings("unused") int targetDimension,
-                    Object[] positions, RIntVector position, int positionOffset, int positionLength,
+                    Object[] positions, RIntVector position, int positionOffset, @SuppressWarnings("unused") int positionLength,
                     RandomAccessIterator rightIter, VectorDataLibrary rightDataLib, Object rightData, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary,
                     @CachedLibrary("getPosition(positions)") AbstractContainerLibrary positionsLibrary) {
@@ -430,7 +425,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                 if (params.vectorType == RType.List || params.vectorType == RType.Expression) {
                     setListElement(leftIter, leftDataLib, leftData, rightIter, rightDataLib, rightData, right, actionLeftIndex, actionRightIndex);
                 } else {
-                    transferElementSameType(leftDataLib, leftIter, leftData, actionLeftIndex, rightDataLib, rightIter, rightData, actionRightIndex);
+                    leftDataLib.transferElementSameType(leftData, leftIter, leftData, actionLeftIndex, rightDataLib, rightIter, rightData, actionRightIndex);
                 }
             }
 
