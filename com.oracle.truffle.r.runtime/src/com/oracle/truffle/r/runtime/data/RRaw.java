@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RRaw implements RTruffleObject {
+public final class RRaw extends RTruffleBaseObject {
 
     private final byte value;
 
@@ -41,6 +41,12 @@ public final class RRaw implements RTruffleObject {
 
     public byte getValue() {
         return value;
+    }
+
+    @ExportMessage
+    @Override
+    public Object toDisplayString(@SuppressWarnings("unused") boolean allowSideEffects) {
+        return RRuntime.rawToHexString(value);
     }
 
     @SuppressWarnings("static-method")

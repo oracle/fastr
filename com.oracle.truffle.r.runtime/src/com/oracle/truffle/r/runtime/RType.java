@@ -19,14 +19,28 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.r.runtime.data.RBaseObject;
 import java.util.Arrays;
 
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 
-public enum RType {
+@ExportLibrary(InteropLibrary.class)
+public enum RType implements TruffleObject {
     Any("any", -1),
     Null("NULL", -1),
     Unbound("UNBOUND", -1),
@@ -84,8 +98,45 @@ public enum RType {
         this.precedence = precedence;
     }
 
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public boolean isMetaObject() {
+        return true;
+    }
+
+    @ExportMessage(name = "getMetaQualifiedName")
+    @ExportMessage(name = "getMetaSimpleName")
     public String getName() {
         return name;
+    }
+
+    @ExportMessage
+    public String toDisplayString(@SuppressWarnings("unused") boolean allowSideEffects) {
+        return getName();
+    }
+
+    @ExportMessage
+    static class IsMetaInstance {
+        @Specialization
+        static boolean regularObjects(RType receiver, RBaseObject obj) {
+            return obj.getMetaType() == receiver;
+        }
+
+        @Specialization
+        static boolean multiSlots(RType receiver, MultiSlotData multiSlotData,
+                        @CachedLibrary("receiver") InteropLibrary interopLib,
+                        @CachedContext(TruffleRLanguage.class) RContext ctx) {
+            try {
+                return interopLib.isMetaInstance(receiver, multiSlotData.get(ctx.getMultiSlotInd()));
+            } catch (UnsupportedMessageException ex) {
+                throw RInternalError.shouldNotReachHere();
+            }
+        }
+
+        @Fallback
+        static boolean otherObjects(@SuppressWarnings("unused") RType receiver, @SuppressWarnings("unused") Object obj) {
+            return false;
+        }
     }
 
     public String getClazz() {
@@ -301,6 +352,7 @@ public enum RType {
         return VECTOR_TYPES;
     }
 
+    @Ignore
     public boolean isNull() {
         return this == Null;
     }

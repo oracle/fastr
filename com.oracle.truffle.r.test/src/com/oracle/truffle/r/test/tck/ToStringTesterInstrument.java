@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,41 +22,91 @@
  */
 package com.oracle.truffle.r.test.tck;
 
+import java.io.IOException;
+
+import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.ExecutionEventNode;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.TruffleInstrument;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.LanguageInfo;
-import com.oracle.truffle.r.test.tck.ToStringTesterInstrument.TestData;
+import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.test.tck.ToStringTesterInstrument.ToStringTestData;
 
-@TruffleInstrument.Registration(id = ToStringTesterInstrument.ID, name = ToStringTesterInstrument.ID, version = "1.0", services = TestData.class)
+@TruffleInstrument.Registration(id = ToStringTesterInstrument.ID, name = ToStringTesterInstrument.ID, version = "1.0", services = ToStringTestData.class)
 public class ToStringTesterInstrument extends TruffleInstrument {
     public static final String ID = "ToStringTester";
 
     @Override
     protected void onCreate(Env env) {
-        TestData testData = new TestData();
+        ToStringTestData testData = new ToStringTestData();
         env.registerService(testData);
-        env.getInstrumenter().attachExecutionEventFactory(SourceSectionFilter.ANY, context -> new ExecutionEventNode() {
+        SourceSectionFilter sourceFilter = SourceSectionFilter.newBuilder().includeInternal(false).build();
+        boolean[] firstExecution = new boolean[]{true};
+        env.getInstrumenter().attachExecutionEventFactory(sourceFilter, context -> new ExecutionEventNode() {
             @Override
             protected void onEnter(VirtualFrame frame) {
-                LanguageInfo rLanguage = env.getLanguages().get("R");
-                testData.intAsString = env.toString(rLanguage, 42);
-                testData.byteAsString = env.toString(rLanguage, (byte) 42);
-                testData.doubleAsString = env.toString(rLanguage, 42.5);
-                testData.stringAsString = env.toString(rLanguage, "Hello");
-                testData.trueAsString = env.toString(rLanguage, true);
-                testData.falseAsString = env.toString(rLanguage, false);
+                if (firstExecution[0]) {
+                    firstExecution[0] = false;
+                    LanguageInfo rLanguage = env.getLanguages().get("R");
+                    Object rObj = null;
+                    try {
+                        rObj = env.parse(Source.newBuilder("R", "structure(class='myclass', 42L)", "<ToStringTesterInstrument:obj>").build()).call();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    testData.intAsString = toDisplayString(env, rLanguage, 42);
+                    testData.byteAsString = toDisplayString(env, rLanguage, (byte) 42);
+                    testData.doubleAsString = toDisplayString(env, rLanguage, 42.5);
+                    testData.stringAsString = toDisplayString(env, rLanguage, "Hello");
+                    testData.trueAsString = toDisplayString(env, rLanguage, true);
+                    testData.falseAsString = toDisplayString(env, rLanguage, false);
+                    testData.objAsString = toDisplayString(env, rLanguage, rObj);
+
+                    FrameSlot lazySlot = frame.getFrameDescriptor().findFrameSlot("lazy");
+                    Object lazyValue;
+                    try {
+                        lazyValue = frame.getObject(lazySlot);
+                    } catch (FrameSlotTypeException e) {
+                        throw new RuntimeException(e);
+                    }
+                    testData.lazyWithoutSideEffects = toDisplayStringWithoutSideEffects(env, rLanguage, lazyValue);
+                    testData.lazyWithSideEffects = toDisplayString(env, rLanguage, lazyValue);
+                }
             }
         });
     }
 
-    public static final class TestData {
+    private static String toDisplayString(Env env, LanguageInfo rLang, Object value) {
+        return toDisplayString(env, rLang, value, true);
+    }
+
+    private static String toDisplayStringWithoutSideEffects(Env env, LanguageInfo rLang, Object value) {
+        return toDisplayString(env, rLang, value, false);
+    }
+
+    private static String toDisplayString(Env env, LanguageInfo rLang, Object value, boolean sideEffects) {
+        Object view = env.getLanguageView(rLang, value);
+        InteropLibrary interop = InteropLibrary.getFactory().getUncached();
+        try {
+            return interop.asString(interop.toDisplayString(view, sideEffects));
+        } catch (UnsupportedMessageException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static final class ToStringTestData {
         public String intAsString;
         public String byteAsString;
         public String doubleAsString;
         public String stringAsString;
         public String trueAsString;
         public String falseAsString;
+        public String objAsString;
+        public String lazyWithoutSideEffects;
+        public String lazyWithSideEffects;
     }
 }

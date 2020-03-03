@@ -28,6 +28,6 @@ public interface TruffleRLanguageAccess {
 
     void onInitializeContext(Env env);
 
-    String toString(RContext context, Object value);
+    String toDisplayString(RContext context, Object value, boolean sideEffects);
 
 }

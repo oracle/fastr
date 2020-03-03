@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -33,6 +34,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
@@ -93,6 +95,19 @@ public final class RFunction extends RSharingAttributeStorage implements Shareab
     Object execute(Object[] arguments,
                     @Cached() ExplicitCall call) {
         return call.execute(this, arguments);
+    }
+
+    @ExportMessage
+    @Override
+    public boolean hasSourceLocation() {
+        return true;
+    }
+
+    @ExportMessage
+    @Override
+    @TruffleBoundary
+    public SourceSection getSourceLocation() {
+        return getRootNode().getSourceSection();
     }
 
     @Override

@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -296,6 +297,8 @@ public interface Engine {
      * @param evalPromises whether to evaluate promises in args array before calling the function.
      */
     Object evalFunction(RFunction func, MaterializedFrame frame, RCaller caller, boolean evalPromises, ArgumentsSignature names, Object... args);
+
+    Object evalPromise(RPromise promise);
 
     /**
      * Checks for the existence of (startup/shutdown) function {@code name} and, if present, invokes

@@ -486,7 +486,7 @@ public class FastRDebugTest {
         stepInto(1);
         assertLocation(6, "if (n <= 1) {");
         assertMetaObjectsOrStringValues(source, true, "n", "promise");
-        assertMetaObjectsOrStringValues(source, false, "n", "2");
+        assertMetaObjectsOrStringValues(source, false, "n", "[1] 2");
 
         continueExecution();
         performWork();
@@ -520,8 +520,8 @@ public class FastRDebugTest {
             debuggerSession.install(Breakpoint.newBuilder(DebuggerTester.getSourceImpl(source)).lineIs(6).build());
         });
 
-        assertArguments(6, "x <- n + m", "n", "<unevaluated>", "m", 20);
-        assertScope(6, "x <- n + m", false, true, "n", "<unevaluated>", "m", 20);
+        assertArguments(6, "x <- n + m", "n", 11, "m", 20);
+        assertScope(6, "x <- n + m", false, true, "n", 11, "m", 20);
         stepOver(4);
         assertArguments(10, "x", "n", 9, "m", 10);
         assertScope(10, "x", false, true, "n", 9, "m", 10, "x", 121);

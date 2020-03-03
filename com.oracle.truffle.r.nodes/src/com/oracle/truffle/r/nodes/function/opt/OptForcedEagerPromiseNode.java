@@ -22,8 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.function.opt;
 
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_EAGER_PROMISES;
+
+import java.util.logging.Level;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.function.ArgumentStatePush;
@@ -33,11 +40,19 @@ import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCaller.UnwrapPromiseCallerProfile;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RLogger;
+import com.oracle.truffle.r.runtime.data.Closure;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 //@formatter:off
@@ -100,11 +115,39 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * The validity of the eager promises across the arguments is maintained via the
  * {@code allArgPromisesCanOptimize} assumption.
  *
+ * <p>
+ * Known limitation: possible double error reporting if error handler is installed.
+ *
+ * <p>
+ * If an error occurs during eager evaluation, the {@link com.oracle.truffle.r.runtime.RError} is
+ * thrown from this node and the whole function call is cancelled. Given that we were allowed to
+ * eagerly evaluate the promise because it would have been evaluated inside the callee anyway, it
+ * should be OK to also "eagerly" report the error. However, if there is an error handler installed,
+ * which runs some code that throws {@link CannotOptimizePromise}, we will bailout from the eager
+ * evaluation and run the code again in the correct (callee) context. However, we've already printed
+ * the error message.
+ *
+ * <pre>
+ * > foo <- function(a) a  # 'a' is a trivial candidate for eager evaluation
+ * > options(error=function(...) print(sys.calls())) # sys.calls() throws CannotOptimizePromise
+ * > foo(sin('string'))
+ * Error in sin("a") : non-numeric argument to mathematical function
+ * Error in sin("a") : non-numeric argument to mathematical function
+ * [[1]]
+ * foo(sin("a"))
+ *
+ * [[2]]
+ * function (...)
+ * print(sys.calls())()
+ * </pre>
+ *
  * @see OptVariablePromiseBaseNode
  * @see PromiseNode
  */
 //@formatter:on
 public final class OptForcedEagerPromiseNode extends PromiseNode implements EagerFeedback {
+
+    private static final TruffleLogger LOGGER = RLogger.getLogger(LOGGER_EAGER_PROMISES);
 
     @Child private RNode expr;
     @Child private PromiseHelperNode promiseHelper;
@@ -169,6 +212,7 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
                 CompilerDirectives.transferToInterpreter();
                 allArgPromisesCanOptimize.invalidate();
             }
+            log("Cannot eagerly evaluate");
             if (previousEvalEagerOnly) {
                 // no point in continuing executing this node, which checks this assumption as the
                 // first thing in this method
@@ -184,6 +228,7 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
         if (value == null) {
             return getFallback().execute(frame);
         }
+        log("Eagerly evaluated");
         RCaller call = RCaller.unwrapPromiseCaller(currentCaller, unwrapCallerProfile);
         if (alwaysForce) {
             return factory.createEvaluatedPromise(value);
@@ -222,4 +267,15 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
         replace(new PromisedNode(factory));
     }
 
+    private void log(String message) {
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            doLog(message);
+        }
+    }
+
+    @TruffleBoundary
+    private void doLog(String message) {
+        String deparsed = RDeparse.deparseSyntaxElement(expr.asRSyntaxNode());
+        LOGGER.finest(String.format("%s, node: %x, expr: %s", message, this.hashCode(), deparsed));
+    }
 }

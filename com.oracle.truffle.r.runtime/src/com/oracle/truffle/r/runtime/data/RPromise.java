@@ -27,15 +27,23 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
@@ -157,6 +165,70 @@ public class RPromise extends RBaseObject {
         this.closure = closure;
         this.value = value;
         this.execFrame = execFrame;
+    }
+
+    @Override
+    public RType getMetaType() {
+        if (isEvaluated()) {
+            Object val = RRuntime.asAbstractVector(getValue());
+            assert val != this;
+            if (val instanceof RBaseObject && val != this) {
+                // Otherwise some foreign object, just use "promise" meta-type
+                return ((RBaseObject) val).getMetaType();
+            }
+        }
+        return this.getRType();
+    }
+
+    @ExportMessage
+    public Object getMetaObject(
+                    @CachedLibrary(limit = "1") InteropLibrary interopLib,
+                    @Exclusive @Cached BranchProfile isEvaluatedProfile) {
+        if (isEvaluated()) {
+            isEvaluatedProfile.enter();
+            Object boxedValue = RRuntime.asAbstractVector(getValue());
+            assert boxedValue != this;
+            if (boxedValue instanceof RBaseObject && boxedValue != this) {
+                try {
+                    return interopLib.getMetaObject(boxedValue);
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere("All R objects should implement getMetaObject");
+                }
+            }
+            // Otherwise some foreign object, just use "promise" meta-type
+        }
+        return getRType();
+    }
+
+    @ExportMessage
+    public Object toDisplayString(boolean allowSideEffects,
+                    @Cached("createBinaryProfile()") ConditionProfile allowSideEffectsProfile,
+                    @Exclusive @Cached BranchProfile deparseProfile,
+                    @CachedLibrary(limit = "1") InteropLibrary valueInteropLib) {
+        // We do not reuse toDisplayString from RBaseObject because it uses the "print" function and
+        // that would always evaluate the promise
+        boolean allowSideEffectsProfiled = allowSideEffectsProfile.profile(allowSideEffects);
+        Object localValue = null;
+        if (this.isEvaluated() || this.isOptimized()) {
+            localValue = getValue();
+        } else {
+            if (allowSideEffectsProfiled) {
+                localValue = RContext.getEngine().evalPromise(this);
+            }
+        }
+        if (localValue != null) {
+            localValue = RRuntime.asAbstractVector(localValue);
+            return valueInteropLib.toDisplayString(localValue, allowSideEffectsProfiled);
+        } else {
+            deparseProfile.enter();
+            String exprAsString = null;
+            try {
+                exprAsString = RDeparse.deparseSyntaxElement(this.closure.getSyntaxElement());
+            } catch (Throwable ex) {
+                assert false : ex.getMessage();
+            }
+            return exprAsString == null ? "<unevaluated>" : "<unevaluated expression: " + exprAsString + ">";
+        }
     }
 
     @SuppressWarnings("static-method")

@@ -87,6 +87,8 @@ public class RLogger {
      */
     public static final String LOGGER_PERFORMANCE_WARNINGS = "com.oracle.truffle.r.performanceWarnings";
 
+    public static final String LOGGER_EAGER_PROMISES = "com.oracle.truffle.r.eagerPromises";
+
     /**
      * Log file access.
      */

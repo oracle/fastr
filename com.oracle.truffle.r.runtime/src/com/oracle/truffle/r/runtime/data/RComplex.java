@@ -38,7 +38,7 @@ import static com.oracle.truffle.r.runtime.data.RComplexVector.MEMBER_RE;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RComplex implements RTruffleObject {
+public final class RComplex extends RTruffleBaseObject {
 
     private final double realPart;
     private final double imaginaryPart;
@@ -46,6 +46,16 @@ public final class RComplex implements RTruffleObject {
     private RComplex(double realPart, double imaginaryPart) {
         this.realPart = realPart;
         this.imaginaryPart = imaginaryPart;
+    }
+
+    @ExportMessage
+    @Override
+    public Object toDisplayString(@SuppressWarnings("unused") boolean allowSideEffects) {
+        if (isNull()) {
+            return "NA";
+        } else {
+            return toString();
+        }
     }
 
     @ExportMessage
@@ -121,7 +131,6 @@ public final class RComplex implements RTruffleObject {
     @Override
     @TruffleBoundary
     public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
         return toString(Double.toString(realPart), Double.toString(imaginaryPart));
     }
 
