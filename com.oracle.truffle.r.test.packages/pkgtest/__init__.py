@@ -227,7 +227,7 @@ def prepare_r_install_arguments(args):
         repos_idx = args.index('--repos')
         if repos_idx + 1 < len(args):
             if 'SNAPSHOT' in args[repos_idx + 1]:
-                logging.info("Overwriting '--repos SNAPSHOT,...' with '--repos CRAN=%s,...'" % default_cran_mirror_url)
+                logging.info("Overwriting '--repos SNAPSHOT,...' with '--repos %s,...'" % default_cran_mirror_url)
                 args[repos_idx + 1] = args[repos_idx + 1].replace("SNAPSHOT", default_cran_mirror_url)
     else:
         logging.info("No '--repos' specified, using default CRAN mirror: " + default_cran_mirror_url)
