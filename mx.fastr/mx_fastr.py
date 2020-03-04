@@ -400,7 +400,7 @@ def _fastr_gate_runner(args, tasks):
                 list_file_llvm = list_file + '.llvm'
                 if os.path.exists(list_file_llvm):
                     list_file = list_file_llvm
-            if os.environ.get('FASTR_GCTORTURE') != '':
+            if 'FASTR_GCTORTURE' in os.environ:
                 list_file_gctorture = list_file + '.gctorture'
                 if os.path.exists(list_file_gctorture):
                     list_file = list_file_gctorture
