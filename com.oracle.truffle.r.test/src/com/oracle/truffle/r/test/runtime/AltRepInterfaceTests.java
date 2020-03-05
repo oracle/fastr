@@ -14,6 +14,8 @@ import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.test.TestBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -69,9 +71,31 @@ public class AltRepInterfaceTests extends TestBase {
         Assert.assertTrue(elem instanceof Integer);
         Assert.assertEquals(simpleDescriptorWrapper.getAltIntVector().getDataAt(0), elem);
     }
+
+    /**
+     * int *data = INTEGER(instance);
+     * data[0] = 42;
+     */
+    @Test
+    public void writeNativeIntData() {
+        SimpleDescriptorWrapper simpleDescriptorWrapper = new SimpleDescriptorWrapper();
+        RIntVector altIntVec = simpleDescriptorWrapper.getAltIntVector();
+
+        // int *data = INTEGER(instance);
+        VectorRFFIWrapper rffiWrapper = VectorRFFIWrapper.get(altIntVec);
+        try {
+            // data[0] = 42;
+            InteropLibrary.getFactory().getUncached(rffiWrapper).writeArrayElement(rffiWrapper, 0, 42);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // data[0] = 42 calls into Dataptr method, so the whole vector has to be materialized.
+        Assert.assertTrue(altIntVec.isMaterialized());
+        Assert.assertEquals(42, altIntVec.getDataAt(0));
+    }
 }
 
-// TODO: Add DataptrFunctionMock that will check arguments, and so on ...
 @ExportLibrary(InteropLibrary.class)
 abstract class NativeFunctionMock implements TruffleObject {
     private boolean called;
@@ -114,6 +138,25 @@ abstract class NativeFunctionMock implements TruffleObject {
     }
 }
 
+@ExportLibrary(value = InteropLibrary.class)
+final class Dataptr implements TruffleObject {
+    private final long dataPtrAddr;
+
+    Dataptr(long dataPtrAddr) {
+        this.dataPtrAddr = dataPtrAddr;
+    }
+
+    @ExportMessage
+    public long asPointer() {
+        return dataPtrAddr;
+    }
+
+    @ExportMessage
+    public boolean isPointer() {
+        return true;
+    }
+}
+
 abstract class DataptrFunctionMock extends NativeFunctionMock {
     @Override
     protected Object doExecute(RIntVector instance, Object... args) {
@@ -122,7 +165,7 @@ abstract class DataptrFunctionMock extends NativeFunctionMock {
         return dataptr(instance, (boolean) args[0]);
     }
 
-    protected abstract Object dataptr(RIntVector instance, boolean writeabble);
+    protected abstract Dataptr dataptr(RIntVector instance, boolean writeabble);
 }
 
 abstract class EltFunctionMock extends NativeFunctionMock {
@@ -158,14 +201,26 @@ abstract class LengthFunctionMock extends NativeFunctionMock {
 }
 
 class SimpleDescriptorWrapper {
-    private Dataptr dataptrMethod = new Dataptr();
-    private Length lengthMethod = new Length();
-    private Elt eltMethod = new Elt();
-    private Sum sumMethod = new Sum();
-    private AltIntegerClassDescriptor descriptor = createDescriptor();
-    private RIntVector altIntVector = RDataFactory.createAltIntVector(descriptor, new RAltRepData(RNull.instance, RNull.instance));
-    private RAltIntVectorData altIntVectorData = (RAltIntVectorData) altIntVector.getData();
     private static final int LENGTH = 10;
+    private DataptrMethod dataptrMethod;
+    private Length lengthMethod;
+    private Elt eltMethod;
+    private Sum sumMethod;
+    private AltIntegerClassDescriptor descriptor;
+    private RIntVector altIntVector;
+    private RAltIntVectorData altIntVectorData;
+    private long nativeMemPtr;
+
+    SimpleDescriptorWrapper() {
+        nativeMemPtr = allocateNativeMem(LENGTH);
+        dataptrMethod = new DataptrMethod(nativeMemPtr);
+        eltMethod = new Elt(nativeMemPtr);
+        lengthMethod = new Length();
+        sumMethod = new Sum();
+        descriptor = createDescriptor();
+        altIntVector = RDataFactory.createAltIntVector(descriptor, new RAltRepData(RNull.instance, RNull.instance));
+        altIntVectorData = (RAltIntVectorData) altIntVector.getData();
+    }
 
     private AltIntegerClassDescriptor createDescriptor() {
         AltIntegerClassDescriptor descriptor = new AltIntegerClassDescriptor(SimpleDescriptorWrapper.class.getSimpleName(),
@@ -177,11 +232,15 @@ class SimpleDescriptorWrapper {
         return descriptor;
     }
 
+    private static long allocateNativeMem(long size) {
+        return NativeMemory.allocate(ElementType.INT, size, null);
+    }
+
     public AltIntegerClassDescriptor getDescriptor() {
         return descriptor;
     }
 
-    public Dataptr getDataptrMethod() {
+    public DataptrMethod getDataptrMethod() {
         return dataptrMethod;
     }
 
@@ -217,16 +276,28 @@ class SimpleDescriptorWrapper {
     }
 
     static final class Elt extends EltFunctionMock {
+        private long nativeMemAddr;
+
+        Elt(long nativeMemAddr) {
+            this.nativeMemAddr = nativeMemAddr;
+        }
+
         @Override
         protected int elt(RIntVector instance, int idx) {
-            return 1;
+            return NativeMemory.getInt(nativeMemAddr, idx);
         }
     }
 
-    static final class Dataptr extends DataptrFunctionMock {
+    static final class DataptrMethod extends DataptrFunctionMock {
+        private long nativeMemAddr;
+
+        DataptrMethod(long nativeMemAddr) {
+            this.nativeMemAddr = nativeMemAddr;
+        }
+
         @Override
-        protected Object dataptr(RIntVector instance, boolean writeabble) {
-            return (long)0xdef00023;
+        protected Dataptr dataptr(RIntVector instance, boolean writeabble) {
+            return new Dataptr(nativeMemAddr);
         }
     }
 
@@ -240,7 +311,7 @@ class SimpleDescriptorWrapper {
 
 class IntVectorDescriptorWrapper {
     private final static int vecLength = 10;
-    private final Dataptr dataptrMethod = new Dataptr();
+    private final DataptrMethod dataptrMethod = new DataptrMethod();
     private final Length lengthMethod = new Length();
     private final Elt eltMethod = new Elt();
     private final AltIntegerClassDescriptor descriptor = createDescriptor();
@@ -309,10 +380,10 @@ class IntVectorDescriptorWrapper {
         return getInstanceData(instance).getDataAt(idx);
     }
 
-    static final class Dataptr extends DataptrFunctionMock {
+    static final class DataptrMethod extends DataptrFunctionMock {
         @Override
-        protected Object dataptr(RIntVector instance, boolean writeabble) {
-            return executeDataptr(instance);
+        protected Dataptr dataptr(RIntVector instance, boolean writeabble) {
+            return new Dataptr(executeDataptr(instance));
         }
     }
 
