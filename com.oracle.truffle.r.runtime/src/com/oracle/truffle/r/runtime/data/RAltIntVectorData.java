@@ -98,11 +98,17 @@ public class RAltIntVectorData extends RIntVectorData {
         return "AltIntegerVector: data={" + data.toString() + "}";
     }
 
+    @Override
+    @Ignore
+    public int getIntAt(int index) {
+        ConditionProfile isEltMethodRegisteredProfile = ConditionProfile.getUncached();
+        return getIntAt(index, isEltMethodRegisteredProfile);
+    }
+
     // TODO: Implement with copy of FastPathAccess
     @ExportMessage
-    @Override
-    public int getIntAt(int index) {
-        if (descriptor.isEltMethodRegistered()) {
+    public int getIntAt(int index, @Cached("createBinaryProfile()") ConditionProfile isEltMethodRegisteredProfile) {
+        if (isEltMethodRegisteredProfile.profile(descriptor.isEltMethodRegistered())) {
             return descriptor.invokeEltMethodUncached(vector, index);
         } else {
             // Invoke uncached dataptr method
