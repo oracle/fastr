@@ -109,6 +109,7 @@ public class RAltIntVectorData extends RIntVectorData {
     @ExportMessage
     public int getIntAt(int index, @Cached("createBinaryProfile()") ConditionProfile isEltMethodRegisteredProfile) {
         if (isEltMethodRegisteredProfile.profile(descriptor.isEltMethodRegistered())) {
+            // TODO: Invoke cached version
             return descriptor.invokeEltMethodUncached(vector, index);
         } else {
             // Invoke uncached dataptr method
@@ -133,11 +134,16 @@ public class RAltIntVectorData extends RIntVectorData {
     @ExportMessage
     public RIntArrayVectorData materialize() {
         // TODO: TOhle by chtelo implementovat pomoci Dataptr
+        int[] newData = getDataAsArray();
+        return new RIntArrayVectorData(newData, true);
+    }
+
+    private int[] getDataAsArray() {
         int[] newData = new int[getLength()];
         for (int i = 0; i < getLength(); i++) {
             newData[i] = getIntAt(i);
         }
-        return new RIntArrayVectorData(newData, true);
+        return newData;
     }
 
     @Override
@@ -176,7 +182,7 @@ public class RAltIntVectorData extends RIntVectorData {
 
     @ExportMessage
     public int[] getReadonlyIntData() {
-        throw RInternalError.unimplemented("RAltIntVectorData.getReadonlyIntData");
+        return getDataAsArray();
     }
 
     @ExportMessage
