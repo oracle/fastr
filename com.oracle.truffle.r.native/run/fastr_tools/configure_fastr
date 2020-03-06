@@ -84,21 +84,11 @@ done
       exit 2
     fi
     res=0
-    for lib in libgfortran.so.5 libquadmath.so.0 libgcc_s.so.1; do
-      if ! ldconfig -p | grep --quiet $lib; then
-        echo "Error: could not find gfortran5 runtime library: $lib"
-        echo "Please install the gfortran5 runtime libraries:"
-        echo "    On Debian based systems: apt-get install libgfortran-8-dev"
-        echo "    On Oracle Linux 8: yum install libgfortran"
-        res=1
-        break
-      fi
-    done
     if ! ldconfig -p | grep --quiet "libgomp.so.1"; then
       echo "Error: could not find OpenMP runtime library: libgomp.so.1"
       echo "Please install the OpenMP runtime library runtime libraries:"
       echo "    On Debian based systems: apt-get install libgomp1"
-      echo "    On Oracle Linux 8: yum install libgomp"
+      echo "    On Oracle Linux: yum install libgomp"
       echo "    Note: Oracle Linux 8 should contain libgomp by default"
       res=1
     fi
@@ -114,7 +104,7 @@ done
       echo "Note: if you intend to install R packages you may need additional dependencies."
       echo "The following packages should cover the most commonly used R packages:"
       echo "    On Debian based systems: apt-get install build-essential gfortran libxml2 libc++-dev"
-      echo "    On Oracle Linux 8: yum groupinstall 'Development Tools'"
+      echo "    On Oracle Linux: yum groupinstall 'Development Tools' && yum install gcc-gfortran"
     fi
   elif [[ "$OSTYPE" == "darwin"* ]]; then
 

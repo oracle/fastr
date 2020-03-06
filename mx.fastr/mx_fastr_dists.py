@@ -276,7 +276,7 @@ if mx.get_env('FASTR_RELEASE') == 'true' and mx.get_env('FASTR_RFFI') in (None, 
         include_in_polyglot=False,
         post_install_msg="NOTES:\n---------------\n" +
              "FastR needs a system-dependent configuration because it links with some system libraries. " +
-             "A generic configuration that works out of the box on most Linux distributions with GCC and gfortran installed is provided by default. " +
+             "A generic configuration that works out of the box on most Linux distributions is provided by default. " +
              "If you are on another system (e.g., MacOS), wish to fine-tune the configuration to your system, or should you encounter any " +
              "issues when running FastR or during R packages installation, try running the following script that adjusts " +
              "the configuration to your system: \n" +
