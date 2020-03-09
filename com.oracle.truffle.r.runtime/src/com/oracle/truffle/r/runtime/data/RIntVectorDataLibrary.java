@@ -46,32 +46,32 @@ public abstract class RIntVectorDataLibrary extends Library {
     // ---------------------------------------------------------------------
     // Methods copy & pasted from VectorDataLibrary, specialized for integer
 
-    public abstract RIntVectorData materialize(RIntVectorData receiver);
+    public abstract RIntVectorData materialize(Object receiver);
 
     @SuppressWarnings("unused")
-    public boolean isWriteable(RIntVectorData receiver) {
+    public boolean isWriteable(Object receiver) {
         return false;
     }
 
-    public abstract RIntVectorData copy(RIntVectorData receiver, boolean deep);
+    public abstract RIntVectorData copy(Object receiver, boolean deep);
 
-    public abstract RIntVectorData copyResized(RIntVectorData receiver, int newSize, boolean deep, boolean fillNA);
+    public abstract RIntVectorData copyResized(Object receiver, int newSize, boolean deep, boolean fillNA);
 
-    public abstract int getLength(RIntVectorData receiver);
+    public abstract int getLength(Object receiver);
 
     @SuppressWarnings("unused")
-    public boolean isComplete(RIntVectorData receiver) {
+    public boolean isComplete(Object receiver) {
         return false;
     }
 
     @SuppressWarnings("unused")
-    public boolean isSorted(RIntVectorData receiver, boolean descending, boolean naLast) {
+    public boolean isSorted(Object receiver, boolean descending, boolean naLast) {
         return false;
     }
 
-    public abstract SeqIterator iterator(RIntVectorData receiver);
+    public abstract SeqIterator iterator(Object receiver);
 
-    public abstract RandomAccessIterator randomAccessIterator(RIntVectorData receiver);
+    public abstract RandomAccessIterator randomAccessIterator(Object receiver);
 
     // ---------------------------------------------------------------------
     // Methods specific to integer data
@@ -81,52 +81,52 @@ public abstract class RIntVectorDataLibrary extends Library {
      * underlying data. Note: if you need to send an array to the native code, you should use
      * {@code TODO:RIntVector#getDataPtr()} instead.
      */
-    public abstract int[] getReadonlyIntData(RIntVectorData receiver);
+    public abstract int[] getReadonlyIntData(Object receiver);
 
     // TODO: switch this: implement getReadonlyIntData using getIntDataCopy
 
-    public int[] getIntDataCopy(RIntVectorData receiver) {
+    public int[] getIntDataCopy(Object receiver) {
         return getReadonlyIntData(receiver);
     }
 
-    public abstract int getIntAt(RIntVectorData receiver, int index);
+    public abstract int getIntAt(Object receiver, int index);
 
-    public abstract int getNext(RIntVectorData receiver, SeqIterator it);
+    public abstract int getNext(Object receiver, SeqIterator it);
 
-    public abstract int getAt(RIntVectorData receiver, RandomAccessIterator it, int index);
+    public abstract int getAt(Object receiver, RandomAccessIterator it, int index);
 
     /**
      * Sets the value under given index. The vector must be writeable (see
-     * {@link #isWriteable(RIntVectorData)}. The {@code naCheck} is used to determine if it is
-     * necessary to check whether {@code value} is {@code NA}. The {@code naCheck} must be "enabled"
-     * on the source of the input data, i.e., the {@code value} argument. Using this overload makes
-     * sense if this method is called multiple times with the same {@code naCheck} instance,
-     * otherwise use the overload without the {@code naCheck}.
+     * {@link #isWriteable(Object)}. The {@code naCheck} is used to determine if it is necessary to
+     * check whether {@code value} is {@code NA}. The {@code naCheck} must be "enabled" on the
+     * source of the input data, i.e., the {@code value} argument. Using this overload makes sense
+     * if this method is called multiple times with the same {@code naCheck} instance, otherwise use
+     * the overload without the {@code naCheck}.
      */
     @SuppressWarnings("unused")
-    public void setIntAt(RIntVectorData receiver, int index, int value, NACheck naCheck) {
+    public void setIntAt(Object receiver, int index, int value, NACheck naCheck) {
         throw notWriteableError(RIntVectorData.class, "setIntAt");
     }
 
     @SuppressWarnings("unused")
-    public void setNext(RIntVectorData receiver, SeqIterator it, int value, NACheck naCheck) {
+    public void setNext(Object receiver, SeqIterator it, int value, NACheck naCheck) {
         throw notWriteableError(RIntVectorData.class, "setIntAt");
     }
 
     @SuppressWarnings("unused")
-    public void setAt(RIntVectorData receiver, RandomAccessIterator it, int index, int value, NACheck naCheck) {
+    public void setAt(Object receiver, RandomAccessIterator it, int index, int value, NACheck naCheck) {
         throw notWriteableError(RIntVectorData.class, "setIntAt");
     }
 
-    public final void setIntAt(RIntVectorData receiver, int index, int value) {
+    public final void setIntAt(Object receiver, int index, int value) {
         setIntAt(receiver, index, value, NACheck.getEnabled());
     }
 
-    public final void setIntAt(RIntVectorData receiver, SeqIterator it, int value) {
+    public final void setIntAt(Object receiver, SeqIterator it, int value) {
         setNext(receiver, it, value, NACheck.getEnabled());
     }
 
-    public final void setIntAt(RIntVectorData receiver, RandomAccessIterator it, int index, int value) {
+    public final void setIntAt(Object receiver, RandomAccessIterator it, int index, int value) {
         setAt(receiver, it, index, value, NACheck.getEnabled());
     }
 }

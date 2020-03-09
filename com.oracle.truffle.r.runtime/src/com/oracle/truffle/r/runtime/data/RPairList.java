@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,6 +84,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 @ExportLibrary(RPairListLibrary.class)
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(AbstractContainerLibrary.class)
 public final class RPairList extends RAbstractContainer implements Iterable<RPairList>, Shareable {
 
     private static final RSymbol FUNCTION_SYMBOL = RDataFactory.createSymbolInterned("function");
@@ -565,6 +566,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
     }
 
     @Override
+    @ExportMessage
     public boolean isComplete() {
         return false;
     }
@@ -643,6 +645,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
 
     @Override
     @TruffleBoundary
+    @ExportMessage
     public RPairList copy() {
         if (closure != null) {
             RPairList result = new RPairList(closure);
@@ -703,6 +706,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
     }
 
     @Override
+    @ExportMessage
     public RPairList materialize() {
         return this;
     }

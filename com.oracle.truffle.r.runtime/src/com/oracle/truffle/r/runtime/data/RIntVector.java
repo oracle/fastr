@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -44,11 +45,9 @@ import java.util.concurrent.atomic.AtomicReference;
 @ExportLibrary(InteropLibrary.class)
 public final class RIntVector extends RAbstractNumericVector {
 
-    private RIntVectorData data;
-
     RIntVector(int[] data, boolean complete) {
         super(complete);
-        this.data = new RIntArrayVectorData(data, complete);
+        setData(new RIntArrayVectorData(data, complete));
         assert RAbstractVector.verifyVector(this);
     }
 
@@ -57,20 +56,26 @@ public final class RIntVector extends RAbstractNumericVector {
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
-    private RIntVector(RIntVectorData data) {
+    RIntVector(RIntVectorData data) {
         super(false);
-        this.data = data;
+        setData(data);
     }
 
     private RIntVector() {
         super(false);
     }
 
+    // XXX hack
+    private void setData(Object data) {
+        this.data = data;
+        shareable = data instanceof RIntArrayVectorData || data instanceof RIntNativeVectorData;
+    }
+
     static RIntVector fromNative(long address, int length) {
         RIntVector result = new RIntVector();
         NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
-        result.data = new RIntNativeVectorData(result);
+        result.setData(new RIntNativeVectorData(result));
         return result;
     }
 
@@ -93,20 +98,8 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     @Override
-    public boolean isShareable() {
-        // TODO: initially we retain even the behavior of "isShareable" forcing materialization
-        // where it may not be necessary
-        // Only Java array and native memory backed vectors "look like" shareable
-        return RIntVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
-    }
-
-    @Override
     public boolean isMaterialized() {
         return RIntVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
-    }
-
-    public RIntVectorData getData() {
-        return data;
     }
 
     // TODO: method that breaks encapsulation of data
@@ -178,7 +171,7 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     public int getDataAt(int index) {
-        return data.getIntAt(index);
+        return RIntVectorDataLibrary.getFactory().getUncached().getIntAt(data, index);
     }
 
     public int getDataAt(Object store, int index) {
@@ -205,13 +198,16 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     @Override
+    @ExportMessage.Ignore
     public int getLength() {
-        return data.getLength();
+        return ((RIntVectorData) data).getLength();
     }
 
     @Override
+    @ExportMessage.Ignore
     public boolean isComplete() {
-        return data.isComplete();
+        // return RIntVectorDataLibrary.getFactory().getUncached().isComplete(data);
+        return ((RIntVectorData) data).isComplete();
     }
 
     @Override
@@ -219,7 +215,7 @@ public final class RIntVector extends RAbstractNumericVector {
         try {
             NativeDataAccess.setDataLength(this, getArrayForNativeDataAccess(), l);
         } finally {
-            data = new RIntNativeVectorData(this);
+            setData(new RIntNativeVectorData(this));
             setComplete(false);
         }
     }
@@ -234,7 +230,7 @@ public final class RIntVector extends RAbstractNumericVector {
         try {
             NativeDataAccess.setTrueDataLength(this, l);
         } finally {
-            data = new RIntNativeVectorData(this);
+            setData(new RIntNativeVectorData(this));
             setComplete(false);
         }
     }
@@ -273,6 +269,7 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     @Override
+    @ExportMessage.Ignore
     public RIntVector materialize() {
         if (RIntVectorDataLibrary.getFactory().getUncached().isWriteable(data)) {
             return this;
@@ -283,7 +280,7 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     public void materializeData(RIntVectorDataLibrary dataLib) {
-        data = dataLib.materialize(data);
+        setData(dataLib.materialize(data));
     }
 
     @Override
@@ -306,6 +303,15 @@ public final class RIntVector extends RAbstractNumericVector {
     @Override
     protected RIntVector internalCopy() {
         return RDataFactory.createIntVector(getDataCopy(), isComplete());
+    }
+
+    // XXX HACK taken from RAbstractVector
+    RIntVector copy(RIntVectorDataLibrary dataLib) {
+        RIntVector result = RDataFactory.createIntVector(dataLib.getIntDataCopy(data), dataLib.isComplete(data));
+        MemoryCopyTracer.reportCopying(this, result);
+        setAttributes(result);
+        result.setTypedValueInfo(getTypedValueInfo());
+        return result;
     }
 
     @Override
@@ -344,14 +350,14 @@ public final class RIntVector extends RAbstractNumericVector {
 
     @Override
     public void setElement(int index, Object value) {
-        data.setIntAt(index, (Integer) value);
+        ((RIntVectorData) data).setIntAt(index, (Integer) value);
     }
 
     public long allocateNativeContents() {
         try {
-            data = RIntVectorDataLibrary.getFactory().getUncached().materialize(data);
+            setData(RIntVectorDataLibrary.getFactory().getUncached().materialize(data));
             long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
-            data = new RIntNativeVectorData(this);
+            setData(new RIntNativeVectorData(this));
             return result;
         } finally {
             setComplete(false);
@@ -389,12 +395,17 @@ public final class RIntVector extends RAbstractNumericVector {
 
         @Override
         public int getIntImpl(AccessIterator accessIter, int index) {
-            return dataLib.getIntAt((RIntVectorData) accessIter.getStore(), index);
+            return dataLib.getIntAt(accessIter.getStore(), index);
         }
 
         @Override
         protected void setIntImpl(AccessIterator accessIter, int index, int value) {
-            dataLib.setIntAt((RIntVectorData) accessIter.getStore(), index, value);
+            dataLib.setIntAt(accessIter.getStore(), index, value);
+        }
+
+        @Override
+        protected int getLength(RAbstractContainer vector) {
+            return dataLib.getLength(((RIntVector) vector).getData());
         }
     }
 

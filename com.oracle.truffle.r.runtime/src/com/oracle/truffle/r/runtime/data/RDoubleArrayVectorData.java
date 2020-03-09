@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import java.util.Arrays;
 
 @ExportLibrary(RDoubleVectorDataLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 class RDoubleArrayVectorData extends RDoubleVectorData {
     private final double[] data;
     private boolean complete;
@@ -44,18 +45,24 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
     }
 
     @Override
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     public int getLength() {
         return data.length;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
     public RDoubleArrayVectorData materialize() {
         return this;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
     public boolean isWriteable() {
+        return true;
+    }
+
+    @ExportMessage(library = VectorDataLibrary.class)
+    public boolean isMaterialized() {
         return true;
     }
 
@@ -77,10 +84,11 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                     @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt((RDoubleVectorData) destination, index, data[index]);
+        dataLib.setDoubleAt(destination, index, data[index]);
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     @Override
     public boolean isComplete() {
         return complete;
@@ -127,6 +135,11 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
     public void setDoubleAt(int index, double value, NACheck naCheck) {
         updateComplete(value, naCheck);
         data[index] = value;
+    }
+
+    @ExportMessage
+    public void setDataAtAsObject(int index, Object value, NACheck naCheck) {
+        setDoubleAt(index, (double) value, naCheck);
     }
 
     @ExportMessage

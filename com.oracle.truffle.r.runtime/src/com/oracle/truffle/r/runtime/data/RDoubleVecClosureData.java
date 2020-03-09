@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 @ExportLibrary(RDoubleVectorDataLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 public class RDoubleVecClosureData extends RDoubleVectorData implements RClosure {
     private final RAbstractVector vector;
 
@@ -41,26 +42,23 @@ public class RDoubleVecClosureData extends RDoubleVectorData implements RClosure
         this.vector = vector;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     @Override
     public int getLength() {
         return vector.getLength();
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
     public RDoubleArrayVectorData materialize() {
-        throw new RuntimeException("TODO?");
-    }
-
-    @ExportMessage
-    public boolean isWriteable() {
-        return false;
+        return new RDoubleArrayVectorData(getReadonlyDoubleData(), isComplete());
     }
 
     @SuppressWarnings("unused")
     @ExportMessage
-    public RDoubleArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
-        throw new RuntimeException("TODO?");
+    public RDoubleVecClosureData copy(@SuppressWarnings("unused") boolean deep) {
+        // TODO deep
+        return new RDoubleVecClosureData(this.vector);
     }
 
     @SuppressWarnings("unused")
@@ -73,13 +71,7 @@ public class RDoubleVecClosureData extends RDoubleVectorData implements RClosure
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                     @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt((RDoubleVectorData) destination, index, getDoubleAt(index));
-    }
-
-    @ExportMessage
-    @Override
-    public boolean isComplete() {
-        return false;
+        dataLib.setDoubleAt(destination, index, getDoubleAt(index));
     }
 
     @ExportMessage

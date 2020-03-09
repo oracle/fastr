@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 @ExportLibrary(RIntVectorDataLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 public class RIntVecClosureData extends RIntVectorData implements RClosure {
     private final RAbstractVector vector;
 
@@ -41,26 +42,23 @@ public class RIntVecClosureData extends RIntVectorData implements RClosure {
         this.vector = vector;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     @Override
     public int getLength() {
         return vector.getLength();
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
     public RIntArrayVectorData materialize() {
-        throw new RuntimeException("TODO?");
-    }
-
-    @ExportMessage
-    public boolean isWriteable() {
-        return false;
+        return new RIntArrayVectorData(getReadonlyIntData(), isComplete());
     }
 
     @SuppressWarnings("unused")
     @ExportMessage
-    public RIntArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
-        throw new RuntimeException("TODO?");
+    public RIntVecClosureData copy(@SuppressWarnings("unused") boolean deep) {
+        // TOD new closure or also new vector?
+        return new RIntVecClosureData(this.vector);
     }
 
     @SuppressWarnings("unused")
@@ -73,13 +71,7 @@ public class RIntVecClosureData extends RIntVectorData implements RClosure {
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                     @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
-    }
-
-    @ExportMessage
-    @Override
-    public boolean isComplete() {
-        return false;
+        dataLib.setIntAt(destination, index, getIntAt(index));
     }
 
     @ExportMessage

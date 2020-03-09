@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(RIntVectorDataLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 public class RIntNativeVectorData extends RIntVectorData {
     // We need the vector, so that we can easily use the existing NativeDataAccess methods
     // TODO: this field should be replaced with address/length fields and
@@ -41,19 +42,25 @@ public class RIntNativeVectorData extends RIntVectorData {
         this.vec = vec;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     @Override
     public int getLength() {
         return NativeDataAccess.getDataLength(vec, null);
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
     public RIntNativeVectorData materialize() {
         return this;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
     public boolean isWriteable() {
+        return true;
+    }
+
+    @ExportMessage(library = VectorDataLibrary.class)
+    public boolean isMaterialized() {
         return true;
     }
 
@@ -72,7 +79,7 @@ public class RIntNativeVectorData extends RIntVectorData {
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                     @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
+        dataLib.setIntAt(destination, index, getIntAt(index));
     }
 
     @ExportMessage
@@ -112,6 +119,11 @@ public class RIntNativeVectorData extends RIntVectorData {
     @ExportMessage
     public void setIntAt(int index, int value, @SuppressWarnings("unused") NACheck naCheck) {
         NativeDataAccess.setData(vec, null, index, value);
+    }
+
+    @ExportMessage
+    public void setDataAtAsObject(int index, Object value, @SuppressWarnings("unused") NACheck naCheck) {
+        NativeDataAccess.setData(vec, null, index, (int) value);
     }
 
     @ExportMessage

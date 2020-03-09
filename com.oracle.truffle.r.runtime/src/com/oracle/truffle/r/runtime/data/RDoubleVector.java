@@ -46,8 +46,6 @@ import java.util.concurrent.atomic.AtomicReference;
 @ExportLibrary(InteropLibrary.class)
 public final class RDoubleVector extends RAbstractDoubleVector implements RMaterializedVector, Shareable {
 
-    private RDoubleVectorData data;
-
     RDoubleVector(double[] data, boolean complete) {
         super(complete);
         this.data = new RDoubleArrayVectorData(data, complete);
@@ -59,7 +57,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
-    private RDoubleVector(RDoubleVectorData data) {
+    RDoubleVector(RDoubleVectorData data) {
         super(false);
         this.data = data;
     }
@@ -86,24 +84,12 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         return result;
     }
 
-    public RDoubleVectorData getData() {
-        return data;
-    }
-
     static RDoubleVector fromNative(long address, int length) {
         RDoubleVector result = new RDoubleVector();
         NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
         result.data = new RDoubleNativeVectorData(result);
         return result;
-    }
-
-    @Override
-    public boolean isShareable() {
-        // TODO: initially we retain even the behavior of "isShareable" forcing materialization
-        // where it may not be necessary
-        // Only Java array and native memory backed vectors "look like" shareable
-        return RDoubleVectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
     }
 
     @Override
@@ -119,7 +105,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     @Override
     public boolean isComplete() {
-        return data.isComplete();
+        return RDoubleVectorDataLibrary.getFactory().getUncached().isComplete(data);
     }
 
     @Override
@@ -199,7 +185,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     @Override
     public int getLength() {
-        return data.getLength();
+        return ((RVectorData) data).getLength();
     }
 
     @Override
@@ -229,12 +215,21 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     @Override
     public double getDataAt(int index) {
-        return data.getDoubleAt(index);
+        return ((RDoubleVectorData) data).getDoubleAt(index);
     }
 
     @Override
     public double[] getDataCopy() {
         return RDoubleVectorDataLibrary.getFactory().getUncached().getDoubleDataCopy(data);
+    }
+
+    // XXX HACK taken from RAbstractVector
+    RDoubleVector copy(RDoubleVectorDataLibrary dataLib) {
+        RDoubleVector result = RDataFactory.createDoubleVector(dataLib.getDoubleDataCopy(data), dataLib.isComplete(data));
+        MemoryCopyTracer.reportCopying(this, result);
+        setAttributes(result);
+        result.setTypedValueInfo(getTypedValueInfo());
+        return result;
     }
 
     @Override
@@ -327,7 +322,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     @Override
     public void setElement(int index, Object value) {
-        data.setDoubleAt(index, (Double) value);
+        ((RDoubleVectorData) data).setDoubleAt(index, (Double) value);
     }
 
     public long allocateNativeContents() {
@@ -372,12 +367,17 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
         @Override
         public double getDoubleImpl(AccessIterator accessIter, int index) {
-            return dataLib.getDoubleAt((RDoubleVectorData) accessIter.getStore(), index);
+            return dataLib.getDoubleAt(accessIter.getStore(), index);
         }
 
         @Override
         protected void setDoubleImpl(AccessIterator accessIter, int index, double value) {
-            dataLib.setDoubleAt((RDoubleVectorData) accessIter.getStore(), index, value);
+            dataLib.setDoubleAt(accessIter.getStore(), index, value);
+        }
+
+        @Override
+        protected int getLength(RAbstractContainer vector) {
+            return dataLib.getLength(((RDoubleVector) vector).getData());
         }
     }
 

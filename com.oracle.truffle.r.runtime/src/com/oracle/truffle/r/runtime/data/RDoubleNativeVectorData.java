@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(RDoubleVectorDataLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 public class RDoubleNativeVectorData extends RDoubleVectorData {
     // We need the vector, so that we can easily use the existing NativeDataAccess methods
     // TODO: this field should be replaced with address/length fields and
@@ -41,19 +42,25 @@ public class RDoubleNativeVectorData extends RDoubleVectorData {
         this.vec = vec;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     @Override
     public int getLength() {
         return NativeDataAccess.getDataLength(vec, null);
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
     public RDoubleNativeVectorData materialize() {
         return this;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
     public boolean isWriteable() {
+        return true;
+    }
+
+    @ExportMessage(library = VectorDataLibrary.class)
+    public boolean isMaterialized() {
         return true;
     }
 
@@ -72,7 +79,7 @@ public class RDoubleNativeVectorData extends RDoubleVectorData {
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                     @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt((RDoubleVectorData) destination, index, getDoubleAt(index));
+        dataLib.setDoubleAt(destination, index, getDoubleAt(index));
     }
 
     @ExportMessage
@@ -112,6 +119,11 @@ public class RDoubleNativeVectorData extends RDoubleVectorData {
     @ExportMessage
     public void setDoubleAt(int index, double value, @SuppressWarnings("unused") NACheck naCheck) {
         NativeDataAccess.setData(vec, null, index, value);
+    }
+
+    @ExportMessage
+    public void setDataAtAsObject(int index, Object value, @SuppressWarnings("unused") NACheck naCheck) {
+        NativeDataAccess.setData(vec, null, index, (double) value);
     }
 
     @ExportMessage

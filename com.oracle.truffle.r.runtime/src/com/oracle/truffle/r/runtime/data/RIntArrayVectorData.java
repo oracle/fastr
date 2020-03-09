@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import java.util.Arrays;
 
 @ExportLibrary(RIntVectorDataLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 class RIntArrayVectorData extends RIntVectorData {
     private final int[] data;
     private boolean complete;
@@ -43,19 +44,25 @@ class RIntArrayVectorData extends RIntVectorData {
         this.complete = complete;
     }
 
+    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     @Override
-    @ExportMessage
     public int getLength() {
         return data.length;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
     public RIntArrayVectorData materialize() {
         return this;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
     public boolean isWriteable() {
+        return true;
+    }
+
+    @ExportMessage(library = VectorDataLibrary.class)
+    public boolean isMaterialized() {
         return true;
     }
 
@@ -77,10 +84,11 @@ class RIntArrayVectorData extends RIntVectorData {
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                     @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt((RIntVectorData) destination, index, data[index]);
+        dataLib.setIntAt(destination, index, data[index]);
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     @Override
     public boolean isComplete() {
         return complete;
@@ -127,6 +135,11 @@ class RIntArrayVectorData extends RIntVectorData {
     public void setIntAt(int index, int value, NACheck naCheck) {
         updateComplete(value, naCheck);
         data[index] = value;
+    }
+
+    @ExportMessage
+    public void setDataAtAsObject(int index, Object value, NACheck naCheck) {
+        setIntAt(index, (int) value, naCheck);
     }
 
     @ExportMessage

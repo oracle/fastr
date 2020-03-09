@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -109,8 +109,8 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
         return createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete, dimensions);
     }
 
-    protected RStringVector createStringVector(Object[] data, boolean isComplete, int[] dims) {
-        return RDataFactory.createStringVector((String[]) data, isComplete, dims);
+    protected RStringVector createStringVector(Object[] dataArg, boolean isComplete, int[] dims) {
+        return RDataFactory.createStringVector((String[]) dataArg, isComplete, dims);
     }
 
     protected Object[] copyResizedData(int size, String fill) {

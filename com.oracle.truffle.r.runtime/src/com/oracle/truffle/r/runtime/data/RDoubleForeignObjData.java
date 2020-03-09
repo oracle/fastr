@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
 import java.util.Arrays;
 
 @ExportLibrary(RDoubleVectorDataLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 class RDoubleForeignObjData extends RDoubleVectorData {
     protected final Object foreign;
 
@@ -61,7 +62,8 @@ class RDoubleForeignObjData extends RDoubleVectorData {
         return getLength(InteropLibrary.getFactory().getUncached());
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     public int getLength(@CachedLibrary("this.foreign") InteropLibrary interop) {
         try {
             long result = interop.getArraySize(foreign);
@@ -71,7 +73,7 @@ class RDoubleForeignObjData extends RDoubleVectorData {
         }
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
     public RDoubleArrayVectorData materialize(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
@@ -79,7 +81,7 @@ class RDoubleForeignObjData extends RDoubleVectorData {
         return copy(false, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
     public boolean isWriteable() {
         return false;
     }
@@ -111,7 +113,7 @@ class RDoubleForeignObjData extends RDoubleVectorData {
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                     @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt((RDoubleVectorData) destination, index, getDoubleAt(index));
+        dataLib.setDoubleAt(destination, index, getDoubleAt(index));
     }
 
     @ExportMessage

@@ -66,6 +66,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @ExportLibrary(InteropLibrary.class)
 public abstract class RAbstractVector extends RAbstractContainer implements RFFIAccess {
 
+    protected Object data;
+
     /**
      * Dummy volatile field that can be used to create memory barrier.
      */
@@ -75,6 +77,11 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     protected RAbstractVector(boolean complete) {
         this.complete = complete;
+        data = this;
+    }
+
+    public final Object getData() {
+        return data;
     }
 
     public boolean isSequence() {
@@ -892,9 +899,9 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return str.append(']').toString();
     }
 
-    protected boolean canBeValidStore(Object store, Object data) {
+    protected boolean canBeValidStore(Object store, Object dataArg) {
         // We can be only sure if there is only one thread
-        return !RContext.isSingle() || store == data;
+        return !RContext.isSingle() || store == dataArg;
     }
 
     @Override

@@ -46,32 +46,32 @@ public abstract class RDoubleVectorDataLibrary extends Library {
     // ---------------------------------------------------------------------
     // Methods copy & pasted from VectorDataLibrary, specialized for double
 
-    public abstract RDoubleVectorData materialize(RDoubleVectorData receiver);
+    public abstract RDoubleVectorData materialize(Object receiver);
 
     @SuppressWarnings("unused")
-    public boolean isWriteable(RDoubleVectorData receiver) {
+    public boolean isWriteable(Object receiver) {
         return false;
     }
 
-    public abstract RDoubleVectorData copy(RDoubleVectorData receiver, boolean deep);
+    public abstract RDoubleVectorData copy(Object receiver, boolean deep);
 
-    public abstract RDoubleVectorData copyResized(RDoubleVectorData receiver, int newSize, boolean deep, boolean fillNA);
+    public abstract RDoubleVectorData copyResized(Object receiver, int newSize, boolean deep, boolean fillNA);
 
-    public abstract int getLength(RDoubleVectorData receiver);
+    public abstract int getLength(Object receiver);
 
     @SuppressWarnings("unused")
-    public boolean isComplete(RDoubleVectorData receiver) {
+    public boolean isComplete(Object receiver) {
         return false;
     }
 
     @SuppressWarnings("unused")
-    public boolean isSorted(RDoubleVectorData receiver, boolean descending, boolean naLast) {
+    public boolean isSorted(Object receiver, boolean descending, boolean naLast) {
         return false;
     }
 
-    public abstract SeqIterator iterator(RDoubleVectorData receiver);
+    public abstract SeqIterator iterator(Object receiver);
 
-    public abstract RandomAccessIterator randomAccessIterator(RDoubleVectorData receiver);
+    public abstract RandomAccessIterator randomAccessIterator(Object receiver);
 
     // ---------------------------------------------------------------------
     // Methods specific to integer data
@@ -81,52 +81,52 @@ public abstract class RDoubleVectorDataLibrary extends Library {
      * underlying data. Note: if you need to send an array to the native code, you should use
      * {@code TODO:RDoubleVector#getDataPtr()} instead.
      */
-    public abstract double[] getReadonlyDoubleData(RDoubleVectorData receiver);
+    public abstract double[] getReadonlyDoubleData(Object receiver);
 
     // TODO: switch this: implement getReadonlyDoubleData using getDoubleDataCopy
 
-    public double[] getDoubleDataCopy(RDoubleVectorData receiver) {
+    public double[] getDoubleDataCopy(Object receiver) {
         return getReadonlyDoubleData(receiver);
     }
 
-    public abstract double getDoubleAt(RDoubleVectorData receiver, int index);
+    public abstract double getDoubleAt(Object receiver, int index);
 
-    public abstract double getNext(RDoubleVectorData receiver, SeqIterator it);
+    public abstract double getNext(Object receiver, SeqIterator it);
 
-    public abstract double getAt(RDoubleVectorData receiver, RandomAccessIterator it, int index);
+    public abstract double getAt(Object receiver, RandomAccessIterator it, int index);
 
     /**
      * Sets the value under given index. The vector must be writeable (see
-     * {@link #isWriteable(RDoubleVectorData)}. The {@code naCheck} is used to determine if it is
-     * necessary to check whether {@code value} is {@code NA}. The {@code naCheck} must be "enabled"
-     * on the source of the input data, i.e., the {@code value} argument. Using this overload makes
-     * sense if this method is called multiple times with the same {@code naCheck} instance,
-     * otherwise use the overload without the {@code naCheck}.
+     * {@link #isWriteable(Object)}. The {@code naCheck} is used to determine if it is necessary to
+     * check whether {@code value} is {@code NA}. The {@code naCheck} must be "enabled" on the
+     * source of the input data, i.e., the {@code value} argument. Using this overload makes sense
+     * if this method is called multiple times with the same {@code naCheck} instance, otherwise use
+     * the overload without the {@code naCheck}.
      */
     @SuppressWarnings("unused")
-    public void setDoubleAt(RDoubleVectorData receiver, int index, double value, NACheck naCheck) {
+    public void setDoubleAt(Object receiver, int index, double value, NACheck naCheck) {
         throw notWriteableError(RDoubleVectorData.class, "setDoubleAt");
     }
 
     @SuppressWarnings("unused")
-    public void setNext(RDoubleVectorData receiver, SeqIterator it, double value, NACheck naCheck) {
+    public void setNext(Object receiver, SeqIterator it, double value, NACheck naCheck) {
         throw notWriteableError(RDoubleVectorData.class, "setDoubleAt");
     }
 
     @SuppressWarnings("unused")
-    public void setAt(RDoubleVectorData receiver, RandomAccessIterator it, int index, double value, NACheck naCheck) {
+    public void setAt(Object receiver, RandomAccessIterator it, int index, double value, NACheck naCheck) {
         throw notWriteableError(RDoubleVectorData.class, "setDoubleAt");
     }
 
-    public final void setDoubleAt(RDoubleVectorData receiver, int index, double value) {
+    public final void setDoubleAt(Object receiver, int index, double value) {
         setDoubleAt(receiver, index, value, NACheck.getEnabled());
     }
 
-    public final void setDoubleAt(RDoubleVectorData receiver, SeqIterator it, double value) {
+    public final void setDoubleAt(Object receiver, SeqIterator it, double value) {
         setNext(receiver, it, value, NACheck.getEnabled());
     }
 
-    public final void setDoubleAt(RDoubleVectorData receiver, RandomAccessIterator it, int index, double value) {
+    public final void setDoubleAt(Object receiver, RandomAccessIterator it, int index, double value) {
         setAt(receiver, it, index, value, NACheck.getEnabled());
     }
 }

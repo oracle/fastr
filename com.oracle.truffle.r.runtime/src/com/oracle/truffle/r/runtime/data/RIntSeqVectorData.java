@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
 import java.util.Arrays;
 
 @ExportLibrary(RIntVectorDataLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     private final int start;
     private final int stride;
@@ -81,20 +82,16 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
         return -1;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     @Override
     public int getLength() {
         return length;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
     public RIntArrayVectorData materialize() {
         return new RIntArrayVectorData(getReadonlyIntData(), isComplete());
-    }
-
-    @ExportMessage
-    public boolean isWriteable() {
-        return false;
     }
 
     @ExportMessage
@@ -115,10 +112,10 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                     @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
+        dataLib.setIntAt(destination, index, getIntAt(index));
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
     @Override
     public boolean isComplete() {
         return true;

@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
 import java.util.Arrays;
 
 @ExportLibrary(RIntVectorDataLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 class RIntForeignObjData extends RIntVectorData {
     protected final Object foreign;
 
@@ -56,13 +57,14 @@ class RIntForeignObjData extends RIntVectorData {
                         ConditionProfile.getUncached());
     }
 
-    @Override
     @Ignore
+    @Override
     public int getLength() {
         return getLength(InteropLibrary.getFactory().getUncached());
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     public int getLength(@CachedLibrary("this.foreign") InteropLibrary interop) {
         try {
             long result = interop.getArraySize(foreign);
@@ -72,7 +74,7 @@ class RIntForeignObjData extends RIntVectorData {
         }
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
     public RIntArrayVectorData materialize(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
@@ -81,7 +83,7 @@ class RIntForeignObjData extends RIntVectorData {
         return copy(false, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
     }
 
-    @ExportMessage
+    @ExportMessage(library = RIntVectorDataLibrary.class)
     public boolean isWriteable() {
         return false;
     }
@@ -115,7 +117,7 @@ class RIntForeignObjData extends RIntVectorData {
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                     @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
+        dataLib.setIntAt(destination, index, getIntAt(index));
     }
 
     @ExportMessage

@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
 import java.util.Arrays;
 
 @ExportLibrary(RDoubleVectorDataLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
     private final double start;
     private final double stride;
@@ -69,20 +70,16 @@ public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
         return start + (getLength() - 1) * stride;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     @Override
     public int getLength() {
         return length;
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
     public RDoubleArrayVectorData materialize() {
         return new RDoubleArrayVectorData(getReadonlyDoubleData(), isComplete());
-    }
-
-    @ExportMessage
-    public boolean isWriteable() {
-        return false;
     }
 
     @ExportMessage
@@ -103,10 +100,11 @@ public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
     // @ExportMessage
     public void transferElement(RVectorData destination, int index,
                     @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt((RDoubleVectorData) destination, index, getDoubleAt(index));
+        dataLib.setDoubleAt(destination, index, getDoubleAt(index));
     }
 
-    @ExportMessage
+    @ExportMessage(library = RDoubleVectorDataLibrary.class)
+    @ExportMessage(library = VectorDataLibrary.class)
     @Override
     public boolean isComplete() {
         return true;
