@@ -32,21 +32,23 @@ import com.oracle.truffle.r.nodes.attributes.CopyAttributesNodeGen;
 import com.oracle.truffle.r.nodes.attributes.HasFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 final class BinaryMapScalarNode extends BinaryMapNode {
@@ -154,13 +156,9 @@ final class BinaryMapVectorNode extends BinaryMapNode {
     @Child private HasFixedAttributeNode hasLeftDimNode = HasFixedAttributeNode.createDim();
     @Child private HasFixedAttributeNode hasRightDimNode = HasFixedAttributeNode.createDim();
 
-    @Child private AbstractContainerLibrary leftLibrary = AbstractContainerLibrary.getFactory().createDispatched(1);
-    @Child private AbstractContainerLibrary rightLibrary = AbstractContainerLibrary.getFactory().createDispatched(1);
-    @Child private AbstractContainerLibrary targetLibrary = AbstractContainerLibrary.getFactory().createDispatched(1);
-
-    @Child private VectorAccess fastLeftAccess;
-    @Child private VectorAccess fastRightAccess;
-    @Child private VectorAccess resultAccess;
+    @Child private VectorDataLibrary leftLibrary = VectorDataLibrary.getFactory().createDispatched(1);
+    @Child private VectorDataLibrary rightLibrary = VectorDataLibrary.getFactory().createDispatched(1);
+    @Child private VectorDataLibrary resultLibrary;
 
     // profiles
     private final VectorLengthProfile leftLengthProfile;
@@ -185,8 +183,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         this.leftLengthProfile = VectorLengthProfile.create();
         this.rightLengthProfile = VectorLengthProfile.create();
         this.seenEmpty = ConditionProfile.createBinaryProfile();
-        this.fastLeftAccess = isGeneric ? null : left.access();
-        this.fastRightAccess = isGeneric ? null : right.access();
+
         this.vectorNode = VectorMapBinaryInternalNode.create(resultType, argumentType);
         boolean leftVectorImpl = left.isMaterialized();
         boolean rightVectorImpl = right.isMaterialized();
@@ -208,7 +205,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
 
     @Override
     public boolean isSupported(RAbstractVector left, RAbstractVector right) {
-        return getDataClass(left) == leftDataClass && getDataClass(right) == rightDataClass && (isGeneric || fastLeftAccess.supports(left) && fastRightAccess.supports(right));
+        return getDataClass(left) == leftDataClass && getDataClass(right) == rightDataClass && (isGeneric || leftLibrary.accepts(left.getData()) && rightLibrary.accepts(right.getData()));
     }
 
     @Override
@@ -217,7 +214,10 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         RAbstractVector left = leftClass.cast(originalLeft);
         RAbstractVector right = rightClass.cast(originalRight);
 
-        function.enable(leftLibrary, left, rightLibrary, right);
+        Object leftData = left.getData();
+        Object rightData = right.getData();
+
+        function.enable(leftLibrary, leftData, rightLibrary, rightData);
 
         if (mayContainMetadata && (dimensionsProfile.profile(hasLeftDimNode.execute(left) && hasRightDimNode.execute(right)))) {
             if (differentDimensions(left, right)) {
@@ -225,52 +225,69 @@ final class BinaryMapVectorNode extends BinaryMapNode {
             }
         }
 
-        VectorAccess leftAccess = isGeneric ? left.slowPathAccess() : fastLeftAccess;
-        VectorAccess rightAccess = isGeneric ? right.slowPathAccess() : fastRightAccess;
-        try (SequentialIterator leftIter = leftAccess.access(leftLibrary, left);
-                        SequentialIterator rightIter = rightAccess.access(rightLibrary, right)) {
-            RAbstractVector target = null;
-            int leftLength = leftLengthProfile.profile(leftAccess.getLength(leftIter));
-            int rightLength = rightLengthProfile.profile(rightAccess.getLength(rightIter));
-            if (seenEmpty.profile(leftLength == 0 || rightLength == 0)) {
-                /*
-                 * It is safe to skip attribute handling here as they are never copied if length is
-                 * 0 of either side. Note that dimension check still needs to be performed.
-                 */
-                return resultType.getEmpty();
-            }
-            if (mayFoldConstantTime && function.mayFoldConstantTime(left, right)) {
-                target = function.tryFoldConstantTime(left.castSafe(argumentType, leftIsNAProfile, false), leftLength, right.castSafe(argumentType, rightIsNAProfile, false), rightLength);
-            }
-            if (target == null) {
-                int maxLength = maxLengthProfile.profile(leftLength >= rightLength) ? leftLength : rightLength;
-
-                assert left.getLength() == leftLength;
-                assert right.getLength() == rightLength;
-                if (mayShareLeft && left.getRType() == resultType && shareLeft.profile(leftLength == maxLength && ((RSharingAttributeStorage) left).isTemporary())) {
-                    target = left;
-                    vectorNode.execute(function, leftLength, rightLength, left, leftAccess, leftIter, left, leftAccess, leftIter, right, rightAccess, rightIter);
-                } else if (mayShareRight && right.getRType() == resultType && shareRight.profile(rightLength == maxLength && ((RSharingAttributeStorage) right).isTemporary())) {
-                    target = right;
-                    vectorNode.execute(function, leftLength, rightLength, right, rightAccess, rightIter, left, leftAccess, leftIter, right, rightAccess, rightIter);
-                } else {
-                    if (resultAccess == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        resultAccess = insert(VectorAccess.createNew(resultType));
-                    }
-                    target = resultType.create(maxLength, false);
-                    try (SequentialIterator resultIter = resultAccess.access(targetLibrary, target)) {
-                        vectorNode.execute(function, leftLength, rightLength, target, resultAccess, resultIter, left, leftAccess, leftIter, right, rightAccess, rightIter);
-                    }
-                }
-                RBaseNode.reportWork(this, maxLength);
-                target.setComplete(function.isComplete());
-            }
-            if (mayContainMetadata) {
-                target = copyAttributes.execute(target, left, leftLength, right, rightLength);
-            }
-            return target;
+        RAbstractVector target = null;
+        int leftLength = leftLengthProfile.profile(leftLibrary.getLength(leftData));
+        int rightLength = rightLengthProfile.profile(rightLibrary.getLength(rightData));
+        if (seenEmpty.profile(leftLength == 0 || rightLength == 0)) {
+            /*
+             * It is safe to skip attribute handling here as they are never copied if length is 0 of
+             * either side. Note that dimension check still needs to be performed.
+             */
+            return resultType.getEmpty();
         }
+        if (mayFoldConstantTime && function.mayFoldConstantTime(left, right)) {
+            target = function.tryFoldConstantTime(left.castSafe(argumentType, leftIsNAProfile, false), leftLength, right.castSafe(argumentType, rightIsNAProfile, false), rightLength);
+        }
+        if (target == null) {
+            int maxLength = maxLengthProfile.profile(leftLength >= rightLength) ? leftLength : rightLength;
+
+            assert left.getLength() == leftLength;
+            assert right.getLength() == rightLength;
+            if (mayShareLeft && left.getRType() == resultType && shareLeft.profile(leftLength == maxLength && ((RSharingAttributeStorage) left).isTemporary())) {
+                target = left;
+                try (SeqWriteIterator leftIter = leftLibrary.writeIterator(leftData, false)) {
+                    SeqIterator rightIter = rightLibrary.iterator(rightData);
+                    vectorNode.execute(function, leftLength, rightLength, leftData, leftLibrary, leftIter, leftData, leftLibrary, leftIter, rightData, rightLibrary, rightIter);
+                    leftLibrary.commitWriteIterator(leftData, leftIter);
+                    assert RAbstractVector.verifyVector(target);
+                }
+            } else if (mayShareRight && right.getRType() == resultType && shareRight.profile(rightLength == maxLength && ((RSharingAttributeStorage) right).isTemporary())) {
+                target = right;
+                try (SeqWriteIterator rightIter = rightLibrary.writeIterator(rightData, false)) {
+                    SeqIterator leftIter = leftLibrary.iterator(leftData);
+                    vectorNode.execute(function, leftLength, rightLength, rightData, rightLibrary, rightIter, leftData, leftLibrary, leftIter, rightData, rightLibrary, rightIter);
+                    rightLibrary.commitWriteIterator(rightData, rightIter);
+                    assert RAbstractVector.verifyVector(target);
+                }
+            } else {
+                target = resultType.create(maxLength, false);
+                Object targetData = target.getData();
+                try (SeqWriteIterator resultIter = getResultLibrary().writeIterator(target, false)) {
+                    SeqIterator leftIter = leftLibrary.iterator(leftData);
+                    SeqIterator rightIter = rightLibrary.iterator(rightData);
+                    vectorNode.execute(function, leftLength, rightLength, targetData, getResultLibrary(), resultIter, leftData, leftLibrary, leftIter, rightData, rightLibrary, rightIter);
+
+                    getResultLibrary().commitWriteIterator(targetData, resultIter);
+                    assert RAbstractVector.verifyVector(target);
+                }
+            }
+            RBaseNode.reportWork(this, maxLength);
+            // target.setComplete(function.isComplete()); XXX function.isComplete - redundant work,
+            // what else?
+        }
+        if (mayContainMetadata) {
+            target = copyAttributes.execute(target, left, leftLength, right, rightLength);
+        }
+
+        return target;
+    }
+
+    private VectorDataLibrary getResultLibrary() {
+        if (resultLibrary == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            resultLibrary = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericVectorAccessCacheSize()));
+        }
+        return resultLibrary;
     }
 
     private boolean differentDimensions(RAbstractVector left, RAbstractVector right) {
@@ -295,93 +312,115 @@ final class BinaryMapVectorNode extends BinaryMapNode {
 abstract class VectorMapBinaryInternalNode extends RBaseNode {
 
     private abstract static class MapBinaryIndexedAction {
-        public abstract void perform(BinaryMapFunctionNode action, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter);
+        public abstract void perform(BinaryMapFunctionNode action, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter);
     }
 
     private static final MapBinaryIndexedAction LOGICAL_LOGICAL = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setLogical(resultIter, arithmetic.applyLogical(left.getLogical(leftIter), right.getLogical(rightIter)));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setLogicalAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyLogical(leftLib.getLogicalAt(leftData, leftIter.getIndex()), rightLib.getLogicalAt(rightData, rightIter.getIndex())),
+                            resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction LOGICAL_INTEGER = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setLogical(resultIter, arithmetic.applyLogical(left.getInt(leftIter), right.getInt(rightIter)));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setLogicalAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyLogical(leftLib.getIntAt(leftData, leftIter.getIndex()), rightLib.getIntAt(rightData, rightIter.getIndex())),
+                            resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction LOGICAL_DOUBLE = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setLogical(resultIter, arithmetic.applyLogical(left.getDouble(leftIter), right.getDouble(rightIter)));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setLogicalAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyLogical(leftLib.getDoubleAt(leftData, leftIter.getIndex()), rightLib.getDoubleAt(rightData, rightIter.getIndex())),
+                            resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction LOGICAL_COMPLEX = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setLogical(resultIter, arithmetic.applyLogical(left.getComplex(leftIter), right.getComplex(rightIter)));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setLogicalAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyLogical(leftLib.getComplexAt(leftData, leftIter.getIndex()), rightLib.getComplexAt(rightData, rightIter.getIndex())),
+                            resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction LOGICAL_CHARACTER = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setLogical(resultIter, arithmetic.applyLogical(left.getString(leftIter), right.getString(rightIter)));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setLogicalAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyLogical(leftLib.getStringAt(leftData, leftIter.getIndex()), rightLib.getStringAt(rightData, rightIter.getIndex())),
+                            resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction LOGICAL_RAW = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setLogical(resultIter, arithmetic.applyLogical(RRuntime.raw2int(left.getRaw(leftIter)), RRuntime.raw2int(right.getRaw(rightIter))));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setLogicalAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyLogical(RRuntime.raw2int(leftLib.getRawAt(leftData, leftIter.getIndex())), RRuntime.raw2int(rightLib.getRawAt(rightData, rightIter.getIndex()))),
+                            resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction RAW_RAW = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setRaw(resultIter, arithmetic.applyRaw(left.getRaw(leftIter), right.getRaw(rightIter)));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setRawAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyRaw(leftLib.getRawAt(leftData, leftIter.getIndex()), rightLib.getRawAt(rightData, rightIter.getIndex())),
+                            resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction INTEGER_INTEGER = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setInt(resultIter, arithmetic.applyInteger(left.getInt(leftIter), right.getInt(rightIter)));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setIntAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyInteger(leftLib.getIntAt(leftData, leftIter.getIndex()), rightLib.getIntAt(rightData, rightIter.getIndex())),
+                            resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction DOUBLE_INTEGER = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setDouble(resultIter, arithmetic.applyDouble(left.getInt(leftIter), right.getInt(rightIter)));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setDoubleAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyDouble(leftLib.getIntAt(leftData, leftIter.getIndex()), rightLib.getIntAt(rightData, rightIter.getIndex())),
+                            resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction DOUBLE = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setDouble(resultIter, arithmetic.applyDouble(left.getDouble(leftIter), right.getDouble(rightIter)));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setDoubleAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyDouble(leftLib.getDoubleAt(leftData, leftIter.getIndex()), rightLib.getDoubleAt(rightData, rightIter.getIndex())),
+                            resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction COMPLEX = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            RComplex value = arithmetic.applyComplex(left.getComplex(leftIter), right.getComplex(rightIter));
-            result.setComplex(resultIter, value.getRealPart(), value.getImaginaryPart());
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            RComplex value = arithmetic.applyComplex(leftLib.getComplexAt(leftData, leftIter.getIndex()), rightLib.getComplexAt(rightData, rightIter.getIndex()));
+            resultLib.setComplexAt(resultData, resultIter.getIndex(), value, resultLib.getInputNACheck(resultData));
         }
     };
     private static final MapBinaryIndexedAction CHARACTER = new MapBinaryIndexedAction() {
         @Override
-        public void perform(BinaryMapFunctionNode arithmetic, RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                        RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter, RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-            result.setString(resultIter, arithmetic.applyCharacter(left.getString(leftIter), right.getString(rightIter)));
+        public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                        Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+            resultLib.setStringAt(resultData, resultIter.getIndex(),
+                            arithmetic.applyCharacter(leftLib.getStringAt(leftData, leftIter.getIndex()), rightLib.getStringAt(rightData, rightIter.getIndex())),
+                            resultLib.getInputNACheck(resultData));
         }
     };
 
@@ -441,103 +480,103 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
     }
 
     public abstract void execute(BinaryMapFunctionNode node, int leftLength, int rightLength,
-                    RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                    RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter,
-                    RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter);
+                    Object resultData, VectorDataLibrary result, SeqWriteIterator resultIter,
+                    Object leftData, VectorDataLibrary left, SeqIterator leftIter,
+                    Object rightData, VectorDataLibrary right, SeqIterator rightIter);
 
     @Specialization(guards = {"leftLength == 1", "rightLength == 1"})
     protected void doScalarScalar(BinaryMapFunctionNode node, @SuppressWarnings("unused") int leftLength, @SuppressWarnings("unused") int rightLength,
-                    RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                    RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter,
-                    RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter) {
-        left.next(leftIter);
-        right.next(rightIter);
-        if (resultVec != rightVec && resultVec != leftVec) {
-            result.next(resultIter);
+                    Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                    Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter,
+                    Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
+        leftLib.next(leftData, leftIter);
+        rightLib.next(rightData, rightIter);
+        if (resultData != rightData && resultData != leftData) {
+            resultLib.next(resultData, resultIter);
         }
-        indexedAction.perform(node, resultVec, result, resultIter, leftVec, left, leftIter, rightVec, right, rightIter);
+        indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
     }
 
     @Specialization(replaces = "doScalarScalar", guards = {"leftLength == 1"})
     protected void doScalarVector(BinaryMapFunctionNode node, @SuppressWarnings("unused") int leftLength, int rightLength,
-                    RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                    RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter,
-                    RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter,
+                    Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                    Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter,
+                    Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter,
                     @Cached("createCountingProfile()") LoopConditionProfile profile) {
         profile.profileCounted(rightLength);
-        left.next(leftIter);
-        while (profile.inject(right.next(rightIter))) {
-            if (resultVec != rightVec && resultVec != leftVec) {
-                result.next(resultIter);
+        leftLib.next(leftData, leftIter);
+        while (profile.inject(rightLib.next(rightData, rightIter))) {
+            if (resultData != rightData && resultData != leftData) {
+                resultLib.next(resultData, resultIter);
             }
-            indexedAction.perform(node, resultVec, result, resultIter, leftVec, left, leftIter, rightVec, right, rightIter);
+            indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
         }
     }
 
     @Specialization(replaces = "doScalarScalar", guards = {"rightLength == 1"})
     protected void doVectorScalar(BinaryMapFunctionNode node, int leftLength, @SuppressWarnings("unused") int rightLength,
-                    RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                    RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter,
-                    RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter,
+                    Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                    Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter,
+                    Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter,
                     @Cached("createCountingProfile()") LoopConditionProfile profile) {
         profile.profileCounted(leftLength);
-        right.next(rightIter);
-        while (profile.inject(left.next(leftIter))) {
-            if (resultVec != leftVec && resultVec != rightVec) {
-                result.next(resultIter);
+        rightLib.next(rightData, rightIter);
+        while (profile.inject(leftLib.next(leftData, leftIter))) {
+            if (resultData != leftData && resultData != rightData) {
+                resultLib.next(resultData, resultIter);
             }
-            indexedAction.perform(node, resultVec, result, resultIter, leftVec, left, leftIter, rightVec, right, rightIter);
+            indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
         }
     }
 
     @Specialization(guards = {"leftLength == rightLength"})
     protected void doSameLength(BinaryMapFunctionNode node, int leftLength, @SuppressWarnings("unused") int rightLength,
-                    RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                    RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter,
-                    RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter,
+                    Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                    Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter,
+                    Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter,
                     @Cached("createCountingProfile()") LoopConditionProfile profile) {
         profile.profileCounted(leftLength);
-        while (profile.inject(left.next(leftIter))) {
-            right.next(rightIter);
-            if (resultVec != leftVec && resultVec != rightVec) {
-                result.next(resultIter);
+        while (profile.inject(leftLib.next(leftData, leftIter))) {
+            rightLib.next(rightData, rightIter);
+            if (resultData != leftData && resultData != rightData) {
+                resultLib.next(resultData, resultIter);
             }
-            indexedAction.perform(node, resultVec, result, resultIter, leftVec, left, leftIter, rightVec, right, rightIter);
+            indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
         }
     }
 
     @Specialization(guards = {"leftLength > rightLength"})
     protected void doMultiplesLeft(BinaryMapFunctionNode node, int leftLength, int rightLength,
-                    RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                    RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter,
-                    RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter,
+                    Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                    Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter,
+                    Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter,
                     @Cached("createCountingProfile()") LoopConditionProfile leftProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile rightProfile,
                     @Cached("createBinaryProfile()") ConditionProfile smallRemainderProfile) {
-        assert result.getLength(resultIter) == leftLength;
+        assert resultLib.getLength(resultData) == leftLength;
         // This specialization no longer handles leftLength == rightLength
         // (leftLength > rightLength now forces doSameLength() use)
         // because result == right would be possible and it would have to be checked
-        // in each subsequent if (result != left) { result.next(resultIter); }
-        assert (resultVec != rightVec);
+        // in each subsequent if (result != left) { result.next(resultData, resultIter); }
+        assert (resultData != rightData);
         leftProfile.profileCounted(leftLength);
         rightProfile.profileCounted(rightLength);
         while (leftProfile.inject(leftIter.getIndex() + 1 < leftLength)) {
-            right.reset(rightIter);
+            rightIter.reset();
             if (smallRemainderProfile.profile((leftLength - leftIter.getIndex() - 1) >= rightLength)) {
                 // we need at least rightLength more elements
-                while (rightProfile.inject(right.next(rightIter)) && leftProfile.inject(left.next(leftIter))) {
-                    if (resultVec != leftVec) {
-                        result.next(resultIter);
+                while (rightProfile.inject(rightLib.next(rightData, rightIter)) && leftProfile.inject(leftLib.next(leftData, leftIter))) {
+                    if (resultData != leftData) {
+                        resultLib.next(resultData, resultIter);
                     }
-                    indexedAction.perform(node, resultVec, result, resultIter, leftVec, left, leftIter, rightVec, right, rightIter);
+                    indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
                 }
             } else {
-                while (rightProfile.inject(right.next(rightIter)) && leftProfile.inject(left.next(leftIter))) {
-                    if (resultVec != leftVec) {
-                        result.next(resultIter);
+                while (rightProfile.inject(rightLib.next(rightData, rightIter)) && leftProfile.inject(leftLib.next(leftData, leftIter))) {
+                    if (resultData != leftData) {
+                        resultLib.next(resultData, resultIter);
                     }
-                    indexedAction.perform(node, resultVec, result, resultIter, leftVec, left, leftIter, rightVec, right, rightIter);
+                    indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
                 }
                 RError.warning(this, RError.Message.LENGTH_NOT_MULTI);
             }
@@ -546,32 +585,32 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
 
     @Specialization(guards = {"rightLength > leftLength"})
     protected void doMultiplesRight(BinaryMapFunctionNode node, int leftLength, int rightLength,
-                    RAbstractVector resultVec, VectorAccess result, SequentialIterator resultIter,
-                    RAbstractVector leftVec, VectorAccess left, SequentialIterator leftIter,
-                    RAbstractVector rightVec, VectorAccess right, SequentialIterator rightIter,
+                    Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
+                    Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter,
+                    Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter,
                     @Cached("createCountingProfile()") LoopConditionProfile leftProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile rightProfile,
                     @Cached("createBinaryProfile()") ConditionProfile smallRemainderProfile) {
-        assert result.getLength(resultIter) == rightLength;
-        assert resultVec != leftVec;
+        assert resultLib.getLength(resultData) == rightLength;
+        assert resultData != leftData;
         leftProfile.profileCounted(leftLength);
         rightProfile.profileCounted(rightLength);
         while (rightProfile.inject(rightIter.getIndex() + 1 < rightLength)) {
-            left.reset(leftIter);
+            leftIter.reset();
             if (smallRemainderProfile.profile((rightLength - rightIter.getIndex() - 1) >= leftLength)) {
                 // we need at least leftLength more elements
-                while (leftProfile.inject(left.next(leftIter)) && rightProfile.inject(right.next(rightIter))) {
-                    if (resultVec != rightVec) {
-                        result.next(resultIter);
+                while (leftProfile.inject(leftLib.next(leftData, leftIter)) && rightProfile.inject(rightLib.next(rightData, rightIter))) {
+                    if (resultData != rightData) {
+                        resultLib.next(resultData, resultIter);
                     }
-                    indexedAction.perform(node, resultVec, result, resultIter, leftVec, left, leftIter, rightVec, right, rightIter);
+                    indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
                 }
             } else {
-                while (leftProfile.inject(left.next(leftIter)) && rightProfile.inject(right.next(rightIter))) {
-                    if (resultVec != rightVec) {
-                        result.next(resultIter);
+                while (leftProfile.inject(leftLib.next(leftData, leftIter)) && rightProfile.inject(rightLib.next(rightData, rightIter))) {
+                    if (resultData != rightData) {
+                        resultLib.next(resultData, resultIter);
                     }
-                    indexedAction.perform(node, resultVec, result, resultIter, leftVec, left, leftIter, rightVec, right, rightIter);
+                    indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
                 }
                 RError.warning(this, RError.Message.LENGTH_NOT_MULTI);
             }

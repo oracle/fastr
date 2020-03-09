@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAOrNaNCheck;
 
 @ImportStatic(DSLConfig.class)
@@ -125,7 +124,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
                 if (!xDataLib.isComplete(xData)) {
                     SeqIterator iter = xDataLib.iterator(xData);
                     while (xDataLib.next(xData, iter)) {
-                        if (xDataLib.isNextNA(xData, iter, NACheck.getEnabled())) {
+                        if (xDataLib.isNextNA(xData, iter)) {
                             return RRuntime.LOGICAL_TRUE;
                         }
                     }
