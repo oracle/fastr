@@ -33,11 +33,14 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
 
@@ -53,6 +56,19 @@ public class RDoubleSeqVectorData implements RSeq, TruffleObject {
         this.length = length;
     }
 
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck() {
+        return NACheck.getDisabled();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public InputNACheck getInputNACheck() {
+        throw RInternalError.shouldNotReachHere("InputNACheck is meant to be used only with write oprations");
+    }
+
+    @SuppressWarnings("static-method")
     @ExportMessage
     public final RType getType() {
         return RType.Double;
@@ -123,8 +139,10 @@ public class RDoubleSeqVectorData implements RSeq, TruffleObject {
     // Read access to the elements:
 
     @ExportMessage
-    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+    public SeqIterator iterator(@Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(new IteratorData(start, stride), length);
+        naCheck.enable(false);
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -136,7 +154,8 @@ public class RDoubleSeqVectorData implements RSeq, TruffleObject {
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator() {
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(false);
         return new RandomAccessIterator(new IteratorData(start, stride));
     }
 

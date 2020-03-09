@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
@@ -63,6 +62,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
     RDoubleVector(Object data, int newLen) {
         super(false);
         setData(data, newLen);
+        assert RAbstractVector.verifyVector(this);
     }
 
     private RDoubleVector() {
@@ -243,7 +243,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         return VectorDataLibrary.getFactory().getUncached().getDoubleDataCopy(data);
     }
 
-    // XXX HACK taken from RAbstractVector
+    // HACK copy and paste from RAbstractVector
     RDoubleVector copy(VectorDataLibrary dataLib) {
         RDoubleVector result = RDataFactory.createDoubleVector(dataLib.getDoubleDataCopy(data), dataLib.isComplete(data));
         MemoryCopyTracer.reportCopying(this, result);
@@ -257,10 +257,10 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         return VectorDataLibrary.getFactory().getUncached().getReadonlyDoubleData(data);
     }
 
-    private RDoubleVector updateDataAt(int index, double value, NACheck valueNACheck) {
+    private RDoubleVector updateDataAt(int index, double value, NACheck naCheck) {
         assert !this.isShared();
-        assert !RRuntime.isNA(value) || valueNACheck.isEnabled();
-        VectorDataLibrary.getFactory().getUncached().setDoubleAt(data, index, value, InputNACheck.fromNACheck(valueNACheck));
+        assert !RRuntime.isNA(value) || naCheck.isEnabled();
+        VectorDataLibrary.getFactory().getUncached().setDoubleAt(data, index, value);
         assert !isComplete() || !RRuntime.isNA(value);
         return this;
     }

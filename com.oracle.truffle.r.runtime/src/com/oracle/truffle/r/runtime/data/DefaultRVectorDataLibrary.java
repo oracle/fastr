@@ -22,8 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import static com.oracle.truffle.r.runtime.data.VectorDataLibrary.initInputNACheck;
-import static com.oracle.truffle.r.runtime.data.VectorDataLibrary.notWriteableError;
+import static com.oracle.truffle.r.runtime.data.VectorDataLibrary.initInputNAChecks;
 
 import java.util.Arrays;
 
@@ -52,6 +51,19 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(value = VectorDataLibrary.class, receiverType = RAbstractContainer.class)
 public class DefaultRVectorDataLibrary {
+
+    @ExportMessage
+    public static NACheck getNACheck(@SuppressWarnings("unused") RAbstractContainer v,
+                    @Shared("naCheck") @Cached() NACheck na) {
+        return na;
+    }
+
+    @ExportMessage
+    public static InputNACheck getInputNACheck(@SuppressWarnings("unused") RAbstractContainer v,
+                    @Shared("inputNACheck") @Cached() InputNACheck na) {
+        return na;
+    }
+
     @ExportMessage
     public static RType getType(RAbstractContainer v,
                     @Cached("createIdentityProfile()") ValueProfile valueProfile) {
@@ -96,8 +108,10 @@ public class DefaultRVectorDataLibrary {
 
     @ExportMessage
     public static SeqIterator iterator(RAbstractContainer receiver,
+                    @Shared("naCheck") @Cached() NACheck naCheck,
                     @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(null, receiver.getLength());
+        naCheck.enable(!isComplete(receiver));
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -109,33 +123,38 @@ public class DefaultRVectorDataLibrary {
     }
 
     @ExportMessage
-    public static RandomAccessIterator randomAccessIterator(RAbstractContainer receiver) {
+    public static RandomAccessIterator randomAccessIterator(@SuppressWarnings("unused") RAbstractContainer receiver,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(!isComplete(receiver));
         return new RandomAccessIterator(null);
     }
 
     @ExportMessage
-    public static SeqWriteIterator writeIterator(RAbstractContainer receiver, boolean inputIsComplete, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        initInputNACheck(naCheck, inputIsComplete, isComplete(receiver));
+    public static SeqWriteIterator writeIterator(RAbstractContainer receiver, boolean inputIsComplete,
+                    @Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        initInputNAChecks(inputNACheck, naCheck, inputIsComplete, isComplete(receiver));
         return new SeqWriteIterator(null, receiver.getLength(), inputIsComplete);
     }
 
     @ExportMessage
     public static RandomAccessWriteIterator randomAccessWriteIterator(@SuppressWarnings("unused") RAbstractContainer receiver, boolean inputIsComplete,
-                    @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        initInputNACheck(naCheck, inputIsComplete, isComplete(receiver));
+                    @Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        initInputNAChecks(inputNACheck, naCheck, inputIsComplete, isComplete(receiver));
         return new RandomAccessWriteIterator(null, inputIsComplete);
     }
 
     @ExportMessage
-    public static void commitWriteIterator(RAbstractContainer receiver, SeqWriteIterator iterator, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+    public static void commitWriteIterator(RAbstractContainer receiver, SeqWriteIterator iterator, @Shared("inputNACheck") @Cached() InputNACheck na) {
         iterator.commit();
-        commitWrites(receiver, naCheck, iterator.inputIsComplete);
+        commitWrites(receiver, na, iterator.inputIsComplete);
     }
 
     @ExportMessage
-    public static void commitRandomAccessWriteIterator(RAbstractContainer receiver, RandomAccessWriteIterator iterator, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+    public static void commitRandomAccessWriteIterator(RAbstractContainer receiver, RandomAccessWriteIterator iterator, @Shared("inputNACheck") @Cached() InputNACheck na) {
         iterator.commit();
-        commitWrites(receiver, naCheck, iterator.inputIsComplete);
+        commitWrites(receiver, na, iterator.inputIsComplete);
     }
 
     private static void commitWrites(RAbstractContainer receiver, InputNACheck naCheck, boolean inputIsComlete) {
@@ -152,42 +171,26 @@ public class DefaultRVectorDataLibrary {
     }
 
     @ExportMessage
-    public static byte getLogicalAt(RAbstractContainer receiver, int index) {
-        return asLogical(receiver).getDataAt(index);
-    }
-
-    @ExportMessage
-    public static byte getNextLogical(RAbstractContainer receiver, SeqIterator it) {
-        return asLogical(receiver).getDataAt(it.getIndex());
-    }
-
-    @ExportMessage
-    public static byte getLogical(RAbstractContainer receiver, @SuppressWarnings("unused") RandomAccessIterator it, int index) {
-        return asLogical(receiver).getDataAt(index);
-    }
-
-    @ExportMessage
-    public static void setLogicalAt(RAbstractContainer receiver, int index, byte value, InputNACheck naCheck) {
-        setLogicalImpl(receiver, index, value, naCheck);
-        if (naCheck.needsResettingCompleteFlag()) {
+    public static void setLogicalAt(RAbstractContainer receiver, int index, byte value, InputNACheck inputNACheck) {
+        setLogicalImpl(receiver, index, value, inputNACheck);
+        if (inputNACheck.needsResettingCompleteFlag()) {
             ((RAbstractVector) receiver).setComplete(false);
         }
     }
 
     @ExportMessage
-    public static void setNextLogical(RAbstractContainer receiver, SeqWriteIterator it, byte value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        setLogicalImpl(receiver, it.getIndex(), value, naCheck);
+    public static void setNextLogical(RAbstractContainer receiver, SeqWriteIterator it, byte value,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        setLogicalImpl(receiver, it.getIndex(), value, inputNACheck);
     }
 
     @ExportMessage
-    public static void setLogical(RAbstractContainer receiver, RandomAccessWriteIterator it, int index, byte value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        setLogicalImpl(receiver, index, value, naCheck);
+    public static void setLogical(RAbstractContainer receiver, @SuppressWarnings("unused") RandomAccessWriteIterator it, int index, byte value,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        setLogicalImpl(receiver, index, value, inputNACheck);
     }
 
     private static void setLogicalImpl(RAbstractContainer receiver, int index, byte value, InputNACheck naCheck) {
-        if (!(receiver instanceof RLogicalVector)) {
-            throw notWriteableError(receiver, "setLogicalAt");
-        }
         RLogicalVector vec = (RLogicalVector) receiver;
         vec.setDataAt(vec.getInternalStore(), index, value);
         naCheck.check(value);
@@ -202,44 +205,28 @@ public class DefaultRVectorDataLibrary {
     }
 
     @ExportMessage
-    public static byte getRawAt(RAbstractContainer receiver, int index) {
-        return asRaw(receiver).getRawDataAt(index);
-    }
-
-    @ExportMessage
-    public static byte getNextRaw(RAbstractContainer receiver, SeqIterator it) {
-        return asRaw(receiver).getRawDataAt(it.getIndex());
-    }
-
-    @ExportMessage
-    public static byte getRaw(RAbstractContainer receiver, @SuppressWarnings("unused") RandomAccessIterator it, int index) {
-        return asRaw(receiver).getRawDataAt(index);
-    }
-
-    @ExportMessage
-    public static void setRawAt(RAbstractContainer receiver, int index, byte value, InputNACheck naCheck) {
-        setRawImpl(receiver, index, value, naCheck);
-        if (naCheck.needsResettingCompleteFlag()) {
+    public static void setRawAt(RAbstractContainer receiver, int index, byte value, InputNACheck inputNACheck) {
+        setRawImpl(receiver, index, value, inputNACheck);
+        if (inputNACheck.needsResettingCompleteFlag()) {
             ((RAbstractVector) receiver).setComplete(false);
         }
     }
 
     @ExportMessage
-    public static void setNextRaw(RAbstractContainer receiver, SeqWriteIterator it, byte value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        setRawImpl(receiver, value, value, naCheck);
+    public static void setNextRaw(RAbstractContainer receiver, SeqWriteIterator it, byte value,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        setRawImpl(receiver, it.getIndex(), value, inputNACheck);
     }
 
     @ExportMessage
-    public static void setRaw(RAbstractContainer receiver, RandomAccessWriteIterator it, int index, byte value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        setRawImpl(receiver, value, value, naCheck);
+    public static void setRaw(RAbstractContainer receiver, @SuppressWarnings("unused") RandomAccessWriteIterator it, int index, byte value,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        setRawImpl(receiver, index, value, inputNACheck);
     }
 
     private static void setRawImpl(RAbstractContainer receiver, int index, byte value, InputNACheck naCheck) {
-        if (!(receiver instanceof RLogicalVector)) {
-            throw notWriteableError(receiver, "setRawAt");
-        }
-        RLogicalVector vec = (RLogicalVector) receiver;
-        vec.setDataAt(vec.getInternalStore(), index, value);
+        RRawVector vec = (RRawVector) receiver;
+        vec.setRawDataAt(vec.getInternalStore(), index, value);
         naCheck.check(value);
     }
 
@@ -251,42 +238,26 @@ public class DefaultRVectorDataLibrary {
     }
 
     @ExportMessage
-    public static String getStringAt(RAbstractContainer receiver, int index) {
-        return asString(receiver).getDataAt(index);
-    }
-
-    @ExportMessage
-    public static String getNextString(RAbstractContainer receiver, SeqIterator it) {
-        return asString(receiver).getDataAt(it.getIndex());
-    }
-
-    @ExportMessage
-    public static String getString(RAbstractContainer receiver, @SuppressWarnings("unused") RandomAccessIterator it, int index) {
-        return asString(receiver).getDataAt(index);
-    }
-
-    @ExportMessage
-    public static void setStringAt(RAbstractContainer receiver, int index, String value, InputNACheck naCheck) {
-        setStringImpl(receiver, index, value, naCheck);
-        if (naCheck.needsResettingCompleteFlag()) {
+    public static void setStringAt(RAbstractContainer receiver, int index, String value, InputNACheck inputNACheck) {
+        setStringImpl(receiver, index, value, inputNACheck);
+        if (inputNACheck.needsResettingCompleteFlag()) {
             ((RAbstractVector) receiver).setComplete(false);
         }
     }
 
     @ExportMessage
-    public static void setNextString(RAbstractContainer receiver, SeqWriteIterator it, String value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        setStringImpl(receiver, it.getIndex(), value, naCheck);
+    public static void setNextString(RAbstractContainer receiver, SeqWriteIterator it, String value,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        setStringImpl(receiver, it.getIndex(), value, inputNACheck);
     }
 
     @ExportMessage
-    public static void setString(RAbstractContainer receiver, RandomAccessWriteIterator it, int index, String value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        setStringImpl(receiver, index, value, naCheck);
+    public static void setString(RAbstractContainer receiver, @SuppressWarnings("unused") RandomAccessWriteIterator it, int index, String value,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        setStringImpl(receiver, index, value, inputNACheck);
     }
 
     private static void setStringImpl(RAbstractContainer receiver, int index, String value, InputNACheck naCheck) {
-        if (!(receiver instanceof RStringVector)) {
-            throw notWriteableError(receiver, "setStringAt");
-        }
         RStringVector vec = (RStringVector) receiver;
         vec.setDataAt(vec.getInternalStore(), index, value);
         naCheck.check(value);
@@ -300,42 +271,26 @@ public class DefaultRVectorDataLibrary {
     }
 
     @ExportMessage
-    public static RComplex getComplexAt(RAbstractContainer receiver, int index) {
-        return asComplex(receiver).getDataAt(index);
-    }
-
-    @ExportMessage
-    public static RComplex getNextComplex(RAbstractContainer receiver, SeqIterator it) {
-        return asComplex(receiver).getDataAt(it.getIndex());
-    }
-
-    @ExportMessage
-    public static RComplex getComplex(RAbstractContainer receiver, @SuppressWarnings("unused") RandomAccessIterator it, int index) {
-        return asComplex(receiver).getDataAt(index);
-    }
-
-    @ExportMessage
-    public static void setComplexAt(RAbstractContainer receiver, int index, RComplex value, InputNACheck naCheck) {
-        setComplexImpl(receiver, index, value, naCheck);
-        if (naCheck.needsResettingCompleteFlag()) {
+    public static void setComplexAt(RAbstractContainer receiver, int index, RComplex value, InputNACheck inputNACheck) {
+        setComplexImpl(receiver, index, value, inputNACheck);
+        if (inputNACheck.needsResettingCompleteFlag()) {
             ((RAbstractVector) receiver).setComplete(false);
         }
     }
 
     @ExportMessage
-    public static void setNextComplex(RAbstractContainer receiver, SeqWriteIterator it, RComplex value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        setComplexImpl(receiver, it.getIndex(), value, naCheck);
+    public static void setNextComplex(RAbstractContainer receiver, SeqWriteIterator it, RComplex value,
+                    @Shared("inputNACheck") @Cached() InputNACheck na) {
+        setComplexImpl(receiver, it.getIndex(), value, na);
     }
 
     @ExportMessage
-    public static void setComplex(RAbstractContainer receiver, RandomAccessWriteIterator it, int index, RComplex value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        setComplexImpl(receiver, index, value, naCheck);
+    public static void setComplex(RAbstractContainer receiver, @SuppressWarnings("unused") RandomAccessWriteIterator it, int index, RComplex value,
+                    @Shared("inputNACheck") @Cached() InputNACheck na) {
+        setComplexImpl(receiver, index, value, na);
     }
 
     private static void setComplexImpl(RAbstractContainer receiver, int index, RComplex value, InputNACheck naCheck) {
-        if (!(receiver instanceof RComplexVector)) {
-            throw notWriteableError(receiver, "setStringAt");
-        }
         RComplexVector vec = (RComplexVector) receiver;
         vec.setDataAt(vec.getInternalStore(), index, value);
         naCheck.check(value);
@@ -394,43 +349,6 @@ public class DefaultRVectorDataLibrary {
 
     @ExportMessage
     public static int[] getIntDataCopy(RAbstractContainer receiver) {
-        throw shouldHaveSpecializedLib(receiver);
-    }
-
-    @ExportMessage
-    public static int getIntAt(RAbstractContainer receiver, @SuppressWarnings("unused") int index) {
-        throw shouldHaveSpecializedLib(receiver);
-    }
-
-    @ExportMessage
-    public static int getNextInt(RAbstractContainer receiver, @SuppressWarnings("unused") SeqIterator it) {
-        throw shouldHaveSpecializedLib(receiver);
-    }
-
-    @ExportMessage
-    public static int getInt(RAbstractContainer receiver, @SuppressWarnings("unused") RandomAccessIterator it, @SuppressWarnings("unused") int index) {
-        throw shouldHaveSpecializedLib(receiver);
-    }
-
-    // Doubles: should already have specialized library
-
-    @ExportMessage
-    public static double[] getDoubleDataCopy(RAbstractContainer receiver) {
-        throw shouldHaveSpecializedLib(receiver);
-    }
-
-    @ExportMessage
-    public static double getDoubleAt(RAbstractContainer receiver, @SuppressWarnings("unused") int index) {
-        throw shouldHaveSpecializedLib(receiver);
-    }
-
-    @ExportMessage
-    public static double getNextDouble(RAbstractContainer receiver, @SuppressWarnings("unused") SeqIterator it) {
-        throw shouldHaveSpecializedLib(receiver);
-    }
-
-    @ExportMessage
-    public static double getDouble(RAbstractContainer receiver, @SuppressWarnings("unused") RandomAccessIterator it, @SuppressWarnings("unused") int index) {
         throw shouldHaveSpecializedLib(receiver);
     }
 

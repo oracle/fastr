@@ -33,10 +33,10 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * Serves as a FastR specific Truffle profile, i.e. it uses {@link CompilerDirectives Truffle
@@ -118,22 +118,44 @@ public final class NACheck {
      */
     private static final int CHECK = 2;
 
-    @CompilationFinal private int state;
-    @CompilationFinal private boolean seenNaN;
+    @CompilationFinal protected int state;
+    @CompilationFinal protected boolean seenNaN;
+
+    private final boolean disabled;
 
     private NACheck() {
         // private constructor
+        disabled = false;
+    }
+
+    private NACheck(boolean disabled) {
+        // private constructor
+        this.disabled = disabled;
     }
 
     private static final NACheck ENABLED;
 
     static {
         ENABLED = new NACheck();
-        ENABLED.state = CHECK;
+        ENABLED.state = NACheck.CHECK;
         ENABLED.seenNaN = true;
     }
 
+    private static final NACheck DISABLED;
+    static {
+        DISABLED = new NACheck(true);
+        DISABLED.state = NACheck.NO_CHECK;
+    }
+
     public static NACheck getEnabled() {
+        return ENABLED;
+    }
+
+    public static NACheck getDisabled() {
+        return DISABLED;
+    }
+
+    public static NACheck getUncached() {
         return ENABLED;
     }
 
@@ -141,12 +163,13 @@ public final class NACheck {
         if (ENABLE_COMPLETE) {
             return new NACheck();
         } else {
-            // enabled check if always checking NA and always says that it has seen NA/NaN
+            // enabled check is always checking NA and always says that it has seen NA/NaN
             return ENABLED;
         }
     }
 
     public void enable(boolean value) {
+        assert !disabled;
         if (state == NO_CHECK && value) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             state = CHECK_DEOPT;
@@ -154,55 +177,64 @@ public final class NACheck {
     }
 
     public void enable(byte logical) {
+        assert !disabled;
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(logical));
         }
     }
 
     public void enable(int value) {
+        assert !disabled;
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(value));
         }
     }
 
     public void enable(double value) {
+        assert !disabled;
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(value));
         }
     }
 
     public void enable(RComplex value) {
+        assert !disabled;
         if (state == NO_CHECK) {
             enable(value.isNA());
         }
     }
 
-    // XXX TODO: this should be replaced by enable(XXXLibrary library, RAbstractContainer value)
+    // TODO: should be completely replaced by enable(library, RAbstractContainer value)
     public void enable(RAbstractContainer value) {
+        assert !disabled;
         if (state == NO_CHECK) {
             enable(!value.isComplete());
         }
     }
 
     public void enable(AbstractContainerLibrary library, RAbstractContainer value) {
+        assert !disabled;
         if (state == NO_CHECK) {
             enable(!library.isComplete(value));
         }
     }
 
     public void enable(VectorDataLibrary library, Object vectorData) {
+        assert !disabled;
         if (state == NO_CHECK) {
             enable(!library.isComplete(vectorData));
         }
     }
 
-    public void enable(VectorDataLibrary library, RIntVector vector) {
+    public void enable(VectorDataLibrary library, RAbstractVector vector) {
+        assert !disabled;
         if (state == NO_CHECK) {
             enable(!library.isComplete(vector.getData()));
         }
     }
 
     public void enable(String operand) {
+        assert !disabled;
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(operand));
         }

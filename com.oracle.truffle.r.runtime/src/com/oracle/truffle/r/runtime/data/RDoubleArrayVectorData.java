@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import static com.oracle.truffle.r.runtime.data.VectorDataLibrary.initInputNACheck;
+import static com.oracle.truffle.r.runtime.data.VectorDataLibrary.initInputNAChecks;
 import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
 
 import com.oracle.truffle.api.dsl.Cached;
@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
 
@@ -58,10 +59,26 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
 
     @Override
     public void setOwner(RAbstractVector newOwner) {
+        boolean firstOwner = owner == null;
         owner = (RDoubleVector) newOwner;
-        owner.setComplete(dataInitiallyComplete);
+        if (firstOwner) {
+            owner.setComplete(dataInitiallyComplete);
+        }
     }
 
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na) {
+        return na;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public InputNACheck getInputNACheck(@Shared("inputNACheck") @Cached() InputNACheck na) {
+        return na;
+    }
+
+    @SuppressWarnings("static-method")
     @ExportMessage
     public final RType getType() {
         return RType.Double;
@@ -114,8 +131,11 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     // Read access to the elements:
 
     @ExportMessage
-    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+    public SeqIterator iterator(
+                    @Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(data, data.length);
+        naCheck.enable(!isComplete());
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -127,75 +147,88 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator() {
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(!isComplete());
         return new RandomAccessIterator(data);
     }
 
     @ExportMessage
-    public double getDoubleAt(int index) {
-        return data[index];
+    public double getDoubleAt(int index, @Shared("naCheck") @Cached() NACheck naCheck) {
+        double value = data[index];
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage
-    public double getNextDouble(SeqIterator it) {
-        return getStore(it)[it.getIndex()];
+    public double getNextDouble(SeqIterator it, @Shared("naCheck") @Cached() NACheck naCheck) {
+        double value = getStore(it)[it.getIndex()];
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage
-    public double getDouble(RandomAccessIterator it, int index) {
-        return getStore(it)[index];
+    public double getDouble(RandomAccessIterator it, int index, @Shared("naCheck") @Cached() NACheck naCheck) {
+        double value = getStore(it)[index];
+        naCheck.check(value);
+        return value;
     }
 
     // Write access to the elements:
 
     @ExportMessage
-    public SeqWriteIterator writeIterator(boolean inputIsComplete, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        initInputNACheck(naCheck, inputIsComplete, isComplete());
+    public SeqWriteIterator writeIterator(boolean inputIsComplete,
+                    @Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        initInputNAChecks(inputNACheck, naCheck, inputIsComplete, isComplete());
         return new SeqWriteIterator(data, data.length, inputIsComplete);
     }
 
     @ExportMessage
-    public RandomAccessWriteIterator randomAccessWriteIterator(boolean inputIsComplete, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        initInputNACheck(naCheck, inputIsComplete, isComplete());
+    public RandomAccessWriteIterator randomAccessWriteIterator(boolean inputIsComplete,
+                    @Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        initInputNAChecks(inputNACheck, naCheck, inputIsComplete, isComplete());
         return new RandomAccessWriteIterator(data, inputIsComplete);
     }
 
     @ExportMessage
-    public void commitWriteIterator(SeqWriteIterator iterator, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+    public void commitWriteIterator(SeqWriteIterator iterator, @Shared("inputNACheck") @Cached() InputNACheck na) {
         iterator.commit();
-        commitWrites(naCheck, iterator.inputIsComplete);
+        commitWrites(na, iterator.inputIsComplete);
     }
 
     @ExportMessage
-    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
+    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, @Shared("inputNACheck") @Cached() InputNACheck na) {
         iterator.commit();
-        commitWrites(naCheck, iterator.inputIsComplete);
+        commitWrites(na, iterator.inputIsComplete);
     }
 
-    private void commitWrites(InputNACheck naCheck, boolean inputIsComplete) {
-        if (naCheck.needsResettingCompleteFlag() && !inputIsComplete) {
+    private void commitWrites(InputNACheck na, boolean inputIsComplete) {
+        if (na.needsResettingCompleteFlag() && !inputIsComplete) {
             owner.setComplete(false);
         }
     }
 
     @ExportMessage
-    public void setDoubleAt(int index, double value, InputNACheck naCheck) {
-        naCheck.check(value);
+    public void setDoubleAt(int index, double value, InputNACheck inputNACheck) {
+        inputNACheck.check(value);
         data[index] = value;
-        if (naCheck.needsResettingCompleteFlag()) {
+        if (inputNACheck.needsResettingCompleteFlag()) {
             owner.setComplete(false);
         }
     }
 
     @ExportMessage
-    public void setNextDouble(SeqWriteIterator it, double value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        naCheck.check(value);
+    public void setNextDouble(SeqWriteIterator it, double value,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        inputNACheck.check(value);
         getStore(it)[it.getIndex()] = value;
     }
 
     @ExportMessage
-    public void setDouble(RandomAccessWriteIterator it, int index, double value, @Shared("inputNACheck") @Cached InputNACheck naCheck) {
-        naCheck.check(value);
+    public void setDouble(RandomAccessWriteIterator it, int index, double value,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        inputNACheck.check(value);
         getStore(it)[index] = value;
     }
 

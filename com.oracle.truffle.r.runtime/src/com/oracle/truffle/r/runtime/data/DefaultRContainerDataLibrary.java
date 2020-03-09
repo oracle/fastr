@@ -50,13 +50,11 @@ public class DefaultRContainerDataLibrary {
         }
     }
 
-    // XXX TODO this is temporary
     // To retain the semantics of the original materialize,
     // for sequences and such we return new vector
     @ExportMessage
     @ImportStatic({DSLConfig.class})
     static class Materialize {
-
         @Specialization(guards = "isRIntVector(vector)", limit = "getGenericVectorAccessCacheSize()")
         static RAbstractVector materializeInt(RAbstractVector vector, @CachedLibrary("vector.getData()") VectorDataLibrary library) {
             if (library.isWriteable(vector.getData())) {
@@ -79,7 +77,6 @@ public class DefaultRContainerDataLibrary {
         }
     }
 
-    // XXX TODO is this temporary?
     // To retain the semantics of the original materialize,
     // for sequences and such we return new vector
     @ExportMessage
@@ -103,7 +100,6 @@ public class DefaultRContainerDataLibrary {
 
     }
 
-    // XXX using a different types in msg specializations breaks DSL
     protected static boolean isRIntVector(RAbstractVector v) {
         return v instanceof RIntVector;
     }

@@ -36,6 +36,8 @@ import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
+import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
 public class RIntVecClosureData implements RClosure, TruffleObject {
@@ -45,6 +47,19 @@ public class RIntVecClosureData implements RClosure, TruffleObject {
         this.vector = vector;
     }
 
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck() {
+        return NACheck.getEnabled();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public InputNACheck getInputNACheck() {
+        return InputNACheck.getUncached();
+    }
+
+    @SuppressWarnings("static-method")
     @ExportMessage
     public final RType getType() {
         return RType.Integer;
@@ -56,8 +71,8 @@ public class RIntVecClosureData implements RClosure, TruffleObject {
     }
 
     @ExportMessage
-    public RIntArrayVectorData materialize() {
-        return new RIntArrayVectorData(getIntDataCopy(), false);
+    public RIntArrayVectorData materialize(@Shared("naCheck") @Cached() NACheck naCheck) {
+        return new RIntArrayVectorData(getIntDataCopy(naCheck), false);
     }
 
     @ExportMessage
@@ -67,15 +82,15 @@ public class RIntVecClosureData implements RClosure, TruffleObject {
     }
 
     @ExportMessage
-    public RIntArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
+    public RIntArrayVectorData copyResized(@SuppressWarnings("unused") int newSize, @SuppressWarnings("unused") boolean deep, @SuppressWarnings("unused") boolean fillNA) {
         throw new RuntimeException("TODO?");
     }
 
     @ExportMessage
-    public int[] getIntDataCopy() {
+    public int[] getIntDataCopy(@Shared("naCheck") @Cached() NACheck naCheck) {
         int[] res = new int[getLength()];
         for (int i = 0; i < res.length; i++) {
-            res[i] = getIntAt(i);
+            res[i] = getIntAt(i, naCheck);
         }
         return res;
     }
@@ -84,8 +99,10 @@ public class RIntVecClosureData implements RClosure, TruffleObject {
     // the iterator object
 
     @ExportMessage
-    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+    public SeqIterator iterator(@Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(null, getLength());
+        naCheck.enable(true);
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -97,30 +114,35 @@ public class RIntVecClosureData implements RClosure, TruffleObject {
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator() {
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(true);
         return new RandomAccessIterator(null);
     }
 
     @ExportMessage
-    public Object getDataAtAsObject(int index) {
-        return getIntAt(index);
+    public Object getDataAtAsObject(int index,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
+        return getIntAt(index, naCheck);
     }
 
     @ExportMessage
-    public int getIntAt(int index) {
+    public int getIntAt(int index,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
         VectorAccess access = vector.slowPathAccess();
         RandomIterator it = access.randomAccess(vector);
-        return access.getInt(it, index);
+        int value = access.getInt(it, index);
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage
-    public int getNextInt(SeqIterator it) {
-        return getIntAt(it.getIndex());
+    public int getNextInt(SeqIterator it, @Shared("naCheck") @Cached() NACheck naCheck) {
+        return getIntAt(it.getIndex(), naCheck);
     }
 
     @ExportMessage
-    public int getInt(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
-        return getIntAt(index);
+    public int getInt(@SuppressWarnings("unused") RandomAccessIterator it, int index, @Shared("naCheck") @Cached() NACheck naCheck) {
+        return getIntAt(index, naCheck);
     }
 
     // RClosure overrides:

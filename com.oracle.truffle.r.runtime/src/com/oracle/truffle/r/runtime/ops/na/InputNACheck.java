@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 
 /**
- * Variant of the {@link NACheck} specialized for determining whether a vector data that is written
+ * Variant of the {@link NACheck} specialized for determining whether a vector data that has written
  * values from some "inputs" should be switched to "incomplete" (
  * {@link VectorDataLibrary#isComplete(Object)} is {@code false}).
  *
@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
  * of specializations.
  */
 public final class InputNACheck extends NodeCloneable {
+
     // no need to check: we have only seen "complete" "input" vectors so far
     private static final byte STATE_DISABLED_CHECK_NEVER_SEEN_NA = 0;
     // no need to check the input: all the destination vectors were incomplete already
@@ -55,30 +56,14 @@ public final class InputNACheck extends NodeCloneable {
     // we already saw NA value, all bets are off: no need to check NAs anymore
     private static final byte STATE_DISABLED_CHECK_SEEN_NA = 3;
 
-    /**
-     * Singleton instance of check that is degraded to no checks and
-     * {@link #needsResettingCompleteFlag} returning {@code true}.
-     */
-    public static final InputNACheck SEEN_NA = new InputNACheck(STATE_DISABLED_CHECK_SEEN_NA);
-
-    public static InputNACheck fromNACheck(NACheck naCheck) {
-        if (!ENABLE_COMPLETE) {
-            return new InputNACheck(STATE_DISABLED_CHECK_SEEN_NA);
-        } else if (naCheck.isEnabled()) {
-            return new InputNACheck(STATE_DISABLED_CHECK_NEVER_SEEN_NA);
-        } else if (naCheck.neverSeenNA()) {
-            return new InputNACheck(STATE_ENABLED_CHECK);
-        } else {
-            return new InputNACheck(STATE_DISABLED_CHECK_SEEN_NA);
-        }
-    }
-
     public static InputNACheck create() {
-        return new InputNACheck(ENABLE_COMPLETE ? STATE_DISABLED_CHECK_NEVER_SEEN_NA : STATE_DISABLED_CHECK_SEEN_NA);
+        return new InputNACheck(ENABLE_COMPLETE ? STATE_ENABLED_CHECK : STATE_DISABLED_CHECK_SEEN_NA);
     }
+
+    private static final InputNACheck DISABLED_SEEN_NA = new InputNACheck(STATE_DISABLED_CHECK_SEEN_NA);
 
     public static InputNACheck getUncached() {
-        return SEEN_NA;
+        return DISABLED_SEEN_NA;
     }
 
     @CompilationFinal private byte state;
@@ -103,6 +88,16 @@ public final class InputNACheck extends NodeCloneable {
             state = STATE_DISABLED_CHECK_SEEN_NA; // -- just gives up, but does not pollute the loop
                                                   // body with NA check
         }
+
+        // XXX
+        // - firstIncompleteInput sets SEEN_NA even though the particular written might not be NA
+        // - only enabling STATE_ENABLED_CHECK on the other hand has a detrimental (2 magnitudes)
+        // effect on performance
+
+        // else if (!inputIsComplete) {
+        // CompilerDirectives.transferToInterpreterAndInvalidate();
+        // state = STATE_ENABLED_CHECK;
+        // }
         return this;
     }
 
@@ -120,6 +115,15 @@ public final class InputNACheck extends NodeCloneable {
     public boolean needsResettingCompleteFlag() {
         // no need to reset the flag in case when the destination already had complete == false
         return state == STATE_DISABLED_CHECK_SEEN_NA;
+    }
+
+    public void check(byte value) {
+        if (state == STATE_ENABLED_CHECK) {
+            if (RRuntime.isNA(value)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                state = STATE_DISABLED_CHECK_SEEN_NA;
+            }
+        }
     }
 
     public void check(int value) {

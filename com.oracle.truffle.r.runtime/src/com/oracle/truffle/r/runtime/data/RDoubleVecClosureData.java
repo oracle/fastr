@@ -36,6 +36,8 @@ import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
+import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
 public class RDoubleVecClosureData implements RClosure, TruffleObject {
@@ -45,6 +47,19 @@ public class RDoubleVecClosureData implements RClosure, TruffleObject {
         this.vector = vector;
     }
 
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck() {
+        return NACheck.getEnabled();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public InputNACheck getInputNACheck() {
+        return InputNACheck.getUncached();
+    }
+
+    @SuppressWarnings("static-method")
     @ExportMessage
     public final RType getType() {
         return RType.Double;
@@ -56,8 +71,8 @@ public class RDoubleVecClosureData implements RClosure, TruffleObject {
     }
 
     @ExportMessage
-    public RDoubleArrayVectorData materialize() {
-        return new RDoubleArrayVectorData(getReadonlyDoubleData(), false);
+    public RDoubleArrayVectorData materialize(@Shared("naCheck") @Cached() NACheck naCheck) {
+        return new RDoubleArrayVectorData(getReadonlyDoubleData(naCheck), false);
     }
 
     @ExportMessage
@@ -67,20 +82,20 @@ public class RDoubleVecClosureData implements RClosure, TruffleObject {
     }
 
     @ExportMessage
-    public RDoubleArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
+    public RDoubleArrayVectorData copyResized(@SuppressWarnings("unused") int newSize, @SuppressWarnings("unused") boolean deep, @SuppressWarnings("unused") boolean fillNA) {
         throw new RuntimeException("TODO?");
     }
 
     @ExportMessage
-    public double[] getReadonlyDoubleData() {
-        return getDoubleDataCopy();
+    public double[] getReadonlyDoubleData(@Shared("naCheck") @Cached() NACheck naCheck) {
+        return getDoubleDataCopy(naCheck);
     }
 
     @ExportMessage
-    public double[] getDoubleDataCopy() {
+    public double[] getDoubleDataCopy(@Shared("naCheck") @Cached() NACheck naCheck) {
         double[] res = new double[getLength()];
         for (int i = 0; i < res.length; i++) {
-            res[i] = getDoubleAt(i);
+            res[i] = getDoubleAt(i, naCheck);
         }
         return res;
     }
@@ -90,8 +105,10 @@ public class RDoubleVecClosureData implements RClosure, TruffleObject {
     // the iterator object
 
     @ExportMessage
-    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+    public SeqIterator iterator(@Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(null, getLength());
+        naCheck.enable(true);
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -103,25 +120,31 @@ public class RDoubleVecClosureData implements RClosure, TruffleObject {
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator() {
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(true);
         return new RandomAccessIterator(null);
     }
 
     @ExportMessage
-    public double getDoubleAt(int index) {
+    public double getDoubleAt(int index,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
         VectorAccess access = vector.slowPathAccess();
         RandomIterator it = access.randomAccess(vector);
-        return access.getDouble(it, index);
+        double value = access.getDouble(it, index);
+        naCheck.enable(value);
+        return value;
     }
 
     @ExportMessage
-    public double getNextDouble(SeqIterator it) {
-        return getDoubleAt(it.getIndex());
+    public double getNextDouble(SeqIterator it, @Shared("naCheck") @Cached() NACheck naCheck) {
+        double value = getDoubleAt(it.getIndex(), naCheck);
+        naCheck.enable(value);
+        return value;
     }
 
     @ExportMessage
-    public double getDouble(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
-        return getDoubleAt(index);
+    public double getDouble(@SuppressWarnings("unused") RandomAccessIterator it, int index, @Shared("naCheck") @Cached() NACheck naCheck) {
+        return getDoubleAt(index, naCheck);
     }
 
     // RClosure overrides:

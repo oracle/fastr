@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
@@ -62,6 +61,7 @@ public final class RIntVector extends RAbstractNumericVector {
     RIntVector(Object data, int length) {
         super(false);
         setData(data, length);
+        assert RAbstractVector.verifyVector(this);
     }
 
     private RIntVector() {
@@ -267,7 +267,7 @@ public final class RIntVector extends RAbstractNumericVector {
     private RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
         assert !this.isShared();
         assert !RRuntime.isNA(value) || valueNACheck.isEnabled();
-        VectorDataLibrary.getFactory().getUncached().setIntAt(data, index, value, InputNACheck.fromNACheck(valueNACheck));
+        VectorDataLibrary.getFactory().getUncached().setIntAt(data, index, value);
         assert !isComplete() || !RRuntime.isNA(value);
         return this;
     }
@@ -314,7 +314,7 @@ public final class RIntVector extends RAbstractNumericVector {
         return RDataFactory.createIntVector(getDataCopy(), isComplete());
     }
 
-    // XXX HACK taken from RAbstractVector
+    // HACK copy and paste from RAbstractVector
     RIntVector copy(VectorDataLibrary dataLib) {
         RIntVector result = RDataFactory.createIntVector(dataLib.getIntDataCopy(data), dataLib.isComplete(data));
         MemoryCopyTracer.reportCopying(this, result);
@@ -398,7 +398,9 @@ public final class RIntVector extends RAbstractNumericVector {
 
         @Override
         public int getIntImpl(AccessIterator accessIter, int index) {
-            return dataLib.getIntAt(accessIter.getStore(), index);
+            int value = dataLib.getIntAt(accessIter.getStore(), index);
+            na.check(value);
+            return value;
         }
 
         @Override

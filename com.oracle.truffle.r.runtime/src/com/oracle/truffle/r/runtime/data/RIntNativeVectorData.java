@@ -48,6 +48,19 @@ public class RIntNativeVectorData implements TruffleObject {
         this.vec = vec;
     }
 
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck() {
+        return NACheck.getEnabled();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public InputNACheck getInputNACheck() {
+        return InputNACheck.getUncached();
+    }
+
+    @SuppressWarnings("static-method")
     @ExportMessage
     public final RType getType() {
         return RType.Integer;
@@ -89,8 +102,11 @@ public class RIntNativeVectorData implements TruffleObject {
     // maybe add a specialized field to the iterator
 
     @ExportMessage
-    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+    public SeqIterator iterator(
+                    @Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(vec, NativeDataAccess.getDataLength(vec, null));
+        naCheck.enable(true);
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -102,23 +118,33 @@ public class RIntNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator() {
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(true);
         return new RandomAccessIterator(vec);
     }
 
     @ExportMessage
-    public int getIntAt(int index) {
-        return NativeDataAccess.getData(vec, null, index);
+    public int getIntAt(int index,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
+        int value = NativeDataAccess.getData(vec, null, index);
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage
-    public int getNextInt(SeqIterator it) {
-        return NativeDataAccess.getData(vec, null, it.getIndex());
+    public int getNextInt(SeqIterator it,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
+        int value = NativeDataAccess.getData(vec, null, it.getIndex());
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage
-    public int getInt(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
-        return NativeDataAccess.getData(vec, null, index);
+    public int getInt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
+        int value = NativeDataAccess.getData(vec, null, index);
+        naCheck.check(value);
+        return value;
     }
 
     // Write access to the elements:
@@ -134,17 +160,22 @@ public class RIntNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
-    public void setIntAt(int index, int value, @SuppressWarnings("unused") InputNACheck naCheck) {
+    public void setIntAt(int index, int value, @SuppressWarnings("unused") InputNACheck inputNACheck) {
+        inputNACheck.check(value);
         NativeDataAccess.setData(vec, null, index, value);
     }
 
     @ExportMessage
-    public void setNextInt(SeqWriteIterator it, int value) {
+    public void setNextInt(SeqWriteIterator it, int value,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        inputNACheck.check(value);
         NativeDataAccess.setData(vec, null, it.getIndex(), value);
     }
 
     @ExportMessage
-    public void setInt(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, int value) {
+    public void setInt(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, int value,
+                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
+        inputNACheck.check(value);
         NativeDataAccess.setData(vec, null, index, value);
     }
 }

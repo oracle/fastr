@@ -27,11 +27,17 @@ import com.oracle.truffle.api.library.GenerateLibrary;
 import com.oracle.truffle.api.library.GenerateLibrary.DefaultExport;
 import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Asserts;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -90,15 +96,16 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * <li>At random positions using an iterator object (
  * {@link #setInt(Object, RandomAccessWriteIterator, int, int)})</li>
  * <li>At random positions without an iterator object (
- * {@link #setIntAt(Object, int, int, InputNACheck)})</li>
+ * {@link #setIntAt(Object, int, int, InputNACheck)} )</li>
  * </ul>
  * <p>
- * Write operations require {@link InputNACheck}, which is either passed when creating the iterator
- * object or directly in case of {@link #setIntAt(Object, int, int, InputNACheck)}. The
- * {@link InputNACheck} must be enabled if the source of the "input" data may contain {@code NA}
- * values (see {@link InputNACheck#enable(boolean, boolean)}. This allows to optimize away the check
- * for {@code NA} values. Moreover, the data object usually needs to update its "complete" field
- * when {@code NA} value is written. The memory write of that "complete" field is moved to
+ * 
+ * Write operations require {@link InputNACheck}, which is created together with the iterator object
+ * and can be be accessed via {@link #getInputNACheck(Object)}. The {@link InputNACheck} must be
+ * enabled if the source of the "input" data may contain {@code NA} values (see
+ * {@link InputNACheck#enable(boolean, boolean)}. This allows to optimize away the check for
+ * {@code NA} values. Moreover, the data object usually needs to update its "complete" field when
+ * {@code NA} value is written. The memory write of that "complete" field is moved to
  * {@link #commitWriteIterator(Object, SeqWriteIterator)} in case of the iterator API, so that the
  * memory write is outside of the loop that usually writes values to the vector object.
  */
@@ -196,15 +203,23 @@ public abstract class VectorDataLibrary extends Library {
             profile.profileCounted(length);
         }
 
-        final boolean next(LoopConditionProfile loopConditionProfile, boolean withWrap) {
+        final boolean next(@SuppressWarnings("unused") LoopConditionProfile loopConditionProfile, boolean withWrap) {
             if (withWrap) {
                 index++;
-                if (loopConditionProfile.inject(index == length)) {
+                // TODO is clashing with LoopConditionProfile used in BinaryMapVectorNode
+                // e.g. shootout.mandelbrot-ascii to reproduce
+                // if (loopConditionProfile.inject(index == length)) {
+                if (index == length) {
                     index = 0;
                 }
                 return true;
             }
-            return loopConditionProfile.inject(++index < length);
+            // return loopConditionProfile.inject(++index < length);
+            return ++index < length;
+        }
+
+        public final void reset() {
+            index = -1;
         }
     }
 
@@ -224,7 +239,11 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         void commit() {
-            assert committed = true;
+            assert setCommited(true);
+        }
+
+        private boolean setCommited(boolean b) {
+            return committed = b;
         }
 
         @Override
@@ -233,6 +252,7 @@ public abstract class VectorDataLibrary extends Library {
             // 'committed' flag in the iterator
             assert committed;
         }
+
     }
 
     public static final class RandomAccessWriteIterator extends RandomAccessIterator implements AutoCloseable {
@@ -245,7 +265,7 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         void commit() {
-            assert committed = true;
+            committed = true;
         }
 
         @Override
@@ -256,11 +276,12 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
-    static void initInputNACheck(InputNACheck naCheck, boolean inputIsComplete, boolean destIsComplete) {
-        naCheck.enable(destIsComplete, inputIsComplete);
+    static void initInputNAChecks(InputNACheck inputNACheck, NACheck naCheck, boolean inputIsComplete, boolean destIsComplete) {
+        naCheck.enable(!inputIsComplete);
+        inputNACheck.enable(destIsComplete, inputIsComplete);
         if (!destIsComplete) {
             // No point in checking NAs if the destination is already marked as incomplete vector
-            naCheck.disableChecks();
+            inputNACheck.disableChecks();
         }
     }
 
@@ -346,16 +367,20 @@ public abstract class VectorDataLibrary extends Library {
      *
      * @see #writeIterator(Object, boolean)
      */
-    public void commitWriteIterator(Object receiver, SeqWriteIterator iterator) {
+    public void commitWriteIterator(@SuppressWarnings("unused") Object receiver, SeqWriteIterator iterator) {
         iterator.commit();
     }
 
     /**
      * @see #commitWriteIterator(Object, SeqWriteIterator)
      */
-    public void commitRandomAccessWriteIterator(Object receiver, RandomAccessWriteIterator iterator) {
+    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") Object receiver, RandomAccessWriteIterator iterator) {
         iterator.commit();
     }
+
+    public abstract NACheck getNACheck(Object receiver);
+
+    public abstract InputNACheck getInputNACheck(Object receiver);
 
     // ---------------------------------------------------------------------
     // Methods specific to integer data
@@ -380,8 +405,25 @@ public abstract class VectorDataLibrary extends Library {
      * Returns the value at given position. See the documentation of {@link #iterator(Object)} for
      * details.
      */
-    public int getIntAt(Object receiver, int index) {
-        throw notImplemented(receiver);
+    public int getIntAt(Object receiver, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere");
+            case Double:
+                return double2int(getNACheck(receiver), getDoubleAt(receiver, index));
+            case Logical:
+                return logical2int(getNACheck(receiver), getLogicalAt(receiver, index));
+            case Raw:
+                return raw2int(getRawAt(receiver, index));
+            case Complex:
+                return complex2int(getNACheck(receiver), getComplexAt(receiver, index));
+            case Character:
+                return string2int(getNACheck(receiver), getStringAt(receiver, index));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
     /**
@@ -389,8 +431,25 @@ public abstract class VectorDataLibrary extends Library {
      * {@link #iterator(Object)} on the same {@code receiver} object. See the documentation of
      * {@link VectorDataLibrary} for a high level overview.
      */
-    public int getNextInt(Object receiver, SeqIterator it) {
-        throw notImplemented(receiver);
+    public int getNextInt(Object receiver, @SuppressWarnings("unused") SeqIterator it) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere");
+            case Double:
+                return double2int(getNACheck(receiver), getNextDouble(receiver, it));
+            case Logical:
+                return logical2int(getNACheck(receiver), getNextLogical(receiver, it));
+            case Raw:
+                return raw2int(getNextRaw(receiver, it));
+            case Complex:
+                return complex2int(getNACheck(receiver), getNextComplex(receiver, it));
+            case Character:
+                return string2int(getNACheck(receiver), getNextString(receiver, it));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
     /**
@@ -398,8 +457,25 @@ public abstract class VectorDataLibrary extends Library {
      * {@link #randomAccessIterator(Object)} on the same {@code receiver} object. See the
      * documentation of {@link VectorDataLibrary} for a high level overview.
      */
-    public int getInt(Object receiver, RandomAccessIterator it, int index) {
-        throw notImplemented(receiver);
+    public int getInt(Object receiver, @SuppressWarnings("unused") RandomAccessIterator it, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
+            case Double:
+                return double2int(getNACheck(receiver), getDouble(receiver, it, index));
+            case Logical:
+                return logical2int(getNACheck(receiver), getLogical(receiver, it, index));
+            case Raw:
+                return raw2int(getRaw(receiver, it, index));
+            case Complex:
+                return complex2int(getNACheck(receiver), getComplex(receiver, it, index));
+            case Character:
+                return string2int(getNACheck(receiver), getString(receiver, it, index));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
     /**
@@ -442,11 +518,11 @@ public abstract class VectorDataLibrary extends Library {
 
     /**
      * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
-     * {@link InputNACheck}. It is recommended to use the other overload and actual
-     * {@link InputNACheck} to enable more optimizations.
+     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
+     * to enable more optimizations.
      */
     public final void setIntAt(Object receiver, int index, int value) {
-        setIntAt(receiver, index, value, InputNACheck.SEEN_NA);
+        setIntAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -460,16 +536,67 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
-    public double getDoubleAt(Object receiver, int index) {
-        throw notImplemented(receiver);
+    public double getDoubleAt(Object receiver, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2double(getNACheck(receiver), getIntAt(receiver, index));
+            case Double:
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
+            case Logical:
+                return logical2double(getNACheck(receiver), getLogicalAt(receiver, index));
+            case Raw:
+                return raw2double(getRawAt(receiver, index));
+            case Complex:
+                return complex2double(getNACheck(receiver), getComplexAt(receiver, index));
+            case Character:
+                return string2double(getNACheck(receiver), getStringAt(receiver, index));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
-    public double getNextDouble(Object receiver, SeqIterator it) {
-        throw notImplemented(receiver);
+    public double getNextDouble(Object receiver, @SuppressWarnings("unused") SeqIterator it) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2double(getNACheck(receiver), getNextInt(receiver, it));
+            case Double:
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere");
+            case Logical:
+                return logical2double(getNACheck(receiver), getNextLogical(receiver, it));
+            case Raw:
+                return raw2double(getNextRaw(receiver, it));
+            case Complex:
+                return complex2double(getNACheck(receiver), getNextComplex(receiver, it));
+            case Character:
+                return string2double(getNACheck(receiver), getNextString(receiver, it));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
-    public double getDouble(Object receiver, RandomAccessIterator it, int index) {
-        throw notImplemented(receiver);
+    public double getDouble(Object receiver, @SuppressWarnings("unused") RandomAccessIterator it, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2double(getNACheck(receiver), getInt(receiver, it, index));
+            case Double:
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
+            case Logical:
+                return logical2double(getNACheck(receiver), getLogical(receiver, it, index));
+            case Raw:
+                return raw2double(getRaw(receiver, it, index));
+            case Complex:
+                return complex2double(getNACheck(receiver), getComplex(receiver, it, index));
+            case Character:
+                return string2double(getNACheck(receiver), getString(receiver, it, index));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
     @SuppressWarnings("unused")
@@ -487,8 +614,13 @@ public abstract class VectorDataLibrary extends Library {
         throw notWriteableError(receiver, "setDouble");
     }
 
+    /**
+     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
+     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
+     * to enable more optimizations.
+     */
     public final void setDoubleAt(Object receiver, int index, double value) {
-        setDoubleAt(receiver, index, value, InputNACheck.SEEN_NA);
+        setDoubleAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -502,16 +634,73 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
-    public byte getLogicalAt(Object receiver, int index) {
-        throw notImplemented(receiver);
+    public byte getLogicalAt(Object receiver, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2logical(getNACheck(receiver), getIntAt(receiver, index));
+            case Double:
+                return double2logical(getNACheck(receiver), getDoubleAt(receiver, index));
+            case Logical:
+                byte value = asLogical(receiver).getDataAt(index);
+                getNACheck(receiver).check(value);
+                return value;
+            case Raw:
+                return raw2logical(getRawAt(receiver, index));
+            case Complex:
+                return complex2logical(getNACheck(receiver), getComplexAt(receiver, index));
+            case Character:
+                return string2logical(getNACheck(receiver), getStringAt(receiver, index));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
-    public byte getNextLogical(Object receiver, SeqIterator it) {
-        throw notImplemented(receiver);
+    public byte getNextLogical(Object receiver, @SuppressWarnings("unused") SeqIterator it) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2logical(getNACheck(receiver), getNextInt(receiver, it));
+            case Double:
+                return double2logical(getNACheck(receiver), getNextDouble(receiver, it));
+            case Logical:
+                byte value = asLogical(receiver).getDataAt(it.getIndex());
+                getNACheck(receiver).check(value);
+                return value;
+            case Raw:
+                return raw2logical(getNextRaw(receiver, it));
+            case Complex:
+                return complex2logical(getNACheck(receiver), getNextComplex(receiver, it));
+            case Character:
+                return string2logical(getNACheck(receiver), getNextString(receiver, it));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
-    public byte getLogical(Object receiver, RandomAccessIterator it, int index) {
-        throw notImplemented(receiver);
+    public byte getLogical(Object receiver, @SuppressWarnings("unused") RandomAccessIterator it, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2logical(getNACheck(receiver), getInt(receiver, it, index));
+            case Double:
+                return double2logical(getNACheck(receiver), getDouble(receiver, it, index));
+            case Logical:
+                byte value = asLogical(receiver).getDataAt(index);
+                getNACheck(receiver).check(value);
+                return value;
+            case Raw:
+                return raw2logical(getRaw(receiver, it, index));
+            case Complex:
+                return complex2logical(getNACheck(receiver), getComplex(receiver, it, index));
+            case Character:
+                return string2logical(getNACheck(receiver), getString(receiver, it, index));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
     @SuppressWarnings("unused")
@@ -521,16 +710,21 @@ public abstract class VectorDataLibrary extends Library {
 
     @SuppressWarnings("unused")
     public void setNextLogical(Object receiver, SeqWriteIterator it, byte value) {
-        throw notWriteableError(receiver, "setLogicalAt");
+        throw notWriteableError(receiver, "setNextLogical");
     }
 
     @SuppressWarnings("unused")
     public void setLogical(Object receiver, RandomAccessWriteIterator it, int index, byte value) {
-        throw notWriteableError(receiver, "setLogicalAt");
+        throw notWriteableError(receiver, "setLogical");
     }
 
+    /**
+     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
+     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
+     * to enable more optimizations.
+     */
     public final void setLogicalAt(Object receiver, int index, byte value) {
-        setLogicalAt(receiver, index, value, InputNACheck.SEEN_NA);
+        setLogicalAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -544,20 +738,77 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
-    public byte getRawAt(Object receiver, int index) {
-        throw notImplemented(receiver);
+    public byte getRawAt(Object receiver, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2raw(getNACheck(receiver), getIntAt(receiver, index));
+            case Double:
+                return double2raw(getNACheck(receiver), getDoubleAt(receiver, index));
+            case Logical:
+                return logical2raw(getNACheck(receiver), getLogicalAt(receiver, index));
+            case Raw:
+                byte value = asRaw(receiver).getRawDataAt(index);
+                getNACheck(receiver).check(value);
+                return value;
+            case Complex:
+                return complex2raw(getNACheck(receiver), getComplexAt(receiver, index));
+            case Character:
+                return string2raw(getNACheck(receiver), getStringAt(receiver, index));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
-    public byte getNextRaw(Object receiver, SeqIterator it) {
-        throw notImplemented(receiver);
+    public byte getNextRaw(Object receiver, @SuppressWarnings("unused") SeqIterator it) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2raw(getNACheck(receiver), getNextInt(receiver, it));
+            case Double:
+                return double2raw(getNACheck(receiver), getNextDouble(receiver, it));
+            case Logical:
+                return logical2raw(getNACheck(receiver), getNextLogical(receiver, it));
+            case Raw:
+                byte value = asRaw(receiver).getRawDataAt(it.getIndex());
+                getNACheck(receiver).check(value);
+                return value;
+            case Complex:
+                return complex2raw(getNACheck(receiver), getNextComplex(receiver, it));
+            case Character:
+                return string2raw(getNACheck(receiver), getNextString(receiver, it));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
-    public byte getRaw(Object receiver, RandomAccessIterator it, int index) {
-        throw notImplemented(receiver);
+    public byte getRaw(Object receiver, @SuppressWarnings("unused") RandomAccessIterator it, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2raw(getNACheck(receiver), getInt(receiver, it, index));
+            case Double:
+                return double2raw(getNACheck(receiver), getDouble(receiver, it, index));
+            case Logical:
+                return logical2raw(getNACheck(receiver), getLogical(receiver, it, index));
+            case Raw:
+                byte value = asRaw(receiver).getRawDataAt(index);
+                getNACheck(receiver).check(value);
+                return value;
+            case Complex:
+                return complex2raw(getNACheck(receiver), getComplex(receiver, it, index));
+            case Character:
+                return string2raw(getNACheck(receiver), getString(receiver, it, index));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
     @SuppressWarnings("unused")
-    public void setRawAt(Object receiver, int index, byte value, InputNACheck naCheck) {
+    public void setRawAt(Object receiver, int index, byte value, InputNACheck inputNACheck) {
         throw notWriteableError(receiver, "setRawAt");
     }
 
@@ -568,11 +819,16 @@ public abstract class VectorDataLibrary extends Library {
 
     @SuppressWarnings("unused")
     public void setRaw(Object receiver, RandomAccessWriteIterator it, int index, byte value) {
-        throw notWriteableError(receiver, "setRaw");
+        throw notWriteableError(receiver, "setLogical");
     }
 
+    /**
+     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
+     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
+     * to enable more optimizations.
+     */
     public final void setRawAt(Object receiver, int index, byte value) {
-        setRawAt(receiver, index, value, InputNACheck.SEEN_NA);
+        setRawAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -587,16 +843,77 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
-    public String getStringAt(Object receiver, int index) {
-        throw notImplemented(receiver);
+    public String getStringAt(Object receiver, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2string(getNACheck(receiver), getIntAt(receiver, index));
+            case Double:
+                return double2string(getNACheck(receiver), getDoubleAt(receiver, index));
+            case Logical:
+                return logical2string(getNACheck(receiver), getLogicalAt(receiver, index));
+            case Raw:
+                return raw2string(getRawAt(receiver, index));
+            case Complex:
+                return complex2string(getNACheck(receiver), getComplexAt(receiver, index));
+            case Character:
+                String value = asString(receiver).getDataAt(index);
+                getNACheck(receiver).check(value);
+                return value;
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
-    public String getNextString(Object receiver, SeqIterator it) {
-        throw notImplemented(receiver);
+    public String getNextString(Object receiver, @SuppressWarnings("unused") SeqIterator it) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2string(getNACheck(receiver), getNextInt(receiver, it));
+            case Double:
+                return double2string(getNACheck(receiver), getNextDouble(receiver, it));
+            case Logical:
+                return logical2string(getNACheck(receiver), getNextLogical(receiver, it));
+            case Raw:
+                return raw2string(getNextRaw(receiver, it));
+            case Complex:
+                return complex2string(getNACheck(receiver), getNextComplex(receiver, it));
+            case Character:
+                String value = asString(receiver).getDataAt(it.getIndex());
+                getNACheck(receiver).check(value);
+                return value;
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
-    public String getString(Object receiver, RandomAccessIterator it, int index) {
-        throw notImplemented(receiver);
+    public String getString(Object receiver, @SuppressWarnings("unused") RandomAccessIterator it, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        return getStringImpl(receiver, type, it, index);
+    }
+
+    public String getStringImpl(Object receiver, RType type, RandomAccessIterator it, int index) {
+        switch (type) {
+            case Integer:
+                return int2string(getNACheck(receiver), getInt(receiver, it, index));
+            case Double:
+                return double2string(getNACheck(receiver), getDouble(receiver, it, index));
+            case Logical:
+                return logical2string(getNACheck(receiver), getLogical(receiver, it, index));
+            case Raw:
+                return raw2string(getRaw(receiver, it, index));
+            case Complex:
+                return complex2string(getNACheck(receiver), getComplex(receiver, it, index));
+            case Character:
+                String value = asString(receiver).getDataAt(index);
+                getNACheck(receiver).check(value);
+                return value;
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
     @SuppressWarnings("unused")
@@ -611,11 +928,18 @@ public abstract class VectorDataLibrary extends Library {
 
     @SuppressWarnings("unused")
     public void setString(Object receiver, RandomAccessWriteIterator it, int index, String value) {
-        throw notWriteableError(receiver, "setRaw");
+        throw notWriteableError(receiver, "setString");
     }
 
+    private final ConditionProfile emptyStringProfile = ConditionProfile.createBinaryProfile();
+
+    /**
+     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
+     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
+     * to enable more optimizations.
+     */
     public final void setStringAt(Object receiver, int index, String value) {
-        setStringAt(receiver, index, value, InputNACheck.SEEN_NA);
+        setStringAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -629,35 +953,101 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
-    public RComplex getComplexAt(Object receiver, int index) {
-        throw notImplemented(receiver);
+    public RComplex getComplexAt(Object receiver, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2complex(getNACheck(receiver), getIntAt(receiver, index));
+            case Double:
+                return double2complex(getNACheck(receiver), getDoubleAt(receiver, index));
+            case Logical:
+                return logical2complex(getNACheck(receiver), getLogicalAt(receiver, index));
+            case Raw:
+                return raw2complex(getRawAt(getNACheck(receiver), index));
+            case Complex:
+                RComplex value = asComplex(receiver).getDataAt(index);
+                getNACheck(receiver).check(value);
+                return value;
+            case Character:
+                return string2complex(getNACheck(receiver), getStringAt(receiver, index));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
-    public RComplex getNextComplex(Object receiver, SeqIterator it) {
-        throw notImplemented(receiver);
+    public RComplex getNextComplex(Object receiver, @SuppressWarnings("unused") SeqIterator it) {
+        RType type = getType(receiver);
+        switch (type) {
+            case Integer:
+                return int2complex(getNACheck(receiver), getNextInt(receiver, it));
+            case Double:
+                return double2complex(getNACheck(receiver), getNextDouble(receiver, it));
+            case Logical:
+                return logical2complex(getNACheck(receiver), getNextLogical(receiver, it));
+            case Raw:
+                return raw2complex(getNextRaw(receiver, it));
+            case Complex:
+                RComplex value = asComplex(receiver).getDataAt(it.getIndex());
+                getNACheck(receiver).check(value);
+                return value;
+            case Character:
+                return string2complex(getNACheck(receiver), getNextString(receiver, it));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
-    public RComplex getComplex(Object receiver, RandomAccessIterator it, int index) {
-        throw notImplemented(receiver);
+    public RComplex getComplex(Object receiver, @SuppressWarnings("unused") RandomAccessIterator it, @SuppressWarnings("unused") int index) {
+        RType type = getType(receiver);
+        return getComplexImpl(receiver, type, it, index);
+    }
+
+    private RComplex getComplexImpl(Object receiver, RType type, RandomAccessIterator it, int index) {
+        switch (type) {
+            case Integer:
+                return int2complex(getNACheck(receiver), getInt(receiver, it, index));
+            case Double:
+                return double2complex(getNACheck(receiver), getDouble(receiver, it, index));
+            case Logical:
+                return logical2complex(getNACheck(receiver), getLogical(receiver, it, index));
+            case Raw:
+                return raw2complex(getRaw(receiver, it, index));
+            case Complex:
+                RComplex value = asComplex(receiver).getDataAt(index);
+                getNACheck(receiver).check(value);
+                return value;
+            case Character:
+                return string2complex(getNACheck(receiver), getString(receiver, it, index));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
     }
 
     @SuppressWarnings("unused")
     public void setComplexAt(Object receiver, int index, RComplex value, InputNACheck naCheck) {
-        throw notWriteableError(receiver, "setStringAt");
+        throw notWriteableError(receiver, "setComplexAt");
     }
 
     @SuppressWarnings("unused")
     public void setNextComplex(Object receiver, SeqWriteIterator it, RComplex value) {
-        throw notWriteableError(receiver, "setNextString");
+        throw notWriteableError(receiver, "setNextComplex");
     }
 
     @SuppressWarnings("unused")
     public void setComplex(Object receiver, RandomAccessWriteIterator it, int index, RComplex value) {
-        throw notWriteableError(receiver, "setRaw");
+        throw notWriteableError(receiver, "setComplex");
     }
 
+    /**
+     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
+     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
+     * to enable more optimizations.
+     */
     public final void setComplexAt(Object receiver, int index, RComplex value) {
-        setComplexAt(receiver, index, value, InputNACheck.SEEN_NA);
+        setComplexAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -743,22 +1133,22 @@ public abstract class VectorDataLibrary extends Library {
         RType type = getType(receiver);
         switch (type) {
             case Integer:
-                setIntAt(receiver, index, (Integer) value, InputNACheck.SEEN_NA);
+                setIntAt(receiver, index, (Integer) value);
                 break;
             case Double:
-                setDoubleAt(receiver, index, (Double) value, InputNACheck.SEEN_NA);
+                setDoubleAt(receiver, index, (Double) value);
                 break;
             case Logical:
-                setLogicalAt(receiver, index, (Byte) value, InputNACheck.SEEN_NA);
+                setLogicalAt(receiver, index, (Byte) value);
                 break;
             case Raw:
-                setRawAt(receiver, index, (Byte) value, InputNACheck.SEEN_NA);
+                setRawAt(receiver, index, (Byte) value);
                 break;
             case Complex:
-                setComplexAt(receiver, index, (RComplex) value, InputNACheck.SEEN_NA);
+                setComplexAt(receiver, index, (RComplex) value);
                 break;
             case Character:
-                setStringAt(receiver, index, (String) value, InputNACheck.SEEN_NA);
+                setStringAt(receiver, index, (String) value);
                 break;
             default:
                 CompilerDirectives.transferToInterpreter();
@@ -777,38 +1167,56 @@ public abstract class VectorDataLibrary extends Library {
     // Utility methods. The instance utility methods are not intended for overriding although they
     // may be overridden if the need is.
 
-    public static void transferElementSameType(VectorDataLibrary destLib, RandomAccessWriteIterator destIt, Object dest, int destIdx, VectorDataLibrary sourceLib, RandomAccessIterator sourceIt,
+    public void transferElementSameType(@SuppressWarnings("unused") Object receiver, RandomAccessWriteIterator destIt, Object dest, int destIdx, VectorDataLibrary sourceLib,
+                    RandomAccessIterator sourceIt,
                     Object source, int sourceIdx) {
-        RType type = sourceLib.getType(source);
-        assert type == destLib.getType(dest);
-        switch (type) {
+        RType sourceType = sourceLib.getType(source);
+        RType destType = getType(dest);
+        // assert checkSameType(type, destLib.getType(dest));
+        switch (destType) {
             case Integer:
-                destLib.setInt(dest, destIt, destIdx, sourceLib.getInt(source, sourceIt, sourceIdx));
+                setInt(dest, destIt, destIdx, sourceLib.getInt(source, sourceIt, sourceIdx));
                 break;
             case Double:
-                destLib.setDouble(dest, destIt, destIdx, sourceLib.getDouble(source, sourceIt, sourceIdx));
+                setDouble(dest, destIt, destIdx, sourceLib.getDouble(source, sourceIt, sourceIdx));
                 break;
             case Logical:
-                destLib.setLogical(dest, destIt, destIdx, sourceLib.getLogical(source, sourceIt, sourceIdx));
+                setLogical(dest, destIt, destIdx, sourceLib.getLogical(source, sourceIt, sourceIdx));
                 break;
             case Raw:
-                destLib.setRaw(dest, destIt, destIdx, sourceLib.getRaw(source, sourceIt, sourceIdx));
+                setRaw(dest, destIt, destIdx, sourceLib.getRaw(source, sourceIt, sourceIdx));
                 break;
             case Complex:
-                destLib.setComplex(dest, destIt, destIdx, sourceLib.getComplex(source, sourceIt, sourceIdx));
+                switch (sourceType) {
+                    case Integer:
+                    case Double:
+                    case Complex:
+                        setComplex(dest, destIt, destIdx, sourceLib.getComplex(source, sourceIt, sourceIdx));
+                        break;
+                    default:
+                        setComplex(dest, destIt, destIdx, sourceLib.getComplex(source, sourceIt, sourceIdx));
+                }
                 break;
             case Character:
-                destLib.setString(dest, destIt, destIdx, sourceLib.getString(source, sourceIt, sourceIdx));
+                switch (sourceType) {
+                    case Integer:
+                    case Double:
+                    case Character:
+                        setString(dest, destIt, destIdx, sourceLib.getString(source, sourceIt, sourceIdx));
+                        break;
+                    default:
+                        setString(dest, destIt, destIdx, sourceLib.getString(source, sourceIt, sourceIdx));
+                }
                 break;
             case List:
             case PairList:
             case Language:
             case Expression:
-                destLib.setElement(dest, destIt, destIdx, sourceLib.getElement(source, sourceIt, sourceIdx));
+                setElement(dest, destIt, destIdx, sourceLib.getElement(source, sourceIt, sourceIdx));
                 break;
             default:
                 CompilerDirectives.transferToInterpreter();
-                throw RInternalError.unimplemented(type.toString());
+                throw RInternalError.unimplemented(destType.toString());
         }
     }
 
@@ -838,26 +1246,26 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
-    public void setDataAtAsObject(Object data, int index, Object value, InputNACheck naCheck) {
+    public void setDataAtAsObject(Object data, int index, Object value) {
         RType type = getType(data);
         switch (type) {
             case Integer:
-                setIntAt(data, index, (Integer) value, naCheck);
+                setIntAt(data, index, (Integer) value);
                 break;
             case Double:
-                setDoubleAt(data, index, (Double) value, naCheck);
+                setDoubleAt(data, index, (Double) value);
                 break;
             case Logical:
-                setLogicalAt(data, index, (Byte) value, naCheck);
+                setLogicalAt(data, index, (Byte) value);
                 break;
             case Raw:
-                setRawAt(data, index, (Byte) value, naCheck);
+                setRawAt(data, index, (Byte) value);
                 break;
             case Complex:
-                setComplexAt(data, index, (RComplex) value, naCheck);
+                setComplexAt(data, index, (RComplex) value);
                 break;
             case Character:
-                setStringAt(data, index, (String) value, naCheck);
+                setStringAt(data, index, (String) value);
                 break;
             case List:
             case PairList:
@@ -884,7 +1292,8 @@ public abstract class VectorDataLibrary extends Library {
                 setLogical(data, it, index, RRuntime.LOGICAL_NA);
                 break;
             case Raw:
-                throw RInternalError.shouldNotReachHere("raw vectors do not have NA value");
+                setRaw(data, it, index, (byte) 0);
+                break;
             case Complex:
                 setComplex(data, it, index, RComplex.createNA());
                 break;
@@ -904,56 +1313,57 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
-    public boolean isNextNA(Object data, SeqIterator it, NACheck naCheck) {
+    public boolean isNextNA(Object data, SeqIterator it) {
         RType type = getType(data);
         switch (type) {
             case Integer:
-                return naCheck.check(getNextInt(data, it));
+                return getNACheck(data).check(getNextInt(data, it));
             case Double:
-                return naCheck.check(getNextDouble(data, it));
+                return getNACheck(data).check(getNextDouble(data, it));
             case Logical:
-                return naCheck.check(getNextLogical(data, it));
+                return getNACheck(data).check(getNextLogical(data, it));
             case Raw:
                 return false;
             case Complex:
-                return naCheck.check(getNextComplex(data, it));
+                return getNACheck(data).check(getNextComplex(data, it));
             case Character:
-                return naCheck.check(getNextString(data, it));
+                return getNACheck(data).check(getNextString(data, it));
             case List:
             case PairList:
             case Language:
             case Expression:
                 // To be compatible with the VectorAccess API, checkListElement checks for NULLs not
                 // NAs...
-                return naCheck.checkListElement(getNextElement(data, it));
+                return getNACheck(data).checkListElement(getNextElement(data, it));
             default:
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.unimplemented(type.toString());
         }
     }
 
-    public boolean isNAAt(Object data, int index, NACheck naCheck) {
+    // XXX perhaps 1 naCheck too much
+    public boolean isNAAt(Object data, int index) {
         RType type = getType(data);
         switch (type) {
             case Integer:
-                return naCheck.check(getIntAt(data, index));
+                return getNACheck(data).check(getIntAt(data, index));
             case Double:
-                return naCheck.check(getDoubleAt(data, index));
+                return getNACheck(data).check(getDoubleAt(data, index));
             case Logical:
-                return naCheck.check(getLogicalAt(data, index));
+                return getNACheck(data).check(getLogicalAt(data, index));
             case Raw:
                 return false;
             case Complex:
-                return naCheck.check(getComplexAt(data, index));
+                return getNACheck(data).check(getComplexAt(data, index));
             case Character:
-                return naCheck.check(getStringAt(data, index));
+                return getNACheck(data).check(getStringAt(data, index));
             case List:
             case PairList:
             case Language:
             case Expression:
                 // To be compatible with the VectorAccess API, checkListElement checks for NULLs not
                 // NAs...
-                return naCheck.checkListElement(getElementAt(data, index));
+                return getNACheck(data).checkListElement(getElementAt(data, index));
             default:
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.unimplemented(type.toString());
@@ -979,8 +1389,6 @@ public abstract class VectorDataLibrary extends Library {
             // pattern
             // this could be when you do @CachedLibrary("vec") instead of
             // @CachedLibrary("vec.getData()")
-            assert !(receiver instanceof RIntVector);
-            assert !(receiver instanceof RDoubleVector);
             return delegate.accepts(receiver);
         }
 
@@ -990,6 +1398,16 @@ public abstract class VectorDataLibrary extends Library {
             int result = delegate.getLength(data);
             assert result >= 0;
             return result;
+        }
+
+        @Override
+        public NACheck getNACheck(Object receiver) {
+            return delegate.getNACheck(receiver);
+        }
+
+        @Override
+        public InputNACheck getInputNACheck(Object receiver) {
+            return delegate.getInputNACheck(receiver);
         }
 
         @Override
@@ -1007,7 +1425,8 @@ public abstract class VectorDataLibrary extends Library {
             assert result != null;
             assert getUncachedLib().isWriteable(result);
             // data is not complete => result is not complete
-            assert delegate.isComplete(data) || !getUncachedLib().isComplete(result);
+            // XXX while materializing data, they have no owner yet
+            // assert delegate.isComplete(data) || !getUncachedLib().isComplete(result);
             return result;
         }
 
@@ -1029,7 +1448,7 @@ public abstract class VectorDataLibrary extends Library {
             // end
             if (fillNA && newSize > delegate.getLength(data)) {
                 assert !getUncachedLib().isComplete(result);
-                assert getUncachedLib().isNAAt(result, getUncachedLib().getLength(result) - 1, NACheck.getEnabled());
+                assert getUncachedLib().isNAAt(result, getUncachedLib().getLength(result) - 1);
             }
             return result;
         }
@@ -1052,12 +1471,35 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
-        public void setDataAtAsObject(Object data, int index, Object value, InputNACheck naCheck) {
+        public void setDataAtAsObject(Object data, int index, Object value) {
             assert index >= 0 && index < delegate.getLength(data);
-            delegate.setDataAtAsObject(data, index, value, naCheck);
-            assert delegate.getDataAtAsObject(data, index) == value;
+            delegate.setDataAtAsObject(data, index, value);
+            assert isSame(delegate.getDataAtAsObject(data, index), value) : "data: " + data + ", delegate: " + delegate +
+                            ", index: " + index + ", value: " + value + ", dataAt: " +
+                            delegate.getDataAtAsObject(data, index);
             // NA written -> complete must be false
-            assert !delegate.isNAAt(data, index, NACheck.getEnabled()) || !delegate.isComplete(data);
+            assert !delegate.isNAAt(data, index) || !delegate.isComplete(data) : "data: " + data + ", delegate: " + delegate + ", value: " + value + " " +
+                            delegate.isNAAt(data, index) + " " +
+                            delegate.isComplete(data);
+        }
+
+        private static boolean isSame(Object o1, Object o2) {
+            if (o1 instanceof Double) {
+                if (RRuntime.isNAorNaN((double) o1) && !RRuntime.isNAorNaN((double) o2)) {
+                    return false;
+                }
+                if (!RRuntime.isNAorNaN((double) o1) && RRuntime.isNAorNaN((double) o2)) {
+                    return false;
+                }
+                // if (o1 == (Double) o2) {
+                // return true;
+                // }
+                return true;
+            }
+            if (o1.equals(o2)) {
+                return true;
+            }
+            return false;
         }
 
         @Override
@@ -1075,9 +1517,12 @@ public abstract class VectorDataLibrary extends Library {
             assert index >= 0 && index < delegate.getLength(receiver);
             naCheck.assertInputValue(value);
             delegate.setDoubleAt(receiver, index, value, naCheck);
-            assert delegate.getDoubleAt(receiver, index) == value;
+            assert isSame(delegate.getDoubleAt(receiver, index), value);
             // NA written -> complete must be false
-            assert !RRuntime.isNA(delegate.getDoubleAt(receiver, index)) || !delegate.isComplete(receiver);
+            if (RRuntime.isNA(delegate.getDoubleAt(receiver, index)) && delegate.isComplete(receiver)) {
+                System.out.println("");
+            }
+            assert !RRuntime.isNA(delegate.getDoubleAt(receiver, index)) || !delegate.isComplete(receiver) : delegate.getDoubleAt(receiver, index) + " " + delegate.isComplete(receiver);
         }
 
         @Override
@@ -1093,13 +1538,13 @@ public abstract class VectorDataLibrary extends Library {
         @Override
         public void commitWriteIterator(Object receiver, SeqWriteIterator iterator) {
             delegate.commitWriteIterator(receiver, iterator);
-            assert verify(receiver);
+            verifyIfSlowAssertsEnabled(receiver);
         }
 
         @Override
         public void commitRandomAccessWriteIterator(Object receiver, RandomAccessWriteIterator iterator) {
             delegate.commitRandomAccessWriteIterator(receiver, iterator);
-            assert verify(receiver);
+            verifyIfSlowAssertsEnabled(receiver);
         }
 
         private void verifyIfSlowAssertsEnabled(Object data) {
@@ -1124,7 +1569,7 @@ public abstract class VectorDataLibrary extends Library {
                 case Double:
                     for (int i = 0; i < len; i++) {
                         double doubleVal = lib.getDoubleAt(data, i);
-                        assert !isComplete || !RRuntime.isNA(doubleVal);
+                        assert !isComplete || !RRuntime.isNA(doubleVal) : isComplete + " " + doubleVal;
                         assert lib.getDataAtAsObject(data, i).equals(doubleVal);
                     }
                     break;
@@ -1225,13 +1670,13 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
-        public boolean isNextNA(Object data, SeqIterator it, NACheck naCheck) {
-            return delegate.isNextNA(data, it, naCheck);
+        public boolean isNextNA(Object data, SeqIterator it) {
+            return delegate.isNextNA(data, it);
         }
 
         @Override
-        public boolean isNAAt(Object data, int index, NACheck naCheck) {
-            return delegate.isNAAt(data, index, naCheck);
+        public boolean isNAAt(Object data, int index) {
+            return delegate.isNAAt(data, index);
         }
 
         @Override
@@ -1498,6 +1943,287 @@ public abstract class VectorDataLibrary extends Library {
         public void setElement(Object receiver, RandomAccessWriteIterator it, int index, Object value) {
             delegate.setElement(receiver, it, index, value);
         }
+    }
+
+    private static byte complex2logical(NACheck naCheck, RComplex value) {
+        return naCheck.check(value) ? RRuntime.LOGICAL_NA : RRuntime.complex2logicalNoCheck(value);
+    }
+
+    private static String complex2string(NACheck naCheck, RComplex value) {
+        return naCheck.check(value) ? RRuntime.STRING_NA : RContext.getRRuntimeASTAccess().encodeComplex(value);
+    }
+
+    private static byte complex2raw(NACheck naCheck, RComplex value) {
+        naCheck.check(value);
+        double realPart = value.getRealPart();
+        double realResult = realPart;
+
+        if (realPart > Integer.MAX_VALUE || realPart <= Integer.MIN_VALUE) {
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
+            realResult = 0;
+        }
+
+        if (value.getImaginaryPart() != 0) {
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        }
+
+        if (Double.isNaN(realPart) || realPart < 0 || realPart >= 256) {
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.OUT_OF_RANGE);
+            realResult = 0;
+        }
+        return (byte) RRuntime.double2rawIntValue(realResult);
+    }
+
+    private static double complex2double(NACheck naCheck, RComplex cpl) {
+        double value = cpl.getRealPart();
+        if (Double.isNaN(value)) {
+            naCheck.enable(true);
+            return RRuntime.DOUBLE_NA;
+        }
+        if (cpl.getImaginaryPart() != 0) {
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        }
+        return value;
+    }
+
+    private static int complex2int(NACheck naCheck, RComplex cpl) {
+        double value = cpl.getRealPart();
+        if (Double.isNaN(value)) {
+            naCheck.enable(true);
+            return RRuntime.INT_NA;
+        }
+        if (value > Integer.MAX_VALUE || value <= Integer.MIN_VALUE) {
+            naCheck.enable(true);
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
+            return RRuntime.INT_NA;
+        }
+        if (cpl.getImaginaryPart() != 0) {
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        }
+        return (int) value;
+    }
+
+    private static byte double2raw(NACheck naCheck, double value) {
+        naCheck.check(value);
+        byte result = (byte) (int) value;
+        if ((result & 0xff) != value) {
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.OUT_OF_RANGE);
+            return 0;
+        }
+        return result;
+    }
+
+    private static String double2string(NACheck naCheck, double value) {
+        return naCheck.check(value) ? RRuntime.STRING_NA : RContext.getRRuntimeASTAccess().encodeDouble(value);
+    }
+
+    private static RComplex double2complex(NACheck naCheck, double value) {
+        return naCheck.check(value) ? RComplex.createNA() : RRuntime.double2complexNoCheck(value);
+    }
+
+    private static int double2int(NACheck naCheck, double value) {
+        naCheck.enable(value);
+        if (naCheck.checkNAorNaN(value)) {
+            return RRuntime.INT_NA;
+        }
+        if (value > Integer.MAX_VALUE || value <= Integer.MIN_VALUE) {
+            // conversionOverflowReached.enter();
+            naCheck.enable(true);
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
+            return RRuntime.INT_NA;
+        }
+        return (int) value;
+    }
+
+    private static byte double2logical(NACheck naCheck, double value) {
+        return naCheck.check(value) ? RRuntime.LOGICAL_NA : RRuntime.double2logicalNoCheck(value);
+    }
+
+    private static byte int2raw(NACheck naCheck, int value) {
+        naCheck.check(value);
+        byte result = (byte) value;
+        if ((result & 0xff) != value) {
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.OUT_OF_RANGE);
+            return 0;
+        }
+        return result;
+    }
+
+    private static String int2string(NACheck naCheck, int value) {
+        return naCheck.check(value) ? RRuntime.STRING_NA : RRuntime.intToStringNoCheck(value);
+    }
+
+    private static RComplex int2complex(NACheck naCheck, int value) {
+        return naCheck.check(value) ? RComplex.createNA() : RRuntime.int2complexNoCheck(value);
+    }
+
+    private static double int2double(NACheck naCheck, int value) {
+        return naCheck.check(value) ? RRuntime.DOUBLE_NA : RRuntime.int2doubleNoCheck(value);
+    }
+
+    private static byte int2logical(NACheck naCheck, int value) {
+        return naCheck.check(value) ? RRuntime.LOGICAL_NA : RRuntime.int2logicalNoCheck(value);
+    }
+
+    private static byte logical2raw(NACheck naCheck, byte value) {
+        if (naCheck.check(value)) {
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.OUT_OF_RANGE);
+            return 0;
+        } else {
+            return value;
+        }
+    }
+
+    private static String logical2string(NACheck naCheck, byte value) {
+        return naCheck.check(value) ? RRuntime.STRING_NA : RRuntime.logicalToStringNoCheck(value);
+    }
+
+    private static RComplex logical2complex(NACheck naCheck, byte value) {
+        return naCheck.check(value) ? RComplex.createNA() : RRuntime.logical2complexNoCheck(value);
+    }
+
+    private static double logical2double(NACheck naCheck, byte value) {
+        return naCheck.check(value) ? RRuntime.DOUBLE_NA : RRuntime.logical2doubleNoCheck(value);
+    }
+
+    private static int logical2int(NACheck naCheck, byte value) {
+        return naCheck.check(value) ? RRuntime.INT_NA : RRuntime.logical2intNoCheck(value);
+    }
+
+    private static byte raw2logical(byte value) {
+        return value == 0 ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE;
+    }
+
+    private static String raw2string(byte value) {
+        return RRuntime.rawToHexString(value);
+    }
+
+    private static RComplex raw2complex(byte value) {
+        return RComplex.valueOf(value & 0xff, 0);
+    }
+
+    private static double raw2double(byte value) {
+        return value & 0xff;
+    }
+
+    private static int raw2int(byte value) {
+        return value & 0xff;
+    }
+
+    private static byte string2logical(NACheck naCheck, String value) {
+        return naCheck.convertStringToLogical(value);
+    }
+
+    private byte string2raw(NACheck naCheck, String value) {
+        int intValue;
+        if (naCheck.check(value) || emptyStringProfile.profile(value.isEmpty())) {
+            intValue = RRuntime.INT_NA;
+        } else {
+            double d = naCheck.convertStringToDouble(value);
+            naCheck.enable(d);
+            if (naCheck.checkNAorNaN(d)) {
+                if (naCheck.check(d) && !value.isEmpty()) {
+                    // warningReportedProfile.enter();
+                    // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION);
+                }
+                intValue = RRuntime.INT_NA;
+            } else {
+                intValue = naCheck.convertDoubleToInt(d);
+                naCheck.enable(intValue);
+                if (naCheck.check(intValue) && !value.isEmpty()) {
+                    // warningReportedProfile.enter();
+                    // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
+                }
+            }
+            int intRawValue = RRuntime.int2rawIntValue(intValue);
+            if (intValue != intRawValue) {
+                // warningReportedProfile.enter();
+                // accessIter.warning(RError.Message.OUT_OF_RANGE);
+                intValue = 0;
+            }
+        }
+        return intValue >= 0 && intValue <= 255 ? (byte) intValue : 0;
+    }
+
+    private RComplex string2complex(NACheck naCheck, String value) {
+        RComplex complexValue;
+        if (naCheck.check(value) || emptyStringProfile.profile(value.isEmpty())) {
+            complexValue = RComplex.createNA();
+        } else {
+            complexValue = RRuntime.string2complexNoCheck(value);
+            if (complexValue.isNA()) {
+                // warningReportedProfile.enter();
+                naCheck.enable(true);
+                // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION);
+            }
+        }
+        return complexValue;
+    }
+
+    private double string2double(NACheck naCheck, String str) {
+        if (naCheck.check(str) || emptyStringProfile.profile(str.isEmpty())) {
+            naCheck.enable(true);
+            return RRuntime.DOUBLE_NA;
+        }
+        double value = naCheck.convertStringToDouble(str);
+        if (RRuntime.isNA(value)) {
+            naCheck.enable(true);
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION);
+            return RRuntime.DOUBLE_NA;
+        }
+        return value;
+    }
+
+    private int string2int(NACheck naCheck, String str) {
+        if (naCheck.check(str) || emptyStringProfile.profile(str.isEmpty())) {
+            naCheck.enable(true);
+            return RRuntime.INT_NA;
+        }
+        double d = naCheck.convertStringToDouble(str);
+        naCheck.enable(d);
+        if (naCheck.checkNAorNaN(d)) {
+            if (naCheck.check(d)) {
+                // warningReportedProfile.enter();
+                // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION);
+                return RRuntime.INT_NA;
+            }
+            return RRuntime.INT_NA;
+        }
+        int value = naCheck.convertDoubleToInt(d);
+        naCheck.enable(value);
+        if (naCheck.check(value)) {
+            // warningReportedProfile.enter();
+            // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
+            return RRuntime.INT_NA;
+        }
+        return value;
+    }
+
+    private static RAbstractLogicalVector asLogical(Object obj) {
+        return (RAbstractLogicalVector) obj;
+    }
+
+    private static RAbstractRawVector asRaw(Object obj) {
+        return (RAbstractRawVector) obj;
+    }
+
+    private static RAbstractStringVector asString(Object obj) {
+        return (RAbstractStringVector) obj;
+    }
+
+    private static RAbstractComplexVector asComplex(Object obj) {
+        return (RAbstractComplexVector) obj;
     }
 
     // Private utility methods
