@@ -64,7 +64,7 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
 
     @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()",
                     "dataLib.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")
-    protected RDoubleVector setInt(RDoubleVector vector, int index, int value,
+    protected RDoubleVector setDouble(RDoubleVector vector, int index, double value,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         if (!isValidIndexCached(dataLib, vector, index) || !dataLib.isWriteable(vector.getData())) {
             throw RSpecialFactory.throwFullCallNeeded(value);
@@ -104,16 +104,16 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         return setList(list, index, value, list.slowPathAccess());
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "dataLib.isWriteable(vector)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "dataLib.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")
     protected RDoubleVector setDoubleIntIndexIntValue(RDoubleVector vector, int index, int value,
                     @Cached BranchProfile isNAProfile,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         if (RRuntime.isNA(value)) {
             isNAProfile.enter();
-            dataLib.setDoubleAt(vector, index - 1, RRuntime.DOUBLE_NA);
+            dataLib.setDoubleAt(vector.getData(), index - 1, RRuntime.DOUBLE_NA);
             assert !vector.isComplete();
         } else {
-            dataLib.setDoubleAt(vector, index - 1, value);
+            dataLib.setDoubleAt(vector.getData(), index - 1, value);
         }
         return vector;
     }
