@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.access.vector.AccessForeignObjectNode.ReadPositionsNode;
 import com.oracle.truffle.r.nodes.attributes.GetPropertyNode;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
@@ -92,10 +94,20 @@ public abstract class AccessSlotNode extends BaseAccessSlotNode implements Acces
         }
     }
 
+    @Specialization(guards = {"isForeignObject(object)"})
+    protected Object getForeign(TruffleObject object, String name,
+                    @Cached("create()") ReadPositionsNode readElements) {
+        return readElements.execute(object, new String[]{name});
+    }
+
     @Fallback
     @TruffleBoundary
     protected Object getSlot(Object object, Object name) {
         throw error(RError.Message.SLOT_CANNOT_GET, name, RRuntime.getRTypeName(object));
+    }
+
+    protected static boolean isForeignObject(Object object) {
+        return RRuntime.isForeignObject(object);
     }
 
 }

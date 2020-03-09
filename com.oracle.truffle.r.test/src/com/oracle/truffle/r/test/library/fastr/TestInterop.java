@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -168,10 +168,6 @@ public class TestInterop extends TestBase {
         assertEvalFastR("cl <- java.type('java.math.BigInteger'); fo <- new(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength()", "print(72L)");
         assertEvalFastR("cl <- java.type('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength(), silent=TRUE); fo <- new(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength()",
                         "print(72L)");
-        assertEvalFastR("cl <- java.type('java.math.BigInteger'); fo <- new(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
-                        "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"polyglot.value\"\n')");
-        assertEvalFastR("cl <- java.type('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength, silent=TRUE); fo <- new(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
-                        "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"polyglot.value\"\n')");
     }
 
     /**
@@ -290,6 +286,7 @@ public class TestInterop extends TestBase {
         // tests the execute msg
         assertEvalFastR("tpojo <- import('testPOJO)'; tos <- tpojo$toString(); is.character(tos) && length(tos) == 1", "TRUE");
         assertEvalFastR("ja <- new(java.type('int[]'), 3); tos <- ja$toString(); is.character(tos) && length(tos) == 1", "TRUE");
+        assertEvalFastR("ja <- new(java.type('int[]'), 3); ts <- ja$toString; tos <- ts(); is.character(tos) && length(tos) == 1", "TRUE");
     }
 
     @Test
@@ -297,6 +294,7 @@ public class TestInterop extends TestBase {
         // tests the invoke msg
         assertEvalFastR("tpojo <- import('testPOJO)'; tpojo@toString(); is.character(tos) && length(tos) == 1", "TRUE");
         assertEvalFastR("ja <-new(java.type('int[]'), 3); tos <- ja@toString(); is.character(tos) && length(tos) == 1", "TRUE");
+        assertEvalFastR("ja <-new(java.type('int[]'), 3); ts <- ja@toString; tos <- ts(); is.character(tos) && length(tos) == 1", "TRUE");
     }
 
     public void testVariableWrite() {

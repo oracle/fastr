@@ -1,4 +1,4 @@
-# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -87,6 +87,20 @@ eval(expression({
 		res
 	}
 	
+        specialOpCompletionsHelper.original <- specialOpCompletionsHelper
+        specialOpCompletionsHelper <- function(op, suffix, prefix)
+        {
+            tryToEval <- function(s) {
+                tryCatch(eval(parse(text = s), envir = .GlobalEnv), error = function(e)e)
+            }
+            if(op == "@") {               
+                object <- tryToEval(prefix)
+                if (is.polyglot.value(object)) {
+                    return(names(object))
+                }               
+            }
+            return(specialOpCompletionsHelper.original(op, suffix, prefix))
+        }
 }), asNamespace("utils"))
 
 # export new public functions
