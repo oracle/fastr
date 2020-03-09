@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags;
@@ -113,7 +114,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     @Override
     protected boolean isObjectOfLanguage(Object object) {
-        return object instanceof RBaseObject;
+        return object instanceof RTruffleObject;
     }
 
     @Override
