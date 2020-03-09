@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix.special;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -30,12 +29,10 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.SubInterface;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
-import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 /**
  * Subscript code for vectors minus list is the same as subset code, this class allows sharing it.
@@ -51,21 +48,15 @@ public abstract class AccessSpecial extends IndexingSpecialCommon implements Sub
 
     public abstract int executeInteger(RIntVector vec, int index);
 
-    @Specialization(guards = {"simpleVector(vector)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
     protected int accessInt(RIntVector vector, int index,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
-        if (!isValidIndexCached(dataLib, vector, index)) {
-            throw RSpecialFactory.throwFullCallNeeded();
-        }
         return dataLib.getIntAt(vector.getData(), index - 1);
     }
 
-    @Specialization(guards = {"simpleVector(vector)"}, limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
     protected double accessDouble(RAbstractDoubleVector vector, int index,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
-        if (!isValidIndexCached(dataLib, vector, index)) {
-            throw RSpecialFactory.throwFullCallNeeded();
-        }
         return dataLib.getDoubleAt(vector.getData(), index - 1);
     }
 
