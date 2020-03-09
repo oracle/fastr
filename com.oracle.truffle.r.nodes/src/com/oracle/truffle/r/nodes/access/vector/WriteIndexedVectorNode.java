@@ -26,7 +26,9 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.SlowPathException;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -40,9 +42,12 @@ import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.IntValueProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
+import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -57,6 +62,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  *
  * @see WriteIndexedVectorNode
  */
+@ImportStatic(DSLConfig.class)
 abstract class WriteIndexedVectorNode extends Node {
 
     private final WriteIndexedVectorParameters params;
@@ -77,16 +83,20 @@ abstract class WriteIndexedVectorNode extends Node {
         return WriteIndexedVectorAccessNodeGen.create(params, dimensionIndex);
     }
 
-    @Specialization(guards = {"leftAccess.supports(left)", "rightAccess.supports(right)"})
+    // XXX getTypedVectorDataLibraryCacheSize()
+    @Specialization(guards = {"leftAccess.supports(left)", "rightAccess.supports(right)"}, limit = "getGenericVectorAccessCacheSize()")
     protected void write(RAbstractVector left, Object[] positions, RAbstractContainer right, int[] positionTargetDimensions,
                     @Cached("left.access()") VectorAccess leftAccess,
                     @Cached("right.access()") VectorAccess rightAccess,
                     @Cached("createBinaryProfile()") ConditionProfile completeVectorProfile,
-                    @Cached("createWrite()") WriteIndexedVectorAccessNode write) {
-        try (RandomIterator leftIter = leftAccess.randomAccess(left); RandomIterator rightIter = rightAccess.randomAccess(right)) {
-            write.apply(leftIter, leftAccess, positions, rightIter, rightAccess, right, positionTargetDimensions);
+                    @Cached("createWrite()") WriteIndexedVectorAccessNode write,
+                    @CachedLibrary("left") AbstractContainerLibrary leftLibrary,
+                    @CachedLibrary("right") AbstractContainerLibrary rightLibrary,
+                    @CachedLibrary("getPosition(positions)") AbstractContainerLibrary positionContainerLibrary) {
+        try (RandomIterator leftIter = leftAccess.randomAccess(leftLibrary, left); RandomIterator rightIter = rightAccess.randomAccess(rightLibrary, right)) {
+            write.apply(positionContainerLibrary, leftIter, leftAccess, positions, rightIter, rightAccess, right, positionTargetDimensions);
 
-            if (completeVectorProfile.profile(left.isComplete())) {
+            if (completeVectorProfile.profile(leftLibrary.isComplete(left))) {
                 if (!(leftAccess.na.neverSeenNA() && rightAccess.na.neverSeenNA())) {
                     left.setComplete(false);
                 }
@@ -101,11 +111,15 @@ abstract class WriteIndexedVectorNode extends Node {
         VectorAccess leftAccess = left.slowPathAccess();
         VectorAccess rightAccess = right.slowPathAccess();
         try (RandomIterator leftIter = leftAccess.randomAccess(left); RandomIterator rightIter = rightAccess.randomAccess(right)) {
-            write.apply(leftIter, leftAccess, positions, rightIter, rightAccess, right, positionTargetDimensions);
+            write.apply(AbstractContainerLibrary.getFactory().getUncached(), leftIter, leftAccess, positions, rightIter, rightAccess, right, positionTargetDimensions);
             if (!(leftAccess.na.neverSeenNA() && rightAccess.na.neverSeenNA())) {
                 left.setComplete(false);
             }
         }
+    }
+
+    protected Object getPosition(Object[] positions) {
+        return positions[dimensionIndex];
     }
 }
 
@@ -138,6 +152,7 @@ final class WriteIndexedVectorParameters {
  * extracts (in which case the write target is a vector preallocated to hold the extraction result).
  * The entry point is the {@code apply} method.
  */
+@ImportStatic(DSLConfig.class)
 abstract class WriteIndexedVectorAccessNode extends Node {
 
     private final WriteIndexedVectorParameters params;
@@ -148,7 +163,6 @@ abstract class WriteIndexedVectorAccessNode extends Node {
     @CompilationFinal private VectorLengthProfile dimensionValueProfile;
     @CompilationFinal private ConditionProfile resetIndexProfile;
 
-    private final VectorLengthProfile positionLengthProfile = VectorLengthProfile.create();
     private final ValueProfile positionClassProfile = ValueProfile.createClassProfile();
     private final ConditionProfile positionMatchesTargetDimensionsProfile = ConditionProfile.createBinaryProfile();
 
@@ -187,7 +201,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
      * target of write operation. The boolean flag {@link WriteIndexedVectorParameters#isReplace}
      * passed to constructor distinguishes those two cases.
      */
-    public void apply(RandomIterator leftIter, VectorAccess leftAccess, Object[] positions, RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right,
+    void apply(AbstractContainerLibrary library, RandomIterator leftIter, VectorAccess leftAccess, Object[] positions, RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right,
                     int[] positionTargetDimensions) {
         assert params.totalDimensions == positions.length : "totalDimensions must be constant per vector write node";
 
@@ -209,19 +223,19 @@ abstract class WriteIndexedVectorAccessNode extends Node {
             firstTargetDimension = getDimensionValueProfile().profile(positionTargetDimensions[dimensionIndex]);
         }
 
-        applyImpl(leftIter, leftAccess, 0, leftLength, positionTargetDimensions, firstTargetDimension,
+        applyImpl(library, leftIter, leftAccess, 0, leftLength, positionTargetDimensions, firstTargetDimension,
                         positions, initialPositionOffset,
                         rightIter, rightAccess, right, 0, rightLength, false);
     }
 
     private int applyImpl(//
-                    RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
+                    AbstractContainerLibrary library, RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
                     Object[] positions, int positionOffset,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA) {
 
         Object position = positionClassProfile.profile(positions[dimensionIndex]);
 
-        int positionLength = getPositionLength(position);
+        int positionLength = getPositionLength(library, position);
         int newPositionOffset;
         if (positionMatchesTargetDimensionsProfile.profile(positionOffset == targetDimension)) {
             newPositionOffset = 1;
@@ -233,9 +247,10 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                         rightIter, rightAccess, right, rightBase, rightLength, parentNA);
     }
 
-    private int getPositionLength(Object position) {
+    private static int getPositionLength(AbstractContainerLibrary library, Object position) {
         if (position instanceof RAbstractVector) {
-            return positionLengthProfile.profile(((RAbstractVector) position).getLength());
+            // XXX
+            return library.getLength(position);
         } else {
             return -1;
         }
@@ -245,31 +260,34 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                     Object[] positions, Object position, int positionOffset, int positionLength,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int valueBase, int valueLength, boolean parentNA);
 
-    @Specialization
+    @Specialization(limit = "getGenericVectorAccessCacheSize()")
     protected int doMissing(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
                     Object[] positions, @SuppressWarnings("unused") RMissing position, int positionOffset, @SuppressWarnings("unused") int positionLength,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
-                    @Cached("createCountingProfile()") LoopConditionProfile profile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile,
+                    @CachedLibrary("getPosition(positions)") AbstractContainerLibrary positionsLibrary) {
         int rightIndex = rightBase;
         profile.profileCounted(targetDimension);
         for (int positionValue = 0; profile.inject(positionValue < targetDimension); positionValue += 1) {
             rightIndex = applyInner(//
-                            leftIter, leftAccess, leftBase, leftLength, targetDimensions,
+                            positionsLibrary, leftIter, leftAccess, leftBase, leftLength, targetDimensions,
                             positions, positionOffset, positionValue,
                             rightIter, rightAccess, right, rightLength, rightIndex, parentNA);
         }
         return rightIndex;
     }
 
-    @Specialization
+    @Specialization(limit = "getGenericVectorAccessCacheSize()")
     protected int doLogicalPosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
                     Object[] positions, RAbstractLogicalVector position, int positionOffset, int positionLength,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("create()") BranchProfile wasTrue,
                     @Cached("create()") AlwaysOnBranchProfile outOfBounds,
                     @Cached("createCountingProfile()") LoopConditionProfile profile,
-                    @Cached("createBinaryProfile()") ConditionProfile incModProfile) {
-        getPositionNACheck().enable(!params.skipNA && !position.isComplete());
+                    @Cached("createBinaryProfile()") ConditionProfile incModProfile,
+                    @CachedLibrary("position") RIntVectorDataLibrary positionLibrary,
+                    @CachedLibrary("getPosition(positions)") AbstractContainerLibrary positionsLibrary) {
+        getPositionNACheck().enable(!params.skipNA && !positionLibrary.isComplete(position));
 
         int length = targetDimension;
         if (positionLength > targetDimension) {
@@ -291,7 +309,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                         isNA = true;
                     }
                     rightIndex = applyInner(//
-                                    leftIter, leftAccess, leftBase, leftLength, targetDimensions,
+                                    positionsLibrary, leftIter, leftAccess, leftBase, leftLength, targetDimensions,
                                     positions, positionOffset, i,
                                     rightIter, rightAccess, right, rightLength, rightIndex, isNA || parentNA);
                 }
@@ -306,14 +324,15 @@ abstract class WriteIndexedVectorAccessNode extends Node {
      *
      * @throws SlowPathException
      */
-    @Specialization(rewriteOn = SlowPathException.class, guards = "position.isSequence()")
+    @Specialization(rewriteOn = SlowPathException.class, guards = "position.isSequence()", limit = "getGenericVectorAccessCacheSize()")
     protected int doIntegerSequencePosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
                     Object[] positions, RIntVector position, int positionOffset, int positionLength,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("create()") IntValueProfile startProfile,
                     @Cached("create()") IntValueProfile strideProfile,
                     @Cached("createBinaryProfile()") ConditionProfile conditionProfile,
-                    @Cached("createCountingProfile()") LoopConditionProfile profile) throws SlowPathException {
+                    @Cached("createCountingProfile()") LoopConditionProfile profile,
+                    @CachedLibrary("getPosition(positions)") AbstractContainerLibrary positionsLibrary) throws SlowPathException {
         // skip NA check. sequences never contain NA values.
         int rightIndex = rightBase;
         RIntSeqVectorData seq = (RIntSeqVectorData) position.getData();
@@ -329,7 +348,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
         profile.profileCounted(positionLength);
         for (int positionValue = start; profile.inject(ascending ? positionValue < end : positionValue > end); positionValue += stride) {
             rightIndex = applyInner(//
-                            leftIter, leftAccess, leftBase, leftLength, targetDimensions,
+                            positionsLibrary, leftIter, leftAccess, leftBase, leftLength, targetDimensions,
                             positions, positionOffset, positionValue,
                             rightIter, rightAccess, right, rightLength, rightIndex, parentNA);
         }
@@ -341,17 +360,20 @@ abstract class WriteIndexedVectorAccessNode extends Node {
      * positions in an integer vector is significantly lower than the number of elements. This might
      * not be always true and could benefit from more investigation.
      */
-    @Specialization(replaces = "doIntegerSequencePosition")
+    @Specialization(replaces = "doIntegerSequencePosition", limit = "getGenericVectorAccessCacheSize()")
     protected int doIntegerPosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
                     Object[] positions, RIntVector position, int positionOffset, int positionLength,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
-                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
-        getPositionNACheck().enable(position);
+                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
+                    // @CachedLibrary("position") AbstractContainerLibrary positionLibrary,
+                    @CachedLibrary("position.getData()") RIntVectorDataLibrary positionLibrary,
+                    @CachedLibrary("getPosition(positions)") AbstractContainerLibrary positionsLibrary) {
+        getPositionNACheck().enable(positionLibrary, position);
         int rightIndex = rightBase;
 
         lengthProfile.profileCounted(positionLength);
         for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
-            int positionValue = position.getDataAt(i);
+            int positionValue = positionLibrary.getIntAt(position.getData(), i);
             boolean isNA = getPositionNACheck().check(positionValue);
             if (isNA) {
                 if (params.skipNA) {
@@ -359,7 +381,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                 }
             }
             rightIndex = applyInner(//
-                            leftIter, leftAccess, leftBase, leftLength, targetDimensions,
+                            positionsLibrary, leftIter, leftAccess, leftBase, leftLength, targetDimensions,
                             positions, positionOffset, positionValue - 1,
                             rightIter, rightAccess, right, rightLength, rightIndex, isNA || parentNA);
         }
@@ -367,7 +389,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
     }
 
     private int applyInner(//
-                    RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions,
+                    AbstractContainerLibrary positionsLibrary, RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions,
                     Object[] positions, int positionOffset, int positionValue,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightLength, int actionIndex, boolean isNA) {
         int newTargetIndex = leftBase + positionValue * positionOffset;
@@ -405,10 +427,11 @@ abstract class WriteIndexedVectorAccessNode extends Node {
             // generate another for-loop for other dimensions
             int nextTargetDimension = innerVectorNode.getDimensionValueProfile().profile(((int[]) targetDimensions)[innerVectorNode.dimensionIndex]);
             return innerVectorNode.applyImpl(//
-                            leftIter, leftAccess, newTargetIndex, leftLength, targetDimensions, nextTargetDimension,
+                            positionsLibrary, leftIter, leftAccess, newTargetIndex, leftLength, targetDimensions, nextTargetDimension,
                             positions, positionOffset,
                             rightIter, rightAccess, right, actionIndex, rightLength, isNA);
         }
+
     }
 
     private void setListElement(RandomIterator leftIter, VectorAccess leftAccess, RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int leftIndex, int rightIndex) {
@@ -456,5 +479,10 @@ abstract class WriteIndexedVectorAccessNode extends Node {
             resetIndexProfile = ConditionProfile.createBinaryProfile();
         }
         return resetIndexProfile;
+    }
+
+    protected Object getPosition(Object[] positions) {
+
+        return positions[dimensionIndex > 0 ? dimensionIndex - 1 : 0];
     }
 }

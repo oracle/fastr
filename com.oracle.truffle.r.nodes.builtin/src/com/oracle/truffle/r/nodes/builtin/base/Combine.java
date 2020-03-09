@@ -80,6 +80,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -354,6 +355,9 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         return result;
     }
 
+    // XXX
+    @Child private VectorDataLibrary library = VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericVectorAccessCacheSize());
+
     private int processContentElement(RAbstractVector result, int pos, Object element) {
         if (isAbstractVectorProfile.profile(element instanceof RAbstractVector)) {
             RAbstractVector v = (RAbstractVector) element;
@@ -370,7 +374,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
             return 0;
         } else {
             naCheck.enable(true);
-            result.updateDataAtAsObject(pos, element, naCheck);
+            library.setDataAtAsObject(result.getData(), pos, element, naCheck);
             return 1;
         }
     }

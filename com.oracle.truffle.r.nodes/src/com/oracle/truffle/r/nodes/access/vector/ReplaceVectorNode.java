@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.AccessForeignObjectNode.WritePositionsNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.ExtractSingleName;
@@ -42,6 +43,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -113,11 +115,12 @@ public abstract class ReplaceVectorNode extends RBaseNode {
             return null;
         }
         return new CachedReplaceVectorNode(mode, vector, positions, value.getClass(), RRuntime.isForeignObject(value) ? RType.TruffleObject : ((RBaseObject) value).getRType(), true,
-                        recursive, CachedReplaceVectorNode.isValueLengthGreaterThanOne(value), ignoreRefCount);
+                        recursive, CachedReplaceVectorNode.isValueLengthGreaterThanOne(AbstractContainerLibrary.getFactory().getUncached(), value), ignoreRefCount);
     }
 
-    @Specialization(limit = "getCacheSize(5)", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions, value)"})
+    @Specialization(limit = "getCacheSize(5)", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions, valueLibrary, value)"})
     protected Object doReplaceCached(RAbstractVector vector, Object[] positions, Object value,  //
+                    @SuppressWarnings("unused") @CachedLibrary(limit = "getGenericVectorAccessCacheSize()") AbstractContainerLibrary valueLibrary,
                     @Cached("createDefaultCached(vector, positions, value)") CachedReplaceVectorNode cached) {
         assert !isRecursiveSubscript(vector, positions);
         return cached.apply(vector, positions, value);
@@ -240,7 +243,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         private CachedReplaceVectorNode get(ReplaceVectorNode node, RAbstractVector vector, Object[] positions, Object value) {
             CompilerAsserts.neverPartOfCompilation();
             CachedReplaceVectorNode current = cached;
-            if (current == null || !current.isSupported(vector, positions, value)) {
+            if (current == null || !current.isSupported(vector, positions, AbstractContainerLibrary.getFactory().getUncached(), value)) {
                 return cached = insert(node.createDefaultCached(vector, positions, value));
             }
             return current;

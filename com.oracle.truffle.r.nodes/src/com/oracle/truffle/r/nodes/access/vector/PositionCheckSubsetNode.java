@@ -25,27 +25,33 @@ package com.oracle.truffle.r.nodes.access.vector;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+@ImportStatic(DSLConfig.class)
 abstract class PositionCheckSubsetNode extends PositionCheckNode {
 
     private final NACheck positionNACheck = NACheck.create();
@@ -129,7 +135,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         return position;
     }
 
-    @Specialization(/* contains = "doSequence" */)
+    @Specialization(/* contains = "doSequence" */ limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector doDouble(PositionProfile profile, int dimensionLength, RAbstractDoubleVector position, int positionLength,
                     @Cached("create()") BranchProfile seenZeroProfile,
                     @Cached("create()") BranchProfile seenPositiveProfile,
@@ -140,9 +146,10 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("create()") NullProfile hasNamesProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
                     @Cached("create()") GetNamesAttributeNode getNamesNode,
-                    @Cached("create()") SetNamesAttributeNode setNamesNode) {
+                    @Cached("create()") SetNamesAttributeNode setNamesNode,
+                    @CachedLibrary("position.getData()") RDoubleVectorDataLibrary positionLibrary) {
         int[] intPosition = new int[positionLength];
-        positionNACheck.enable(position);
+        positionNACheck.enable(positionLibrary, position);
         boolean hasSeenPositive = false;
         boolean hasSeenNegative = false;
         boolean hasSeenNA = false;
@@ -151,7 +158,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         int maxOutOfBoundsIndex = 0;
         lengthProfile.profileCounted(positionLength);
         for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
-            double positionValue = position.getDataAt(i);
+            double positionValue = positionLibrary.getDoubleAt(position.getData(), i);
             int intPositionValue;
             if (Double.isInfinite(positionValue)) {
                 seenInf.enter();
@@ -213,7 +220,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
 
     }
 
-    @Specialization(/* contains = "doSequence" */)
+    @Specialization(/* contains = "doSequence" */ limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector doInteger(PositionProfile profile, int dimensionLength, RIntVector position, int positionLength,
                     @Cached("create()") BranchProfile seenZeroProfile,
                     @Cached("create()") BranchProfile seenPositiveProfile,
@@ -222,9 +229,10 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("createBinaryProfile()") ConditionProfile seenPositiveFlagProfile,
                     @Cached("createBinaryProfile()") ConditionProfile seenNegativeFlagProfile,
                     @Cached("create()") BranchProfile seenOutOfBounds,
-                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
+                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
+                    @CachedLibrary("position.getData()") RIntVectorDataLibrary positionLibrary) {
 
-        positionNACheck.enable(position);
+        positionNACheck.enable(positionLibrary, position);
         boolean hasSeenPositive = false;
         boolean hasSeenNegative = false;
         boolean hasSeenNA = false;
@@ -233,7 +241,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         int maxOutOfBoundsIndex = 0;
         lengthProfile.profileCounted(positionLength);
         for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
-            int positionValue = position.getDataAt(i);
+            int positionValue = positionLibrary.getIntAt(position.getData(), i);
             if (positionValue > 0) {
                 seenPositiveProfile.enter();
                 hasSeenPositive = true;

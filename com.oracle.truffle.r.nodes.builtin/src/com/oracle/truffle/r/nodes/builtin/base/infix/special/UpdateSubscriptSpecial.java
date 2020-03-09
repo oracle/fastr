@@ -24,20 +24,27 @@ package com.oracle.truffle.r.nodes.builtin.base.infix.special;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.ProfiledSpecialsUtilsFactory.ProfiledUpdateSubscriptSpecialBaseNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertIndex;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertValue;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
+@ImportStatic(DSLConfig.class)
 public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
 
     protected UpdateSubscriptSpecial(boolean inReplacement) {
@@ -46,10 +53,23 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
 
     protected abstract Object execute(VirtualFrame frame, Object vec, Object index, Object value);
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)",
+                    "intLibrary.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")
     protected RIntVector setInt(RIntVector vector, int index, int value,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+                    @Cached("vector.access()") VectorAccess access,
+                    @SuppressWarnings("unused") @CachedLibrary("vector.getData()") RIntVectorDataLibrary intLibrary,
+                    @CachedLibrary("vector") AbstractContainerLibrary library) {
+        return setIntInternal(access, library, vector, index, value);
+    }
+
+    @Specialization(replaces = "setInt", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)",
+                    "getIntUncachedLibrary().isWriteable(vector.getData())"})
+    protected RIntVector setIntGeneric(RIntVector vector, int index, int value) {
+        return setIntInternal(vector.slowPathAccess(), AbstractContainerLibrary.getFactory().getUncached(), vector, index, value);
+    }
+
+    private static RIntVector setIntInternal(VectorAccess access, AbstractContainerLibrary library, RIntVector vector, int index, int value) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(library, vector)) {
             access.setInt(iter, index - 1, value);
             if (RRuntime.isNA(value)) {
                 vector.setComplete(false);
@@ -58,26 +78,28 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
         }
     }
 
-    @Specialization(replaces = "setInt", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
-    protected RIntVector setIntGeneric(RIntVector vector, int index, int value) {
-        return setInt(vector, index, value, vector.slowPathAccess());
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)",
+                    "doubleLibrary.isWriteable(vector.getData())"}, limit = "getGenericVectorAccessCacheSize()")
+    protected RDoubleVector setDouble(RDoubleVector vector, int index, double value,
+                    @Cached("vector.access()") VectorAccess access,
+                    @SuppressWarnings("unused") @CachedLibrary("vector.getData()") RDoubleVectorDataLibrary doubleLibrary,
+                    @CachedLibrary("vector") AbstractContainerLibrary library) {
+        return setDoubleInternal(access, library, vector, index, value);
     }
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
-    protected RDoubleVector setDouble(RDoubleVector vector, int index, double value,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+    @Specialization(replaces = "setDouble", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "getDoubleUncachedLibrary().isWriteable(vector.getData())"})
+    protected RDoubleVector setDoubleGeneric(RDoubleVector vector, int index, double value) {
+        return setDoubleInternal(vector.slowPathAccess(), AbstractContainerLibrary.getFactory().getUncached(), vector, index, value);
+    }
+
+    private static RDoubleVector setDoubleInternal(VectorAccess access, AbstractContainerLibrary library, RDoubleVector vector, int index, double value) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(library, vector)) {
             access.setDouble(iter, index - 1, value);
             if (RRuntime.isNA(value)) {
                 vector.setComplete(false);
             }
             return vector;
         }
-    }
-
-    @Specialization(replaces = "setDouble", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
-    protected RDoubleVector setDoubleGeneric(RDoubleVector vector, int index, double value) {
-        return setDouble(vector, index, value, vector.slowPathAccess());
     }
 
     @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)", "vector.isMaterialized()"})
@@ -138,5 +160,13 @@ public abstract class UpdateSubscriptSpecial extends IndexingSpecialCommon {
 
     public static RNode create(boolean inReplacement, RNode vector, ConvertIndex index, ConvertValue value) {
         return ProfiledUpdateSubscriptSpecialBaseNodeGen.create(inReplacement, vector, index, value);
+    }
+
+    protected RIntVectorDataLibrary getIntUncachedLibrary() {
+        return RIntVectorDataLibrary.getFactory().getUncached();
+    }
+
+    protected RDoubleVectorDataLibrary getDoubleUncachedLibrary() {
+        return RDoubleVectorDataLibrary.getFactory().getUncached();
     }
 }

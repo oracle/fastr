@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -153,6 +154,10 @@ final class BinaryMapVectorNode extends BinaryMapNode {
     @Child private HasFixedAttributeNode hasLeftDimNode = HasFixedAttributeNode.createDim();
     @Child private HasFixedAttributeNode hasRightDimNode = HasFixedAttributeNode.createDim();
 
+    @Child private AbstractContainerLibrary leftLibrary = AbstractContainerLibrary.getFactory().createDispatched(1);
+    @Child private AbstractContainerLibrary rightLibrary = AbstractContainerLibrary.getFactory().createDispatched(1);
+    @Child private AbstractContainerLibrary targetLibrary = AbstractContainerLibrary.getFactory().createDispatched(1);
+
     @Child private VectorAccess fastLeftAccess;
     @Child private VectorAccess fastRightAccess;
     @Child private VectorAccess resultAccess;
@@ -212,7 +217,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         RAbstractVector left = leftClass.cast(originalLeft);
         RAbstractVector right = rightClass.cast(originalRight);
 
-        function.enable(left, right);
+        function.enable(leftLibrary, left, rightLibrary, right);
 
         if (mayContainMetadata && (dimensionsProfile.profile(hasLeftDimNode.execute(left) && hasRightDimNode.execute(right)))) {
             if (differentDimensions(left, right)) {
@@ -222,8 +227,8 @@ final class BinaryMapVectorNode extends BinaryMapNode {
 
         VectorAccess leftAccess = isGeneric ? left.slowPathAccess() : fastLeftAccess;
         VectorAccess rightAccess = isGeneric ? right.slowPathAccess() : fastRightAccess;
-        try (SequentialIterator leftIter = leftAccess.access(left);
-                        SequentialIterator rightIter = rightAccess.access(right)) {
+        try (SequentialIterator leftIter = leftAccess.access(leftLibrary, left);
+                        SequentialIterator rightIter = rightAccess.access(rightLibrary, right)) {
             RAbstractVector target = null;
             int leftLength = leftLengthProfile.profile(leftAccess.getLength(leftIter));
             int rightLength = rightLengthProfile.profile(rightAccess.getLength(rightIter));
@@ -254,7 +259,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
                         resultAccess = insert(VectorAccess.createNew(resultType));
                     }
                     target = resultType.create(maxLength, false);
-                    try (SequentialIterator resultIter = resultAccess.access(target)) {
+                    try (SequentialIterator resultIter = resultAccess.access(targetLibrary, target)) {
                         vectorNode.execute(function, leftLength, rightLength, target, resultAccess, resultIter, left, leftAccess, leftIter, right, rightAccess, rightIter);
                     }
                 }

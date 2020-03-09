@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,10 +29,16 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 /**
  * Serves as a FastR specific Truffle profile, i.e. it uses {@link CompilerDirectives Truffle
@@ -168,9 +174,34 @@ public final class NACheck {
         }
     }
 
+    // XXX TODO: this should be replaced by enable(XXXLibrary library, RAbstractContainer value)
     public void enable(RAbstractContainer value) {
         if (state == NO_CHECK) {
             enable(!value.isComplete());
+        }
+    }
+
+    public void enable(AbstractContainerLibrary library, RAbstractContainer value) {
+        if (state == NO_CHECK) {
+            enable(!library.isComplete(value));
+        }
+    }
+
+    public void enable(VectorDataLibrary library, Object vectorData) {
+        if (state == NO_CHECK) {
+            enable(!library.isComplete(vectorData));
+        }
+    }
+
+    public void enable(RIntVectorDataLibrary library, RIntVector vector) {
+        if (state == NO_CHECK) {
+            enable(!library.isComplete(vector.getData()));
+        }
+    }
+
+    public void enable(RDoubleVectorDataLibrary library, RAbstractDoubleVector vector) {
+        if (state == NO_CHECK) {
+            enable(!library.isComplete(vector.getData()));
         }
     }
 
