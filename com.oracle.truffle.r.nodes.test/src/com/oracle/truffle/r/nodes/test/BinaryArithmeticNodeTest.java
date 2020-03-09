@@ -68,6 +68,8 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticNode;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.FastROptions;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -247,6 +249,11 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
     @Theory
     public void testCompleteness(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
         execInContext(() -> {
+
+            if (RContext.getInstance().getOption(FastROptions.DSLCacheSizeFactor) == 0.0) {
+                return null;
+            }
+
             RAbstractVector a = copy(aOrig);
             RAbstractVector b = copy(bOrig);
             assumeArithmeticCompatible(factory, a, b);
@@ -263,8 +270,12 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
             if (a.getLength() == 0 || b.getLength() == 0) {
                 Assert.assertTrue(resultComplete);
             } else {
-                boolean expectedComplete = a.isComplete() && b.isComplete();
-                Assert.assertEquals(expectedComplete, resultComplete);
+                if (result instanceof RAbstractVector && ((RAbstractVector) result).isComplete()) {
+                    RAbstractVector.verifyVector((RAbstractVector) result);
+                } else {
+                    boolean expectedComplete = a.isComplete() && b.isComplete();
+                    Assert.assertEquals(expectedComplete, resultComplete);
+                }
             }
             return null;
         });
