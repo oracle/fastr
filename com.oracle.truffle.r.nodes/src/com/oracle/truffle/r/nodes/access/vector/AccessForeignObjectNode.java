@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,16 +54,16 @@ import com.oracle.truffle.r.runtime.interop.ForeignTypeCheck;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 
-abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
+public abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
 
     @ImportStatic({RRuntime.class})
-    protected abstract static class ReadPositionsNode extends AccessForeignObjectNode {
+    public abstract static class ReadPositionsNode extends AccessForeignObjectNode {
 
         public static ReadPositionsNode create() {
             return ReadPositionsNodeGen.create();
         }
 
-        protected abstract Object execute(TruffleObject object, Object positions);
+        public abstract Object execute(TruffleObject object, Object positions);
 
         @Specialization(guards = {"isForeignObject(object)", "!positionsByVector(positions)", "!positionsByLogicalValue(positions)"})
         protected Object readField(TruffleObject object, Object[] positions,

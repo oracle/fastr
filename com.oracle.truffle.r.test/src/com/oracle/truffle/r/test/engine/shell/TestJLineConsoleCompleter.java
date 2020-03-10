@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.test.engine.shell;
 
+import com.oracle.truffle.api.interop.TruffleObject;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -34,10 +35,11 @@ import org.graalvm.polyglot.Value;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.launcher.JLineConsoleCompleter;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.test.generate.FastRSession;
 
 public class TestJLineConsoleCompleter {
 
@@ -52,13 +54,23 @@ public class TestJLineConsoleCompleter {
     @Before
     public void before() {
         JLineConsoleCompleter.testingMode();
-        context = Context.create();
+        context = FastRSession.getContextBuilder("R", "llvm").build();
+        context.enter();
+
+        context.eval("R", "1"); // initialize context
+        context.eval("R", "l <- list(foo=1, bar=2)");
+        context.eval("R", "setClass('testclass', representation(foo = 'character', bar = 'numeric')); tc <- new('testclass', foo = 'what', bar = 42)");
+        TruffleObject tobj = (TruffleObject) RContext.getInstance().getEnv().asGuestValue(new TestJavaObject());
+        context.getPolyglotBindings().putMember("tjo", tobj);
+        context.eval("R", "tjo <- import('tjo')");
+
         consoleCompleter = new JLineConsoleCompleter(context);
     }
 
     @After
     public void dispose() {
         if (context != null) {
+            context.leave();
             context.close();
         }
         String testPath = getTestPath();
@@ -71,7 +83,6 @@ public class TestJLineConsoleCompleter {
     }
 
     // disabled because it uses Engine, which clashes with other tests that use PolyglotEngine
-    @Ignore
     @Test
     public void testCompl() {
         assertCompl("", 0);
@@ -158,9 +169,17 @@ public class TestJLineConsoleCompleter {
         assertCompl(noName + "'." + File.separator, 9, NOT_EMPTY);
         assertCompl(noName + "'." + File.separator, 10, NOT_EMPTY);
         assertCompl(noName + "\"." + File.separator, 8, NOT_EMPTY);
+
+        // named list
+        assertCompl("l$", 2, "l$bar", "l$foo");
+        // s4 object
+        assertCompl("tc@", 3, "tc@bar", "tc@foo");
+
+        // java object
+        assertCompl("tjo$", 4, "tjo$class", "tjo$name");
+        assertCompl("tjo@", 4, "tjo@class", "tjo@name");
     }
 
-    @Ignore
     @Test
     public void testPathCompl() {
         testPathCompl('"');
@@ -266,4 +285,7 @@ public class TestJLineConsoleCompleter {
         }
     }
 
+    public static final class TestJavaObject {
+        public final String name = "abc";
+    }
 }
