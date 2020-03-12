@@ -23,6 +23,7 @@ package com.oracle.truffle.r.nodes.access;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -48,6 +49,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 /**
  * Perform a slot access. This node represents the {@code @} operator in R.
  */
+@ImportStatic(RRuntime.class)
 public abstract class AccessSlotNode extends BaseAccessSlotNode implements AccessSlotAccess {
 
     public AccessSlotNode(boolean asOperator) {
@@ -105,9 +107,4 @@ public abstract class AccessSlotNode extends BaseAccessSlotNode implements Acces
     protected Object getSlot(Object object, Object name) {
         throw error(RError.Message.SLOT_CANNOT_GET, name, RRuntime.getRTypeName(object));
     }
-
-    protected static boolean isForeignObject(Object object) {
-        return RRuntime.isForeignObject(object);
-    }
-
 }

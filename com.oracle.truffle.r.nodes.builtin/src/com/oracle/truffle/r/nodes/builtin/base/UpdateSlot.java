@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,17 +27,22 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
+import com.oracle.truffle.r.nodes.access.vector.AccessForeignObjectNode.WritePositionsNode;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.foreign;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess.UpdateSlotAccess;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -46,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@ImportStatic(RRuntime.class)
 @RBuiltin(name = "@<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class UpdateSlot extends RBuiltinNode.Arg3 implements UpdateSlotAccess {
 
@@ -54,7 +60,7 @@ public abstract class UpdateSlot extends RBuiltinNode.Arg3 implements UpdateSlot
 
     static {
         Casts casts = new Casts(UpdateSlot.class);
-        casts.arg(0).asAttributable(true, true, true);
+        casts.arg(0).returnIf(foreign()).asAttributable(true, true, true);
     }
 
     @Override
@@ -112,7 +118,7 @@ public abstract class UpdateSlot extends RBuiltinNode.Arg3 implements UpdateSlot
         }
     }
 
-    @Specialization
+    @Specialization(guards = {"!isForeignObject(object)"})
     protected Object updateSlot(VirtualFrame frame, Object object, RPromise nameObj, Object value,
                     @Cached("new()") CheckSlotAssignNode check) {
         String name = getName(nameObj);
@@ -120,10 +126,23 @@ public abstract class UpdateSlot extends RBuiltinNode.Arg3 implements UpdateSlot
         return updateSlotNode.executeUpdate(object, name, value);
     }
 
-    @Specialization
+    @Specialization(guards = {"!isForeignObject(object)"})
     protected Object updateSlot(VirtualFrame frame, Object object, String name, Object value,
                     @Cached("new()") CheckSlotAssignNode check) {
         check.execute(frame, object, name, value);
         return updateSlotNode.executeUpdate(object, name, value);
+    }
+
+    @Specialization(guards = {"isForeignObject(object)"})
+    protected Object accessField(TruffleObject object, RPromise nameObj, Object value,
+                    @Cached("create()") WritePositionsNode writeNode) {
+        String name = getName(nameObj);
+        return writeNode.execute(object, new Object[]{name}, value);
+    }
+
+    @Specialization(guards = {"isForeignObject(object)"})
+    protected Object accessField(TruffleObject object, String name, Object value,
+                    @Cached("create()") WritePositionsNode writeNode) {
+        return writeNode.execute(object, new Object[]{name}, value);
     }
 }
