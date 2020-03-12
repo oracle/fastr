@@ -167,13 +167,13 @@ public abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
     }
 
     @ImportStatic({RRuntime.class, ConvertForeignObjectNode.class})
-    protected abstract static class WritePositionsNode extends AccessForeignObjectNode {
+    public abstract static class WritePositionsNode extends AccessForeignObjectNode {
 
         public static WritePositionsNode create() {
             return WritePositionsNodeGen.create();
         }
 
-        protected abstract Object execute(TruffleObject object, Object[] positions, Object value);
+        public abstract Object execute(TruffleObject object, Object[] positions, Object value);
 
         @Specialization(guards = {"isForeignObject(object)", "!positionsByVector(positions)", "!positionsByLogicalValue(positions)"})
         protected Object writeField(TruffleObject object, Object[] positions, Object value,

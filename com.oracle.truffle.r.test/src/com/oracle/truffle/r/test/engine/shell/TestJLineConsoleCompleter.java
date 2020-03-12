@@ -172,12 +172,16 @@ public class TestJLineConsoleCompleter {
 
         // named list
         assertCompl("l$", 2, "l$bar", "l$foo");
+        assertCompl("l$b", 3, "l$bar");
         // s4 object
         assertCompl("tc@", 3, "tc@bar", "tc@foo");
+        assertCompl("tc@b", 4, "tc@bar");
 
         // java object
         assertCompl("tjo$", 4, "tjo$class", "tjo$name");
+        assertCompl("tjo$n", 5, "tjo$name");
         assertCompl("tjo@", 4, "tjo@class", "tjo@name");
+        assertCompl("tjo@n", 5, "tjo@name");
     }
 
     @Test

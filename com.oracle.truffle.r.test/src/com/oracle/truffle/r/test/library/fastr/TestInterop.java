@@ -22,7 +22,12 @@
  */
 package com.oracle.truffle.r.test.library.fastr;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -35,12 +40,14 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import static com.oracle.truffle.r.test.library.fastr.Utils.errorIn;
 import java.io.File;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import org.junit.Before;
 
 public class TestInterop extends TestBase {
 
@@ -78,6 +85,11 @@ public class TestInterop extends TestBase {
                     new TestVariable("testShortVariable", (short) 5, "'integer'"),
                     new TestVariable("testStringVariable", "abc", "'character'", "'abc'")
     };
+
+    @Before
+    public void testInit() {
+        FastRInterop.testingMode();
+    }
 
     @After
     public void cleanup() {
@@ -192,7 +204,10 @@ public class TestInterop extends TestBase {
         }
     }
 
-    private static final TestJavaObject[] testJavaObjects = new TestJavaObject[]{new TestJavaObject("testPOJO", new POJO()), new TestJavaObject("testIntArray", new int[]{1, -5, 199}),
+    private static final TestJavaObject[] testJavaObjects = new TestJavaObject[]{
+                    new TestJavaObject("testPOJO", new POJO()),
+                    new TestJavaObject("testPOJOWrite", new POJO()),
+                    new TestJavaObject("testIntArray", new int[]{1, -5, 199}),
                     new TestJavaObject("testStringArray", new String[]{"a", "", "foo"})};
 
     // TODO: export/importSymbol
@@ -201,9 +216,10 @@ public class TestInterop extends TestBase {
         FastRSession.execInContext(context, () -> {
             RContext rContext = RContext.getInstance();
             for (TestJavaObject t : TestInterop.testJavaObjects) {
-                TruffleObject tobj = (TruffleObject) rContext.getEnv().asGuestValue(t.object);
-                context.getPolyglotBindings().putMember(t.name, tobj);
+                context.getPolyglotBindings().putMember(t.name, rContext.getEnv().asGuestValue(t.object));
             }
+            context.getPolyglotBindings().putMember("foreignObjectFactory", rContext.getEnv().asGuestValue(new FOFactory()));
+
             for (TestVariable t : TestInterop.testVariables) {
                 context.getContext().getBindings("R").putMember(t.name, t.value);
                 context.getPolyglotBindings().putMember(t.name, t.value);
@@ -284,17 +300,22 @@ public class TestInterop extends TestBase {
     @Test
     public void testDollar() {
         // tests the execute msg
-        assertEvalFastR("tpojo <- import('testPOJO)'; tos <- tpojo$toString(); is.character(tos) && length(tos) == 1", "TRUE");
+        assertEvalFastR("tpojo <- import('testPOJO'); tos <- tpojo$toString(); is.character(tos) && length(tos) == 1", "TRUE");
         assertEvalFastR("ja <- new(java.type('int[]'), 3); tos <- ja$toString(); is.character(tos) && length(tos) == 1", "TRUE");
         assertEvalFastR("ja <- new(java.type('int[]'), 3); ts <- ja$toString; tos <- ts(); is.character(tos) && length(tos) == 1", "TRUE");
+
+        assertEvalFastR("tpojo <- import('testPOJOWrite'); tpojo$stringValue <- '$aaa'; tpojo$stringValue", "'$aaa'");
+
     }
 
     @Test
     public void testSlot() {
-        // tests the invoke msg
-        assertEvalFastR("tpojo <- import('testPOJO)'; tpojo@toString(); is.character(tos) && length(tos) == 1", "TRUE");
+        // tests the invoke msgs
+        assertEvalFastR("tpojo <- import('testPOJO'); tos <- tpojo@toString(); is.character(tos) && length(tos) == 1", "TRUE");
         assertEvalFastR("ja <-new(java.type('int[]'), 3); tos <- ja@toString(); is.character(tos) && length(tos) == 1", "TRUE");
         assertEvalFastR("ja <-new(java.type('int[]'), 3); ts <- ja@toString; tos <- ts(); is.character(tos) && length(tos) == 1", "TRUE");
+
+        assertEvalFastR("tpojo <- import('testPOJOWrite'); tpojo@stringValue <- '@aaa'; tpojo@stringValue", "'@aaa'");
     }
 
     public void testVariableWrite() {
@@ -303,5 +324,114 @@ public class TestInterop extends TestBase {
             assertEvalFastR(t.name, "" + t.rValue);
             assertEvalFastR(t.name + "Read()", "TRUE");
         }
+    }
+
+    private static final String CREATE_FO = "foreignObjectFactory <- import('foreignObjectFactory'); fo <- foreignObjectFactory$createInvocableNotReadable(); ";
+
+    @Test
+    public void testInvocableNoReadable() {
+        String member = InvocableNotReadable.MEMBER_NAME;
+
+        assertEvalFastR(CREATE_FO + "names(fo)", "print('" + member + "')");
+        assertEvalFastR(CREATE_FO + "fo", "cat('[polyglot value]\n$" + member + "\n[not readable value]\n\n')");
+        assertEvalFastR(CREATE_FO + "fo$" + member, errorIn("fo$" + member, "invalid index/identifier during foreign access: " + member));
+        assertEvalFastR(CREATE_FO + "fo$" + member + "()", errorIn("fo$" + member, "invalid index/identifier during foreign access: " + member));
+        assertEvalFastR(CREATE_FO + "fo@" + member + "()", "print(42)");
+
+        assertEvalFastR(CREATE_FO + "as.list(fo)", "cat('named list()\n')");
+    }
+
+    public static class FOFactory {
+        public static TruffleObject createInvocableNotReadable() {
+            return new InvocableNotReadable();
+        }
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static class InvocableNotReadable implements TruffleObject {
+        private static final String MEMBER_NAME = "invocable";
+        private static ExecutableTO invocable = new ExecutableTO();
+
+        @ExportMessage
+        public boolean hasMembers() {
+            return true;
+        }
+
+        @SuppressWarnings("unused")
+        @ExportMessage
+        public Object getMembers(boolean includeInternals) {
+            return new Array(MEMBER_NAME);
+        }
+
+        @SuppressWarnings("unused")
+        @ExportMessage
+        public boolean isMemberReadable(String name) {
+            return false;
+        }
+
+        @SuppressWarnings("unused")
+        @ExportMessage
+        public boolean isMemberInvocable(String name) {
+            return MEMBER_NAME.equals(name);
+        }
+
+        @SuppressWarnings("unused")
+        @ExportMessage
+        public Object invokeMember(String name, Object... args) throws UnsupportedMessageException {
+            if (!MEMBER_NAME.equals(name)) {
+                throw UnsupportedMessageException.create();
+            }
+            return invocable.execute(args);
+        }
+
+        @SuppressWarnings("unused")
+        @ExportMessage
+        public Object readMember(String name) throws UnsupportedMessageException {
+            throw UnsupportedMessageException.create();
+        }
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static class ExecutableTO implements TruffleObject {
+        @ExportMessage
+        public boolean isExecutable() {
+            return true;
+        }
+
+        @SuppressWarnings("unused")
+        @ExportMessage
+        public Object execute(Object... args) {
+            return 42;
+        }
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static class Array implements TruffleObject {
+        private final Object[] a;
+
+        public Array(Object... a) {
+            this.a = a;
+        }
+
+        @ExportMessage
+        public boolean hasArrayElements() {
+            return true;
+        }
+
+        @ExportMessage
+        public long getArraySize() {
+            return a.length;
+        }
+
+        @ExportMessage
+        public boolean isArrayElementReadable(long i) {
+            return i <= a.length;
+        }
+
+        @ExportMessage
+        public Object readArrayElement(long i) {
+            return a[(int) i];
+        }
+
     }
 }
