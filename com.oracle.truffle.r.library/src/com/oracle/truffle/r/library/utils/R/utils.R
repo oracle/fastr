@@ -96,8 +96,8 @@ eval(expression({
             if(op == "@") {               
                 object <- tryToEval(prefix)
                 if (is.polyglot.value(object)) {
-                    return(names(object))
-                }               
+                    return(findMatches(sprintf("^%s", makeRegexpSafe(suffix)), names(object)))
+                }
             }
             return(specialOpCompletionsHelper.original(op, suffix, prefix))
         }
