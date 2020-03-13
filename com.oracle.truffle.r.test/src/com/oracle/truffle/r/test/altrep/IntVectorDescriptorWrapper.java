@@ -8,17 +8,21 @@ import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import org.junit.Assert;
 
-class IntVectorDescriptorWrapper {
+public class IntVectorDescriptorWrapper {
     private final static int vecLength = 10;
-    private final DataptrMethod dataptrMethod = new DataptrMethod();
-    private final Length lengthMethod = new Length();
-    private final Elt eltMethod = new Elt();
-    private final AltIntegerClassDescriptor descriptor = createDescriptor();
+    private final DataptrMethod dataptrMethod;
+    private final Length lengthMethod;
+    private final Elt eltMethod;
+    private final AltIntegerClassDescriptor descriptor;
     private final RIntVector altIntVector;
 
-    IntVectorDescriptorWrapper() {
+    public IntVectorDescriptorWrapper() {
         RIntVector wrappedVector = createIntVector();
         RAltRepData altRepData = new RAltRepData(wrappedVector, RNull.instance);
+        dataptrMethod = new DataptrMethod();
+        lengthMethod = new Length();
+        eltMethod = new Elt();
+        descriptor = createDescriptor();
         altIntVector = RDataFactory.createAltIntVector(descriptor, altRepData);
     }
 
