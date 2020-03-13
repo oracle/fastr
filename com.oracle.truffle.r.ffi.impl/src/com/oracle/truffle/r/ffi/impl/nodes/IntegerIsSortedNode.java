@@ -34,11 +34,7 @@ public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
     }
 
     protected static boolean isIsSortedMethodRegistered(Object x) {
-        if (x instanceof RAltIntVectorData) {
-            return ((RAltIntVectorData) x).getDescriptor().isIsSortedMethodRegistered();
-        } else {
-            return false;
-        }
+        return AltrepUtilities.hasSortedMethodRegistered(x);
     }
 
     protected static IsSortedDispatchNode createDispatchNode() {

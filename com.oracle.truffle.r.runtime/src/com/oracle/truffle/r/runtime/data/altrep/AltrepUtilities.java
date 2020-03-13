@@ -10,6 +10,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RIntVectorData;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 public class AltrepUtilities {
@@ -25,6 +26,18 @@ public class AltrepUtilities {
     private static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVector) {
         assert altIntVector.isAltRep();
         return getAltIntVectorData(altIntVector).getDescriptor();
+    }
+
+    public static AltRepClassDescriptor getDescriptorFromAltrepObj(RBaseObject altrepObject) {
+        assert altrepObject.isAltRep();
+
+        if (altrepObject instanceof RIntVector) {
+            return getAltIntDescriptor((RIntVector) altrepObject);
+        } else if (altrepObject instanceof RAltStringVector) {
+            return ((RAltStringVector) altrepObject).getDescriptor();
+        } else {
+            throw RInternalError.unimplemented();
+        }
     }
 
     public static boolean hasCoerceMethodRegistered(Object object) {
@@ -93,6 +106,30 @@ public class AltrepUtilities {
 
         if (object instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) object).isSumMethodRegistered();
+        } else {
+            throw RInternalError.shouldNotReachHere("Unexpected altrep type");
+        }
+    }
+
+    public static boolean hasGetRegionMethodRegistered(Object object) {
+        if (!isAltrep(object)) {
+            return false;
+        }
+
+        if (object instanceof RIntVector) {
+            return getAltIntDescriptor((RIntVector) object).isGetRegionMethodRegistered();
+        } else {
+            throw RInternalError.shouldNotReachHere("Unexpected altrep type");
+        }
+    }
+
+    public static boolean hasSortedMethodRegistered(Object object) {
+        if (!isAltrep(object)) {
+            return false;
+        }
+
+        if (object instanceof RIntVector) {
+            return getAltIntDescriptor((RIntVector) object).isIsSortedMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }

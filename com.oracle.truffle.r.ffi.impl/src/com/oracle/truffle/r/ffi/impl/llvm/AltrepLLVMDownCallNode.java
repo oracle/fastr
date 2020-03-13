@@ -20,6 +20,7 @@ import com.oracle.truffle.r.runtime.data.RIntVectorData;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -57,21 +58,11 @@ public abstract class AltrepLLVMDownCallNode extends DownCallNode {
     }
 
     private static boolean isAltrep(Object object) {
-        return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
+        return AltrepUtilities.isAltrep(object);
     }
 
     private static AltRepClassDescriptor getDescriptorFromAltrepObj(RBaseObject altrepObject) {
-        assert altrepObject.isAltRep();
-
-        if (altrepObject instanceof RIntVector) {
-            RIntVectorData data = ((RIntVector) altrepObject).getData();
-            assert data instanceof RAltIntVectorData;
-            return ((RAltIntVectorData) data).getDescriptor();
-        } else if (altrepObject instanceof RAltStringVector) {
-            return ((RAltStringVector) altrepObject).getDescriptor();
-        } else {
-            throw RInternalError.unimplemented();
-        }
+        return AltrepUtilities.getDescriptorFromAltrepObj(altrepObject);
     }
 
     @ExplodeLoop

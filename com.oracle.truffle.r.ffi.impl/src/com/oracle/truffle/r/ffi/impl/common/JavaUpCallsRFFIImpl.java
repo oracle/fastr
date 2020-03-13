@@ -97,6 +97,7 @@ import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltVecClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -1359,7 +1360,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public int ALTREP(Object x) {
         if (x instanceof RBaseObject) {
-            return ((RBaseObject) x).isAltRep() ? 1 : 0;
+            return AltrepUtilities.isAltrep(x) ? 1 : 0;
         } else {
             return 0;
         }

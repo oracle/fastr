@@ -104,6 +104,6 @@ public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
     }
 
     protected static boolean hasGetRegionMethodRegistered(RIntVector altIntVec) {
-        return ((RAltIntVectorData) altIntVec.getData()).getDescriptor().isGetRegionMethodRegistered();
+        return AltrepUtilities.hasGetRegionMethodRegistered(altIntVec);
     }
 }

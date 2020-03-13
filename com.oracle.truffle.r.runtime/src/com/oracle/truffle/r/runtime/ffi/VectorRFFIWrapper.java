@@ -243,7 +243,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         protected static boolean isAltrep(Object value) {
-            return value instanceof RBaseObject && ((RBaseObject) value).isAltRep();
+            return AltrepUtilities.isAltrep(value);
         }
 
         @Specialization(guards = "isAltrep(value)")
