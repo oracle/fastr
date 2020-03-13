@@ -234,8 +234,12 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(ret);
         }
-        assert ret instanceof Integer;
-        return (int) ret;
+        assert ret instanceof Integer || ret instanceof Long;
+        if (ret instanceof Long) {
+            return ((Long) ret).intValue();
+        } else {
+            return (int) ret;
+        }
     }
 
     @Override
