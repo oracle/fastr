@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
 
 public final class TruffleRLanguageAccessImpl implements TruffleRLanguageAccess {
 
@@ -67,8 +68,10 @@ public final class TruffleRLanguageAccessImpl implements TruffleRLanguageAccess 
             return "NA";
         }
 
+        // could be also some RInteropXXX value
+        Object unwrapped = Foreign2R.getUncached().convert(value);
+
         // the debugger also passes result of TruffleRLanguage.findMetaObject() to this method
-        Object unwrapped = value;
         // print promises by other means than the "print" function to avoid evaluating them
         if (unwrapped instanceof RPromise) {
             RPromise promise = (RPromise) unwrapped;
