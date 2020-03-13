@@ -23,7 +23,7 @@ public class AltrepUtilities {
         return (RAltIntVectorData) altIntVector.getData();
     }
 
-    private static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVector) {
+    public static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVector) {
         assert altIntVector.isAltRep();
         return getAltIntVectorData(altIntVector).getDescriptor();
     }
