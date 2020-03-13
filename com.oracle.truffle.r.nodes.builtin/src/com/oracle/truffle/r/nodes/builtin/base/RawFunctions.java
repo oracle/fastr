@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,11 +67,7 @@ public class RawFunctions {
                     warning(RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
                 }
                 String s = xAccess.getString(iter, 0);
-                byte[] data = new byte[s.length()];
-                for (int i = 0; i < data.length; i++) {
-                    data[i] = (byte) s.charAt(i);
-                }
-                return RDataFactory.createRawVector(data);
+                return stringToRaw(s);
             }
         }
 
@@ -167,5 +163,13 @@ public class RawFunctions {
                         @Cached("createBinaryProfile()") ConditionProfile negativeShiftProfile) {
             return rawShift(x, n, negativeShiftProfile, x.slowPathAccess());
         }
+    }
+
+    static RRawVector stringToRaw(String s) {
+        byte[] data = new byte[s.length()];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = (byte) s.charAt(i);
+        }
+        return RDataFactory.createRawVector(data);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,15 +45,14 @@ import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "iconv", kind = INTERNAL, parameterNames = {"x", "from", "to", "sub", "mark", "toRaw"}, behavior = PURE)
 public abstract class IConv extends RBuiltinNode.Arg6 {
@@ -84,12 +83,8 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractStringVector doIConv(RAbstractStringVector x, String from, String to, String sub, @SuppressWarnings("unused") boolean mark, boolean toRaw,
+    protected Object doIConv(RAbstractStringVector x, String from, String to, String sub, @SuppressWarnings("unused") boolean mark, boolean toRaw,
                     @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
-
-        if (toRaw) {
-            throw RInternalError.unimplemented("iconv with toRaw=TRUE");
-        }
 
         Charset fromCharset = getCharset(from, from, to);
         Charset toCharset = getCharset(to, from, to);
@@ -139,7 +134,16 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
                     }
                 }
             }
-            RStringVector result = RDataFactory.createStringVector(data, complete);
+            RAbstractVector result;
+            if (toRaw) {
+                Object[] listData = new Object[data.length];
+                for (int i = 0; i < listData.length; i++) {
+                    listData[i] = RRuntime.isNA(data[i]) ? RNull.instance : RawFunctions.stringToRaw(data[i]);
+                }
+                result = RDataFactory.createList(listData);
+            } else {
+                result = RDataFactory.createStringVector(data, complete);
+            }
             copyAttributesNode.execute(result, x);
             return result;
         }
