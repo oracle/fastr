@@ -110,6 +110,10 @@ public abstract class BinaryMapFunctionNode extends RBaseNode {
 
     }
 
+    public void initialize(VectorDataLibrary leftDataLib, RAbstractContainer left, VectorDataLibrary rightDataLib, RAbstractContainer right) {
+
+    }
+
     /**
      * Returns <code>true</code> if the result can always be considered complete.
      */
