@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -228,7 +229,6 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                     @Cached("createBinaryProfile()") ConditionProfile seenPositiveFlagProfile,
                     @Cached("createBinaryProfile()") ConditionProfile seenNegativeFlagProfile,
                     @Cached("create()") BranchProfile seenOutOfBounds,
-                    @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
                     @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary) {
 
         positionNACheck.enable(positionLibrary, position);
@@ -238,9 +238,10 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         int outOfBoundsCount = 0;
         int zeroCount = 0;
         int maxOutOfBoundsIndex = 0;
-        lengthProfile.profileCounted(positionLength);
-        for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
-            int positionValue = positionLibrary.getIntAt(position.getData(), i);
+        Object positionsData = position.getData();
+        SeqIterator it = positionLibrary.iterator(positionsData);
+        while (positionLibrary.next(positionsData, it)) {
+            int positionValue = positionLibrary.getNextInt(positionsData, it);
             if (positionValue > 0) {
                 seenPositiveProfile.enter();
                 hasSeenPositive = true;
