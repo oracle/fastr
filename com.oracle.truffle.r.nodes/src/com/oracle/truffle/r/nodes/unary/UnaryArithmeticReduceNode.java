@@ -83,6 +83,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
     private final BranchProfile emptyProfile = BranchProfile.create();
     private final BranchProfile naResultProfile = BranchProfile.create();
 
+    private final BranchProfile intNANoOverflowProfile = BranchProfile.create();
+
     protected UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.factory = factory;
         this.semantics = semantics;
@@ -250,6 +252,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
                 result = arithmetic.op(result, d);
 
                 if (RRuntime.isNA(result) && !overflow) {
+                    intNANoOverflowProfile.enter();
                     overflow = true;
                     doubleResult = arithmetic.op((double) oldResult, (double) d);
                 }
