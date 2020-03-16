@@ -87,7 +87,6 @@ abstract class WriteIndexedVectorNode extends Node {
         return WriteIndexedVectorAccessNodeGen.create(params, dimensionIndex);
     }
 
-    // TODO: specialize on right.isComplete()
     @Specialization(limit = "getGenericVectorAccessCacheSize()")
     protected void write(RAbstractVector left, Object[] positions, RAbstractContainer right, int[] positionTargetDimensions,
                     @CachedLibrary("left.getData()") VectorDataLibrary leftDataLib,
@@ -96,15 +95,10 @@ abstract class WriteIndexedVectorNode extends Node {
                     @Cached("createWrite()") WriteIndexedVectorAccessNode write) {
         Object rightData = right.getData();
         Object leftData = left.getData();
-        // determining whether the input is complete requires bit more complex logic than checking
-        // the completeness of "right". We may write NAs also if "right" is empty or if positions
-        // contain NA and possibly in other situations
-        boolean inputIsComplete = false;
-        try (RandomAccessWriteIterator leftIter = leftDataLib.randomAccessWriteIterator(leftData, inputIsComplete)) {
+        try (RandomAccessWriteIterator leftIter = leftDataLib.randomAccessWriteIterator(leftData)) {
             RandomAccessIterator rightIter = rightDataLib.randomAccessIterator(rightData);
             write.apply(positionContainerLibrary, leftIter, leftDataLib, leftData, positions, rightIter, rightDataLib, rightData, right, positionTargetDimensions);
-            // TODO: check that this handles written NAs correctly
-            leftDataLib.commitRandomAccessWriteIterator(leftData, leftIter);
+            leftDataLib.commitRandomAccessWriteIterator(leftData, leftIter, rightDataLib.getNACheck(rightData).neverSeenNA());
             assert RAbstractVector.verifyVector(left);
         }
     }
@@ -421,6 +415,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
 
             if (isNA) {
                 leftDataLib.setNA(leftData, leftIter, actionLeftIndex);
+                rightDataLib.getNACheck(rightData).seenNA();
             } else {
                 if (params.vectorType == RType.List || params.vectorType == RType.Expression) {
                     setListElement(leftIter, leftDataLib, leftData, rightIter, rightDataLib, rightData, right, actionLeftIndex, actionRightIndex);

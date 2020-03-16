@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
-import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
@@ -56,12 +55,6 @@ class RIntForeignObjData implements TruffleObject {
     @ExportMessage
     public NACheck getNACheck() {
         return NACheck.getEnabled();
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public InputNACheck getInputNACheck() {
-        return InputNACheck.getUncached();
     }
 
     @SuppressWarnings("static-method")

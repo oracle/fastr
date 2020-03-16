@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ops.na;
 
-import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.NodeCloneable;
@@ -36,35 +34,33 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
  * values from some "inputs" should be switched to "incomplete" (
  * {@link VectorDataLibrary#isComplete(Object)} is {@code false}).
  *
- * This check is doing noting if all "inputs" it ever saw were "complete". Once it sees "incomplete"
- * input, it starts checking individual values in the {@code check} methods and once it sees actual
- * {@code NA} value it again turns off any checks and {@link #needsResettingCompleteFlag()} will
- * always return {@code true} from then on.
+ * {@link #getUncached()} is intended for use with Truffle DSL: it returns {@link InputNACheck} that
+ * checks nothing, but always returns {@code false} from {@link #neverSeenNA()}.
+ *
+ * Use {@link #create()} and then optionally {@link #enable(boolean, boolean)} for
+ * {@link InputNACheck} that optimizes the checks when possible.
+ *
+ * Use {@link #disableChecksNeverSeenNA()} to turn the object into a dummy instance configured to do
+ * nothing and always return {@code true} from {@link #neverSeenNA()}, which is useful for
+ * situations, where the API requires {@link InputNACheck}, but the user wants it to be a no-op and
+ * wants to do the {@code NA} checking by other means.
  *
  * Instances of this class should be stored in AST as (compilation) final field or cached parameters
  * of specializations.
  */
 public final class InputNACheck extends NodeCloneable {
-
-    // no need to check: we have only seen "complete" "input" vectors so far
-    private static final byte STATE_DISABLED_CHECK_NEVER_SEEN_NA = 0;
-    // no need to check the input: all the destination vectors were incomplete already
-    private static final byte STATE_DISABLED_CHECK_INCOMPLETE_DEST = 1;
-    // check: we saw some "incomplete" "input" vectors, but no actual NA value was ever passed to
-    // one of the check methods
-    private static final byte STATE_ENABLED_CHECK = 2;
-    // we already saw NA value, all bets are off: no need to check NAs anymore
+    // Initial state when "enable" was not called yet,
+    // checking NAs is preventive measure for cases when the user forgets to call "enable"
+    private static final byte STATE_INITIAL_ENABLED_CHECK = 0;
+    // Nothing is checked, neverSeenNA() returns true
+    private static final byte STATE_NO_CHECK_NEVER_SEEN_NA = 1;
+    // Checks individual values, neverSeenNA() returns true,
+    // but any NA value transforms the state to STATE_DISABLED_CHECK_SEEN_NA
+    private static final byte STATE_ENABLED_CHECK_NEVER_SEEN_NA = 2;
+    // We already saw NA value, all bets are off: no need to check NAs anymore
     private static final byte STATE_DISABLED_CHECK_SEEN_NA = 3;
-
-    public static InputNACheck create() {
-        return new InputNACheck(ENABLE_COMPLETE ? STATE_ENABLED_CHECK : STATE_DISABLED_CHECK_SEEN_NA);
-    }
-
-    private static final InputNACheck DISABLED_SEEN_NA = new InputNACheck(STATE_DISABLED_CHECK_SEEN_NA);
-
-    public static InputNACheck getUncached() {
-        return DISABLED_SEEN_NA;
-    }
+    // Special state used to denote "no-op" InputNACheck instance
+    private static final byte STATE_DISABLED_CHECK_NEVER_SEEN_NA = 4;
 
     @CompilationFinal private byte state;
 
@@ -72,115 +68,104 @@ public final class InputNACheck extends NodeCloneable {
         this.state = state;
     }
 
-    public InputNACheck enable(boolean destinationIsComplete, boolean inputIsComplete) {
-        // So far we've seen only incomplete destination vectors, now we saw first complete one,
-        // now it makes sense to check if the input does not contain NAs
-        boolean firstCompleteDest = state == STATE_DISABLED_CHECK_INCOMPLETE_DEST && destinationIsComplete;
-        // So far all the inputs were complete, so no need to check the elements, now we need to
-        boolean firstIncompleteInput = state == STATE_DISABLED_CHECK_NEVER_SEEN_NA && !inputIsComplete;
-        if (firstCompleteDest || firstIncompleteInput) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            // TODO: to be figured out, which is better:
-            // Maybe we can also check the length of the input and do the checks of
-            // individual elements only if we've seen only small vectors...
-            // state = STATE_ENABLED_CHECK; -- checks every element to avoid reporting hasSeenNA at
-            // the end if possible
-            state = STATE_DISABLED_CHECK_SEEN_NA; // -- just gives up, but does not pollute the loop
-                                                  // body with NA check
-        }
+    public static InputNACheck getUncached() {
+        return new InputNACheck(STATE_DISABLED_CHECK_SEEN_NA);
+    }
 
-        // XXX
-        // - firstIncompleteInput sets SEEN_NA even though the particular written might not be NA
-        // - only enabling STATE_ENABLED_CHECK on the other hand has a detrimental (2 magnitudes)
-        // effect on performance
+    public static InputNACheck create() {
+        return new InputNACheck(STATE_INITIAL_ENABLED_CHECK);
+    }
 
-        // else if (!inputIsComplete) {
-        // CompilerDirectives.transferToInterpreterAndInvalidate();
-        // state = STATE_ENABLED_CHECK;
-        // }
-        return this;
+    public void disableChecksNeverSeenNA() {
+
     }
 
     /**
-     * Fallback to the worst-case: no checks are performed and {@link #needsResettingCompleteFlag()}
-     * always returns {@code true}.
+     * Communicates the completeness of the destination vector (where we are writing to) and the
+     * source of the data. If the completeness of the source (input) is not known, use {@code false}
+     * .
      */
-    public void disableChecks() {
-        if (state != STATE_DISABLED_CHECK_SEEN_NA) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            state = STATE_DISABLED_CHECK_SEEN_NA;
-        }
-    }
-
-    public boolean needsResettingCompleteFlag() {
-        // no need to reset the flag in case when the destination already had complete == false
-        return state == STATE_DISABLED_CHECK_SEEN_NA;
-    }
-
-    public void check(byte value) {
-        if (state == STATE_ENABLED_CHECK) {
-            if (RRuntime.isNA(value)) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                state = STATE_DISABLED_CHECK_SEEN_NA;
+    public void enable(boolean destinationIsComplete, boolean sourceIsComplete) {
+        if (state == STATE_INITIAL_ENABLED_CHECK) {
+            if (!destinationIsComplete) {
+                // no need for NA checks, complete flag of destination is false anyway
+                setState(STATE_NO_CHECK_NEVER_SEEN_NA);
+            } else if (!sourceIsComplete) {
+                // source may contain NAs, we need to check
+                setState(STATE_ENABLED_CHECK_NEVER_SEEN_NA);
+            } else {
+                // sourceIsComplete == true, no NAs in source, we're fine
+                setState(STATE_NO_CHECK_NEVER_SEEN_NA);
+            }
+        } else if (state == STATE_NO_CHECK_NEVER_SEEN_NA) {
+            if (destinationIsComplete) {
+                // destination is complete, now it matters: we need to know if we need to update the
+                // complete flag
+                // source is not complete: we need to check the individual incoming values
+                if (!sourceIsComplete) {
+                    setState(STATE_ENABLED_CHECK_NEVER_SEEN_NA);
+                }
             }
         }
     }
 
-    public void check(int value) {
-        if (state == STATE_ENABLED_CHECK) {
+    public boolean neverSeenNA() {
+        return state == STATE_NO_CHECK_NEVER_SEEN_NA ||
+                        state == STATE_ENABLED_CHECK_NEVER_SEEN_NA ||
+                        state == STATE_DISABLED_CHECK_NEVER_SEEN_NA;
+    }
+
+    public byte check(byte value) {
+        if (isCheckEnabled()) {
             if (RRuntime.isNA(value)) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                state = STATE_DISABLED_CHECK_SEEN_NA;
+                setState(STATE_DISABLED_CHECK_SEEN_NA);
             }
         }
+        return value;
     }
 
-    public void check(double value) {
-        if (state == STATE_ENABLED_CHECK) {
+    public int check(int value) {
+        if (isCheckEnabled()) {
             if (RRuntime.isNA(value)) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                state = STATE_DISABLED_CHECK_SEEN_NA;
+                setState(STATE_DISABLED_CHECK_SEEN_NA);
             }
         }
+        return value;
     }
 
-    public void check(String value) {
-        if (state == STATE_ENABLED_CHECK) {
+    public double check(double value) {
+        if (isCheckEnabled()) {
             if (RRuntime.isNA(value)) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                state = STATE_DISABLED_CHECK_SEEN_NA;
+                setState(STATE_DISABLED_CHECK_SEEN_NA);
             }
         }
+        return value;
     }
 
-    public void check(RComplex value) {
-        if (state == STATE_ENABLED_CHECK) {
+    public String check(String value) {
+        if (isCheckEnabled()) {
             if (RRuntime.isNA(value)) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                state = STATE_DISABLED_CHECK_SEEN_NA;
+                setState(STATE_DISABLED_CHECK_SEEN_NA);
             }
         }
+        return value;
     }
 
-    // assertion checks for: NA input value => NA check must have been enabled
-
-    public void assertInputValue(int value) {
-        assert !RRuntime.isNA(value) || state != STATE_DISABLED_CHECK_NEVER_SEEN_NA;
+    public RComplex check(RComplex value) {
+        if (isCheckEnabled()) {
+            if (RRuntime.isNA(value)) {
+                setState(STATE_DISABLED_CHECK_SEEN_NA);
+            }
+        }
+        return value;
     }
 
-    public void assertInputValue(double value) {
-        assert !RRuntime.isNA(value) || state != STATE_DISABLED_CHECK_NEVER_SEEN_NA;
+    private boolean isCheckEnabled() {
+        return state == STATE_ENABLED_CHECK_NEVER_SEEN_NA || state == STATE_INITIAL_ENABLED_CHECK;
     }
 
-    public void assertInputValue(byte value) {
-        assert !RRuntime.isNA(value) || state != STATE_DISABLED_CHECK_NEVER_SEEN_NA;
-    }
-
-    public void assertInputValue(String value) {
-        assert !RRuntime.isNA(value) || state != STATE_DISABLED_CHECK_NEVER_SEEN_NA;
-    }
-
-    public void assertInputValue(RComplex value) {
-        assert !RRuntime.isNA(value) || state != STATE_DISABLED_CHECK_NEVER_SEEN_NA;
+    private void setState(byte newState) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        state = newState;
     }
 }

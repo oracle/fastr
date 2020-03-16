@@ -22,59 +22,47 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import static com.oracle.truffle.r.runtime.data.VectorDataLibrary.initInputNAChecks;
 import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
+
+import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-
-import java.util.Arrays;
 
 @ExportLibrary(VectorDataLibrary.class)
 class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     private final int[] data;
-    // this flag is used only to initialize the complete flag in the owner,
-    // from then on, we read/write the owner's complete flag
-    private final boolean dataInitiallyComplete;
     private RIntVector owner;
+    private boolean complete;
 
     RIntArrayVectorData(int[] data, boolean complete) {
         this.data = data;
-        this.dataInitiallyComplete = complete && ENABLE_COMPLETE;
+        this.complete = complete && ENABLE_COMPLETE;
     }
 
     @Override
     public void setOwner(RAbstractVector newOwner) {
-        boolean firstOwner = owner == null;
         owner = (RIntVector) newOwner;
-        if (firstOwner) {
-            owner.setComplete(dataInitiallyComplete);
-        }
+        owner.setComplete(complete);
     }
 
     @SuppressWarnings("static-method")
     @ExportMessage
     public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na) {
-        return na;
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public InputNACheck getInputNACheck(@Shared("inputNACheck") @Cached() InputNACheck na) {
         return na;
     }
 
@@ -115,7 +103,7 @@ class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public boolean isComplete() {
-        return owner != null && owner.isComplete() && ENABLE_COMPLETE;
+        return complete && ENABLE_COMPLETE;
     }
 
     @ExportMessage
@@ -177,59 +165,53 @@ class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     // Write access to the elements:
 
     @ExportMessage
-    public SeqWriteIterator writeIterator(boolean inputIsComplete, @Shared("naCheck") @Cached() NACheck naCheck,
-                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
-        initInputNAChecks(inputNACheck, naCheck, inputIsComplete, isComplete());
-        return new SeqWriteIterator(data, data.length, inputIsComplete);
+    public SeqWriteIterator writeIterator() {
+        return new SeqWriteIterator(data, data.length);
     }
 
     @ExportMessage
-    public RandomAccessWriteIterator randomAccessWriteIterator(boolean inputIsComplete,
-                    @Shared("naCheck") @Cached() NACheck naCheck,
-                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
-        initInputNAChecks(inputNACheck, naCheck, inputIsComplete, isComplete());
-        return new RandomAccessWriteIterator(data, inputIsComplete);
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(data);
     }
 
     @ExportMessage
-    public void commitWriteIterator(SeqWriteIterator iterator, @Shared("inputNACheck") @Cached() InputNACheck na) {
+    public void commitWriteIterator(SeqWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
         iterator.commit();
-        commitWrites(na, iterator.inputIsComplete);
+        commitWrites(neverSeenNA, setCompleteProfile);
     }
 
     @ExportMessage
-    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, @Shared("inputNACheck") @Cached() InputNACheck na) {
+    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
         iterator.commit();
-        commitWrites(na, iterator.inputIsComplete);
+        commitWrites(neverSeenNA, setCompleteProfile);
     }
 
-    private void commitWrites(InputNACheck naCheck, boolean inputIsComplete) {
-        if (naCheck.needsResettingCompleteFlag() && !inputIsComplete) {
+    private void commitWrites(boolean neverSeenNA, @Cached BranchProfile setCompleteProfile) {
+        if (!neverSeenNA) {
+            setCompleteProfile.enter();
             owner.setComplete(false);
+            complete = false;
         }
     }
 
     @ExportMessage
-    public void setIntAt(int index, int value, InputNACheck inputNACheck) {
-        inputNACheck.check(value);
+    public void setIntAt(int index, int value, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
         data[index] = value;
-        if (inputNACheck.needsResettingCompleteFlag()) {
+        if (RRuntime.isNA(value)) {
+            setCompleteProfile.enter();
             owner.setComplete(false);
+            complete = false;
         }
     }
 
     @ExportMessage
-    public void setNextInt(SeqWriteIterator it, int value,
-                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
-        inputNACheck.check(value);
+    public void setNextInt(SeqWriteIterator it, int value) {
         getStore(it)[it.getIndex()] = value;
         // complete flag will be updated in commit method
     }
 
     @ExportMessage
-    public void setInt(RandomAccessWriteIterator it, int index, int value,
-                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
-        inputNACheck.check(value);
+    public void setInt(RandomAccessWriteIterator it, int index, int value) {
         getStore(it)[index] = value;
         // complete flag will be updated in commit method
     }

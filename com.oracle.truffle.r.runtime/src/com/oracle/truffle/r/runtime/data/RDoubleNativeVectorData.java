@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
-import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
@@ -52,12 +51,6 @@ public class RDoubleNativeVectorData implements TruffleObject {
     @ExportMessage
     public NACheck getNACheck() {
         return NACheck.getEnabled();
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public InputNACheck getInputNACheck() {
-        return InputNACheck.getUncached();
     }
 
     @SuppressWarnings("static-method")
@@ -148,33 +141,27 @@ public class RDoubleNativeVectorData implements TruffleObject {
     // Write access to the elements:
 
     @ExportMessage
-    public SeqWriteIterator writeIterator(@SuppressWarnings("unused") boolean inputIsComplete) {
-        return new SeqWriteIterator(null, getLength(), false);
+    public SeqWriteIterator writeIterator() {
+        return new SeqWriteIterator(null, getLength());
     }
 
     @ExportMessage
-    public RandomAccessWriteIterator randomAccessWriteIterator(@SuppressWarnings("unused") boolean inputIsComplete) {
-        return new RandomAccessWriteIterator(null, false);
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(null);
     }
 
     @ExportMessage
-    public void setDoubleAt(int index, double value,
-                    @SuppressWarnings("unused") InputNACheck inputNACheck) {
-        inputNACheck.check(value);
+    public void setDoubleAt(int index, double value) {
         NativeDataAccess.setData(vec, null, index, value);
     }
 
     @ExportMessage
-    public void setNextDouble(SeqWriteIterator it, double value,
-                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
-        inputNACheck.check(value);
+    public void setNextDouble(SeqWriteIterator it, double value) {
         NativeDataAccess.setData(vec, null, it.getIndex(), value);
     }
 
     @ExportMessage
-    public void setDouble(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, double value,
-                    @Shared("inputNACheck") @Cached() InputNACheck inputNACheck) {
-        inputNACheck.check(value);
+    public void setDouble(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, double value) {
         NativeDataAccess.setData(vec, null, index, value);
     }
 }

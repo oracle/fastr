@@ -33,13 +33,11 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
-import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
@@ -60,12 +58,6 @@ public class RIntSeqVectorData implements RSeq, TruffleObject {
     @ExportMessage
     public NACheck getNACheck() {
         return NACheck.getDisabled();
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public InputNACheck getInputNACheck() {
-        throw RInternalError.shouldNotReachHere("InputNACheck is meant to be used only with write oprations");
     }
 
     @SuppressWarnings("static-method")
@@ -199,10 +191,12 @@ public class RIntSeqVectorData implements RSeq, TruffleObject {
 
     // Utility methods:
 
-    private int[] getDataAsArray(int newLength, NACheck naCheck) {
+    private int[] getDataAsArray(int newLength, @SuppressWarnings("unused") NACheck naCheck) {
         int[] data = new int[newLength];
+        int startLocal = start;
+        int strideLocal = stride;
         for (int i = 0; i < Math.min(newLength, length); i++) {
-            data[i] = getIntAt(i, naCheck);
+            data[i] = startLocal + strideLocal * i;
         }
         return data;
     }

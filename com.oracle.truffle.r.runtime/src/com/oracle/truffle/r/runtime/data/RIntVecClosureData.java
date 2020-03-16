@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
-import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
@@ -51,12 +50,6 @@ public class RIntVecClosureData implements RClosure, TruffleObject {
     @ExportMessage
     public NACheck getNACheck() {
         return NACheck.getEnabled();
-    }
-
-    @SuppressWarnings("static-method")
-    @ExportMessage
-    public InputNACheck getInputNACheck() {
-        return InputNACheck.getUncached();
     }
 
     @SuppressWarnings("static-method")

@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.ops.na.InputNACheck;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 // TODO:
@@ -95,19 +94,21 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * wrap-up if desired ({@link #setNextInt(Object, SeqWriteIterator, int)})</li>
  * <li>At random positions using an iterator object (
  * {@link #setInt(Object, RandomAccessWriteIterator, int, int)})</li>
- * <li>At random positions without an iterator object (
- * {@link #setIntAt(Object, int, int, InputNACheck)} )</li>
+ * <li>At random positions without an iterator object ( {@link #setIntAt(Object, int, int)}). This
+ * is the least efficient way and should be used only outside of loops.</li>
  * </ul>
  * <p>
- * 
- * Write operations require {@link InputNACheck}, which is created together with the iterator object
- * and can be be accessed via {@link #getInputNACheck(Object)}. The {@link InputNACheck} must be
- * enabled if the source of the "input" data may contain {@code NA} values (see
- * {@link InputNACheck#enable(boolean, boolean)}. This allows to optimize away the check for
- * {@code NA} values. Moreover, the data object usually needs to update its "complete" field when
- * {@code NA} value is written. The memory write of that "complete" field is moved to
- * {@link #commitWriteIterator(Object, SeqWriteIterator)} in case of the iterator API, so that the
- * memory write is outside of the loop that usually writes values to the vector object.
+ * Write operations also provide overloads with and without iterators. The overload without iterator
+ * ({@link #setIntAt(Object, int, int)}), always checks if the value is NA and updates the complete
+ * flag immediately if necessary. This is more efficient if you are writing single value. With the
+ * iterators usage, the memory write of the "complete" field is moved to
+ * {@link #commitWriteIterator(Object, SeqWriteIterator, boolean)}, so that the memory write is
+ * outside of the loop that usually writes values to the vector object.
+ * <p>
+ * Write operations with iterators may be configured to check incoming values for NAs. If they are
+ * not configured to do so, then whether or not to update the complete flag is determined solely by
+ * the argument passed to the "commit" method. In such case, it is responsibility of the user to
+ * check for NA values.
  */
 @GenerateLibrary(assertions = Asserts.class)
 @DefaultExport(DefaultRVectorDataLibrary.class)
@@ -203,19 +204,15 @@ public abstract class VectorDataLibrary extends Library {
             profile.profileCounted(length);
         }
 
-        final boolean next(@SuppressWarnings("unused") LoopConditionProfile loopConditionProfile, boolean withWrap) {
+        final boolean next(LoopConditionProfile loopConditionProfile, boolean withWrap) {
             if (withWrap) {
                 index++;
-                // TODO is clashing with LoopConditionProfile used in BinaryMapVectorNode
-                // e.g. shootout.mandelbrot-ascii to reproduce
-                // if (loopConditionProfile.inject(index == length)) {
-                if (index == length) {
+                if (loopConditionProfile.inject(index == length)) {
                     index = 0;
                 }
                 return true;
             }
-            // return loopConditionProfile.inject(++index < length);
-            return ++index < length;
+            return loopConditionProfile.inject(++index < length);
         }
 
         public final void reset() {
@@ -230,12 +227,10 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     public static final class SeqWriteIterator extends SeqIterator implements AutoCloseable {
-        final boolean inputIsComplete;
         private boolean committed; // used for assertions only
 
-        protected SeqWriteIterator(Object store, int length, boolean inputIsComplete) {
+        protected SeqWriteIterator(Object store, int length) {
             super(store, length);
-            this.inputIsComplete = inputIsComplete;
         }
 
         void commit() {
@@ -256,16 +251,18 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     public static final class RandomAccessWriteIterator extends RandomAccessIterator implements AutoCloseable {
-        final boolean inputIsComplete;
         private boolean committed; // used for assertions only
 
-        protected RandomAccessWriteIterator(Object store, boolean inputIsComplete) {
+        protected RandomAccessWriteIterator(Object store) {
             super(store);
-            this.inputIsComplete = inputIsComplete;
         }
 
         void commit() {
-            committed = true;
+            assert setCommited(true);
+        }
+
+        private boolean setCommited(boolean b) {
+            return committed = b;
         }
 
         @Override
@@ -273,15 +270,6 @@ public abstract class VectorDataLibrary extends Library {
             // commitWriteIterator was not called or the library impl. is not setting the
             // 'committed' flag in the iterator
             assert committed;
-        }
-    }
-
-    static void initInputNAChecks(InputNACheck inputNACheck, NACheck naCheck, boolean inputIsComplete, boolean destIsComplete) {
-        naCheck.enable(!inputIsComplete);
-        inputNACheck.enable(destIsComplete, inputIsComplete);
-        if (!destIsComplete) {
-            // No point in checking NAs if the destination is already marked as incomplete vector
-            inputNACheck.disableChecks();
         }
     }
 
@@ -321,40 +309,35 @@ public abstract class VectorDataLibrary extends Library {
 
     /**
      * Returns an iterator object. Using an iterator object allows to better optimize the operation
-     * of getting data at given index. See the documentation of {@link VectorDataLibrary} for high
+     * of writing data at given index. See the documentation of {@link VectorDataLibrary} for high
      * level overview. The {@code receiver} object must be {@link #isWriteable(Object)}.
      * <p>
-     * The {@code inputIsComplete} parameter should be {@code true} of if we know that the values
-     * that will be written do not contain any {@code NA}. Usually one is writing data that
-     * originate from one or more "input" vectors, the value of {@code inputIsComplete} should be
-     * logical AND of {@link #isComplete(Object)} flags of those vectors. Note that if the data from
-     * the "input" vectors are processed by some operation that can produce {@code NA} even if the
-     * none of the inputs is {@code NA}, then {@code inputIsComplete} must be set to {@code false}.
-     * <p>
      * Writes using a write iterator must be committed using
-     * {@link #commitWriteIterator(Object, SeqWriteIterator)}.
+     * {@link #commitWriteIterator(Object, SeqWriteIterator, boolean)}.
      */
-    public SeqWriteIterator writeIterator(Object receiver, @SuppressWarnings("unused") boolean inputIsComplete) {
+    public SeqWriteIterator writeIterator(Object receiver) {
         throw notWriteableError(receiver, "writeIterator");
     }
 
     /**
-     * @see #writeIterator(Object, boolean)
+     * @see #writeIterator(Object)
      */
-    public RandomAccessWriteIterator randomAccessWriteIterator(Object receiver, @SuppressWarnings("unused") boolean inputIsComplete) {
+    public RandomAccessWriteIterator randomAccessWriteIterator(Object receiver) {
         throw notWriteableError(receiver, "randomAccessWriteIterator");
     }
 
     /**
      * Writes using a write iterator must be committed using this method. Moreover, the iterators
      * should be used with the try-with-resources pattern. The {@code close} method checks that
-     * {@link #commitWriteIterator(Object, SeqWriteIterator)} was invoked.
+     * {@link #commitWriteIterator(Object, SeqWriteIterator, boolean)} was invoked.
      *
-     * This is a place where implementations that dynamically maintain the "complete" flag will
-     * check the {@code inputIsComplete} flag passed to {@link #writeIterator(Object, boolean)}.
-     * They should also use a {@code @Shared @Cached} instance of {@link InputNACheck} and the
-     * {@link InputNACheck#needsResettingCompleteFlag()} should be also used to determine if the
-     * "complete" flag of this vector should be set to {@code false}.
+     * {@code neverSeenNA} set to {@code true} indicates that no {@code NA} value was written to the
+     * vector. {@code neverSeenNA} set to {@code false} indicates that an {@code NA} value may or
+     * may not have been written. Some implementations need this information in order to update
+     * their {@link #isComplete(Object)} state. It is left to the user to track the {@code NA}
+     * values, for example, using {@link NACheck}.
+     *
+     * Notes for implementors:
      *
      * Make sure to update the {@link SeqWriteIterator#committed} flag to {@code true}. It is
      * checked with assertion in the {@link SeqWriteIterator#close()} method.
@@ -364,23 +347,27 @@ public abstract class VectorDataLibrary extends Library {
      *
      * Note: we cannot implement this in the {@link AutoCloseable#close()} method of
      * {@link SeqWriteIterator}, because we need to pass in the {@code receiver} object.
-     *
-     * @see #writeIterator(Object, boolean)
      */
-    public void commitWriteIterator(@SuppressWarnings("unused") Object receiver, SeqWriteIterator iterator) {
+    public void commitWriteIterator(@SuppressWarnings("unused") Object receiver, SeqWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
         iterator.commit();
     }
 
     /**
-     * @see #commitWriteIterator(Object, SeqWriteIterator)
+     * @see #commitWriteIterator(Object, SeqWriteIterator, boolean)
      */
-    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") Object receiver, RandomAccessWriteIterator iterator) {
+    public void commitRandomAccessWriteIterator(@SuppressWarnings("unused") Object receiver, RandomAccessWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
         iterator.commit();
     }
 
+    /**
+     * Gives an {@link NACheck} that is enabled depending on the {@link #isComplete(Object)} flag of
+     * the data and also checks every value returned from any method for accessing single elements
+     * of this data object.
+     *
+     * In other words: {@link NACheck#neverSeenNA()} implies that no method such as
+     * {@link #getIntAt(Object, int)} ever returned {@code NA} value.
+     */
     public abstract NACheck getNACheck(Object receiver);
-
-    public abstract InputNACheck getInputNACheck(Object receiver);
 
     // ---------------------------------------------------------------------
     // Methods specific to integer data
@@ -490,7 +477,7 @@ public abstract class VectorDataLibrary extends Library {
      * See the documentation of {@link VectorDataLibrary} for a high level overview.
      */
     @SuppressWarnings("unused")
-    public void setIntAt(Object receiver, int index, int value, InputNACheck naCheck) {
+    public void setIntAt(Object receiver, int index, int value) {
         throw notWriteableError(receiver, "setIntAt");
     }
 
@@ -514,15 +501,6 @@ public abstract class VectorDataLibrary extends Library {
     @SuppressWarnings("unused")
     public void setInt(Object receiver, RandomAccessWriteIterator it, int index, int value) {
         throw notWriteableError(receiver, "setInt");
-    }
-
-    /**
-     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
-     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
-     * to enable more optimizations.
-     */
-    public final void setIntAt(Object receiver, int index, int value) {
-        setIntAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -600,7 +578,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     @SuppressWarnings("unused")
-    public void setDoubleAt(Object receiver, int index, double value, InputNACheck naCheck) {
+    public void setDoubleAt(Object receiver, int index, double value) {
         throw notWriteableError(receiver, "setDoubleAt");
     }
 
@@ -612,15 +590,6 @@ public abstract class VectorDataLibrary extends Library {
     @SuppressWarnings("unused")
     public void setDouble(Object receiver, RandomAccessWriteIterator it, int index, double value) {
         throw notWriteableError(receiver, "setDouble");
-    }
-
-    /**
-     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
-     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
-     * to enable more optimizations.
-     */
-    public final void setDoubleAt(Object receiver, int index, double value) {
-        setDoubleAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -704,7 +673,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     @SuppressWarnings("unused")
-    public void setLogicalAt(Object receiver, int index, byte value, InputNACheck naCheck) {
+    public void setLogicalAt(Object receiver, int index, byte value) {
         throw notWriteableError(receiver, "setLogicalAt");
     }
 
@@ -716,15 +685,6 @@ public abstract class VectorDataLibrary extends Library {
     @SuppressWarnings("unused")
     public void setLogical(Object receiver, RandomAccessWriteIterator it, int index, byte value) {
         throw notWriteableError(receiver, "setLogical");
-    }
-
-    /**
-     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
-     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
-     * to enable more optimizations.
-     */
-    public final void setLogicalAt(Object receiver, int index, byte value) {
-        setLogicalAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -808,7 +768,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     @SuppressWarnings("unused")
-    public void setRawAt(Object receiver, int index, byte value, InputNACheck inputNACheck) {
+    public void setRawAt(Object receiver, int index, byte value) {
         throw notWriteableError(receiver, "setRawAt");
     }
 
@@ -820,15 +780,6 @@ public abstract class VectorDataLibrary extends Library {
     @SuppressWarnings("unused")
     public void setRaw(Object receiver, RandomAccessWriteIterator it, int index, byte value) {
         throw notWriteableError(receiver, "setLogical");
-    }
-
-    /**
-     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
-     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
-     * to enable more optimizations.
-     */
-    public final void setRawAt(Object receiver, int index, byte value) {
-        setRawAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -917,7 +868,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     @SuppressWarnings("unused")
-    public void setStringAt(Object receiver, int index, String value, InputNACheck naCheck) {
+    public void setStringAt(Object receiver, int index, String value) {
         throw notWriteableError(receiver, "setStringAt");
     }
 
@@ -932,15 +883,6 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     private final ConditionProfile emptyStringProfile = ConditionProfile.createBinaryProfile();
-
-    /**
-     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
-     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
-     * to enable more optimizations.
-     */
-    public final void setStringAt(Object receiver, int index, String value) {
-        setStringAt(receiver, index, value, InputNACheck.getUncached());
-    }
 
     // ---------------------------------------------------------------------
     // Methods specific to complex data
@@ -1027,7 +969,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     @SuppressWarnings("unused")
-    public void setComplexAt(Object receiver, int index, RComplex value, InputNACheck naCheck) {
+    public void setComplexAt(Object receiver, int index, RComplex value) {
         throw notWriteableError(receiver, "setComplexAt");
     }
 
@@ -1039,15 +981,6 @@ public abstract class VectorDataLibrary extends Library {
     @SuppressWarnings("unused")
     public void setComplex(Object receiver, RandomAccessWriteIterator it, int index, RComplex value) {
         throw notWriteableError(receiver, "setComplex");
-    }
-
-    /**
-     * Convenience overload of {@link #setIntAt(Object, int, int, InputNACheck)}, which uses enabled
-     * {@link NACheck}. It is recommended to use the other overload and actual {@link InputNACheck}
-     * to enable more optimizations.
-     */
-    public final void setComplexAt(Object receiver, int index, RComplex value) {
-        setComplexAt(receiver, index, value, InputNACheck.getUncached());
     }
 
     // ---------------------------------------------------------------------
@@ -1341,7 +1274,6 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
-    // XXX perhaps 1 naCheck too much
     public boolean isNAAt(Object data, int index) {
         RType type = getType(data);
         switch (type) {
@@ -1406,11 +1338,6 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
-        public InputNACheck getInputNACheck(Object receiver) {
-            return delegate.getInputNACheck(receiver);
-        }
-
-        @Override
         public RType getType(Object data) {
             verifyIfSlowAssertsEnabled(data);
             RType result = delegate.getType(data);
@@ -1424,9 +1351,6 @@ public abstract class VectorDataLibrary extends Library {
             Object result = delegate.materialize(data);
             assert result != null;
             assert getUncachedLib().isWriteable(result);
-            // data is not complete => result is not complete
-            // XXX while materializing data, they have no owner yet
-            // assert delegate.isComplete(data) || !getUncachedLib().isComplete(result);
             return result;
         }
 
@@ -1503,20 +1427,18 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
-        public void setIntAt(Object receiver, int index, int value, InputNACheck naCheck) {
+        public void setIntAt(Object receiver, int index, int value) {
             assert index >= 0 && index < delegate.getLength(receiver);
-            naCheck.assertInputValue(value);
-            delegate.setIntAt(receiver, index, value, naCheck);
+            delegate.setIntAt(receiver, index, value);
             assert delegate.getIntAt(receiver, index) == value;
             // NA written -> complete must be false
             assert !RRuntime.isNA(delegate.getIntAt(receiver, index)) || !delegate.isComplete(receiver);
         }
 
         @Override
-        public void setDoubleAt(Object receiver, int index, double value, InputNACheck naCheck) {
+        public void setDoubleAt(Object receiver, int index, double value) {
             assert index >= 0 && index < delegate.getLength(receiver);
-            naCheck.assertInputValue(value);
-            delegate.setDoubleAt(receiver, index, value, naCheck);
+            delegate.setDoubleAt(receiver, index, value);
             assert isSame(delegate.getDoubleAt(receiver, index), value);
             // NA written -> complete must be false
             if (RRuntime.isNA(delegate.getDoubleAt(receiver, index)) && delegate.isComplete(receiver)) {
@@ -1526,24 +1448,23 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
-        public void setLogicalAt(Object receiver, int index, byte value, InputNACheck naCheck) {
+        public void setLogicalAt(Object receiver, int index, byte value) {
             assert index >= 0 && index < delegate.getLength(receiver);
-            naCheck.assertInputValue(value);
-            delegate.setLogicalAt(receiver, index, value, naCheck);
+            delegate.setLogicalAt(receiver, index, value);
             assert delegate.getLogicalAt(receiver, index) == value;
             // NA written -> complete must be false
             assert !RRuntime.isNA(delegate.getLogicalAt(receiver, index)) || !delegate.isComplete(receiver);
         }
 
         @Override
-        public void commitWriteIterator(Object receiver, SeqWriteIterator iterator) {
-            delegate.commitWriteIterator(receiver, iterator);
+        public void commitWriteIterator(Object receiver, SeqWriteIterator iterator, boolean neverSeenNA) {
+            delegate.commitWriteIterator(receiver, iterator, neverSeenNA);
             verifyIfSlowAssertsEnabled(receiver);
         }
 
         @Override
-        public void commitRandomAccessWriteIterator(Object receiver, RandomAccessWriteIterator iterator) {
-            delegate.commitRandomAccessWriteIterator(receiver, iterator);
+        public void commitRandomAccessWriteIterator(Object receiver, RandomAccessWriteIterator iterator, boolean neverSeenNA) {
+            delegate.commitRandomAccessWriteIterator(receiver, iterator, neverSeenNA);
             verifyIfSlowAssertsEnabled(receiver);
         }
 
@@ -1636,15 +1557,15 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
-        public SeqWriteIterator writeIterator(Object receiver, boolean inputIsComplete) {
+        public SeqWriteIterator writeIterator(Object receiver) {
             verifyIfSlowAssertsEnabled(receiver);
-            return delegate.writeIterator(receiver, inputIsComplete);
+            return delegate.writeIterator(receiver);
         }
 
         @Override
-        public RandomAccessWriteIterator randomAccessWriteIterator(Object receiver, boolean inputIsComplete) {
+        public RandomAccessWriteIterator randomAccessWriteIterator(Object receiver) {
             verifyIfSlowAssertsEnabled(receiver);
-            return delegate.randomAccessWriteIterator(receiver, inputIsComplete);
+            return delegate.randomAccessWriteIterator(receiver);
         }
 
         @Override
@@ -1804,8 +1725,8 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
-        public void setRawAt(Object receiver, int index, byte value, InputNACheck naCheck) {
-            delegate.setRawAt(receiver, index, value, naCheck);
+        public void setRawAt(Object receiver, int index, byte value) {
+            delegate.setRawAt(receiver, index, value);
         }
 
         @Override
@@ -1846,8 +1767,8 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
-        public void setStringAt(Object receiver, int index, String value, InputNACheck naCheck) {
-            delegate.setStringAt(receiver, index, value, naCheck);
+        public void setStringAt(Object receiver, int index, String value) {
+            delegate.setStringAt(receiver, index, value);
         }
 
         @Override
@@ -1888,8 +1809,8 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
-        public void setComplexAt(Object receiver, int index, RComplex value, InputNACheck naCheck) {
-            delegate.setComplexAt(receiver, index, value, naCheck);
+        public void setComplexAt(Object receiver, int index, RComplex value) {
+            delegate.setComplexAt(receiver, index, value);
         }
 
         @Override
