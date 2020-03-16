@@ -169,7 +169,9 @@ public final class NACheck {
     }
 
     public void enable(boolean value) {
-        assert !disabled;
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK && value) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             state = CHECK_DEOPT;
@@ -177,28 +179,36 @@ public final class NACheck {
     }
 
     public void enable(byte logical) {
-        assert !disabled;
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(logical));
         }
     }
 
     public void enable(int value) {
-        assert !disabled;
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(value));
         }
     }
 
     public void enable(double value) {
-        assert !disabled;
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(value));
         }
     }
 
     public void enable(RComplex value) {
-        assert !disabled;
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(value.isNA());
         }
@@ -206,35 +216,45 @@ public final class NACheck {
 
     // TODO: should be completely replaced by enable(library, RAbstractContainer value)
     public void enable(RAbstractContainer value) {
-        assert !disabled;
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(!value.isComplete());
         }
     }
 
     public void enable(AbstractContainerLibrary library, RAbstractContainer value) {
-        assert !disabled;
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(!library.isComplete(value));
         }
     }
 
     public void enable(VectorDataLibrary library, Object vectorData) {
-        assert !disabled;
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(!library.isComplete(vectorData));
         }
     }
 
     public void enable(VectorDataLibrary library, RAbstractVector vector) {
-        assert !disabled;
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(!library.isComplete(vector.getData()));
         }
     }
 
     public void enable(String operand) {
-        assert !disabled;
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(operand));
         }

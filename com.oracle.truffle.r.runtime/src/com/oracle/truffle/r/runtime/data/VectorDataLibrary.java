@@ -41,17 +41,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-// TODO:
-// 1. rewrite WriteIndexedVectorNode (done)
-// 1.1: intermezzo: marker interface for data objects to catch errors when we are passing unrelated object to the library - issue, this does not allow Integer to be a data object
-// 1.2: specialize on right.isComplete()
-// 2. rewrite CumSum (uses NACheck from vector access)
-// 3. rewrite AnyNA (uses getType from vector access)
-// 3. rewrite PPsum?
-// Performance compatibility: data objs update complete flag of the vector + length is kept in vectors too
-// N. API for vectors materialization/reuse
-// check other APIs on VectorAccess
-
 /**
  * Truffle library for objects that represent data of {@link RAbstractVector} objects. Data objects
  * represent an array of elements of the vector. For example, {@code int} array for
@@ -234,10 +223,10 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         void commit() {
-            assert setCommited(true);
+            assert setCommitted(true);
         }
 
-        private boolean setCommited(boolean b) {
+        private boolean setCommitted(boolean b) {
             return committed = b;
         }
 
