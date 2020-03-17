@@ -61,7 +61,7 @@ fast as GNU-R and sometimes even faster because the GraalVM dynamic compiler can
 ## Stay connected with the community
 
 See [graalvm.org/community](https://www.graalvm.org/community/) on how to stay connected with the development community.
-The discussion on [slack](https://graalvm.slack.com) is a good way to get in touch with us.
+The discussion on [Slack](https://www.graalvm.org/slack-invitation/) is a good way to get in touch with us.
 
 We would like to grow the FastR open-source community to provide a free R implementation atop the Truffle/Graal stack.
 We encourage contributions, and invite interested developers to join in.
