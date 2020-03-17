@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,16 +23,20 @@
 package com.oracle.truffle.r.runtime.ops.na;
 
 import static com.oracle.truffle.r.runtime.RRuntime.isNA;
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
  * Serves as a FastR specific Truffle profile, i.e. it uses {@link CompilerDirectives Truffle
@@ -114,30 +118,60 @@ public final class NACheck {
      */
     private static final int CHECK = 2;
 
-    @CompilationFinal private int state;
-    @CompilationFinal private boolean seenNaN;
+    @CompilationFinal protected int state;
+    @CompilationFinal protected boolean seenNaN;
+
+    private final boolean disabled;
 
     private NACheck() {
         // private constructor
+        disabled = false;
+    }
+
+    private NACheck(boolean disabled) {
+        // private constructor
+        this.disabled = disabled;
     }
 
     private static final NACheck ENABLED;
 
     static {
         ENABLED = new NACheck();
-        ENABLED.state = CHECK;
+        ENABLED.state = NACheck.CHECK;
         ENABLED.seenNaN = true;
+    }
+
+    private static final NACheck DISABLED;
+    static {
+        DISABLED = new NACheck(true);
+        DISABLED.state = NACheck.NO_CHECK;
     }
 
     public static NACheck getEnabled() {
         return ENABLED;
     }
 
+    public static NACheck getDisabled() {
+        return DISABLED;
+    }
+
+    public static NACheck getUncached() {
+        return ENABLED;
+    }
+
     public static NACheck create() {
-        return new NACheck();
+        if (ENABLE_COMPLETE) {
+            return new NACheck();
+        } else {
+            // enabled check is always checking NA and always says that it has seen NA/NaN
+            return ENABLED;
+        }
     }
 
     public void enable(boolean value) {
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK && value) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             state = CHECK_DEOPT;
@@ -145,36 +179,82 @@ public final class NACheck {
     }
 
     public void enable(byte logical) {
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(logical));
         }
     }
 
     public void enable(int value) {
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(value));
         }
     }
 
     public void enable(double value) {
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(value));
         }
     }
 
     public void enable(RComplex value) {
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(value.isNA());
         }
     }
 
+    // TODO: should be completely replaced by enable(library, RAbstractContainer value)
     public void enable(RAbstractContainer value) {
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(!value.isComplete());
         }
     }
 
+    public void enable(AbstractContainerLibrary library, RAbstractContainer value) {
+        if (disabled) {
+            return;
+        }
+        if (state == NO_CHECK) {
+            enable(!library.isComplete(value));
+        }
+    }
+
+    public void enable(VectorDataLibrary library, Object vectorData) {
+        if (disabled) {
+            return;
+        }
+        if (state == NO_CHECK) {
+            enable(!library.isComplete(vectorData));
+        }
+    }
+
+    public void enable(VectorDataLibrary library, RAbstractVector vector) {
+        if (disabled) {
+            return;
+        }
+        if (state == NO_CHECK) {
+            enable(!library.isComplete(vector.getData()));
+        }
+    }
+
     public void enable(String operand) {
+        if (disabled) {
+            return;
+        }
         if (state == NO_CHECK) {
             enable(RRuntime.isNA(operand));
         }

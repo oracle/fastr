@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypes;
@@ -81,6 +82,8 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile emptyProfile = BranchProfile.create();
     private final BranchProfile naResultProfile = BranchProfile.create();
+
+    private final BranchProfile intNANoOverflowProfile = BranchProfile.create();
 
     protected UnaryArithmeticReduceNode(ReduceSemantics semantics, BinaryArithmeticFactory factory) {
         this.factory = factory;
@@ -204,14 +207,14 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
         }
     }
 
-    private Object doInt(RAbstractVector vector, boolean naRm, VectorAccess access) {
+    private Object doInt(RAbstractVector vector, boolean naRm, VectorAccess access, AbstractContainerLibrary library) {
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
         int oldResult = result;
         double doubleResult = semantics.getDoubleStart();
         boolean overflow = false;
         boolean empty = true;
-        try (VectorAccess.SequentialIterator iter = access.access(vector)) {
+        try (VectorAccess.SequentialIterator iter = access.access(library, vector)) {
             while (access.next(iter)) {
                 int d;
                 switch (access.getType()) {
@@ -249,6 +252,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
                 result = arithmetic.op(result, d);
 
                 if (RRuntime.isNA(result) && !overflow) {
+                    intNANoOverflowProfile.enter();
                     overflow = true;
                     doubleResult = arithmetic.op((double) oldResult, (double) d);
                 }
@@ -270,24 +274,26 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
 
     @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected Object doIntCached(RIntVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite,
-                    @Cached("vector.access()") VectorAccess access) {
-        return doInt(vector, naRm, access);
+                    @Cached("vector.access()") VectorAccess access,
+                    @CachedLibrary("vector") AbstractContainerLibrary library) {
+        return doInt(vector, naRm, access, library);
     }
 
     @Specialization(replaces = "doIntCached")
     protected Object doIntGeneric(RIntVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        return doInt(vector, naRm, vector.slowPathAccess());
+        return doInt(vector, naRm, vector.slowPathAccess(), AbstractContainerLibrary.getFactory().getUncached());
     }
 
     @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected Object doLogicalCached(RAbstractLogicalVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite,
-                    @Cached("vector.access()") VectorAccess access) {
-        return doInt(vector, naRm, access);
+                    @Cached("vector.access()") VectorAccess access,
+                    @CachedLibrary("vector") AbstractContainerLibrary library) {
+        return doInt(vector, naRm, access, library);
     }
 
     @Specialization(replaces = "doIntCached")
     protected Object doLogicalGeneric(RAbstractLogicalVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite) {
-        return doInt(vector, naRm, vector.slowPathAccess());
+        return doInt(vector, naRm, vector.slowPathAccess(), AbstractContainerLibrary.getFactory().getUncached());
     }
 
     private double doDouble(RAbstractDoubleVector vector, boolean naRm, boolean finite, ConditionProfile finiteProfile, ConditionProfile isInfiniteProfile, VectorAccess access) {

@@ -25,7 +25,9 @@ package com.oracle.truffle.r.nodes.attributes;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
@@ -33,11 +35,13 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,6 +53,7 @@ import java.util.logging.Level;
  * @see UnaryCopyAttributesNode
  * @see CopyOfRegAttributesNode
  */
+@ImportStatic(DSLConfig.class)
 public abstract class CopyAttributesNode extends RBaseNode {
 
     private final boolean copyAllAttributes;
@@ -68,8 +73,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
     public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
 
-    protected boolean containsMetadata(RAbstractVector vector) {
-        return vector.isMaterialized() && hasDimNode.execute(vector) ||
+    protected boolean containsMetadata(VectorDataLibrary library, RAbstractVector vector) {
+        return library.isWriteable(vector.getData()) && hasDimNode.execute(vector) ||
                         (copyAllAttributes && vector.getAttributes() != null) ||
                         getDimNamesNode.getDimNames(vector) != null ||
                         getNamesNode.getNames(vector) != null;
@@ -110,8 +115,10 @@ public abstract class CopyAttributesNode extends RBaseNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"!containsMetadata(left)", "!containsMetadata(right)"})
-    protected RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
+    @Specialization(guards = {"!containsMetadata(leftLibrary, left)", "!containsMetadata(rightLibrary, right)"}, limit = "getGenericVectorAccessCacheSize()")
+    protected RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength,
+                    @CachedLibrary("left.getData()") VectorDataLibrary leftLibrary,
+                    @CachedLibrary("right.getData()") VectorDataLibrary rightLibrary) {
         if (LOGGER.isLoggable(Level.FINE)) {
             log("copyAttributes: no");
             countNo++;
@@ -119,7 +126,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         return target;
     }
 
-    @Specialization(guards = {"leftLength == rightLength", "containsMetadata(left) || containsMetadata(right)"})
+    @Specialization(guards = {"leftLength == rightLength", "containsMetadata(leftLibrary,left) || containsMetadata(rightLibrary,right)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right,
                     @SuppressWarnings("unused") int rightLength,
                     @Cached("create()") CopyOfRegAttributesNode copyOfRegLeft,
@@ -138,7 +145,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
                     @Cached("create()") GetDimAttributeNode getRightDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                    @SuppressWarnings("unused") @CachedLibrary("left.getData()") VectorDataLibrary leftLibrary,
+                    @SuppressWarnings("unused") @CachedLibrary("right.getData()") VectorDataLibrary rightLibrary) {
         if (LOGGER.isLoggable(Level.FINE)) {
             log("copyAttributes: ==");
             countEquals++;
@@ -200,7 +209,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         return result;
     }
 
-    @Specialization(guards = {"leftLength < rightLength", "containsMetadata(left) || containsMetadata(right)"})
+    @Specialization(guards = {"leftLength < rightLength", "containsMetadata(leftLibrary,left) || containsMetadata(rightLibrary,right)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector copyShorter(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength,
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg,
                     @Cached("createBinaryProfile()") ConditionProfile rightNotResultProfile,
@@ -214,7 +223,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
                     @Cached("create()") GetDimAttributeNode getRightDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                    @SuppressWarnings("unused") @CachedLibrary("left.getData()") VectorDataLibrary leftLibrary,
+                    @SuppressWarnings("unused") @CachedLibrary("right.getData()") VectorDataLibrary rightLibrary) {
         if (LOGGER.isLoggable(Level.FINE)) {
             log("copyAttributes: <");
             countSmaller++;
@@ -257,7 +268,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         return result;
     }
 
-    @Specialization(guards = {"leftLength > rightLength", "containsMetadata(left) || containsMetadata(right)"})
+    @Specialization(guards = {"leftLength > rightLength", "containsMetadata(leftLibrary,left) || containsMetadata(rightLibrary,right)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector copyLonger(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength,
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg,
                     @Cached("create()") BranchProfile leftHasDimensions,
@@ -270,7 +281,9 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
                     @Cached("create()") GetDimAttributeNode getRightDimsNode,
-                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
+                    @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
+                    @SuppressWarnings("unused") @CachedLibrary("left.getData()") VectorDataLibrary leftLibrary,
+                    @SuppressWarnings("unused") @CachedLibrary("right.getData()") VectorDataLibrary rightLibrary) {
         if (LOGGER.isLoggable(Level.FINE)) {
             log("copyAttributes: >");
             countLarger++;

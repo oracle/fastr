@@ -23,20 +23,27 @@
 
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.Iterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
 
-@ExportLibrary(RIntVectorDataLibrary.class)
-public class RIntSeqVectorData extends RIntVectorData implements RSeq {
+@ExportLibrary(VectorDataLibrary.class)
+public class RIntSeqVectorData implements RSeq, TruffleObject {
     private final int start;
     private final int stride;
     private final int length;
@@ -45,6 +52,18 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
         this.start = start;
         this.stride = stride;
         this.length = length;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck() {
+        return NACheck.getDisabled();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final RType getType() {
+        return RType.Integer;
     }
 
     @Override
@@ -88,13 +107,8 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
-    public RIntArrayVectorData materialize() {
-        return new RIntArrayVectorData(getReadonlyIntData(), isComplete());
-    }
-
-    @ExportMessage
-    public boolean isWriteable() {
-        return false;
+    public RIntArrayVectorData materialize(@Shared("naCheck") @Cached() NACheck naCheck) {
+        return new RIntArrayVectorData(getIntDataCopy(naCheck), isComplete());
     }
 
     @ExportMessage
@@ -103,25 +117,18 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
-    public RIntArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
-        int[] newData = getDataAsArray(newSize);
+    public RIntArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
+        int[] newData = getDataAsArray(newSize, naCheck);
         if (fillNA) {
             Arrays.fill(newData, length, newData.length, RRuntime.INT_NA);
         }
         return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
-    }
-
     @ExportMessage
-    @Override
     public boolean isComplete() {
-        return true;
+        return ENABLE_COMPLETE;
     }
 
     @ExportMessage
@@ -130,47 +137,66 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     }
 
     @ExportMessage
-    public int[] getReadonlyIntData() {
-        return getDataAsArray(length);
+    public int[] getIntDataCopy(@Shared("naCheck") @Cached() NACheck naCheck) {
+        return getDataAsArray(length, naCheck);
+    }
+
+    // Read access to the elements:
+
+    @ExportMessage
+    public SeqIterator iterator(@Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(new IteratorData(start, stride), length);
+        naCheck.enable(false);
+        it.initLoopConditionProfile(loopProfile);
+        return it;
     }
 
     @ExportMessage
-    public SeqIterator iterator() {
-        return new SeqIterator(new IteratorData(start, stride), length);
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator() {
-        return new RandomAccessIterator(new IteratorData(start, stride), length);
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(false);
+        return new RandomAccessIterator(new IteratorData(start, stride));
     }
 
     @ExportMessage
-    @Override
-    public int getIntAt(int index) {
+    public int getIntAt(int index,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
         assert index < length;
-        return start + stride * index;
+        int value = start + stride * index;
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage
-    public int getNext(SeqIterator it) {
+    public int getNextInt(SeqIterator it, @Shared("naCheck") @Cached() NACheck naCheck) {
         IteratorData data = getStore(it);
-        return data.start + data.stride * it.getIndex();
+        int value = data.start + data.stride * it.getIndex();
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage
-    public int getAt(RandomAccessIterator it, int index) {
+    public int getInt(RandomAccessIterator it, int index, @Shared("naCheck") @Cached() NACheck naCheck) {
         IteratorData data = getStore(it);
-        return data.start + data.stride * index;
+        int value = data.start + data.stride * index;
+        naCheck.check(value);
+        return value;
     }
 
-    private static IteratorData getStore(Iterator it) {
-        return (IteratorData) it.getStore();
-    }
+    // Utility methods:
 
-    private int[] getDataAsArray(int newLength) {
+    private int[] getDataAsArray(int newLength, @SuppressWarnings("unused") NACheck naCheck) {
         int[] data = new int[newLength];
+        int startLocal = start;
+        int strideLocal = stride;
         for (int i = 0; i < Math.min(newLength, length); i++) {
-            data[i] = getIntAt(i);
+            data[i] = startLocal + strideLocal * i;
         }
         return data;
     }
@@ -179,6 +205,10 @@ public class RIntSeqVectorData extends RIntVectorData implements RSeq {
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return "[" + start + " - " + getEnd() + "]";
+    }
+
+    private static IteratorData getStore(Iterator it) {
+        return (IteratorData) it.getStore();
     }
 
     // We use a fresh new class for the iterator data in order to help the escape analysis

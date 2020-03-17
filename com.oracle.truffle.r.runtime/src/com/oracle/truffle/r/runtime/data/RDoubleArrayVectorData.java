@@ -22,28 +22,56 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.library.CachedLibrary;
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
+
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.Iterator;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
 
-@ExportLibrary(RDoubleVectorDataLibrary.class)
-class RDoubleArrayVectorData extends RDoubleVectorData {
+@ExportLibrary(VectorDataLibrary.class)
+class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     private final double[] data;
     private boolean complete;
+    private RDoubleVector owner;
 
     RDoubleArrayVectorData(double[] data, boolean complete) {
         this.data = data;
-        this.complete = complete;
+        this.complete = complete && ENABLE_COMPLETE;
     }
 
     @Override
+    public void setOwner(RAbstractVector newOwner) {
+        owner = (RDoubleVector) newOwner;
+        owner.setComplete(complete);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na) {
+        return na;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final RType getType() {
+        return RType.Double;
+    }
+
     @ExportMessage
     public int getLength() {
         return data.length;
@@ -61,7 +89,7 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
 
     @ExportMessage
     public RDoubleArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
-        return new RDoubleArrayVectorData(Arrays.copyOf(data, data.length), complete);
+        return new RDoubleArrayVectorData(Arrays.copyOf(data, data.length), isComplete());
     }
 
     @ExportMessage
@@ -70,20 +98,12 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
         if (fillNA) {
             Arrays.fill(newData, data.length, newData.length, RRuntime.DOUBLE_NA);
         }
-        return new RDoubleArrayVectorData(newData, complete);
-    }
-
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt((RDoubleVectorData) destination, index, data[index]);
+        return new RDoubleArrayVectorData(newData, isComplete());
     }
 
     @ExportMessage
-    @Override
     public boolean isComplete() {
-        return complete;
+        return complete && ENABLE_COMPLETE;
     }
 
     @ExportMessage
@@ -96,55 +116,101 @@ class RDoubleArrayVectorData extends RDoubleVectorData {
         return Arrays.copyOf(data, data.length);
     }
 
+    // Read access to the elements:
+
     @ExportMessage
-    public SeqIterator iterator() {
-        return new SeqIterator(data, data.length);
+    public SeqIterator iterator(
+                    @Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(data, data.length);
+        naCheck.enable(!isComplete());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator() {
-        return new RandomAccessIterator(data, data.length);
-    }
-
-    @Override
-    @ExportMessage
-    public double getDoubleAt(int index) {
-        return data[index];
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
     @ExportMessage
-    public double getNext(SeqIterator it) {
-        return getStore(it)[it.getIndex()];
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(!isComplete());
+        return new RandomAccessIterator(data);
     }
 
     @ExportMessage
-    public double getAt(RandomAccessIterator it, int index) {
-        return getStore(it)[index];
+    public double getDoubleAt(int index, @Shared("naCheck") @Cached() NACheck naCheck) {
+        double value = data[index];
+        naCheck.check(value);
+        return value;
     }
 
-    @Override
     @ExportMessage
-    public void setDoubleAt(int index, double value, NACheck naCheck) {
-        updateComplete(value, naCheck);
+    public double getNextDouble(SeqIterator it, @Shared("naCheck") @Cached() NACheck naCheck) {
+        double value = getStore(it)[it.getIndex()];
+        naCheck.check(value);
+        return value;
+    }
+
+    @ExportMessage
+    public double getDouble(RandomAccessIterator it, int index, @Shared("naCheck") @Cached() NACheck naCheck) {
+        double value = getStore(it)[index];
+        naCheck.check(value);
+        return value;
+    }
+
+    // Write access to the elements:
+
+    @ExportMessage
+    public SeqWriteIterator writeIterator() {
+        return new SeqWriteIterator(data, data.length);
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(data);
+    }
+
+    @ExportMessage
+    public void commitWriteIterator(SeqWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
+        iterator.commit();
+        commitWrites(neverSeenNA, setCompleteProfile);
+    }
+
+    @ExportMessage
+    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
+        iterator.commit();
+        commitWrites(neverSeenNA, setCompleteProfile);
+    }
+
+    private void commitWrites(boolean neverSeenNA, BranchProfile setCompleteProfile) {
+        if (!neverSeenNA) {
+            setCompleteProfile.enter();
+            complete = false;
+            owner.setComplete(false);
+        }
+    }
+
+    @ExportMessage
+    public void setDoubleAt(int index, double value, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
         data[index] = value;
+        if (RRuntime.isNA(value)) {
+            setCompleteProfile.enter();
+            complete = false;
+            owner.setComplete(false);
+        }
     }
 
     @ExportMessage
-    public void setNext(SeqIterator it, double value, NACheck naCheck) {
-        updateComplete(value, naCheck);
+    public void setNextDouble(SeqWriteIterator it, double value) {
         getStore(it)[it.getIndex()] = value;
     }
 
     @ExportMessage
-    public void setAt(RandomAccessIterator it, int index, double value, NACheck naCheck) {
-        updateComplete(value, naCheck);
+    public void setDouble(RandomAccessWriteIterator it, int index, double value) {
         getStore(it)[index] = value;
-    }
-
-    private void updateComplete(double value, NACheck naCheck) {
-        if (naCheck.check(value)) {
-            this.complete = false;
-        }
     }
 
     private static double[] getStore(Iterator it) {

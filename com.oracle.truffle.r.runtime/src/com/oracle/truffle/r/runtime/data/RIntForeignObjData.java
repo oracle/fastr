@@ -31,35 +31,36 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
 
-@ExportLibrary(RIntVectorDataLibrary.class)
-class RIntForeignObjData extends RIntVectorData {
+@ExportLibrary(VectorDataLibrary.class)
+class RIntForeignObjData implements TruffleObject {
     protected final Object foreign;
 
     RIntForeignObjData(Object foreign) {
         this.foreign = foreign;
     }
 
-    @Override
-    @Ignore
-    public int getIntAt(int index) {
-        return getIntImpl(index, InteropLibrary.getFactory().getUncached(), InteropLibrary.getFactory().getUncached(), ValueProfile.getUncached(), ConditionProfile.getUncached(),
-                        ConditionProfile.getUncached());
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck() {
+        return NACheck.getEnabled();
     }
 
-    @Override
-    @Ignore
-    public int getLength() {
-        return getLength(InteropLibrary.getFactory().getUncached());
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final RType getType() {
+        return RType.Integer;
     }
 
     @ExportMessage
@@ -93,7 +94,7 @@ class RIntForeignObjData extends RIntVectorData {
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
                     @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return new RIntArrayVectorData(getReadonlyIntData(valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile), RDataFactory.INCOMPLETE_VECTOR);
+        return new RIntArrayVectorData(getIntDataCopy(valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile), RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage
@@ -111,15 +112,8 @@ class RIntForeignObjData extends RIntVectorData {
         return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt((RIntVectorData) destination, index, getIntAt(index));
-    }
-
     @ExportMessage
-    public int[] getReadonlyIntData(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
+    public int[] getIntDataCopy(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
@@ -128,23 +122,39 @@ class RIntForeignObjData extends RIntVectorData {
         return getDataAsArray(len, len, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
     }
 
+    // Read access to the elements:
+
     @ExportMessage
-    public SeqIterator iterator(@CachedLibrary("this.foreign") InteropLibrary interop) {
-        return new SeqIterator(foreign, getLength(interop));
+    public SeqIterator iterator(@Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                    @CachedLibrary("this.foreign") InteropLibrary interop) {
+        SeqIterator it = new SeqIterator(foreign, getLength(interop));
+        naCheck.enable(true);
+        it.initLoopConditionProfile(loopProfile);
+        return it;
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator(@CachedLibrary("this.foreign") InteropLibrary interop) {
-        return new RandomAccessIterator(foreign, getLength(interop));
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
-    private int getIntImpl(int index, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile isTruffleObjectProfile, ConditionProfile isIntProfile) {
+    @ExportMessage
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(true);
+        return new RandomAccessIterator(foreign);
+    }
+
+    private static int getIntImpl(Object foreign, int index, NACheck naCheck, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile isTruffleObjectProfile,
+                    ConditionProfile isIntProfile) {
         try {
             Object result = interop.readArrayElement(foreign, index);
             if (isTruffleObjectProfile.profile(result instanceof TruffleObject)) {
                 if (valueInterop.isNumber(result)) {
                     result = valueInterop.asInt(result);
                 } else if (valueInterop.isNull(result)) {
+                    naCheck.seenNA();
                     return RRuntime.INT_NA;
                 } else {
                     result = valueInterop.asString(result).charAt(0);
@@ -152,9 +162,13 @@ class RIntForeignObjData extends RIntVectorData {
             }
 
             if (isIntProfile.profile(result instanceof Number)) {
-                return ((Number) resultProfile.profile(result)).intValue();
+                int ir = ((Number) resultProfile.profile(result)).intValue();
+                naCheck.check(ir);
+                return ir;
             } else {
-                return (Character) resultProfile.profile(result);
+                char cr = (Character) resultProfile.profile(result);
+                naCheck.check(cr);
+                return cr;
             }
         } catch (UnsupportedMessageException | InvalidArrayIndexException e) {
             throw RInternalError.shouldNotReachHere(e);
@@ -165,37 +179,42 @@ class RIntForeignObjData extends RIntVectorData {
     public int getIntAt(int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
+                    @Shared("naCheck") @Cached() NACheck naCheck,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
                     @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return getIntImpl(index, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+        return getIntImpl(foreign, index, naCheck, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
     }
 
     @ExportMessage
-    public int getNext(SeqIterator it,
+    public int getNextInt(SeqIterator it,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
+                    @Shared("naCheck") @Cached() NACheck naCheck,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
                     @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return getIntImpl(it.getIndex(), valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+        return getIntImpl(it.getStore(), it.getIndex(), naCheck, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
     }
 
     @ExportMessage
-    public int getAt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
+    public int getInt(RandomAccessIterator it, int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
+                    @Shared("naCheck") @Cached() NACheck naCheck,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
                     @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        return getIntImpl(index, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+        return getIntImpl(it.getStore(), index, naCheck, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
     }
+
+    // Utility methods:
 
     private int[] getDataAsArray(int newLength, int length, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile isTruffleObjectProfile,
                     ConditionProfile isIntProfile) {
         int[] data = new int[newLength];
         for (int i = 0; i < Math.min(newLength, length); i++) {
-            data[i] = getIntAt(i, valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile);
+            data[i] = getIntAt(i, valueInterop, interop, NACheck.getDisabled(), resultProfile, isTruffleObjectProfile, isIntProfile);
         }
         return data;
     }

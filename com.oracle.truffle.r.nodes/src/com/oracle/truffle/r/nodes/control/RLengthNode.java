@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,13 +24,16 @@ package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -49,6 +52,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 @ReportPolymorphism
 @GenerateUncached
+@ImportStatic(DSLConfig.class)
 public abstract class RLengthNode extends RBaseNode {
 
     public abstract int executeInteger(Object value);
@@ -95,14 +99,16 @@ public abstract class RLengthNode extends RBaseNode {
     @Specialization(guards = {"cachedClass != null", "cachedClass == operand.getClass()"})
     protected int doCachedContainer(Object operand,
                     @Cached("getContainerClass(operand)") Class<? extends RAbstractContainer> cachedClass,
-                    @Cached("create()") VectorLengthProfile lengthProfile) {
-        return lengthProfile.profile(cachedClass.cast(operand).getLength());
+                    @Cached("create()") VectorLengthProfile lengthProfile,
+                    @CachedLibrary(limit = "getGenericVectorAccessCacheSize()") AbstractContainerLibrary lib) {
+        return lengthProfile.profile(lib.getLength(cachedClass.cast(operand)));
     }
 
-    @Specialization(replaces = "doCachedContainer")
+    @Specialization(replaces = "doCachedContainer", limit = "getGenericVectorAccessCacheSize()")
     protected int doContainer(RAbstractContainer operand,
-                    @Cached(allowUncached = true) VectorLengthProfile lengthProfile) {
-        return lengthProfile.profile(operand.getLength());
+                    @Cached(allowUncached = true) VectorLengthProfile lengthProfile,
+                    @CachedLibrary("operand") AbstractContainerLibrary lib) {
+        return lengthProfile.profile(lib.getLength(operand));
     }
 
     protected static Class<? extends RAbstractContainer> getContainerClass(Object value) {

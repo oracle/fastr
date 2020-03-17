@@ -80,11 +80,11 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ImportStatic({RRuntime.class, DSLConfig.class})
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"...", "recursive"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
@@ -105,8 +105,9 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     @Children private final CombineInputCast[] inputCasts = new CombineInputCast[MAX_PROFILES];
     @Child private CombineInputCast overflowInputCast;
 
+    @Child private VectorDataLibrary vectorDataLibrary;
+
     private final BranchProfile naBranch = BranchProfile.create();
-    private final NACheck naCheck = NACheck.create();
     private final ConditionProfile fastNamesMerge = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isAbstractVectorProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasNewNamesProfile = ConditionProfile.createBinaryProfile();
@@ -369,10 +370,17 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
             // nothing to do - NULL elements are skipped
             return 0;
         } else {
-            naCheck.enable(true);
-            result.updateDataAtAsObject(pos, element, naCheck);
+            getVectorDataLibrary().setDataAtAsObject(result.getData(), pos, element);
             return 1;
         }
+    }
+
+    private VectorDataLibrary getVectorDataLibrary() {
+        if (vectorDataLibrary == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            vectorDataLibrary = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericVectorAccessCacheSize()));
+        }
+        return vectorDataLibrary;
     }
 
     private static boolean signatureHasNames(ArgumentsSignature signature) {

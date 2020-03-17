@@ -22,28 +22,56 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.Iterator;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
 
 import java.util.Arrays;
 
-@ExportLibrary(RIntVectorDataLibrary.class)
-class RIntArrayVectorData extends RIntVectorData {
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
+@ExportLibrary(VectorDataLibrary.class)
+class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     private final int[] data;
+    private RIntVector owner;
     private boolean complete;
 
     RIntArrayVectorData(int[] data, boolean complete) {
         this.data = data;
-        this.complete = complete;
+        this.complete = complete && ENABLE_COMPLETE;
     }
 
     @Override
+    public void setOwner(RAbstractVector newOwner) {
+        owner = (RIntVector) newOwner;
+        owner.setComplete(complete);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na) {
+        return na;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final RType getType() {
+        return RType.Integer;
+    }
+
     @ExportMessage
     public int getLength() {
         return data.length;
@@ -61,7 +89,7 @@ class RIntArrayVectorData extends RIntVectorData {
 
     @ExportMessage
     public RIntArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
-        return new RIntArrayVectorData(Arrays.copyOf(data, data.length), complete);
+        return new RIntArrayVectorData(Arrays.copyOf(data, data.length), isComplete());
     }
 
     @ExportMessage
@@ -70,20 +98,12 @@ class RIntArrayVectorData extends RIntVectorData {
         if (fillNA) {
             Arrays.fill(newData, data.length, newData.length, RRuntime.INT_NA);
         }
-        return new RIntArrayVectorData(newData, complete);
-    }
-
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RIntVectorDataLibrary dataLib) {
-        dataLib.setIntAt((RIntVectorData) destination, index, data[index]);
+        return new RIntArrayVectorData(newData, isComplete());
     }
 
     @ExportMessage
-    @Override
     public boolean isComplete() {
-        return complete;
+        return complete && ENABLE_COMPLETE;
     }
 
     @ExportMessage
@@ -96,56 +116,107 @@ class RIntArrayVectorData extends RIntVectorData {
         return Arrays.copyOf(data, data.length);
     }
 
+    // Read access to the elements:
+
     @ExportMessage
-    public SeqIterator iterator() {
-        return new SeqIterator(data, data.length);
+    public SeqIterator iterator(
+                    @Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(data, data.length);
+        naCheck.enable(!isComplete());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator() {
-        return new RandomAccessIterator(data, data.length);
-    }
-
-    @Override
-    @ExportMessage
-    public int getIntAt(int index) {
-        return data[index];
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
     @ExportMessage
-    public int getNext(SeqIterator it) {
-        return getStore(it)[it.getIndex()];
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(!isComplete());
+        return new RandomAccessIterator(data);
     }
 
     @ExportMessage
-    public int getAt(RandomAccessIterator it, int index) {
-        return getStore(it)[index];
-    }
-
-    @Override
-    @ExportMessage
-    public void setIntAt(int index, int value, NACheck naCheck) {
-        updateComplete(value, naCheck);
-        data[index] = value;
+    public int getIntAt(int index,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
+        int value = data[index];
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage
-    public void setNext(SeqIterator it, int value, NACheck naCheck) {
-        updateComplete(value, naCheck);
-        getStore(it)[it.getIndex()] = value;
+    public int getNextInt(SeqIterator it, @Shared("naCheck") @Cached() NACheck naCheck) {
+        int value = getStore(it)[it.getIndex()];
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage
-    public void setAt(RandomAccessIterator it, int index, int value, NACheck naCheck) {
-        updateComplete(value, naCheck);
-        getStore(it)[index] = value;
+    public int getInt(RandomAccessIterator it, int index, @Shared("naCheck") @Cached() NACheck naCheck) {
+        int value = getStore(it)[index];
+        naCheck.check(value);
+        return value;
     }
 
-    private void updateComplete(int value, NACheck naCheck) {
-        if (naCheck.check(value)) {
-            this.complete = false;
+    // Write access to the elements:
+
+    @ExportMessage
+    public SeqWriteIterator writeIterator() {
+        return new SeqWriteIterator(data, data.length);
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(data);
+    }
+
+    @ExportMessage
+    public void commitWriteIterator(SeqWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
+        iterator.commit();
+        commitWrites(neverSeenNA, setCompleteProfile);
+    }
+
+    @ExportMessage
+    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, boolean neverSeenNA, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
+        iterator.commit();
+        commitWrites(neverSeenNA, setCompleteProfile);
+    }
+
+    private void commitWrites(boolean neverSeenNA, @Cached BranchProfile setCompleteProfile) {
+        if (!neverSeenNA) {
+            setCompleteProfile.enter();
+            owner.setComplete(false);
+            complete = false;
         }
     }
+
+    @ExportMessage
+    public void setIntAt(int index, int value, @Shared("setCompleteProfile") @Cached BranchProfile setCompleteProfile) {
+        data[index] = value;
+        if (RRuntime.isNA(value)) {
+            setCompleteProfile.enter();
+            owner.setComplete(false);
+            complete = false;
+        }
+    }
+
+    @ExportMessage
+    public void setNextInt(SeqWriteIterator it, int value) {
+        getStore(it)[it.getIndex()] = value;
+        // complete flag will be updated in commit method
+    }
+
+    @ExportMessage
+    public void setInt(RandomAccessWriteIterator it, int index, int value) {
+        getStore(it)[index] = value;
+        // complete flag will be updated in commit method
+    }
+
+    // Utility methods:
 
     private static int[] getStore(Iterator it) {
         return (int[]) it.getStore();

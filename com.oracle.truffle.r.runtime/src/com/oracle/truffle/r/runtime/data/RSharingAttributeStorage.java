@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,9 +55,15 @@ public abstract class RSharingAttributeStorage extends RAttributable {
 
     }
 
-    public boolean isShareable() {
+    public RSharingAttributeStorage() {
+        this.shareable = (this instanceof Shareable);
+    }
+
+    protected boolean shareable;
+
+    public final boolean isShareable() {
         // TODO: For the period of the refactoring this is not a final method
-        return this instanceof Shareable;
+        return shareable;
     }
 
     public RSharingAttributeStorage deepCopy() {

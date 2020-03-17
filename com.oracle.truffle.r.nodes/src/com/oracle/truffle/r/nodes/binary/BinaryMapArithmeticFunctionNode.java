@@ -315,7 +315,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         double[] data = new double[len];
         double otherVal = otherStartInt;
         for (int i = 0; i < len; i++) {
-            data[i] = applyDouble(sequence.getIntAt(i), otherVal);
+            data[i] = applyDouble(sequence.getIntAt(i, NACheck.getDisabled()), otherVal);
             otherVal += otherStrideInt;
         }
         return RDataFactory.createDoubleVector(data, true);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,10 +30,12 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -138,8 +140,9 @@ public abstract class ConvertBooleanNode extends RNode {
 
     @Specialization(guards = "access.supports(value)", limit = "getCacheSize(ATOMIC_VECTOR_LIMIT)")
     protected byte doVector(RAbstractVector value,
-                    @Cached("value.access()") VectorAccess access) {
-        SequentialIterator it = access.access(value);
+                    @Cached("value.access()") VectorAccess access,
+                    @CachedLibrary("value") AbstractContainerLibrary library) {
+        SequentialIterator it = access.access(library, value);
         checkLength(access.getLength(it));
         access.next(it);
         switch (access.getType()) {
@@ -162,7 +165,7 @@ public abstract class ConvertBooleanNode extends RNode {
 
     @Specialization(replaces = "doVector")
     protected byte doVectorGeneric(RAbstractVector value) {
-        return doVector(value, value.slowPathAccess());
+        return doVector(value, value.slowPathAccess(), AbstractContainerLibrary.getFactory().getUncached());
     }
 
     @Specialization(guards = "isForeignObject(obj)")

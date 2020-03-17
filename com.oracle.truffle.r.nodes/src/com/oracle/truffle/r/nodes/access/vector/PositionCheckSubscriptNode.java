@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,10 +24,13 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -37,10 +40,12 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+@ImportStatic(DSLConfig.class)
 abstract class PositionCheckSubscriptNode extends PositionCheckNode {
 
     private final NACheck positionNACheck = NACheck.create();
@@ -60,10 +65,11 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         return position;
     }
 
-    @Specialization
+    @Specialization(limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector doLogical(PositionProfile statistics, int dimSize, RAbstractLogicalVector position, int positionLength,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
-        positionNACheck.enable(position);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary) {
+        positionNACheck.enable(positionLibrary, position.getData());
         byte value = position.getDataAt(0);
         if (positionLength != 1) {
             error.enter();
@@ -81,15 +87,16 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
         return doIntegerImpl(statistics, dimSize, positionNACheck.convertLogicalToInt(value), position, extractNamesNode);
     }
 
-    @Specialization
+    @Specialization(limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector doInteger(PositionProfile profile, int dimSize, RIntVector position, int positionLength,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary) {
         if (positionLength != 1) {
             error.enter();
             Message message;
             if (positionLength > 1) {
                 /* This is a very specific check. But it just did not fit into other checks. */
-                if (positionLength == 2 && position.getDataAt(0) == 0) {
+                if (positionLength == 2 && positionLibrary.getIntAt(position.getData(), 0) == 0) {
                     message = RError.Message.SELECT_LESS_1;
                 } else {
                     message = RError.Message.SELECT_MORE_1;
@@ -100,8 +107,8 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
             throw error(message);
         }
         assert positionLength == 1;
-        positionNACheck.enable(position);
-        return doIntegerImpl(profile, dimSize, position.getDataAt(0), position, extractNamesNode);
+        positionNACheck.enable(positionLibrary, position);
+        return doIntegerImpl(profile, dimSize, positionLibrary.getIntAt(position.getData(), 0), position, extractNamesNode);
     }
 
     private RAbstractVector doIntegerImpl(PositionProfile profile, int dimSize, int value, RAbstractVector originalVector, ExtractNamesAttributeNode extractNamesNode) {

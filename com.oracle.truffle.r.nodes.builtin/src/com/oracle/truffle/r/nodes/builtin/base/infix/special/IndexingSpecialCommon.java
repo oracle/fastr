@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base.infix.special;
 
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -31,6 +33,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 abstract class IndexingSpecialCommon extends Node {
 
     protected final boolean inReplacement;
+
+    @Child private VectorDataLibrary vectorLibrary = VectorDataLibrary.getFactory().createDispatched(DSLConfig.getVectorAccessCacheSize());
 
     protected IndexingSpecialCommon(boolean inReplacement) {
         this.inReplacement = inReplacement;
@@ -43,8 +47,12 @@ abstract class IndexingSpecialCommon extends Node {
     /**
      * Checks whether the given (1-based) index is valid for the given vector.
      */
-    protected static boolean isValidIndex(RAbstractVector vector, int index) {
-        return index >= 1 && index <= vector.getLength();
+    protected boolean isValidIndex(RAbstractVector vector, int index) {
+        return index >= 1 && index <= vectorLibrary.getLength(vector.getData());
+    }
+
+    protected static boolean isValidIndexCached(VectorDataLibrary library, RAbstractVector vector, int index) {
+        return index >= 1 && index <= library.getLength(vector.getData());
     }
 
     /**

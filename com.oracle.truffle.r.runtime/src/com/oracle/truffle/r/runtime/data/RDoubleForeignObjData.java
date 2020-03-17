@@ -26,39 +26,42 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
 
-@ExportLibrary(RDoubleVectorDataLibrary.class)
-class RDoubleForeignObjData extends RDoubleVectorData {
+@ExportLibrary(VectorDataLibrary.class)
+class RDoubleForeignObjData implements TruffleObject {
     protected final Object foreign;
 
     RDoubleForeignObjData(Object foreign) {
         this.foreign = foreign;
     }
 
-    @Override
-    @Ignore
-    public double getDoubleAt(int index) {
-        return getDoubleImpl(index, InteropLibrary.getFactory().getUncached(), InteropLibrary.getFactory().getUncached(), ValueProfile.getUncached(), ConditionProfile.getUncached());
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final RType getType() {
+        return RType.Double;
     }
 
-    @Override
-    @Ignore
-    public int getLength() {
-        return getLength(InteropLibrary.getFactory().getUncached());
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck() {
+        return NACheck.getEnabled();
     }
 
     @ExportMessage
@@ -90,7 +93,7 @@ class RDoubleForeignObjData extends RDoubleVectorData {
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
-        return new RDoubleArrayVectorData(getReadonlyDoubleData(valueInterop, interop, resultProfile, unprecisseDoubleProfile), RDataFactory.INCOMPLETE_VECTOR);
+        return new RDoubleArrayVectorData(getDoubleDataCopy(valueInterop, interop, resultProfile, unprecisseDoubleProfile), RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage
@@ -107,15 +110,8 @@ class RDoubleForeignObjData extends RDoubleVectorData {
         return new RDoubleArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt((RDoubleVectorData) destination, index, getDoubleAt(index));
-    }
-
     @ExportMessage
-    public double[] getReadonlyDoubleData(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
+    public double[] getDoubleDataCopy(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
@@ -124,32 +120,51 @@ class RDoubleForeignObjData extends RDoubleVectorData {
     }
 
     @ExportMessage
-    public SeqIterator iterator(@CachedLibrary("this.foreign") InteropLibrary interop) {
-        return new SeqIterator(foreign, getLength(interop));
+    public SeqIterator iterator(@Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                    @CachedLibrary("this.foreign") InteropLibrary interop) {
+        SeqIterator it = new SeqIterator(foreign, getLength(interop));
+        naCheck.enable(true);
+        it.initLoopConditionProfile(loopProfile);
+        return it;
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator(@CachedLibrary("this.foreign") InteropLibrary interop) {
-        return new RandomAccessIterator(foreign, getLength(interop));
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
-    private double getDoubleImpl(int index, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile unprecisseDoubleProfile) {
+    @ExportMessage
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(true);
+        return new RandomAccessIterator(foreign);
+    }
+
+    private static double getDoubleImpl(Object foreign, int index, NACheck naCheck, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile,
+                    ConditionProfile unprecisseDoubleProfile) {
         try {
             Object result = interop.readArrayElement(foreign, index);
+            double rd;
             try {
-                return ((Number) resultProfile.profile(valueInterop.asDouble(result))).doubleValue();
+                rd = ((Number) resultProfile.profile(valueInterop.asDouble(result))).doubleValue();
+                naCheck.check(rd);
             } catch (UnsupportedMessageException e) {
-                if (interop.isNull(result)) {
+                if (valueInterop.isNull(result)) {
+                    naCheck.seenNA();
                     return RRuntime.DOUBLE_NA;
                 }
                 if (unprecisseDoubleProfile.profile(valueInterop.fitsInLong(result))) {
                     Long l = valueInterop.asLong(result);
                     double d = l.doubleValue();
                     RError.warning(RError.SHOW_CALLER, RError.Message.PRECISSION_LOSS_BY_CONVERSION, l, d);
-                    return ((Long) valueInterop.asLong(result)).doubleValue();
+                    rd = ((Long) valueInterop.asLong(result)).doubleValue();
+                    naCheck.check(rd);
+                    return rd;
                 }
                 throw RInternalError.shouldNotReachHere();
             }
+            return rd;
         } catch (UnsupportedMessageException | InvalidArrayIndexException | ClassCastException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
@@ -159,33 +174,36 @@ class RDoubleForeignObjData extends RDoubleVectorData {
     public double getDoubleAt(int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
+                    @Shared("naCheck") @Cached() NACheck naCheck,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
-        return getDoubleImpl(index, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
+        return getDoubleImpl(foreign, index, naCheck, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
     }
 
     @ExportMessage
-    public double getNext(SeqIterator it,
+    public double getNextDouble(SeqIterator it,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
+                    @Shared("naCheck") @Cached() NACheck naCheck,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
-        return getDoubleImpl(it.getIndex(), valueInterop, interop, resultProfile, unprecisseDoubleProfile);
+        return getDoubleImpl(it.getStore(), it.getIndex(), naCheck, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
     }
 
     @ExportMessage
-    public double getAt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
+    public double getDouble(RandomAccessIterator it, int index,
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
+                    @Shared("naCheck") @Cached() NACheck naCheck,
                     @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
                     @Shared("unprecisseProfile") @Cached("createBinaryProfile()") ConditionProfile unprecisseDoubleProfile) {
-        return getDoubleImpl(index, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
+        return getDoubleImpl(it.getStore(), index, naCheck, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
     }
 
     private double[] getDataAsArray(int newLength, int length, InteropLibrary valueInterop, InteropLibrary interop, ValueProfile resultProfile, ConditionProfile unprecisseDoubleProfile) {
         double[] data = new double[newLength];
         for (int i = 0; i < Math.min(newLength, length); i++) {
-            data[i] = getDoubleAt(i, valueInterop, interop, resultProfile, unprecisseDoubleProfile);
+            data[i] = getDoubleAt(i, valueInterop, interop, NACheck.getDisabled(), resultProfile, unprecisseDoubleProfile);
         }
         return data;
     }

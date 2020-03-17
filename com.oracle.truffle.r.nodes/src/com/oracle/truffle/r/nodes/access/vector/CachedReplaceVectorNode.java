@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -60,6 +61,7 @@ import com.oracle.truffle.r.runtime.data.RScalarList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -160,16 +162,20 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
     }
 
-    public static boolean isValueLengthGreaterThanOne(Object values) {
-        return (values instanceof RAbstractContainer) && ((RAbstractContainer) values).getLength() > 1;
+    public static boolean isValueLengthGreaterThanOne(AbstractContainerLibrary library, Object values) {
+        return (values instanceof RAbstractContainer) && library.getLength(values) > 1;
     }
 
-    public boolean isSupported(RAbstractVector target, Object[] positions, Object values) {
+    public boolean isSupported(RAbstractVector target, Object[] positions, AbstractContainerLibrary library, Object values) {
         if (vectorClass == target.getClass() && values.getClass() == valueClass) {
-            return positionsCheckNode.isSupported(positions) && isValueLengthGreaterThanOne(values) == isValueGt1;
+            return positionsCheckNode.isSupported(positions) && isValueLengthGreaterThanOne(library, values) == isValueGt1;
         }
         return false;
     }
+
+    @Child private AbstractContainerLibrary containerLibrary = AbstractContainerLibrary.getFactory().createDispatched(DSLConfig.getVectorAccessCacheSize());
+    @Child private VectorDataLibrary vectorLibrary = VectorDataLibrary.getFactory().createDispatched(DSLConfig.getVectorAccessCacheSize());
+    @Child private AbstractContainerLibrary valueLibrary = AbstractContainerLibrary.getFactory().createDispatched(DSLConfig.getVectorAccessCacheSize());
 
     public Object apply(RAbstractVector originalVector, Object[] originalPositions, Object originalValues) {
         if (error != null) {
@@ -177,7 +183,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             error.run();
         }
         Object[] positions = filterPositions(originalPositions);
-        assert isSupported(originalVector, positions, originalValues);
+        assert isSupported(originalVector, positions, valueLibrary, originalValues);
 
         RAbstractVector vector = vectorClass.cast(originalVector);
         Object castValue = valueClass.cast(originalValues);
@@ -198,7 +204,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             }
         }
 
-        int appliedValueLength = valueLengthProfile.profile(value.getLength());
+        int appliedValueLength = valueLengthProfile.profile(valueLibrary.getLength(value));
 
         int valueLength;
         if (this.numberOfPositions > 1 && isDeleteElements()) {
@@ -207,7 +213,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             valueLength = appliedValueLength;
         }
 
-        int vectorLength = targetLengthProfile.profile(vector.getLength());
+        int vectorLength = targetLengthProfile.profile(vectorLibrary.getLength(vector.getData()));
         int[] vectorDimensions;
         if (numberOfPositions == 1) {
             /* For single dimension case we never need to load the dimension. */
@@ -235,7 +241,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (RSharingAttributeStorage.isShareable(vector) && !ignoreRefCount) {
             // TODO find out if we need to copy always in the recursive case
             if (recursive || sharedConditionProfile.execute(vector.isShared()) || valueEqualsVectorProfile.profile(vector == value)) {
-                vector = vector.copy();
+                vector = (RAbstractVector) containerLibrary.copy(vector);
                 assert vector.isTemporary();
             }
         }
@@ -250,7 +256,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             }
             vector = resizeVector(vector, maxOutOfBounds);
         } else {
-            vector = vector.materialize();
+            vector = (RAbstractVector) containerLibrary.materialize(vector);
         }
 
         // Note: the refCount of elements inside lists can stay the same. If we are replacing in a
@@ -266,7 +272,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         // incremented during the assignment step.
 
         vector = vectorTypeProfile.profile(vector);
-        vectorLength = targetLengthProfile.profile(vector.getLength());
+        vectorLength = targetLengthProfile.profile(vectorLibrary.getLength(vector.getData()));
 
         if (mode.isSubset()) {
             /*

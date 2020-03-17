@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfi
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -88,6 +89,8 @@ abstract class PositionCheckNode extends RBaseNode {
     @Child private GetDimAttributeNode getDimsNode;
     private final ConditionProfile vectorNullDimensionsProfile;
     @Child private Matrix2IndexCache matrix2IndexCache;
+
+    @Child private VectorDataLibrary vectorLibrary = VectorDataLibrary.getFactory().createDispatched(DSLConfig.getVectorAccessCacheSize());
 
     PositionCheckNode(ElementAccessMode mode, RType containerType, Object positionValue, int positionIndex, int numPositions, boolean exact, boolean replace) {
         this.positionClass = positionValue.getClass();
@@ -216,7 +219,7 @@ abstract class PositionCheckNode extends RBaseNode {
         if (positionVector instanceof RMissing) {
             positionLength = -1;
         } else {
-            positionLength = positionLengthProfile.profile(((RAbstractVector) positionVector).getLength());
+            positionLength = positionLengthProfile.profile(vectorLibrary.getLength(((RAbstractVector) positionVector).getData()));
         }
 
         assert isValidCastedType(positionVector) : "result type of a position cast node must be integer or logical";

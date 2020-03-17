@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.primitive;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class BinaryMapNAFunctionNode extends BinaryMapFunctionNode {
 
-    protected final NACheck leftNACheck = NACheck.create();
-    protected final NACheck rightNACheck = NACheck.create();
+    @CompilationFinal protected NACheck leftNACheck = NACheck.create();
+    @CompilationFinal protected NACheck rightNACheck = NACheck.create();
+    @CompilationFinal protected boolean isInitialized;
 
     /**
      * Enables all NA checks for the given input vectors.
@@ -37,6 +43,34 @@ public abstract class BinaryMapNAFunctionNode extends BinaryMapFunctionNode {
     public final void enable(RAbstractVector left, RAbstractVector right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
+    }
+
+    /**
+     * Enables all NA checks for the given input vectors.
+     */
+    @Override
+    public final void enable(VectorDataLibrary leftLibrary, Object leftData, VectorDataLibrary rightLibrary, Object rightData) {
+        leftNACheck.enable(leftLibrary, leftData);
+        rightNACheck.enable(rightLibrary, rightData);
+    }
+
+    /**
+     * Enables all NA checks for the given input vectors.
+     */
+    @Override
+    public final void enable(AbstractContainerLibrary leftLibrary, RAbstractContainer left, AbstractContainerLibrary rightLibrary, RAbstractContainer right) {
+        leftNACheck.enable(leftLibrary, left);
+        rightNACheck.enable(rightLibrary, right);
+    }
+
+    @Override
+    public void initialize(VectorDataLibrary leftDataLib, RAbstractContainer left, VectorDataLibrary rightDataLib, RAbstractContainer right) {
+        if (!isInitialized) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            leftNACheck = leftDataLib.getNACheck(left.getData());
+            rightNACheck = rightDataLib.getNACheck(right.getData());
+            isInitialized = true;
+        }
     }
 
     /**

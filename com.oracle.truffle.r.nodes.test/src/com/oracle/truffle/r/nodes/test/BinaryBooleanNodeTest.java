@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,8 @@ import com.oracle.truffle.r.nodes.binary.BinaryBooleanNode;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.FastROptions;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -241,6 +243,9 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
     @Theory
     public void testCompleteness(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
         execInContext(() -> {
+            if (RContext.getInstance().getOption(FastROptions.DSLCacheSizeFactor) == 0.0) {
+                return null;
+            }
             RAbstractVector a = copy(aOrig);
             RAbstractVector b = copy(bOrig);
             assumeArithmeticCompatible(factory, a, b);
@@ -252,8 +257,12 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
             if (a.getLength() == 0 || b.getLength() == 0) {
                 Assert.assertTrue(resultComplete);
             } else {
-                boolean expectedComplete = a.isComplete() && b.isComplete();
-                Assert.assertEquals(expectedComplete, resultComplete);
+                if (result instanceof RAbstractVector && ((RAbstractVector) result).isComplete()) {
+                    RAbstractVector.verifyVector((RAbstractVector) result);
+                } else {
+                    boolean expectedComplete = a.isComplete() && b.isComplete();
+                    Assert.assertEquals(expectedComplete, resultComplete);
+                }
             }
             return null;
         });

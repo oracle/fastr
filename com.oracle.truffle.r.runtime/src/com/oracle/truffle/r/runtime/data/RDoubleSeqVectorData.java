@@ -23,20 +23,27 @@
 
 package com.oracle.truffle.r.runtime.data;
 
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.Iterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
 
-@ExportLibrary(RDoubleVectorDataLibrary.class)
-public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
+@ExportLibrary(VectorDataLibrary.class)
+public class RDoubleSeqVectorData implements RSeq, TruffleObject {
     private final double start;
     private final double stride;
     private final int length;
@@ -45,6 +52,18 @@ public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
         this.start = start;
         this.stride = stride;
         this.length = length;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public NACheck getNACheck() {
+        return NACheck.getDisabled();
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final RType getType() {
+        return RType.Double;
     }
 
     @Override
@@ -77,12 +96,7 @@ public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
 
     @ExportMessage
     public RDoubleArrayVectorData materialize() {
-        return new RDoubleArrayVectorData(getReadonlyDoubleData(), isComplete());
-    }
-
-    @ExportMessage
-    public boolean isWriteable() {
-        return false;
+        return new RDoubleArrayVectorData(getDoubleDataCopy(), isComplete());
     }
 
     @ExportMessage
@@ -99,17 +113,9 @@ public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
         return new RDoubleArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    // TODO: this will be message exported by the generic VectorDataLibrary
-    // @ExportMessage
-    public void transferElement(RVectorData destination, int index,
-                    @CachedLibrary("destination") RDoubleVectorDataLibrary dataLib) {
-        dataLib.setDoubleAt((RDoubleVectorData) destination, index, getDoubleAt(index));
-    }
-
     @ExportMessage
-    @Override
     public boolean isComplete() {
-        return true;
+        return ENABLE_COMPLETE;
     }
 
     @ExportMessage
@@ -118,35 +124,52 @@ public class RDoubleSeqVectorData extends RDoubleVectorData implements RSeq {
     }
 
     @ExportMessage
-    public double[] getReadonlyDoubleData() {
+    public double[] getDoubleDataCopy() {
         return getDataAsArray(length);
     }
 
+    // Read access to the elements:
+
     @ExportMessage
-    public SeqIterator iterator() {
-        return new SeqIterator(new IteratorData(start, stride), length);
+    public SeqIterator iterator(@Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(new IteratorData(start, stride), length);
+        naCheck.enable(false);
+        it.initLoopConditionProfile(loopProfile);
+        return it;
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator() {
-        return new RandomAccessIterator(new IteratorData(start, stride), length);
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
     }
 
     @ExportMessage
-    @Override
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(false);
+        return new RandomAccessIterator(new IteratorData(start, stride));
+    }
+
+    @ExportMessage
+    public Object getDataAtAsObject(int index) {
+        return getDoubleAt(index);
+    }
+
+    @ExportMessage
     public double getDoubleAt(int index) {
         assert index < length;
         return start + stride * index;
     }
 
     @ExportMessage
-    public double getNext(SeqIterator it) {
+    public double getNextDouble(SeqIterator it) {
         IteratorData data = getStore(it);
         return data.start + data.stride * it.getIndex();
     }
 
     @ExportMessage
-    public double getAt(RandomAccessIterator it, int index) {
+    public double getDouble(RandomAccessIterator it, int index) {
         IteratorData data = getStore(it);
         return data.start + data.stride * index;
     }

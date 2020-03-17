@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix.special;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.SubInterface;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 /**
  * Subscript code for vectors minus list is the same as subset code, this class allows sharing it.
  */
+@ImportStatic(DSLConfig.class)
 public abstract class AccessSpecial extends IndexingSpecialCommon implements SubInterface {
 
     protected AccessSpecial(boolean inReplacement) {
@@ -45,48 +48,27 @@ public abstract class AccessSpecial extends IndexingSpecialCommon implements Sub
 
     public abstract int executeInteger(RIntVector vec, int index);
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
     protected int accessInt(RIntVector vector, int index,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            return access.getInt(iter, index - 1);
-        }
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        return dataLib.getIntAt(vector.getData(), index - 1);
     }
 
-    @Specialization(replaces = "accessInt", guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected int accessIntGeneric(RIntVector vector, int index) {
-        return accessInt(vector, index, vector.slowPathAccess());
-    }
-
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
     protected double accessDouble(RAbstractDoubleVector vector, int index,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            return access.getDouble(iter, index - 1);
-        }
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        return dataLib.getDoubleAt(vector.getData(), index - 1);
     }
 
-    @Specialization(replaces = "accessDouble", guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected double accessDoubleGeneric(RAbstractDoubleVector vector, int index) {
-        return accessDouble(vector, index, vector.slowPathAccess());
-    }
-
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
     protected String accessString(RAbstractStringVector vector, int index,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            return access.getString(iter, index - 1);
-        }
-    }
-
-    @Specialization(replaces = "accessString", guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected String accessStringGeneric(RAbstractStringVector vector, int index) {
-        return accessString(vector, index, vector.slowPathAccess());
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        return dataLib.getStringAt(vector.getData(), index - 1);
     }
 
     @SuppressWarnings("unused")
     @Fallback
-    protected static Object access(Object vector, Object index) {
+    protected static Object accessFallback(Object vector, Object index) {
         throw RSpecialFactory.throwFullCallNeeded();
     }
 }

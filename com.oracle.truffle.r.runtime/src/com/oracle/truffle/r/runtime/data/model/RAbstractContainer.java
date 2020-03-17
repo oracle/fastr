@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,16 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 public abstract class RAbstractContainer extends RSharingAttributeStorage {
+
+    protected Object data;
+
+    public RAbstractContainer() {
+        this.data = this;
+    }
+
+    public final Object getData() {
+        return data;
+    }
 
     public abstract boolean isComplete();
 

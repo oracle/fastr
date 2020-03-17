@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-/**
- * Base class for all the implementations of {@code TODO:RVectorDataLibrary}. The methods defined
- * here and in subclasses of this class are convenience methods for slow path access only. In the
- * future, we should add {@code CompilerAsserts.neverPartOfCompilation()} to all of them.
- */
-public abstract class RVectorData {
-    public abstract int getLength();
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-    public boolean isComplete() {
-        return false;
-    }
+/**
+ * Interface for vector data objects (see {@link VectorDataLibrary}) that need a reference to their
+ * owning vector.
+ */
+interface VectorDataWithOwner {
+    void setOwner(RAbstractVector owner);
 }

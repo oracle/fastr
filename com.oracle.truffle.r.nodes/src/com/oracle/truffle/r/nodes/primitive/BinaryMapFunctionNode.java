@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,10 @@
 package com.oracle.truffle.r.nodes.primitive;
 
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -96,6 +99,18 @@ public abstract class BinaryMapFunctionNode extends RBaseNode {
      * Enables the node for the two operation. Invoked once for each BinaryMap operation invocation.
      */
     public void enable(RAbstractVector left, RAbstractVector right) {
+
+    }
+
+    public void enable(VectorDataLibrary leftLibrary, Object leftData, VectorDataLibrary rightLibrary, Object rightData) {
+
+    }
+
+    public void enable(AbstractContainerLibrary leftLibrary, RAbstractContainer leftData, AbstractContainerLibrary rightLibrary, RAbstractContainer rightData) {
+
+    }
+
+    public void initialize(VectorDataLibrary leftDataLib, RAbstractContainer left, VectorDataLibrary rightDataLib, RAbstractContainer right) {
 
     }
 

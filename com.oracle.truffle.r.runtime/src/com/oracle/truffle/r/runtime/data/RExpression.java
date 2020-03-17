@@ -131,6 +131,11 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
     }
 
     @Override
+    public void setDataAt(Object store, int index, Object value) {
+        updateDataAtAsObject(index, value, NACheck.getEnabled());
+    }
+
+    @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RAbstractListVector other = (RAbstractListVector) fromVector;
         setDataAt(toIndex, other.getDataAt(fromIndex));
