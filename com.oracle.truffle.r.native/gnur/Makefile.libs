@@ -31,6 +31,8 @@ $(error no platform.mk available)
 endif
 endif
 
+OSNAME := $(shell uname)
+
 # blas and lapack implementations can be overridden using the following environment variables
 BLAS_LAPACK_DIR ?= $(GNUR_HOME_BINARY)/lib
 BLAS_SOURCE ?= $(BLAS_LAPACK_DIR)/libRblas$(DYLIB_EXT)
@@ -47,7 +49,13 @@ LAPACK_TARGET := $(FASTR_LIB_DIR)/libRlapack$(DYLIB_EXT)
 # to keep the Java side simpler, we (may) copy them to $(FASTR_LIB_DIR) unless
 # they were found in the standard system locations
 # Note: removed gfortran quadmath gcc_s for the time being
-OTHER_LIB_TARGETS = pcre z
+ifeq ($(OSNAME), Linux)
+  OTHER_LIB_TARGETS = pcre z gfortran quadmath gcc_s
+else ifeq ($(OSNAME), Darwin)
+  OTHER_LIB_TARGETS = pcre z
+else
+  $(error OS $(OSNAME) is not supported)
+endif
 
 .PHONY: all
 
