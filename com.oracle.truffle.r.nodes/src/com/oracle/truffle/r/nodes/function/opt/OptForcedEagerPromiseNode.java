@@ -28,7 +28,6 @@ import java.util.logging.Level;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -42,17 +41,11 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCaller.UnwrapPromiseCallerProfile;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RLogger;
-import com.oracle.truffle.r.runtime.data.Closure;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 //@formatter:off
