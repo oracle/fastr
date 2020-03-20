@@ -150,15 +150,11 @@ def copylib(args):
                             _copylib(lib_name, target, plain_libpath_base, target_dir)
                         return 0
 
-    if 'FASTR_RELEASE' in os.environ:
-        if os.environ.get('FASTR_RELEASE') == 'dev':
-            log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
-            log('the resulting FastR release build will not be portable to another system')
-        else:
-            abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
-
-    log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, assuming system location')
-    return 0
+    abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but is required.\n' +
+          'Remove this library from FASTR_CAPTURE_DEPENDENCIES env. variable,\n' +
+          'or set FASTR_CAPTURE_DEPENDENCIES env. variable to an empty value to avoid capturing of any library,\n' +
+          'or provide the location of this library on your system in PKG_LDFLAGS_OVERRIDE env. variable.'
+          'See FASTR_HOME/documentation/dev/building.md for details')
 
 def updatelib(args):
     '''

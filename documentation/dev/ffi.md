@@ -58,9 +58,6 @@ Note: this may need some updating (Jan 2020).
 FastR can interface to native C and Fortran code in a number of ways, for example, access to C library APIs not supported by the Java JDK, access to LaPack functions, and the `.Call`, `.Fortran`, `.C` builtins. Each of these are defined by a Java interface, e.g. `CallRFFI` for the `.Call` builtin. To facilitate experimentation and different implementations, the implementation of these interfaces is defined by a factory class, `RFFIFactory`, that is chosen at run time via the `fastr.ffi.factory.class` system property, or the `FASTR_RFFI` environment variable.
 The factory is responsible for creating an instance of the `RFFI` interface that in turn provides access to implementations of the underlying interfaces such as `CallRFFI`. This structure allows for each of the individual interfaces to be implemented by a different mechanism. Currently the default factory class is `TruffleNFI_RFFIFactory` which uses the Truffle NFI system to implement the transition to native code.
 
-## No native code mode
-FastR can be configured to avoid running any unmanaged code coming from GNU R or packages. It is described in more detail [here](managed_ffi.md).
-
 ## Native Implementation
 The native implementation of the [R FFI](https://cran.r-project.org/doc/manuals/r-release/R-exts.html) is contained in the `fficall` directory of
 the `com.oracle/truffle.r.native` project. It's actually a bit more than that as it historically also contains code taken over and adapted from GNU R,

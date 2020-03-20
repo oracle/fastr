@@ -10,10 +10,8 @@ then delving into individual scripts that patch and build parts of GNUR. Last se
  * As of August 2018 requires LLVM <= 8
  * Uses the "mx" tool (https://github.com/graalvm/mx)
  * `post-init` (see function `mx_fastr_dist.mx_post_parse_cmd_line`)
- 	* instantiation of distribution `FASTR_RELEASE<rffi>`
+ 	* instantiation of distribution `FASTR_RELEASE`
  		* NB: consult `mx.fastr/suite.py` for distributions definitions
-		* `FASTR_RFFI` environment variable is checked to instantiate the `FASTR_RELEASE<rffi>` distribution
-	 	* `<rffi>` is replaced by the `FASTR_RFFI` env var, which is by default `""`
 	 	* various distribution properties are initialized, such as the license, dependencies, target OS,
 	 	 build path etc. (see `mx._load_distribution`)
 	 	* dependency resolution
@@ -258,7 +256,7 @@ _Other required sources_:
 
 ## Release build
 
-The *FASTR_RELEASE* mx distribution is built only when `FASTR_RELEASE` environment variable is exported.
+Handled by the *FASTR_RELEASE* mx distribution.
 The building logic for *FASTR_RELEASE* resides in Python class `ReleaseBuildTask` and the output is a jar
 file that if unzipped contains a stand-alone FastR distribution including everything that is needed to
 run FastR.
