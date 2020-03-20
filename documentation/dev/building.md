@@ -59,7 +59,7 @@ take a look into: `com.oracle.truffle.r.native/gnur/Makefile.gnur`.
 By exporting environment variable `GNUR_HOME_BINARY` with path to a home directory of existing GNU-R installation,
 you can bypass the build of GUN-R from sources, however, FastR still downloads GNU-R sources during FastR build.
 
-You can find you the home directory of your system GNU-R by executing `R -e 'R.home()'`.
+You can find the home directory of your system GNU-R by executing `R -e 'R.home()'`.
 
 It is strongly recommended to use the same GNU-R version (major and minor) and in case you want to run tests that
 compare output of FastR with GNU-R then also the same path version. You can find out version of an R engine by
@@ -68,7 +68,7 @@ in FastR sources (variable `R_VERSION`).
 
 #### Using different Blas/Lapack libraries
 
-By exporting `BLAS_SOURCE` and/or `LAPACK_SOURCE` once can choose Blas/Lapack implementation independently of GNU-R. 
+By exporting `BLAS_SOURCE` and/or `LAPACK_SOURCE` one can choose Blas/Lapack implementation independently of GNU-R. 
 These variables must point to dynamic libraries that implement the Blas/Lapack interface. Another option is to export
 `BLAS_LAPACK_DIR` that must point to a directory with subdirectory `lib` that must contain
 `libRblas.so` and `libRlapack.so` (`*.dylib` on MacOS).
@@ -121,7 +121,7 @@ systems where all the dependencies are in standard locations is following:
 
     export PKG_LDFLAGS_OVERRIDE="\"-L/lib/x86_64-linux-gnu/ -L/usr/lib/x86_64-linux-gnu/\""
 
-Note that if more than once location must be specified, the values must be quoted.
+Note that if more than one location must be specified, the values must be quoted.
 
 ### Caching recommended packages
 
