@@ -1359,11 +1359,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int ALTREP(Object x) {
-        if (x instanceof RBaseObject) {
-            return AltrepUtilities.isAltrep(x) ? 1 : 0;
-        } else {
-            return 0;
-        }
+        return AltrepUtilities.isAltrep(x) ? 1 : 0;
     }
 
     // TODO
