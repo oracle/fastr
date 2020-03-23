@@ -2,7 +2,7 @@
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
  * Copyright (c) 2012-2013, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
  */
 package com.oracle.truffle.r.runtime.ops;
 
+import com.oracle.truffle.r.runtime.data.WarningInfo;
 import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.RRuntime.INT_NA;
 import static com.oracle.truffle.r.runtime.RRuntime.isFinite;
@@ -109,6 +110,10 @@ public abstract class BinaryArithmetic extends Operation {
 
     public abstract String opName();
 
+    public int op(@SuppressWarnings("unused") WarningInfo warningInfo, int left, int right) {
+        return op(left, right);
+    }
+
     public abstract int op(int left, int right);
 
     public abstract double op(double left, double right);
@@ -150,14 +155,20 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        public int op(int left, int right) {
+        public int op(WarningInfo warningInfo, int left, int right) {
             if (!introducesOverflow) {
                 try {
                     int result = Math.addExact(left, right);
                     // NAs can also be introduced without a 32-bit overflow
-                    if (!introducesNA && result == RRuntime.INT_NA) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        introducesNA = true;
+                    if (result == RRuntime.INT_NA) {
+                        if (!introducesNA) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            introducesNA = true;
+                        }
+                        if (warningInfo != null) {
+                            warningInfo.setIntergerOverflow(true);
+                        }
+                        return result;
                     }
                 } catch (ArithmeticException e) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -167,9 +178,17 @@ public abstract class BinaryArithmetic extends Operation {
             // Borrowed from ExactMath
             int r = left + right;
             if (((left ^ r) & (right ^ r)) < 0) {
+                if (warningInfo != null) {
+                    warningInfo.setIntergerOverflow(true);
+                }
                 return INT_NA;
             }
             return r;
+        }
+
+        @Override
+        public int op(int left, int right) {
+            return op(null, left, right);
         }
 
         @Override
@@ -208,14 +227,19 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        public int op(int left, int right) {
+        public int op(WarningInfo warningInfo, int left, int right) {
             if (!introducesOverflow) {
                 try {
                     int result = Math.subtractExact(left, right);
                     // NAs can also be introduced without a 32-bit overflow
-                    if (!introducesNA && result == RRuntime.INT_NA) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        introducesNA = true;
+                    if (result == RRuntime.INT_NA) {
+                        if (!introducesNA && result == RRuntime.INT_NA) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            introducesNA = true;
+                        }
+                        if (warningInfo != null) {
+                            warningInfo.setIntergerOverflow(true);
+                        }
                     }
                     return result;
                 } catch (ArithmeticException e) {
@@ -226,9 +250,17 @@ public abstract class BinaryArithmetic extends Operation {
             // Borrowed from ExactMath
             int r = left - right;
             if (((left ^ right) & (left ^ r)) < 0) {
+                if (warningInfo != null) {
+                    warningInfo.setIntergerOverflow(true);
+                }
                 return INT_NA;
             }
             return r;
+        }
+
+        @Override
+        public int op(int left, int right) {
+            return op(null, left, right);
         }
 
         @Override
@@ -266,7 +298,7 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        public int op(int left, int right) {
+        public int op(WarningInfo warningInfo, int left, int right) {
             if (!introducesNA) {
                 try {
                     return Math.multiplyExact(left, right);
@@ -277,9 +309,17 @@ public abstract class BinaryArithmetic extends Operation {
             }
             long r = (long) left * (long) right;
             if ((int) r != r) {
+                if (warningInfo != null) {
+                    warningInfo.setIntergerOverflow(true);
+                }
                 return INT_NA;
             }
             return (int) r;
+        }
+
+        @Override
+        public int op(int left, int right) {
+            return op(null, left, right);
         }
 
         @Override

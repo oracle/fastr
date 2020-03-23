@@ -39,9 +39,11 @@ import java.util.Arrays;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -54,6 +56,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.WarningInfo;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -103,25 +106,31 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
     @Specialization(limit = "getVectorAccessCacheSize()")
     protected RIntVector cumsumInt(RIntVector x,
                     @Cached NACheck naCheck,
-                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
+                    @Cached() BranchProfile hasWarningsBranchProfile) {
         Object xData = x.getData();
         naCheck.enable(xDataLib, xData);
         SeqIterator iter = xDataLib.iterator(xData);
         int[] array = new int[iter.getLength()];
         int prev = 0;
+        WarningInfo warningInfo = new WarningInfo();
         while (xDataLib.next(xData, iter)) {
             int value = xDataLib.getNextInt(xData, iter);
             if (naCheck.check(value)) {
                 Arrays.fill(array, iter.getIndex(), array.length, RRuntime.INT_NA);
                 break;
             }
-            prev = add.op(prev, value);
+            prev = add.op(warningInfo, prev, value);
             // integer addition can introduce NAs
             if (add.introducesNA() && RRuntime.isNA(prev)) {
                 Arrays.fill(array, iter.getIndex(), array.length, RRuntime.INT_NA);
                 break;
             }
             array[iter.getIndex()] = prev;
+        }
+        if (warningInfo.hasIntergerOverflow()) {
+            hasWarningsBranchProfile.enter();
+            RError.warning(RError.NO_CALLER, Message.INTEGER_OVERFLOW_USE_NUMERIC, "cumsum", "cumsum");
         }
         return RDataFactory.createIntVector(array, naCheck.neverSeenNA() && !add.introducesNA(), extractNamesNode.execute(x));
     }

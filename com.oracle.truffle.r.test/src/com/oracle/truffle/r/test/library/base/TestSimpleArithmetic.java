@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -44,7 +44,7 @@ public class TestSimpleArithmetic extends TestBase {
 
         assertEval("{ 1000000000*100000000000 }");
         assertEval("{ 1000000000L*1000000000 }");
-        assertEval(Output.MissingWarning, "{ 1000000000L*1000000000L }"); // FIXME missing warning
+        assertEval("{ for(i in 1:2) 1000000000L*1000000000L }");
     }
 
     @Test
@@ -743,22 +743,24 @@ public class TestSimpleArithmetic extends TestBase {
 
     @Test
     public void testIntegerOverflow() {
-        assertEval(Output.MissingWarning, "{ x <- 2147483647L ; x + 1L }");
-        assertEval(Output.MissingWarning, "{ x <- 2147483647L ; x * x }");
-        assertEval(Output.MissingWarning, "{ x <- -2147483647L ; x - 2L }");
-        assertEval(Output.MissingWarning, "{ x <- -2147483647L ; x - 1L }");
-        assertEval(Output.MissingWarning, "{ 2147483647L + 1:3 }");
-        assertEval(Output.MissingWarning, "{ 2147483647L + c(1L,2L,3L) }");
-        assertEval(Output.MissingWarning, "{ 1:3 + 2147483647L }");
-        assertEval(Output.MissingWarning, "{ c(1L,2L,3L) + 2147483647L }");
-        assertEval(Output.MissingWarning, "{ 1:3 + c(2147483647L,2147483647L,2147483647L) }");
-        assertEval(Output.MissingWarning, "{ c(2147483647L,2147483647L,2147483647L) + 1:3 }");
-        assertEval(Output.MissingWarning, "{ c(1L,2L,3L) + c(2147483647L,2147483647L,2147483647L) }");
-        assertEval(Output.MissingWarning, "{ c(2147483647L,2147483647L,2147483647L) + c(1L,2L,3L) }");
-        assertEval(Output.MissingWarning, "{ 1:4 + c(2147483647L,2147483647L) }");
-        assertEval(Output.MissingWarning, "{ c(2147483647L,2147483647L) + 1:4 }");
-        assertEval(Output.MissingWarning, "{ c(1L,2L,3L,4L) + c(2147483647L,2147483647L) }");
-        assertEval(Output.MissingWarning, "{ c(2147483647L,2147483647L) + c(1L,2L,3L,4L) }");
+        // invoke twice to check warning keeps being printed
+        assertEval("{ for(i in 1:2) {x <- 2147483647L ; x + 1L} }");
+        assertEval("{ for(i in 1:2) {x <- 2147483647L ; x * x} }");
+        assertEval("{ for(i in 1:2) {x <- -2147483647L ; x - 2L} }");
+        assertEval("{ for(i in 1:2) {x <- -2147483647L ; x - 1L} }");
+        assertEval("{ for(i in 1:2) {x <- -2147483647L ; x + -1L} }");
+        assertEval("{ for(i in 1:2) 2147483647L + 1:3 }");
+        assertEval("{ for(i in 1:2) 2147483647L + c(1L,2L,3L) }");
+        assertEval("{ for(i in 1:2) 1:3 + 2147483647L }");
+        assertEval("{ for(i in 1:2) c(1L,2L,3L) + 2147483647L }");
+        assertEval("{ for(i in 1:2) 1:3 + c(2147483647L,2147483647L,2147483647L) }");
+        assertEval("{ for(i in 1:2) c(2147483647L,2147483647L,2147483647L) + 1:3 }");
+        assertEval("{ for(i in 1:2) c(1L,2L,3L) + c(2147483647L,2147483647L,2147483647L) }");
+        assertEval("{ for(i in 1:2) c(2147483647L,2147483647L,2147483647L) + c(1L,2L,3L) }");
+        assertEval("{ for(i in 1:2) 1:4 + c(2147483647L,2147483647L) }");
+        assertEval("{ for(i in 1:2) c(2147483647L,2147483647L) + 1:4 }");
+        assertEval("{ for(i in 1:2) c(1L,2L,3L,4L) + c(2147483647L,2147483647L) }");
+        assertEval("{ for(i in 1:2) c(2147483647L,2147483647L) + c(1L,2L,3L,4L) }");
     }
 
     @Test

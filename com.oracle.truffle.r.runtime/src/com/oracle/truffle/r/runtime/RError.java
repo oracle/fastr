@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -390,7 +390,7 @@ public final class RError extends RuntimeException implements TruffleException {
         NA_UNEXP("missing value where TRUE/FALSE needed"),
         LENGTH_NOT_MULTI("longer object length is not a multiple of shorter object length"),
         INTEGER_OVERFLOW("NAs produced by integer overflow"),
-        INTEGER_OVERFLOW_USE_SUM_NUMERIC("integer overflow - use sum(as.numeric(.))"),
+        INTEGER_OVERFLOW_USE_NUMERIC("integer overflow in '%s'; use '%s(as.numeric(.))'"),
         NA_OR_NAN("NA/NaN argument"),
         SUBSCRIPT_BOUNDS("subscript out of bounds"),
         SUBSCRIPT_BOUNDS_SUB("[[ ]] subscript out of bounds"),

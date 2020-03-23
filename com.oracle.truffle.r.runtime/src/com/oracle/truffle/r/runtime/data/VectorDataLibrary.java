@@ -162,12 +162,18 @@ public abstract class VectorDataLibrary extends Library {
     public abstract static class Iterator {
         private final Object store;
 
+        private final WarningInfo warningInfo = new WarningInfo();
+
         protected Iterator(Object store) {
             this.store = store;
         }
 
         final Object getStore() {
             return store;
+        }
+
+        public final WarningInfo getWarningInfo() {
+            return warningInfo;
         }
     }
 

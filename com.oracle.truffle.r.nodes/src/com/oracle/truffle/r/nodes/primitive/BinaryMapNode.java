@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.primitive;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyAttributesNode;
@@ -46,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
+import com.oracle.truffle.r.runtime.data.WarningInfo;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -170,6 +172,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
     private final ConditionProfile shareRight;
     private final ConditionProfile leftIsNAProfile;
     private final ConditionProfile rightIsNAProfile;
+    private final BranchProfile hasWarningsBranchProfile;
 
     // compile-time optimization flags
     private final boolean mayContainMetadata;
@@ -197,6 +200,8 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         this.shareRight = mayShareRight ? ConditionProfile.createBinaryProfile() : null;
         this.dimensionsProfile = mayContainMetadata ? ConditionProfile.createBinaryProfile() : null;
 
+        this.hasWarningsBranchProfile = BranchProfile.create();
+
         this.copyAttributes = mayContainMetadata ? CopyAttributesNodeGen.create(copyAttributes) : null;
         this.maxLengthProfile = ConditionProfile.createBinaryProfile();
         if (isGeneric) {
@@ -218,6 +223,8 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         assert isSupported(originalLeft, originalRight);
         RAbstractVector left = leftClass.cast(originalLeft);
         RAbstractVector right = rightClass.cast(originalRight);
+
+        WarningInfo warningInfo = null;
 
         function.initialize(leftLibrary, left, rightLibrary, right);
 
@@ -242,7 +249,8 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         }
         if (mayFoldConstantTime && function.mayFoldConstantTime(left, right)) {
             function.enable(left, right);
-            target = function.tryFoldConstantTime(left.castSafe(argumentType, leftIsNAProfile, false), leftLength, right.castSafe(argumentType, rightIsNAProfile, false), rightLength);
+            warningInfo = new WarningInfo();
+            target = function.tryFoldConstantTime(warningInfo, left.castSafe(argumentType, leftIsNAProfile, false), leftLength, right.castSafe(argumentType, rightIsNAProfile, false), rightLength);
         }
         if (target == null) {
             int maxLength = maxLengthProfile.profile(leftLength >= rightLength) ? leftLength : rightLength;
@@ -254,12 +262,14 @@ final class BinaryMapVectorNode extends BinaryMapNode {
             if (mayShareLeft && left.getRType() == resultType && shareLeft.profile(leftLength == maxLength && ((RSharingAttributeStorage) left).isTemporary())) {
                 target = left;
                 try (SeqWriteIterator resultIter = leftLibrary.writeIterator(leftData)) {
+                    warningInfo = resultIter.getWarningInfo();
                     vectorNode.execute(function, leftLength, rightLength, leftData, leftLibrary, resultIter, leftData, leftLibrary, leftIter, rightData, rightLibrary, rightIter);
                     leftLibrary.commitWriteIterator(leftData, resultIter, function.isComplete());
                 }
             } else if (mayShareRight && right.getRType() == resultType && shareRight.profile(rightLength == maxLength && ((RSharingAttributeStorage) right).isTemporary())) {
                 target = right;
                 try (SeqWriteIterator resultIter = rightLibrary.writeIterator(rightData)) {
+                    warningInfo = resultIter.getWarningInfo();
                     vectorNode.execute(function, leftLength, rightLength, rightData, rightLibrary, resultIter, leftData, leftLibrary, leftIter, rightData, rightLibrary, rightIter);
                     rightLibrary.commitWriteIterator(rightData, resultIter, function.isComplete());
                 }
@@ -267,6 +277,7 @@ final class BinaryMapVectorNode extends BinaryMapNode {
                 target = resultType.create(maxLength, false);
                 Object targetData = target.getData();
                 try (SeqWriteIterator resultIter = getResultLibrary().writeIterator(targetData)) {
+                    warningInfo = resultIter.getWarningInfo();
                     vectorNode.execute(function, leftLength, rightLength, targetData, getResultLibrary(), resultIter, leftData, leftLibrary, leftIter, rightData, rightLibrary, rightIter);
                     getResultLibrary().commitWriteIterator(targetData, resultIter, function.isComplete());
                 }
@@ -275,6 +286,12 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         }
         if (mayContainMetadata) {
             target = copyAttributes.execute(target, left, leftLength, right, rightLength);
+        }
+
+        assert warningInfo != null;
+        if (warningInfo.hasIntergerOverflow()) {
+            hasWarningsBranchProfile.enter();
+            RError.warning(this, RError.Message.INTEGER_OVERFLOW);
         }
 
         assert RAbstractVector.verifyVector(target);
@@ -376,7 +393,7 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
         public void perform(BinaryMapFunctionNode arithmetic, Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
                         Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter, Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
             resultLib.setNextInt(resultData, resultIter,
-                            arithmetic.applyInteger(leftLib.getNextInt(leftData, leftIter), rightLib.getNextInt(rightData, rightIter)));
+                            arithmetic.applyInteger(resultIter.getWarningInfo(), leftLib.getNextInt(leftData, leftIter), rightLib.getNextInt(rightData, rightIter)));
         }
     };
     private static final MapBinaryIndexedAction DOUBLE_INTEGER = new MapBinaryIndexedAction() {
