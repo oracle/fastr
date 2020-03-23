@@ -23,14 +23,12 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.library.GenerateLibrary;
-import com.oracle.truffle.api.library.GenerateLibrary.DefaultExport;
 import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @GenerateLibrary
-@DefaultExport(DefaultRContainerDataLibrary.class)
 public abstract class AbstractContainerLibrary extends Library {
 
     static final LibraryFactory<AbstractContainerLibrary> FACTORY = LibraryFactory.resolve(AbstractContainerLibrary.class);

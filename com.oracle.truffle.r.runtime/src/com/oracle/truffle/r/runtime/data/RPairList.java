@@ -27,6 +27,7 @@ import java.util.Iterator;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
@@ -40,6 +41,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -53,6 +55,10 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory.BaseVectorFactory;
 import com.oracle.truffle.r.runtime.data.RPairListFactory.RPairListSnapshotNodeGen;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
@@ -67,6 +73,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * RPairList objects can represent both "normal" pairlists (which are rarely used from R directly)
@@ -85,6 +92,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 @ExportLibrary(RPairListLibrary.class)
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(AbstractContainerLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 public final class RPairList extends RAbstractContainer implements Iterable<RPairList>, Shareable {
 
     private static final RSymbol FUNCTION_SYMBOL = RDataFactory.createSymbolInterned("function");
@@ -549,6 +557,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
         }
     }
 
+    @Ignore
     public SEXPTYPE getType() {
         return type;
     }
@@ -566,7 +575,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
     }
 
     @Override
-    @ExportMessage
+    @Ignore // AbstractContainerLibrary
     public boolean isComplete() {
         return false;
     }
@@ -645,7 +654,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
 
     @Override
     @TruffleBoundary
-    @ExportMessage
+    @Ignore // AbstractContainerLibrary
     public RPairList copy() {
         if (closure != null) {
             RPairList result = new RPairList(closure);
@@ -705,18 +714,14 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
         }
     }
 
-    @ExportMessage
     @Override
+    @Ignore // AbstractContainerLibrary
     public RPairList materialize() {
         return this;
     }
 
-    @ExportMessage
-    void materializeData() {
-        // nop
-    }
-
     @Override
+    @Ignore
     @TruffleBoundary
     public Object getDataAtAsObject(int index) {
         if (closure != null) {
@@ -800,6 +805,7 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
 
     }
 
+    @Ignore
     @Override
     public Iterator<RPairList> iterator() {
         return RPairListLibrary.getUncached().iterable(this).iterator();
@@ -1304,5 +1310,118 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
             return snapshot.root == other;
         }
 
+    }
+
+    // -------------------------------
+    // VectorDataLibrary
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public NACheck getNACheck() {
+        // we do not maintain any completeness info about lists
+        // to avoid any errors we return NACheck that is enabled:
+        // checks for NAs and also reports neverSeenNA() == false
+        return NACheck.getEnabled();
+    }
+
+    @ExportMessage(name = "getType", library = VectorDataLibrary.class)
+    public RType dataLibGetType() {
+        return getRType();
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public boolean isWriteable() {
+        return true;
+    }
+
+    @ExportMessage(name = "copy", library = VectorDataLibrary.class)
+    public Object dataLibCopy(@SuppressWarnings("unused") boolean deep) {
+        return copy();
+    }
+
+    @ExportMessage(name = "materialize", library = VectorDataLibrary.class)
+    public RPairList dataLibMaterialize() {
+        return this;
+    }
+
+    @ExportMessage(name = "copyResized", library = VectorDataLibrary.class)
+    @SuppressWarnings("static-method")
+    public Object dataLibCopyResized(@SuppressWarnings("unused") int newSize, @SuppressWarnings("unused") boolean deep, @SuppressWarnings("unused") boolean fillNA) {
+        throw RInternalError.unimplemented();
+    }
+
+    @ExportMessage
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(getInternalStore(), getLength());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
+    }
+
+    @ExportMessage
+    public RandomAccessIterator randomAccessIterator() {
+        return new RandomAccessIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public SeqWriteIterator writeIterator() {
+        return new SeqWriteIterator(getInternalStore(), getLength());
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public Object[] getReadonlyListData() {
+        throw RInternalError.unimplemented();
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public Object[] getListDataCopy() {
+        throw RInternalError.unimplemented();
+    }
+
+    @ExportMessage
+    public Object getElementAt(int index) {
+        return getDataAtAsObject(index);
+    }
+
+    @ExportMessage
+    public Object getNextElement(SeqIterator it) {
+        return getDataAtAsObject(it.getIndex());
+    }
+
+    @ExportMessage
+    public Object getElement(@SuppressWarnings("unused") RandomAccessIterator it, int index) {
+        return getDataAtAsObject(index);
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public void setElementAt(@SuppressWarnings("unused") int index, @SuppressWarnings("unused") Object value) {
+        throw RInternalError.unimplemented();
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public void setNextElement(@SuppressWarnings("unused") SeqWriteIterator it, @SuppressWarnings("unused") Object value) {
+        throw RInternalError.unimplemented();
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public void setElement(@SuppressWarnings("unused") RandomAccessWriteIterator it, @SuppressWarnings("unused") int index, @SuppressWarnings("unused") Object value) {
+        throw RInternalError.unimplemented();
     }
 }

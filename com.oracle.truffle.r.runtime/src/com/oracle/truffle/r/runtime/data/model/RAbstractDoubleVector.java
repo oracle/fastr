@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import java.util.Arrays;
@@ -60,12 +59,7 @@ public abstract class RAbstractDoubleVector extends RAbstractNumericVector {
     }
 
     @Override
-    public RDoubleVector materialize() {
-        RDoubleVector result = RDataFactory.createDoubleVector(getDataCopy(), isComplete());
-        copyAttributes(result);
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
-    }
+    public abstract RDoubleVector materialize();
 
     @TruffleBoundary
     protected void copyAttributes(RDoubleVector materialized) {

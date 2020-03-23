@@ -30,8 +30,10 @@ import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -39,6 +41,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -64,7 +67,15 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * When implementing, make sure to invoke related {@link MemoryCopyTracer} methods.
  */
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(AbstractContainerLibrary.class)
 public abstract class RAbstractVector extends RAbstractContainer implements RFFIAccess {
+
+    public static final String DATA_LIB_LIMIT = "getDataLibCacheSize()";
+
+    public static int getDataLibCacheSize() {
+        // this has to be a method, because DSLConfig gets initialized lazily
+        return DSLConfig.getCacheSize(3);
+    }
 
     /**
      * Debugging aid: changing to {@code false} turns off all "complete" flag optimizations and all
@@ -441,6 +452,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public final boolean isComplete() {
         return complete && ENABLE_COMPLETE;
     }
@@ -563,6 +575,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      * should be used.
      */
     @Override
+    @Ignore // AbstractContainerLibrary
     public RAbstractVector copy() {
         RAbstractVector result = internalCopyAndReport();
         setAttributes(result);
@@ -905,6 +918,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public abstract RAbstractVector materialize();
 
     public abstract RAbstractVector createEmptySameType(int newLength, boolean newIsComplete);

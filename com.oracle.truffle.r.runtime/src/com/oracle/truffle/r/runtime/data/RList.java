@@ -118,8 +118,8 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
      */
     @Override
     public Object getDataAtAsObject(Object store, int index) {
-        assert store == data;
-        return ((Object[]) store)[index];
+        assert store == getInternalStore();
+        return NativeDataAccess.getData(this, (Object[]) store, index);
     }
 
     public void setDataAt(int index, Object value) {
