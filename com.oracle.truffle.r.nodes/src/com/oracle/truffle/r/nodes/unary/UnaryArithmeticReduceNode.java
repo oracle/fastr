@@ -81,7 +81,6 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
     private final NACheck na = NACheck.create();
     private final ConditionProfile naRmProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile emptyProfile = BranchProfile.create();
-    private final BranchProfile naResultProfile = BranchProfile.create();
 
     private final BranchProfile intNANoOverflowProfile = BranchProfile.create();
 
@@ -97,14 +96,6 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
         emptyProfile.enter();
         if (semantics.getEmptyWarning() != null) {
             warning(semantics.emptyWarning);
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private void naResultWarning() {
-        naResultProfile.enter();
-        if (semantics.getNAResultWarning() != null) {
-            warning(semantics.getNAResultWarning());
         }
     }
 
@@ -464,19 +455,17 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
         private final boolean nullInt;
         private final RError.Message emptyWarning;
         private final RError.Message emptyWarningCharacter;
-        private final RError.Message naResultWarning;
         private final boolean supportComplex;
         private final boolean supportString;
         private final boolean useDoubleStartForEmptyVector;
 
-        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter, RError.Message naResultWarning,
+        public ReduceSemantics(int intStart, double doubleStart, boolean nullInt, RError.Message emptyWarning, RError.Message emptyWarningCharacter,
                         boolean supportComplex, boolean supportString, boolean useDoubleStartForEmptyVector) {
             this.intStart = intStart;
             this.doubleStart = doubleStart;
             this.nullInt = nullInt;
             this.emptyWarning = emptyWarning;
             this.emptyWarningCharacter = emptyWarningCharacter;
-            this.naResultWarning = naResultWarning;
             this.supportComplex = supportComplex;
             this.supportString = supportString;
             this.useDoubleStartForEmptyVector = useDoubleStartForEmptyVector;
@@ -504,10 +493,6 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
 
         public RError.Message getEmptyWarningCharacter() {
             return emptyWarningCharacter;
-        }
-
-        public RError.Message getNAResultWarning() {
-            return naResultWarning;
         }
 
         public boolean isUseDoubleStartForEmptyVector() {

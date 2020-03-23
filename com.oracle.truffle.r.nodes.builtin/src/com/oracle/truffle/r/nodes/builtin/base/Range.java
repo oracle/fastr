@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,9 +55,9 @@ public abstract class Range extends RBuiltinNode.Arg3 {
      */
 
     private static final ReduceSemantics minSemantics = new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN,
-                    RError.Message.NO_NONMISSING_MIN_NA, null, false, true, true);
+                    RError.Message.NO_NONMISSING_MIN_NA, false, true, true);
     private static final ReduceSemantics maxSemantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX,
-                    RError.Message.NO_NONMISSING_MAX_NA, null, false, true, true);
+                    RError.Message.NO_NONMISSING_MAX_NA, false, true, true);
 
     static {
         Casts casts = new Casts(Range.class);
