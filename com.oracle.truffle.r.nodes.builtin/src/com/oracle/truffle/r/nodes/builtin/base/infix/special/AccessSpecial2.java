@@ -25,8 +25,10 @@ package com.oracle.truffle.r.nodes.builtin.base.infix.special;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.Sub2Interface;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -45,30 +47,16 @@ public abstract class AccessSpecial2 extends IndexingSpecial2Common implements S
 
     public abstract int executeInteger(RIntVector vec, int index1, int index2);
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected int accessInt(RIntVector vector, int index1, int index2,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            return access.getInt(iter, matrixIndex(vector, index1, index2));
-        }
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        return dataLib.getIntAt(vector.getData(), matrixIndex(vector, index1, index2));
     }
 
-    @Specialization(replaces = "accessInt", guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected int accessIntGeneric(RIntVector vector, int index1, int index2) {
-        return accessInt(vector, index1, index2, vector.slowPathAccess());
-    }
-
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
+    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected double accessDouble2(RAbstractDoubleVector vector, int index1, int index2,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            return access.getDouble(iter, matrixIndex(vector, index1, index2));
-        }
-    }
-
-    @Specialization(replaces = "accessDouble2", guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected double accessDoubleGeneric(RAbstractDoubleVector vector, int index1, int index2) {
-        return accessDouble2(vector, index1, index2, vector.slowPathAccess());
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        return dataLib.getDoubleAt(vector.getData(), matrixIndex(vector, index1, index2));
     }
 
     @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
