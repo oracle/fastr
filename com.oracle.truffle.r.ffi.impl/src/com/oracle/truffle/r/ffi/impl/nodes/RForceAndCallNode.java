@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,7 +79,7 @@ public abstract class RForceAndCallNode extends AbstractCallInfoEvalNode {
         }
     }
 
-    @Specialization(guards = "cachedFunCall.isCompatible(fun, env, accessProfile)", limit = "CACHE_SIZE")
+    @Specialization(guards = "cachedFunCall.isCompatible(fun, env, accessProfile)", limit = "getCacheSize(CACHE_SIZE)")
     @ExplodeLoop
     Object forceAndCallCached(Object e, RFunction fun, int n, REnvironment env,
                     @Cached("createClassProfile()") ValueProfile accessProfile,

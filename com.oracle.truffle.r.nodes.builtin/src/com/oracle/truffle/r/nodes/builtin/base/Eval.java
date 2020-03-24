@@ -353,7 +353,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
         abstract Object execute(VirtualFrame frame, CallInfo functionInfo, RCaller rCaller, RPairList expr);
 
-        @Specialization(limit = "CACHE_SIZE", guards = {"cachedCallInfo.isCompatible(callInfo, otherInfoClassProfile)"})
+        @Specialization(limit = "getCacheSize(CACHE_SIZE)", guards = {"cachedCallInfo.isCompatible(callInfo, otherInfoClassProfile)"})
         Object evalFastPath(VirtualFrame frame, CallInfo callInfo, RCaller evalCaller, RPairList expr,
                         @SuppressWarnings("unused") @Cached("createClassProfile()") ValueProfile otherInfoClassProfile,
                         @SuppressWarnings("unused") @Cached("callInfo.getCachedCallInfo()") CallInfo.CachedCallInfo cachedCallInfo,
