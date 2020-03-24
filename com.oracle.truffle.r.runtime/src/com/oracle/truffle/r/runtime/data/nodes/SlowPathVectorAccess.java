@@ -44,7 +44,7 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
 
     protected SlowPathVectorAccess() {
         // VectorAccess.supports has an assertion that relies on this being Object.class
-        super(Object.class, true);
+        super(null, Object.class, true);
     }
 
     @Override

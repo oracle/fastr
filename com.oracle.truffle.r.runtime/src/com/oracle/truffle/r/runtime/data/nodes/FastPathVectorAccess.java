@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -46,7 +47,11 @@ public abstract class FastPathVectorAccess extends VectorAccess {
     protected final BranchProfile warningReportedProfile = BranchProfile.create();
 
     protected FastPathVectorAccess(Object value) {
-        super(value.getClass(), value instanceof RAbstractContainer ? ((RAbstractContainer) value).getInternalStore() != null : true);
+        super(createVectorDataLibrary(value), value.getClass(), value instanceof RAbstractContainer ? ((RAbstractContainer) value).getInternalStore() != null : true);
+    }
+
+    private static VectorDataLibrary createVectorDataLibrary(Object value) {
+        return value instanceof RAbstractVector ? VectorDataLibrary.getFactory().create(((RAbstractVector) value).getData()) : null;
     }
 
     @Override

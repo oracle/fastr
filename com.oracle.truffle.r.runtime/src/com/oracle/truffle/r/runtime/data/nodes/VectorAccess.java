@@ -30,7 +30,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -42,6 +41,8 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -77,9 +78,11 @@ public abstract class VectorAccess extends RBaseNode {
 
     protected final Class<?> clazz;
     protected final boolean hasStore;
+    @Child protected VectorDataLibrary dataLib;
 
-    public VectorAccess(Class<?> clazz, boolean hasStore) {
+    public VectorAccess(VectorDataLibrary dataLib, Class<?> clazz, boolean hasStore) {
         CompilerAsserts.neverPartOfCompilation();
+        this.dataLib = dataLib;
         this.clazz = clazz;
         this.hasStore = hasStore;
     }
@@ -88,10 +91,12 @@ public abstract class VectorAccess extends RBaseNode {
         private Set<RError.Message> reportedWarnings;
 
         protected final Object store; // internal store, native mirror or vector
+        protected final RandomAccessIterator vectorDataIterator;
         protected final int length;
         private final RBaseNode warningContext;
 
-        private AccessIterator(Object store, int length, RBaseNode warningContext) {
+        private AccessIterator(RandomAccessIterator vectorDataIterator, Object store, int length, RBaseNode warningContext) {
+            this.vectorDataIterator = vectorDataIterator;
             this.store = store;
             this.length = length;
             this.warningContext = warningContext != null ? warningContext : RError.SHOW_CALLER;
@@ -124,8 +129,8 @@ public abstract class VectorAccess extends RBaseNode {
 
         protected int index;
 
-        private SequentialIterator(Object store, int length, RBaseNode warningContext) {
-            super(store, length, warningContext);
+        private SequentialIterator(RandomAccessIterator vectorDataIterator, Object store, int length, RBaseNode warningContext) {
+            super(vectorDataIterator, store, length, warningContext);
             this.index = -1;
         }
 
@@ -146,8 +151,8 @@ public abstract class VectorAccess extends RBaseNode {
 
     public static final class RandomIterator extends AccessIterator implements AutoCloseable {
 
-        private RandomIterator(Object store, int length, RBaseNode warningContext) {
-            super(store, length, warningContext);
+        private RandomIterator(RandomAccessIterator vectorDataIterator, Object store, int length, RBaseNode warningContext) {
+            super(vectorDataIterator, store, length, warningContext);
         }
 
         @Override
@@ -247,7 +252,11 @@ public abstract class VectorAccess extends RBaseNode {
     protected abstract Object getStore(RAbstractContainer vector);
 
     protected int getLength(RAbstractContainer vector) {
-        return vector.getLength();
+        if (dataLib == null) {
+            return vector.getLength();
+        } else {
+            return dataLib.getLength(vector.getData());
+        }
     }
 
     protected int getLength(@SuppressWarnings("unused") Object vector) {
@@ -264,11 +273,7 @@ public abstract class VectorAccess extends RBaseNode {
      * 
      */
     public final SequentialIterator access(Object vector) {
-        return access(AbstractContainerLibrary.getFactory().getUncached(), vector, null);
-    }
-
-    public final SequentialIterator access(AbstractContainerLibrary library, Object vector) {
-        return access(library, vector, null);
+        return access(vector, null);
     }
 
     /**
@@ -282,20 +287,23 @@ public abstract class VectorAccess extends RBaseNode {
      *            accessing node, in which case {@link RBaseNode#getErrorContext()} will be used.
      */
     public final SequentialIterator access(Object vector, RBaseNode warningContext) {
-        return access(AbstractContainerLibrary.getFactory().getUncached(), vector, warningContext);
-    }
-
-    public final SequentialIterator access(AbstractContainerLibrary library, Object vector, RBaseNode warningContext) {
         Object castVector = cast(vector);
         if (castVector instanceof RAbstractContainer) {
             RAbstractContainer container = (RAbstractContainer) castVector;
             int length = getLength(container);
             RBaseNode.reportWork(this, length);
-            na.enable(library, container);
-            return new SequentialIterator(getStore(container), length, warningContext);
+            RandomAccessIterator it;
+            if (dataLib == null) {
+                na.enable(container);
+                it = null;
+            } else {
+                na.enable(dataLib, container.getData());
+                it = dataLib.randomAccessIterator(container.getData());
+            }
+            return new SequentialIterator(it, getStore(container), length, warningContext);
         } else {
             na.enable(true);
-            return new SequentialIterator(castVector, getLength(castVector), warningContext);
+            return new SequentialIterator(null, castVector, getLength(castVector), warningContext);
         }
     }
 
@@ -416,11 +424,7 @@ public abstract class VectorAccess extends RBaseNode {
      * {@link RError#SHOW_CALLER} will be used to determine the warning message caller context.
      */
     public final RandomIterator randomAccess(RAbstractContainer vector) {
-        return randomAccess(AbstractContainerLibrary.getFactory().getUncached(), vector, null);
-    }
-
-    public final RandomIterator randomAccess(AbstractContainerLibrary library, RAbstractContainer vector) {
-        return randomAccess(library, vector, null);
+        return randomAccess(vector, null);
     }
 
     /**
@@ -433,20 +437,18 @@ public abstract class VectorAccess extends RBaseNode {
      *            accessing node, in which case {@link RBaseNode#getErrorContext()} will be used.
      */
     public final RandomIterator randomAccess(RAbstractContainer vector, RBaseNode warningContext) {
-        return randomAccess(AbstractContainerLibrary.getFactory().getUncached(), vector, warningContext);
-    }
-
-    public final RandomIterator randomAccess(AbstractContainerLibrary library, RAbstractContainer vector, RBaseNode warningContext) {
         Object castVector = cast(vector);
-        if (castVector instanceof RAbstractContainer) {
-            RAbstractContainer container = (RAbstractContainer) castVector;
-            int length = getLength(container);
-            na.enable(library, container);
-            return new RandomIterator(getStore(container), length, warningContext);
+        RAbstractContainer container = (RAbstractContainer) castVector;
+        int length = getLength(container);
+        RandomAccessIterator it;
+        if (dataLib == null) {
+            na.enable(container);
+            it = null;
         } else {
-            na.enable(true);
-            return new RandomIterator(castVector, getLength(castVector), warningContext);
+            na.enable(dataLib, container.getData());
+            it = dataLib.randomAccessIterator(container.getData());
         }
+        return new RandomIterator(it, getStore(container), length, warningContext);
     }
 
     @SuppressWarnings("static-method")
