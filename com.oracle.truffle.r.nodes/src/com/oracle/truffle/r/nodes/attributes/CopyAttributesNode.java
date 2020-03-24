@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RLogger;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -129,6 +130,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
     @Specialization(guards = {"leftLength == rightLength", "containsMetadata(leftLibrary,left) || containsMetadata(rightLibrary,right)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right,
                     @SuppressWarnings("unused") int rightLength,
+                    @CachedLibrary("target") AbstractContainerLibrary targetLib,
                     @Cached("create()") CopyOfRegAttributesNode copyOfRegLeft,
                     @Cached("create()") CopyOfRegAttributesNode copyOfRegRight,
                     @Cached("createDim()") RemoveFixedAttributeNode removeDim,
@@ -152,7 +154,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             log("copyAttributes: ==");
             countEquals++;
         }
-        RAbstractVector result = target.materialize();
+        RAbstractVector result = (RAbstractVector) targetLib.materialize(target);
         if (copyAllAttributes) {
             if (result != right) {
                 copyOfRegRight.execute(right, result);
@@ -211,6 +213,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
     @Specialization(guards = {"leftLength < rightLength", "containsMetadata(leftLibrary,left) || containsMetadata(rightLibrary,right)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector copyShorter(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength,
+                    @CachedLibrary("target") AbstractContainerLibrary targetLib,
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg,
                     @Cached("createBinaryProfile()") ConditionProfile rightNotResultProfile,
                     @Cached("create()") BranchProfile leftHasDimensions,
@@ -231,7 +234,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             countSmaller++;
         }
         boolean rightNotResult = rightNotResultProfile.profile(right != target);
-        RAbstractVector result = target.materialize();
+        RAbstractVector result = (RAbstractVector) targetLib.materialize(target);
         if (copyAllAttributes && rightNotResult) {
             copyOfReg.execute(right, result);
         }
@@ -270,6 +273,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
     @Specialization(guards = {"leftLength > rightLength", "containsMetadata(leftLibrary,left) || containsMetadata(rightLibrary,right)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector copyLonger(RAbstractVector target, RAbstractVector left, @SuppressWarnings("unused") int leftLength, RAbstractVector right, @SuppressWarnings("unused") int rightLength,
+                    @CachedLibrary("target") AbstractContainerLibrary targetLib,
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg,
                     @Cached("create()") BranchProfile leftHasDimensions,
                     @Cached("create()") BranchProfile rightHasDimensions,
@@ -288,7 +292,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
             log("copyAttributes: >");
             countLarger++;
         }
-        RAbstractVector result = target.materialize();
+        RAbstractVector result = (RAbstractVector) targetLib.materialize(target);
         if (copyAllAttributes && result != left) {
             copyOfReg.execute(left, result);
         }
