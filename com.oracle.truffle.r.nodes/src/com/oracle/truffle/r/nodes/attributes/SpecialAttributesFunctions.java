@@ -42,6 +42,7 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetClassAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.IsSpecialAttributeNodeGen;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
@@ -67,7 +68,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -605,7 +605,7 @@ public final class SpecialAttributesFunctions {
         private final ConditionProfile nullDimsProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile nonEmptyDimsProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile twoDimsOrMoreProfile = ConditionProfile.createBinaryProfile();
-        @Child private GetReadonlyData.Int getReadonlyData;
+        @Child private VectorDataLibrary dimDataLib;
 
         public static GetDimAttributeNode create() {
             return GetDimAttributeNodeGen.create();
@@ -629,12 +629,12 @@ public final class SpecialAttributesFunctions {
                 isPairListProfile.enter();
                 return ((RPairList) x).getDimensions();
             }
-            if (getReadonlyData == null) {
+            if (dimDataLib == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getReadonlyData = insert(GetReadonlyData.Int.create());
+                dimDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getTypedVectorDataLibraryCacheSize()));
             }
             RIntVector dims = (RIntVector) execute(x);
-            return nullDimsProfile.profile(dims == null) ? null : getReadonlyData.execute(dims);
+            return nullDimsProfile.profile(dims == null) ? null : dimDataLib.getReadonlyIntData(dims.getData());
         }
 
         public static boolean isArray(int[] dimensions) {

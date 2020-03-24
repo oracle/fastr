@@ -27,9 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -60,42 +58,6 @@ public class GetReadonlyData {
 
         public static Double create() {
             return GetReadonlyDataFactory.DoubleNodeGen.create();
-        }
-    }
-
-    public abstract static class Complex extends Node {
-        public abstract double[] execute(RComplexVector vector);
-
-        @Specialization(guards = "!vec.hasNativeMemoryData()")
-        protected double[] doManagedRVector(RComplexVector vec) {
-            return vec.getInternalManagedData();
-        }
-
-        @Specialization(guards = "vec.hasNativeMemoryData()")
-        protected double[] doNativeDataRVector(RComplexVector vec) {
-            return NativeDataAccess.copyComplexNativeData(vec.getNativeMirror());
-        }
-
-        public static Complex create() {
-            return GetReadonlyDataFactory.ComplexNodeGen.create();
-        }
-    }
-
-    public abstract static class Int extends Node {
-        public abstract int[] execute(RIntVector vector);
-
-        @Specialization(guards = "!vec.hasNativeMemoryData()")
-        protected int[] doManagedRVector(RIntVector vec) {
-            return vec.getInternalManagedData();
-        }
-
-        @Specialization(guards = "vec.hasNativeMemoryData()")
-        protected int[] doNativeDataRVector(RIntVector vec) {
-            return NativeDataAccess.copyIntNativeData(vec.getNativeMirror());
-        }
-
-        public static Int create() {
-            return GetReadonlyDataFactory.IntNodeGen.create();
         }
     }
 
