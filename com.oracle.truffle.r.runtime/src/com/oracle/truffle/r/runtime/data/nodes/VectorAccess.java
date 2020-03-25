@@ -246,7 +246,12 @@ public abstract class VectorAccess extends RBaseNode {
             return false;
         }
         Object castVector = cast(value);
-        return !(castVector instanceof RAbstractContainer) || (((RAbstractContainer) castVector).getInternalStore() != null) == hasStore;
+        if (castVector instanceof RAbstractContainer) {
+            Object data = ((RAbstractContainer) value).getData();
+            return (((RAbstractContainer) castVector).getInternalStore() != null) == hasStore && (dataLib == null || dataLib.accepts(data));
+        } else {
+            return true;
+        }
     }
 
     protected abstract Object getStore(RAbstractContainer vector);
