@@ -60,7 +60,7 @@ public abstract class ReadDoublePointerNode extends Node {
         }
     }
 
-    @Specialization(guards = {"!targetLib.isArrayElementWritable(target, index)"}, limit = "getInteropLibraryCacheSize()")
+    @Specialization(guards = {"!targetLib.isArrayElementReadable(target, index)"}, limit = "getInteropLibraryCacheSize()")
     protected static double getFromNative(Object target, int index,
                     @CachedLibrary("target") InteropLibrary targetLib) {
         try {
