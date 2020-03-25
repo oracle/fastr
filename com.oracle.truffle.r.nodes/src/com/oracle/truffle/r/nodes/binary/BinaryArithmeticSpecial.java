@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,12 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticSpecialNodeGen.IntegerBinaryArithmeticSpecialNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticSpecialNodeGen;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
@@ -38,6 +41,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
+import com.oracle.truffle.r.runtime.data.WarningInfo;
 
 /**
  * Fast-path for scalar values: these cannot have any class attribute. Note: we intentionally use
@@ -138,12 +142,19 @@ public abstract class BinaryArithmeticSpecial extends RNode {
 
         @Specialization(insertBefore = "doFallback")
         public int doIntegers(int left, int right,
-                        @Cached("createBinaryProfile()") ConditionProfile naProfile) {
+                        @Cached("createBinaryProfile()") ConditionProfile naProfile,
+                        @Cached() BranchProfile hasWarningsBranchProfile) {
             if (naProfile.profile(RRuntime.isNA(left) || RRuntime.isNA(right))) {
                 checkFullCallNeededOnNA();
                 return RRuntime.INT_NA;
             }
-            return getOperation().op(left, right);
+            WarningInfo overflowWarning = new WarningInfo();
+            int result = getOperation().op(overflowWarning, left, right);
+            if (overflowWarning.hasIntergerOverflow()) {
+                hasWarningsBranchProfile.enter();
+                RError.warning(this, Message.INTEGER_OVERFLOW);
+            }
+            return result;
         }
 
         @Specialization(insertBefore = "doFallback")

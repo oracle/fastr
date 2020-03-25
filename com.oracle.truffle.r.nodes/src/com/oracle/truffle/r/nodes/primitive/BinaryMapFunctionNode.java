@@ -29,6 +29,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.data.WarningInfo;
 
 /**
  * A typed binary map function for use in {@link BinaryMapNode}. The called methods depend on the
@@ -58,6 +59,10 @@ public abstract class BinaryMapFunctionNode extends RBaseNode {
     }
 
     public int applyInteger(int left, int right) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    public int applyInteger(WarningInfo warningInfo, int left, int right) {
         throw RInternalError.shouldNotReachHere();
     }
 
@@ -94,6 +99,10 @@ public abstract class BinaryMapFunctionNode extends RBaseNode {
      * operation. Returns <code>null</code> if folding was not possible.
      */
     public abstract RAbstractVector tryFoldConstantTime(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
+
+    public RAbstractVector tryFoldConstantTime(WarningInfo warningInfo, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
+        throw RInternalError.shouldNotReachHere();
+    }
 
     /**
      * Enables the node for the two operation. Invoked once for each BinaryMap operation invocation.
