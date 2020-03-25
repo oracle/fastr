@@ -39,6 +39,6 @@ else
   >&2 echo "  * On Debian based Linux: apt install gfortran."
   >&2 echo "  * On Oracle/Red Hat Linux: yum install gcc-gfortran."
   >&2 echo "  * On MacOS: see https://gcc.gnu.org/wiki/GFortranBinaries."
-  >&2 echo "If GFortran is installed, but under a non-standard path, or if you would like to use another compatible Fortran compiler, then path to a fortran compiler can be configured in '$R_HOME/etc/Makeconf' (variable 'FC')."
+  >&2 echo "If GFortran is installed, but under a non-standard path, or if you would like to use another compatible Fortran compiler, then path to a fortran compiler can be configured in '$R_HOME/etc/Makeconf' (variable 'FC', please see the comments above that variable)."
   exit 1
 fi
