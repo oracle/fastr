@@ -3,6 +3,7 @@
 Bug fixes:
 
 * `dyn.load` did not work with relative paths
+* missing warnings on integer overflow #136
 
 # 20.0.0
 
