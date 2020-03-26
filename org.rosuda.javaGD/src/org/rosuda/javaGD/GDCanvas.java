@@ -28,12 +28,10 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
 import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.util.Arrays;
 import java.util.Vector;
 import java.util.function.Consumer;
 
@@ -212,7 +210,7 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
                 if (!active)
                     break;
                 if (c.updatePending && (System.currentTimeMillis() - lastUpdate > 200)) {
-                    // c.repaint();
+                    c.repaint();
                 }
             }
             c = null;
@@ -242,11 +240,6 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
             o.paint(this, gs, g);
         }
         lastUpdate = System.currentTimeMillis();
-    }
-
-    public static void main(String[] args) {
-        String[] availableFontFamilyNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-        System.out.println(Arrays.asList(availableFontFamilyNames));
     }
 
 }

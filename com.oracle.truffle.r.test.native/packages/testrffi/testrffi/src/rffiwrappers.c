@@ -47,6 +47,10 @@ SEXP api_OBJECT(SEXP x) {
     return ScalarInteger(OBJECT(x));
 }
 
+SEXP api_Rf_cons(SEXP car, SEXP cdr) {
+    return Rf_cons(car, cdr);
+}
+
 SEXP api_Rf_ScalarInteger(SEXP value) {
     return Rf_ScalarInteger(INTEGER_VALUE(value));
 }
@@ -85,10 +89,6 @@ SEXP api_Rf_coerceVector(SEXP x, SEXP mode) {
 
 SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding) {
     return Rf_mkCharLenCE(R_CHAR(STRING_ELT(bytes, 0)), INTEGER_VALUE(len), INTEGER_VALUE(encoding));
-}
-
-SEXP api_Rf_cons(SEXP car, SEXP cdr) {
-    return Rf_cons(car, cdr);
 }
 
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg) {

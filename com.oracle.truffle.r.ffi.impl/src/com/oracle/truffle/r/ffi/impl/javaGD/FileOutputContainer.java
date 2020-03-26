@@ -70,7 +70,6 @@ public abstract class FileOutputContainer implements GDContainer {
             if (isDevNull(file)) {
                 return null;
             }
-            parent.createDirectories();
             if (parent != null && !parent.exists()) {
                 parent.createDirectories();
             }
