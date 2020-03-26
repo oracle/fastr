@@ -256,14 +256,16 @@ public final class TruffleLLVM_Call implements CallRFFI {
 
         private Object doInvoke(InteropLibrary interop, TruffleObject truffleObject, Object[] args, FFIMaterializeNode[] ffiMaterializeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
             FFIDownCallWrap ffiWrap;
+            Object[] wrappedArgs;
             if (ffiToNativeMirrorNodes != null) {
                 ffiWrap = new FFIDownCallWrap(args.length);
-                ffiWrap.wrap(args, ffiMaterializeNodes, ffiToNativeMirrorNodes);
+                wrappedArgs = ffiWrap.wrap(args, ffiMaterializeNodes, ffiToNativeMirrorNodes);
             } else {
                 ffiWrap = null;
+                wrappedArgs = args;
             }
             try {
-                Object result = interop.execute(truffleObject, args);
+                Object result = interop.execute(truffleObject, wrappedArgs);
                 if (!isVoid) {
                     result = unwrap.execute(result);
                 }

@@ -27,7 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 /**
- * 
+ *
  * In general, two steps are necessary before an object is sent to native code or LLVM interpreter.
  * <ol>
  * <li>Ensure the object is <b>materialized</b>. Done via {@link FFIMaterializeNode}</li>
@@ -41,16 +41,16 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
  * NativeMirror.
  * </p>
  * <br>
- * 
+ *
  * The life-cycle of both resulting Java objects should be tied to the original argument, which is a
  * performance (caching the result) and a defensive measure.
- * 
+ *
  * <ol>
  * <li><b>Performance measure</b> - the NativeMirror life cycle is trivially tied to the
  * materialized version of the arg since it's going to be stored in its nativeMirror field, but what
  * is important is that the materialized arg life-cycle is tied to the original argument, that is,
  * e.g., why sequences cache and reuse the materialized vector.</li>
- * 
+ *
  * <li><b>Defensive measure</b> - any RFFI function whose result's life-cycle should be tied with
  * some other R object (e.g. it is retrieved from an environment or list) should make sure it is
  * tied by replacing the original compact representation with the materialized one inside the
@@ -70,7 +70,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
  */
 public class FFIWrap {
 
-    public static class FFIDownCallWrap implements AutoCloseable {
+    public static final class FFIDownCallWrap implements AutoCloseable {
         /**
          * Hold the materialized values for as long, as the FFIWrap instance exists.
          */
@@ -91,14 +91,16 @@ public class FFIWrap {
         }
 
         @ExplodeLoop
-        public void wrap(Object[] args, FFIMaterializeNode[] ffiMateralizeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
+        public Object[] wrap(Object[] args, FFIMaterializeNode[] ffiMateralizeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
             assert ffiMateralizeNodes.length == ffiToNativeMirrorNodes.length;
             assert ffiMateralizeNodes.length == materialized.length;
             CompilerAsserts.compilationConstant(ffiMateralizeNodes.length);
+            Object[] wrappedArgs = new Object[args.length];
             for (int i = 0; i < ffiMateralizeNodes.length; i++) {
                 materialized[i] = ffiMateralizeNodes[i].materialize(args[i]);
-                args[i] = ffiToNativeMirrorNodes[i].execute(materialized[i]);
+                wrappedArgs[i] = ffiToNativeMirrorNodes[i].execute(materialized[i]);
             }
+            return wrappedArgs;
         }
 
         @Override
@@ -107,13 +109,13 @@ public class FFIWrap {
         }
     }
 
-    public static class FFIUpCallWrap {
+    public static final class FFIUpCallWrap {
         public static class FFIWrapResult {
             public Object materialized;
             public Object nativeMirror;
         }
 
-        public FFIWrapResult wrap(Object arg, FFIMaterializeNode ffiMateralizeNodes, FFIToNativeMirrorNode ffiToNativeMirrorNode) {
+        public static FFIWrapResult wrap(Object arg, FFIMaterializeNode ffiMateralizeNodes, FFIToNativeMirrorNode ffiToNativeMirrorNode) {
             FFIWrapResult result = new FFIWrapResult();
             result.materialized = ffiMateralizeNodes.materialize(arg);
             result.nativeMirror = ffiToNativeMirrorNode.execute(result.materialized);

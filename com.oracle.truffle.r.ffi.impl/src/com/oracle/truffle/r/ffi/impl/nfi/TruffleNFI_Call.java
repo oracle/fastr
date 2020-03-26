@@ -109,10 +109,10 @@ public class TruffleNFI_Call implements CallRFFI {
             Object result = null;
             try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
                 logCall(nativeCallInfo.name, args);
-                ffiWrap.wrap(args, ffiMaterializeNode, ffiToNativeMirrorNodes);
+                Object[] wrappedArgs = ffiWrap.wrap(args, ffiMaterializeNode, ffiToNativeMirrorNodes);
                 Object[] realArgs = new Object[cachedArgsLength + 1];
                 realArgs[0] = address;
-                System.arraycopy(args, 0, realArgs, 1, cachedArgsLength);
+                System.arraycopy(wrappedArgs, 0, realArgs, 1, cachedArgsLength);
                 result = interop.execute(function, realArgs);
                 return unwrap.execute(result);
             } catch (Exception ex) {
@@ -143,18 +143,20 @@ public class TruffleNFI_Call implements CallRFFI {
         @Override
         public void execute(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
             try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(args.length)) {
+                Object[] wrappedArgs;
                 switch (args.length) {
                     case 0:
                         logCall(nativeCallInfo.name, args);
-                        ffiWrap.wrap(args, ffiMaterialize0, ffiWrapper0);
+                        // Why is it necessary to call ffiWrap.wrap for an empty args?
+                        wrappedArgs = ffiWrap.wrap(args, ffiMaterialize0, ffiWrapper0);
                         TruffleObject callVoid0Function = getFunction("dot_call_void0", CallVoid0Sig);
                         execute0Interop.execute(callVoid0Function, nativeCallInfo.address.asTruffleObject());
                         break;
                     case 1:
                         logCall(nativeCallInfo.name, args);
-                        ffiWrap.wrap(args, ffiMaterialize1, ffiWrapper1);
+                        wrappedArgs = ffiWrap.wrap(args, ffiMaterialize1, ffiWrapper1);
                         TruffleObject callVoid1Function = getFunction("dot_call_void1", CallVoid1Sig);
-                        execute1Interop.execute(callVoid1Function, nativeCallInfo.address.asTruffleObject(), args[0]);
+                        execute1Interop.execute(callVoid1Function, nativeCallInfo.address.asTruffleObject(), wrappedArgs[0]);
                         break;
                     default:
                         throw RInternalError.shouldNotReachHere();

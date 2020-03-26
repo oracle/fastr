@@ -445,8 +445,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
         if (returnKind != TypeKind.VOID) {
             if (needsReturnWrap) {
-                w.append("            FFIUpCallWrap ffiWrap = new FFIUpCallWrap();\n");
-                w.append("            FFIWrapResult result = ffiWrap.wrap(resultRObj0, materializeNode, toNativeWrapperNode);\n");
+                w.append("            FFIWrapResult result = FFIUpCallWrap.wrap(resultRObj0, materializeNode, toNativeWrapperNode);\n");
                 w.append("            resultRObj = result.nativeMirror;\n");
                 w.append("            registerRObj = result.materialized;\n");
             } else {
