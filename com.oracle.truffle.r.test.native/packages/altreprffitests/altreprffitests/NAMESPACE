@@ -4,6 +4,9 @@ useDynLib(altreprffitests, .registration = TRUE, .fixes = "CXX_")
 ## and exported functions
 export(
     is.altrep,
+    altrep.get_data1,
+    altrep.get_data2,
+    trivial_class.create_instance,
     simple_vec_wrapper.create_instance,
     logging_vec_wrapper.create_instance,
     logging_vec_wrapper.was_Duplicate_called,

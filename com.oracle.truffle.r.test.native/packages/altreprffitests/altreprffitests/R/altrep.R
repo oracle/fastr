@@ -4,6 +4,20 @@ is.altrep <- function(x) {
     .Call("is_altrep", x)
 }
 
+altrep.get_data1 <- function(x) {
+    stopifnot(is.altrep(x))
+    .Call("altrep_get_data1", x)
+}
+
+altrep.get_data2 <- function(x) {
+    stopifnot(is.altrep(x))
+    .Call("altrep_get_data2", x)
+}
+
+trivial_class.create_instance <- function() {
+    .Call("trivial_class_create_instance")
+}
+
 simple_vec_wrapper.create_instance <- function(data,
                                                gen.Duplicate=F,
                                                gen.Coerce=F,

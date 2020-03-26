@@ -205,6 +205,15 @@ test_framework_behavior <- function() {
     test_after_coerce()
 }
 
+test_trivial <- function() {
+    expected_data <- as.integer(c(1, 2, 3, 4, 5))
+    instance <- trivial_class.create_instance()
+    stopifnot( is.altrep(instance))
+    stopifnot( altrep.get_data1(instance) == NULL)
+    stopifnot( altrep.get_data2(instance) == NULL)
+    check_equal(instance, expected_data)
+}
+
 test_simple <- function() {
     data <- 1:10
     instance <- simple_vec_wrapper.create_instance(data)
@@ -254,6 +263,7 @@ test_first_char_changer_class <- function() {
 }
 
 TESTS <- list(
+    list("test_trivial", test_trivial),
     list("test_simple", test_simple),
     list("test_two_instances", test_two_instances),
     list("test_default_implementations", test_default_implementations),

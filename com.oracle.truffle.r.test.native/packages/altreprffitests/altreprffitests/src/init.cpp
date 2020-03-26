@@ -1,15 +1,21 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
+#include "TrivialClass.hpp"
 #include "altrep_classes.hpp"
 #include "GeneratorClass.hpp"
 #include "FirstCharChangerClass.hpp"
 
 static SEXP is_altrep(SEXP x);
+static SEXP altrep_get_data1(SEXP x);
+static SEXP altrep_get_data2(SEXP x);
 extern "C" SEXP my_test(SEXP vec);
 
 static const R_CallMethodDef CallEntries[] = {
         {"is_altrep", (DL_FUNC) &is_altrep, 1},
+        {"altrep_get_data1", (DL_FUNC) &altrep_get_data1, 1},
+        {"altrep_get_data2", (DL_FUNC) &altrep_get_data2, 1},
+        {"trivial_class_create_instance", (DL_FUNC) &TrivialClass::createInstance, 0},
         {"simple_vec_wrapper_create_instance", (DL_FUNC) &VecWrapper::createInstance, 9},
         {"logging_vec_wrapper_create_instance", (DL_FUNC) &LoggingVecWrapper::createInstance, 9},
         {"logging_vec_wrapper_was_method_called", (DL_FUNC) &LoggingVecWrapper::wasMethodCalled, 2},
@@ -28,6 +34,16 @@ extern "C" void R_init_altreprffitests(DllInfo *dll)
 static SEXP is_altrep(SEXP x)
 {
     return ScalarLogical(ALTREP(x));
+}
+
+static SEXP altrep_get_data1(SEXP x)
+{
+    return R_altrep_data1(x);
+}
+
+static SEXP altrep_get_data2(SEXP x)
+{
+    return R_altrep_data2(x);
 }
 
 /*static int my_elt_method(SEXP instance, R_xlen_t idx)
