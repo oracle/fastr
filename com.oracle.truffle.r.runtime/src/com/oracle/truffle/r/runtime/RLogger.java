@@ -82,14 +82,15 @@ public class RLogger {
      */
     public static final String LOGGER_SYSTEM_FUNCTION = "com.oracle.truffle.r.systemFunction";
 
+    /**
+     * Log eager promises deopts and successful evaluations.
+     */
     public static final String LOGGER_EAGER_PROMISES = "com.oracle.truffle.r.eagerPromises";
 
     /**
      * Log performance warnings.
      */
     public static final String LOGGER_PERFORMANCE_WARNINGS = "com.oracle.truffle.r.performanceWarnings";
-
-    public static final String LOGGER_EAGER_PROMISES = "com.oracle.truffle.r.eagerPromises";
 
     /**
      * Log file access.

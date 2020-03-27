@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,8 +35,8 @@ import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 
 /**
  * R values that are publicly flowing through the interpreter. Be aware that also the primitive
- * values {@link Integer}, {@link Double}, {@link Byte}, {@link String}, {@link RRaw} and {@link RComplex} flow but are not
- * implementing this interface.
+ * values {@link Integer}, {@link Double}, {@link Byte}, {@link String}, {@link RRaw} and
+ * {@link RComplex} flow but are not implementing this interface.
  */
 @ExportLibrary(InteropLibrary.class)
 public abstract class RBaseObject extends RTruffleBaseObject {
