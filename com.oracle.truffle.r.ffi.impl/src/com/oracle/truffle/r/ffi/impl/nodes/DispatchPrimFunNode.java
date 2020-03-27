@@ -32,6 +32,10 @@ public abstract class DispatchPrimFunNode extends FFIUpCallNode.Arg4 {
         return RContext.getRRuntimeASTAccess().createExplicitFunctionCall();
     }
 
+    static RRuntimeASTAccess.ExplicitFunctionCall createSlowPathFunctionCallNode() {
+        return RContext.getRRuntimeASTAccess().createSlowPathExplicitFunctionCall();
+    }
+
     static MaterializedFrame getCurrentRFrame(RContext ctxRef) {
         RFFIContext context = ctxRef.getStateRFFI();
         return context.rffiContextState.currentDowncallFrame;
@@ -76,7 +80,7 @@ public abstract class DispatchPrimFunNode extends FFIUpCallNode.Arg4 {
 
     @Specialization(replaces = "dispatchCached")
     static Object dispatchGeneric(@SuppressWarnings("unused") Object call, RFunction function, RPairList args, @SuppressWarnings("unused") Object rho,
-                    @Cached("createFunctionCallNode()") RRuntimeASTAccess.ExplicitFunctionCall callNode,
+                    @Cached("createSlowPathFunctionCallNode()") RRuntimeASTAccess.ExplicitFunctionCall callNode,
                     @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
         return dispatchCached(call, function, args, rho, callNode, ctxRef, null);
     }

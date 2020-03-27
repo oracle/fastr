@@ -148,6 +148,11 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
+    public ExplicitFunctionCall createSlowPathExplicitFunctionCall() {
+        return RExplicitCallNode.SlowPathExplicitCallNode.create();
+    }
+
+    @Override
     public ArgumentsSignature getArgumentsSignature(RFunction f) {
         return ((RRootNode) f.getRootNode()).getSignature();
     }

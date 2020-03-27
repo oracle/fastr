@@ -36,6 +36,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.RCallNode.ExplicitArgs;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNodeGen.SlowPathExplicitCallNodeGen;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -59,32 +60,15 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
 
     public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame);
 
-    static FrameSlot initArgsFrameSlot(FrameDescriptor frameDesc) {
-        return FrameSlotChangeMonitor.findOrAddFrameSlot(frameDesc, RFrameSlot.ExplicitCallArgs, FrameSlotKind.Object);
-    }
+    @CompilationFinal private FrameSlot argsFrameSlot;
 
-    @Specialization(guards = "cachedFrameDesc == frame.getFrameDescriptor()", limit = "1")
-    protected Object doFastCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame,
-                    @SuppressWarnings("unused") @Cached("frame.getFrameDescriptor()") FrameDescriptor cachedFrameDesc,
-                    @Cached("createExplicitCall()") RCallBaseNode call,
-                    @Cached("initArgsFrameSlot(cachedFrameDesc)") FrameSlot argsFrameSlot) {
-        try {
-            FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, new ExplicitArgs(args, caller, callerFrame));
-            return call.execute(frame, function);
-        } finally {
-            FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, null);
-        }
-    }
-
-    @Specialization(replaces = "doFastCall")
-    protected Object doSlowCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame,
+    @Specialization
+    protected Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame,
                     @Cached("createExplicitCall()") RCallBaseNode call) {
-        return slowPathCall(frame.materialize(), function, args, caller, callerFrame, call);
-    }
-
-    @TruffleBoundary
-    private static Object slowPathCall(MaterializedFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame, RCallBaseNode call) {
-        FrameSlot argsFrameSlot = initArgsFrameSlot(frame.getFrameDescriptor());
+        if (argsFrameSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.ExplicitCallArgs, FrameSlotKind.Object);
+        }
         try {
             FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, new ExplicitArgs(args, caller, callerFrame));
             return call.execute(frame, function);
@@ -95,5 +79,45 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
 
     protected RCallBaseNode createExplicitCall() {
         return RCallNode.createExplicitCall(RFrameSlot.ExplicitCallArgs);
+    }
+
+    public static abstract class SlowPathExplicitCallNode extends Node implements ExplicitFunctionCall {
+
+        public static RExplicitCallNode.SlowPathExplicitCallNode create() {
+            return SlowPathExplicitCallNodeGen.create();
+        }
+
+        @Override
+        public final Object call(VirtualFrame frame, RFunction function, RArgsValuesAndNames args) {
+            return execute(frame, function, args, null, null);
+        }
+
+        public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame);
+
+        @Specialization
+        protected Object doSlowCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame,
+                        @Cached("createExplicitCall()") RCallBaseNode call) {
+            return slowPathCall(frame.materialize(), function, args, caller, callerFrame, call);
+        }
+
+        static FrameSlot initArgsFrameSlot(FrameDescriptor frameDesc) {
+            return FrameSlotChangeMonitor.findOrAddFrameSlot(frameDesc, RFrameSlot.ExplicitCallArgs, FrameSlotKind.Object);
+        }
+
+        @TruffleBoundary
+        private static Object slowPathCall(MaterializedFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame, RCallBaseNode call) {
+            FrameSlot argsFrameSlot = initArgsFrameSlot(frame.getFrameDescriptor());
+            try {
+                FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, new ExplicitArgs(args, caller, callerFrame));
+                return call.execute(frame, function);
+            } finally {
+                FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, null);
+            }
+        }
+
+        protected RCallBaseNode createExplicitCall() {
+            return RCallNode.createExplicitCall(RFrameSlot.ExplicitCallArgs);
+        }
+
     }
 }

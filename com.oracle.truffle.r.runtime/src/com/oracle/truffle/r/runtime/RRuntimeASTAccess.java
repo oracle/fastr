@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess.ExplicitFunctionCall;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
@@ -116,6 +117,11 @@ public interface RRuntimeASTAccess {
      * Access to RExplicitCallNode.
      */
     ExplicitFunctionCall createExplicitFunctionCall();
+
+    /**
+     * Access to RExplicitCallNode.
+     */
+    ExplicitFunctionCall createSlowPathExplicitFunctionCall();
 
     /**
      * Returns the {@link ArgumentsSignature} for {@code f}.
