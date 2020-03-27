@@ -81,6 +81,8 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -102,12 +104,15 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     private static final int MAX_PROFILES = 8;
 
     @Child private PrecedenceNode precedenceNode = PrecedenceNodeGen.create();
+
     @Children private final CombineInputCast[] inputCasts = new CombineInputCast[MAX_PROFILES];
     @Child private CombineInputCast overflowInputCast;
 
+    @Children private final VectorDataLibrary[] elementsDataLibs = new VectorDataLibrary[MAX_PROFILES];
+    @Child private VectorDataLibrary overflowElementDataLib;
+
     @Child private VectorDataLibrary vectorDataLibrary;
 
-    private final BranchProfile naBranch = BranchProfile.create();
     private final ConditionProfile fastNamesMerge = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isAbstractVectorProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasNewNamesProfile = ConditionProfile.createBinaryProfile();
@@ -150,6 +155,20 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
             }
         }
         return cast;
+    }
+
+    private VectorDataLibrary getElemDataLib(int index) {
+        VectorDataLibrary lib = index < MAX_PROFILES ? elementsDataLibs[index] : overflowElementDataLib;
+        if (lib == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            lib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericVectorAccessCacheSize()));
+            if (index < MAX_PROFILES) {
+                elementsDataLibs[index] = lib;
+            } else {
+                overflowElementDataLib = lib;
+            }
+        }
+        return lib;
     }
 
     @Specialization(replaces = "combineSimple", limit = "getCacheSize(COMBINE_CACHED_SIGNATURE_LIMIT)", guards = {"!recursive", "args.getSignature() == cachedSignature",
@@ -246,17 +265,17 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         for (int i = 0; i < elements.length; i++) {
             CombineInputCast inputCast = getCast(i);
             Object value = args[i];
-            Object element = (exprListPrecedence && (value instanceof RPairList && ((RPairList) value).isLanguage())) ? value : cast.doCast(inputCast.cast(value));
+            Object element = (exprListPrecedence && (value instanceof RPairList && ((RPairList) value).isLanguage())) ? value : cast.doCast(inputCast.cast(value, i));
             element = inputCast.valueProfile.profile(element);
             elements[i] = element;
-            size += getElementSize(element);
+            size += getElementSize(element, i);
         }
         return size;
     }
 
-    private static int getElementSize(Object element) {
+    private int getElementSize(Object element, int elementIndex) {
         if (element instanceof RAbstractVector) {
-            return ((RAbstractVector) element).getLength();
+            return getElemDataLib(elementIndex).getLength(((RAbstractVector) element).getData());
         } else if (element instanceof RNull) {
             // nothing to do - NULL elements are skipped
             return 0;
@@ -350,22 +369,26 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         int pos = 0;
         for (int i = 0; i < elements.length; i++) {
             Object element = getCast(i).valueProfile.profile(elements[i]);
-            pos += processContentElement(result, pos, element);
+            pos += processContentElement(result, pos, element, i);
         }
         return result;
     }
 
-    private int processContentElement(RAbstractVector result, int pos, Object element) {
+    private int processContentElement(RAbstractVector result, int pos, Object element, int elementIndex) {
         if (isAbstractVectorProfile.profile(element instanceof RAbstractVector)) {
             RAbstractVector v = (RAbstractVector) element;
-            for (int i = 0; i < v.getLength(); i++) {
-                result.transferElementSameType(pos + i, v, i);
+            VectorDataLibrary resultDataLib = getVectorDataLibrary();
+            VectorDataLibrary vDataLib = getElemDataLib(elementIndex);
+            Object resultData = result.getData();
+            Object vData = v.getData();
+            try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+                RandomAccessIterator vIt = vDataLib.randomAccessIterator(vData);
+                for (int i = 0; i < v.getLength(); i++) {
+                    resultDataLib.transfer(resultData, resultIt, pos + i, vDataLib, vIt, vData, i);
+                }
+                resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, vDataLib.getNACheck(vData).neverSeenNA());
             }
-            if (!v.isComplete()) {
-                naBranch.enter();
-                result.setComplete(false);
-            }
-            return v.getLength();
+            return vDataLib.getLength(vData);
         } else if (element instanceof RNull) {
             // nothing to do - NULL elements are skipped
             return 0;
@@ -526,7 +549,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         return names;
     }
 
-    protected static final class CombineInputCast extends Node {
+    protected final class CombineInputCast extends Node {
 
         @Child private ExtractDimNamesAttributeNode extractDimNamesNode;
         @Child private ExtractNamesAttributeNode extractNamesNode;
@@ -537,9 +560,16 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         @CompilationFinal private ConditionProfile hasNamesProfile;
         @CompilationFinal private ConditionProfile hasDimNamesProfile;
 
-        public Object cast(Object operand) {
+        protected boolean isMaterializedVector(Object value, int elementIndex) {
+            if (!(value instanceof RAbstractVector)) {
+                return false;
+            }
+            return getElemDataLib(elementIndex).isWriteable(((RAbstractVector) value).getData());
+        }
+
+        public Object cast(Object operand, int elementIndex) {
             Object profiled = inputValueProfile.profile(operand);
-            if (RRuntime.isMaterializedVector(profiled)) {
+            if (isMaterializedVector(profiled, elementIndex)) {
                 RAbstractVector vector = (RAbstractVector) profiled;
                 if (vector.getAttributes() != null) {
                     if (extractNamesNode == null) {

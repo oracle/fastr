@@ -165,13 +165,18 @@ public final class OptForcedEagerPromiseNode extends PromiseNode implements Eage
             }
         } catch (CannotOptimizePromise ex) {
             assert !alwaysForce;
-            allArgPromisesCanOptimize.invalidate();
+            if (allArgPromisesCanOptimize.isValid()) {
+                CompilerDirectives.transferToInterpreter();
+                allArgPromisesCanOptimize.invalidate();
+            }
             if (previousEvalEagerOnly) {
                 // no point in continuing executing this node, which checks this assumption as the
                 // first thing in this method
                 rewriteToFallback();
                 throw ex;
             }
+            // Note: not clear why we continue here if the next time we invoke this node it is going
+            // to rewrite itself to fallback anyway
             value = null;
         } finally {
             currentCaller.setEvaluateOnlyEagerPromises(previousEvalEagerOnly);

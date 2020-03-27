@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -40,6 +39,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.CopyResized;
 
 @RBuiltin(name = "matrix", kind = INTERNAL, parameterNames = {"data", "nrow", "ncol", "byrow", "dimnames", "missingNr", "missingNc"}, behavior = PURE)
 public abstract class Matrix extends RBuiltinNode.Arg7 {
@@ -78,6 +78,8 @@ public abstract class Matrix extends RBuiltinNode.Arg7 {
 
     @Specialization
     protected RAbstractVector matrix(RAbstractVector data, int nrow, int ncol, boolean byrow, Object dimnames, boolean missingNr, boolean missingNc,
+                    @Cached CopyResized copyResizedNode,
+                    @Cached SetDimAttributeNode setDimAttributeNode,
                     @Cached("create()") SetDimAttributeNode setDimNode) {
         int[] dim;
         if (byrowProfile.profile(byrow)) {
@@ -89,7 +91,7 @@ public abstract class Matrix extends RBuiltinNode.Arg7 {
         if (empty.profile(data.getLength() == 0)) {
             if (isList.profile(data instanceof RAbstractListVector)) {
                 // matrix of NULL-s
-                res = copyResizedWithDimensions(data, dim);
+                res = copyResizedWithDimensions(copyResizedNode, setDimAttributeNode, data, dim, true);
                 if (byrowProfile.profile(byrow)) {
                     if (transpose == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -105,7 +107,7 @@ public abstract class Matrix extends RBuiltinNode.Arg7 {
                 setDimNode.setDimensions(res, dim);
             }
         } else {
-            res = data.copyResizedWithDimensions(dim, false);
+            res = copyResizedWithDimensions(copyResizedNode, setDimAttributeNode, data, dim, false);
             if (byrowProfile.profile(byrow)) {
                 if (transpose == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -120,9 +122,10 @@ public abstract class Matrix extends RBuiltinNode.Arg7 {
         return res;
     }
 
-    @TruffleBoundary
-    private static RAbstractVector copyResizedWithDimensions(RAbstractVector data, int[] dim) {
-        return data.copyResizedWithDimensions(dim, true);
+    private static RAbstractVector copyResizedWithDimensions(CopyResized copyResizedNode, SetDimAttributeNode setDimAttributeNode, RAbstractVector data, int[] dim, boolean fillWithNA) {
+        RAbstractVector res = copyResizedNode.execute(data, dim[0] * dim[1], fillWithNA);
+        setDimAttributeNode.setDimensions(res, dim);
+        return res;
     }
 
     private int[] computeDimByCol(int size, int nrow, int ncol, boolean missingNr, boolean missingNc) {
