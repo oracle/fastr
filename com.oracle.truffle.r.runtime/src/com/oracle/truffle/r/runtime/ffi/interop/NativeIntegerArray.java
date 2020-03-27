@@ -38,22 +38,12 @@ public final class NativeIntegerArray extends NativeArray {
 
     private final int[] array;
 
-    public NativeIntegerArray(long address, int size) {
-        this.array = new int[size];
-        this.nativeMirror = NativeMemory.wrapExternalNativeMemory(address, this);
-        refresh();
-    }
-
     public NativeIntegerArray(int[] value) {
         this.array = value;
     }
 
     @Override
     protected Object getArray() {
-        return array;
-    }
-
-    public int[] getIntegerArray() {
         return array;
     }
 

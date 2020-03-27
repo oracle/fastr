@@ -80,6 +80,7 @@ import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
@@ -1200,6 +1201,12 @@ public final class RContext {
     }
 
     /**
+     * A special caller object for the {@link ReturnException} thrown by
+     * {@link RContext#checkPendingRepaintRequest()}.
+     */
+    private static final RCaller dispatchPrimFunNodeCaller = RCaller.createInvalid(null);
+
+    /**
      * Check whether we are running as a display list callback and whether there is a new repaint
      * request. If so, break the playing back of the display list for the waiting repaint request to
      * be processed.
@@ -1207,7 +1214,7 @@ public final class RContext {
     public static void checkPendingRepaintRequest() {
         RContext rCtx = RContext.getInstance();
         if (rCtx.getStateRFFI().rffiContextState.primFunBeingDispatched && rCtx.interruptResize.get()) {
-            throw new ReturnException(RUnboundValue.instance, null);
+            throw new ReturnException(RUnboundValue.instance, dispatchPrimFunNodeCaller);
         }
     }
 

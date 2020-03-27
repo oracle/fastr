@@ -26,6 +26,8 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeRawArray;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @GenerateUncached
@@ -99,7 +101,9 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
         try {
             interopLib.toNative(x);
             long addr = interopLib.asPointer(x);
-            return new NativeRawArray(addr, length).getByteArray();
+            byte[] result = new byte[length];
+            NativeMemory.copyMemory(addr, result, ElementType.INT, length);
+            return result;
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere(e);
         }

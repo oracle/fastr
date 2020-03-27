@@ -25,16 +25,10 @@ package com.oracle.truffle.r.runtime.ffi.interop;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
-import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(NativeTypeLibrary.class)
 public final class NativeRawArray extends NativeUInt8Array {
-
-    public NativeRawArray(long address, int length) {
-        super(address, length);
-    }
-
     public NativeRawArray(byte[] bytes) {
         super(bytes, false);
     }

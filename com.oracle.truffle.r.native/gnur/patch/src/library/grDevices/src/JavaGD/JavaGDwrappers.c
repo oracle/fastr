@@ -130,7 +130,7 @@ SEXP api_gdClose() {
 extern void gdPath(int gdId, int npoly, int *nper, int n, double *x, double *y, Rboolean winding);
 
 SEXP api_gdPath(SEXP npoly, SEXP nper, SEXP n, SEXP x, SEXP y, SEXP winding) {
-	gdPath(gdId, INTEGER(npoly)[0], INTEGER(nper), INTEGER(npoly)[0], REAL(x), REAL(y), INTEGER(winding)[0]);
+	gdPath(gdId, INTEGER(npoly)[0], INTEGER(nper), INTEGER(n)[0], REAL(x), REAL(y), INTEGER(winding)[0]);
     return R_NilValue;
 }
 
