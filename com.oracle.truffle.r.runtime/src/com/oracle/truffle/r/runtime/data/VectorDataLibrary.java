@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.library.GenerateLibrary;
-import com.oracle.truffle.api.library.GenerateLibrary.DefaultExport;
 import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -100,7 +99,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * check for NA values.
  */
 @GenerateLibrary(assertions = Asserts.class)
-@DefaultExport(DefaultRVectorDataLibrary.class)
 public abstract class VectorDataLibrary extends Library {
 
     private static final boolean ENABLE_VERY_SLOW_ASSERTS = false;
@@ -168,7 +166,7 @@ public abstract class VectorDataLibrary extends Library {
             this.store = store;
         }
 
-        final Object getStore() {
+        public final Object getStore() {
             return store;
         }
 
@@ -181,7 +179,7 @@ public abstract class VectorDataLibrary extends Library {
         private final int length;
         private int index;
 
-        protected SeqIterator(Object store, int length) {
+        public SeqIterator(Object store, int length) {
             super(store);
             index = -1;
             this.length = length;
@@ -195,11 +193,11 @@ public abstract class VectorDataLibrary extends Library {
             return index;
         }
 
-        final void initLoopConditionProfile(LoopConditionProfile profile) {
+        public final void initLoopConditionProfile(LoopConditionProfile profile) {
             profile.profileCounted(length);
         }
 
-        final boolean next(LoopConditionProfile loopConditionProfile, boolean withWrap) {
+        public final boolean next(LoopConditionProfile loopConditionProfile, boolean withWrap) {
             if (withWrap) {
                 index++;
                 if (loopConditionProfile.inject(index == length)) {
@@ -216,7 +214,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     public static class RandomAccessIterator extends Iterator {
-        RandomAccessIterator(Object store) {
+        public RandomAccessIterator(Object store) {
             super(store);
         }
     }
@@ -224,11 +222,11 @@ public abstract class VectorDataLibrary extends Library {
     public static final class SeqWriteIterator extends SeqIterator implements AutoCloseable {
         private boolean committed; // used for assertions only
 
-        protected SeqWriteIterator(Object store, int length) {
+        public SeqWriteIterator(Object store, int length) {
             super(store, length);
         }
 
-        void commit() {
+        public void commit() {
             assert setCommitted(true);
         }
 
@@ -248,11 +246,11 @@ public abstract class VectorDataLibrary extends Library {
     public static final class RandomAccessWriteIterator extends RandomAccessIterator implements AutoCloseable {
         private boolean committed; // used for assertions only
 
-        protected RandomAccessWriteIterator(Object store) {
+        public RandomAccessWriteIterator(Object store) {
             super(store);
         }
 
-        void commit() {
+        public void commit() {
             assert setCommited(true);
         }
 
@@ -357,7 +355,8 @@ public abstract class VectorDataLibrary extends Library {
     /**
      * Gives an {@link NACheck} that is enabled depending on the {@link #isComplete(Object)} flag of
      * the data and also checks every value returned from any method for accessing single elements
-     * of this data object.
+     * of this data object. Applies only to atomic vectors, not to lists! I.e., not to
+     * {@link #getElementAt(Object, int)}.
      *
      * In other words: {@link NACheck#neverSeenNA()} implies that no method such as
      * {@link #getIntAt(Object, int)} ever returned {@code NA} value.
@@ -1045,7 +1044,7 @@ public abstract class VectorDataLibrary extends Library {
             case Logical:
                 return getLogical(receiver, it, index);
             case Raw:
-                return getRaw(receiver, it, index);
+                return RRaw.valueOf(getRaw(receiver, it, index));
             case Complex:
                 return getComplex(receiver, it, index);
             case Character:
@@ -1070,7 +1069,8 @@ public abstract class VectorDataLibrary extends Library {
                 setLogicalAt(receiver, index, (Byte) value);
                 break;
             case Raw:
-                setRawAt(receiver, index, (Byte) value);
+                byte rawVal = value instanceof RRaw ? ((RRaw) value).getValue() : (Byte) value;
+                setRawAt(receiver, index, rawVal);
                 break;
             case Complex:
                 setComplexAt(receiver, index, (RComplex) value);
@@ -1158,7 +1158,7 @@ public abstract class VectorDataLibrary extends Library {
             case Logical:
                 return getLogicalAt(data, index);
             case Raw:
-                return getRawAt(data, index);
+                return RRaw.valueOf(getRawAt(data, index));
             case Complex:
                 return getComplexAt(data, index);
             case Character:
@@ -1187,7 +1187,8 @@ public abstract class VectorDataLibrary extends Library {
                 setLogicalAt(data, index, (Byte) value);
                 break;
             case Raw:
-                setRawAt(data, index, (Byte) value);
+                byte rawVal = value instanceof RRaw ? ((RRaw) value).getValue() : (Byte) value;
+                setRawAt(data, index, rawVal);
                 break;
             case Complex:
                 setComplexAt(data, index, (RComplex) value);

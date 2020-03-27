@@ -23,19 +23,29 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * The base class for list-like objects: {@link com.oracle.truffle.r.runtime.data.RExpression} and
@@ -57,6 +67,7 @@ import com.oracle.truffle.r.runtime.interop.R2Foreign;
  * vector and put it in the consistent sharing state.
  */
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 public abstract class RAbstractListBaseVector extends RAbstractVector {
 
     public RAbstractListBaseVector(boolean complete) {
@@ -118,6 +129,7 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
         return true;
     }
 
+    @Ignore
     @Override
     public Object getDataAtAsObject(Object store, int i) {
         return getDataAt(i);
@@ -179,5 +191,122 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
             }
         }
         return newData;
+    }
+
+    // -------------------------------
+    // VectorDataLibrary
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public NACheck getNACheck() {
+        // we do not maintain any completeness info about lists
+        // to avoid any errors we return NACheck that is enabled:
+        // checks for NAs and also reports neverSeenNA() == false
+        return NACheck.getEnabled();
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public RType getType() {
+        return this instanceof RAbstractListVector ? RType.List : RType.Expression;
+    }
+
+    @ExportMessage(name = "isComplete", library = VectorDataLibrary.class)
+    public boolean datLibIsComplete() {
+        return false;
+    }
+
+    @ExportMessage(name = "getLength", library = VectorDataLibrary.class)
+    public int dataLibGetLength() {
+        return getLength();
+    }
+
+    @ExportMessage
+    public boolean isWriteable() {
+        return isMaterialized();
+    }
+
+    @ExportMessage(name = "materialize", library = VectorDataLibrary.class)
+    public Object dataLibMaterialize() {
+        return materialize();
+    }
+
+    @ExportMessage(name = "copy", library = VectorDataLibrary.class)
+    public Object dataLibCopy(@SuppressWarnings("unused") boolean deep) {
+        return copy();
+    }
+
+    @ExportMessage(name = "copyResized", library = VectorDataLibrary.class)
+    public Object dataLibCopyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
+        return this.copyResized(newSize, fillNA);
+    }
+
+    @ExportMessage
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(getInternalStore(), getLength());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
+    }
+
+    @ExportMessage
+    public RandomAccessIterator randomAccessIterator() {
+        return new RandomAccessIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public SeqWriteIterator writeIterator() {
+        return new SeqWriteIterator(getInternalStore(), getLength());
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public Object[] getReadonlyListData() {
+        return getReadonlyData();
+    }
+
+    @ExportMessage
+    public Object[] getListDataCopy() {
+        return getDataCopy();
+    }
+
+    @ExportMessage
+    public Object getElementAt(int index) {
+        return getDataAt(index);
+    }
+
+    @ExportMessage
+    public Object getNextElement(SeqIterator it) {
+        return getDataAtAsObject(it.getStore(), it.getIndex());
+    }
+
+    @ExportMessage
+    public Object getElement(RandomAccessIterator it, int index) {
+        return getDataAtAsObject(it.getStore(), index);
+    }
+
+    @ExportMessage
+    public void setElementAt(int index, Object value) {
+        setDataAt(getInternalStore(), index, value);
+    }
+
+    @ExportMessage
+    public void setNextElement(SeqWriteIterator it, Object value) {
+        setDataAt(it.getStore(), it.getIndex(), value);
+    }
+
+    @ExportMessage
+    public void setElement(RandomAccessWriteIterator it, int index, Object value) {
+        setDataAt(it.getStore(), index, value);
     }
 }

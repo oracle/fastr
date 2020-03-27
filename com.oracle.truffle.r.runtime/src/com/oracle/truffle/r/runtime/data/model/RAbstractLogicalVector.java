@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,20 +24,32 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
 import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
 
     public RAbstractLogicalVector(boolean complete) {
@@ -68,6 +80,7 @@ public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
         return RRuntime.fromLogical(getDataAt(0));
     }
 
+    @Ignore
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
@@ -89,6 +102,7 @@ public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
         return RType.Logical;
     }
 
+    @Ignore
     @Override
     public RLogicalVector materialize() {
         RLogicalVector result = RDataFactory.createLogicalVector(getDataCopy(), isComplete());
@@ -156,4 +170,156 @@ public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
         return RDataFactory.createLogicalVector(new byte[newLength], newIsComplete);
     }
 
+    // ------------------------------
+    // VectorDataLibrary
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public NACheck getNACheck(@Shared("naCheck") @Cached NACheck na) {
+        return na;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public RType getType() {
+        return RType.Logical;
+    }
+
+    @ExportMessage(name = "isComplete", library = VectorDataLibrary.class)
+    public boolean datLibIsComplete() {
+        return this.isComplete();
+    }
+
+    @ExportMessage(name = "getLength", library = VectorDataLibrary.class)
+    public int dataLibGetLength() {
+        return getLength();
+    }
+
+    @ExportMessage
+    public boolean isWriteable() {
+        return isMaterialized();
+    }
+
+    @ExportMessage(name = "materialize", library = VectorDataLibrary.class)
+    public Object dataLibMaterialize() {
+        return materialize();
+    }
+
+    @ExportMessage(name = "copy", library = VectorDataLibrary.class)
+    public Object dataLibCopy(@SuppressWarnings("unused") boolean deep) {
+        return copy();
+    }
+
+    @ExportMessage(name = "copyResized", library = VectorDataLibrary.class)
+    public Object dataLibCopyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
+        return this.copyResized(newSize, fillNA);
+    }
+
+    @ExportMessage
+    public SeqIterator iterator(@Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(getInternalStore(), getLength());
+        naCheck.enable(!isComplete());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
+    }
+
+    @ExportMessage
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(!isComplete());
+        return new RandomAccessIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public SeqWriteIterator writeIterator() {
+        return new SeqWriteIterator(getInternalStore(), getLength());
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public void commitWriteIterator(SeqWriteIterator iterator, boolean neverSeenNA) {
+        iterator.commit();
+        commitWrites(neverSeenNA);
+    }
+
+    @ExportMessage
+    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, boolean neverSeenNA) {
+        iterator.commit();
+        commitWrites(neverSeenNA);
+    }
+
+    private void commitWrites(boolean neverSeenNA) {
+        if (!neverSeenNA) {
+            setComplete(false);
+        }
+    }
+
+    @ExportMessage
+    public byte[] getLogicalDataCopy() {
+        return getDataCopy();
+    }
+
+    @ExportMessage
+    public byte[] getReadonlyLogicalData() {
+        return getReadonlyData();
+    }
+
+    @ExportMessage
+    public byte getLogicalAt(int index,
+                    @Shared("storeProfile") @Cached("createClassProfile()") ValueProfile storeProfile,
+                    @Shared("naCheck") @Cached NACheck na) {
+        byte result = getDataAt(storeProfile.profile(getInternalStore()), index);
+        na.check(result);
+        return result;
+    }
+
+    @ExportMessage
+    public byte getNextLogical(SeqIterator it,
+                    @Shared("storeProfile") @Cached("createClassProfile()") ValueProfile storeProfile,
+                    @Shared("naCheck") @Cached NACheck na) {
+        byte result = getDataAt(storeProfile.profile(it.getStore()), it.getIndex());
+        na.check(result);
+        return result;
+    }
+
+    @ExportMessage
+    public byte getLogical(RandomAccessIterator it, int index,
+                    @Shared("storeProfile") @Cached("createClassProfile()") ValueProfile storeProfile,
+                    @Shared("naCheck") @Cached NACheck na) {
+        byte result = getDataAt(storeProfile.profile(it.getStore()), index);
+        na.check(result);
+        return result;
+    }
+
+    @ExportMessage
+    public void setLogicalAt(int index, byte value,
+                    @Shared("storeProfile") @Cached("createClassProfile()") ValueProfile storeProfile) {
+        setDataAt(storeProfile.profile(getInternalStore()), index, value);
+        if (RRuntime.isNA(value)) {
+            setComplete(false);
+        }
+    }
+
+    @ExportMessage
+    public void setNextLogical(SeqWriteIterator it, byte value,
+                    @Shared("storeProfile") @Cached("createClassProfile()") ValueProfile storeProfile) {
+        setDataAt(storeProfile.profile(it.getStore()), it.getIndex(), value);
+    }
+
+    @ExportMessage
+    public void setLogical(RandomAccessWriteIterator it, int index, byte value,
+                    @Shared("storeProfile") @Cached("createClassProfile()") ValueProfile storeProfile) {
+        setDataAt(storeProfile.profile(it.getStore()), index, value);
+    }
 }

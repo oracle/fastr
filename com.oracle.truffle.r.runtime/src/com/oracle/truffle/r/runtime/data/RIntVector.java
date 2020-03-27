@@ -24,8 +24,10 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -288,7 +290,8 @@ public final class RIntVector extends RAbstractNumericVector {
         return new RIntVector(getDataCopy(), isComplete());
     }
 
-    public void materializeData(VectorDataLibrary dataLib) {
+    @ExportMessage(library = AbstractContainerLibrary.class)
+    public void materializeData(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         setData(dataLib.materialize(data), getLength());
     }
 
@@ -315,6 +318,7 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     // HACK copy and paste from RAbstractVector
+    @Ignore // AbstractContainerLibrary
     RIntVector copy(VectorDataLibrary dataLib) {
         RIntVector result = RDataFactory.createIntVector(dataLib.getIntDataCopy(data), dataLib.isComplete(data));
         MemoryCopyTracer.reportCopying(this, result);
@@ -443,5 +447,10 @@ public final class RIntVector extends RAbstractNumericVector {
     private int[] getArrayForNativeDataAccess() {
         materializeData(VectorDataLibrary.getFactory().getUncached());
         return data instanceof RIntArrayVectorData ? ((RIntArrayVectorData) data).getReadonlyIntData() : null;
+    }
+
+    @ExportMessage(name = "getLength", library = AbstractContainerLibrary.class)
+    public int containerLibGetLength(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return dataLib.getLength(data);
     }
 }

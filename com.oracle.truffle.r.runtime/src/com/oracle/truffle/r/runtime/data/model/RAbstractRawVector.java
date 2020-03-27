@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,28 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
 import java.util.Arrays;
 
+@ExportLibrary(VectorDataLibrary.class)
 public abstract class RAbstractRawVector extends RAbstractNumericVector {
 
     public RAbstractRawVector(boolean complete) {
@@ -49,6 +63,7 @@ public abstract class RAbstractRawVector extends RAbstractNumericVector {
     }
 
     @Override
+    @Ignore
     public Object getDataAtAsObject(int index) {
         return RRaw.valueOf(getRawDataAt(index));
     }
@@ -60,7 +75,12 @@ public abstract class RAbstractRawVector extends RAbstractNumericVector {
 
     public abstract byte getRawDataAt(int index);
 
+    public byte getRawDataAt(@SuppressWarnings("unused") Object store, int index) {
+        return getRawDataAt(index);
+    }
+
     @Override
+    @Ignore
     public RRawVector materialize() {
         RRawVector result = RDataFactory.createRawVector(getDataCopy());
         MemoryCopyTracer.reportCopying(this, result);
@@ -126,4 +146,117 @@ public abstract class RAbstractRawVector extends RAbstractNumericVector {
         return RDataFactory.createRawVector(new byte[newLength]);
     }
 
+    // ------------------------------
+    // VectorDataLibrary
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public NACheck getNACheck() {
+        return NACheck.getDisabled();
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public RType getType() {
+        return RType.Raw;
+    }
+
+    @ExportMessage(name = "isComplete", library = VectorDataLibrary.class)
+    public boolean datLibIsComplete() {
+        return true;
+    }
+
+    @ExportMessage(name = "getLength", library = VectorDataLibrary.class)
+    public int dataLibGetLength() {
+        return getLength();
+    }
+
+    @ExportMessage
+    public boolean isWriteable() {
+        return isMaterialized();
+    }
+
+    @ExportMessage(name = "materialize", library = VectorDataLibrary.class)
+    public Object dataLibMaterialize() {
+        return materialize();
+    }
+
+    @ExportMessage(name = "copy", library = VectorDataLibrary.class)
+    public Object dataLibCopy(@SuppressWarnings("unused") boolean deep) {
+        return copy();
+    }
+
+    @ExportMessage(name = "copyResized", library = VectorDataLibrary.class)
+    public Object dataLibCopyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
+        return this.copyResized(newSize, fillNA);
+    }
+
+    @ExportMessage
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(getInternalStore(), getLength());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
+    }
+
+    @ExportMessage
+    public RandomAccessIterator randomAccessIterator() {
+        return new RandomAccessIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public SeqWriteIterator writeIterator() {
+        return new SeqWriteIterator(getInternalStore(), getLength());
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public byte[] getRawDataCopy() {
+        return getDataCopy();
+    }
+
+    @ExportMessage
+    public byte[] getReadonlyRawData() {
+        return getReadonlyData();
+    }
+
+    @ExportMessage
+    public byte getRawAt(int index) {
+        return getRawDataAt(index);
+    }
+
+    @ExportMessage
+    public byte getNextRaw(SeqIterator it) {
+        return getRawDataAt(it.getStore(), it.getIndex());
+    }
+
+    @ExportMessage
+    public byte getRaw(RandomAccessIterator it, int index) {
+        return getRawDataAt(it.getStore(), index);
+    }
+
+    @ExportMessage
+    public void setRawAt(int index, byte value) {
+        setRawDataAt(getInternalStore(), index, value);
+    }
+
+    @ExportMessage
+    public void setNextRaw(SeqWriteIterator it, byte value) {
+        setRawDataAt(it.getStore(), it.getIndex(), value);
+    }
+
+    @ExportMessage
+    public void setRaw(RandomAccessWriteIterator it, int index, byte value) {
+        setRawDataAt(it.getStore(), index, value);
+    }
 }

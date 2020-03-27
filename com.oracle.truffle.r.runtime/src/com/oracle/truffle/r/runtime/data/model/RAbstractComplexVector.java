@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,12 +24,15 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
@@ -39,9 +42,17 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RInteropNA.RInteropComplexNA;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
 import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(VectorDataLibrary.class)
 public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
 
     public static final String MEMBER_RE = "re";
@@ -104,6 +115,7 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
         }
     }
 
+    @Ignore
     @Override
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
@@ -111,6 +123,11 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
 
     public abstract RComplex getDataAt(int index);
 
+    public RComplex getDataAt(@SuppressWarnings("unused") Object store, int index) {
+        return getDataAt(index);
+    }
+
+    @Ignore
     @Override
     public RComplexVector materialize() {
         RComplexVector result = RDataFactory.createComplexVector(getDataCopy(), isComplete());
@@ -212,4 +229,150 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
         return RDataFactory.createComplexVector(new double[newLength << 1], newIsComplete);
     }
 
+    // ------------------------------
+    // VectorDataLibrary
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public NACheck getNACheck(@Shared("naCheck") @Cached NACheck na) {
+        return na;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public RType getType() {
+        return RType.Complex;
+    }
+
+    @ExportMessage(name = "isComplete", library = VectorDataLibrary.class)
+    public boolean datLibIsComplete() {
+        return this.isComplete();
+    }
+
+    @ExportMessage(name = "getLength", library = VectorDataLibrary.class)
+    public int dataLibGetLength() {
+        return getLength();
+    }
+
+    @ExportMessage
+    public boolean isWriteable() {
+        return isMaterialized();
+    }
+
+    @ExportMessage(name = "materialize", library = VectorDataLibrary.class)
+    public Object dataLibMaterialize() {
+        return materialize();
+    }
+
+    @ExportMessage(name = "copy", library = VectorDataLibrary.class)
+    public Object dataLibCopy(@SuppressWarnings("unused") boolean deep) {
+        return copy();
+    }
+
+    @ExportMessage(name = "copyResized", library = VectorDataLibrary.class)
+    public Object dataLibCopyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
+        return this.copyResized(newSize, fillNA);
+    }
+
+    @ExportMessage
+    public SeqIterator iterator(@Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(getInternalStore(), getLength());
+        naCheck.enable(!isComplete());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static")
+    public boolean next(SeqIterator it, boolean withWrap,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
+    }
+
+    @ExportMessage
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(!isComplete());
+        return new RandomAccessIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public SeqWriteIterator writeIterator() {
+        return new SeqWriteIterator(getInternalStore(), getLength());
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public void commitWriteIterator(SeqWriteIterator iterator, boolean neverSeenNA) {
+        iterator.commit();
+        commitWrites(neverSeenNA);
+    }
+
+    @ExportMessage
+    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator, boolean neverSeenNA) {
+        iterator.commit();
+        commitWrites(neverSeenNA);
+    }
+
+    private void commitWrites(boolean neverSeenNA) {
+        if (!neverSeenNA) {
+            setComplete(false);
+        }
+    }
+
+    @ExportMessage
+    public double[] getComplexDataCopy() {
+        return getDataCopy();
+    }
+
+    @ExportMessage
+    public double[] getReadonlyComplexData() {
+        return getReadonlyData();
+    }
+
+    @ExportMessage
+    public RComplex getComplexAt(int index,
+                    @Shared("naCheck") @Cached NACheck na) {
+        RComplex result = getDataAt(index);
+        na.check(result);
+        return result;
+    }
+
+    @ExportMessage
+    public RComplex getNextComplex(SeqIterator it,
+                    @Shared("naCheck") @Cached NACheck na) {
+        RComplex result = getDataAt(it.getStore(), it.getIndex());
+        na.check(result);
+        return result;
+    }
+
+    @ExportMessage
+    public RComplex getComplex(RandomAccessIterator it, int index,
+                    @Shared("naCheck") @Cached NACheck na) {
+        RComplex result = getDataAt(it.getStore(), index);
+        na.check(result);
+        return result;
+    }
+
+    @ExportMessage
+    public void setComplexAt(int index, RComplex value) {
+        setDataAt(getInternalStore(), index, value);
+        if (RRuntime.isNA(value)) {
+            setComplete(false);
+        }
+    }
+
+    @ExportMessage
+    public void setNextComplex(SeqWriteIterator it, RComplex value) {
+        setDataAt(it.getStore(), it.getIndex(), value);
+    }
+
+    @ExportMessage
+    public void setComplex(RandomAccessWriteIterator it, int index, RComplex value) {
+        setDataAt(it.getStore(), index, value);
+    }
 }

@@ -24,7 +24,10 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -202,6 +205,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
     }
 
     @Override
+    @Ignore
     public int getLength() {
         return length;
     }
@@ -244,6 +248,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
     }
 
     // HACK copy and paste from RAbstractVector
+    @Ignore // AbstractContainerLibrary
     RDoubleVector copy(VectorDataLibrary dataLib) {
         RDoubleVector result = RDataFactory.createDoubleVector(dataLib.getDoubleDataCopy(data), dataLib.isComplete(data));
         MemoryCopyTracer.reportCopying(this, result);
@@ -271,6 +276,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public RDoubleVector materialize() {
         if (VectorDataLibrary.getFactory().getUncached().isWriteable(data)) {
             return this;
@@ -280,7 +286,8 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         return new RDoubleVector(getDataCopy(), isComplete());
     }
 
-    public void materializeData(VectorDataLibrary dataLib) {
+    @ExportMessage(library = AbstractContainerLibrary.class)
+    public void materializeData(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         setData(dataLib.materialize(data), getLength());
     }
 
@@ -424,5 +431,10 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
     private double[] getArrayForNativeDataAccess() {
         materializeData(VectorDataLibrary.getFactory().getUncached());
         return data instanceof RDoubleArrayVectorData ? ((RDoubleArrayVectorData) data).getReadonlyDoubleData() : null;
+    }
+
+    @ExportMessage(name = "getLength", library = AbstractContainerLibrary.class)
+    public int containerLibGetLength(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return dataLib.getLength(data);
     }
 }

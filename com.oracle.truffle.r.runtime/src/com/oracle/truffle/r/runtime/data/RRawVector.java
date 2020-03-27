@@ -98,6 +98,11 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
     }
 
     @Override
+    public byte getRawDataAt(Object store, int index) {
+        return NativeDataAccess.getData(this, (byte[]) store, index);
+    }
+
+    @Override
     public void setRawDataAt(Object store, int index, byte value) {
         assert data == store;
         NativeDataAccess.setData(this, (byte[]) store, index, value);

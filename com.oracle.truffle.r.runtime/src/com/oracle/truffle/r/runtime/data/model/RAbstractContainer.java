@@ -23,12 +23,17 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
+@ExportLibrary(AbstractContainerLibrary.class)
 public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
     protected Object data;
@@ -41,8 +46,10 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
         return data;
     }
 
+    @Ignore
     public abstract boolean isComplete();
 
+    @Ignore
     public abstract int getLength();
 
     public abstract void setLength(int l);
@@ -59,10 +66,12 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
     public abstract void setDimensions(int[] newDimensions);
 
+    @Ignore
     public abstract RAbstractContainer materialize();
 
     public abstract Object getDataAtAsObject(int index);
 
+    @Ignore
     @Override
     public abstract RAbstractContainer copy();
 
@@ -94,7 +103,7 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
     /**
      * Sets names for the container, or removes them in case that <code>newNames</code> is
      * <code>null</code>.
-     * 
+     *
      * @param newNames
      */
     public void setNames(RStringVector newNames) {
@@ -125,4 +134,27 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
     public abstract VectorAccess access();
 
     public abstract VectorAccess slowPathAccess();
+
+    // ------------------------------
+    // AbstractContainerLibrary
+
+    @ExportMessage(name = "getLength", library = AbstractContainerLibrary.class)
+    public int containerLibGetLength() {
+        return getLength();
+    }
+
+    @ExportMessage(name = "isComplete", library = AbstractContainerLibrary.class)
+    public boolean containerLibIsComplete() {
+        return isComplete();
+    }
+
+    @ExportMessage(name = "materialize", library = AbstractContainerLibrary.class)
+    public RAbstractContainer containerLibMaterialize() {
+        return materialize();
+    }
+
+    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
+    public RAbstractContainer containerLibCopy() {
+        return copy();
+    }
 }
