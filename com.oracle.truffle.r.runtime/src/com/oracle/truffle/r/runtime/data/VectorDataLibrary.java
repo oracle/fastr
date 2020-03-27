@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.library.GenerateLibrary;
 import com.oracle.truffle.api.library.Library;
@@ -362,6 +363,16 @@ public abstract class VectorDataLibrary extends Library {
      * {@link #getIntAt(Object, int)} ever returned {@code NA} value.
      */
     public abstract NACheck getNACheck(Object receiver);
+
+    /**
+     * Converts the given data to another data object, for which
+     * {@code getType(newObj) == targetType}. The new data object can convert data on the fly or use
+     * other strategy. {@code targetType} must be a compilation constant if used in partially evaluated code.
+     */
+    public Object cast(Object receiver, RType targetType) {
+        CompilerAsserts.partialEvaluationConstant(targetType);
+        return VectorDataClosure.fromData(receiver, getType(receiver), targetType);
+    }
 
     // ---------------------------------------------------------------------
     // Methods specific to integer data
@@ -1148,6 +1159,31 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
+    /**
+     * Returns given element converted to given type. Unlike {@link #getDataAtAsObject(Object, int)}
+     * , which keeps the type of the underlying data.
+     */
+    public Object getDataAtAs(Object data, RType type, int index) {
+        CompilerAsserts.compilationConstant(type);
+        switch (type) {
+            case Integer:
+                return getIntAt(data, index);
+            case Double:
+                return getDoubleAt(data, index);
+            case Logical:
+                return getLogicalAt(data, index);
+            case Raw:
+                return RRaw.valueOf(getRawAt(data, index));
+            case Complex:
+                return getComplexAt(data, index);
+            case Character:
+                return getStringAt(data, index);
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere(type.toString());
+        }
+    }
+
     public Object getDataAtAsObject(Object data, int index) {
         RType type = getType(data);
         switch (type) {
@@ -1338,6 +1374,14 @@ public abstract class VectorDataLibrary extends Library {
             verifyIfSlowAssertsEnabled(data);
             RType result = delegate.getType(data);
             assert result != null;
+            return result;
+        }
+
+        @Override
+        public Object cast(Object receiver, RType targetType) {
+            CompilerAsserts.partialEvaluationConstant(targetType);
+            Object result = delegate.cast(receiver, targetType);
+            assert VectorDataLibrary.getFactory().getUncached().getType(result) == targetType;
             return result;
         }
 

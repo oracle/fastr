@@ -41,13 +41,11 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDoubleVecClosureData;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
-import com.oracle.truffle.r.runtime.data.RIntVecClosureData;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -58,9 +56,6 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.closures.RClosure;
-import com.oracle.truffle.r.runtime.data.closures.RToComplexVectorClosure;
-import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -1011,7 +1006,7 @@ public class RDeparse {
                     append(RRuntime.intToStringNoCheck(sequence.getStart())).append(':').append(RRuntime.intToStringNoCheck(sequence.getEnd()));
                 } else {
                     if (vec.isClosure()) {
-                        append(closureToCoercionFunction(vec.getClosure()));
+                        append(closureToCoercionFunction(vec));
                     }
                     // TODO COMPAT?
                     append("c(");
@@ -1050,17 +1045,20 @@ public class RDeparse {
             }
         }
 
-        private static String closureToCoercionFunction(RClosure vec) {
-            if (vec instanceof RToComplexVectorClosure) {
-                return "as.complex(";
-            } else if (vec instanceof RDoubleVecClosureData) {
-                return "as.double(";
-            } else if (vec instanceof RIntVecClosureData) {
-                return "as.integer(";
-            } else if (vec instanceof RToStringVectorClosure) {
-                return "as.character(";
+        private static String closureToCoercionFunction(RAbstractAtomicVector vec) {
+            assert vec.isClosure();
+            switch (vec.getRType()) {
+                case Complex:
+                    return "as.complex(";
+                case Integer:
+                    return "as.integer(";
+                case Double:
+                    return "as.double(";
+                case Character:
+                    return "as.character(";
+                default:
+                    throw RInternalError.shouldNotReachHere("unhandled closure type " + vec.getClass().getSimpleName());
             }
-            throw RInternalError.shouldNotReachHere("unhandled closure type " + vec.getClass().getSimpleName());
         }
 
         private static RIntSeqVectorData asIntSequence(RAbstractVector vec) {

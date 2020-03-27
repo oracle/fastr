@@ -53,6 +53,9 @@ import org.junit.Ignore;
 
 public class TestJavaInterop extends TestBase {
 
+    private static final String INT_CLOSURE_CLASS = "VectorDataClosure$IntClosure";
+    private static final String DOUBLE_CLOSURE_CLASS = "VectorDataClosure$DoubleClosure";
+
     private static final String TEST_CLASS = TestClass.class.getName();
     private static final String CREATE_TRUFFLE_OBJECT = "to <- .fastr.interop.new(java.type('" + TEST_CLASS + "'));";
     private static final String CREATE_TEST_ARRAYS = "ta <- new('" + TestArraysClass.class.getName() + "');";
@@ -1229,8 +1232,8 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testNoCopyOnCast() throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
-        testNoCopyOnCast("integer", "RIntVecClosureData", new String[]{"fieldBooleanArray", "fieldDoubleArray", "fieldStringArray"});
-        testNoCopyOnCast("double", "RDoubleVecClosureData", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldStringArray"});
+        testNoCopyOnCast("integer", INT_CLOSURE_CLASS, new String[]{"fieldBooleanArray", "fieldDoubleArray", "fieldStringArray"});
+        testNoCopyOnCast("double", DOUBLE_CLOSURE_CLASS, new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldStringArray"});
         testNoCopyOnCast("complex", "RToComplexVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray", "fieldStringArray"});
         testNoCopyOnCast("character", "RToStringVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray"});
     }
@@ -1244,7 +1247,7 @@ public class TestJavaInterop extends TestBase {
             } else {
                 assertEvalFastR(cmd, gnur);
             }
-            gnur = "RIntVecClosureData".equals(closure) || "RDoubleVecClosureData".equals(closure) ? "cat('com.oracle.truffle.r.runtime.data." + closure + "\n')"
+            gnur = INT_CLOSURE_CLASS.equals(closure) || DOUBLE_CLOSURE_CLASS.equals(closure) ? "cat('com.oracle.truffle.r.runtime.data." + closure + "\n')"
                             : "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')";
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as." + type + "(as.vector(to$" + field + ")), inspectVectorData=TRUE)", gnur);
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as.vector(as.vector(to$" + field + "), '" + type + "'), inspectVectorData=TRUE)", gnur);

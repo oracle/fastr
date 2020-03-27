@@ -101,7 +101,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
     }
 
     public static RDoubleVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
-        RDoubleVector result = new RDoubleVector(new RDoubleVecClosureData(delegate), delegate.getLength());
+        RDoubleVector result = new RDoubleVector(VectorDataClosure.fromVector(delegate, RType.Double), delegate.getLength());
         if (keepAttrs) {
             result.initAttributes(delegate.getAttributes());
         } else {
@@ -146,12 +146,12 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     @Override
     public boolean isClosure() {
-        return data instanceof RDoubleVecClosureData;
+        return data instanceof RClosure;
     }
 
     @Override
     public RClosure getClosure() {
-        return (RDoubleVecClosureData) data;
+        return (RClosure) data;
     }
 
     @Override

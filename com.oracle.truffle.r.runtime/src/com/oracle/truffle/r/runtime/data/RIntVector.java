@@ -102,7 +102,7 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     public static RIntVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
-        RIntVector result = new RIntVector(new RIntVecClosureData(delegate), delegate.getLength());
+        RIntVector result = new RIntVector(VectorDataClosure.fromVector(delegate, RType.Integer), delegate.getLength());
         if (keepAttrs) {
             result.initAttributes(delegate.getAttributes());
         } else {
@@ -135,12 +135,12 @@ public final class RIntVector extends RAbstractNumericVector {
 
     @Override
     public boolean isClosure() {
-        return data instanceof RIntVecClosureData;
+        return data instanceof RClosure;
     }
 
     @Override
     public RClosure getClosure() {
-        return (RIntVecClosureData) data;
+        return (RClosure) data;
     }
 
     @Override
