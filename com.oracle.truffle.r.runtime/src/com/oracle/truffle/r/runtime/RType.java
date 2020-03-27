@@ -21,6 +21,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -31,6 +32,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
@@ -108,6 +110,30 @@ public enum RType implements TruffleObject {
     @ExportMessage(name = "getMetaSimpleName")
     public String getName() {
         return name;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final boolean hasSourceLocation() {
+        return false;
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    public final SourceSection getSourceLocation() {
+        return null;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public final boolean hasLanguage() {
+        return true;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public final Class<? extends TruffleLanguage<?>> getLanguage() {
+        return TruffleRLanguage.class;
     }
 
     @ExportMessage

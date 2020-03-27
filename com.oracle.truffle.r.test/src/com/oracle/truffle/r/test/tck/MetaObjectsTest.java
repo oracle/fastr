@@ -52,7 +52,8 @@ public class MetaObjectsTest extends TestBase {
         context.eval("R", "lazyInvoked <- F; delayedAssign('lazy', { lazyInvoked <<- T; 'lazyVal' })");
         assertFalse(context.eval("R", "lazyInvoked").asBoolean());
 
-        MetaObjTestData testData = context.getEngine().getInstruments().get(MetaObjTesterInstrument.ID).lookup(MetaObjTestData.class);
+        context.getEngine().getInstruments().get(MetaObjTesterInstrument.ID).lookup(MetaObjTestData.class);
         context.eval("R", "1+1"); // to trigger the instrument
+        // assertions are in the instrument itself
     }
 }
