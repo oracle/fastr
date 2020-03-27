@@ -367,7 +367,8 @@ public abstract class VectorDataLibrary extends Library {
     /**
      * Converts the given data to another data object, for which
      * {@code getType(newObj) == targetType}. The new data object can convert data on the fly or use
-     * other strategy. {@code targetType} must be a compilation constant if used in partially evaluated code.
+     * other strategy. {@code targetType} must be a compilation constant if used in partially
+     * evaluated code.
      */
     public Object cast(Object receiver, RType targetType) {
         CompilerAsserts.partialEvaluationConstant(targetType);

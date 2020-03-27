@@ -88,7 +88,7 @@ public abstract class BinaryMapFunctionNode extends RBaseNode {
 
     /**
      * Returns <code>true</code> if one of the vector classes may require constant time folding with
-     * {@link #tryFoldConstantTime(RAbstractVector, int, RAbstractVector, int)}.
+     * {@link #tryFoldConstantTime(WarningInfo, Object, int, Object, int)}.
      */
     public boolean mayFoldConstantTime(RAbstractVector left, RAbstractVector right) {
         return false;
@@ -98,10 +98,8 @@ public abstract class BinaryMapFunctionNode extends RBaseNode {
      * Returns a folded version of the left and right vector if both can be folded for this scalar
      * operation. Returns <code>null</code> if folding was not possible.
      */
-    public abstract RAbstractVector tryFoldConstantTime(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
-
-    public RAbstractVector tryFoldConstantTime(WarningInfo warningInfo, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        throw RInternalError.shouldNotReachHere();
+    public RAbstractVector tryFoldConstantTime(WarningInfo warningInfo, Object leftData, int leftLength, Object rightData, int rightLength) {
+        return null;
     }
 
     /**
