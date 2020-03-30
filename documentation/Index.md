@@ -1,7 +1,6 @@
 # FastR Documentation
 
-* [Limitations](Limitations.md)
-* [Debugging](debugging.md)
-* [Graphics support](graphics.md)
-* [For Developers](dev/Index.md)
+* [For FastR Users](user/Index.md)
+* [Java interoperability tutorial](tutorials/interop/javaInteroperability.md)
+* [For FastR Contributors](dev/Index.md)
   * [Building FastR](dev/building.md)
