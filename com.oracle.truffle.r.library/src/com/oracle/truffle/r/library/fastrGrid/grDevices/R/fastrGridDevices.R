@@ -110,6 +110,9 @@ if (.fastr.option("UseInternalGridGraphics")) {
 } else {
 	eval(expression({
 
+		svg <- function (filename = if (onefile) "Rplots.svg" else "Rplot%03d.svg", width = 7, height = 7, pointsize = 12, onefile = FALSE, family = "sans", bg = "white", antialias = c("default", "none", "gray", "subpixel")) {
+			invisible(.External2(C_X11, paste0("svg::onefile=", onefile, ",family=", family, ",bg=", bg, ",antialias=", antialias, ":", filename), 72 * width, 72 * height, pointsize))
+		}
 		gdlog <- function (logfilename, width, height, pointsize) .External2(C_X11, paste0("log::", logfilename), width, height, pointsize)
 		
 		gdOpen <- function (name, w, h, compare = FALSE) if (!compare) .Call(C_api_gdOpen, name, w, h) else gdOpenCmpArg(name, w, h)

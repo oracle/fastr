@@ -95,7 +95,11 @@ public final class JavaGDContext {
                     break;
                 case off:
                 default:
-                    gd = new BufferedImageGD(fileType, fileNameTemplate, params);
+                    if ("svg".equals(fileType)) {
+                        gd = new SVGImageGD(fileNameTemplate, params);
+                    } else {
+                        gd = new BufferedImageGD(fileType, fileNameTemplate, params);
+                    }
                     break;
             }
         } else {
