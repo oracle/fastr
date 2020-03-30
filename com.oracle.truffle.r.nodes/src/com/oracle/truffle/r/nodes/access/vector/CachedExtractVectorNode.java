@@ -67,6 +67,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private static final boolean DEFAULT_DROP_DIMENSION = true;
 
     private final Class<? extends RAbstractContainer> targetClass;
+    private final Class<?> targetDataClass;
     private final Class<? extends RBaseObject> exactClass;
     private final Class<? extends RBaseObject> dropDimensionsClass;
     private final boolean exact;
@@ -110,6 +111,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         super(mode, vector, positions, recursive);
         assert vectorType != RType.Null && vectorType != RType.Environment;
         this.targetClass = vector.getClass();
+        this.targetDataClass = getDataClass(vector);
         this.exactClass = exact.getClass();
         this.dropDimensionsClass = dropDimensions.getClass();
         Object[] convertedPositions = filterPositions(positions);
@@ -125,7 +127,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     }
 
     public boolean isSupported(Object target, Object[] positions, Object exactValue, Object dropDimensionsValue) {
-        if (targetClass == target.getClass() && exactValue.getClass() == this.exactClass && dropDimensionsValue.getClass() == dropDimensionsClass //
+        if (targetClass == target.getClass() && getDataClass(target) == targetDataClass && exactValue.getClass() == this.exactClass && dropDimensionsValue.getClass() == dropDimensionsClass //
                         && logicalAsBoolean(dropDimensionsClass.cast(dropDimensionsValue), DEFAULT_DROP_DIMENSION) == this.dropDimensions //
                         && logicalAsBoolean(exactClass.cast(exactValue), DEFAULT_EXACT) == this.exact) {
             return positionsCheckNode.isSupported(positions);
@@ -133,8 +135,12 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return false;
     }
 
+    private static Class<?> getDataClass(Object value) {
+        // this node does not specialize on data class, but writeVectorNode does
+        return value instanceof RAbstractContainer ? ((RAbstractContainer) value).getData().getClass() : null;
+    }
+
     @Child private AbstractContainerLibrary vectorLibrary = AbstractContainerLibrary.getFactory().createDispatched(DSLConfig.getVectorAccessCacheSize());
-    @Child private AbstractContainerLibrary valueLibrary = AbstractContainerLibrary.getFactory().createDispatched(DSLConfig.getVectorAccessCacheSize());
 
     public Object apply(RAbstractContainer originalVector, Object[] originalPositions, PositionProfile[] originalProfiles, Object originalExact, Object originalDropDimensions) {
         final Object[] positions = filterPositions(originalPositions);

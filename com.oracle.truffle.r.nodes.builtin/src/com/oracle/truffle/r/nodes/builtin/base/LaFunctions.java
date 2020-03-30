@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,6 +52,7 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
@@ -81,6 +82,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -403,7 +405,8 @@ public class LaFunctions {
 
         @Specialization
         Object doQrCoefCmplx(RList q, RAbstractComplexVector b,
-                        @Cached("create()") GetReadonlyData.Complex getReadonlyData,
+                        @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary qrDataLib,
+                        @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary tauDataLib,
                         @Cached("create()") VectorDataReuse.Complex vectorDataReuse,
                         @Cached("create()") ExtractListElement extractQrElement,
                         @Cached("create()") ExtractListElement extractTauElement,
@@ -422,8 +425,8 @@ public class LaFunctions {
             int nrhs = bDims[1];
             int lwork = -1;
             double[] tmp = new double[2]; // Complex
-            double[] qrData = getReadonlyData.execute(qr.materialize());
-            double[] tauData = getReadonlyData.execute(tau.materialize());
+            double[] qrData = qrDataLib.getReadonlyComplexData(qr.getData());
+            double[] tauData = tauDataLib.getReadonlyComplexData(tau.getData());
             double[] bComplexData = vectorDataReuse.execute(b.materialize());
             int info = zunmqrNode.execute(
                             "L", "C", n, nrhs, k, qrData, n, tauData, bComplexData, n, tmp, lwork);

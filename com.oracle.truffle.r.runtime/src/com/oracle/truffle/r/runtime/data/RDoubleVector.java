@@ -373,17 +373,8 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
     }
 
     private static final class FastPathAccess extends FastPathFromDoubleAccess {
-
-        @Child VectorDataLibrary dataLib;
-
         FastPathAccess(RAbstractContainer value) {
             super(value);
-            dataLib = VectorDataLibrary.getFactory().create(((RDoubleVector) value).data);
-        }
-
-        @Override
-        public boolean supports(Object value) {
-            return super.supports(value) && dataLib.accepts(((RDoubleVector) value).getData());
         }
 
         @Override
@@ -394,11 +385,6 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         @Override
         protected void setDoubleImpl(AccessIterator accessIter, int index, double value) {
             dataLib.setDoubleAt(accessIter.getStore(), index, value);
-        }
-
-        @Override
-        protected int getLength(RAbstractContainer vector) {
-            return dataLib.getLength(((RDoubleVector) vector).getData());
         }
     }
 

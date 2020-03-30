@@ -387,12 +387,8 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     private static final class FastPathAccess extends FastPathFromIntAccess {
-
-        @Child VectorDataLibrary dataLib;
-
         FastPathAccess(RAbstractContainer value) {
             super(value);
-            dataLib = VectorDataLibrary.getFactory().create(((RIntVector) value).data);
         }
 
         @Override
@@ -410,11 +406,6 @@ public final class RIntVector extends RAbstractNumericVector {
         @Override
         protected void setIntImpl(AccessIterator accessIter, int index, int value) {
             dataLib.setIntAt(accessIter.getStore(), index, value);
-        }
-
-        @Override
-        protected int getLength(RAbstractContainer vector) {
-            return dataLib.getLength(((RIntVector) vector).getData());
         }
     }
 

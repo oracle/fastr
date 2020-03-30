@@ -33,7 +33,6 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -41,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -96,26 +96,11 @@ public abstract class RLengthNode extends RBaseNode {
         return 1;
     }
 
-    @Specialization(guards = {"cachedClass != null", "cachedClass == operand.getClass()"})
-    protected int doCachedContainer(Object operand,
-                    @Cached("getContainerClass(operand)") Class<? extends RAbstractContainer> cachedClass,
-                    @Cached("create()") VectorLengthProfile lengthProfile,
-                    @CachedLibrary(limit = "getGenericVectorAccessCacheSize()") AbstractContainerLibrary lib) {
-        return lengthProfile.profile(lib.getLength(cachedClass.cast(operand)));
-    }
-
-    @Specialization(replaces = "doCachedContainer", limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(limit = "getGenericVectorAccessCacheSize()")
     protected int doContainer(RAbstractContainer operand,
-                    @Cached(allowUncached = true) VectorLengthProfile lengthProfile,
-                    @CachedLibrary("operand") AbstractContainerLibrary lib) {
-        return lengthProfile.profile(lib.getLength(operand));
-    }
-
-    protected static Class<? extends RAbstractContainer> getContainerClass(Object value) {
-        if (value instanceof RAbstractContainer) {
-            return ((RAbstractContainer) value).getClass();
-        }
-        return null;
+                    @Cached VectorLengthProfile lengthProfile,
+                    @CachedLibrary("operand.getData()") VectorDataLibrary lib) {
+        return lengthProfile.profile(lib.getLength(operand.getData()));
     }
 
     @Specialization
