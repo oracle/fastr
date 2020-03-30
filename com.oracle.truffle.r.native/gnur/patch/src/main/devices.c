@@ -323,7 +323,7 @@ void removeDevice(int devNum, Rboolean findNext)
 		}
 	    }
 	}
-	// In FastR, in constract to GNUR, display lists and saved snapshots are not intrinsically 
+	// In FastR, in contrast to GNUR, display lists and saved snapshots are not intrinsically 
 	// protected from garbage collecting, so we have to explicitly preserve and release them.
 	if (g->displayList != R_NilValue) {
 		R_ReleaseObject(g->displayList);

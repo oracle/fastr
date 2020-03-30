@@ -1090,3 +1090,16 @@ SEXP testMissingArgWithATTRIB() {
     return ATTRIB(R_MissingArg);
 }
 
+#ifdef FASTR
+// These types are borrowed from Defn.h
+typedef SEXP (*CCODE)(SEXP, SEXP, SEXP, SEXP);
+CCODE (PRIMFUN)(SEXP x);
+
+SEXP testPRIMFUN(SEXP fun, SEXP args) {
+	return PRIMFUN(fun) (R_NilValue, fun, args, R_NilValue);
+}
+#else
+SEXP testPRIMFUN(SEXP fun, SEXP args) {
+	return R_NilValue;
+}
+#endif

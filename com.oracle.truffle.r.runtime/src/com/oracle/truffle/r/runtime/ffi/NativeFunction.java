@@ -79,9 +79,9 @@ public enum NativeFunction {
     // misc
     exactSumFunc("([double], sint32, sint32, sint32): double", "call_misc_"),
     dqrls("([double], sint32, sint32, [double], sint32, double, [double], [double], [double], [sint32], [sint32], [double], [double]): void", "call_misc_"),
-    before_graphics_op("():sint32"),
-    after_graphics_op("(pointer,pointer,sint32): sint32"),
-    javaGDresizeCall("(pointer): pointer"),
+    before_graphics_op("():sint32", "", baseLibrary(), true),
+    after_graphics_op("(pointer,pointer,sint32): sint32", "", baseLibrary(), true),
+    javaGDresizeCall("(pointer): pointer", "", baseLibrary(), true),
     // stats
     fft_factor("(sint32, [sint32], [sint32]): void", "", "stats"),
     fft_setup_work("([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32", "", "stats"),

@@ -119,6 +119,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_lapplyWithForceAndCall, 4),
         CALLDEF(rapi_dotCall, 2),
         CALLDEF(testMissingArgWithATTRIB, 0),
+        CALLDEF(testPRIMFUN, 2),
         #include "init_api.h"
         {NULL, NULL, 0}
 };

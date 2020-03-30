@@ -975,6 +975,14 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(MakeActiveBindingNode.class)
     void R_MakeActiveBinding(Object sym, Object fun, Object env);
 
+    /**
+     * <code>PRIMFUN(op)</code> returns a function pointer for the given function object (SEXP)
+     * argument identifying a primitive builtin. Its main purpose is to be stored in a display list.
+     * The FastR implementation uses the fact that the function argument is also passed to the
+     * returned builtin function, which allows for <code>PRIMFUN(op)</code> in FastR to return a
+     * generic <code>DispatchPRIMFUN</code>. The calls to a given primitive function are dispatched
+     * in {@link DispatchPrimFunNode}.
+     */
     @RFFIUpCallNode(DispatchPrimFunNode.class)
     Object DispatchPRIMFUN(Object call, Object op, Object args, Object rho);
 }

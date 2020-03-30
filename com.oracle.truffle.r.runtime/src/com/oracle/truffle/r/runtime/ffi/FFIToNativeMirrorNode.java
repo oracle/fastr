@@ -55,11 +55,6 @@ public abstract class FFIToNativeMirrorNode extends Node {
     }
 
     @Specialization
-    protected static Object wrap(RForeignObjectWrapper value) {
-        return value;
-    }
-
-    @Specialization
     protected static Object wrap(NativeArray value) {
         return value;
     }

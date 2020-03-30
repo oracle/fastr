@@ -147,8 +147,6 @@ public class TruffleNFI_Call implements CallRFFI {
                 switch (args.length) {
                     case 0:
                         logCall(nativeCallInfo.name, args);
-                        // Why is it necessary to call ffiWrap.wrap for an empty args?
-                        wrappedArgs = ffiWrap.wrap(args, ffiMaterialize0, ffiWrapper0);
                         TruffleObject callVoid0Function = getFunction("dot_call_void0", CallVoid0Sig);
                         execute0Interop.execute(callVoid0Function, nativeCallInfo.address.asTruffleObject());
                         break;
