@@ -23,18 +23,32 @@
 package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ExportLibrary(AbstractContainerLibrary.class)
 public abstract class RAbstractContainer extends RSharingAttributeStorage {
+
+    public static final String DATA_LIB_LIMIT = "getDataLibCacheSize()";
+
+    public static int getDataLibCacheSize() {
+        // this has to be a method, because DSLConfig gets initialized lazily
+        return DSLConfig.getCacheSize(3);
+    }
 
     protected Object data;
 
@@ -138,14 +152,32 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
     // ------------------------------
     // AbstractContainerLibrary
 
+    @ExportMessage(name = "getType", library = AbstractContainerLibrary.class)
+    public RType containerLibGetType(@Shared("rtypeProfile") @Cached("createIdentityProfile()") ValueProfile typeProfile) {
+        return typeProfile.profile(getRType());
+    }
+
+    @ExportMessage(name = "createEmptySameType", library = AbstractContainerLibrary.class)
+    public RAbstractVector containerLibCreateEmptySameType(int newLength, boolean fillWithNA,
+                    @Cached("createEqualityProfile()") ValueProfile fillWithNAProfile,
+                    @Shared("rtypeProfile") @Cached("createIdentityProfile()") ValueProfile typeProfile) {
+        assert this instanceof RAbstractVector;
+        return typeProfile.profile(getRType()).create(newLength, fillWithNAProfile.profile(fillWithNA));
+    }
+
+    @ExportMessage(name = "isMaterialized", library = AbstractContainerLibrary.class)
+    public boolean containerLibIsMaterialized(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return dataLib.isWriteable(data);
+    }
+
     @ExportMessage(name = "getLength", library = AbstractContainerLibrary.class)
-    public int containerLibGetLength() {
-        return getLength();
+    public int containerLibGetLength(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return dataLib.getLength(data);
     }
 
     @ExportMessage(name = "isComplete", library = AbstractContainerLibrary.class)
-    public boolean containerLibIsComplete() {
-        return isComplete();
+    public boolean containerLibIsComplete(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return dataLib.isComplete(data);
     }
 
     @ExportMessage(name = "materialize", library = AbstractContainerLibrary.class)

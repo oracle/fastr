@@ -40,6 +40,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedReplaceVectorNodeFactory.ValueProfileNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
+import com.oracle.truffle.r.runtime.data.nodes.CopyWithAttributes;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
@@ -97,6 +98,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @Child private ReplaceVectorNode copyPositionNames;
     @Child private DeleteElementsNode deleteElementsNode;
     @Child private SetNamesAttributeNode setNamesNode;
+    @Child private CopyWithAttributes copyWithAttributesNode;
 
     // if this is non-null, the node needs to throw the error whenever it is executed
     @CompilationFinal protected Runnable error;
@@ -241,7 +243,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (RSharingAttributeStorage.isShareable(vector) && !ignoreRefCount) {
             // TODO find out if we need to copy always in the recursive case
             if (recursive || sharedConditionProfile.execute(vector.isShared()) || valueEqualsVectorProfile.profile(vector == value)) {
-                vector = (RAbstractVector) containerLibrary.copy(vector);
+                vector = (RAbstractVector) copyWithAttributes(vector);
                 assert vector.isTemporary();
             }
         }
@@ -360,6 +362,14 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (positionNames != null && positionNames.getLength() > 0) {
             updatePositionNames(vector, positionNames, positions);
         }
+    }
+
+    public RAbstractContainer copyWithAttributes(RAbstractContainer value) {
+        if (copyWithAttributesNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            copyWithAttributesNode = insert(CopyWithAttributes.create());
+        }
+        return copyWithAttributesNode.execute(containerLibrary, value);
     }
 
     @ImportStatic(DSLConfig.class)

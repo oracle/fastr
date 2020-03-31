@@ -166,6 +166,7 @@ public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public final RLogicalVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createLogicalVector(new byte[newLength], newIsComplete);
     }

@@ -119,6 +119,7 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public boolean isMaterialized() {
         return VectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
     }
@@ -275,12 +276,7 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
     @Override
     @Ignore // AbstractContainerLibrary
     public RDoubleVector materialize() {
-        if (VectorDataLibrary.getFactory().getUncached().isWriteable(data)) {
-            return this;
-        }
-        // To retain the semantics of the original materialize, for sequences and such we return new
-        // vector
-        return new RDoubleVector(getDataCopy(), isComplete());
+        return containerLibMaterialize(VectorDataLibrary.getFactory().getUncached(data));
     }
 
     @ExportMessage(library = AbstractContainerLibrary.class)
@@ -288,7 +284,25 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
         setData(dataLib.materialize(data), getLength());
     }
 
+    @ExportMessage(name = "materialize", library = AbstractContainerLibrary.class)
+    RDoubleVector containerLibMaterialize(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (dataLib.isWriteable(data)) {
+            return this;
+        }
+        // To retain the semantics of the original materialize, for sequences and such we return new
+        // vector
+        return new RDoubleVector(dataLib.getDoubleDataCopy(data), isComplete());
+    }
+
+    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
+    RDoubleVector containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        RDoubleVector result = new RDoubleVector(dataLib.copy(data, false), dataLib.getLength(data));
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
     @Override
+    @Ignore // AbstractContainerLibrary
     public RDoubleVector createEmptySameType(int newLength, boolean newIsComplete) {
         return new RDoubleVector(new double[newLength], newIsComplete);
     }
@@ -414,10 +428,5 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
     private double[] getArrayForNativeDataAccess() {
         materializeData(VectorDataLibrary.getFactory().getUncached());
         return data instanceof RDoubleArrayVectorData ? ((RDoubleArrayVectorData) data).getReadonlyDoubleData() : null;
-    }
-
-    @ExportMessage(name = "getLength", library = AbstractContainerLibrary.class)
-    public int containerLibGetLength(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
-        return dataLib.getLength(data);
     }
 }

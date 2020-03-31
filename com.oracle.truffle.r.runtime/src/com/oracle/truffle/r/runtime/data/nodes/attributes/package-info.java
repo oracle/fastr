@@ -33,29 +33,29 @@
  * <h3>Arbitrary attribute nodes</h3> The nodes in this group operate on the attribute specified as
  * the second argument of the <code>execute</code> method.
  * <ul>
- * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributeNode}: retrieves the value of an
- * arbitrary attribute
- * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.SetAttributeNode}: sets the value of an
- * arbitrary attribute. If the first argument is an instance
+ * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributeNode}: retrieves the
+ * value of an arbitrary attribute
+ * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.SetAttributeNode}: sets the value
+ * of an arbitrary attribute. If the first argument is an instance
  * {@link com.oracle.truffle.r.runtime.data.RAttributable}, the node initializes the object with the
  * empty attributes.
- * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveAttributeNode}: removes an arbitrary
- * attribute, if any.
+ * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveAttributeNode}: removes an
+ * arbitrary attribute, if any.
  * </ul>
  *
  * <h3>Fixed attribute nodes</h3> The nodes in this group operate on the attribute that is specified
  * during the initialization of a node.
  * <ul>
- * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedAttributeNode}: retrieves the value of
- * the predefined attribute
- * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.HasFixedAttributeNode}: determines the existence
- * of the predefined attribute
- * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode}: sets the value of the
- * predefined attribute. If the first argument is an instance
+ * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedAttributeNode}: retrieves
+ * the value of the predefined attribute
+ * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.HasFixedAttributeNode}: determines
+ * the existence of the predefined attribute
+ * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode}: sets the
+ * value of the predefined attribute. If the first argument is an instance
  * {@link com.oracle.truffle.r.runtime.data.RAttributable}, the node initializes the object with the
  * empty attributes.
- * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveFixedAttributeNode}: removes the
- * predefined attribute
+ * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveFixedAttributeNode}: removes
+ * the predefined attribute
  * </ul>
  * There are additional subclasses of the above-mentioned nodes handling the special attributes,
  * such as <code>names</code>, <code>dimnames</code> etc.
@@ -75,7 +75,8 @@
  * <ul>
  * <li>
  * {@link com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode}
- * <li>{@link com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode}
+ * <li>
+ * {@link com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode}
  * <li>
  * {@link com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode}
  * <li>
@@ -89,7 +90,8 @@
  * one or not. The static factory methods defined on the base fixed attribute nodes take care of
  * that and create the corresponding instance as long as the attribute is a special one. Thus, all
  * the following initializations produce an instance of
- * {@link com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode}.
+ * {@link com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode}
+ * .
  *
  * <pre>
  * &#64;Child private SetFixedAttributeNode setDimNode = SetFixedAttributeNode.create("dim");

@@ -24,7 +24,10 @@ package com.oracle.truffle.r.runtime.data.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
@@ -34,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -62,29 +64,32 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
         return UnaryCopyAttributesNodeGen.create(true);
     }
 
-    public abstract RAbstractVector execute(RAbstractVector target, RAbstractVector left);
+    public abstract RAbstractContainer execute(RAbstractContainer target, RAbstractContainer left);
 
-    protected boolean containsMetadata(RAbstractVector vector) {
-        return vector.isMaterialized() && hasDimNode.execute(vector) ||
+    protected boolean containsMetadata(AbstractContainerLibrary containerLib, RAbstractContainer vector) {
+        return containerLib.isMaterialized(vector) && hasDimNode.execute(vector) ||
                         (copyAllAttributes && vector.getAttributes() != null) ||
                         getNamesNode.getNames(vector) != null ||
                         getDimNamesNode.getDimNames(vector) != null;
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "!containsMetadata(source)")
-    protected RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector source) {
+    @Specialization(guards = "!containsMetadata(containerLib, source)", limit = "getGenericVectorAccessCacheSize()")
+    protected RAbstractContainer copyNoMetadata(RAbstractContainer target, RAbstractContainer source,
+                    @SuppressWarnings("unused") @CachedLibrary("source") AbstractContainerLibrary containerLib) {
         return target;
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"copyAllAttributes", "target == source"})
-    protected RAbstractVector copySameVector(RAbstractVector target, RAbstractVector source) {
+    protected RAbstractContainer copySameVector(RAbstractContainer target, RAbstractContainer source) {
         return target;
     }
 
-    @Specialization(guards = {"!copyAllAttributes || target != source", "containsMetadata(source)"})
-    protected RAbstractVector copySameLength(RAbstractVector target, RAbstractVector source,
+    @Specialization(guards = {"!copyAllAttributes || target != source", "containsMetadata(sourceContainerLib, source)"}, limit = "getGenericVectorAccessCacheSize()")
+    protected RAbstractContainer copySameLength(RAbstractContainer target, RAbstractContainer source,
+                    @CachedLibrary("target") AbstractContainerLibrary targetContainerLib,
+                    @SuppressWarnings("unused") @CachedLibrary("source") AbstractContainerLibrary sourceContainerLib,
                     @Cached("create()") CopyOfRegAttributesNode copyOfReg,
                     @Cached("createDim()") RemoveFixedAttributeNode removeDim,
                     @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames,
@@ -98,7 +103,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
-        RAbstractVector result = target.materialize();
+        RAbstractContainer result = targetContainerLib.materialize(target);
 
         if (copyAllAttributes) {
             copyOfReg.execute(source, result);
