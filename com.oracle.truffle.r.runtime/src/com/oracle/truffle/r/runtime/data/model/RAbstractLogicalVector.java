@@ -176,6 +176,7 @@ public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
     @ExportMessage
     @SuppressWarnings("static")
     public NACheck getNACheck(@Shared("naCheck") @Cached NACheck na) {
+        na.enable(!isComplete());
         return na;
     }
 
@@ -280,6 +281,7 @@ public abstract class RAbstractLogicalVector extends RAbstractAtomicVector {
                     @Shared("storeProfile") @Cached("createClassProfile()") ValueProfile storeProfile,
                     @Shared("naCheck") @Cached NACheck na) {
         byte result = getDataAt(storeProfile.profile(getInternalStore()), index);
+        na.enable(!isComplete());
         na.check(result);
         return result;
     }

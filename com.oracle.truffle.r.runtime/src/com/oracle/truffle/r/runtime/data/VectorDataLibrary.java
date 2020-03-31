@@ -360,7 +360,9 @@ public abstract class VectorDataLibrary extends Library {
      * {@link #getElementAt(Object, int)}.
      *
      * In other words: {@link NACheck#neverSeenNA()} implies that no method such as
-     * {@link #getIntAt(Object, int)} ever returned {@code NA} value.
+     * {@link #getIntAt(Object, int)} ever returned {@code NA} value. If
+     * {@link NACheck#neverSeenNA()} is {@code false}, then we do not know anything about the data
+     * and must assume that {@code NA} value could have been returned.
      */
     public abstract NACheck getNACheck(Object receiver);
 

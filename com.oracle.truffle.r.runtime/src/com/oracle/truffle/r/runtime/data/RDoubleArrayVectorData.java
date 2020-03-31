@@ -63,6 +63,7 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     @SuppressWarnings("static-method")
     @ExportMessage
     public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na) {
+        na.enable(!isComplete());
         return na;
     }
 
@@ -143,6 +144,7 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public double getDoubleAt(int index, @Shared("naCheck") @Cached() NACheck naCheck) {
         double value = data[index];
+        naCheck.enable(!isComplete());
         naCheck.check(value);
         return value;
     }

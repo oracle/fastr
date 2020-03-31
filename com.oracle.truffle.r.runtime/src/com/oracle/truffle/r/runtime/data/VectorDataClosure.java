@@ -44,7 +44,7 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     final RAbstractVector delegate;
     final Object data;
 
-    public VectorDataClosure(RAbstractVector delegate, Object data, RType targetType) {
+    private VectorDataClosure(RAbstractVector delegate, Object data, RType targetType) {
         assert delegate == null || delegate.getData() == data;
         // Do not use closure to wrap int vector data as int vector data...
         assert targetType != VectorDataLibrary.getFactory().getUncached().getType(data);
@@ -144,8 +144,12 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     }
 
     @ExportMessage
-    public NACheck getNACheck(@CachedLibrary("this.data") VectorDataLibrary dataLib) {
-        return dataLib.getNACheck(data);
+    public NACheck getNACheck() {
+        // the contract is that the check is enabled if the vector may contain NA values,
+        // we cannot say that upfront, because NAs can occur as the result of type conversions
+        // NOTE: this method and "isComplete" can be improved for type conversions that are known to
+        // never introduce NA values (e.g., int -> double)
+        return NACheck.getDisabled();
     }
 
     // Integer

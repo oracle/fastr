@@ -235,6 +235,7 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
     @ExportMessage
     @SuppressWarnings("static")
     public NACheck getNACheck(@Shared("naCheck") @Cached NACheck na) {
+        na.enable(!isComplete());
         return na;
     }
 
@@ -338,6 +339,7 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
     public RComplex getComplexAt(int index,
                     @Shared("naCheck") @Cached NACheck na) {
         RComplex result = getDataAt(index);
+        na.enable(!isComplete());
         na.check(result);
         return result;
     }
