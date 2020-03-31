@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import com.oracle.truffle.r.nodes.primitive.BinaryMapNAFunctionNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.Or;
 import com.oracle.truffle.r.runtime.ops.BooleanOperation;
@@ -39,11 +38,6 @@ public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode 
 
     public BinaryMapBooleanFunctionNode(BooleanOperation arithmetic) {
         this.operation = arithmetic;
-    }
-
-    @Override
-    public RAbstractVector tryFoldConstantTime(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        return null;
     }
 
     @Override

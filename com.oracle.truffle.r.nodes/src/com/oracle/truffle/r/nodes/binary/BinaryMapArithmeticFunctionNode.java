@@ -26,13 +26,13 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNAFunctionNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RSeq;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add;
@@ -50,12 +50,31 @@ import com.oracle.truffle.r.runtime.data.WarningInfo;
 public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNode {
 
     @Child private BinaryArithmetic arithmetic;
+    @Child private VectorDataLibrary leftDataLib;
+    @Child private VectorDataLibrary rightDataLib;
+
     protected final NACheck resultNACheck = NACheck.create();
 
     private final ConditionProfile finiteResult = ConditionProfile.createBinaryProfile();
 
     public BinaryMapArithmeticFunctionNode(BinaryArithmetic arithmetic) {
         this.arithmetic = arithmetic;
+    }
+
+    public Object getLeftDataAt(Object leftData, int index) {
+        if (leftDataLib == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            leftDataLib = insert(VectorDataLibrary.getFactory().create(leftData));
+        }
+        return leftDataLib.getDataAtAsObject(leftData, index);
+    }
+
+    public Object getRightDataAt(Object rightData, int index) {
+        if (rightDataLib == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            rightDataLib = insert(VectorDataLibrary.getFactory().create(rightData));
+        }
+        return rightDataLib.getDataAtAsObject(rightData, index);
     }
 
     @Override
@@ -69,16 +88,11 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
     }
 
     @Override
-    public RAbstractVector tryFoldConstantTime(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        throw RInternalError.shouldNotReachHere();
-    }
-
-    @Override
-    public RAbstractVector tryFoldConstantTime(WarningInfo warningInfo, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
+    public RAbstractVector tryFoldConstantTime(WarningInfo warningInfo, Object leftData, int leftLength, Object rightData, int rightLength) {
         if (isSequenceAddArithmetic()) {
-            return sequenceAddOperation(warningInfo, left, leftLength, right, rightLength);
+            return sequenceAddOperation(warningInfo, leftData, leftLength, rightData, rightLength);
         } else if (isSequenceMulArithmetic()) {
-            return sequenceMulOperation(warningInfo, left, leftLength, right, rightLength);
+            return sequenceMulOperation(warningInfo, leftData, leftLength, rightData, rightLength);
         }
         return null;
     }
@@ -195,44 +209,44 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         }
     }
 
-    private RAbstractVector sequenceMulOperation(WarningInfo warningInfo, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        if (left.isSequence()) {
+    private RAbstractVector sequenceMulOperation(WarningInfo warningInfo, Object leftData, int leftLength, Object rightData, int rightLength) {
+        if (leftData instanceof RSeq) {
             if (rightLength == 1) {
                 // result_start = left_start <op> right[[0]]
                 // result_stride = left_stride <op> right[[0]]
                 // result_length = left_length
-                Object firstValue = right.getDataAtAsObject(0);
-                return foldSequence(warningInfo, left.getSequence(), firstValue, firstValue, rightNACheck);
+                Object firstValue = getRightDataAt(rightData, 0);
+                return foldSequence(warningInfo, (RSeq) leftData, firstValue, firstValue, rightNACheck);
             }
-        } else if (right.isSequence() && arithmetic.isCommutative() && leftLength == 1) {
+        } else if (rightData instanceof RSeq && arithmetic.isCommutative() && leftLength == 1) {
             // result_start = right_start <op> left[[0]]
             // result_stride = right_stride <op> left[[0]]
             // result_length = right_length
-            Object firstValue = left.getDataAtAsObject(0);
-            return foldSequence(warningInfo, right.getSequence(), firstValue, firstValue, rightNACheck);
+            Object firstValue = getLeftDataAt(leftData, 0);
+            return foldSequence(warningInfo, (RSeq) rightData, firstValue, firstValue, rightNACheck);
         }
         return null;
     }
 
-    private RAbstractVector sequenceAddOperation(WarningInfo warningInfo, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        if (left.isSequence()) {
+    private RAbstractVector sequenceAddOperation(WarningInfo warningInfo, Object leftData, int leftLength, Object rightData, int rightLength) {
+        if (leftData instanceof RSeq) {
             if (rightLength == 1) {
                 // result_start = left_start <op> right[[0]]
                 // result_stride = left_stride
                 // result_length = left_length
-                return foldSequence(warningInfo, left.getSequence(), right.getDataAtAsObject(0), null, rightNACheck);
-            } else if (right.isSequence() && leftLength == rightLength) {
+                return foldSequence(warningInfo, (RSeq) leftData, getRightDataAt(rightData, 0), null, rightNACheck);
+            } else if (rightData instanceof RSeq && leftLength == rightLength) {
                 // result_start = left_start <op> right_start
                 // result_stride = left_stride <op> right_stride
                 // result_length = left_length = right_length
-                RSeq otherSequence = right.getSequence();
-                return foldSequence(warningInfo, left.getSequence(), otherSequence.getStartObject(), otherSequence.getStrideObject(), rightNACheck);
+                RSeq otherSequence = (RSeq) rightData;
+                return foldSequence(warningInfo, (RSeq) leftData, otherSequence.getStartObject(), otherSequence.getStrideObject(), rightNACheck);
             }
-        } else if (right.isSequence() && arithmetic.isCommutative() && leftLength == 1) {
+        } else if (rightData instanceof RSeq && arithmetic.isCommutative() && leftLength == 1) {
             // result_start = right_start <op> left[[0]]
             // result_stride = right_stride
             // result_length = right_length
-            return foldSequence(warningInfo, right.getSequence(), left.getDataAtAsObject(0), null, leftNACheck);
+            return foldSequence(warningInfo, (RSeq) rightData, getLeftDataAt(leftData, 0), null, leftNACheck);
         }
         return null;
     }

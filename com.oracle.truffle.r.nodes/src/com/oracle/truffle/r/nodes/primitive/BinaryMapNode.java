@@ -170,8 +170,6 @@ final class BinaryMapVectorNode extends BinaryMapNode {
     private final ConditionProfile seenEmpty;
     private final ConditionProfile shareLeft;
     private final ConditionProfile shareRight;
-    private final ConditionProfile leftIsNAProfile;
-    private final ConditionProfile rightIsNAProfile;
     private final BranchProfile hasWarningsBranchProfile;
 
     // compile-time optimization flags
@@ -191,8 +189,6 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         boolean rightVectorImpl = right.isMaterialized();
         this.mayContainMetadata = leftVectorImpl || rightVectorImpl;
         this.mayFoldConstantTime = function.mayFoldConstantTime(left, right);
-        this.leftIsNAProfile = mayFoldConstantTime ? ConditionProfile.createBinaryProfile() : null;
-        this.rightIsNAProfile = mayFoldConstantTime ? ConditionProfile.createBinaryProfile() : null;
         this.mayShareLeft = left.getRType() == resultType && leftVectorImpl;
         this.mayShareRight = right.getRType() == resultType && rightVectorImpl;
         // lazily create profiles only if needed to avoid unnecessary allocations
@@ -250,7 +246,9 @@ final class BinaryMapVectorNode extends BinaryMapNode {
         if (mayFoldConstantTime && function.mayFoldConstantTime(left, right)) {
             function.enable(left, right);
             warningInfo = new WarningInfo();
-            target = function.tryFoldConstantTime(warningInfo, left.castSafe(argumentType, leftIsNAProfile, false), leftLength, right.castSafe(argumentType, rightIsNAProfile, false), rightLength);
+            Object leftDataCast = leftLibrary.cast(leftData, argumentType);
+            Object rightDataCast = rightLibrary.cast(rightData, argumentType);
+            target = function.tryFoldConstantTime(warningInfo, leftDataCast, leftLength, rightDataCast, rightLength);
         }
         if (target == null) {
             int maxLength = maxLengthProfile.profile(leftLength >= rightLength) ? leftLength : rightLength;

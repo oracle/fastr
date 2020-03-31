@@ -182,6 +182,7 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     @ExportMessage
     @SuppressWarnings("static")
     public NACheck getNACheck(@Shared("naCheck") @Cached NACheck na) {
+        na.enable(!isComplete());
         return na;
     }
 
@@ -281,6 +282,7 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
                     @Shared("storeProfile") @Cached("createClassProfile()") ValueProfile storeProfile,
                     @Shared("naCheck") @Cached NACheck na) {
         String result = getDataAt(storeProfile.profile(getInternalStore()), index);
+        na.enable(!isComplete());
         na.check(result);
         return result;
     }

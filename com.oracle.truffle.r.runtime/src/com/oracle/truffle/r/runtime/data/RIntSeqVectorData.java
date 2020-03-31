@@ -54,6 +54,19 @@ public class RIntSeqVectorData implements RSeq, TruffleObject {
         this.length = length;
     }
 
+    @ExportMessage
+    public Object cast(RType targetType) {
+        CompilerAsserts.partialEvaluationConstant(targetType);
+        switch (targetType) {
+            case Double:
+                return new RDoubleSeqVectorData(start, stride, length);
+            case Character:
+                // TODO
+            default:
+                return VectorDataClosure.fromData(this, RType.Integer, targetType);
+        }
+    }
+
     @SuppressWarnings("static-method")
     @ExportMessage
     public NACheck getNACheck() {

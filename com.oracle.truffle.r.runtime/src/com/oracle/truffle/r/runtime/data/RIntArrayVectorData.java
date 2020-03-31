@@ -63,6 +63,7 @@ class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     @SuppressWarnings("static-method")
     @ExportMessage
     public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na) {
+        na.enable(!isComplete());
         return na;
     }
 
@@ -144,6 +145,7 @@ class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     public int getIntAt(int index,
                     @Shared("naCheck") @Cached() NACheck naCheck) {
         int value = data[index];
+        naCheck.enable(!isComplete());
         naCheck.check(value);
         return value;
     }
