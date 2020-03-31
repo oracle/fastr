@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,11 +57,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -180,8 +180,8 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
 
             // fast path for very simple case of filling with a single double values:
             if (trySimple) {
-                if (x instanceof RAbstractDoubleVector && x.getLength() == 1 && times.getLength() == 1 && each == 1 && getNames.getNames(x) == null) {
-                    RAbstractDoubleVector doubleVector = (RAbstractDoubleVector) x;
+                if (x instanceof RDoubleVector && x.getLength() == 1 && times.getLength() == 1 && each == 1 && getNames.getNames(x) == null) {
+                    RDoubleVector doubleVector = (RDoubleVector) x;
                     int t = times.getDataAt(0);
                     if (t < 0) {
                         throw error(RError.Message.INVALID_ARGUMENT, "times");

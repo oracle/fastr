@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,11 +53,11 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -113,12 +113,12 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
         return (RIntVector) castInteger.doCast(vector);
     }
 
-    private RAbstractDoubleVector castDouble(Object o) {
+    private RDoubleVector castDouble(Object o) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNode.createNonPreserving());
         }
-        return (RAbstractDoubleVector) castDouble.doCast(o);
+        return (RDoubleVector) castDouble.doCast(o);
     }
 
     private RAbstractVector castVector(Object value) {
@@ -236,7 +236,7 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
             }
             setRowNamesAttrNode.setRowNames(result, castVector(value));
         } else if (Utils.identityEquals(internedName, RRuntime.TSP_ATTR_KEY)) {
-            RAbstractDoubleVector tsp = castDouble(castVector(value));
+            RDoubleVector tsp = castDouble(castVector(value));
             if (setTspAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setTspAttrNode = insert(SetTspAttributeNode.create());

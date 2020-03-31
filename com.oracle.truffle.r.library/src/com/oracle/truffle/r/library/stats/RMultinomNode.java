@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2012, The R Core Team
  * Copyright (c) 2003-2008, The R Foundation
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,9 +41,9 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
@@ -82,7 +82,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = "probsAccess.supports(probs)", limit = "getVectorAccessCacheSize()")
-    protected RIntVector doMultinom(int n, int size, RAbstractDoubleVector probs,
+    protected RIntVector doMultinom(int n, int size, RDoubleVector probs,
                     @Cached("probs.access()") VectorAccess probsAccess) {
         try (SequentialIterator probsIter = probsAccess.access(probs)) {
             double sum = 0.0;
@@ -149,7 +149,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
     }
 
     @Specialization(replaces = "doMultinom")
-    protected RIntVector doMultinomGeneric(int n, int size, RAbstractDoubleVector probs) {
+    protected RIntVector doMultinomGeneric(int n, int size, RDoubleVector probs) {
         return doMultinom(n, size, probs, VectorAccess.createSlowPath(probs));
     }
 }

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +44,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -352,8 +351,8 @@ final class DoSetViewPort {
     // positions replaced with nrow/ncol already.
     private static ViewPortLocation calcViewportLocationFromLayout(LayoutPos pos, RList parentVP, Size parentSize) {
         // unlike in GnuR, we maintain parent viewport widths/heights in inches like anything else
-        RAbstractDoubleVector widths = GridUtils.asDoubleVector(parentVP.getDataAt(ViewPort.PVP_WIDTHS));
-        RAbstractDoubleVector heights = GridUtils.asDoubleVector(parentVP.getDataAt(ViewPort.PVP_HEIGHTS));
+        RDoubleVector widths = GridUtils.asDoubleVector(parentVP.getDataAt(ViewPort.PVP_WIDTHS));
+        RDoubleVector heights = GridUtils.asDoubleVector(parentVP.getDataAt(ViewPort.PVP_HEIGHTS));
         double totalWidth = sum(widths, 0, pos.layoutSize.ncol);
         double totalHeight = sum(heights, 0, pos.layoutSize.nrow);
         double width = sum(widths, pos.colMin, pos.colMax - pos.colMin + 1);

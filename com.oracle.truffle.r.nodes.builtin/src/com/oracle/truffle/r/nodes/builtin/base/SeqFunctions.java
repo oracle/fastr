@@ -70,7 +70,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
@@ -127,7 +126,7 @@ public final class SeqFunctions {
         }
 
         @Specialization
-        protected boolean isNumericNode(@SuppressWarnings("unused") RAbstractDoubleVector obj) {
+        protected boolean isNumericNode(@SuppressWarnings("unused") RDoubleVector obj) {
             return true;
         }
 
@@ -167,7 +166,7 @@ public final class SeqFunctions {
         }
 
         @Specialization
-        protected int getIntegralNumeric(RAbstractDoubleVector doubleVec) {
+        protected int getIntegralNumeric(RDoubleVector doubleVec) {
             return (int) doubleVec.getDataAt(0);
         }
 
@@ -518,7 +517,7 @@ public final class SeqFunctions {
          * A length-1 REAL. Return "1:(int) from" where from is positive integral
          */
         @Specialization(guards = {"fromVec.getLength() == 1", "isPositiveIntegralDouble(fromVec.getDataAt(0))"})
-        protected RAbstractVector seqFromOneArgIntDouble(RAbstractDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
+        protected RAbstractVector seqFromOneArgIntDouble(RDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             int len = (int) fromVec.getDataAt(0);
             return RDataFactory.createIntSequence(1, 1, len);
         }
@@ -528,7 +527,7 @@ public final class SeqFunctions {
          * {@code seq(0.2)} is NOT the same as {@code seq(0.0)} (according to GNU R)
          */
         @Specialization(guards = "fromVec.getLength() == 1")
-        protected RAbstractVector seqFromOneArgDouble(RAbstractDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
+        protected RAbstractVector seqFromOneArgDouble(RDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
             double from = validateDoubleParam(fromVec.getDataAt(0), fromVec, "from");
             int len = effectiveLength(1, from);
             return RDataFactory.createIntSequence(1, from > 0 ? 1 : -1, len);
@@ -566,7 +565,7 @@ public final class SeqFunctions {
          */
 
         @Specialization(guards = "validDoubleParams(fromVec, toVec)")
-        protected RAbstractVector seqLengthByMissingDouble(RAbstractDoubleVector fromVec, RAbstractDoubleVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+        protected RAbstractVector seqLengthByMissingDouble(RDoubleVector fromVec, RDoubleVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
             double from = fromVec.getDataAt(0);
             double to = toVec.getDataAt(0);
@@ -616,7 +615,7 @@ public final class SeqFunctions {
          */
 
         @Specialization(guards = {"validDoubleParams(fromVec, toVec)", "!isMissing(byObj)"})
-        protected Object seqLengthMissing(RAbstractDoubleVector fromVec, RAbstractDoubleVector toVec, Object byObj, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+        protected Object seqLengthMissing(RDoubleVector fromVec, RDoubleVector toVec, Object byObj, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealby) {
             validateLength(byObj, "by");
             double by = asRealby.execute(byObj);
@@ -812,7 +811,7 @@ public final class SeqFunctions {
             }
 
             @Specialization
-            protected boolean isIntegralNumericNode(RAbstractDoubleVector doubleVec) {
+            protected boolean isIntegralNumericNode(RDoubleVector doubleVec) {
                 if (doubleVec.getLength() == 1) {
                     double d = doubleVec.getDataAt(0);
                     return d == (int) d && (checkLength ? d >= 0 : true);
@@ -970,7 +969,7 @@ public final class SeqFunctions {
 
         // Guard methods
 
-        public static boolean validDoubleParams(RAbstractDoubleVector from, RAbstractDoubleVector to) {
+        public static boolean validDoubleParams(RDoubleVector from, RDoubleVector to) {
             return from.getLength() == 1 && to.getLength() == 1 && isFinite(from.getDataAt(0)) && isFinite(to.getDataAt(0));
         }
 
@@ -987,7 +986,7 @@ public final class SeqFunctions {
         }
 
         public static boolean isNumeric(Object obj) {
-            return obj instanceof Double || obj instanceof Integer || obj instanceof RAbstractDoubleVector || obj instanceof RIntVector;
+            return obj instanceof Double || obj instanceof Integer || obj instanceof RDoubleVector || obj instanceof RIntVector;
         }
 
         public static boolean isInt(Object obj) {

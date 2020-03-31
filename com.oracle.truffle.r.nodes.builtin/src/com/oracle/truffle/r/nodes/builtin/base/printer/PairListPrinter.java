@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,12 +24,12 @@ import java.io.IOException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -65,7 +65,7 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
                     pbuf = "Logical," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RIntVector) {
                     pbuf = "Integer," + ((RAbstractContainer) tmp).getLength();
-                } else if (tmp instanceof RAbstractDoubleVector) {
+                } else if (tmp instanceof RDoubleVector) {
                     pbuf = "Numeric," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractComplexVector) {
                     pbuf = "Complex," + ((RAbstractContainer) tmp).getLength();

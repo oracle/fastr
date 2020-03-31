@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -78,7 +77,7 @@ public abstract class CumMax extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "emptyVec.getLength()==0")
-    protected RAbstractVector cumEmpty(RAbstractDoubleVector emptyVec,
+    protected RAbstractVector cumEmpty(RDoubleVector emptyVec,
                     @Cached("create()") GetNamesAttributeNode getNames) {
         return RDataFactory.createDoubleVector(new double[0], true, getNames.getNames(emptyVec));
     }
@@ -102,7 +101,7 @@ public abstract class CumMax extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RDoubleVector cummax(RAbstractDoubleVector v) {
+    protected RDoubleVector cummax(RDoubleVector v) {
         double[] cmaxV = new double[v.getLength()];
         na.enable(v);
         double max = v.getDataAt(0);

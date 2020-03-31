@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,10 +56,10 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -98,7 +98,7 @@ public final class GridTextNode extends RBaseNode {
     }
 
     @TruffleBoundary
-    public Object gridText(RAbstractStringVector textVec, RAbstractVector x, RAbstractVector y, RAbstractDoubleVector hjustVec, RAbstractDoubleVector vjustVec, RAbstractDoubleVector rotationVec,
+    public Object gridText(RAbstractStringVector textVec, RAbstractVector x, RAbstractVector y, RDoubleVector hjustVec, RDoubleVector vjustVec, RDoubleVector rotationVec,
                     boolean checkOverlapIn, double theta) {
         if (textVec.getLength() == 0) {
             return RNull.instance;

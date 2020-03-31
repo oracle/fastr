@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,8 +36,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 
 public abstract class Zeroin2 extends RExternalBuiltinNode.Arg7 {
@@ -61,7 +61,7 @@ public abstract class Zeroin2 extends RExternalBuiltinNode.Arg7 {
     }
 
     @Specialization
-    protected RAbstractDoubleVector zeroin2(RFunction f, double xmin, double xmax, double faxArg, double fbxArg, double tolArg, int maxIterArg) {
+    protected RDoubleVector zeroin2(RFunction f, double xmin, double xmax, double faxArg, double fbxArg, double tolArg, int maxIterArg) {
         double fax = faxArg;
         double fbx = fbxArg;
         double tol = tolArg;
@@ -180,8 +180,8 @@ public abstract class Zeroin2 extends RExternalBuiltinNode.Arg7 {
                     if (vec.getLength() == 1) {
                         fRes = vec.getDataAt(0);
                     }
-                } else if (fRes instanceof RAbstractDoubleVector) {
-                    RAbstractDoubleVector vec = (RAbstractDoubleVector) fRes;
+                } else if (fRes instanceof RDoubleVector) {
+                    RDoubleVector vec = (RDoubleVector) fRes;
                     if (vec.getLength() == 1) {
                         fRes = vec.getDataAt(0);
                     }

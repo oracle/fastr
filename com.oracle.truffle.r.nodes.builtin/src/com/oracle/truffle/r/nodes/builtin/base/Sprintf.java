@@ -41,11 +41,11 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -140,7 +140,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector sprintf(String fmt, RAbstractDoubleVector x) {
+    protected RStringVector sprintf(String fmt, RDoubleVector x) {
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; k++) {
             r[k] = sprintf(fmt, x.getDataAt(k));
@@ -150,7 +150,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
-    protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractDoubleVector x) {
+    protected RStringVector sprintf(RAbstractStringVector fmt, RDoubleVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 

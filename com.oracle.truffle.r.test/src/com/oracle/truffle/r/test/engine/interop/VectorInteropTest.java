@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -324,8 +323,8 @@ public class VectorInteropTest extends AbstractInteropTest {
     }
 
     private static boolean isNA(RAbstractVector vec) {
-        if (vec instanceof RAbstractDoubleVector) {
-            return RRuntime.isNA(((RAbstractDoubleVector) vec).getDataAt(0));
+        if (vec instanceof RDoubleVector) {
+            return RRuntime.isNA(((RDoubleVector) vec).getDataAt(0));
         } else if (vec instanceof RIntVector) {
             return RRuntime.isNA(((RIntVector) vec).getDataAt(0));
         } else if (vec instanceof RAbstractLogicalVector) {
@@ -360,8 +359,8 @@ public class VectorInteropTest extends AbstractInteropTest {
         if (vec instanceof RIntVector) {
             return RRuntime.isNA(((RIntVector) vec).getDataAt(0));
         }
-        if (vec instanceof RAbstractDoubleVector) {
-            return RRuntime.isNA(((RAbstractDoubleVector) vec).getDataAt(0));
+        if (vec instanceof RDoubleVector) {
+            return RRuntime.isNA(((RDoubleVector) vec).getDataAt(0));
         }
         if (vec instanceof RAbstractComplexVector) {
             return RRuntime.isNA(((RAbstractComplexVector) vec).getDataAt(0));

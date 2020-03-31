@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -128,7 +127,7 @@ public final class Unit {
         return cm / CM_IN_INCH;
     }
 
-    public static RAbstractDoubleVector newUnit(double value, int unitId) {
+    public static RDoubleVector newUnit(double value, int unitId) {
         assert unitId > 0 && unitId <= LAST_NORMAL_UNIT;
         RDoubleVector result = RDataFactory.createDoubleVector(new double[]{value}, RDataFactory.COMPLETE_VECTOR);
         result.setClassAttr(RDataFactory.createStringVectorFromScalar(UNIT_CLASS));
@@ -562,7 +561,7 @@ public final class Unit {
                 case "-":
                     return recursive.apply(expr.arg1, L_subtracting) - recursive.apply(expr.arg2, L_subtracting);
                 case "*":
-                    RAbstractDoubleVector left = asDoubleVector(expr.arg1);
+                    RDoubleVector left = asDoubleVector(expr.arg1);
                     return left.getDataAt(args.index % left.getLength()) * recursive.apply(expr.arg2, L_multiplying);
                 default:
                     break;

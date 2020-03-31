@@ -35,8 +35,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.util.ReadDoublePointerNode;
 import com.oracle.truffle.r.runtime.ffi.util.ReadIntPointerNode;
@@ -589,7 +589,7 @@ public final class MathFunctionsNodes {
         protected double besselExForPointer(BesselExCaller caller, Object b,
                         @Cached("create()") GetReadonlyData.Double bReadonlyData,
                         @CachedLibrary("b") InteropLibrary bInterop) {
-            RAbstractDoubleVector bVec;
+            RDoubleVector bVec;
             long addr;
             try {
                 if (!bInterop.isPointer(b)) {
@@ -607,12 +607,12 @@ public final class MathFunctionsNodes {
         protected double besselEx(BesselExCaller caller, Object b,
                         @Cached("create()") GetReadonlyData.Double bReadonlyData,
                         @SuppressWarnings("unused") @CachedLibrary("b") InteropLibrary bInterop) {
-            RAbstractDoubleVector bVec;
+            RDoubleVector bVec;
             if (bConvertForeign == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 bConvertForeign = insert(ConvertForeignObjectNode.create());
             }
-            bVec = (RAbstractDoubleVector) bConvertForeign.convert((TruffleObject) b);
+            bVec = (RDoubleVector) bConvertForeign.convert((TruffleObject) b);
             return caller.call(bReadonlyData.execute(bVec.materialize()));
         }
 

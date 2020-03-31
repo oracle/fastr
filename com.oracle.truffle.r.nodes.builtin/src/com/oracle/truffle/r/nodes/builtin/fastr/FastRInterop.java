@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,6 +88,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
@@ -100,7 +101,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -803,14 +803,14 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractDoubleVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+        public Object toArray(RDoubleVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             return toArray(ctxRef.get(), vec, flat, double.class, (array, i) -> Array.set(array, i, vec.getDataAt(i)));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractDoubleVector vec, String className, boolean flat,
+        public Object toArray(RDoubleVector vec, String className, boolean flat,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             RContext context = ctxRef.get();
             return toArray(context, vec, flat, getClazz(context, className), (array, i) -> {
@@ -1005,7 +1005,7 @@ public class FastRInterop {
         protected boolean isJavaLikeVector(RAbstractVector vec) {
             return vec instanceof RAbstractLogicalVector ||
                             vec instanceof RIntVector ||
-                            vec instanceof RAbstractDoubleVector ||
+                            vec instanceof RDoubleVector ||
                             vec instanceof RAbstractStringVector ||
                             vec instanceof RAbstractRawVector;
         }

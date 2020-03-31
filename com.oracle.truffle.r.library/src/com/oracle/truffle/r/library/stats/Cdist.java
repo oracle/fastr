@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -59,7 +58,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization(guards = {"method == cachedMethod", "xAccess.supports(x)"})
-    protected RDoubleVector cdist(RAbstractDoubleVector x, @SuppressWarnings("unused") int method, RList list, double p,
+    protected RDoubleVector cdist(RDoubleVector x, @SuppressWarnings("unused") int method, RList list, double p,
                     @Cached("method") @SuppressWarnings("unused") int cachedMethod,
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("getMethod(method)") Method methodObj,
@@ -97,7 +96,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization(replaces = "cdist")
-    protected RDoubleVector cdistGeneric(RAbstractDoubleVector x, int method, RList list, double p,
+    protected RDoubleVector cdistGeneric(RDoubleVector x, int method, RList list, double p,
                     @Cached("create()") SetAttributeNode setAttrNode,
                     @Cached("create()") SetClassAttributeNode setClassAttrNode,
                     @Cached("create()") GetDimAttributeNode getDimNode) {

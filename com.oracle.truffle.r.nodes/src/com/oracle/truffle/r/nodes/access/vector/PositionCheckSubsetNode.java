@@ -41,11 +41,11 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -136,7 +136,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     @Specialization(/* contains = "doSequence" */ limit = "getGenericVectorAccessCacheSize()")
-    protected RAbstractVector doDouble(PositionProfile profile, int dimensionLength, RAbstractDoubleVector position, int positionLength,
+    protected RAbstractVector doDouble(PositionProfile profile, int dimensionLength, RDoubleVector position, int positionLength,
                     @Cached("create()") BranchProfile seenZeroProfile,
                     @Cached("create()") BranchProfile seenPositiveProfile,
                     @Cached("create()") BranchProfile seenNegativeProfile,

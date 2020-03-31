@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "formatC", kind = INTERNAL, parameterNames = {"x", "mode", "width", "digits", "format", "flag", "i.strlen"}, behavior = PURE)
@@ -125,7 +125,7 @@ public abstract class FormatC extends RBuiltinNode.Arg7 {
             if (type == RType.Double) {
                 if (doFg) { /* do smart "f" : */
                     for (int i = 0; i < x.getLength(); i++) {
-                        double xx = ((RAbstractDoubleVector) x).getDataAt(i);
+                        double xx = ((RDoubleVector) x).getDataAt(i);
                         if (xx == 0.) {
                             result[i] = "0";
                         } else {

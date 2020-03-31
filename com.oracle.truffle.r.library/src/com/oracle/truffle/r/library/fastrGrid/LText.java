@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -48,7 +48,7 @@ public abstract class LText extends RExternalBuiltinNode.Arg7 {
     }
 
     @Specialization
-    Object drawText(RAbstractStringVector text, RAbstractVector x, RAbstractVector y, RAbstractDoubleVector hjust, RAbstractDoubleVector vjust, RAbstractDoubleVector rotation, boolean checkOverlap,
+    Object drawText(RAbstractStringVector text, RAbstractVector x, RAbstractVector y, RDoubleVector hjust, RDoubleVector vjust, RDoubleVector rotation, boolean checkOverlap,
                     @Cached("createDraw()") GridTextNode gridText) {
         return gridText.gridText(text, x, y, hjust, vjust, rotation, checkOverlap, 0);
     }

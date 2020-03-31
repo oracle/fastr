@@ -57,11 +57,11 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RegExp;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
@@ -1360,7 +1360,7 @@ public class GrepFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RIntVector costs, RAbstractDoubleVector bounds, boolean useBytes, boolean fixed,
+        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RIntVector costs, RDoubleVector bounds, boolean useBytes, boolean fixed,
                         @Cached("createCommon()") CommonCodeNode common) {
             // TODO implement completely; this is a very basic implementation for fixed=TRUE only.
             common.checkExtraArgs(!fixed && ignoreCase, false, false, useBytes, false);
@@ -1482,7 +1482,7 @@ public class GrepFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RIntVector costs, RAbstractDoubleVector bounds, boolean useBytes, boolean fixed,
+        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RIntVector costs, RDoubleVector bounds, boolean useBytes, boolean fixed,
                         @Cached("createCommon()") CommonCodeNode common) {
             // TODO implement properly, this only supports strict equality!
             common.checkExtraArgs(ignoreCase, false, false, useBytes, false);

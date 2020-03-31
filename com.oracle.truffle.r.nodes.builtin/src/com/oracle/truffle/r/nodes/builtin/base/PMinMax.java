@@ -56,7 +56,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -227,8 +226,8 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
                     @Cached("create()") CastToVectorNode castVectorX,
                     @Cached("create()") CastToVectorNode castVectorY) {
         Object[] argValues = args.getArguments();
-        RAbstractDoubleVector x = (RAbstractDoubleVector) castVectorX.doCast(castX.doCast(argValues[0]));
-        RAbstractDoubleVector y = (RAbstractDoubleVector) castVectorY.doCast(castY.doCast(argValues[1]));
+        RDoubleVector x = (RDoubleVector) castVectorX.doCast(castX.doCast(argValues[0]));
+        RDoubleVector y = (RDoubleVector) castVectorY.doCast(castY.doCast(argValues[1]));
         int xLength = x.getLength();
         int yLength = y.getLength();
         int maxLength = Math.max(xLength, yLength);
@@ -276,7 +275,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
             Object[] argValues = args.getArguments();
             boolean warningAdded = false;
             for (int j = 0; j < argValues.length; j++) {
-                RAbstractDoubleVector vec = (RAbstractDoubleVector) argValues[j];
+                RDoubleVector vec = (RDoubleVector) argValues[j];
                 na.enable(vec);
                 if (vec.getLength() > 1 && vec.getLength() < maxLength && !warningAdded) {
                     warning(RError.Message.ARG_RECYCYLED);
@@ -288,7 +287,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
             for (int i = 0; i < maxLength; i++) {
                 double result = semantics.getDoubleStart();
                 for (int j = 0; j < argValues.length; j++) {
-                    RAbstractDoubleVector vec = (RAbstractDoubleVector) argValues[j];
+                    RDoubleVector vec = (RDoubleVector) argValues[j];
                     double v = vec.getDataAt(i % vec.getLength());
                     if (na.check(v)) {
                         if (profiledNaRm) {

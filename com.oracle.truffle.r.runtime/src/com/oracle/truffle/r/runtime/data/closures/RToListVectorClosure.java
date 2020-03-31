@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,11 @@ package com.oracle.truffle.r.runtime.data.closures;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import static com.oracle.truffle.r.runtime.data.closures.RClosures.initRegAttributes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -134,13 +134,13 @@ final class RIntToListVectorClosure extends RToListVectorClosure {
 
 final class RDoubleToListVectorClosure extends RToListVectorClosure {
 
-    RDoubleToListVectorClosure(RAbstractDoubleVector vector, boolean keepAttributes) {
+    RDoubleToListVectorClosure(RDoubleVector vector, boolean keepAttributes) {
         super(vector, keepAttributes);
     }
 
     @Override
     public Double getDataAt(int index) {
-        return ((RAbstractDoubleVector) vector).getDataAt(index);
+        return ((RDoubleVector) vector).getDataAt(index);
     }
 }
 

@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -69,7 +68,7 @@ public abstract class CumProd extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
-    protected RDoubleVector cumprodDouble(RAbstractDoubleVector x,
+    protected RDoubleVector cumprodDouble(RDoubleVector x,
                     @Cached("x.access()") VectorAccess xAccess) {
         try (SequentialIterator iter = xAccess.access(x)) {
             double[] array = new double[xAccess.getLength(iter)];
@@ -93,7 +92,7 @@ public abstract class CumProd extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(replaces = "cumprodDouble")
-    protected RDoubleVector cumprodDoubleGeneric(RAbstractDoubleVector x) {
+    protected RDoubleVector cumprodDoubleGeneric(RDoubleVector x) {
         return cumprodDouble(x, x.slowPathAccess());
     }
 

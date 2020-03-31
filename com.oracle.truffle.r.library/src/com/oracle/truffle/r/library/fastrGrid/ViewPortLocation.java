@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,9 +24,9 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDoubleVector;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 /**
  * The vectors in this class represent a unit objects, therefore we cannot just have a double value
@@ -46,7 +46,7 @@ public final class ViewPortLocation {
         r.y = asAbstractContainer(viewPort.getDataAt(ViewPort.VP_Y));
         r.width = asAbstractContainer(viewPort.getDataAt(ViewPort.VP_WIDTH));
         r.height = asAbstractContainer(viewPort.getDataAt(ViewPort.VP_HEIGHT));
-        RAbstractDoubleVector just = asDoubleVector(viewPort.getDataAt(ViewPort.VP_VALIDJUST));
+        RDoubleVector just = asDoubleVector(viewPort.getDataAt(ViewPort.VP_VALIDJUST));
         if (just.getLength() != 2) {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected size of layout justification vector.");
         }

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,12 +39,12 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -251,8 +251,8 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
     private static boolean isna(RAbstractContainer x, int indx) {
         if (x instanceof RAbstractLogicalVector) {
             return RRuntime.isNA(((RAbstractLogicalVector) x).getDataAt(indx));
-        } else if (x instanceof RAbstractDoubleVector) {
-            return RRuntime.isNA(((RAbstractDoubleVector) x).getDataAt(indx));
+        } else if (x instanceof RDoubleVector) {
+            return RRuntime.isNA(((RDoubleVector) x).getDataAt(indx));
         } else if (x instanceof RIntVector) {
             return RRuntime.isNA(((RIntVector) x).getDataAt(indx));
         } else if (x instanceof RAbstractStringVector) {
@@ -267,8 +267,8 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
     }
 
     private static String encodeElement(Object x, int indx, @SuppressWarnings("unused") char quote, @SuppressWarnings("unused") char dec) {
-        if (x instanceof RAbstractDoubleVector) {
-            RAbstractDoubleVector v = (RAbstractDoubleVector) x;
+        if (x instanceof RDoubleVector) {
+            RDoubleVector v = (RDoubleVector) x;
             return DoubleVectorPrinter.encodeReal(v.getDataAt(indx));
         }
         if (x instanceof RIntVector) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,10 +43,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -105,7 +105,7 @@ public class IsFiniteFunctions {
             return result;
         }
 
-        protected RLogicalVector doFunDouble(RAbstractDoubleVector x, DoublePredicate fun) {
+        protected RLogicalVector doFunDouble(RDoubleVector x, DoublePredicate fun) {
             byte[] b = new byte[x.getLength()];
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
@@ -154,7 +154,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doIsFinite(RAbstractDoubleVector vec) {
+        protected RLogicalVector doIsFinite(RDoubleVector vec) {
             return doFunDouble(vec, RRuntime::isFinite);
         }
 
@@ -192,7 +192,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doIsInfinite(RAbstractDoubleVector vec) {
+        protected RLogicalVector doIsInfinite(RDoubleVector vec) {
             return doFunDouble(vec, Double::isInfinite);
         }
 
@@ -224,7 +224,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doIsNan(RAbstractDoubleVector vec) {
+        protected RLogicalVector doIsNan(RDoubleVector vec) {
             return doFunDouble(vec, IsNaN::isNaN);
         }
 

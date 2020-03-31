@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.PrettyIntevals;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 public abstract class LPretty extends RExternalBuiltinNode.Arg1 {
     static {
@@ -41,7 +41,7 @@ public abstract class LPretty extends RExternalBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected Object doPretty(RAbstractDoubleVector scale) {
+    protected Object doPretty(RDoubleVector scale) {
         double min = scale.getLength() > 0 ? scale.getDataAt(0) : 0;
         double max = scale.getLength() > 1 ? scale.getDataAt(1) : 0;
         boolean swap = max < min;
@@ -80,7 +80,7 @@ public abstract class LPretty extends RExternalBuiltinNode.Arg1 {
         return createAtVector(min, max, ndiv[0]);
     }
 
-    private static RAbstractDoubleVector createAtVector(double axp0, double axp1, double axp2) {
+    private static RDoubleVector createAtVector(double axp0, double axp1, double axp2) {
         /*
          * Create an 'at = ...' vector for axis(.) i.e., the vector of tick mark locations, when
          * none has been specified (= default).

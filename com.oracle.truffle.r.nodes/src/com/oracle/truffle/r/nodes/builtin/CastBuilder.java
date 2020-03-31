@@ -75,7 +75,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -349,19 +348,19 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Double, false);
         }
 
-        public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector() {
+        public static <T> PipelineStep<T, RDoubleVector> asDoubleVector() {
             return new CoercionStep<>(RType.Double, true);
         }
 
-        public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVectorClosure() {
+        public static <T> PipelineStep<T, RDoubleVector> asDoubleVectorClosure() {
             return new CoercionStep<>(RType.Double, true, false, false, false, true, true);
         }
 
-        public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        public static <T> PipelineStep<T, RDoubleVector> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
             return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes);
         }
 
-        public static <T> PipelineStep<T, RAbstractDoubleVector> asDoubleVectorClosure(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        public static <T> PipelineStep<T, RDoubleVector> asDoubleVectorClosure(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
             return new CoercionStep<>(RType.Double, true, preserveNames, preserveDimensions, preserveAttributes, true, true);
         }
 
@@ -477,7 +476,7 @@ public final class CastBuilder {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Integer));
         }
 
-        public static <T extends RAbstractDoubleVector> CompareFilter<T> elementAt(int index, double value) {
+        public static CompareFilter<RDoubleVector> elementAt(int index, double value) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Double));
         }
 
@@ -677,7 +676,7 @@ public final class CastBuilder {
             return new RTypeFilter<>(RType.Character);
         }
 
-        public static <R extends RAbstractDoubleVector> Filter<Object, R> doubleValue() {
+        public static Filter<Object, RDoubleVector> doubleValue() {
             return new RTypeFilter<>(RType.Double);
         }
 

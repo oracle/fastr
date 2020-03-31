@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -252,13 +251,13 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         }
 
         @Specialization(guards = "isFirstIntValue(vector)")
-        protected int doDoubleVectorFirstIntValue(RAbstractDoubleVector vector) {
+        protected int doDoubleVectorFirstIntValue(RDoubleVector vector) {
             checkLength(vector.getLength());
             return (int) vector.getDataAt(0);
         }
 
         @Specialization(guards = "!isFirstIntValue(vector)")
-        protected double doDoubleVector(RAbstractDoubleVector vector) {
+        protected double doDoubleVector(RDoubleVector vector) {
             checkLength(vector.getLength());
             return vector.getDataAt(0);
         }
@@ -293,7 +292,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             return (((int) d)) == d && !RRuntime.isNA((int) d);
         }
 
-        protected static boolean isFirstIntValue(RAbstractDoubleVector d) {
+        protected static boolean isFirstIntValue(RDoubleVector d) {
             return d.getLength() > 0 && isIntValue(d.getDataAt(0));
         }
     }

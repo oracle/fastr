@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1996-2012, The R Core Team
  * Copyright (c) 2005, The R Foundation
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 /**
  * Implements the C_BinDist external.
@@ -57,7 +56,7 @@ public abstract class BinDist extends RExternalBuiltinNode.Arg5 {
     }
 
     @Specialization
-    RDoubleVector bindist(RAbstractDoubleVector x, RAbstractDoubleVector w, double xlo, double xhi, int n) {
+    RDoubleVector bindist(RDoubleVector x, RDoubleVector w, double xlo, double xhi, int n) {
         int ixmin = 0;
         int ixmax = n - 2;
         double xdelta = (xhi - xlo) / (n - 1);

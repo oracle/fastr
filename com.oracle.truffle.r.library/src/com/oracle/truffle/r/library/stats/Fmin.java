@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 2003-2004, The R Core Team
  * Copyright (c) 1998-2014, The R Foundation
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,8 +40,8 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 
 public final class Fmin extends RExternalBuiltinNode.Arg4 {
@@ -87,11 +87,11 @@ public final class Fmin extends RExternalBuiltinNode.Arg4 {
                 throw badValueError();
             }
             return ((RIntVector) result).getDataAt(0);
-        } else if (result instanceof RAbstractDoubleVector) {
-            if (((RAbstractDoubleVector) result).getLength() != 1) {
+        } else if (result instanceof RDoubleVector) {
+            if (((RDoubleVector) result).getLength() != 1) {
                 throw badValueError();
             }
-            return ((RAbstractDoubleVector) result).getDataAt(0);
+            return ((RDoubleVector) result).getDataAt(0);
         }
         throw badValueError();
     }

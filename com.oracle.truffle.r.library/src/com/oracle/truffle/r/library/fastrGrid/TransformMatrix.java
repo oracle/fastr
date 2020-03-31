@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_PI;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 // transcribed from matrix.c
 
@@ -120,7 +120,7 @@ final class TransformMatrix {
     /**
      * Reverse operation to {@link #flatten(double[][])}.
      */
-    static double[][] fromFlat(RAbstractDoubleVector flat) {
+    static double[][] fromFlat(RDoubleVector flat) {
         double[][] res = new double[3][3];
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {

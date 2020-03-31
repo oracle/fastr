@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,9 +27,9 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 
 /**
@@ -53,7 +53,7 @@ public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization
-    protected double asReal(RAbstractDoubleVector obj) {
+    protected double asReal(RDoubleVector obj) {
         if (obj.getLength() == 0) {
             return RRuntime.DOUBLE_NA;
         }
@@ -75,8 +75,8 @@ public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
         Object castObj = castDoubleNode.executeDouble(obj);
         if (castObj instanceof Double) {
             return (double) castObj;
-        } else if (castObj instanceof RAbstractDoubleVector) {
-            return ((RAbstractDoubleVector) castObj).getDataAt(0);
+        } else if (castObj instanceof RDoubleVector) {
+            return ((RDoubleVector) castObj).getDataAt(0);
         } else {
             throw RInternalError.shouldNotReachHere();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -61,7 +60,7 @@ public final class ChooseFunctions {
         @Child private UnaryCopyAttributesNode copyAttrs = UnaryCopyAttributesNode.create();
 
         @Specialization(guards = {"nAccess.supports(n)", "kAccess.supports(k)"})
-        protected RAbstractDoubleVector doVectors(RAbstractVector n, RAbstractVector k,
+        protected RDoubleVector doVectors(RAbstractVector n, RAbstractVector k,
                         @Cached("n.access()") VectorAccess nAccess,
                         @Cached("k.access()") VectorAccess kAccess,
                         @Cached("create()") VectorFactory factory) {
@@ -84,7 +83,7 @@ public final class ChooseFunctions {
         }
 
         @Specialization(replaces = "doVectors")
-        protected RAbstractDoubleVector doVectorsGeneric(RIntVector n, RIntVector k,
+        protected RDoubleVector doVectorsGeneric(RIntVector n, RIntVector k,
                         @Cached("create()") VectorFactory factory) {
             return doVectors(n, k, n.slowPathAccess(), k.slowPathAccess(), factory);
         }

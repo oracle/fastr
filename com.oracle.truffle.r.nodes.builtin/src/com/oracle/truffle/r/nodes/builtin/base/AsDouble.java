@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "as.double", aliases = {"as.numeric"}, kind = PRIMITIVE, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
@@ -49,20 +48,20 @@ public abstract class AsDouble extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
-    protected RAbstractDoubleVector asDouble(RAbstractDoubleVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
+    protected RDoubleVector asDouble(RDoubleVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
                     @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
                     @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            RDoubleVector res = (RDoubleVector) reuseTemporaryNode.getMaterializedResult(v);
+            RDoubleVector res = reuseTemporaryNode.getMaterializedResult(v);
             res.resetAllAttributes(true);
             return res;
         }
     }
 
     @Specialization(replaces = "asDouble")
-    protected RAbstractDoubleVector asDoubleGeneric(RAbstractDoubleVector v, RArgsValuesAndNames dotdotdot,
+    protected RDoubleVector asDoubleGeneric(RDoubleVector v, RArgsValuesAndNames dotdotdot,
                     @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
                     @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         return asDouble(v, dotdotdot, reuseTemporaryNode, noAttributes);

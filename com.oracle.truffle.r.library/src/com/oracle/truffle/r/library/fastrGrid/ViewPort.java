@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,9 +31,9 @@ import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 /**
  * There is a notion of a view point, which is an ordinary list that user creates to define a view
@@ -148,7 +148,7 @@ public final class ViewPort {
             RList layout = asList(vp.getDataAt(ViewPort.VP_LAYOUT));
             int ncol = RRuntime.asInteger(layout.getDataAt(ViewPort.LAYOUT_NCOL));
             int nrow = RRuntime.asInteger(layout.getDataAt(ViewPort.LAYOUT_NROW));
-            RAbstractDoubleVector just = (RAbstractDoubleVector) layout.getDataAt(ViewPort.LAYOUT_VJUST);
+            RDoubleVector just = (RDoubleVector) layout.getDataAt(ViewPort.LAYOUT_VJUST);
             return new LayoutSize(nrow, ncol, just.getDataAt(0), just.getDataAt(1));
         }
     }

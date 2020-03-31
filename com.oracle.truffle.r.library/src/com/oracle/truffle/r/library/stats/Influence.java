@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012, The R Core Team
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI.LminflNode;
 
@@ -60,7 +59,7 @@ public abstract class Influence extends RExternalBuiltinNode.Arg4 {
     @Child private LminflNode lminflNode = LminflNode.create();
 
     @Specialization
-    RList doInfluence(RList mqr, boolean doCoef, RAbstractDoubleVector resid, double tol,
+    RList doInfluence(RList mqr, boolean doCoef, RDoubleVector resid, double tol,
                     @Cached("create()") GetDimAttributeNode getDimAttribute,
                     @Cached("create()") GetReadonlyData.Double getReadonlyData,
                     @Cached("create()") AccessListField accessQrField,
@@ -70,8 +69,8 @@ public abstract class Influence extends RExternalBuiltinNode.Arg4 {
                     @Cached("create()") VectorFactory vectorFactory,
                     @Cached("create()") VectorFactory resultVectorFactory,
                     @Cached("createIntScalarCast()") CastNode scalarIntCast) {
-        RAbstractDoubleVector qr = getDoubleField(mqr, accessQrField, "qr");
-        RAbstractDoubleVector qraux = getDoubleField(mqr, accessQrauxField, "qraux");
+        RDoubleVector qr = getDoubleField(mqr, accessQrField, "qr");
+        RDoubleVector qraux = getDoubleField(mqr, accessQrauxField, "qraux");
         int n = getDimAttribute.nrows(qr);
         int k = (int) scalarIntCast.doCast(accessRankField.execute(mqr, "rank"));
         int q = getDimAttribute.ncols(resid);
@@ -120,11 +119,11 @@ public abstract class Influence extends RExternalBuiltinNode.Arg4 {
         return names;
     }
 
-    private RAbstractDoubleVector getDoubleField(RList mqr, AccessListField access, String name) {
+    private RDoubleVector getDoubleField(RList mqr, AccessListField access, String name) {
         Object obj = access.execute(mqr, name);
-        if (!(obj instanceof RAbstractDoubleVector)) {
+        if (!(obj instanceof RDoubleVector)) {
             throw error(Message.INVALID_TYPE, "numeric", name, "numeric");
         }
-        return (RAbstractDoubleVector) obj;
+        return (RDoubleVector) obj;
     }
 }

@@ -41,10 +41,10 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -128,7 +128,7 @@ public class RowsumFunctions {
                 }
                 result = RDataFactory.createIntVector(ansi, complete, new int[]{ng, p});
             } else {
-                RAbstractDoubleVector xd = (RAbstractDoubleVector) xv;
+                RDoubleVector xd = (RDoubleVector) xv;
                 double[] ansd = new double[ng * p];
                 for (int i = 0; i < p; i++) {
                     for (int j = 0; j < n; j++) {

@@ -32,7 +32,6 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
@@ -47,7 +46,7 @@ public abstract class PPSum {
         }
 
         @Specialization(guards = "uAccess.supports(u)", limit = "getVectorAccessCacheSize()")
-        protected RDoubleVector doPPSum(RAbstractDoubleVector u, int sl,
+        protected RDoubleVector doPPSum(RDoubleVector u, int sl,
                         @Cached("create()") VectorFactory factory,
                         @Cached("u.access()") VectorAccess uAccess) {
 
@@ -67,7 +66,7 @@ public abstract class PPSum {
         }
 
         @Specialization(replaces = "doPPSum")
-        protected RDoubleVector doPPSumGeneric(RAbstractDoubleVector u, int sl,
+        protected RDoubleVector doPPSumGeneric(RDoubleVector u, int sl,
                         @Cached("create()") VectorFactory factory) {
             return doPPSum(u, sl, factory, u.slowPathAccess());
         }
@@ -93,9 +92,9 @@ public abstract class PPSum {
         }
 
         @Specialization
-        protected RAbstractDoubleVector doIntegrateVector(RAbstractDoubleVector x, RAbstractDoubleVector xi, int lag) {
-            RAbstractDoubleVector profiledX = profileArgX.profile(x);
-            RAbstractDoubleVector profiledXi = profileArgXi.profile(xi);
+        protected RDoubleVector doIntegrateVector(RDoubleVector x, RDoubleVector xi, int lag) {
+            RDoubleVector profiledX = profileArgX.profile(x);
+            RDoubleVector profiledXi = profileArgXi.profile(xi);
 
             int n = profiledX.getLength();
             int nResult = n + lag;

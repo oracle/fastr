@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 public abstract class ApproxTest extends RExternalBuiltinNode.Arg4 {
     public static ApproxTest create() {
@@ -39,7 +39,7 @@ public abstract class ApproxTest extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization
-    protected RNull approxtest(RAbstractDoubleVector x, RAbstractDoubleVector y, int method, double f) {
+    protected RNull approxtest(RDoubleVector x, RDoubleVector y, int method, double f) {
         int nx = x.getLength();
         switch (method) {
             case 1:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
@@ -70,12 +70,12 @@ public abstract class VectorFastPaths {
     public abstract static class DoubleFastPath extends RFastPathNode {
 
         @Specialization
-        protected RAbstractDoubleVector get(@SuppressWarnings("unused") RMissing length) {
+        protected RDoubleVector get(@SuppressWarnings("unused") RMissing length) {
             return RDataFactory.createEmptyDoubleVector();
         }
 
         @Specialization
-        protected RAbstractDoubleVector get(int length,
+        protected RDoubleVector get(int length,
                         @Cached("create()") VectorLengthProfile profile) {
             if (length > 0) {
                 return RDataFactory.createDoubleVector(profile.profile(length));
@@ -84,7 +84,7 @@ public abstract class VectorFastPaths {
         }
 
         @Specialization
-        protected RAbstractDoubleVector get(double length,
+        protected RDoubleVector get(double length,
                         @Cached("create()") VectorLengthProfile profile) {
             if (!Double.isNaN(length)) {
                 return get((int) length, profile);

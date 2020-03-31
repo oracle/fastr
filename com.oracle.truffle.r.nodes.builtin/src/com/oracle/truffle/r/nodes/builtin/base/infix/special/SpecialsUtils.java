@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtilsFactor
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -147,7 +147,7 @@ public class SpecialsUtils {
         }
 
         @Specialization(guards = {"access.supports(value)", "value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
-        protected static double convertDoubleVector(RAbstractDoubleVector value,
+        protected static double convertDoubleVector(RDoubleVector value,
                         @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
                         @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode,
                         @Cached("value.access()") VectorAccess access) {
@@ -157,7 +157,7 @@ public class SpecialsUtils {
         }
 
         @Specialization(replaces = "convertDoubleVector", guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
-        protected static double convertDoubleVectorGeneric(RAbstractDoubleVector value,
+        protected static double convertDoubleVectorGeneric(RDoubleVector value,
                         @Cached("create()") ClassHierarchyNode hierarchyNode,
                         @Cached("create()") HasAttributesNode hasAttrsNode) {
             return convertDoubleVector(value, hierarchyNode, hasAttrsNode, value.slowPathAccess());

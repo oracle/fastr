@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,8 +34,8 @@ import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -96,7 +96,7 @@ public abstract class LConvert extends RExternalBuiltinNode.Arg4 {
             boolean realativeConversion = bothRelative && fromUnitIsSimple && compatibleAxes && vpFromSize < 1e-6;
             if (realativeConversion) {
                 // if the unit is not "unit.arithmetic" or "unit.list", it must be double vector
-                RAbstractDoubleVector simpleUnits = (RAbstractDoubleVector) units;
+                RDoubleVector simpleUnits = (RDoubleVector) units;
                 double fromValue = simpleUnits.getDataAt(i % simpleUnits.getLength());
                 result[i] = transformFromNPC(tranfromToNPC(fromValue, fromUnitId, axisFrom, vpContext), unitTo, axisTo, vpContext);
             } else {

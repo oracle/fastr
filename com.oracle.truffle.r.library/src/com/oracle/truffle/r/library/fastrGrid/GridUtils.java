@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -68,7 +67,7 @@ final class GridUtils {
         return -size * justification;
     }
 
-    static double getDataAtMod(RAbstractDoubleVector vec, int idx) {
+    static double getDataAtMod(RDoubleVector vec, int idx) {
         return vec.getDataAt(idx % vec.getLength());
     }
 
@@ -138,8 +137,8 @@ final class GridUtils {
     }
 
     static double getDoubleAt(RAbstractVector vector, int index) {
-        if (vector instanceof RAbstractDoubleVector) {
-            return ((RAbstractDoubleVector) vector).getDataAt(index);
+        if (vector instanceof RDoubleVector) {
+            return ((RDoubleVector) vector).getDataAt(index);
         } else if (vector instanceof RIntVector) {
             return ((RIntVector) vector).getDataAt(index);
         }
@@ -149,9 +148,9 @@ final class GridUtils {
     static double asDouble(Object val) {
         if (val instanceof Double) {
             return (double) val;
-        } else if (val instanceof RAbstractDoubleVector) {
-            if (((RAbstractDoubleVector) val).getLength() > 0) {
-                return ((RAbstractDoubleVector) val).getDataAt(0);
+        } else if (val instanceof RDoubleVector) {
+            if (((RDoubleVector) val).getLength() > 0) {
+                return ((RDoubleVector) val).getDataAt(0);
             }
         } else if (val instanceof Integer) {
             return (int) val;
@@ -166,8 +165,8 @@ final class GridUtils {
     static double asDouble(Object val, int cyclicIndex) {
         if (val instanceof Double) {
             return (double) val;
-        } else if (val instanceof RAbstractDoubleVector) {
-            RAbstractDoubleVector vec = (RAbstractDoubleVector) val;
+        } else if (val instanceof RDoubleVector) {
+            RDoubleVector vec = (RDoubleVector) val;
             if (vec.getLength() > 0) {
                 return vec.getDataAt(cyclicIndex % vec.getLength());
             }
@@ -208,11 +207,11 @@ final class GridUtils {
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non integer value " + value.getClass().getSimpleName());
     }
 
-    public static RAbstractDoubleVector asDoubleVector(Object obj) {
+    public static RDoubleVector asDoubleVector(Object obj) {
         if (obj instanceof Double) {
             return RDataFactory.createDoubleVectorFromScalar((Double) obj);
-        } else if (obj instanceof RAbstractDoubleVector) {
-            return (RAbstractDoubleVector) obj;
+        } else if (obj instanceof RDoubleVector) {
+            return (RDoubleVector) obj;
         }
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "Unexpected non double value " + obj.getClass().getSimpleName());
     }
@@ -243,7 +242,7 @@ final class GridUtils {
         return result;
     }
 
-    static double sum(RAbstractDoubleVector values, int from, int length) {
+    static double sum(RDoubleVector values, int from, int length) {
         double result = 0;
         for (int i = 0; i < length; i++) {
             result += values.getDataAt(from + i);

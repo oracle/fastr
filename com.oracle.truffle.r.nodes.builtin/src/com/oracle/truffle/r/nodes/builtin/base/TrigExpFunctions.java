@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Pow.CHypot;
@@ -433,7 +432,7 @@ public class TrigExpFunctions {
         }
 
         @Specialization(guards = "x.getLength() > 0")
-        protected RDoubleVector atan2(double y, RAbstractDoubleVector x,
+        protected RDoubleVector atan2(double y, RDoubleVector x,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
                         @Cached("createBinaryProfile()") ConditionProfile xLengthProfile) {
             xNACheck.enable(x);
@@ -455,7 +454,7 @@ public class TrigExpFunctions {
         }
 
         @Specialization(guards = "y.getLength() > 0")
-        protected RDoubleVector atan2(RAbstractDoubleVector y, double x,
+        protected RDoubleVector atan2(RDoubleVector y, double x,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
                         @Cached("createBinaryProfile()") ConditionProfile yLengthProfile) {
             xNACheck.enable(x);
@@ -477,7 +476,7 @@ public class TrigExpFunctions {
         }
 
         @Specialization(guards = {"y.getLength() > 0", "x.getLength() > 0"})
-        protected RDoubleVector atan2(RAbstractDoubleVector y, RAbstractDoubleVector x,
+        protected RDoubleVector atan2(RDoubleVector y, RDoubleVector x,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
                         @Cached("createBinaryProfile()") ConditionProfile yLengthProfile) {
             int xLength = x.getLength();
@@ -505,7 +504,7 @@ public class TrigExpFunctions {
         }
 
         @Specialization(guards = "y.getLength() == 0 || x.getLength() == 0")
-        protected RDoubleVector atan2Empty(@SuppressWarnings("unused") RAbstractDoubleVector y, @SuppressWarnings("unused") RAbstractDoubleVector x) {
+        protected RDoubleVector atan2Empty(@SuppressWarnings("unused") RDoubleVector y, @SuppressWarnings("unused") RDoubleVector x) {
             return RDataFactory.createEmptyDoubleVector();
         }
 

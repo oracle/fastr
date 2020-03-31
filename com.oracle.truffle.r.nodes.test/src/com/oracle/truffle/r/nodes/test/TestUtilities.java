@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,9 +37,9 @@ import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -115,7 +115,7 @@ public class TestUtilities {
         return RDataFactory.createIntVector(array, complete || !complete && size < 3);
     }
 
-    public static RAbstractDoubleVector generateDouble(int size, boolean complete) {
+    public static RDoubleVector generateDouble(int size, boolean complete) {
         double[] array = new double[size];
         for (int i = 0; i < size; i++) {
             array[i] = !complete && i % (NA_INDEX + 1) == NA_INDEX ? RRuntime.DOUBLE_NA : i;

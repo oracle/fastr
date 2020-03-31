@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1997-2014, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,10 +32,10 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -220,7 +220,7 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doAlpha(RAbstractDoubleVector r, RAbstractDoubleVector g, RAbstractDoubleVector b, RAbstractDoubleVector a, double mcv, RAbstractStringVector names) {
+        protected RStringVector doAlpha(RDoubleVector r, RDoubleVector g, RDoubleVector b, RDoubleVector a, double mcv, RAbstractStringVector names) {
             int lengthR = r.getLength();
             int lengthG = g.getLength();
             int lengthB = b.getLength();
@@ -245,7 +245,7 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doNonAlpha(RAbstractDoubleVector r, RAbstractDoubleVector g, RAbstractDoubleVector b, @SuppressWarnings("unused") RNull a, double mcv, RAbstractStringVector names) {
+        protected RStringVector doNonAlpha(RDoubleVector r, RDoubleVector g, RDoubleVector b, @SuppressWarnings("unused") RNull a, double mcv, RAbstractStringVector names) {
             int lengthR = r.getLength();
             int lengthG = g.getLength();
             int lengthB = b.getLength();

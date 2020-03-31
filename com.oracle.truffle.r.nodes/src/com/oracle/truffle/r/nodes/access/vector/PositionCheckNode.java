@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -49,7 +50,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -241,7 +241,7 @@ abstract class PositionCheckNode extends RBaseNode {
         assert posDim.length == 2;
 
         if (posDim[1] == vectorDim.length) {
-            if (matrixPosition instanceof RIntVector || matrixPosition instanceof RAbstractDoubleVector) {
+            if (matrixPosition instanceof RIntVector || matrixPosition instanceof RDoubleVector) {
                 return matrix2IndexCache.mat2indsub.execute(vectorDim, matrixPosition, posDim);
             } else if (matrixPosition instanceof RAbstractStringVector) {
                 return matrix2IndexCache.strmat2indsub.execute(vector, vectorDim, (RAbstractStringVector) matrixPosition, posDim);
@@ -316,7 +316,7 @@ abstract class PositionCheckNode extends RBaseNode {
         }
 
         @Specialization
-        protected RAbstractDoubleVector doDouble(int[] vectorDimensions, RAbstractDoubleVector doublePos, int[] positionDimensions) {
+        protected RDoubleVector doDouble(int[] vectorDimensions, RDoubleVector doublePos, int[] positionDimensions) {
             int numberOfPositions = positionDimensions[0];
             double[] flatIndexes = new double[numberOfPositions];
 

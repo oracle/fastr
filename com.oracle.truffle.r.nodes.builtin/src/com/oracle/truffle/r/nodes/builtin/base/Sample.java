@@ -3,7 +3,7 @@
  * Copyright (c) 1997-2012, The R Core Team
  * Copyright (c) 2003-2008, The R Foundation
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,9 +52,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 @RBuiltin(name = "sample", kind = INTERNAL, parameterNames = {"x", "size", "replace", "prob"}, behavior = MODIFIES_STATE)
@@ -79,20 +79,20 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
         return !isRepeatable && size > x;
     }
 
-    protected static boolean invalidProb(final int x, final RAbstractDoubleVector prob) {
+    protected static boolean invalidProb(final int x, final RDoubleVector prob) {
         return prob.getLength() != x;
     }
 
     @Specialization(guards = "invalidProb(x, prob)")
     @SuppressWarnings("unused")
-    protected RIntVector doSampleInvalidProb(final int x, final int size, final boolean isRepeatable, final RAbstractDoubleVector prob) {
+    protected RIntVector doSampleInvalidProb(final int x, final int size, final boolean isRepeatable, final RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
         throw error(RError.Message.INCORRECT_NUM_PROB);
     }
 
     @Specialization(guards = "largerPopulation(x, size, isRepeatable)")
     @SuppressWarnings("unused")
-    protected RIntVector doSampleLargerPopulation(final int x, final int size, final boolean isRepeatable, final RAbstractDoubleVector prob) {
+    protected RIntVector doSampleLargerPopulation(final int x, final int size, final boolean isRepeatable, final RDoubleVector prob) {
         CompilerDirectives.transferToInterpreter();
         throw error(RError.Message.SAMPLE_LARGER_THAN_POPULATION);
     }
@@ -108,7 +108,7 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
 
     @Specialization(guards = {"!invalidProb(x, prob)", "!largerPopulation(x, size, isRepeatable)", "isRepeatable"})
     @TruffleBoundary
-    protected RIntVector doSampleWithReplacement(final int x, final int size, final boolean isRepeatable, final RAbstractDoubleVector prob) {
+    protected RIntVector doSampleWithReplacement(final int x, final int size, final boolean isRepeatable, final RDoubleVector prob) {
         // The following code is transcribed from GNU R src/main/random.c lines 493-501 in
         // function do_sample.
         double[] probArray = prob.materialize().getDataCopy();
@@ -129,7 +129,7 @@ public abstract class Sample extends RBuiltinNode.Arg4 {
 
     @Specialization(guards = {"!invalidProb(x, prob)", "!largerPopulation(x, size, isRepeatable)", "!isRepeatable"})
     @TruffleBoundary
-    protected RIntVector doSampleNoReplacement(final int x, final int size, final boolean isRepeatable, final RAbstractDoubleVector prob) {
+    protected RIntVector doSampleNoReplacement(final int x, final int size, final boolean isRepeatable, final RDoubleVector prob) {
         double[] probArray = prob.materialize().getDataCopy();
         fixupProbability(probArray, x, size, isRepeatable);
         return RDataFactory.createIntVector(probSampleWithoutReplace(x, probArray, size), RDataFactory.COMPLETE_VECTOR);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,11 +58,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -185,7 +185,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         if (funValueVec instanceof RIntVector) {
             int[] data = applyResultZeroLength ? new int[0] : convertIntVector(applyResult, funValueVecLen);
             result = RDataFactory.createIntVector(data, naCheck.neverSeenNA());
-        } else if (funValueVec instanceof RAbstractDoubleVector) {
+        } else if (funValueVec instanceof RDoubleVector) {
             double[] data = applyResultZeroLength ? new double[0] : convertDoubleVector(applyResult, funValueVecLen);
             result = RDataFactory.createDoubleVector(data, naCheck.neverSeenNA());
         } else if (funValueVec instanceof RAbstractLogicalVector) {
@@ -257,7 +257,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         double[] newArray = new double[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractDoubleVector v = (RAbstractDoubleVector) castDouble(values[i]);
+            RDoubleVector v = (RDoubleVector) castDouble(values[i]);
             checkValueLength(v, i, len);
             for (int j = 0; j < v.getLength(); j++) {
                 double val = v.getDataAt(j);

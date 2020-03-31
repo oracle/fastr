@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_2;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
@@ -82,7 +81,7 @@ public final class StatsFunctionsNodes {
         }
     }
 
-    private static RAbstractDoubleVector evaluate4(Node node, Function4_2 function, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RAbstractDoubleVector d, boolean x,
+    private static RDoubleVector evaluate4(Node node, Function4_2 function, RDoubleVector a, RDoubleVector b, RDoubleVector c, RDoubleVector d, boolean x,
                     boolean y, StatFunctionProfiles profiles, UnaryCopyAttributesNode copyAttributesNode) {
         int aLength = a.getLength();
         int bLength = b.getLength();
@@ -174,7 +173,7 @@ public final class StatsFunctionsNodes {
         }
 
         @Specialization
-        protected RAbstractDoubleVector evaluate(RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, boolean x, boolean y,
+        protected RDoubleVector evaluate(RDoubleVector a, RDoubleVector b, RDoubleVector c, boolean x, boolean y,
                         @Cached("create()") StatFunctionProfiles profiles,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
             return evaluate4(this, function, a, b, c, DUMMY_VECTOR, x, y, profiles, copyAttributesNode);
@@ -202,7 +201,7 @@ public final class StatsFunctionsNodes {
         }
 
         @Specialization
-        protected RAbstractDoubleVector evaluate(RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RAbstractDoubleVector d, boolean x,
+        protected RDoubleVector evaluate(RDoubleVector a, RDoubleVector b, RDoubleVector c, RDoubleVector d, boolean x,
                         @Cached("create()") StatFunctionProfiles profiles,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
             return evaluate4(this, function, a, b, c, d, x, false /* dummy */, profiles, copyAttributesNode);
@@ -231,7 +230,7 @@ public final class StatsFunctionsNodes {
         }
 
         @Specialization
-        protected RAbstractDoubleVector evaluate(RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RAbstractDoubleVector d, boolean x, boolean y,
+        protected RDoubleVector evaluate(RDoubleVector a, RDoubleVector b, RDoubleVector c, RDoubleVector d, boolean x, boolean y,
                         @Cached("create()") StatFunctionProfiles profiles,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
             return evaluate4(this, function, a, b, c, d, x, y, profiles, copyAttributesNode);
@@ -258,7 +257,7 @@ public final class StatsFunctionsNodes {
         }
 
         @Specialization
-        protected RAbstractDoubleVector evaluate(RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, boolean x,
+        protected RDoubleVector evaluate(RDoubleVector a, RDoubleVector b, RDoubleVector c, boolean x,
                         @Cached("create()") StatFunctionProfiles profiles,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
             return evaluate4(this, function, a, b, c, DUMMY_VECTOR, x, false /* dummy */, profiles, copyAttributesNode);
@@ -284,7 +283,7 @@ public final class StatsFunctionsNodes {
         }
 
         @Specialization
-        protected RAbstractDoubleVector evaluate(RAbstractDoubleVector a, RAbstractDoubleVector b, boolean x,
+        protected RDoubleVector evaluate(RDoubleVector a, RDoubleVector b, boolean x,
                         @Cached("create()") StatFunctionProfiles profiles,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
             return evaluate4(this, function, a, b, DUMMY_VECTOR, DUMMY_VECTOR, x, false /* dummy */, profiles, copyAttributesNode);
@@ -311,7 +310,7 @@ public final class StatsFunctionsNodes {
         }
 
         @Specialization
-        protected RAbstractDoubleVector evaluate(RAbstractDoubleVector a, RAbstractDoubleVector b, boolean x, boolean y,
+        protected RDoubleVector evaluate(RDoubleVector a, RDoubleVector b, boolean x, boolean y,
                         @Cached("create()") StatFunctionProfiles profiles,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
             return evaluate4(this, function, a, b, DUMMY_VECTOR, DUMMY_VECTOR, x, y, profiles, copyAttributesNode);
