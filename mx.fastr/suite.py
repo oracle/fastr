@@ -333,9 +333,7 @@ suite = {
 
     "org.rosuda.javaGD" : {
       "sourceDirs" : ["src"],
-      "dependencies" : [
-         "com.oracle.truffle.r.nodes",
-      ],
+      "dependencies" : [],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "8+",
       "workingSets" : "FastR",

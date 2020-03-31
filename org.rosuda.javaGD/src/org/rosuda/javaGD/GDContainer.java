@@ -1,5 +1,4 @@
 //
-//  GDContainer.java
 //  Java Graphics Device
 //
 //  Created by Simon Urbanek on Thu Aug 05 2004.
@@ -19,8 +18,6 @@
 //  License along with this library; if not, write to the Free Software
 //  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-//  $Id: GDContainer.java 3166 2009-09-02 13:37:24Z urbanek $
-
 package org.rosuda.javaGD;
 
 import java.awt.*;

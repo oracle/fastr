@@ -18,14 +18,3 @@
 //  License along with this library; if not, write to the Free Software
 //  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-package org.rosuda.javaGD;
-
-import java.awt.Color;
-import java.awt.Font;
-
-/** object storing the current graphics state */
-public class GDState {
-    public Color col;
-    public Color fill;
-    public Font f;
-}

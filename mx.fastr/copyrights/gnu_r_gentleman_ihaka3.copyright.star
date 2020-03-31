@@ -19,18 +19,3 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-#ifndef __JGD_TALK_H__
-#define __JGD_TALK_H__
-
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-
-#include "javaGD.h"
-
-extern void setupJavaGDfunctions(NewDevDesc *dd);
-
-Rboolean newJavaGD_Open(NewDevDesc *dd, newJavaGDDesc *xd, const char *dsp, double w, double h);
-
-
-#endif

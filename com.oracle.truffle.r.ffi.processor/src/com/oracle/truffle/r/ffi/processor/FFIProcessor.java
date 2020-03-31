@@ -371,6 +371,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("    }\n");
         w.append("\n");
         w.append("    @ExportMessage\n");
+        w.append("    @SuppressWarnings(\"unused\")\n");
         w.append("    Object execute(Object[] arguments,\n");
         if (unwrapNodes.length() > 0) {
             w.append(unwrapNodes);

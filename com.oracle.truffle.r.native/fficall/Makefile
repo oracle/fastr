@@ -140,6 +140,7 @@ clean:
 	rm -rf fficall.done
 	rm -rf common.done
 	rm -rf fficallllvm.done
+	$(MAKE) -C src/JavaGD clean
 	rm -rf JavaGD.done
 ifneq ($(FASTR_RFFI),managed)
 	$(MAKE) -C src/truffle_nfi clean

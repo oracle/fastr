@@ -1,8 +1,8 @@
 //
-//  JavaGD - Java Graphics Device for R
-//  JavaGD.java - default GDInterface implementation for use in JavaGD
+//  Java Graphics Device
 //
-//  Copyright (C) 2004-2009  Simon Urbanek
+//  Created by Simon Urbanek on Thu Aug 05 2004.
+//  Copyright (c) 2004-2009 Simon Urbanek. All rights reserved.
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -18,19 +18,14 @@
 //  License along with this library; if not, write to the Free Software
 //  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-
 package org.rosuda.javaGD;
 
 import java.awt.Frame;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import javax.swing.JFrame;
-
-import org.graalvm.polyglot.Context;
 
 /**
  * JavaGD is an implementation of the {@link GDInterface} protocol which displays the R graphics in

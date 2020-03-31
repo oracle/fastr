@@ -1,9 +1,8 @@
 //
-//  JGDBufferedPanel.java
-//  JGR
+//  Java Graphics Device
 //
 //  Created by Simon Urbanek on Sun Aug 29 2004.
-//  Copyright (c) 2004 Simon Urbanek. All rights reserved.
+//  Copyright (c) 2004-2009 Simon Urbanek. All rights reserved.
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -19,7 +18,6 @@
 //  License along with this library; if not, write to the Free Software
 //  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-
 package org.rosuda.javaGD;
 
 import java.awt.Graphics;

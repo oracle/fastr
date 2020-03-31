@@ -1,6 +1,5 @@
 //
-//  XGDserver.java
-//  A sample implementation of the XGD1 protocol using GDCanvas for drawing
+//  Java Graphics Device
 //
 //  Created by Simon Urbanek on Sun Apr 05 2004.
 //  Copyright (c) 2004-2009 Simon Urbanek. All rights reserved.
@@ -19,8 +18,6 @@
 //  License along with this library; if not, write to the Free Software
 //  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-//  $Id: XGDserver.java 3165 2009-09-02 13:21:35Z urbanek $
-
 package org.rosuda.javaGD;
 
 import java.awt.Dimension;
@@ -124,11 +121,11 @@ public class XGDserver extends Thread {
         long getLong(byte[] b, int offset) {
             long l1, l2;
             if (isBE) {
-                l1 = ((long) getInt(b, offset + 4)) & 0xffffffffL;
-                l2 = ((long) getInt(b, offset)) & 0xffffffffL;
+                l1 = getInt(b, offset + 4) & 0xffffffffL;
+                l2 = getInt(b, offset) & 0xffffffffL;
             } else {
-                l1 = ((long) getInt(b, offset)) & 0xffffffffL;
-                l2 = ((long) getInt(b, offset + 4)) & 0xffffffffL;
+                l1 = getInt(b, offset) & 0xffffffffL;
+                l2 = getInt(b, offset + 4) & 0xffffffffL;
             }
             return l1 | (l2 << 32);
         }
@@ -149,9 +146,10 @@ public class XGDserver extends Thread {
          *
          * @param v integer value to store
          * @param buf packet byte stream
-         * @param o offset in the stream to store to (takes 4 bytes)
+         * @param ao offset in the stream to store to (takes 4 bytes)
          */
-        void setInt(int v, byte[] buf, int o) {
+        void setInt(int v, byte[] buf, int ao) {
+            int o = ao;
             if (!isBE) {
                 buf[o] = (byte) (v & 255);
                 o++;
@@ -195,14 +193,14 @@ public class XGDserver extends Thread {
          * dumps a byte stream in hex form to {@link System#out} (with a prefix and trailing new
          * line)
          *
-         * @param s prefix string to print before the dump
+         * @param as prefix string to print before the dump
          * @param b byte array to print in hex
          */
-        void dump(String s, byte[] b) {
-            System.out.print(s);
+        void dump(String as, byte[] b) {
+            System.out.print(as);
             int i = 0;
             while (i < b.length) {
-                System.out.print(Integer.toString((int) b[i], 16) + " ");
+                System.out.print(Integer.toString(b[i], 16) + " ");
                 i++;
             }
             System.out.println("");
@@ -370,17 +368,17 @@ public class XGDserver extends Thread {
                     }
 
                     if (cmd == CMD_StrWidth) { // StrWidth
-                        String s = new String(par, 0, par.length - 1);
-                        System.out.println("Request: get string width of \"" + s + "\"");
+                        String str = new String(par, 0, par.length - 1);
+                        System.out.println("Request: get string width of \"" + str + "\"");
                         byte[] b = new byte[12];
                         setInt((0x51 | 0x80) | 0x800, b, 0);
-                        double width = (double) (8 * s.length()); // rough estimate
+                        double width = 8 * str.length(); // rough estimate
                         if (c != null) {
                             Graphics g = c.getGraphics();
                             if (g != null) {
                                 FontMetrics fm = g.getFontMetrics(c.gs.f);
                                 if (fm != null)
-                                    width = (double) fm.stringWidth(s);
+                                    width = fm.stringWidth(str);
                             }
                         }
                         System.out.println(">> WIDTH: " + width);
@@ -401,9 +399,9 @@ public class XGDserver extends Thread {
                             if (g != null) {
                                 FontMetrics fm = g.getFontMetrics(c.gs.f);
                                 if (fm != null) {
-                                    ascent = (double) fm.getAscent();
-                                    descent = (double) fm.getDescent();
-                                    width = (double) fm.charWidth((ch == 0) ? 77 : ch);
+                                    ascent = fm.getAscent();
+                                    descent = fm.getDescent();
+                                    width = fm.charWidth((ch == 0) ? 77 : ch);
                                 }
                             }
                         }

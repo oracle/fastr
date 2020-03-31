@@ -109,6 +109,7 @@ log "relative FastR home: ${fastr_home}"
 
 fastr_launcher_ni_args=(
     --no-fallback
+    --initialize-at-run-time="sun.awt.dnd.SunDropTargetContextPeer\$EventDispatcher,sun.font.FreetypeFontScaler"
     --initialize-at-build-time
     -H:+ReportExceptionStackTraces
     -cp "${fastr_home}/fastr-launcher.jar:${fastr_home}/../../lib/graalvm/launcher-common.jar"

@@ -1,6 +1,5 @@
 //
-//  GDObject.java
-//  Java graphics device
+//  Java Graphics Device
 //
 //  Created by Simon Urbanek on Thu Aug 05 2004.
 //  Copyright (c) 2004-2009 Simon Urbanek. All rights reserved.
@@ -19,8 +18,6 @@
 //  License along with this library; if not, write to the Free Software
 //  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
-//  $Id: GDObject.java 3458 2012-09-12 21:30:35Z urbanek $
-
 package org.rosuda.javaGD;
 
 import java.awt.BasicStroke;
@@ -30,7 +27,6 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
@@ -46,8 +42,6 @@ import java.awt.image.PixelInterleavedSampleModel;
 import java.awt.image.Raster;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 
 /** GDObject is an arbitrary object that can be painted */
 public abstract class GDObject {
@@ -74,22 +68,26 @@ class GDLine extends GDObject {
 class GDRect extends GDObject {
     double x1, y1, x2, y2;
 
-    public GDRect(double x1, double y1, double x2, double y2) {
+    public GDRect(double ax1, double ay1, double ax2, double ay2) {
         double tmp;
-        if (x1 > x2) {
-            tmp = x1;
-            x1 = x2;
-            x2 = tmp;
+        double bx1 = ax1;
+        double by1 = ay1;
+        double bx2 = ax2;
+        double by2 = ay2;
+        if (bx1 > bx2) {
+            tmp = bx1;
+            bx1 = bx2;
+            bx2 = tmp;
         }
-        if (y1 > y2) {
-            tmp = y1;
-            y1 = y2;
-            y2 = tmp;
+        if (by1 > by2) {
+            tmp = by1;
+            by1 = by2;
+            by2 = tmp;
         }
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
+        this.x1 = bx1;
+        this.y1 = by1;
+        this.x2 = bx2;
+        this.y2 = by2;
         // System.out.println(">> RECT "+x1+":"+y1+" "+x2+":"+y2);
     }
 
@@ -114,22 +112,26 @@ class GDRect extends GDObject {
 class GDClip extends GDObject {
     double x1, y1, x2, y2;
 
-    public GDClip(double x1, double y1, double x2, double y2) {
+    public GDClip(double ax1, double ay1, double ax2, double ay2) {
         double tmp;
-        if (x1 > x2) {
-            tmp = x1;
-            x1 = x2;
-            x2 = tmp;
+        double bx1 = ax1;
+        double by1 = ay1;
+        double bx2 = ax2;
+        double by2 = ay2;
+        if (bx1 > bx2) {
+            tmp = bx1;
+            bx1 = bx2;
+            bx2 = tmp;
         }
-        if (y1 > y2) {
-            tmp = y1;
-            y1 = y2;
-            y2 = tmp;
+        if (by1 > by2) {
+            tmp = by1;
+            by1 = by2;
+            by2 = tmp;
         }
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
+        this.x1 = bx1;
+        this.y1 = by1;
+        this.x2 = bx2;
+        this.y2 = by2;
     }
 
     @Override
@@ -180,8 +182,8 @@ class GDText extends GDObject {
             if (h != 0d) {
                 FontMetrics fm = g.getFontMetrics();
                 int w = fm.stringWidth(txt);
-                hc = ((double) w) * h;
-                rx = x - (((double) w) * h);
+                hc = w * h;
+                rx = x - w * h;
             }
             int ix = (int) (rx + 0.5), iy = (int) (ry + 0.5);
 
@@ -244,8 +246,8 @@ class GDFont extends GDObject {
         if (face == 4)
             jFT = Font.BOLD | Font.ITALIC;
         if (face == 5 && useSymbolFont)
-            family = "Symbol";
-        font = new Font(family.equals("") ? null : family, jFT, (int) (cex * ps + 0.5));
+            this.family = "Symbol";
+        font = new Font(this.family.equals("") ? null : this.family, jFT, (int) (cex * ps + 0.5));
     }
 
     public Font getFont() {
@@ -346,10 +348,10 @@ class GDColor extends GDObject {
         if ((col & 0xff000000) == 0)
             gc = null; // opacity=0 -> no color -> don't paint
         else
-            gc = new Color(((float) (col & 255)) / 255f,
-                            ((float) ((col >> 8) & 255)) / 255f,
-                            ((float) ((col >> 16) & 255)) / 255f,
-                            ((float) ((col >> 24) & 255)) / 255f);
+            gc = new Color((col & 255) / 255f,
+                            ((col >> 8) & 255) / 255f,
+                            ((col >> 16) & 255) / 255f,
+                            ((col >> 24) & 255) / 255f);
         // System.out.println(" "+gc);
     }
 
@@ -372,10 +374,10 @@ class GDFill extends GDObject {
         if ((col & 0xff000000) == 0)
             gc = null; // opacity=0 -> no color -> don't paint
         else
-            gc = new Color(((float) (col & 255)) / 255f,
-                            ((float) ((col >> 8) & 255)) / 255f,
-                            ((float) ((col >> 16) & 255)) / 255f,
-                            ((float) ((col >> 24) & 255)) / 255f);
+            gc = new Color((col & 255) / 255f,
+                            ((col >> 8) & 255) / 255f,
+                            ((col >> 16) & 255) / 255f,
+                            ((col >> 24) & 255) / 255f);
         // System.out.println(" "+gc);
     }
 
@@ -411,7 +413,7 @@ class GDLinePar extends GDObject {
             l = 0;
             while (dt > 0) {
                 int rl = dt & 15;
-                dash[l++] = (float) rl;
+                dash[l++] = rl;
                 dt >>= 4;
             }
             bs = new BasicStroke((float) lwd, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 3f, dash, 0f);
@@ -438,15 +440,16 @@ class GDRaster extends GDObject {
         this(new DataBufferInt(img, img_w * img_h, 0), img_w, img_h, x, y, w, h, rot, interpolate);
     }
 
-    public GDRaster(DataBuffer dbuf, int img_w, int img_h, double x, double y, double w, double h,
+    public GDRaster(DataBuffer dbuf, int img_w, int img_h, double ax, double ay, double aw, double ah,
                     double rot, boolean interpolate) {
         this.interpolate = interpolate;
         atrans = new AffineTransform();
         // R seems to use flipped y coordinates
+        double x = ax, y = ay, w = aw, h = ah;
         y += h;
         h = -h;
 
-        double sx = w / (double) img_w, sy = h / (double) img_h;
+        double sx = w / img_w, sy = h / img_h;
         atrans.translate(x, y);
         atrans.rotate(-rot / 180 * Math.PI, 0, y);
         atrans.scale(sx, sy);
