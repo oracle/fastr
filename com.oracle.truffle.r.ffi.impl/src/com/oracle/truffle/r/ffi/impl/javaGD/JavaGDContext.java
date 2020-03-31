@@ -91,14 +91,14 @@ public final class JavaGDContext {
             // no device specified, i.e. use the default device
             switch (gdLogMode) {
                 case wrap:
-                    gd = new LoggingGD(new JavaGD(new Resizer()), getDefaultFileTemplate(deviceName), gdId, deviceName, false);
+                    gd = new LoggingGD(new JavaGD(new Resizer(), new DevOffCall()), getDefaultFileTemplate(deviceName), gdId, deviceName, false);
                     break;
                 case headless:
                     gd = new LoggingGD(new NullGD(), getDefaultFileTemplate(deviceName), gdId, deviceName, false);
                     break;
                 case off:
                 default:
-                    gd = new JavaGD(new Resizer());
+                    gd = new JavaGD(new Resizer(), new DevOffCall());
             }
         }
 
@@ -167,6 +167,19 @@ public final class JavaGDContext {
         };
     }
 
+    private static final class DevOffCall implements Consumer<Integer> {
+        private final Function<Function<Context, Object>, Future<Object>> executor = getExecutor();
+        private final Value devOffFun = Context.getCurrent().eval("R", "function (devNum) try({ dev.set(devNum); dev.off()},silent=TRUE)");
+
+        @Override
+        public void accept(Integer devNumber) {
+            executor.apply((ctx) -> {
+                devOffFun.execute(devNumber);
+                return null;
+            });
+        }
+    }
+
     private static final class Resizer implements Consumer<Integer> {
 
         private final Function<Function<Context, Object>, Future<Object>> executor = getExecutor();
@@ -187,25 +200,27 @@ public final class JavaGDContext {
 
                     executor.apply((ctx) -> {
                         Resizer.this.lock.lock();
-
-                        int size = resizeRequestQueue.get();
                         try {
-                            while (size > 0) {
-                                interruptResize.set(false);
+                            int size = resizeRequestQueue.get();
+                            try {
+                                while (size > 0) {
+                                    interruptResize.set(false);
 
-                                Resizer.this.lock.unlock();
-                                resize.execute(devNumber);
-                                Resizer.this.lock.lock();
+                                    Resizer.this.lock.unlock();
+                                    resize.execute(devNumber);
+                                    Resizer.this.lock.lock();
 
-                                size = resizeRequestQueue.addAndGet(-size);
+                                    size = resizeRequestQueue.addAndGet(-size);
+                                }
+
+                                return null;
+                            } catch (Throwable t) {
+                                t.printStackTrace();
+                                return null;
+                            } finally {
+                                resizeRequestQueue.set(0);
                             }
-
-                            return null;
-                        } catch (Throwable t) {
-                            t.printStackTrace();
-                            return null;
                         } finally {
-                            resizeRequestQueue.set(0);
                             Resizer.this.lock.unlock();
                         }
                     });

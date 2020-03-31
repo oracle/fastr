@@ -87,12 +87,12 @@ public abstract class AbstractImageContainer extends FileOutputContainer {
     }
 
     @Override
-    final protected void saveImage(TruffleFile file) throws IOException {
+    protected final void saveImage(TruffleFile file) throws IOException {
         repaint();
         dumpImage(file);
     }
 
-    abstract protected void dumpImage(TruffleFile file) throws IOException;
+    protected abstract void dumpImage(TruffleFile file) throws IOException;
 
     @Override
     public void syncDisplay(boolean finish) {

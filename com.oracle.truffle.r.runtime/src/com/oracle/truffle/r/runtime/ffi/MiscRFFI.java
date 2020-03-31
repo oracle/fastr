@@ -66,7 +66,7 @@ public final class MiscRFFI {
         }
     }
 
-    public static abstract class AbstractBeforeGraphicsOpNode extends NativeCallNode {
+    public abstract static class AbstractBeforeGraphicsOpNode extends NativeCallNode {
 
         protected AbstractBeforeGraphicsOpNode(DownCallNodeFactory parent) {
             super(parent.createDownCallNode());
@@ -103,7 +103,7 @@ public final class MiscRFFI {
 
     }
 
-    public static abstract class AbstractAfterGraphicsOpNode extends NativeCallNode {
+    public abstract static class AbstractAfterGraphicsOpNode extends NativeCallNode {
 
         private AbstractAfterGraphicsOpNode(DownCallNodeFactory parent) {
             super(parent.createDownCallNode());

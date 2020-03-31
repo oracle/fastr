@@ -96,7 +96,7 @@ public class NullGD extends GDInterface {
     }
 
     @Override
-    public void gdRaster(byte[] img, int img_w, int img_h, double x, double y, double w, double h, double rot, boolean interpolate) {
+    public void gdRaster(byte[] img, int imgW, int imgH, double x, double y, double w, double h, double rot, boolean interpolate) {
     }
 
     @Override
@@ -127,10 +127,6 @@ public class NullGD extends GDInterface {
 
     @Override
     public void gdcSetFont(double cex, double ps, double lineheight, int fontface, String fontfamily) {
-    }
-
-    @Override
-    public void executeDevOff() {
     }
 
 }

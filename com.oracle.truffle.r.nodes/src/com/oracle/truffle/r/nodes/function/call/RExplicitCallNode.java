@@ -81,7 +81,7 @@ public abstract class RExplicitCallNode extends Node implements ExplicitFunction
         return RCallNode.createExplicitCall(RFrameSlot.ExplicitCallArgs);
     }
 
-    public static abstract class SlowPathExplicitCallNode extends Node implements ExplicitFunctionCall {
+    public abstract static class SlowPathExplicitCallNode extends Node implements ExplicitFunctionCall {
 
         public static RExplicitCallNode.SlowPathExplicitCallNode create() {
             return SlowPathExplicitCallNodeGen.create();

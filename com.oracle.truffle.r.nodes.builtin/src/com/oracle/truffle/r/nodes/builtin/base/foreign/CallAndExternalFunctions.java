@@ -475,7 +475,8 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         public final RExternalBuiltinNode lookupBuiltin(String name) {
-            if (getContext().getOption(UseInternalGridGraphics) && name != null) {
+            assert name != null;
+            if (getContext().getOption(UseInternalGridGraphics)) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(getContext(), name);
                 if (gridExternal != null) {
                     return gridExternal;

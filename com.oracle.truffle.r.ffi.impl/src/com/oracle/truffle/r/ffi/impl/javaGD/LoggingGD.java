@@ -239,11 +239,11 @@ public class LoggingGD extends GDInterface {
     }
 
     @Override
-    public void gdRaster(byte[] img, int img_w, int img_h, double x, double y, double w, double h, double rot, boolean interpolate) {
+    public void gdRaster(byte[] img, int imgW, int imgH, double x, double y, double w, double h, double rot, boolean interpolate) {
         int[] intImgArray = byteArrayToIntArray(img);
 
-        logGDCall("gdRaster(%s, %dL, %dL, %f, %f, %f, %f, %f, %s)\n", arrayToRVector(intImgArray), img_w, img_h, x, y, w, h, rot, toRLogical(interpolate));
-        delegate.gdRaster(img, img_w, img_h, x, y, w, h, rot, interpolate);
+        logGDCall("gdRaster(%s, %dL, %dL, %f, %f, %f, %f, %f, %s)\n", arrayToRVector(intImgArray), imgW, imgH, x, y, w, h, rot, toRLogical(interpolate));
+        delegate.gdRaster(img, imgW, imgH, x, y, w, h, rot, interpolate);
     }
 
     private static int[] byteArrayToIntArray(byte[] img) {

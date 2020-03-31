@@ -25,6 +25,7 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -40,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 
+@GenerateUncached
 public abstract class DispatchPrimFunNode extends FFIUpCallNode.Arg4 {
 
     public static DispatchPrimFunNode create() {
@@ -70,7 +72,7 @@ public abstract class DispatchPrimFunNode extends FFIUpCallNode.Arg4 {
     @Specialization(guards = "getCurrentRFrameDescriptor(ctxRef.get()) == cachedFrameDesc", limit = "3")
     @ExplodeLoop
     static Object dispatchCached(@SuppressWarnings("unused") Object call, RFunction function, RPairList args, @SuppressWarnings("unused") Object rho,
-                    @Cached("createFunctionCallNode()") RRuntimeASTAccess.ExplicitFunctionCall callNode,
+                    @Cached(value = "createFunctionCallNode()", uncached = "createSlowPathFunctionCallNode()") RRuntimeASTAccess.ExplicitFunctionCall callNode,
                     @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
                     @SuppressWarnings("unused") @Cached("getCurrentRFrameDescriptor(ctxRef.get())") FrameDescriptor cachedFrameDesc) {
         RList argsList = args.toRList();
@@ -102,7 +104,7 @@ public abstract class DispatchPrimFunNode extends FFIUpCallNode.Arg4 {
 
     @Specialization(replaces = "dispatchCached")
     static Object dispatchGeneric(@SuppressWarnings("unused") Object call, RFunction function, RPairList args, @SuppressWarnings("unused") Object rho,
-                    @Cached("createSlowPathFunctionCallNode()") RRuntimeASTAccess.ExplicitFunctionCall callNode,
+                    @Cached(value = "createSlowPathFunctionCallNode()", uncached = "createSlowPathFunctionCallNode()") RRuntimeASTAccess.ExplicitFunctionCall callNode,
                     @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
         return dispatchCached(call, function, args, rho, callNode, ctxRef, null);
     }

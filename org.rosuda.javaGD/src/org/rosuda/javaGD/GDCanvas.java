@@ -64,9 +64,9 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
         lastSize = getSize();
         setBackground(Color.white);
         addMouseListener(this);
-        (r = new Refresher(this)).start();
-
         this.resizer = resizer;
+
+        (r = new Refresher(this)).start();
     }
 
     @Override
@@ -86,14 +86,6 @@ public class GDCanvas extends Canvas implements GDContainer, MouseListener {
 
     @Override
     public void closeDisplay() {
-    }
-
-    public synchronized void cleanup() {
-        r.active = false;
-        r.interrupt();
-        reset(-1);
-        r = null;
-        l = null;
     }
 
     @Override

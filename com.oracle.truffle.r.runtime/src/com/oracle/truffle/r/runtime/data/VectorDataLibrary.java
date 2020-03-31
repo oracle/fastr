@@ -1988,10 +1988,10 @@ public abstract class VectorDataLibrary extends Library {
             naCheck.enable(true);
             return RRuntime.DOUBLE_NA;
         }
-        if (cpl.getImaginaryPart() != 0) {
-            // warningReportedProfile.enter();
-            // accessIter.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
-        }
+        // if (cpl.getImaginaryPart() != 0) {
+        // warningReportedProfile.enter();
+        // accessIter.warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        // }
         return value;
     }
 
@@ -2137,18 +2137,18 @@ public abstract class VectorDataLibrary extends Library {
             double d = naCheck.convertStringToDouble(value);
             naCheck.enable(d);
             if (naCheck.checkNAorNaN(d)) {
-                if (naCheck.check(d) && !value.isEmpty()) {
-                    // warningReportedProfile.enter();
-                    // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION);
-                }
+                // if (naCheck.check(d) && !value.isEmpty()) {
+                // warningReportedProfile.enter();
+                // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION);
+                // }
                 intValue = RRuntime.INT_NA;
             } else {
                 intValue = naCheck.convertDoubleToInt(d);
-                naCheck.enable(intValue);
-                if (naCheck.check(intValue) && !value.isEmpty()) {
-                    // warningReportedProfile.enter();
-                    // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
-                }
+                // naCheck.enable(intValue);
+                // if (naCheck.check(intValue) && !value.isEmpty()) {
+                // warningReportedProfile.enter();
+                // accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
+                // }
             }
             int intRawValue = RRuntime.int2rawIntValue(intValue);
             if (intValue != intRawValue) {

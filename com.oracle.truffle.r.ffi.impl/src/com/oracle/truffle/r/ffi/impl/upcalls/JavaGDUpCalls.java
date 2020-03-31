@@ -80,7 +80,7 @@ public interface JavaGDUpCalls {
 
     void gdText(int gdId, double x, double y, @RFFICstring String str, double rot, double hadj, @RFFIInject RContext ctx);
 
-    void gdRaster(int gdId, int img_w, int img_h, @RFFICarray(length = "4 * {1} * {2}", element = Type.Byte) Object img, double x, double y, double w, double h,
+    void gdRaster(int gdId, int imgW, int imgH, @RFFICarray(length = "4 * {1} * {2}", element = Type.Byte) Object img, double x, double y, double w, double h,
                     double rot, int interpolate, @RFFIInject RContext ctx);
 
     @RFFICarray

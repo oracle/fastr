@@ -39,14 +39,16 @@ public class JavaGD extends GDInterface implements WindowListener {
     public Frame f;
 
     private final Consumer<Integer> resizer;
+    private final Consumer<Integer> devOffCall;
 
     /**
      * default, public constructor - creates a new JavaGD instance. The actual window (and canvas)
      * is not created until {@link #gdOpen} is called.
      */
-    public JavaGD(Consumer<Integer> resizer) {
+    public JavaGD(Consumer<Integer> resizer, Consumer<Integer> devOffCall) {
         super();
         this.resizer = resizer;
+        this.devOffCall = devOffCall;
     }
 
     /**
@@ -137,4 +139,10 @@ public class JavaGD extends GDInterface implements WindowListener {
     public void windowDeactivated(WindowEvent e) {
     }
 
+    /** close the device in R associated with this instance */
+    public void executeDevOff() {
+        if (c == null || c.getDeviceNumber() < 0)
+            return;
+        devOffCall.accept(c.getDeviceNumber() + 1);
+    }
 }
