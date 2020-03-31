@@ -193,6 +193,7 @@ public class LoggingGD extends GDInterface {
         intro();
     }
 
+    @TruffleBoundary
     private static String toRVector(int length, Function<Integer, String> arrayFun) {
         StringBuilder sb = new StringBuilder("c(");
         for (int i = 0; i < length; i++) {

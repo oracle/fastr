@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.javaGD;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,18 +35,19 @@ import org.rosuda.javaGD.GDInterface;
 import org.rosuda.javaGD.JavaGD;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.Collections;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class JavaGDContext {
 
-    private final List<GDInterface> devices;
+    private final Collections.ArrayListObj<GDInterface> devices;
 
     private JavaGDContext(JavaGDContext parentGDCtx) {
         this.devices = parentGDCtx.devices;
     }
 
     private JavaGDContext() {
-        this.devices = new ArrayList<>();
+        this.devices = new Collections.ArrayListObj<>();
     }
 
     @TruffleBoundary

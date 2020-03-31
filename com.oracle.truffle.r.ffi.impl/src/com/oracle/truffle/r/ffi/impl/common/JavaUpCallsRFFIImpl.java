@@ -2463,11 +2463,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public void gdOpen(int gdId, String deviceName, double w, double h) {
         JavaGDContext.getContext(RContext.getInstance()).newGD(gdId, deviceName).gdOpen(w, h);
     }
 
     @Override
+    @TruffleBoundary
     public void gdClose(int gdId, RContext ctx) {
         getJavaGDContext(ctx).removeGD(gdId).gdClose();
     }
@@ -2500,6 +2502,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public void gdNewPage(int gdId, int devId, int pageNumber, RContext ctx) {
         getJavaGDContext(ctx).getGD(gdId).gdNewPage(devId, pageNumber);
     }
@@ -2515,6 +2518,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public void gdDeactivate(int gdId, RContext ctx) {
         getJavaGDContext(ctx).getGD(gdId).gdDeactivate();
     }
@@ -2584,6 +2588,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public void gdRaster(int gdId, int img_w, int img_h, Object img, double x, double y, double w, double h, double rot, int interpolate, RContext ctx) {
         getJavaGDContext(ctx).getGD(gdId).gdRaster((byte[]) img, img_w, img_h, x, y, w, h, rot, interpolate != 0);
     }
