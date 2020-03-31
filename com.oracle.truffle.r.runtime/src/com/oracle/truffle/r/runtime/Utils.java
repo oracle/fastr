@@ -38,8 +38,11 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleRuntime;
+import com.oracle.truffle.api.TruffleStackTrace;
+import com.oracle.truffle.api.TruffleStackTraceElement;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance;
@@ -50,6 +53,9 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.LanguageInfo;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -65,6 +71,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import java.util.Iterator;
+import java.util.List;
 
 public final class Utils {
 
@@ -527,75 +535,159 @@ public final class Utils {
         return frame;
     }
 
-    private static final class TracebackVisitor implements FrameInstanceVisitor<Frame> {
-        private int skip;
-        private RPairList head;
-        private RPairList prev;
-
-        private TracebackVisitor(int skip) {
-            this.skip = skip;
-        }
-
-        @Override
-        @TruffleBoundary
-        public Frame visitFrame(FrameInstance frameInstance) {
-            Frame f = RArguments.unwrap(frameInstance.getFrame(FrameAccess.READ_ONLY));
-            if (!RArguments.isRFrame(f) || RArguments.getFunction(f) == null) {
-                return null;
-            }
-            RCaller call = RArguments.getCall(f);
-            assert call != null;
-            if (!call.isValidCaller()) {
-                // this is extra robustness. In ideal world we should not encounter invalid ones
-                return null;
-            }
-            RPairList rl = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
-            if (rl == null) {
-                // this can happen if the call represents promise frame and its logical parent is
-                // the top level execution context
-                return null;
-            }
-            if (skip > 0) {
-                skip--;
-                return null;
-            }
-            SourceSection section = rl.getSourceSection();
-            // fabricate a srcref attribute from ss
-            Source source = section != null ? section.getSource() : null;
-            String path = RSource.getPath(source);
-            RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
-            if (path != null) {
-                callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(RContext.getInstance(), section, path));
-            }
-            RPairList pl = RDataFactory.createPairList(callerSource);
-            if (prev != null) {
-                prev.setCdr(pl);
-            } else {
-                head = pl;
-            }
-            prev = pl;
-            return null;
-        }
-    }
-
     /**
      * Return a top down stack traceback as a pairlist of character vectors possibly attributed with
      * srcref information.
      *
-     * @param skip number of frame to skip
+     * @param skipArg number of frame to skip
      * @return {@link RNull#instance} if no trace else a {@link RPairList}.
      */
     @TruffleBoundary
-    public static Object createTraceback(int skip) {
+    public static Object createTraceback(int skipArg) {
         RError.performanceWarning("slow frame access - createTraceback");
-        FrameInstance current = Truffle.getRuntime().getCurrentFrame();
-        if (current != null) {
-            TracebackVisitor fiv = new TracebackVisitor(skip);
-            Truffle.getRuntime().iterateFrames(fiv);
-            return fiv.head == null ? RNull.instance : fiv.head;
-        } else {
+        List<TruffleStackTraceElement> st = TruffleStackTrace.getStackTrace(new DummyTracebackPolyglotException());
+        if (st == null) {
             return RNull.instance;
         }
+        return toPairList(st, skipArg);
+    }
+
+    public static Object toPairList(List<TruffleStackTraceElement> st, int skipArg) {
+        RPairList head = null;
+        RPairList prev = null;
+        int skip = skipArg;
+        Iterator<TruffleStackTraceElement> it = st.iterator();
+        while (it.hasNext()) {
+            TruffleStackTraceElement element = it.next();
+            RootNode targetRoot = element.getTarget().getRootNode();
+            if (targetRoot.isInternal()) {
+                continue;
+            }
+            String rootName = targetRoot.getName();
+
+            LanguageInfo info = targetRoot.getLanguageInfo();
+            if (info == null) {
+                continue;
+            }
+
+            if (skip > 0) {
+                skip--;
+                continue;
+            }
+
+            String languageId = info.getId();
+            RPairList pl = "R".equals(languageId) ? toPairList(element.getFrame()) : toPairList(element, languageId, rootName);
+            if (pl != null) {
+                if (prev != null) {
+                    prev.setCdr(pl);
+                } else {
+                    head = pl;
+                }
+                prev = pl;
+            }
+        }
+        return head == null ? RNull.instance : head;
+    }
+
+    private static RPairList toPairList(TruffleStackTraceElement element, String languageId, String rootName) {
+        // copied from PolyglotExceptionFrame.createGuest()
+        Node callNode = element.getLocation();
+        SourceSection section;
+        if (callNode != null) {
+            section = callNode.getEncapsulatingSourceSection();
+        } else {
+            section = null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("at ");
+        sb.append(spaces(Math.max(0, languageId.length()) - languageId.length())).append("<").append(languageId).append("> ");
+        sb.append(rootName);
+        sb.append("(");
+
+        sb.append(formatSource(section));
+        sb.append(")");
+        return RDataFactory.createPairList(RDataFactory.createStringVectorFromScalar(sb.toString()));
+    }
+
+    private static RPairList toPairList(Frame f) {
+        if (f == null) {
+            return null;
+        }
+        Frame frame = RArguments.unwrap(f);
+        if (!RArguments.isRFrame(frame) || RArguments.getFunction(frame) == null) {
+            return null;
+        }
+        RCaller call = RArguments.getCall(frame);
+
+        assert call != null;
+        if (!call.isValidCaller()) {
+            // this is extra robustness. In ideal world we should not encounter invalid ones
+            return null;
+        }
+        RPairList rl = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
+        if (rl == null) {
+            // this can happen if the call represents promise frame and its logical parent is
+            // the top level execution context
+            return null;
+        }
+        SourceSection ss = rl.getSourceSection();
+        // fabricate a srcref attribute from ss
+        Source source = ss != null ? ss.getSource() : null;
+        String path = RSource.getPath(source);
+        RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
+        if (path != null) {
+            callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(RContext.getInstance(), ss, path));
+        }
+        return RDataFactory.createPairList(callerSource);
+    }
+
+    private static String spaces(int length) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            b.append(' ');
+        }
+        return b.toString();
+    }
+
+    private static String formatSource(SourceSection sourceSection) {
+        if (sourceSection == null) {
+            return "Unknown";
+        }
+        Source source = sourceSection.getSource();
+        if (source == null) {
+            // safety check. likely not necsssary
+            return "Unknown";
+        }
+        StringBuilder b = new StringBuilder();
+        String path = source.getPath();
+        if (path == null) {
+            b.append(source.getName());
+        } else {
+            b.append(path);
+        }
+
+        b.append(":").append(formatIndices(sourceSection, true));
+        return b.toString();
+    }
+
+    private static String formatIndices(SourceSection sourceSection, boolean needsColumnSpecifier) {
+        StringBuilder b = new StringBuilder();
+        boolean singleLine = sourceSection.getStartLine() == sourceSection.getEndLine();
+        if (singleLine) {
+            b.append(sourceSection.getStartLine());
+        } else {
+            b.append(sourceSection.getStartLine()).append("-").append(sourceSection.getEndLine());
+        }
+        if (needsColumnSpecifier) {
+            b.append(":");
+            if (sourceSection.getCharLength() <= 1) {
+                b.append(sourceSection.getCharIndex());
+            } else {
+                b.append(sourceSection.getCharIndex()).append("-").append(sourceSection.getCharIndex() + sourceSection.getCharLength() - 1);
+            }
+        }
+        return b.toString();
     }
 
     /**
@@ -858,6 +950,20 @@ public final class Utils {
         IntBuffer intBuffer = byteBuffer.asIntBuffer();
         intBuffer.put(intArr);
         return byteBuffer.array();
+    }
+
+    private static final class DummyTracebackPolyglotException extends RuntimeException implements TruffleException {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            return this;
+        }
+
+        @Override
+        public Node getLocation() {
+            return null;
+        }
     }
 
 }

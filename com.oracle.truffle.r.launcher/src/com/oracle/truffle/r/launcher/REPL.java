@@ -28,10 +28,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -152,8 +148,6 @@ public class REPL {
                                 // we continue the repl even though the system may be broken
                                 lastStatus = 1;
                             } else if (e.isHostException() || e.isGuestException()) {
-                                // the 'Error in 'caller' : part of the message was already printed
-                                // in ErrorHandling.handleInteropException
                                 handleError(executor, context, e);
                                 // drop through to continue REPL and remember last eval was an error
                                 lastStatus = 1;
@@ -304,71 +298,31 @@ public class REPL {
         }
     }
 
-    public static void handleError(ExecutorService executor, Context context, PolyglotException e) {
-        String errorText = getErrorText(executor, e);
-        if (!errorText.isEmpty()) {
-            run(executor, () -> context.eval(PRINT_ERROR).execute(errorText));
-        }
-    }
-
-    private static String getErrorText(ExecutorService executor, PolyglotException eIn) {
+    public static void handleError(ExecutorService executor, Context context, PolyglotException eIn) {
         PolyglotException e = eIn;
         if (eIn.getCause() instanceof PolyglotException) {
             e = (PolyglotException) eIn.getCause();
         }
-        List<PolyglotException.StackFrame> stackTrace = new ArrayList<>();
-        for (PolyglotException.StackFrame s : e.getPolyglotStackTrace()) {
-            stackTrace.add(s);
-        }
 
-        // remove trailing host frames
-        for (ListIterator<PolyglotException.StackFrame> iterator = stackTrace.listIterator(stackTrace.size()); iterator.hasPrevious();) {
-            PolyglotException.StackFrame s = iterator.previous();
-            if (s.isHostFrame()) {
-                iterator.remove();
-            } else {
-                break;
-            }
-        }
-
-        // remove trailing <R> frames
-        for (ListIterator<PolyglotException.StackFrame> iterator = stackTrace.listIterator(stackTrace.size()); iterator.hasPrevious();) {
-            PolyglotException.StackFrame s = iterator.previous();
-            if (s.getLanguage().getId().equals("R")) {
-                iterator.remove();
-            } else {
-                break;
-            }
-        }
-
-        StringBuilder sb = new StringBuilder();
-        if (!stackTrace.isEmpty()) {
-            // we just removed all trailing <R> frames and there stil is something left =>
-            // this has to be a non R exception
-            sb.append("Error in polyglot evaluation : ");
-        }
+        // we just removed all trailing <R> frames and there stil is something left =>
+        // let's see if it is a R exception or polyglot
 
         if (!wasPrinted(executor, e)) {
+            boolean isFastR = isFastRRError(executor, e);
+            StringBuilder sb = new StringBuilder();
+            if (!isFastR) {
+                sb.append("Error in polyglot evaluation : ");
+            }
             if (e.isHostException()) {
                 sb.append(e.asHostException().toString());
             } else if (e.getMessage() != null) {
                 sb.append(e.getMessage());
             }
-        }
-
-        if (!stackTrace.isEmpty()) {
-            sb.append('\n');
-            Iterator<PolyglotException.StackFrame> it = stackTrace.iterator();
-            while (it.hasNext()) {
-                PolyglotException.StackFrame s = it.next();
-                sb.append("\tat ");
-                sb.append(s);
-                if (it.hasNext()) {
-                    sb.append('\n');
-                }
+            if (sb.length() > 0) {
+                run(executor, () -> context.eval(PRINT_ERROR).execute(sb.toString()));
             }
         }
-        return sb.toString();
+
     }
 
     private static boolean wasPrinted(ExecutorService executor, PolyglotException e) {
@@ -384,6 +338,18 @@ public class REPL {
                 return false;
             }
             return wasPrinted.asBoolean();
+        });
+    }
+
+    private static boolean isFastRRError(ExecutorService executor, PolyglotException e) {
+        return run(executor, () -> {
+            Value guestObject = e.getGuestObject();
+            // TODO ensure we are accessing only the FastR RError object and
+            // not some another guest object with a wasPrinted member
+            if (guestObject != null && guestObject.hasMember("wasPrinted")) {
+                return true;
+            }
+            return false;
         });
     }
 

@@ -67,6 +67,7 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
+import com.oracle.truffle.api.TruffleStackTraceElement;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.interop.ArityException;
@@ -357,6 +358,7 @@ public final class RContext {
     public final REnvironment.ContextStateImpl stateREnvironment;
     public final RErrorHandling.ContextStateImpl stateRErrorHandling;
     public final FastrInteropTryContextState stateInteropTry;
+    public List<TruffleStackTraceElement> lastInteropTrace;
     public final ConnectionSupport.ContextStateImpl stateRConnection;
     public final RRNG.ContextStateImpl stateRNG;
     public final RSerialize.ContextStateImpl stateRSerialize;

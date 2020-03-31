@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -573,6 +573,10 @@ public class TestBase {
     // support testing of FastR-only functionality (equivalent GNU R output provided separately)
     protected boolean assertEvalFastR(TestTrait trait1, String input, String gnuROutput) {
         return evalAndCompare(getAssertEvalFastR(gnuROutput, input), USE_DEFAULT_TIMEOUT, trait1);
+    }
+
+    protected boolean assertEvalFastR(TestTrait trait1, String input, String gnuROutput, boolean useREPL) {
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), useREPL, USE_DEFAULT_TIMEOUT, true, trait1);
     }
 
     protected boolean assertEvalFastR(TestTrait trait1, TestTrait trait2, String input, String gnuROutput) {

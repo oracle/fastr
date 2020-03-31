@@ -174,6 +174,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     }
 
     @Override
+    public boolean isCaptureFramesForTrace() {
+        return true;
+    }
+
+    @Override
     public RootCallTarget duplicateWithNewFrameDescriptor() {
         RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
 
