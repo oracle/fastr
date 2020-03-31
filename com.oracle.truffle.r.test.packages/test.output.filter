@@ -105,6 +105,7 @@ quantmod => d/>
 # --------
 sqldf => D/A svUnit test suite run in
 sqldf => D/test.all (in runit.all.R) run in
+sqldf => D/Could not load tcltk.  Will use slower R code instead.
 sqldf => d/\>
 
 # --------
