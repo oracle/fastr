@@ -1247,6 +1247,10 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
+    /**
+     * Sets the right NA value (according to the type of the data) at given position. Note: for raw
+     * vectors, this sets value {@code 0x00}.
+     */
     public void setNA(Object data, RandomAccessWriteIterator it, int index) {
         RType type = getType(data);
         switch (type) {
@@ -1274,6 +1278,43 @@ public abstract class VectorDataLibrary extends Library {
             case Expression:
                 // To be compatible with the VectorAccess API, NAs are treated as NULLs...
                 setElement(data, it, index, RNull.instance);
+                break;
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.unimplemented(type.toString());
+        }
+    }
+
+    /**
+     * @see #setNA(Object, RandomAccessWriteIterator, int)
+     */
+    public void setNextNA(Object data, SeqWriteIterator it) {
+        RType type = getType(data);
+        switch (type) {
+            case Integer:
+                setNextInt(data, it, RRuntime.INT_NA);
+                break;
+            case Double:
+                setNextDouble(data, it, RRuntime.DOUBLE_NA);
+                break;
+            case Logical:
+                setNextLogical(data, it, RRuntime.LOGICAL_NA);
+                break;
+            case Raw:
+                setNextRaw(data, it, (byte) 0);
+                break;
+            case Complex:
+                setNextComplex(data, it, RComplex.createNA());
+                break;
+            case Character:
+                setNextString(data, it, RRuntime.STRING_NA);
+                break;
+            case List:
+            case PairList:
+            case Language:
+            case Expression:
+                // To be compatible with the VectorAccess API, NAs are treated as NULLs...
+                setNextElement(data, it, RNull.instance);
                 break;
             default:
                 CompilerDirectives.transferToInterpreter();

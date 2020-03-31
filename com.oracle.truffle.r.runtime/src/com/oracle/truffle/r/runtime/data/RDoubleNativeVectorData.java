@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
@@ -82,7 +83,7 @@ public class RDoubleNativeVectorData implements TruffleObject {
 
     @ExportMessage
     public RDoubleArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
-        return copy(deep).copyResized(newSize, deep, fillNA);
+        return copy(deep).copyResized(newSize, deep, fillNA, BranchProfile.getUncached());
     }
 
     @ExportMessage
