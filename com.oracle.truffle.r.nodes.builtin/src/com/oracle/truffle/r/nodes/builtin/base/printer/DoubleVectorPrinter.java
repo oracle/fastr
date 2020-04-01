@@ -26,13 +26,12 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/format.c
 
-public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVector> {
+public final class DoubleVectorPrinter extends VectorPrinter<RDoubleVector> {
 
     static final DoubleVectorPrinter INSTANCE = new DoubleVectorPrinter();
 
@@ -41,13 +40,13 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
     }
 
     @Override
-    protected VectorPrinter<RAbstractDoubleVector>.VectorPrintJob createJob(RAbstractDoubleVector vector, int indx, PrintContext printCtx) {
+    protected VectorPrinter<RDoubleVector>.VectorPrintJob createJob(RDoubleVector vector, int indx, PrintContext printCtx) {
         return new DoubleVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class DoubleVectorPrintJob extends VectorPrintJob {
 
-        protected DoubleVectorPrintJob(RAbstractDoubleVector vector, int indx, PrintContext printCtx) {
+        protected DoubleVectorPrintJob(RDoubleVector vector, int indx, PrintContext printCtx) {
             super(vector, indx, printCtx);
         }
 
@@ -578,7 +577,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         return x - DECIMAL_VALUES[digit + DECIMAL_SHIFT][c];
     }
 
-    public static String[] format(RAbstractDoubleVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {
+    public static String[] format(RDoubleVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {
         VectorAccess access = value.slowPathAccess();
         try (RandomIterator iter = access.randomAccess(value)) {
             int length = access.getLength(iter);

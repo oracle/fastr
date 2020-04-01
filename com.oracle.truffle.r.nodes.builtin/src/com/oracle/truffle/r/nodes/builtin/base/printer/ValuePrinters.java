@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -44,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -90,7 +90,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
                     printer = FactorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractStringVector) {
                     printer = StringVectorPrinter.INSTANCE;
-                } else if (x instanceof RAbstractDoubleVector) {
+                } else if (x instanceof RDoubleVector) {
                     printer = DoubleVectorPrinter.INSTANCE;
                 } else if (x instanceof RIntVector) {
                     printer = IntegerVectorPrinter.INSTANCE;

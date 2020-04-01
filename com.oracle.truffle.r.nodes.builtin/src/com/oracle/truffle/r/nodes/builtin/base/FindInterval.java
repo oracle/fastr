@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2002--2016, The R Core Team
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -54,7 +54,7 @@ public abstract class FindInterval extends RBuiltinNode.Arg5 {
     }
 
     @Specialization(guards = {"xtAccess.supports(xt)", "xAccess.supports(x)"})
-    RIntVector doFindInterval(RAbstractDoubleVector xt, RAbstractDoubleVector x, boolean right, boolean inside, boolean leftOpen,
+    RIntVector doFindInterval(RDoubleVector xt, RDoubleVector x, boolean right, boolean inside, boolean leftOpen,
                     @Cached("createEqualityProfile()") ValueProfile leftOpenProfile,
                     @Cached("create(xt)") VectorAccess xtAccess,
                     @Cached("create(x)") VectorAccess xAccess,
@@ -81,7 +81,7 @@ public abstract class FindInterval extends RBuiltinNode.Arg5 {
     }
 
     @Specialization(replaces = "doFindInterval")
-    RIntVector doFindIntervalGeneric(RAbstractDoubleVector xt, RAbstractDoubleVector x, boolean right, boolean inside, boolean leftOpen,
+    RIntVector doFindIntervalGeneric(RDoubleVector xt, RDoubleVector x, boolean right, boolean inside, boolean leftOpen,
                     @Cached("createEqualityProfile()") ValueProfile leftOpenProfile,
                     @Cached("create()") VectorFactory factory) {
         return doFindInterval(xt, x, right, inside, leftOpen, leftOpenProfile, xt.slowPathAccess(), x.slowPathAccess(), factory);

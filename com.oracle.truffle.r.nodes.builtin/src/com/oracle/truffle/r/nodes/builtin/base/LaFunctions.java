@@ -84,7 +84,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorDataReuse;
@@ -134,7 +133,7 @@ public class LaFunctions {
         @Child private LapackRFFI.DgeevNode dgeevNode = LapackRFFI.DgeevNode.create();
 
         @Specialization
-        protected Object doRg(RAbstractDoubleVector matrix, boolean onlyValues,
+        protected Object doRg(RDoubleVector matrix, boolean onlyValues,
                         @Cached("create()") GetDimAttributeNode getDimsNode) {
             int[] dims = getDimsNode.getDimensions(matrix);
             // copy array component of matrix as Lapack destroys it
@@ -232,7 +231,7 @@ public class LaFunctions {
         @Child private LapackRFFI.DsyevrNode dsyevrNode = LapackRFFI.DsyevrNode.create();
 
         @Specialization
-        protected Object doRs(RAbstractDoubleVector matrix, boolean onlyValues,
+        protected Object doRs(RDoubleVector matrix, boolean onlyValues,
                         @Cached("create()") GetDimAttributeNode getDimsNode) {
             int[] dims = getDimsNode.getDimensions(matrix);
             int n = dims[0];
@@ -296,7 +295,7 @@ public class LaFunctions {
         @Child private LapackRFFI.Dgeqp3Node dgeqp3Node = LapackRFFI.Dgeqp3Node.create();
 
         @Specialization
-        protected RList doQr(RAbstractDoubleVector aIn,
+        protected RList doQr(RDoubleVector aIn,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") SetDimAttributeNode setDimsNode) {
             // This implementation is sufficient for B25 matcal-5.
@@ -348,7 +347,7 @@ public class LaFunctions {
         @Child private LapackRFFI.DtrtrsNode dtrtrsNode = LapackRFFI.DtrtrsNode.create();
 
         @Specialization
-        protected RDoubleVector doQrCoefReal(RList qIn, RAbstractDoubleVector b,
+        protected RDoubleVector doQrCoefReal(RList qIn, RDoubleVector b,
                         @Cached("create()") GetReadonlyData.Double qrToArrayNode,
                         @Cached("create()") GetReadonlyData.Double tauToArrayNode,
                         @Cached("create()") GetDimAttributeNode getBDimsNode,
@@ -472,7 +471,7 @@ public class LaFunctions {
         @Child private LapackRFFI.DgetrfNode dgetrfNode = LapackRFFI.DgetrfNode.create();
 
         @Specialization
-        protected RList doDetGeReal(RAbstractDoubleVector aIn, boolean useLog,
+        protected RList doDetGeReal(RDoubleVector aIn, boolean useLog,
                         @Cached("create()") GetReadonlyData.Double vectorToArrayNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode) {
             RDoubleVector a = (RDoubleVector) aIn.copy();
@@ -555,7 +554,7 @@ public class LaFunctions {
         @Child private LapackRFFI.DpstrfNode dpstrfNode = LapackRFFI.DpstrfNode.create();
 
         @Specialization
-        protected RDoubleVector doDetGeReal(RAbstractDoubleVector aIn, boolean piv, double tol,
+        protected RDoubleVector doDetGeReal(RDoubleVector aIn, boolean piv, double tol,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode,
                         @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
@@ -629,7 +628,7 @@ public class LaFunctions {
         @Child private LapackRFFI.DpotriNode dpotriNode = LapackRFFI.DpotriNode.create();
 
         @Specialization
-        protected RDoubleVector chol2inv(RAbstractDoubleVector a, int size,
+        protected RDoubleVector chol2inv(RDoubleVector a, int size,
                         @Cached("create()") GetDimAttributeNode getDimsNode) {
 
             int[] aDims = getDimsNode.getDimensions(a);
@@ -689,7 +688,7 @@ public class LaFunctions {
 
         private static final NativeArrayCache aCache = new NativeArrayCache();
 
-        private static Function<RAbstractDoubleVector, Object> getDimVal(int dim) {
+        private static Function<RDoubleVector, Object> getDimVal(int dim) {
             return vec -> vec.getDimensions()[dim];
         }
 
@@ -709,7 +708,7 @@ public class LaFunctions {
         @Child private LapackRFFI.DlangeNode dlangeNode = LapackRFFI.DlangeNode.create();
 
         @Specialization
-        protected RDoubleVector laSolve(RAbstractVector a, RAbstractDoubleVector bin, double tol,
+        protected RDoubleVector laSolve(RAbstractVector a, RDoubleVector bin, double tol,
                         @Cached("create()") GetDimAttributeNode getADimsNode,
                         @Cached("create()") GetDimAttributeNode getBinDimsNode,
                         @Cached("create()") SetDimAttributeNode setBDimsNode,
@@ -782,8 +781,8 @@ public class LaFunctions {
             int[] ipiv = new int[n];
             // work on a copy of A
             RDoubleVector aDouble;
-            if (a instanceof RAbstractDoubleVector) {
-                aDouble = ((RAbstractDoubleVector) a).materialize();
+            if (a instanceof RDoubleVector) {
+                aDouble = ((RDoubleVector) a).materialize();
             } else {
                 aDouble = (RDoubleVector) castDouble.doCast(a);
             }
@@ -830,7 +829,7 @@ public class LaFunctions {
         @Child private LapackRFFI.DgesddNode dgesddNode = LapackRFFI.DgesddNode.create();
 
         @Specialization
-        protected Object doSvd(String ju, RAbstractDoubleVector x, RAbstractDoubleVector s, RAbstractDoubleVector u, RAbstractDoubleVector vt,
+        protected Object doSvd(String ju, RDoubleVector x, RDoubleVector s, RDoubleVector u, RDoubleVector vt,
                         @Cached("createCopyAllAttributes()") CopyAttributesNode copyAttrNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode) {
 
@@ -910,7 +909,7 @@ public class LaFunctions {
         @Child private LapackRFFI.DtrsmNode dtrsmNode = LapackRFFI.DtrsmNode.create();
 
         @Specialization
-        Object doBacksolve(RAbstractDoubleVector r, RAbstractDoubleVector b, int k, boolean upperTri, boolean transpose,
+        Object doBacksolve(RDoubleVector r, RDoubleVector b, int k, boolean upperTri, boolean transpose,
                         @Cached("create()") GetDimAttributeNode getRDimAttribute,
                         @Cached("create()") GetDimAttributeNode getBDimAttribute,
                         @Cached("create()") GetReadonlyData.Double getReadonlyData,

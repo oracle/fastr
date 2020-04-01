@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,10 +33,10 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -66,7 +66,7 @@ public abstract class LRaster extends RExternalBuiltinNode.Arg8 {
 
     @Specialization
     @TruffleBoundary
-    Object doRaster(RAbstractVector raster, RAbstractVector xVec, RAbstractVector yVec, RAbstractVector widthVec, RAbstractVector heightVec, RAbstractDoubleVector hjust, RAbstractDoubleVector vjust,
+    Object doRaster(RAbstractVector raster, RAbstractVector xVec, RAbstractVector yVec, RAbstractVector widthVec, RAbstractVector heightVec, RDoubleVector hjust, RDoubleVector vjust,
                     RAbstractLogicalVector interpolate) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.library.stats.StatsFunctionsNodes.Function2_1Node;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 /**
  * Base package builtins beta and lbeta.
@@ -48,7 +48,7 @@ public class BetaFunctions {
         }
 
         @Specialization
-        protected Object doVectors(RAbstractDoubleVector a, RAbstractDoubleVector b,
+        protected Object doVectors(RDoubleVector a, RDoubleVector b,
                         @Cached("createFuncNode()") Function2_1Node funcNode) {
             // Note: we call execute, which skips the casts of the Function2_1Node
             return funcNode.execute(a, b, true);
@@ -68,7 +68,7 @@ public class BetaFunctions {
         }
 
         @Specialization
-        protected Object doVectors(RAbstractDoubleVector a, RAbstractDoubleVector b,
+        protected Object doVectors(RDoubleVector a, RDoubleVector b,
                         @Cached("createFuncNode()") Function2_1Node funcNode) {
             // Note: we call execute, which skips the casts of the Function2_1Node
             return funcNode.execute(a, b, true);

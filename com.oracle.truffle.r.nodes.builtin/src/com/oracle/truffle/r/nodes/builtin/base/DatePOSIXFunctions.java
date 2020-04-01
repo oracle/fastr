@@ -81,7 +81,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -197,7 +196,7 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RList doDate2POSIXlt(RAbstractDoubleVector x) {
+        protected RList doDate2POSIXlt(RDoubleVector x) {
             int xLen = x.getLength();
             POSIXltBuilder builder = new POSIXltBuilder(xLen, "UTC");
             for (int i = 0; i < xLen; i++) {
@@ -234,7 +233,7 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RList asPOSIXlt(RAbstractDoubleVector x, String tz) {
+        protected RList asPOSIXlt(RDoubleVector x, String tz) {
             int xLen = x.getLength();
             POSIXltBuilder builder = new POSIXltBuilder(xLen, tz);
             for (int i = 0; i < xLen; i++) {
@@ -390,7 +389,7 @@ public class DatePOSIXFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector format(RAbstractListVector x, RAbstractStringVector format, boolean usetz) {
-            RAbstractDoubleVector secVector = (RAbstractDoubleVector) RRuntime.convertScalarVectors(x.getDataAt(0));
+            RDoubleVector secVector = (RDoubleVector) RRuntime.convertScalarVectors(x.getDataAt(0));
             RIntVector minVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(1));
             RIntVector hourVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(2));
             RIntVector mdayVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(3));
@@ -787,8 +786,8 @@ public class DatePOSIXFunctions {
 
     private static double getDouble(RAbstractVector v, int index) {
         int i = index % v.getLength();
-        if (v instanceof RAbstractDoubleVector) {
-            return ((RAbstractDoubleVector) v).getDataAt(i);
+        if (v instanceof RDoubleVector) {
+            return ((RDoubleVector) v).getDataAt(i);
         } else if (v instanceof RIntVector) {
             return ((RIntVector) v).getDataAt(i);
         } else {
@@ -800,8 +799,8 @@ public class DatePOSIXFunctions {
         int i = index % v.getLength();
         if (v instanceof RIntVector) {
             return ((RIntVector) v).getDataAt(i);
-        } else if (v instanceof RAbstractDoubleVector) {
-            return (int) ((RAbstractDoubleVector) v).getDataAt(i);
+        } else if (v instanceof RDoubleVector) {
+            return (int) ((RDoubleVector) v).getDataAt(i);
         } else {
             throw RInternalError.shouldNotReachHere();
         }

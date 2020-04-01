@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,13 +54,13 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -116,12 +116,12 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
         return (RIntVector) castInteger.doCast(vector);
     }
 
-    private RAbstractDoubleVector castDouble(RAbstractVector vector) {
+    private RDoubleVector castDouble(RAbstractVector vector) {
         if (castDouble == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castDouble = insert(CastDoubleNode.createNonPreserving());
         }
-        return (RAbstractDoubleVector) castDouble.doCast(vector);
+        return (RDoubleVector) castDouble.doCast(vector);
     }
 
     private RAbstractVector castVector(Object value) {
@@ -241,7 +241,7 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
                 }
                 setRowNamesNode.setRowNames(res, castVector(value));
             } else if (attrName.equals(RRuntime.TSP_ATTR_KEY)) {
-                RAbstractDoubleVector tsp;
+                RDoubleVector tsp;
                 if (value != RNull.instance) {
                     tsp = castDouble(castVector(value));
                 } else {

@@ -67,6 +67,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -84,7 +85,6 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -1015,8 +1015,8 @@ public class RSerialize {
                 int first = vec.getDataAt(1);
                 int stride = vec.getDataAt(2);
                 result = RDataFactory.createIntSequence(first, stride, length);
-            } else if (state instanceof RAbstractDoubleVector) {
-                RAbstractDoubleVector vec = (RAbstractDoubleVector) state;
+            } else if (state instanceof RDoubleVector) {
+                RDoubleVector vec = (RDoubleVector) state;
                 int length = (int) vec.getDataAt(0);
                 int first = (int) vec.getDataAt(1);
                 int stride = (int) vec.getDataAt(2);
@@ -1029,8 +1029,8 @@ public class RSerialize {
 
         private static Object readCompactRealSeq(Object state) throws RuntimeException {
             RAbstractVector result;
-            if (state instanceof RAbstractDoubleVector) {
-                RAbstractDoubleVector vec = (RAbstractDoubleVector) state;
+            if (state instanceof RDoubleVector) {
+                RDoubleVector vec = (RDoubleVector) state;
                 double length = (int) vec.getDataAt(0);
                 double first = vec.getDataAt(1);
                 double stride = vec.getDataAt(2);
@@ -1789,7 +1789,7 @@ public class RSerialize {
                             }
 
                             case REALSXP: {
-                                RAbstractDoubleVector vector = (RAbstractDoubleVector) obj;
+                                RDoubleVector vector = (RDoubleVector) obj;
                                 VectorAccess access = vector.slowPathAccess();
                                 try (SequentialIterator iter = access.access(vector)) {
                                     stream.writeInt(access.getLength(iter));
@@ -2889,7 +2889,7 @@ public class RSerialize {
             if (value instanceof RAbstractVector) {
                 RAbstractVector vector = (RAbstractVector) value;
                 if (vector.getLength() == 1 && (vector.getAttributes() == null || vector.getAttributes().getShape().getPropertyCount() == 0)) {
-                    if (vector instanceof RAbstractDoubleVector || vector instanceof RIntVector || vector instanceof RAbstractStringVector ||
+                    if (vector instanceof RDoubleVector || vector instanceof RIntVector || vector instanceof RAbstractStringVector ||
                                     vector instanceof RAbstractLogicalVector || vector instanceof RAbstractRawVector || vector instanceof RAbstractComplexVector) {
                         return vector.getDataAtAsObject(0);
                     }

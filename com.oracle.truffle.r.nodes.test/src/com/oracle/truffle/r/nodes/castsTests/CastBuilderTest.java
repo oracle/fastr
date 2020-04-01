@@ -101,7 +101,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -578,8 +577,8 @@ public class CastBuilderTest {
 
         RIntVector vec = RDataFactory.createIntVector(new int[]{0, 1, 2, 3}, true, new int[]{2, 2});
         Object res = cast(vec);
-        assertTrue(res instanceof RAbstractDoubleVector);
-        RAbstractDoubleVector dvec = (RAbstractDoubleVector) res;
+        assertTrue(res instanceof RDoubleVector);
+        RDoubleVector dvec = (RDoubleVector) res;
         assertNotNull(dvec.getDimensions());
         assertEquals(2, dvec.getDimensions().length);
         assertEquals(2, dvec.getDimensions()[0]);

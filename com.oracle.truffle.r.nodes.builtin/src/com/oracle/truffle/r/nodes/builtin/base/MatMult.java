@@ -50,7 +50,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -109,7 +108,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "bothZeroDim(a, b)")
-    protected RDoubleVector both0Dim(RAbstractDoubleVector a, RAbstractDoubleVector b) {
+    protected RDoubleVector both0Dim(RDoubleVector a, RDoubleVector b) {
         int r = getBDimsNode.getDimensions(b)[1];
         int c = getADimsNode.getDimensions(a)[0];
         RDoubleVector result = RDataFactory.createDoubleVector(r * c);
@@ -190,7 +189,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     @Child private GetReadonlyData.Double aToArrayNode = GetReadonlyData.Double.create();
     @Child private GetReadonlyData.Double bToArrayNode = GetReadonlyData.Double.create();
 
-    private RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols) {
+    private RDoubleVector doubleMatrixMultiply(RDoubleVector a, RDoubleVector b, int aRows, int aCols, int bRows, int bCols) {
         return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols, 1, aRows, 1, bRows, false);
     }
 
@@ -211,7 +210,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
      * @param mirrored true if only the upper right triangle of the result needs to be calculated
      * @return the result vector
      */
-    public RDoubleVector doubleMatrixMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, int aRows, int aCols, int bRows, int bCols, int aRowStride, int aColStride, int bRowStride,
+    public RDoubleVector doubleMatrixMultiply(RDoubleVector a, RDoubleVector b, int aRows, int aCols, int bRows, int bCols, int aRowStride, int aColStride, int bRowStride,
                     int bColStride, boolean mirrored) {
         if (aCols != bRows) {
             throw error(RError.Message.NON_CONFORMABLE_ARGS);
@@ -325,9 +324,9 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"a.getClass() == aClass", "b.getClass() == bClass"})
-    protected RDoubleVector multiplyDouble(RAbstractDoubleVector a, RAbstractDoubleVector b,
-                    @Cached("a.getClass()") Class<? extends RAbstractDoubleVector> aClass,
-                    @Cached("b.getClass()") Class<? extends RAbstractDoubleVector> bClass,
+    protected RDoubleVector multiplyDouble(RDoubleVector a, RDoubleVector b,
+                    @Cached("a.getClass()") Class<? extends RDoubleVector> aClass,
+                    @Cached("b.getClass()") Class<? extends RDoubleVector> bClass,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
@@ -335,14 +334,14 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "multiplyDouble")
-    protected RDoubleVector multiply(RAbstractDoubleVector a, RAbstractDoubleVector b,
+    protected RDoubleVector multiply(RDoubleVector a, RDoubleVector b,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
         return doubleMultiply(a, b, aIsMatrix, bIsMatrix, lengthEquals);
     }
 
-    private RDoubleVector doubleMultiply(RAbstractDoubleVector a, RAbstractDoubleVector b, ConditionProfile aIsMatrix, ConditionProfile bIsMatrix, ConditionProfile lengthEquals) {
+    private RDoubleVector doubleMultiply(RDoubleVector a, RDoubleVector b, ConditionProfile aIsMatrix, ConditionProfile bIsMatrix, ConditionProfile lengthEquals) {
         int[] aDimensions = getADimsNode.getDimensions(a);
         int[] bDimensions = getBDimsNode.getDimensions(b);
         if (aIsMatrix.profile(isMatrix(aDimensions))) {
@@ -782,21 +781,21 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     // to double
 
     @Specialization(guards = {"!isRAbstractComplexVector(a)"})
-    protected RDoubleVector multiply(RAbstractAtomicVector a, RAbstractDoubleVector b,
+    protected RDoubleVector multiply(RAbstractAtomicVector a, RDoubleVector b,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
-        return doubleMultiply((RAbstractDoubleVector) a.castSafe(RType.Double, isNAProfile), b, aIsMatrix, bIsMatrix, lengthEquals);
+        return doubleMultiply((RDoubleVector) a.castSafe(RType.Double, isNAProfile), b, aIsMatrix, bIsMatrix, lengthEquals);
     }
 
     @Specialization(guards = {"!isRAbstractComplexVector(b)"})
-    protected RDoubleVector multiply(RAbstractDoubleVector a, RAbstractAtomicVector b,
+    protected RDoubleVector multiply(RDoubleVector a, RAbstractAtomicVector b,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
-        return doubleMultiply(a, (RAbstractDoubleVector) b.castSafe(RType.Double, isNAProfile), aIsMatrix, bIsMatrix, lengthEquals);
+        return doubleMultiply(a, (RDoubleVector) b.castSafe(RType.Double, isNAProfile), aIsMatrix, bIsMatrix, lengthEquals);
     }
 
     // to complex

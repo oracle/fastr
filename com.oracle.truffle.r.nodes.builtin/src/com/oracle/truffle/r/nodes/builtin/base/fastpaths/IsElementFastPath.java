@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
@@ -70,7 +70,7 @@ public abstract class IsElementFastPath extends RFastPathNode {
     }
 
     @Specialization(guards = "el.getLength() == 1")
-    protected Byte iselementOne(RAbstractDoubleVector el, RAbstractDoubleVector set,
+    protected Byte iselementOne(RDoubleVector el, RDoubleVector set,
                     @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {
         double element = el.getDataAt(0);
@@ -86,7 +86,7 @@ public abstract class IsElementFastPath extends RFastPathNode {
     }
 
     @Specialization(guards = {"set.isSequence()", "el.getLength() == 1", "set.getSequence().getStride() >= 0"})
-    protected Byte isElementOneSequence(RAbstractDoubleVector el, RIntVector set,
+    protected Byte isElementOneSequence(RDoubleVector el, RIntVector set,
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
         double element = el.getDataAt(0);
         RIntSeqVectorData seq = set.getSequence();
@@ -94,7 +94,7 @@ public abstract class IsElementFastPath extends RFastPathNode {
     }
 
     @Specialization(replaces = "isElementOneSequence", guards = {"!set.isSequence()", "el.getLength() == 1"})
-    protected Byte iselementOne(RAbstractDoubleVector el, RIntVector set,
+    protected Byte isElementOne(RDoubleVector el, RIntVector set,
                     @Cached("create()") NACheck na,
                     @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {

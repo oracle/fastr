@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2014,  The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,9 +35,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 @RBuiltin(name = "pretty", kind = INTERNAL, parameterNames = {"l", "u", "n", "min.n", "shrink.sml", "hi", "eps.correct"}, behavior = PURE)
 public abstract class Pretty extends RBuiltinNode.Arg7 {
@@ -55,10 +55,10 @@ public abstract class Pretty extends RBuiltinNode.Arg7 {
         casts.arg("eps.correct").defaultError(RError.Message.GENERIC, "'eps.correct' must be 0, 1, or 2").asIntegerVector().findFirst().mustNotBeNA().mustBe(and(gte0(), lte(2)));
     }
 
-    public abstract RList execute(double l, double u, int n, int minN, double shrinkSml, RAbstractDoubleVector hi, int epsCorrect);
+    public abstract RList execute(double l, double u, int n, int minN, double shrinkSml, RDoubleVector hi, int epsCorrect);
 
     @Specialization
-    protected RList pretty(double l, double u, int n, int minN, double shrinkSml, RAbstractDoubleVector hi, int epsCorrect) {
+    protected RList pretty(double l, double u, int n, int minN, double shrinkSml, RDoubleVector hi, int epsCorrect) {
         double hi0 = hi.getDataAt(0);
         double hi1 = hi.getDataAt(1);
 

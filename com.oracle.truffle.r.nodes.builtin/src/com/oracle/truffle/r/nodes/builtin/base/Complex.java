@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "complex", kind = INTERNAL, parameterNames = {"length.out", "real", "imaginary"}, behavior = PURE)
@@ -50,7 +50,7 @@ public abstract class Complex extends RBuiltinNode.Arg3 {
     }
 
     @Specialization
-    protected RComplexVector complex(int lengthOut, RAbstractDoubleVector real, RAbstractDoubleVector imaginary,
+    protected RComplexVector complex(int lengthOut, RDoubleVector real, RDoubleVector imaginary,
                     @Cached("create()") NACheck realNA,
                     @Cached("create()") NACheck imaginaryNA,
                     @Cached("create()") VectorLengthProfile realLengthProfile,

@@ -58,7 +58,6 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -897,8 +896,8 @@ public class RRuntime {
             return string2logical((String) obj);
         } else if (obj instanceof RIntVector) {
             return int2logical(((RIntVector) obj).getDataAt(0));
-        } else if (obj instanceof RAbstractDoubleVector) {
-            return double2logical(((RAbstractDoubleVector) obj).getDataAt(0));
+        } else if (obj instanceof RDoubleVector) {
+            return double2logical(((RDoubleVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractLogicalVector) {
             return ((RAbstractLogicalVector) obj).getDataAt(0);
         } else if (obj instanceof RAbstractComplexVector) {
@@ -924,8 +923,8 @@ public class RRuntime {
             return string2int((String) obj);
         } else if (obj instanceof RIntVector) {
             return ((RIntVector) obj).getDataAt(0);
-        } else if (obj instanceof RAbstractDoubleVector) {
-            return double2int(((RAbstractDoubleVector) obj).getDataAt(0));
+        } else if (obj instanceof RDoubleVector) {
+            return double2int(((RDoubleVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractLogicalVector) {
             return logical2int(((RAbstractLogicalVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractComplexVector) {
@@ -952,7 +951,7 @@ public class RRuntime {
             case Numeric:
                 // Note: e.g. foo <- 3.4; exists("foo", mode = "integer") really gives TRUE
                 return obj instanceof Integer || obj instanceof Double ||
-                                obj instanceof RIntVector || obj instanceof RAbstractDoubleVector;
+                                obj instanceof RIntVector || obj instanceof RDoubleVector;
             case Complex:
                 return obj instanceof RAbstractComplexVector;
             case Character:

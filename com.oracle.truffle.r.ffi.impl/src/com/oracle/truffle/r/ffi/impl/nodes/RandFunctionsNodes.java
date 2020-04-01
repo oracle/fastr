@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,8 +35,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -178,13 +178,13 @@ public final class RandFunctionsNodes {
                         @CachedLibrary("rN") InteropLibrary rNInterop) {
             // prob is double* and rN is int*
             // Return a vector data in rN rN[1:K] {K := length(prob)}
-            RAbstractDoubleVector probVector;
+            RDoubleVector probVector;
             if (probInterop.hasArrayElements(prob)) {
                 if (probConvertForeign == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     probConvertForeign = insert(ConvertForeignObjectNode.create());
                 }
-                probVector = (RAbstractDoubleVector) probConvertForeign.convert((TruffleObject) prob);
+                probVector = (RDoubleVector) probConvertForeign.convert((TruffleObject) prob);
             } else {
                 if (!probInterop.isPointer(prob)) {
                     probInterop.toNative(prob);
@@ -229,10 +229,10 @@ public final class RandFunctionsNodes {
 
     abstract static class DoRMultinomNode extends Node {
 
-        public abstract void execute(int n, RAbstractDoubleVector prob, int k, RIntVector rN);
+        public abstract void execute(int n, RDoubleVector prob, int k, RIntVector rN);
 
         @Specialization(guards = {"probAccess.supports(prob)", "rNAccess.supports(rN)"})
-        protected void doRMultinom(int n, RAbstractDoubleVector prob, int k, RIntVector rN,
+        protected void doRMultinom(int n, RDoubleVector prob, int k, RIntVector rN,
                         @Cached("prob.access()") VectorAccess probAccess,
                         @Cached("rN.access()") VectorAccess rNAccess,
                         @Cached() Rbinom rbinom) {
@@ -245,7 +245,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization(replaces = "doRMultinom")
-        protected void doGeneric(int n, RAbstractDoubleVector prob, int k, RIntVector rN,
+        protected void doGeneric(int n, RDoubleVector prob, int k, RIntVector rN,
                         @Cached() Rbinom rbinom) {
             doRMultinom(n, prob, k, rN, prob.slowPathAccess(), rN.slowPathAccess(), rbinom);
         }

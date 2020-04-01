@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,9 +39,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 
 @RBuiltin(name = "shortRowNames", kind = INTERNAL, parameterNames = {"x", "type"}, behavior = PURE)
@@ -100,8 +100,8 @@ public abstract class ShortRowNames extends RBuiltinNode.Arg2 {
                 }
             }
             return intVector.getLength();
-        } else if (rowNames instanceof RAbstractDoubleVector) {
-            RAbstractDoubleVector doubleVector = ((RAbstractDoubleVector) rowNames);
+        } else if (rowNames instanceof RDoubleVector) {
+            RDoubleVector doubleVector = ((RDoubleVector) rowNames);
             if (doubleVector.getLength() == 2) {
                 if (RRuntime.isNA(doubleVector.getDataAt(0))) {
                     naValueMet.enter();

@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 
@@ -942,12 +941,12 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
     }
 
     @Specialization
-    public Object call(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y, int method, boolean iskendall) {
+    public Object call(RDoubleVector x, @SuppressWarnings("unused") RNull y, int method, boolean iskendall) {
         return corcov(x.materialize(), null, methodValueProfile.profile(method), iskendall);
     }
 
     @Specialization
-    public Object call(RAbstractDoubleVector x, RAbstractDoubleVector y, int method, boolean iskendall) {
+    public Object call(RDoubleVector x, RDoubleVector y, int method, boolean iskendall) {
         return corcov(x.materialize(), y.materialize(), methodValueProfile.profile(method), iskendall);
     }
 

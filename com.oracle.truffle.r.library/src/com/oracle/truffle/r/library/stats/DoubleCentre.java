@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1995--2015, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
@@ -37,7 +37,7 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = {"aAccess.supports(a)", "reuse.supports(a)"})
-    protected RAbstractDoubleVector doubleCentre(RAbstractDoubleVector a,
+    protected RDoubleVector doubleCentre(RDoubleVector a,
                     @Cached("a.access()") VectorAccess aAccess,
                     @Cached("createNonShared(a)") VectorReuse reuse,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
@@ -47,7 +47,7 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
             throw error(Message.MUST_BE_SQUARE_MATRIX, "x");
         }
         try (RandomIterator aIter = aAccess.randomAccess(a)) {
-            RAbstractDoubleVector result = reuse.getResult(a);
+            RDoubleVector result = reuse.getResult(a);
             VectorAccess resultAccess = reuse.access(result);
             try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
                 for (int i = 0; i < n; i++) {
@@ -76,7 +76,7 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
     }
 
     @Specialization(replaces = "doubleCentre")
-    protected RAbstractDoubleVector doubleCentreGeneric(RAbstractDoubleVector a,
+    protected RDoubleVector doubleCentreGeneric(RDoubleVector a,
                     @Cached("createNonSharedGeneric()") VectorReuse reuse,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
         return doubleCentre(a, a.slowPathAccess(), reuse, getDimNode);

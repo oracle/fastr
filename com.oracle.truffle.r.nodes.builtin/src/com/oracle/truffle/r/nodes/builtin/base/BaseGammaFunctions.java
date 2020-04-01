@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.nmath.GammaFunctions;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -55,7 +54,7 @@ public class BaseGammaFunctions {
         }
 
         @Specialization
-        protected RDoubleVector digamma(RAbstractDoubleVector x,
+        protected RDoubleVector digamma(RDoubleVector x,
                         @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
             naValCheck.enable(x);
             double[] result = new double[x.getLength()];
@@ -177,26 +176,26 @@ public class BaseGammaFunctions {
         }
 
         @Specialization(guards = "binaryMapNode.isSupported(x, deriv)")
-        protected RAbstractDoubleVector psiGammaFast(RAbstractDoubleVector x, RAbstractDoubleVector deriv,
+        protected RDoubleVector psiGammaFast(RDoubleVector x, RDoubleVector deriv,
                         @Cached("createFastCached(x, deriv)") BinaryMapNode binaryMapNode) {
-            return (RAbstractDoubleVector) binaryMapNode.apply(x, deriv);
+            return (RDoubleVector) binaryMapNode.apply(x, deriv);
         }
 
         @Specialization(replaces = "psiGammaFast")
-        protected RAbstractDoubleVector psiGammaGeneric(RAbstractDoubleVector x, RAbstractDoubleVector deriv,
+        protected RDoubleVector psiGammaGeneric(RDoubleVector x, RDoubleVector deriv,
                         @Cached("createGeneric(x, deriv)") BinaryMapNode binaryMapNode) {
-            return (RAbstractDoubleVector) binaryMapNode.apply(x, deriv);
+            return (RDoubleVector) binaryMapNode.apply(x, deriv);
         }
 
-        protected BinaryMapNode createFastCached(RAbstractDoubleVector x, RAbstractDoubleVector deriv) {
+        protected BinaryMapNode createFastCached(RDoubleVector x, RDoubleVector deriv) {
             return createCached(x, deriv, false);
         }
 
-        protected BinaryMapNode createGeneric(RAbstractDoubleVector x, RAbstractDoubleVector deriv) {
+        protected BinaryMapNode createGeneric(RDoubleVector x, RDoubleVector deriv) {
             return createCached(x, deriv, true);
         }
 
-        protected BinaryMapNode createCached(RAbstractDoubleVector x, RAbstractDoubleVector deriv, boolean isGeneric) {
+        protected BinaryMapNode createCached(RDoubleVector x, RDoubleVector deriv, boolean isGeneric) {
             return BinaryMapNode.create(new PsiGammaFunction(), x, deriv, RType.Double, RType.Double, false, isGeneric);
         }
 

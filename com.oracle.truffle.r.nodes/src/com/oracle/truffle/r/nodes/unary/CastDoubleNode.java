@@ -44,7 +44,6 @@ import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -96,7 +95,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization(guards = {"uAccess.supports(x)", "noClosure(x)", "!isForeignIntVector(x)"}, limit = "getGenericVectorAccessCacheSize()")
-    protected RAbstractDoubleVector doAbstractVector(RAbstractAtomicVector x,
+    protected RDoubleVector doAbstractVector(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile,
                     @Cached("x.access()") VectorAccess uAccess) {
         RAbstractAtomicVector operand = operandTypeProfile.profile(x);
@@ -104,21 +103,21 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization(replaces = "doAbstractVector", guards = {"noClosure(x)", "!isForeignIntVector(x)"})
-    protected RAbstractDoubleVector doAbstractVectorGeneric(RAbstractAtomicVector x,
+    protected RDoubleVector doAbstractVectorGeneric(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
         return doAbstractVector(x, operandTypeProfile, x.slowPathAccess());
     }
 
     @Specialization(guards = {"useClosure(x)", "!isForeignIntVector(x)"})
-    public RAbstractDoubleVector doAbstractVectorClosure(RAbstractAtomicVector x,
+    public RDoubleVector doAbstractVectorClosure(RAbstractAtomicVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile,
                     @Cached("create()") NAProfile naProfile) {
         RAbstractAtomicVector operand = operandTypeProfile.profile(x);
-        return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
+        return (RDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
     }
 
     @Specialization
-    protected RAbstractDoubleVector doDoubleVector(RAbstractDoubleVector operand) {
+    protected RDoubleVector doDoubleVector(RDoubleVector operand) {
         return operand;
     }
 
@@ -177,16 +176,16 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization(guards = "isForeignObject(obj)")
-    protected RAbstractDoubleVector doForeignObject(TruffleObject obj,
+    protected RDoubleVector doForeignObject(TruffleObject obj,
                     @Cached("create()") ConvertForeignObjectNode convertForeign) {
         Object o = convertForeign.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
-            if (o instanceof RAbstractDoubleVector) {
-                return (RAbstractDoubleVector) o;
+            if (o instanceof RDoubleVector) {
+                return (RDoubleVector) o;
             }
             o = castDoubleRecursive(o);
-            if (o instanceof RAbstractDoubleVector) {
-                return (RAbstractDoubleVector) o;
+            if (o instanceof RDoubleVector) {
+                return (RDoubleVector) o;
             }
         }
         throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
@@ -197,19 +196,19 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization
-    protected RAbstractDoubleVector doForeignWrapper(RForeignBooleanWrapper operand) {
+    protected RDoubleVector doForeignWrapper(RForeignBooleanWrapper operand) {
         return RClosures.createToDoubleVector(operand, true);
     }
 
     @Specialization(guards = "operand.isForeignWrapper()")
-    protected RAbstractDoubleVector doForeignWrapper(RIntVector operand) {
+    protected RDoubleVector doForeignWrapper(RIntVector operand) {
         // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
         // specialization
         return RClosures.createToDoubleVector(operand, true);
     }
 
     @Specialization
-    protected RAbstractDoubleVector doForeignWrapper(RForeignStringWrapper operand) {
+    protected RDoubleVector doForeignWrapper(RForeignStringWrapper operand) {
         return RClosures.createToDoubleVector(operand, true);
     }
 
@@ -234,10 +233,10 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     protected boolean useClosure(RAbstractAtomicVector x) {
-        return useClosure() && !isForeignWrapper(x) && !(x instanceof RAbstractDoubleVector) && !(x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
+        return useClosure() && !isForeignWrapper(x) && !(x instanceof RDoubleVector) && !(x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
     }
 
     protected boolean noClosure(RAbstractAtomicVector x) {
-        return !isForeignWrapper(x) && !(x instanceof RAbstractDoubleVector) && (!useClosure() || x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
+        return !isForeignWrapper(x) && !(x instanceof RDoubleVector) && (!useClosure() || x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
     }
 }

@@ -87,7 +87,6 @@ import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -112,7 +111,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAsDoubleVector() {
         arg.asDoubleVector();
-        assertTypes(RNull.class, RMissing.class, double.class, RAbstractDoubleVector.class, RDoubleVector.class);
+        assertTypes(RNull.class, RMissing.class, double.class, RDoubleVector.class, RDoubleVector.class);
     }
 
     @Test
@@ -455,7 +454,7 @@ public class ResultTypesAnalyserTest {
         assertTypes(atom(String.class).lower(m("l10")).or(atom(String.class).lower(m("l20"))));
     }
 
-    private static Function<RAbstractDoubleVector, Object> getDimVal(int dim) {
+    private static Function<RDoubleVector, Object> getDimVal(int dim) {
         return vec -> vec.getDimensions()[dim];
     }
 
@@ -463,7 +462,7 @@ public class ResultTypesAnalyserTest {
     public void testAnalyseRealPipeline() {
         arg.mustBe(numericValue()).asVector().mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(not(dimEq(0, 0)),
                         RError.Message.GENERIC, "'a' is 0-diml").mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
-        assertTypes(TypeExpr.union(RAbstractDoubleVector.class, RIntVector.class, RAbstractLogicalVector.class), true);
+        assertTypes(TypeExpr.union(RDoubleVector.class, RIntVector.class, RAbstractLogicalVector.class), true);
     }
 
     // utilities

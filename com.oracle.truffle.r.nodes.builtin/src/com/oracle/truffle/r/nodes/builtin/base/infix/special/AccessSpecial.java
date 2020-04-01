@@ -29,8 +29,8 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.SubInterface;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -44,7 +44,7 @@ public abstract class AccessSpecial extends IndexingSpecialCommon implements Sub
         super(inReplacement);
     }
 
-    public abstract double executeDouble(RAbstractDoubleVector vec, int index);
+    public abstract double executeDouble(RDoubleVector vec, int index);
 
     public abstract int executeInteger(RIntVector vec, int index);
 
@@ -55,7 +55,7 @@ public abstract class AccessSpecial extends IndexingSpecialCommon implements Sub
     }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
-    protected double accessDouble(RAbstractDoubleVector vector, int index,
+    protected double accessDouble(RDoubleVector vector, int index,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         return dataLib.getDoubleAt(vector.getData(), index - 1);
     }

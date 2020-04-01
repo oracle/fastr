@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -50,14 +49,14 @@ public abstract class ColSums extends ColSumsBase {
     }
 
     @Specialization
-    protected RDoubleVector colSums(RAbstractDoubleVector x, int rowNum, int colNum, boolean rnaParam) {
+    protected RDoubleVector colSums(RDoubleVector x, int rowNum, int colNum, boolean rnaParam) {
         checkVectorLength(x, rowNum, colNum);
 
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
         final boolean rna = removeNA.profile(rnaParam);
-        final RAbstractDoubleVector profiledX = concreteVectorProfile.profile(x);
+        final RDoubleVector profiledX = concreteVectorProfile.profile(x);
 
         int pos = 0;
         nextCol: for (int c = 0; c < colNum; c++) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,7 +68,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -86,6 +85,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import java.util.logging.Level;
 import static com.oracle.truffle.r.runtime.RLogger.LOGGER_COMPLEX_LOOKUPS;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 final class LookupNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
@@ -1005,7 +1005,7 @@ abstract class CheckTypeNode extends RBaseNode {
     }
 
     @Specialization
-    boolean checkType(@SuppressWarnings("unused") RAbstractDoubleVector o) {
+    boolean checkType(@SuppressWarnings("unused") RDoubleVector o) {
         return type == RType.Integer || type == RType.Double;
     }
 

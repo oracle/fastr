@@ -54,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -393,7 +392,7 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RDoubleVector doUnique(RAbstractDoubleVector vec, byte incomparables, byte fromLast, int nmax) {
+    protected RDoubleVector doUnique(RDoubleVector vec, byte incomparables, byte fromLast, int nmax) {
         reportWork(vec.getLength());
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             NonRecursiveHashSetDouble set = new NonRecursiveHashSetDouble(vec.getLength());

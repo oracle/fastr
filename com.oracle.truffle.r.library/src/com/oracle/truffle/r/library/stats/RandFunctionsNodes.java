@@ -51,7 +51,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -123,7 +122,7 @@ public final class RandFunctionsNodes {
             this.functionFactory = functionFactory;
         }
 
-        public abstract RAbstractVector execute(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand);
+        public abstract RAbstractVector execute(RAbstractVector length, RDoubleVector a, RDoubleVector b, RDoubleVector c, RandomNumberProvider rand);
 
         @Child private ConvertToLength convertToLength = ConvertToLengthNodeGen.create();
         private final VectorLengthProfile resultVectorLengthProfile = VectorLengthProfile.create();
@@ -138,7 +137,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization(guards = {"randCached.isSame(rand)"})
-        protected final RAbstractVector evaluateWithCached(RAbstractVector lengthVec, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c,
+        protected final RAbstractVector evaluateWithCached(RAbstractVector lengthVec, RDoubleVector a, RDoubleVector b, RDoubleVector c,
                         @SuppressWarnings("unused") RandomNumberProvider rand,
                         @Cached("rand") RandomNumberProvider randCached,
                         @Cached("createIterator()") RandFunctionIterator iterator) {
@@ -148,7 +147,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization(replaces = "evaluateWithCached")
-        protected final RAbstractVector evaluateFallback(RAbstractVector lengthVec, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand,
+        protected final RAbstractVector evaluateFallback(RAbstractVector lengthVec, RDoubleVector a, RDoubleVector b, RDoubleVector c, RandomNumberProvider rand,
                         @Cached("createIterator()") RandFunctionIterator iterator) {
             int length = resultVectorLengthProfile.profile(convertToLength.execute(lengthVec));
             RBaseNode.reportWork(this, length);
@@ -171,7 +170,7 @@ public final class RandFunctionsNodes {
             return functionFactory.get();
         }
 
-        public abstract RAbstractVector execute(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand);
+        public abstract RAbstractVector execute(int length, RDoubleVector a, RDoubleVector b, RDoubleVector c, RandomNumberProvider rand);
 
         static void putRNGState() {
             // Note: we call putRNGState only if we actually changed the state, i.e. called random
@@ -192,7 +191,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization(guards = {"aAccess.supports(a)", "bAccess.supports(b)", "cAccess.supports(c)"})
-        protected RIntVector cached(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
+        protected RIntVector cached(int length, RDoubleVector a, RDoubleVector b, RDoubleVector c, RandomNumberProvider randProvider,
                         @Cached("createFunction()") RandFunction3_DoubleBase function,
                         @Cached("a.access()") VectorAccess aAccess,
                         @Cached("b.access()") VectorAccess bAccess,
@@ -231,7 +230,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization(replaces = "cached")
-        protected RIntVector generic(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
+        protected RIntVector generic(int length, RDoubleVector a, RDoubleVector b, RDoubleVector c, RandomNumberProvider randProvider,
                         @Cached("createFunction()") RandFunction3_DoubleBase function) {
             return cached(length, a, b, c, randProvider, function, a.slowPathAccess(), b.slowPathAccess(), c.slowPathAccess());
         }
@@ -244,7 +243,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization(guards = {"aAccess.supports(a)", "bAccess.supports(b)", "cAccess.supports(c)"})
-        protected RAbstractDoubleVector cached(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
+        protected RDoubleVector cached(int length, RDoubleVector a, RDoubleVector b, RDoubleVector c, RandomNumberProvider randProvider,
                         @Cached("createFunction()") RandFunction3_DoubleBase function,
                         @Cached("a.access()") VectorAccess aAccess,
                         @Cached("b.access()") VectorAccess bAccess,
@@ -281,7 +280,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization(replaces = "cached")
-        protected RAbstractDoubleVector generic(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
+        protected RDoubleVector generic(int length, RDoubleVector a, RDoubleVector b, RDoubleVector c, RandomNumberProvider randProvider,
                         @Cached("createFunction()") RandFunction3_DoubleBase function) {
             return cached(length, a, b, c, randProvider, function, a.slowPathAccess(), b.slowPathAccess(), c.slowPathAccess());
         }
@@ -313,7 +312,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization
-        protected RAbstractVector evaluate(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c) {
+        protected RAbstractVector evaluate(RAbstractVector length, RDoubleVector a, RDoubleVector b, RDoubleVector c) {
             RRNG.getRNGState();
             return inner.execute(length, a, b, c, RandomNumberProvider.fromCurrentRNG());
         }
@@ -342,7 +341,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization
-        protected Object evaluate(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b) {
+        protected Object evaluate(RAbstractVector length, RDoubleVector a, RDoubleVector b) {
             RRNG.getRNGState();
             return inner.execute(length, a, b, DUMMY_VECTOR, RandomNumberProvider.fromCurrentRNG());
         }
@@ -370,7 +369,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization
-        protected Object evaluate(RAbstractVector length, RAbstractDoubleVector a) {
+        protected Object evaluate(RAbstractVector length, RDoubleVector a) {
             RRNG.getRNGState();
             return inner.execute(length, a, DUMMY_VECTOR, DUMMY_VECTOR, RandomNumberProvider.fromCurrentRNG());
         }

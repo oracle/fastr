@@ -54,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -128,7 +127,7 @@ public class SortFunctions {
         return data;
     }
 
-    protected static RDoubleVector jdkSort(RAbstractDoubleVector vec, boolean decreasing) {
+    protected static RDoubleVector jdkSort(RDoubleVector vec, boolean decreasing) {
         double[] data = vec.materialize().getDataCopy();
         return RDataFactory.createDoubleVector(sort(data, decreasing), vec.isComplete());
     }
@@ -165,7 +164,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RDoubleVector sort(RAbstractDoubleVector vec, boolean decreasing) {
+        protected RDoubleVector sort(RDoubleVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
@@ -206,7 +205,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RDoubleVector qsort(RAbstractDoubleVector vec, boolean decreasing) {
+        protected RDoubleVector qsort(RDoubleVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
@@ -226,7 +225,7 @@ public class SortFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RDoubleVector sort(RAbstractDoubleVector vec, Object partial) {
+        protected RDoubleVector sort(RDoubleVector vec, Object partial) {
             return jdkSort(vec, false);
         }
 

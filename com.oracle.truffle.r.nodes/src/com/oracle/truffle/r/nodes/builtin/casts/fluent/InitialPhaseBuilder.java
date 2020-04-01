@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,9 +32,9 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -178,17 +178,17 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
         return asIntegerVectorClosure(false, false, false);
     }
 
-    public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVectorClosure(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+    public CoercedPhaseBuilder<RDoubleVector, Double> asDoubleVectorClosure(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         pipelineBuilder().appendAsVectorClosure(RType.Double, preserveNames, preserveDimensions, preserveAttributes);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Double.class);
     }
 
-    public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+    public CoercedPhaseBuilder<RDoubleVector, Double> asDoubleVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         pipelineBuilder().appendAsVector(RType.Double, preserveNames, preserveDimensions, preserveAttributes);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), Double.class);
     }
 
-    public CoercedPhaseBuilder<RAbstractDoubleVector, Double> asDoubleVector() {
+    public CoercedPhaseBuilder<RDoubleVector, Double> asDoubleVector() {
         return asDoubleVector(false, false, false);
     }
 

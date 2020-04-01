@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropShort;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -57,7 +56,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
                 RInteropLong.class,
                 RInteropShort.class,
                 int.class, RIntVector.class,
-                double.class, RAbstractDoubleVector.class,
+                double.class, RDoubleVector.class,
                 String.class, RAbstractStringVector.class,
                 RRaw.class, RAbstractRawVector.class,
                 RComplex.class, RAbstractComplexVector.class,
@@ -143,7 +142,7 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractDoubleVector toAbstractDoubleVector(double value) {
+    public static RDoubleVector toAbstractDoubleVector(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 

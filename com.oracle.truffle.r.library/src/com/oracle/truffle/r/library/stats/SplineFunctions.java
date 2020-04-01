@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (C) 1998--2012  The R Core Team
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 
 /**
@@ -64,19 +63,19 @@ public class SplineFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object splineCoef(int method, RAbstractDoubleVector x, RAbstractDoubleVector y) {
+        protected Object splineCoef(int method, RDoubleVector x, RDoubleVector y) {
             return splineCoefImpl(method, x.materialize(), y.materialize());
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object splineCoef(int method, RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y) {
+        protected Object splineCoef(int method, RDoubleVector x, @SuppressWarnings("unused") RNull y) {
             return splineCoefImpl(method, x.materialize(), RDataFactory.createDoubleVector(0));
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object splineCoef(int method, @SuppressWarnings("unused") RNull x, RAbstractDoubleVector y) {
+        protected Object splineCoef(int method, @SuppressWarnings("unused") RNull x, RDoubleVector y) {
             return splineCoefImpl(method, RDataFactory.createDoubleVector(0), y.materialize());
         }
 
@@ -118,7 +117,7 @@ public class SplineFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object splineEval(RAbstractDoubleVector xout, RList z) {
+        protected Object splineEval(RDoubleVector xout, RList z) {
             // This is called with the result of SplineCoef, so it is surely an RList
             return SplineFunctions.splineEval(xout.materialize(), z);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 
@@ -82,7 +81,7 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"getXDimsNode.isMatrix(x)", "getYDimsNode.isMatrix(y)"})
-    protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y,
+    protected RDoubleVector crossprod(RDoubleVector x, RDoubleVector y,
                     @Cached("create()") GetDimAttributeNode getXDimsNode,
                     @Cached("create()") GetDimAttributeNode getYDimsNode) {
         int[] xDims = getXDimsNode.getDimensions(x);
@@ -102,7 +101,7 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "getDimsNode.isMatrix(x)")
-    protected RDoubleVector crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y,
+    protected RDoubleVector crossprodDoubleMatrix(RDoubleVector x, @SuppressWarnings("unused") RNull y,
                     @Cached("create()") GetReadonlyData.Double getReadonlyData,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") GetDimAttributeNode getResultDimsNode) {

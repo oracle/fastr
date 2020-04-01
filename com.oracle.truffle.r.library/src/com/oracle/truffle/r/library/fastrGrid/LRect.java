@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.library.fastrGrid.Unit.UnitConversionContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class LRect extends RExternalBuiltinNode.Arg6 {
@@ -55,7 +55,7 @@ public abstract class LRect extends RExternalBuiltinNode.Arg6 {
 
     @Specialization
     @TruffleBoundary
-    public Object execute(RAbstractVector xVec, RAbstractVector yVec, RAbstractVector wVec, RAbstractVector hVec, RAbstractDoubleVector hjust, RAbstractDoubleVector vjust) {
+    public Object execute(RAbstractVector xVec, RAbstractVector yVec, RAbstractVector wVec, RAbstractVector hVec, RDoubleVector hjust, RDoubleVector vjust) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();
 

@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -65,7 +66,6 @@ import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
@@ -1051,8 +1051,8 @@ public final class SpecialAttributesFunctions {
                     if (vec.getLength() == 2 && RRuntime.isNA(vec.getDataAt(0))) {
                         return RDataFactory.createIntSequence(1, 1, Math.abs(vec.getDataAt(1)));
                     }
-                } else if (rowNames instanceof RAbstractDoubleVector) {
-                    RAbstractDoubleVector vec = (RAbstractDoubleVector) rowNames;
+                } else if (rowNames instanceof RDoubleVector) {
+                    RDoubleVector vec = (RDoubleVector) rowNames;
                     if (vec.getLength() == 2 && RRuntime.isNA(vec.getDataAt(0))) {
                         return RDataFactory.createIntSequence(1, 1, Math.abs((int) (vec.getDataAt(1))));
                     }
@@ -1065,8 +1065,8 @@ public final class SpecialAttributesFunctions {
             if (rowNames == RNull.instance) {
                 return RNull.instance;
             } else {
-                if (rowNames instanceof RAbstractDoubleVector) {
-                    RAbstractDoubleVector vec = (RAbstractDoubleVector) rowNames;
+                if (rowNames instanceof RDoubleVector) {
+                    RDoubleVector vec = (RDoubleVector) rowNames;
                     if (vec.getLength() == 2 && RRuntime.isNA(vec.getDataAt(0))) {
                         return RDataFactory.createIntVector(new int[]{RRuntime.INT_NA, (int) vec.getDataAt(1)}, false);
                     }
@@ -1212,7 +1212,7 @@ public final class SpecialAttributesFunctions {
             return SpecialAttributesFunctionsFactory.SetTspAttributeNodeGen.create();
         }
 
-        public void setTsp(RAttributable x, RAbstractDoubleVector tsp) {
+        public void setTsp(RAttributable x, RDoubleVector tsp) {
             if (nullTspProfile.profile(tsp == null)) {
                 execute(x, RNull.instance);
             } else {
@@ -1243,7 +1243,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setTspInVector(RAttributable x, RAbstractDoubleVector newTsp,
+        protected void setTspInVector(RAttributable x, RDoubleVector newTsp,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createTsp()") SetFixedPropertyNode setFixedPropertyNode,
                         @Cached("create()") ShareObjectNode updateRefCountNode) {
@@ -1268,8 +1268,8 @@ public final class SpecialAttributesFunctions {
             return RRuntime.TSP_ATTR_KEY;
         }
 
-        public RAbstractDoubleVector getTsp(RAttributable x) {
-            return (RAbstractDoubleVector) execute(x);
+        public RDoubleVector getTsp(RAttributable x) {
+            return (RDoubleVector) execute(x);
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")

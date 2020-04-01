@@ -29,12 +29,13 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 /**
  * Provides interop messages for numeric vectors. <br>
  * <ul>
  * <li>{@link RIntVector}</li>
- * <li>{@link RAbstractDoubleVector}</li>
+ * <li>{@link RDoubleVector}</li>
  * <li>{@link RAbstractRawVector}</li>
  * </ul>
  * 

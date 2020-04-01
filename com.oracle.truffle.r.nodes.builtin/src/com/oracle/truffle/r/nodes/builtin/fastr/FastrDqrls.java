@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -64,16 +63,16 @@ public abstract class FastrDqrls extends RBuiltinNode.Arg7 {
     }
 
     @Specialization
-    public RList doDouble(RAbstractDoubleVector xVec, int n, int p, RAbstractDoubleVector yVec, int ny, double tol, RAbstractDoubleVector coeffVec) {
+    public RList doDouble(RDoubleVector xVec, int n, int p, RDoubleVector yVec, int ny, double tol, RDoubleVector coeffVec) {
         return call(xVec, xVec.materialize(), n, p, yVec, yVec.materialize(), ny, tol, coeffVec);
     }
 
     @Specialization(replaces = "doDouble")
-    public RList doOther(RAbstractVector xVec, int n, int p, RAbstractVector yVec, int ny, double tol, RAbstractDoubleVector coeffVec, @Cached(value = "create()") CastDoubleNode castNode) {
-        return call(xVec, ((RAbstractDoubleVector) castNode.doCast(xVec)).materialize(), n, p, yVec, ((RAbstractDoubleVector) castNode.doCast(yVec)).materialize(), ny, tol, coeffVec);
+    public RList doOther(RAbstractVector xVec, int n, int p, RAbstractVector yVec, int ny, double tol, RDoubleVector coeffVec, @Cached(value = "create()") CastDoubleNode castNode) {
+        return call(xVec, ((RDoubleVector) castNode.doCast(xVec)).materialize(), n, p, yVec, ((RDoubleVector) castNode.doCast(yVec)).materialize(), ny, tol, coeffVec);
     }
 
-    private RList call(RAbstractVector originalXVec, RDoubleVector xVec, int n, int p, RAbstractVector originalYVec, RDoubleVector yVec, int ny, double tol, RAbstractDoubleVector coeffVec) {
+    private RList call(RAbstractVector originalXVec, RDoubleVector xVec, int n, int p, RAbstractVector originalYVec, RDoubleVector yVec, int ny, double tol, RDoubleVector coeffVec) {
         double[] x = xVec.getDataTemp();
         double[] y = yVec.getDataTemp();
         double[] coeff = coeffVec.materialize().getDataTemp();

@@ -54,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.WarningInfo;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -94,7 +93,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "x.getLength()==0")
-    protected RAbstractVector cumEmpty(RAbstractDoubleVector x) {
+    protected RAbstractVector cumEmpty(RDoubleVector x) {
         return RDataFactory.createDoubleVector(new double[0], true, extractNamesNode.execute(x));
     }
 
@@ -136,7 +135,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(limit = "getVectorAccessCacheSize()")
-    protected RDoubleVector cumsumDouble(RAbstractDoubleVector x,
+    protected RDoubleVector cumsumDouble(RDoubleVector x,
                     @Cached NACheck naCheck,
                     @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
         Object xData = x.getData();

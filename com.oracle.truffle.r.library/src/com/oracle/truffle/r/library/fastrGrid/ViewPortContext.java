@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@ import static com.oracle.truffle.r.library.fastrGrid.GridUtils.asDoubleVector;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 public final class ViewPortContext {
     public double xscalemin;
@@ -46,13 +46,13 @@ public final class ViewPortContext {
 
     public static ViewPortContext fromViewPort(RList viewPort) {
         ViewPortContext result = new ViewPortContext();
-        RAbstractDoubleVector x = asDoubleVector(viewPort.getDataAt(ViewPort.VP_XSCALE));
+        RDoubleVector x = asDoubleVector(viewPort.getDataAt(ViewPort.VP_XSCALE));
         if (x.getLength() != 2) {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "view-port xscale must be vector of size 2");
         }
         result.xscalemin = x.getDataAt(0);
         result.xscalemax = x.getDataAt(1);
-        RAbstractDoubleVector y = asDoubleVector(viewPort.getDataAt(ViewPort.VP_YSCALE));
+        RDoubleVector y = asDoubleVector(viewPort.getDataAt(ViewPort.VP_YSCALE));
         if (y.getLength() != 2) {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "view-port yscale must be vector of size 2");
         }

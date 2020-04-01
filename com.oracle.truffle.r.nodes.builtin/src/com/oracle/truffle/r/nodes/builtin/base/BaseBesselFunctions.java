@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nmath.BesselFunctions;
@@ -50,7 +50,7 @@ public class BaseBesselFunctions {
         }
 
         @Specialization(guards = {"xAccess.supports(x)", "nuAccess.supports(nu)", "expoAccess.supports(expo)"})
-        protected RAbstractDoubleVector doFast(RAbstractDoubleVector x, RAbstractDoubleVector nu, RAbstractDoubleVector expo,
+        protected RDoubleVector doFast(RDoubleVector x, RDoubleVector nu, RDoubleVector expo,
                         @Cached("x.access()") VectorAccess xAccess,
                         @Cached("nu.access()") VectorAccess nuAccess,
                         @Cached("expo.access()") VectorAccess expoAccess,
@@ -78,7 +78,7 @@ public class BaseBesselFunctions {
         }
 
         @Specialization(replaces = "doFast")
-        protected RAbstractDoubleVector doGeneric(RAbstractDoubleVector x, RAbstractDoubleVector nu, RAbstractDoubleVector expo,
+        protected RDoubleVector doGeneric(RDoubleVector x, RDoubleVector nu, RDoubleVector expo,
                         @Cached("create()") VectorFactory factory) {
             return doFast(x, nu, expo, x.slowPathAccess(), nu.slowPathAccess(), expo.slowPathAccess(), factory);
         }
@@ -95,7 +95,7 @@ public class BaseBesselFunctions {
         }
 
         @Specialization(guards = {"xAccess.supports(x)", "nuAccess.supports(nu)"})
-        protected RAbstractDoubleVector doFast(RAbstractDoubleVector x, RAbstractDoubleVector nu,
+        protected RDoubleVector doFast(RDoubleVector x, RDoubleVector nu,
                         @Cached("x.access()") VectorAccess xAccess,
                         @Cached("nu.access()") VectorAccess nuAccess,
                         @Cached("create()") VectorFactory factory) {
@@ -118,7 +118,7 @@ public class BaseBesselFunctions {
         }
 
         @Specialization(replaces = "doFast")
-        protected RAbstractDoubleVector doGeneric(RAbstractDoubleVector x, RAbstractDoubleVector nu,
+        protected RDoubleVector doGeneric(RDoubleVector x, RDoubleVector nu,
                         @Cached("create()") VectorFactory factory) {
             return doFast(x, nu, x.slowPathAccess(), nu.slowPathAccess(), factory);
         }
@@ -136,7 +136,7 @@ public class BaseBesselFunctions {
         }
 
         @Specialization(guards = {"xAccess.supports(x)", "nuAccess.supports(nu)", "expoAccess.supports(expo)"})
-        protected RAbstractDoubleVector doFast(RAbstractDoubleVector x, RAbstractDoubleVector nu, RAbstractDoubleVector expo,
+        protected RDoubleVector doFast(RDoubleVector x, RDoubleVector nu, RDoubleVector expo,
                         @Cached("x.access()") VectorAccess xAccess,
                         @Cached("nu.access()") VectorAccess nuAccess,
                         @Cached("expo.access()") VectorAccess expoAccess,
@@ -164,7 +164,7 @@ public class BaseBesselFunctions {
         }
 
         @Specialization(replaces = "doFast")
-        protected RAbstractDoubleVector doGeneric(RAbstractDoubleVector x, RAbstractDoubleVector nu, RAbstractDoubleVector expo,
+        protected RDoubleVector doGeneric(RDoubleVector x, RDoubleVector nu, RDoubleVector expo,
                         @Cached("create()") VectorFactory factory) {
             return doFast(x, nu, expo, x.slowPathAccess(), nu.slowPathAccess(), expo.slowPathAccess(), factory);
         }
@@ -181,7 +181,7 @@ public class BaseBesselFunctions {
         }
 
         @Specialization(guards = {"xAccess.supports(x)", "nuAccess.supports(nu)"})
-        protected RAbstractDoubleVector doFast(RAbstractDoubleVector x, RAbstractDoubleVector nu,
+        protected RDoubleVector doFast(RDoubleVector x, RDoubleVector nu,
                         @Cached("x.access()") VectorAccess xAccess,
                         @Cached("nu.access()") VectorAccess nuAccess,
                         @Cached("create()") VectorFactory factory) {
@@ -204,7 +204,7 @@ public class BaseBesselFunctions {
         }
 
         @Specialization(replaces = "doFast")
-        protected RAbstractDoubleVector doGeneric(RAbstractDoubleVector x, RAbstractDoubleVector nu,
+        protected RDoubleVector doGeneric(RDoubleVector x, RDoubleVector nu,
                         @Cached("create()") VectorFactory factory) {
             return doFast(x, nu, x.slowPathAccess(), nu.slowPathAccess(), factory);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,8 +38,8 @@ import com.oracle.truffle.r.nodes.casts.CastUtils;
 import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.casts.UpperBoundsConjunction;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -87,7 +87,7 @@ public class TypeExprTest {
         Set<Type> exp = toSet(UpperBoundsConjunction.create(Runnable.class, RAbstractStringVector.class).asWildcard("a"));
         Assert.assertEquals(exp, te.lower("a").toNormalizedConjunctionSet());
 
-        te = atom(RIntVector.class).and(atom(RAbstractDoubleVector.class).lower());
+        te = atom(RIntVector.class).and(atom(RDoubleVector.class).lower());
         Assert.assertTrue(te.isNothing());
     }
 

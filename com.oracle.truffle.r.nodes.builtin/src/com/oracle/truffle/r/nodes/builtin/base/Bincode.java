@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,9 +29,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "bincode", kind = INTERNAL, parameterNames = {"x", "breaks", "right", "include.lowest"}, behavior = PURE)
@@ -52,12 +52,12 @@ public abstract class Bincode extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    RIntVector formatC(RNull x, RAbstractDoubleVector breaks, boolean right, boolean includeBorder) {
+    RIntVector formatC(RNull x, RDoubleVector breaks, boolean right, boolean includeBorder) {
         return RDataFactory.createEmptyIntVector();
     }
 
     @Specialization
-    RIntVector formatC(RAbstractDoubleVector x, RAbstractDoubleVector breaks, boolean right, boolean includeBorder) {
+    RIntVector formatC(RDoubleVector x, RDoubleVector breaks, boolean right, boolean includeBorder) {
         int n = x.getLength();
         int nb = breaks.getLength();
 

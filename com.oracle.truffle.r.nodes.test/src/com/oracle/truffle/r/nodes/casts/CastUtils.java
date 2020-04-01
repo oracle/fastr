@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,13 +42,13 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -476,7 +476,7 @@ public class CastUtils {
         if (RIntVector.class.isAssignableFrom(vectorType) || Integer.class.isAssignableFrom(vectorType) || int.class.isAssignableFrom(vectorType)) {
             return Integer.class;
         }
-        if (RAbstractDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType) || double.class.isAssignableFrom(vectorType)) {
+        if (RDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType) || double.class.isAssignableFrom(vectorType)) {
             return Double.class;
         }
         if (RAbstractLogicalVector.class.isAssignableFrom(vectorType) || Byte.class.isAssignableFrom(vectorType) || byte.class.isAssignableFrom(vectorType)) {
@@ -526,7 +526,7 @@ public class CastUtils {
         if (RIntVector.class.isAssignableFrom(vectorType) || Integer.class.isAssignableFrom(vectorType) || int.class.isAssignableFrom(vectorType)) {
             return RDataFactory.createIntVector(size);
         }
-        if (RAbstractDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType) || double.class.isAssignableFrom(vectorType)) {
+        if (RDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType) || double.class.isAssignableFrom(vectorType)) {
             return RDataFactory.createDoubleVector(size);
         }
         if (RAbstractLogicalVector.class.isAssignableFrom(vectorType) || Byte.class.isAssignableFrom(vectorType) || byte.class.isAssignableFrom(vectorType)) {
@@ -568,7 +568,7 @@ public class CastUtils {
             case Integer:
                 return new Class<?>[]{Integer.class, RIntVector.class};
             case Double:
-                return new Class<?>[]{Double.class, RAbstractDoubleVector.class};
+                return new Class<?>[]{Double.class, RDoubleVector.class};
             case Logical:
                 return new Class<?>[]{Byte.class, RAbstractLogicalVector.class};
             case Character:
@@ -721,8 +721,8 @@ public class CastUtils {
                 if (vectorOrScalar instanceof RIntVector) {
                     return Optional.of((T) ((RIntVector) vectorOrScalar).getDataAtAsObject(0));
                 }
-                if (vectorOrScalar instanceof RAbstractDoubleVector) {
-                    return Optional.of((T) ((RAbstractDoubleVector) vectorOrScalar).getDataAtAsObject(0));
+                if (vectorOrScalar instanceof RDoubleVector) {
+                    return Optional.of((T) ((RDoubleVector) vectorOrScalar).getDataAtAsObject(0));
                 }
                 if (vectorOrScalar instanceof RAbstractComplexVector) {
                     return Optional.of((T) ((RAbstractComplexVector) vectorOrScalar).getDataAtAsObject(0));
@@ -745,7 +745,7 @@ public class CastUtils {
             if (vector instanceof RIntVector) {
                 return Optional.of(Integer.class);
             }
-            if (vector instanceof RAbstractDoubleVector) {
+            if (vector instanceof RDoubleVector) {
                 return Optional.of(Double.class);
             }
             if (vector instanceof RAbstractComplexVector) {
@@ -825,7 +825,7 @@ public class CastUtils {
             samples.add(-Math.PI);
         }
 
-        if (cls == Object.class || RAbstractDoubleVector.class.isAssignableFrom(cls)) {
+        if (cls == Object.class || RDoubleVector.class.isAssignableFrom(cls)) {
             samples.add(RDataFactory.createDoubleVectorFromScalar(0));
             samples.add(RDataFactory.createDoubleVectorFromScalar(1));
             samples.add(RDataFactory.createDoubleVectorFromScalar(-1));

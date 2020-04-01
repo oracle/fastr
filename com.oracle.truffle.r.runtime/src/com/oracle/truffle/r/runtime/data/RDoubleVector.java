@@ -34,20 +34,20 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
+import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
-public final class RDoubleVector extends RAbstractDoubleVector implements RMaterializedVector, Shareable {
+public final class RDoubleVector extends RAbstractNumericVector implements RMaterializedVector, Shareable {
 
     private int length;
 
@@ -192,13 +192,11 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         return data;
     }
 
-    @Override
     public void setDataAt(Object store, int index, double value) {
         assert data == store;
         VectorDataLibrary.getFactory().getUncached().setDoubleAt(store, index, value);
     }
 
-    @Override
     public double getDataAt(Object store, int index) {
         assert data == store;
         return VectorDataLibrary.getFactory().getUncached().getDoubleAt(store, index);
@@ -237,7 +235,6 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
         }
     }
 
-    @Override
     public double getDataAt(int index) {
         return getDataAt(getData(), index);
     }
@@ -339,7 +336,7 @@ public final class RDoubleVector extends RAbstractDoubleVector implements RMater
 
     @Override
     public double[] getDataTemp() {
-        return super.getDataTemp();
+        return (double[]) super.getDataTemp();
     }
 
     @Override

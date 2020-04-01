@@ -28,8 +28,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.Sub2Interface;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -43,7 +43,7 @@ public abstract class AccessSpecial2 extends IndexingSpecial2Common implements S
         super(inReplacement);
     }
 
-    public abstract double executeDouble(RAbstractDoubleVector vec, int index1, int index2);
+    public abstract double executeDouble(RDoubleVector vec, int index1, int index2);
 
     public abstract int executeInteger(RIntVector vec, int index1, int index2);
 
@@ -54,7 +54,7 @@ public abstract class AccessSpecial2 extends IndexingSpecial2Common implements S
     }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"}, limit = "getTypedVectorDataLibraryCacheSize()")
-    protected double accessDouble2(RAbstractDoubleVector vector, int index1, int index2,
+    protected double accessDouble2(RDoubleVector vector, int index1, int index2,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         return dataLib.getDoubleAt(vector.getData(), matrixIndex(vector, index1, index2));
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -169,7 +168,7 @@ public class LogFunctions {
                         @Cached("create()") InitDimsNamesDimNamesNode initDimsNamesDimNames,
                         @Cached("create()") NACheck xNACheck,
                         @Cached("create()") NACheck baseNACheck) {
-            RAbstractDoubleVector doubleVector = (RAbstractDoubleVector) vectorProfile.profile(vector).castSafe(RType.Double, isNAProfile);
+            RDoubleVector doubleVector = (RDoubleVector) vectorProfile.profile(vector).castSafe(RType.Double, isNAProfile);
             return logInternal(doubleVector, base, copyAttrsNode, initDimsNamesDimNames, xNACheck, baseNACheck);
         }
 
@@ -197,7 +196,7 @@ public class LogFunctions {
             return logInternal(complexVector, base, divNode, initDimsNamesDimNames, copyAttrsNode, xNACheck, baseNACheck);
         }
 
-        private RDoubleVector logInternal(RAbstractDoubleVector vector, double base, CopyOfRegAttributesNode copyAttrsNode, InitDimsNamesDimNamesNode initDimsNamesDimNames,
+        private RDoubleVector logInternal(RDoubleVector vector, double base, CopyOfRegAttributesNode copyAttrsNode, InitDimsNamesDimNamesNode initDimsNamesDimNames,
                         NACheck xNACheck, NACheck baseNACheck) {
             baseNACheck.enable(base);
             double[] resultVector = new double[vector.getLength()];

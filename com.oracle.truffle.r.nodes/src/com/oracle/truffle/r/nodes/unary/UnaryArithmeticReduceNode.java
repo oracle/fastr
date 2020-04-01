@@ -38,10 +38,10 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -284,7 +284,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
         return doInt(vector, naRm, vector.slowPathAccess());
     }
 
-    private double doDouble(RAbstractDoubleVector vector, boolean naRm, boolean finite, ConditionProfile finiteProfile, ConditionProfile isInfiniteProfile, VectorAccess access) {
+    private double doDouble(RDoubleVector vector, boolean naRm, boolean finite, ConditionProfile finiteProfile, ConditionProfile isInfiniteProfile, VectorAccess access) {
         boolean profiledNaRm = naRmProfile.profile(naRm);
         boolean profiledFinite = finiteProfile.profile(finite);
         double result = semantics.getDoubleStart();
@@ -317,7 +317,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
     }
 
     @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
-    protected double doDoubleCached(RAbstractDoubleVector vector, boolean naRm, boolean finite,
+    protected double doDoubleCached(RDoubleVector vector, boolean naRm, boolean finite,
                     @Cached("createBinaryProfile()") ConditionProfile finiteProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isInfiniteProfile,
                     @Cached("vector.access()") VectorAccess access) {
@@ -325,7 +325,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
     }
 
     @Specialization(replaces = "doDoubleCached")
-    protected double doDoubleGeneric(RAbstractDoubleVector vector, boolean naRm, boolean finite,
+    protected double doDoubleGeneric(RDoubleVector vector, boolean naRm, boolean finite,
                     @Cached("createBinaryProfile()") ConditionProfile finiteProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isInfiniteProfile) {
         return doDouble(vector, naRm, finite, finiteProfile, isInfiniteProfile, vector.slowPathAccess());

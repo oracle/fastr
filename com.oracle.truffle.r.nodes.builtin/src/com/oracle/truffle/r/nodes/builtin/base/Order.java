@@ -54,10 +54,10 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -104,7 +104,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
      * NaN in double or complex vectors that the order builtin regard as NA.
      */
     private static boolean mayContainNAorNaN(RAbstractVector v) {
-        return !v.isComplete() || v instanceof RAbstractDoubleVector || v instanceof RAbstractComplexVector;
+        return !v.isComplete() || v instanceof RDoubleVector || v instanceof RAbstractComplexVector;
     }
 
     private int[] createIndexes(RAbstractVector v, int len, byte naLast) {
@@ -197,7 +197,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"oneVec(args)", "isFirstDoublePrecedence(args)"})
     Object orderDouble(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
-        RAbstractDoubleVector v = (RAbstractDoubleVector) castVector(args.getArgument(0));
+        RDoubleVector v = (RDoubleVector) castVector(args.getArgument(0));
         return executeOrderVector1(v, naLast, decreasing);
     }
 
@@ -363,7 +363,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected Object orderVector1(int[] indx, RAbstractDoubleVector dv, byte naLast, boolean decreasing, boolean sortNA) {
+        protected Object orderVector1(int[] indx, RDoubleVector dv, byte naLast, boolean decreasing, boolean sortNA) {
             if (indx.length < 2) {
                 return indx;
             }
@@ -481,7 +481,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             return indx;
         }
 
-        private void sort(int[] indx, RAbstractDoubleVector dv, int lo, int hi, boolean dec) {
+        private void sort(int[] indx, RDoubleVector dv, int lo, int hi, boolean dec) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
@@ -723,7 +723,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected boolean doDouble(RAbstractDoubleVector v, int idx) {
+        protected boolean doDouble(RDoubleVector v, int idx) {
             double d = v.getDataAt(idx);
             return RRuntime.isNA(d) || Double.isNaN(d);
         }
@@ -795,7 +795,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected int rcmp(RAbstractDoubleVector v, int i, int j, boolean naLast) {
+        protected int rcmp(RDoubleVector v, int i, int j, boolean naLast) {
             double x = v.getDataAt(i);
             double y = v.getDataAt(j);
             boolean nax = RRuntime.isNAorNaN(x);
