@@ -78,7 +78,11 @@ ECHO_N = -n
 ECHO_T = 
 F_VISIBILITY = -fvisibility=hidden
 ## FC is the compiler used for all Fortran as from R 3.6.0
-## FastR Note: the wrapper tries to use f2c, if it fails it uses the tool given as the first argument
+## FastR Note: the tool 'f2c-wrapper' tries to use f2c (bundled with FastR) and
+## if it fails it delegates to the fortran compiler given as the argument.
+## If gfortran is installed in a non-standard location on your system,
+## replace the second path pointing to "safe-forward-gfortran" with the correct
+## path to the gfortran executable on your system.
 FC = "$(R_HOME)/bin/f2c-wrapper" "$(R_HOME)/bin/safe-forward-gfortran"
 FCFLAGS = -O2 $(LTO)
 ## additional libs needed when linking with $(FC), e.g. on some Oracle compilers

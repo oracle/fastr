@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -33,9 +34,10 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 @GenerateUncached
+@ImportStatic(DSLConfig.class)
 public abstract class RfFindFun extends FFIUpCallNode.Arg2 {
 
-    protected static final int SYM_CACHE_SIZE = DSLConfig.getCacheSize(20);
+    protected static final int SYM_CACHE_SIZE = 20;
 
     protected RfFindFun() {
     }
@@ -44,7 +46,7 @@ public abstract class RfFindFun extends FFIUpCallNode.Arg2 {
         return RfFindFunNodeGen.create();
     }
 
-    @Specialization(limit = "SYM_CACHE_SIZE", guards = {"cachedFunName.equals(funSym.getName())", "env.getFrame().getFrameDescriptor() == cachedFrameDesc"})
+    @Specialization(limit = "getCacheSize(SYM_CACHE_SIZE)", guards = {"cachedFunName.equals(funSym.getName())", "env.getFrame().getFrameDescriptor() == cachedFrameDesc"})
     Object findFunCached(@SuppressWarnings("unused") RSymbol funSym, REnvironment env,
                     @SuppressWarnings("unused") @Cached("funSym.getName()") String cachedFunName,
                     @SuppressWarnings("unused") @Cached("env.getFrame().getFrameDescriptor()") FrameDescriptor cachedFrameDesc,

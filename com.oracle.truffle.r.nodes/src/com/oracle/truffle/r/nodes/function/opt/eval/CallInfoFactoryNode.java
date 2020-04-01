@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function.opt.eval;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -44,9 +45,10 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * Creates a {@code FunctionInfo} instance for a recognized function call. The function can be
  * represented either by a {@link RFunction function} object or by a {@link RSymbol symbol}.
  */
+@ImportStatic(DSLConfig.class)
 public abstract class CallInfoFactoryNode extends Node {
 
-    protected static final int CACHE_SIZE = DSLConfig.getCacheSize(100);
+    protected static final int CACHE_SIZE = 100;
 
     static CallInfoFactoryNode create() {
         return CallInfoFactoryNodeGen.create();
@@ -54,7 +56,7 @@ public abstract class CallInfoFactoryNode extends Node {
 
     abstract CallInfo execute(Object fun, Object argList, REnvironment env);
 
-    @Specialization(limit = "CACHE_SIZE", guards = {"cachedFunName.equals(funSym.getName())", "env.getFrame(frameAccessProfile).getFrameDescriptor() == cachedFrameDesc"})
+    @Specialization(limit = "getCacheSize(CACHE_SIZE)", guards = {"cachedFunName.equals(funSym.getName())", "env.getFrame(frameAccessProfile).getFrameDescriptor() == cachedFrameDesc"})
     CallInfo createFunctionInfoFromSymbolCached(@SuppressWarnings("unused") RSymbol funSym, RPairList argList, REnvironment env,
                     @SuppressWarnings("unused") @Cached("funSym.getName()") String cachedFunName,
                     @SuppressWarnings("unused") @Cached("env.getFrame().getFrameDescriptor()") FrameDescriptor cachedFrameDesc,

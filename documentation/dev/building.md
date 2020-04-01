@@ -21,7 +21,9 @@ is used on another system it will work regardless of whether those libraries are
 By default no recommended packages and no 3rd party dynamic libraries are bundled in FastR.
 This can be controlled by the following environment variables:
 
-* `FASTR_RELEASE` set to any value switches FastR to mode, where it builds and bundles recommended packages (may take very long unless they are cached), and captures and bundles some system libraries, which requires setting `PKG_LDFLAGS_OVERRIDE` environment variable (see [below](#non-standard-system-library-locations)). This mode is used for official FastR releases.
+* `FASTR_RELEASE` set to any value switches FastR to mode, where it builds and bundles recommended packages (may take very long unless they are cached), and captures and bundles some system libraries, which requires setting `PKG_LDFLAGS_OVERRIDE` environment variable (see [below](#non-standard-system-library-locations)). This mode is usedfor official FastR releases
+and must be used when you are building a GraalVM distribution (from the `graal/vm` mx suite),
+but it can be further configured by using the following environment variables:
 * `FASTR_NO_RECOMMENDED` set to any value turns off the recommended packages build and bundling with FastR. Only applicable if `FASTR_RELEASE` is set.
 * `FASTR_CAPTURE_DEPENDENCIES` if exported overrides the set of 3rd party libraries that are bundled with FastR, the value is space separated list of "base" names of the libraries, for example, use `gfortran`, for `libgfortran.so.5`. Libraries that can be bundled are: `libz`, `libpcre`, `libgfortran`, `libquadmath`, and `libgcc_s`. Only applicable if `FASTR_RELEASE` is set.
 

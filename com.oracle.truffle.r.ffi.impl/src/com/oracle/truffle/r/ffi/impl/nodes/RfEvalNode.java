@@ -162,7 +162,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
         abstract Object execute(Object downcallFrame, CallInfo callInfo, RPairList expr);
 
-        @Specialization(limit = "CACHE_SIZE", guards = {"cachedCallInfo.isCompatible(callInfo, otherInfoClassProfile)"})
+        @Specialization(limit = "getCacheSize(CACHE_SIZE)", guards = {"cachedCallInfo.isCompatible(callInfo, otherInfoClassProfile)"})
         Object evalFastPath(Object downcallFrame, CallInfo callInfo, RPairList expr,
                         @CachedContext(TruffleRLanguage.class) RContext ctx,
                         @SuppressWarnings("unused") @Cached("createClassProfile()") ValueProfile otherInfoClassProfile,

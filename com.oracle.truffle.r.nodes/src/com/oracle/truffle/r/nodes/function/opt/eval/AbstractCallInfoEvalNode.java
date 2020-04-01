@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function.opt.eval;
 
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -29,8 +30,9 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 /**
  * Evaluates the function call defined in {@code FunctionInfo} in the fast path.
  */
+@ImportStatic(DSLConfig.class)
 public abstract class AbstractCallInfoEvalNode extends RBaseNode {
-    protected static final int CACHE_SIZE = DSLConfig.getCacheSize(10);
+    protected static final int CACHE_SIZE = 10;
     protected static final int MAX_ARITY = 10;
 
     protected final ValueProfile frameProfile = ValueProfile.createClassProfile();
