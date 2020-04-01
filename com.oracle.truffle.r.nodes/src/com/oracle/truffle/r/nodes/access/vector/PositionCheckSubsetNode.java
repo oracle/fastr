@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -55,6 +56,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 abstract class PositionCheckSubsetNode extends PositionCheckNode {
 
     private final NACheck positionNACheck = NACheck.create();
+    @Child private VectorDataLibrary double2IntCoercedPosDataLibrary;
 
     PositionCheckSubsetNode(ElementAccessMode mode, RType containerType, Object positionValue, int dimensionIndex, int numDimensions, boolean exact, boolean assignment) {
         super(mode, containerType, positionValue, dimensionIndex, numDimensions, exact, assignment);
@@ -215,8 +217,14 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         if (names != null) {
             setNamesNode.setNames(intPositionVec, names);
         }
+        if (double2IntCoercedPosDataLibrary == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            // We assume that RDataFactory.createIntVector always returns the same implementation
+            double2IntCoercedPosDataLibrary = insert(VectorDataLibrary.getFactory().create(intPositionVec.getData()));
+        }
 
-        return doIntegerProfiled(profile, dimensionLength, intPositionVec, positionLength, hasSeenPositive, hasSeenNegative, hasSeenNA, outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
+        return doIntegerProfiled(profile, dimensionLength, double2IntCoercedPosDataLibrary, intPositionVec, positionLength, hasSeenPositive, hasSeenNegative, hasSeenNA, outOfBoundsCount, zeroCount,
+                        maxOutOfBoundsIndex);
 
     }
 
@@ -266,13 +274,15 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                 }
             }
         }
-        return doIntegerProfiled(profile, dimensionLength, position, positionLength, seenPositiveFlagProfile.profile(hasSeenPositive), seenNegativeFlagProfile.profile(hasSeenNegative),
+        return doIntegerProfiled(profile, dimensionLength, positionLibrary, position, positionLength, seenPositiveFlagProfile.profile(hasSeenPositive),
+                        seenNegativeFlagProfile.profile(hasSeenNegative),
                         seenNAFlagProfile.profile(hasSeenNA), outOfBoundsCount, zeroCount, maxOutOfBoundsIndex);
     }
 
     private final BranchProfile noZeroes = BranchProfile.create();
 
-    private RAbstractVector doIntegerProfiled(PositionProfile profile, int dimensionLength, RIntVector intPosition, int positionLength, boolean hasSeenPositive, boolean hasSeenNegative,
+    private RAbstractVector doIntegerProfiled(PositionProfile profile, int dimensionLength, VectorDataLibrary intPositionDataLib, RIntVector intPosition, int positionLength, boolean hasSeenPositive,
+                    boolean hasSeenNegative,
                     boolean hasSeenNA, int outOfBoundsCount, int zeroCount, int maxOutOfBoundsIndex) {
         if (hasSeenPositive || hasSeenNA) {
             if (numPositions > 1 && outOfBoundsCount > 0) {
@@ -293,21 +303,24 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
                 return intPosition;
             } else {
                 noZeroes.enter();
-                return eliminateZerosAndOutOfBounds(intPosition, positionLength, dimensionLength, outOfBoundsCount, zeroCount, hasSeenNA);
+                return eliminateZerosAndOutOfBounds(intPositionDataLib, intPosition, positionLength, dimensionLength, outOfBoundsCount, zeroCount, hasSeenNA);
             }
         } else if (hasSeenNegative) {
             assert !hasSeenNA;
-            return transformNegative(profile, dimensionLength, intPosition, positionLength, zeroCount > 0);
+            return transformNegative(profile, dimensionLength, intPositionDataLib, intPosition, zeroCount > 0);
         } else {
             return RDataFactory.createEmptyIntVector();
         }
     }
 
-    private RAbstractVector eliminateZerosAndOutOfBounds(RIntVector position, int positionLength, int dimensionLength, int outOfBoundsCount, int zeroCount, boolean hasSeenNA) {
+    private RAbstractVector eliminateZerosAndOutOfBounds(VectorDataLibrary posDataLibrary, RIntVector position, int positionLength, int dimensionLength, int outOfBoundsCount, int zeroCount,
+                    boolean hasSeenNA) {
         int[] newIndices = new int[positionLength - zeroCount];
         int newPositionIndex = 0;
-        for (int i = 0; i < positionLength; i++) {
-            int positionValue = position.getDataAt(i);
+        Object posData = position.getData();
+        SeqIterator posIt = posDataLibrary.iterator(posData);
+        while (posDataLibrary.next(posData, posIt)) {
+            int positionValue = posDataLibrary.getNextInt(posData, posIt);
             if (zeroCount > 0 && positionValue == 0) {
                 continue;
             } else if (!replace && outOfBoundsCount > 0 && positionValue > dimensionLength) {
@@ -319,12 +332,14 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         return RDataFactory.createIntVector(newIndices, !hasSeenNA && outOfBoundsCount == 0);
     }
 
-    private static RAbstractVector transformNegative(PositionProfile statistics, int dimLength, RIntVector position, int positionLength, boolean hasZeros) {
+    private static RAbstractVector transformNegative(PositionProfile statistics, int dimLength, VectorDataLibrary posDataLibrary, RIntVector position, boolean hasZeros) {
         byte[] mask = new byte[dimLength];
         Arrays.fill(mask, RRuntime.LOGICAL_TRUE);
         int allPositionsNum = dimLength;
-        for (int i = 0; i < positionLength; i++) {
-            int pos = -position.getDataAt(i);
+        Object posData = position.getData();
+        SeqIterator posIt = posDataLibrary.iterator(posData);
+        while (posDataLibrary.next(posData, posIt)) {
+            int pos = -posDataLibrary.getNextInt(posData, posIt);
             if (hasZeros && pos == 0) {
                 continue;
             }
