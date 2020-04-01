@@ -26,15 +26,18 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "colSums", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class ColSums extends ColSumsBase {
@@ -42,33 +45,34 @@ public abstract class ColSums extends ColSumsBase {
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
     private final ConditionProfile removeNA = ConditionProfile.createBinaryProfile();
-    private final ValueProfile concreteVectorProfile = ValueProfile.createClassProfile();
 
     static {
         createCasts(ColSums.class);
     }
 
-    @Specialization
-    protected RDoubleVector colSums(RDoubleVector x, int rowNum, int colNum, boolean rnaParam) {
-        checkVectorLength(x, rowNum, colNum);
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector colSums(RDoubleVector x, int rowNum, int colNum, boolean rnaParam,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+        checkVectorLength(xDataLib, x, rowNum, colNum);
 
         double[] result = new double[colNum];
         boolean isComplete = true;
-        na.enable(x);
         final boolean rna = removeNA.profile(rnaParam);
-        final RDoubleVector profiledX = concreteVectorProfile.profile(x);
 
         int pos = 0;
+        Object xData = x.getData();
+        RandomAccessIterator xIt = xDataLib.randomAccessIterator(xData);
+        NACheck naCheck = xDataLib.getNACheck(xData);
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                final double el = profiledX.getDataAt(pos++);
+                final double el = xDataLib.getDouble(xData, xIt, pos++);
                 if (rna) {
-                    if (!na.check(el) && !Double.isNaN(el)) {
+                    if (!naCheck.check(el) && !Double.isNaN(el)) {
                         sum = add.op(sum, el);
                     }
                 } else {
-                    if (na.check(el)) {
+                    if (naCheck.check(el)) {
                         result[c] = RRuntime.DOUBLE_NA;
                         isComplete = false;
                         pos += rowNum - i - 1;
@@ -87,25 +91,28 @@ public abstract class ColSums extends ColSumsBase {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @Specialization
-    protected RDoubleVector colSums(RAbstractLogicalVector x, int rowNum, int colNum, boolean rna) {
-        checkVectorLength(x, rowNum, colNum);
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector colSums(RAbstractLogicalVector x, int rowNum, int colNum, boolean rnaParam,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+        checkVectorLength(xDataLib, x, rowNum, colNum);
 
+        final boolean rna = removeNA.profile(rnaParam);
         double[] result = new double[colNum];
         boolean isComplete = true;
-        na.enable(x);
-        final RAbstractLogicalVector profiledX = concreteVectorProfile.profile(x);
         int pos = 0;
+        Object xData = x.getData();
+        RandomAccessIterator xIt = xDataLib.randomAccessIterator(xData);
+        NACheck naCheck = xDataLib.getNACheck(xData);
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                final byte el = profiledX.getDataAt(pos++);
+                final byte el = xDataLib.getLogical(xData, xIt, pos++);
                 if (rna) {
-                    if (!na.check(el)) {
+                    if (!naCheck.check(el)) {
                         sum = add.op(sum, el);
                     }
                 } else {
-                    if (na.check(el)) {
+                    if (naCheck.check(el)) {
                         result[c] = RRuntime.DOUBLE_NA;
                         pos += rowNum - i - 1;
                         isComplete = false;
@@ -119,25 +126,29 @@ public abstract class ColSums extends ColSumsBase {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @Specialization
-    protected RDoubleVector colSums(RIntVector x, int rowNum, int colNum, boolean rna) {
-        checkVectorLength(x, rowNum, colNum);
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector colSums(RIntVector x, int rowNum, int colNum, boolean rnaParam,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+        checkVectorLength(xDataLib, x, rowNum, colNum);
 
+        final boolean rna = removeNA.profile(rnaParam);
         double[] result = new double[colNum];
         boolean isComplete = true;
         na.enable(x);
-        final RIntVector profiledX = concreteVectorProfile.profile(x);
         int pos = 0;
+        Object xData = x.getData();
+        RandomAccessIterator xIt = xDataLib.randomAccessIterator(xData);
+        NACheck naCheck = xDataLib.getNACheck(xData);
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                final int el = profiledX.getDataAt(pos++);
+                final int el = xDataLib.getInt(xData, xIt, pos++);
                 if (rna) {
-                    if (!na.check(el)) {
+                    if (!naCheck.check(el)) {
                         sum = add.op(sum, el);
                     }
                 } else {
-                    if (na.check(el)) {
+                    if (naCheck.check(el)) {
                         result[c] = RRuntime.DOUBLE_NA;
                         pos += rowNum - i - 1;
                         isComplete = false;
