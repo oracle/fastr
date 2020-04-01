@@ -62,8 +62,8 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na) {
-        na.enable(!isComplete());
+    public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
+        na.enable(!isComplete(ownerIsNull));
         return na;
     }
 
@@ -89,21 +89,26 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RDoubleArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
-        return new RDoubleArrayVectorData(Arrays.copyOf(data, data.length), isComplete());
+    public RDoubleArrayVectorData copy(@SuppressWarnings("unused") boolean deep,
+                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
+        return new RDoubleArrayVectorData(Arrays.copyOf(data, data.length), isComplete(ownerIsNull));
     }
 
     @ExportMessage
-    public RDoubleArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
+    public RDoubleArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
         double[] newData = Arrays.copyOf(data, newSize);
         if (fillNA) {
             Arrays.fill(newData, data.length, newData.length, RRuntime.DOUBLE_NA);
         }
-        return new RDoubleArrayVectorData(newData, isComplete());
+        return new RDoubleArrayVectorData(newData, isComplete(ownerIsNull));
     }
 
     @ExportMessage
-    public boolean isComplete() {
+    public boolean isComplete(@Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
+        if (owner != null) {
+            return owner.isComplete() && ENABLE_COMPLETE;
+        }
+        ownerIsNull.enter();
         return complete && ENABLE_COMPLETE;
     }
 
@@ -122,9 +127,10 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public SeqIterator iterator(
                     @Shared("naCheck") @Cached() NACheck naCheck,
-                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
         SeqIterator it = new SeqIterator(data, data.length);
-        naCheck.enable(!isComplete());
+        naCheck.enable(!isComplete(ownerIsNull));
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -136,15 +142,15 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
-        naCheck.enable(!isComplete());
+    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
+        naCheck.enable(!isComplete(ownerIsNull));
         return new RandomAccessIterator(data);
     }
 
     @ExportMessage
-    public double getDoubleAt(int index, @Shared("naCheck") @Cached() NACheck naCheck) {
+    public double getDoubleAt(int index, @Shared("naCheck") @Cached() NACheck naCheck, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
         double value = data[index];
-        naCheck.enable(!isComplete());
+        naCheck.enable(!isComplete(ownerIsNull));
         naCheck.check(value);
         return value;
     }
@@ -191,7 +197,9 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
         if (!neverSeenNA) {
             setCompleteProfile.enter();
             complete = false;
-            owner.setComplete(false);
+            if (owner != null) {
+                owner.setComplete(false);
+            }
         }
     }
 
@@ -201,7 +209,9 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
         if (RRuntime.isNA(value)) {
             setCompleteProfile.enter();
             complete = false;
-            owner.setComplete(false);
+            if (owner != null) {
+                owner.setComplete(false);
+            }
         }
     }
 
