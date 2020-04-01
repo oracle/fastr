@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -61,7 +61,7 @@ public abstract class FFINativeDoubleArrayUnwrapNode extends RBaseNode {
 
     @Specialization
     protected double[] doVectorRFFIWrapper(@SuppressWarnings("unused") Object length, VectorRFFIWrapper x) {
-        return ((RAbstractDoubleVector) x.getVector()).getDataTemp();
+        return ((RDoubleVector) x.getVector()).getDataTemp();
     }
 
     @Specialization(guards = {"!isVectorRFFIWrapper(x)", "interopLib.hasArrayElements(x)", "typeLib.getNativeType(x) == sulongDoubleArrayType"}, limit = "1")

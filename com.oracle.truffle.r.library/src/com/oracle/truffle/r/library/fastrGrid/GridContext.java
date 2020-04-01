@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -165,7 +165,7 @@ public final class GridContext {
     public void openDefaultDevice(RContext context) {
         String defaultDev = RGridGraphicsAdapter.getDefaultDevice();
         if (defaultDev.equals("awt") || defaultDev.startsWith("X11")) {
-            if (!FastRConfig.InternalGridAwtSupport) {
+            if (!FastRConfig.AwtSupport) {
                 throw awtNotSupported();
             }
             setCurrentDevice(defaultDev, WindowDevice.createWindowDevice(context, false, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT));

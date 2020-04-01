@@ -1043,4 +1043,3 @@ com.oracle.truffle.r.native/fficall/src/JavaGD/javaGD.c,gnu_r_gentleman_ihaka3.c
 com.oracle.truffle.r.native/fficall/src/JavaGD/jGDtalk.h,gnu_r_gentleman_ihaka3.copyright
 com.oracle.truffle.r.native/fficall/src/JavaGD/jGDtalk.c,gnu_r_gentleman_ihaka3.copyright
 com.oracle.truffle.r.native/fficall/src/JavaGD/Makefile,no.copyright
-org.rosuda.javaGD/src/org/rosuda/javaGD/Makefile,no.copyright

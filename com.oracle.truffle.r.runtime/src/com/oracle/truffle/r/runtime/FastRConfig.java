@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ public final class FastRConfig {
     /**
      * Whether the internal grid emulation should use AWT backed graphical devices.
      */
-    public static final boolean InternalGridAwtSupport;
+    public static final boolean AwtSupport;
 
     public static final boolean UseRemoteGridAwtDevice;
 
@@ -64,7 +64,7 @@ public final class FastRConfig {
             UseMXBeans = getBooleanOrTrue("fastr.internal.usemxbeans");
             UseNativeEventLoop = getBooleanOrTrue("fastr.internal.usenativeeventloop");
         }
-        InternalGridAwtSupport = getBooleanOrTrue("fastr.internal.grid.awt.support");
+        AwtSupport = getBooleanOrTrue("fastr.awt.support");
         UseRemoteGridAwtDevice = getBooleanOrFalse("fastr.use.remote.grid.awt.device");
         DefaultDownloadMethod = System.getProperty("fastr.internal.defaultdownloadmethod");
     }

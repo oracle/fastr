@@ -36,6 +36,9 @@ import org.rosuda.javaGD.JavaGD;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.Collections;
+import com.oracle.truffle.r.runtime.FastRConfig;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class JavaGDContext {
@@ -50,8 +53,16 @@ public final class JavaGDContext {
         this.devices = new Collections.ArrayListObj<>();
     }
 
+    public static RError awtNotSupported() {
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "AWT based grid devices are not supported.");
+    }
+
     @TruffleBoundary
     public GDInterface newGD(int gdId, String deviceName) {
+        if (!FastRConfig.AwtSupport) {
+            throw awtNotSupported();
+        }
+
         assert gdId == devices.size();
         GDInterface gd = newGD(gdId, deviceName, LoggingGD.Mode.getMode());
         devices.add(gd);
@@ -116,10 +127,16 @@ public final class JavaGDContext {
     }
 
     public GDInterface getGD(int devId) {
+        if (!FastRConfig.AwtSupport) {
+            throw awtNotSupported();
+        }
         return this.devices.get(devId);
     }
 
     public GDInterface removeGD(int devId) {
+        if (!FastRConfig.AwtSupport) {
+            throw awtNotSupported();
+        }
         assert devId < devices.size();
         GDInterface gd = devices.get(devId);
         assert gd != null;
