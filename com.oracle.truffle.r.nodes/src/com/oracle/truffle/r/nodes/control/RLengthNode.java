@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
@@ -93,6 +94,11 @@ public abstract class RLengthNode extends RBaseNode {
 
     @Specialization
     protected int doChar(@SuppressWarnings("unused") CharSXPWrapper operand) {
+        return 1;
+    }
+
+    @Specialization
+    protected int doChar(@SuppressWarnings("unused") RRaw operand) {
         return 1;
     }
 

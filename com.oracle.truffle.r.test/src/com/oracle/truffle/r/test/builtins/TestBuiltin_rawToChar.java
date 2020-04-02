@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -31,5 +31,8 @@ public class TestBuiltin_rawToChar extends TestBase {
     @Test
     public void testrawToChar1() {
         assertEval("argv <- structure(list(x = as.raw(c(115, 116, 114, 105, 110,     103))), .Names = 'x');do.call('rawToChar', argv)");
+
+        // as.raw(c(1,2,3))[1] returns RRaw
+        assertEval("rawToChar(as.raw(c(42))[1])");
     }
 }

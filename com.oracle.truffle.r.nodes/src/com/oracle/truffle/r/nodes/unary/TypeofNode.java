@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
 
 @ImportStatic(DSLConfig.class)
@@ -70,6 +71,11 @@ public abstract class TypeofNode extends UnaryNode {
     @Specialization
     protected static RType doMissing(@SuppressWarnings("unused") RMissing x) {
         return RType.Missing;
+    }
+
+    @Specialization
+    protected static RType doRRaw(@SuppressWarnings("unused") RRaw x) {
+        return RType.Raw;
     }
 
     @Specialization(guards = "isForeignObject(object)")

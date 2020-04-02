@@ -30,6 +30,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -66,6 +68,11 @@ public abstract class BoxPrimitiveNode extends CastNode {
     }
 
     @Specialization
+    protected static RRawVector doRaw(RRaw value) {
+        return RDataFactory.createRawVectorFromScalar(value);
+    }
+
+    @Specialization
     protected static CharSXPWrapper doCharSXPWrapper(CharSXPWrapper value) {
         return value;
     }
@@ -74,7 +81,7 @@ public abstract class BoxPrimitiveNode extends CastNode {
      * For the limit we use the number of primitive specializations - 1. After that its better to
      * check !isPrimitive.
      */
-    @Specialization(limit = "getCacheSize(3)", guards = "vector.getClass() == cachedClass")
+    @Specialization(limit = "getCacheSize(5)", guards = "vector.getClass() == cachedClass")
     protected static Object doCached(Object vector,
                     @Cached("vector.getClass()") Class<?> cachedClass) {
         assert (!isPrimitive(vector));
@@ -91,6 +98,6 @@ public abstract class BoxPrimitiveNode extends CastNode {
     }
 
     protected static boolean isPrimitive(Object value) {
-        return (value instanceof Integer) || (value instanceof Double) || (value instanceof Byte) || (value instanceof String);
+        return (value instanceof Integer) || (value instanceof Double) || (value instanceof Byte) || (value instanceof String) || (value instanceof RRaw);
     }
 }

@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
@@ -83,7 +82,7 @@ public enum SEXPTYPE {
     BCODESXP(21), /* byte code */
     EXTPTRSXP(22, RExternalPtr.class), /* external pointer */
     WEAKREFSXP(23), /* weak reference */
-    RAWSXP(24, RRawVector.class, RRaw.class), /* raw bytes */
+    RAWSXP(24, RRawVector.class), /* raw bytes */
     S4SXP(25, RS4Object.class), /* S4 non-vector */
 
     NEWSXP(30), /* fresh node created in new page */

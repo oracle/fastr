@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import static org.junit.Assert.assertTrue;
@@ -65,7 +64,7 @@ public class ListInteropTest extends AbstractInteropTest {
         assertTrue(getInterop().readMember(l, "n") instanceof RNull);
 
         assertSingletonVector(1, getInterop().readArrayElement(l, 0));
-        assertSingletonVector(RRaw.valueOf((byte) 1), getInterop().readArrayElement(l, 1));
+        assertSingletonVector((byte) 1, getInterop().readArrayElement(l, 1));
         assertSingletonVector(2.1, getInterop().readArrayElement(l, 2));
         assertSingletonVector(4d, getInterop().readArrayElement(l, 6));
         assertSingletonVector(true, getInterop().readArrayElement(l, 3));

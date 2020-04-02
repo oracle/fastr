@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,12 +35,14 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RInteropNA.RInteropComplexNA;
+import com.oracle.truffle.r.runtime.data.RInteropRaw;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropChar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropLong;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropShort;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -145,6 +147,16 @@ public abstract class R2Foreign extends RBaseNode {
             return new RInteropComplexNA(vec);
         }
         return new RInteropComplex(vec);
+    }
+
+    @Specialization(guards = "!boxPrimitives")
+    public Object doRawNoBox(RRaw vec, @SuppressWarnings("unused") boolean boxPrimitives) {
+        return vec.getValue();
+    }
+
+    @Specialization(guards = "boxPrimitives")
+    public Object doRawBox(RRaw vec, @SuppressWarnings("unused") boolean boxPrimitives) {
+        return new RInteropRaw(vec);
     }
 
     @Specialization

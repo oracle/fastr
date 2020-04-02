@@ -22,11 +22,15 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.Arrays;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -37,14 +41,17 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
+@ExportLibrary(InteropLibrary.class)
 public final class RRawVector extends RAbstractRawVector implements RMaterializedVector, Shareable {
 
-    private byte[] data;
+    private int length;
 
     RRawVector(byte[] data) {
         super(true);
-        this.data = data;
+        setData(new RRawArrayVectorData(data), data.length);
         assert RAbstractVector.verifyVector(this);
     }
 
@@ -53,15 +60,54 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    RRawVector(Object data, int newLen) {
+        super(true);
+        setData(data, newLen);
+        assert RAbstractVector.verifyVector(this);
+    }
+
     private RRawVector() {
         super(true);
+    }
+
+    private void setData(Object data, int newLen) {
+        this.data = data;
+        // Temporary solution to keep getLength(), isComplete(), and isShareable be fast-path
+        // operations (they only read a field, no polymorphism).
+        // The assumption is that length of vectors can only change in infrequently used setLength
+        // operation where we update the field accordingly
+        length = newLen;
+        shareable = data instanceof RRawArrayVectorData || data instanceof RRawNativeVectorData;
     }
 
     static RRawVector fromNative(long address, int length) {
         RRawVector result = new RRawVector();
         NativeDataAccess.toNative(result);
         NativeDataAccess.setNativeContents(result, address, length);
+        result.setData(new RRawNativeVectorData(result), length);
         return result;
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.Raw;
+    }
+
+    @Override
+    protected boolean isScalarNA() {
+        assert getLength() == 1;
+        return false;
+    }
+
+    @Override
+    public boolean isForeignWrapper() {
+        return false;
+    }
+
+    @Override
+    protected Object getScalarValue() {
+        assert getLength() == 1;
+        return getRawDataAt(0);
     }
 
     @Override
@@ -84,33 +130,76 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
 
     @Override
     public byte[] getInternalManagedData() {
+        if (data instanceof RRawNativeVectorData) {
+            return null;
+        }
+        // TODO: get rid of this method
+        assert data instanceof RRawArrayVectorData : data.getClass().getName();
+        return ((RRawArrayVectorData) data).getReadonlyRawData();
+    }
+
+    @Override
+    public Object getInternalStore() {
         return data;
     }
 
     @Override
-    public byte[] getInternalStore() {
-        return data;
+    protected RRawVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        return RDataFactory.createRawVector(copyResizedData(size, fillNA), dimensions);
+    }
+
+    private byte[] copyResizedData(int size, boolean fillNA) {
+        byte[] localData = getReadonlyData();
+        byte[] newData = Arrays.copyOf(localData, size);
+        if (!fillNA) {
+            assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+            // NA is 00 for raw
+            for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
+                newData[i] = localData[j];
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    public byte[] getDataTemp() {
+        return (byte[]) super.getDataTemp();
+    }
+
+    @Override
+    public byte[] getReadonlyData() {
+        return getDataCopy();
+    }
+
+    @Override
+    protected RRawVector internalCopy() {
+        return RDataFactory.createRawVector(getDataCopy());
+    }
+
+    @Override
+    public byte[] getDataCopy() {
+        return VectorDataLibrary.getFactory().getUncached().getRawDataCopy(data);
     }
 
     @Override
     public byte getRawDataAt(int index) {
-        return NativeDataAccess.getData(this, data, index);
+        return VectorDataLibrary.getFactory().getUncached().getRawAt(data, index);
     }
 
     @Override
     public byte getRawDataAt(Object store, int index) {
-        return NativeDataAccess.getData(this, (byte[]) store, index);
+        return VectorDataLibrary.getFactory().getUncached().getRawAt(store, index);
     }
 
     @Override
     public void setRawDataAt(Object store, int index, byte value) {
-        assert data == store;
-        NativeDataAccess.setData(this, (byte[]) store, index, value);
+        VectorDataLibrary.getFactory().getUncached().setRawAt(store, index, value);
     }
 
     @Override
+    @Ignore
     public int getLength() {
-        return NativeDataAccess.getDataLength(this, data);
+        return length;
     }
 
     @Override
@@ -121,44 +210,60 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
     @Override
     public void setLength(int l) {
         try {
-            NativeDataAccess.setDataLength(this, data, l);
+            NativeDataAccess.setDataLength(this, getArrayForNativeDataAccess(), l);
         } finally {
-            data = null;
-            setComplete(false);
+            RRawNativeVectorData newData = new RRawNativeVectorData(this);
+            setData(newData, l);
         }
     }
 
     @Override
     public void setTrueLength(int l) {
-        NativeDataAccess.setTrueDataLength(this, l);
-    }
-
-    @Override
-    public byte[] getDataCopy() {
-        if (data != null) {
-            return Arrays.copyOf(data, data.length);
-        } else {
-            return NativeDataAccess.copyByteNativeData(getNativeMirror());
+        try {
+            NativeDataAccess.setTrueDataLength(this, l);
+        } finally {
+            RRawNativeVectorData newData = new RRawNativeVectorData(this);
+            setData(newData, VectorDataLibrary.getFactory().getUncached().getLength(newData));
         }
     }
 
     @Override
-    public byte[] getReadonlyData() {
-        if (data != null) {
-            return data;
-        } else {
-            return NativeDataAccess.copyByteNativeData(getNativeMirror());
-        }
-    }
-
-    @Override
+    @Ignore // AbstractContainerLibrary
     public RRawVector materialize() {
-        return this;
+        return containerLibMaterialize(VectorDataLibrary.getFactory().getUncached(data));
+    }
+
+    @ExportMessage(library = AbstractContainerLibrary.class)
+    public void materializeData(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        setData(dataLib.materialize(data), getLength());
+    }
+
+    @ExportMessage(name = "materialize", library = AbstractContainerLibrary.class)
+    RRawVector containerLibMaterialize(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (dataLib.isWriteable(data)) {
+            return this;
+        }
+        // To retain the semantics of the original materialize, for sequences and such we return new
+        // vector
+        return new RRawVector(dataLib.getRawDataCopy(data));
+    }
+
+    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
+    RRawVector containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        RRawVector result = new RRawVector(dataLib.copy(data, false), dataLib.getLength(data));
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
+    @Override
+    @Ignore // AbstractContainerLibrary
+    public boolean isMaterialized() {
+        return VectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
     }
 
     private RRawVector updateDataAt(int index, RRaw value) {
         assert !this.isShared();
-        NativeDataAccess.setData(this, data, index, value.getValue());
+        VectorDataLibrary.getFactory().getUncached().setRawAt(data, index, value.getValue());
         return this;
     }
 
@@ -168,17 +273,42 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
     }
 
     @Override
+    @Ignore
+    public Object getDataAtAsObject(int index) {
+        return RRaw.valueOf(getRawDataAt(index));
+    }
+
+    @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        NativeDataAccess.setData(this, data, toIndex, ((RAbstractRawVector) fromVector).getRawDataAt(fromIndex));
+        VectorDataLibrary lib = VectorDataLibrary.getFactory().getUncached();
+        byte value = lib.getRawAt(((RRawVector) fromVector).data, fromIndex);
+        lib.setRawAt(data, toIndex, value);
+    }
+
+    @Override
+    @Ignore
+    public RRawVector createEmptySameType(int newLength, @SuppressWarnings("unused") boolean newIsComplete) {
+        return RDataFactory.createRawVector(new byte[newLength]);
     }
 
     public long allocateNativeContents() {
         try {
-            return NativeDataAccess.allocateNativeContents(this, data, getLength());
+            data = VectorDataLibrary.getFactory().getUncached().materialize(data);
+            long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
+            setData(new RRawNativeVectorData(this), getLength());
+            return result;
         } finally {
-            data = null;
             setComplete(false);
         }
+    }
+
+    private AtomicReference<RRawVector> materialized = new AtomicReference<>();
+
+    public Object cachedMaterialize() {
+        if (materialized.get() == null) {
+            materialized.compareAndSet(null, materialize());
+        }
+        return materialized.get();
     }
 
     private static final class FastPathAccess extends FastPathFromRawAccess {
@@ -189,16 +319,12 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
 
         @Override
         protected byte getRawImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((byte[]) accessIter.getStore())[index] : NativeDataAccess.getRawNativeMirrorData((NativeMirror) accessIter.getStore(), index);
+            return dataLib.getRawAt(accessIter.getStore(), index);
         }
 
         @Override
         protected void setRawImpl(AccessIterator accessIter, int index, byte value) {
-            if (hasStore) {
-                ((byte[]) accessIter.getStore())[index] = value;
-            } else {
-                NativeDataAccess.setNativeMirrorRawData((NativeMirror) accessIter.getStore(), index, value);
-            }
+            dataLib.setRawAt(accessIter.getStore(), index, value);
         }
     }
 
@@ -211,18 +337,31 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
         @Override
         protected byte getRawImpl(AccessIterator accessIter, int index) {
             RRawVector vector = (RRawVector) accessIter.getStore();
-            return NativeDataAccess.getData(vector, vector.data, index);
+            return vector.getRawDataAt(index);
         }
 
         @Override
         protected void setRawImpl(AccessIterator accessIter, int index, byte value) {
             RRawVector vector = (RRawVector) accessIter.getStore();
-            NativeDataAccess.setData(vector, vector.data, index, value);
+            vector.setRawDataAt(vector.getInternalStore(), index, value);
         }
     };
 
     @Override
     public VectorAccess slowPathAccess() {
         return SLOW_PATH_ACCESS;
+    }
+
+    // TODO: Hack: we make sure the vector is either array or native, so that we can call
+    // NativeDataAccess methods
+    private byte[] getArrayForNativeDataAccess() {
+        materializeData(VectorDataLibrary.getFactory().getUncached());
+        return data instanceof RRawArrayVectorData ? ((RRawArrayVectorData) data).getReadonlyRawData() : null;
+    }
+
+    @ExportMessage(name = "getLength", library = AbstractContainerLibrary.class)
+    @Override
+    public int containerLibGetLength(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return dataLib.getLength(data);
     }
 }

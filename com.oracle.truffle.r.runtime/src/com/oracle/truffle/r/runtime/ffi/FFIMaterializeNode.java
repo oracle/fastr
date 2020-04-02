@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RScalarList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
@@ -177,6 +178,11 @@ public abstract class FFIMaterializeNode extends Node {
     @Specialization
     protected static Object wrap(RDoubleVector value, @SuppressWarnings("unused") boolean protect) {
         // TODO specialize only for sequences (and maybe some other)
+        return value.cachedMaterialize();
+    }
+
+    @Specialization
+    protected static Object wrap(RRawVector value, @SuppressWarnings("unused") boolean protect) {
         return value.cachedMaterialize();
     }
 

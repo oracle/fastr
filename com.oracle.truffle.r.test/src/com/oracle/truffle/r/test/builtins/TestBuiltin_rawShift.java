@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -37,5 +37,8 @@ public class TestBuiltin_rawShift extends TestBase {
             assertEval("argv <- structure(list(x = as.raw(c(0, 1, 32, 127, 128, 255, 123)), n = " + i + ".1), .Names = c('x', 'n'));do.call('rawShift', argv)");
         }
         assertEval("argv <- structure(list(x = as.raw(c(0, 1, 32, 127, 128, 255, 123)), n = 9), .Names = c('x', 'n'));do.call('rawShift', argv)");
+
+        // as.raw(c(1,2,3))[1] returns RRaw
+        assertEval("rawShift( as.raw(c(1,2,3))[1], 1)");
     }
 }

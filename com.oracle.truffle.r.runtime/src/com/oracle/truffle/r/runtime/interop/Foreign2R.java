@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.RInteropNA;
+import com.oracle.truffle.r.runtime.data.RInteropRaw;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
@@ -128,6 +129,11 @@ public abstract class Foreign2R extends Node {
     @Specialization
     public Object doInteropComplex(RInteropComplex interopComplex, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
         return interopComplex.getValue();
+    }
+
+    @Specialization
+    public Object doInteropRaw(RInteropRaw interopRaw, @SuppressWarnings("unused") boolean preserveByte, @SuppressWarnings("unused") boolean printWarning) {
+        return interopRaw.getValue();
     }
 
     @Specialization(guards = "isNA(d)")
