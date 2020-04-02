@@ -36,9 +36,11 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -51,6 +53,7 @@ import com.oracle.truffle.r.nodes.function.call.PrepareMatchInternalArguments;
 import com.oracle.truffle.r.nodes.function.call.PrepareMatchInternalArgumentsNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -62,8 +65,14 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.CopyResizedToPreallocated;
+import com.oracle.truffle.r.runtime.data.nodes.CopyResizedToPreallocatedNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -155,71 +164,87 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
     }
 
     @TypeSystemReference(RTypes.class)
+    @ImportStatic(DSLConfig.class)
     abstract static class FastRInternalRepeat extends RBaseNode {
 
         private final ConditionProfile lengthOutOrTimes = ConditionProfile.createBinaryProfile();
         private final ConditionProfile oneTimeGiven = ConditionProfile.createBinaryProfile();
 
         @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
+        @Child private VectorDataLibrary resultDataLib;
+        @Child private VectorDataLibrary namesDataLib;
+        @Child private VectorDataLibrary eachResultDataLib;
+
+        @Child CopyResizedToPreallocated copyResizedNode;
 
         @CompilationFinal private boolean trySimple = true;
 
         public abstract RAbstractVector execute(VirtualFrame frame, Object... args);
 
-        @Specialization
-        protected RAbstractVector rep(RAbstractVector xIn, RIntVector timesIn, int lengthOutIn, int eachIn,
+        @Specialization(limit = "getGenericVectorAccessCacheSize()")
+        protected RAbstractVector rep(RAbstractVector xIn, RIntVector times, int lengthOutIn, int eachIn,
                         @Cached("createClassProfile()") ValueProfile xProfile,
-                        @Cached("createClassProfile()") ValueProfile timesProfile,
+                        @CachedLibrary("xIn.getData()") VectorDataLibrary xDataLib,
+                        @CachedLibrary("times.getData()") VectorDataLibrary timesDataLib,
                         @Cached("createEqualityProfile()") PrimitiveValueProfile lengthOutProfile,
                         @Cached("createEqualityProfile()") PrimitiveValueProfile eachProfile,
                         @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
             RAbstractVector x = xProfile.profile(xIn);
-            RIntVector times = timesProfile.profile(timesIn);
+            Object timesData = times.getData();
+            Object xData = x.getData();
             int lengthOut = lengthOutProfile.profile(lengthOutIn);
             int each = eachProfile.profile(eachIn);
 
             // fast path for very simple case of filling with a single double values:
             if (trySimple) {
-                if (x instanceof RDoubleVector && x.getLength() == 1 && times.getLength() == 1 && each == 1 && getNames.getNames(x) == null) {
-                    RDoubleVector doubleVector = (RDoubleVector) x;
-                    int t = times.getDataAt(0);
+                if (x instanceof RDoubleVector && xDataLib.getLength(xData) == 1 && timesDataLib.getLength(timesData) == 1 && each == 1 && getNames.getNames(x) == null) {
+                    int t = timesDataLib.getIntAt(timesData, 0);
                     if (t < 0) {
                         throw error(RError.Message.INVALID_ARGUMENT, "times");
                     }
                     int length = lengthOutOrTimes.profile(!RRuntime.isNA(lengthOut)) ? lengthOut : t;
                     double[] data = new double[length];
-                    Arrays.fill(data, doubleVector.getDataAt(0));
-                    return RDataFactory.createDoubleVector(data, !RRuntime.isNA(doubleVector.getDataAt(0)));
+                    double value = xDataLib.getDoubleAt(xData, 0);
+                    Arrays.fill(data, value);
+                    return RDataFactory.createDoubleVector(data, !RRuntime.isNA(value));
                 } else {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     trySimple = false;
                 }
             }
-            return repInternal(x, times, lengthOut, each, hasNamesProfile);
+            return preprocessEach(xDataLib, xData, x, timesDataLib, timesData, lengthOut, each, hasNamesProfile);
         }
 
-        private RAbstractVector repInternal(RAbstractVector x, RIntVector times, int lengthOut, int each, ConditionProfile hasNamesProfile) {
-            RAbstractVector input = x;
+        private RAbstractVector preprocessEach(VectorDataLibrary xDataLib, Object xData, RAbstractVector x, VectorDataLibrary timesDataLib, Object timesData, int lengthOut, int each,
+                        ConditionProfile hasNamesProfile) {
             if (each != 1) {
                 if (each <= 0) {
                     throw error(RError.Message.INVALID_ARGUMENT, "times");
                 }
-                if (times.getLength() > 1) {
+                if (timesDataLib.getLength(timesData) > 1) {
                     throw error(RError.Message.INVALID_ARGUMENT, "times");
                 }
-                input = handleEach(input, each);
+                initEachResultDataLib();
+                RAbstractVector input = handleEach(xDataLib, xData, x, each, eachResultDataLib);
+                return repInternal(eachResultDataLib, input.getData(), input, timesDataLib, timesData, lengthOut, each, hasNamesProfile);
+            } else {
+                return repInternal(xDataLib, xData, x, timesDataLib, timesData, lengthOut, each, hasNamesProfile);
             }
+        }
+
+        private RAbstractVector repInternal(VectorDataLibrary xDataLib, Object xData, RAbstractVector x, VectorDataLibrary timesDataLib, Object timesData, int lengthOut, int each,
+                        ConditionProfile hasNamesProfile) {
             RAbstractVector r;
             if (lengthOutOrTimes.profile(RRuntime.isNA(lengthOut))) {
-                r = handleTimes(input, times);
+                r = handleTimes(xDataLib, xData, x, timesDataLib, timesData);
             } else {
-                r = handleLengthOut(input, lengthOut);
+                r = handleLengthOut(xDataLib, xData, x, lengthOut);
             }
             if (hasNamesProfile != null) {
                 RStringVector names = getNames.getNames(x);
                 if (hasNamesProfile.profile(names != null)) {
                     // handle names - passing null as hasNamesProfile stops the recursion
-                    names = (RStringVector) repInternal(names, times, lengthOut, each, null);
+                    names = (RStringVector) preprocessEach(getNamesDataLib(), names.getData(), names, timesDataLib, timesData, lengthOut, each, null);
                     r.initAttributes(RAttributesLayout.createNames(names));
                 }
             }
@@ -229,12 +254,20 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
         /**
          * Prepare the input vector by replicating its elements.
          */
-        private static RAbstractVector handleEach(RAbstractVector x, int each) {
-            RAbstractVector r = x.createEmptySameType(x.getLength() * each, x.isComplete());
-            for (int i = 0; i < x.getLength(); i++) {
-                for (int j = i * each; j < (i + 1) * each; j++) {
-                    r.transferElementSameType(j, x, i);
+        private static RAbstractVector handleEach(VectorDataLibrary xDataLib, Object xData, RAbstractVector x, int each, VectorDataLibrary eachResultDataLib) {
+            int xLen = xDataLib.getLength(xData);
+            // Note: the complete flag will be updated in the commitRandomAccessWriteIterator
+            RAbstractVector r = x.createEmptySameType(xLen * each, true);
+            Object rData = r.getData();
+            try (RandomAccessWriteIterator rIt = eachResultDataLib.randomAccessWriteIterator(rData)) {
+                RandomAccessIterator xIt = xDataLib.randomAccessIterator(xData);
+                for (int i = 0; i < xLen; i++) {
+                    for (int j = i * each; j < (i + 1) * each; j++) {
+                        eachResultDataLib.transfer(rData, rIt, j, xDataLib, xIt, xData, i);
+                    }
                 }
+                boolean neverSeenNA = xDataLib.isComplete(xData) || xDataLib.getNACheck(xData).neverSeenNA();
+                eachResultDataLib.commitRandomAccessWriteIterator(rData, rIt, neverSeenNA);
             }
             return r;
         }
@@ -242,45 +275,90 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
         /**
          * Extend or truncate the vector to a specified length.
          */
-        private static RAbstractVector handleLengthOut(RAbstractVector x, int lengthOut) {
-            return x.copyResized(lengthOut, x.getLength() == 0);
+        private RAbstractVector handleLengthOut(VectorDataLibrary xDataLib, Object xData, RAbstractVector x, int lengthOut) {
+            return copyResized(xDataLib, xData, x, lengthOut);
+        }
+
+        private RAbstractVector copyResized(VectorDataLibrary xDataLib, Object xData, RAbstractVector x, int length) {
+            if (copyResizedNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                copyResizedNode = insert(CopyResizedToPreallocatedNodeGen.create());
+            }
+            boolean fillWithNA = xDataLib.getLength(xData) == 0;
+            RAbstractVector result = x.createEmptySameType(length, xDataLib.isComplete(xData) && !fillWithNA);
+            copyResizedNode.execute(xDataLib, xData, result.getData(), fillWithNA);
+            return result;
         }
 
         /**
          * Replicate the vector a given number of times.
          */
-        private RAbstractVector handleTimes(RAbstractVector x, RIntVector times) {
-            if (oneTimeGiven.profile(times.getLength() == 1)) {
+        private RAbstractVector handleTimes(VectorDataLibrary xDataLib, Object xData, RAbstractVector x, VectorDataLibrary timesDataLib, Object timesData) {
+            if (oneTimeGiven.profile(timesDataLib.getLength(timesData) == 1)) {
                 // only one times value is given
-                int howManyTimes = times.getDataAt(0);
+                int howManyTimes = timesDataLib.getIntAt(timesData, 0);
                 if (howManyTimes < 0) {
                     throw error(RError.Message.INVALID_ARGUMENT, "times");
                 }
-                return x.copyResized(x.getLength() * howManyTimes, false);
+                int resultLength = xDataLib.getLength(xData) * howManyTimes;
+                return copyResized(xDataLib, xData, x, resultLength);
             } else {
                 // times is a vector with several elements
-                if (x.getLength() != times.getLength()) {
+                if (xDataLib.getLength(xData) != timesDataLib.getLength(timesData)) {
                     throw error(RError.Message.INVALID_ARGUMENT, "times");
                 }
                 // iterate once over the times vector to determine result vector size
                 int resultLength = 0;
-                for (int i = 0; i < times.getLength(); i++) {
-                    int t = times.getDataAt(i);
+                SeqIterator it = timesDataLib.iterator(timesData);
+                while (timesDataLib.next(timesData, it)) {
+                    int t = timesDataLib.getNextInt(timesData, it);
                     if (t < 0) {
                         throw error(RError.Message.INVALID_ARGUMENT, "times");
                     }
                     resultLength += t;
                 }
-                // create and populate result vector
-                RAbstractVector r = x.createEmptySameType(resultLength, x.isComplete());
-                int wp = 0; // write pointer
-                for (int i = 0; i < x.getLength(); i++) {
-                    for (int j = 0; j < times.getDataAt(i); ++j, ++wp) {
-                        r.transferElementSameType(wp, x, i);
+                // create and populate result vector, the complete flag will be updated in the
+                // iterator commit
+                RAbstractVector r = x.createEmptySameType(resultLength, true);
+                Object rData = r.getData();
+                VectorDataLibrary rDataLib = getResultDataLib();
+                try (RandomAccessWriteIterator rIt = rDataLib.randomAccessWriteIterator(rData)) {
+                    RandomAccessIterator xIt = xDataLib.randomAccessIterator(xData);
+                    int xLen = xDataLib.getLength(xData);
+                    int wp = 0; // write pointer
+                    for (int i = 0; i < xLen; i++) {
+                        for (int j = 0; j < timesDataLib.getIntAt(timesData, i); ++j, ++wp) {
+                            rDataLib.transfer(rData, rIt, wp, xDataLib, xIt, xData, i);
+                        }
                     }
+                    boolean neverSeenNA = xDataLib.isComplete(xData) || xDataLib.getNACheck(xData).neverSeenNA();
+                    rDataLib.commitRandomAccessWriteIterator(rData, rIt, neverSeenNA);
                 }
                 return r;
             }
+        }
+
+        public void initEachResultDataLib() {
+            if (eachResultDataLib == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                eachResultDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericVectorAccessCacheSize()));
+            }
+        }
+
+        public VectorDataLibrary getResultDataLib() {
+            if (resultDataLib == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                resultDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericVectorAccessCacheSize()));
+            }
+            return resultDataLib;
+        }
+
+        public VectorDataLibrary getNamesDataLib() {
+            if (namesDataLib == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                namesDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getGenericVectorAccessCacheSize()));
+            }
+            return namesDataLib;
         }
     }
 }

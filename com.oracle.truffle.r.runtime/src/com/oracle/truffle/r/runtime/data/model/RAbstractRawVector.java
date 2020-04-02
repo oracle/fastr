@@ -142,7 +142,6 @@ public abstract class RAbstractRawVector extends RAbstractNumericVector {
 
     @Override
     public final RRawVector createEmptySameType(int newLength, boolean newIsComplete) {
-        assert newIsComplete;
         return RDataFactory.createRawVector(new byte[newLength]);
     }
 

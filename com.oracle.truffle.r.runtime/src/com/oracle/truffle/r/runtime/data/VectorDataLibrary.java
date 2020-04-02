@@ -152,6 +152,7 @@ public abstract class VectorDataLibrary extends Library {
 
     public abstract Object copy(Object data, boolean deep);
 
+    // TODO: do we really need this?
     public abstract Object copyResized(Object data, int newSize, boolean deep, boolean fillNA);
 
     /**
@@ -371,6 +372,11 @@ public abstract class VectorDataLibrary extends Library {
      * {@code getType(newObj) == targetType}. The new data object can convert data on the fly or use
      * other strategy. {@code targetType} must be a compilation constant if used in partially
      * evaluated code.
+     *
+     * For every combination of the implementation of {@link VectorDataLibrary} and
+     * {@code targetType}, the result must always be the same implementation of
+     * {@link VectorDataLibrary}. I.e., it is allowed to create a specialized library for the result
+     * if the type of the {@code receiver} and {@code targetType} are guaranteed to be the same.
      */
     public Object cast(Object receiver, RType targetType) {
         CompilerAsserts.partialEvaluationConstant(targetType);
@@ -1109,12 +1115,52 @@ public abstract class VectorDataLibrary extends Library {
     // Utility methods. The instance utility methods are not intended for overriding although they
     // may be overridden if the need is.
 
-    public void transferElementSameType(@SuppressWarnings("unused") Object receiver, RandomAccessWriteIterator destIt, Object dest, int destIdx, VectorDataLibrary sourceLib,
+    /**
+     * Transfers and element from source to destination. The element will be coerced to the type of
+     * the destination data object.
+     */
+    public void transferNext(Object dest, SeqWriteIterator destIt, VectorDataLibrary sourceLib, SeqIterator sourceIt, Object source) {
+        RType destType = getType(dest);
+        switch (destType) {
+            case Integer:
+                setNextInt(dest, destIt, sourceLib.getNextInt(source, sourceIt));
+                break;
+            case Double:
+                setNextDouble(dest, destIt, sourceLib.getNextDouble(source, sourceIt));
+                break;
+            case Logical:
+                setNextLogical(dest, destIt, sourceLib.getNextLogical(source, sourceIt));
+                break;
+            case Raw:
+                setNextRaw(dest, destIt, sourceLib.getNextRaw(source, sourceIt));
+                break;
+            case Complex:
+                setNextComplex(dest, destIt, sourceLib.getNextComplex(source, sourceIt));
+                break;
+            case Character:
+                setNextString(dest, destIt, sourceLib.getNextString(source, sourceIt));
+                break;
+            case List:
+            case PairList:
+            case Language:
+            case Expression:
+                setNextElement(dest, destIt, sourceLib.getNextElement(source, sourceIt));
+                break;
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.unimplemented(destType.toString());
+        }
+    }
+
+    /**
+     * Variant of
+     * {@link #transferNext(Object, SeqWriteIterator, VectorDataLibrary, SeqIterator, Object)} that
+     * supports random access.
+     */
+    public void transfer(Object dest, RandomAccessWriteIterator destIt, int destIdx, VectorDataLibrary sourceLib,
                     RandomAccessIterator sourceIt,
                     Object source, int sourceIdx) {
-        RType sourceType = sourceLib.getType(source);
         RType destType = getType(dest);
-        // assert checkSameType(type, destLib.getType(dest));
         switch (destType) {
             case Integer:
                 setInt(dest, destIt, destIdx, sourceLib.getInt(source, sourceIt, sourceIdx));
@@ -1129,26 +1175,10 @@ public abstract class VectorDataLibrary extends Library {
                 setRaw(dest, destIt, destIdx, sourceLib.getRaw(source, sourceIt, sourceIdx));
                 break;
             case Complex:
-                switch (sourceType) {
-                    case Integer:
-                    case Double:
-                    case Complex:
-                        setComplex(dest, destIt, destIdx, sourceLib.getComplex(source, sourceIt, sourceIdx));
-                        break;
-                    default:
-                        setComplex(dest, destIt, destIdx, sourceLib.getComplex(source, sourceIt, sourceIdx));
-                }
+                setComplex(dest, destIt, destIdx, sourceLib.getComplex(source, sourceIt, sourceIdx));
                 break;
             case Character:
-                switch (sourceType) {
-                    case Integer:
-                    case Double:
-                    case Character:
-                        setString(dest, destIt, destIdx, sourceLib.getString(source, sourceIt, sourceIdx));
-                        break;
-                    default:
-                        setString(dest, destIt, destIdx, sourceLib.getString(source, sourceIt, sourceIdx));
-                }
+                setString(dest, destIt, destIdx, sourceLib.getString(source, sourceIt, sourceIdx));
                 break;
             case List:
             case PairList:

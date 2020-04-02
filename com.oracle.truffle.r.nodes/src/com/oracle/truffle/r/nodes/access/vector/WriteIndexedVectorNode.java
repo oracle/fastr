@@ -420,7 +420,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                 if (params.vectorType == RType.List || params.vectorType == RType.Expression) {
                     setListElement(leftIter, leftDataLib, leftData, rightIter, rightDataLib, rightData, right, actionLeftIndex, actionRightIndex);
                 } else {
-                    leftDataLib.transferElementSameType(leftData, leftIter, leftData, actionLeftIndex, rightDataLib, rightIter, rightData, actionRightIndex);
+                    leftDataLib.transfer(leftData, leftIter, actionLeftIndex, rightDataLib, rightIter, rightData, actionRightIndex);
                 }
             }
 
