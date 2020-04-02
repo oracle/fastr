@@ -141,6 +141,7 @@ suite = {
       "javaCompliance" : "8+",
       "workingSets" : "Truffle,FastR,Test",
       "jacoco" : "include",
+      "spotbugsIgnoresGenerated" : True,
     },
 
     "com.oracle.truffle.r.test" : {
@@ -157,6 +158,7 @@ suite = {
       "javaCompliance" : "8+",
       "workingSets" : "Truffle,FastR,Test",
       "jacoco" : "include",
+      "spotbugsIgnoresGenerated" : True,
     },
 
     "com.oracle.truffle.r.test.native" : {
@@ -173,6 +175,7 @@ suite = {
          "urand/lib/liburand.so",
        ],
       "workingSets" : "FastR",
+      "spotbugsIgnoresGenerated" : True,
     },
 
     "com.oracle.truffle.r.test.packages" : {
@@ -209,6 +212,7 @@ suite = {
       "javaCompliance" : "8+",
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
+      "spotbugsIgnoresGenerated" : True,
     },
 
     "com.oracle.truffle.r.runtime" : {
@@ -226,6 +230,7 @@ suite = {
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
+      "spotbugsIgnoresGenerated" : True,
     },
 
     "com.oracle.truffle.r.launcher" : {
@@ -257,6 +262,7 @@ suite = {
       ],
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
+      "spotbugsIgnoresGenerated" : True,
     },
 
     "com.oracle.truffle.r.ffi.codegen" : {
@@ -313,7 +319,7 @@ suite = {
       "javaCompliance" : "8+",
       "workingSets" : "FastR",
       "jacoco" : "include",
-
+      "spotbugsIgnoresGenerated" : True,
     },
 
     "com.oracle.truffle.r.library.fastrGrid.server" : {
@@ -360,6 +366,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "8+",
       "workingSets" : "FastR,Test",
+      "spotbugsIgnoresGenerated" : True,
     },
   },
 
