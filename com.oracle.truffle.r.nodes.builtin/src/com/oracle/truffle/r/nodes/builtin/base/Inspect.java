@@ -39,7 +39,7 @@ import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;

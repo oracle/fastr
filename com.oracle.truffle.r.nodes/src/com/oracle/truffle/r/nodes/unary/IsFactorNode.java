@@ -25,6 +25,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
 
 public final class IsFactorNode extends UnaryNode {
 

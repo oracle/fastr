@@ -71,7 +71,7 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNode;
 import com.oracle.truffle.r.nodes.unary.CastStringBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;

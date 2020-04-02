@@ -28,7 +28,7 @@ import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.DuplicateNode;
 import com.oracle.truffle.r.nodes.unary.DuplicateNodeGen;
 import com.oracle.truffle.r.runtime.RError;

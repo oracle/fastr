@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 import java.util.function.Function;
 
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
 
 /**

@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
-import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
+import com.oracle.truffle.r.runtime.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.runtime.data.RComplex;

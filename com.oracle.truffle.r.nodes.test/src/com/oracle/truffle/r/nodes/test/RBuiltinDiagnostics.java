@@ -55,7 +55,7 @@ import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.ResultTypesAnalyser;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.nodes.test.ChimneySweeping.ChimneySweepingSuite;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;

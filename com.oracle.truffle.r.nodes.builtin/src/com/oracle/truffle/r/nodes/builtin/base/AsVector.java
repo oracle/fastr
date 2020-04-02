@@ -50,7 +50,7 @@ import com.oracle.truffle.r.nodes.unary.CastExpressionNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastSymbolNode;

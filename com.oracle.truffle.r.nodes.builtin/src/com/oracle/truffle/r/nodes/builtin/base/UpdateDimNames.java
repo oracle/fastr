@@ -35,8 +35,8 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNa
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;

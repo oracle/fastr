@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.casts;
 
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
+import com.oracle.truffle.r.runtime.MessageData;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.ErrorContext;
 

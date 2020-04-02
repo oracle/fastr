@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
+import com.oracle.truffle.r.runtime.MessageData;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 public abstract class NonNANode extends CastNode {
 

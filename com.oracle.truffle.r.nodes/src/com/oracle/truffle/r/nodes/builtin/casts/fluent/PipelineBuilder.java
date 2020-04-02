@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
-import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
+import com.oracle.truffle.r.runtime.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.AttributableCoercionStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.CoercionStep;
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineToCastNode;
 import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardedValuesAnalyser;
 import com.oracle.truffle.r.nodes.builtin.casts.analysis.ForwardingAnalysisResult;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 

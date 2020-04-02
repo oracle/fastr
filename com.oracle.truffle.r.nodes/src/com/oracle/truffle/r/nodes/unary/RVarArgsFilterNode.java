@@ -28,11 +28,12 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
+import com.oracle.truffle.r.runtime.MessageData;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 public abstract class RVarArgsFilterNode extends CastNode {
 

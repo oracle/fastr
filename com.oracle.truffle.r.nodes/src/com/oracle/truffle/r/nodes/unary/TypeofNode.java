@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
 
 @ImportStatic(DSLConfig.class)
 public abstract class TypeofNode extends UnaryNode {

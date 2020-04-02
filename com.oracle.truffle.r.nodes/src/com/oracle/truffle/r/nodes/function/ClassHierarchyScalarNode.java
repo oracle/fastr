@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.nodes.unary.UnaryNode;
+import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;

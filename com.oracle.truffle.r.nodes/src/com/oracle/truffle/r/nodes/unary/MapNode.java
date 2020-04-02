@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.r.nodes.builtin.ArgumentMapper;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class MapNode extends CastNode {

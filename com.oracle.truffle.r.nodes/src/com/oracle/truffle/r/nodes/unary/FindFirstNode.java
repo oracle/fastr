@@ -24,10 +24,11 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
+import com.oracle.truffle.r.runtime.MessageData;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 public abstract class FindFirstNode extends CastNode {
 

@@ -53,7 +53,7 @@ import com.oracle.truffle.r.nodes.attributes.SetHiddenAttrsProperty;
 import com.oracle.truffle.r.nodes.attributes.SetPropertyNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;

@@ -20,26 +20,40 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.unary;
+package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.RError.Message;
 
-@NodeInfo(cost = NodeCost.NONE)
-public final class ApplyCastNode extends RNode {
+/**
+ * Value type that holds data necessary for error/warning message from a cast pipeline.
+ */
+public final class MessageData {
+    private final RError.Message message;
+    private final Object[] messageArgs;
 
-    @Child private CastNode cast;
-    @Child private RNode value;
-
-    public ApplyCastNode(CastNode cast, RNode value) {
-        this.cast = cast;
-        this.value = value;
+    public MessageData(Message message, Object... messageArgs) {
+        this.message = message;
+        this.messageArgs = messageArgs;
+        assert message != null;
     }
 
-    @Override
-    public Object execute(VirtualFrame frame) {
-        return cast.execute(value.execute(frame));
+    public Message getMessage() {
+        return message;
+    }
+
+    public Object[] getMessageArgs() {
+        return messageArgs;
+    }
+
+    /**
+     * Helper method for operation that is often performed with {@link MessageData}.
+     */
+    public static MessageData getFirstNonNull(MessageData... messages) {
+        for (MessageData message : messages) {
+            if (message != null) {
+                return message;
+            }
+        }
+        throw RInternalError.shouldNotReachHere("at least the last message must not be null");
     }
 }

@@ -46,7 +46,7 @@ import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNode;
 import com.oracle.truffle.r.nodes.objects.CollectGenericArgumentsNodeGen;
 import com.oracle.truffle.r.nodes.objects.DispatchGeneric;
 import com.oracle.truffle.r.nodes.objects.DispatchGenericNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;

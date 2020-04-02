@@ -41,7 +41,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNodeGen;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError.Message;

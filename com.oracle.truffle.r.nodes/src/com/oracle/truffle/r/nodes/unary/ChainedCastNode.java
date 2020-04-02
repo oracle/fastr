@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.nodes.unary.ConditionalMapNode.PipelineReturnException;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class ChainedCastNode extends CastNode {

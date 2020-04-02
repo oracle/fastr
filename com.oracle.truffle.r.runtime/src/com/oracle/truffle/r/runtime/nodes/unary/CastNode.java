@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.unary;
+package com.oracle.truffle.r.runtime.nodes.unary;
 
 import java.util.Arrays;
 import java.util.function.Function;
@@ -28,7 +28,7 @@ import java.util.function.Function;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
+import com.oracle.truffle.r.runtime.MessageData;
 import com.oracle.truffle.r.runtime.RError;
 
 /**
@@ -50,7 +50,7 @@ public abstract class CastNode extends UnaryNode {
         return execute(classProfile.profile(value));
     }
 
-    protected abstract Object execute(Object value);
+    public abstract Object execute(Object value);
 
     /**
      * For testing purposes only, returns the last warning message (only when {@link #testingMode()}

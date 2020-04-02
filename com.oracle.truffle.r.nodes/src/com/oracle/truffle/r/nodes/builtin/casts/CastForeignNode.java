@@ -27,7 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
@@ -45,7 +45,7 @@ public final class CastForeignNode extends CastNode {
     @CompilationFinal private ConditionProfile isInteropScalar;
 
     @Override
-    protected Object execute(Object obj) {
+    public Object execute(Object obj) {
         if (!RRuntime.isForeignObject(obj)) {
             return obj;
         }

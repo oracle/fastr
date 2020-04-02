@@ -26,7 +26,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
-import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
+import com.oracle.truffle.r.runtime.MessageData;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RError.Message;

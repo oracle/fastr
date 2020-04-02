@@ -29,6 +29,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 public abstract class ConditionalMapNode extends CastNode {
 

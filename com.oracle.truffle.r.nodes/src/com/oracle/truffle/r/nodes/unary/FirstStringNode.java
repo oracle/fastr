@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 public abstract class FirstStringNode extends CastNode {
 

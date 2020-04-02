@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.oracle.truffle.api.dsl.GeneratedBy;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineBuilder;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
-import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;

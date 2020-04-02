@@ -49,8 +49,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.helpers.GetFromEnvironment;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo.MethodCode;
@@ -80,6 +79,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNodeGen;
 
 // Transcribed (unless otherwise noted) from src/library/methods/methods_list_dispatch.c
 
