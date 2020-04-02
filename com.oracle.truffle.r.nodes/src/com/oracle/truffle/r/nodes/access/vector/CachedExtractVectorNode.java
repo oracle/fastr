@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -87,6 +88,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     @Child private BoxPrimitiveNode boxNewDimName;
     @Children private final CachedExtractVectorNode[] extractNames;
     @Children private final CachedExtractVectorNode[] extractNamesAlternative;
+    @Child private VectorDataLibrary extractedVectorDataLib;
 
     @Child private GetFixedAttributeNode getSrcrefNode;
     @Child private CachedExtractVectorNode extractSrcrefNode;
@@ -228,6 +230,14 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return dimensions;
     }
 
+    public VectorDataLibrary getExtractedVectorDataLib(Object extractedVectorData) {
+        if (extractedVectorDataLib == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            extractedVectorDataLib = insert(VectorDataLibrary.getFactory().create(extractedVectorData));
+        }
+        return extractedVectorDataLib;
+    }
+
     private Object trySubsetPrimitive(RAbstractVector extractedVector) {
         if (!getMetadataApplied().isVisited() && positionsCheckNode.getCachedSelectedPositionsCount() == 1 && vectorType != RType.List && vectorType != RType.Expression) {
             /*
@@ -238,7 +248,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             assert extractedVector.getNames() == null;
             assert extractedVector.getDimensions() == null;
             assert extractedVector.getDimNames() == null;
-            return extractedVector.getDataAtAsObject(0);
+            Object extractedVecData = extractedVector.getData();
+            VectorDataLibrary dataLib = getExtractedVectorDataLib(extractedVecData);
+            return dataLib.getDataAtAsObject(extractedVecData, 0);
         }
         return extractedVector;
     }
