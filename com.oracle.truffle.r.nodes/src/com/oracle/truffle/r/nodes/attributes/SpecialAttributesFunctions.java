@@ -22,10 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
-import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 import static com.oracle.truffle.r.runtime.DSLConfig.getGenericVectorAccessCacheSize;
-import static com.oracle.truffle.r.runtime.RError.Message.LENGTH_ZERO_DIM_INVALID;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -43,33 +40,34 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.G
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.IsSpecialAttributeNodeGen;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
-import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
-import com.oracle.truffle.r.runtime.data.nodes.MaterializeNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
-import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.MaterializeNode;
+import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.nmath.TOMS708;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -298,7 +296,7 @@ public final class SpecialAttributesFunctions {
     public abstract static class SetNamesAttributeNode extends SetSpecialAttributeNode {
 
         private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
-        @Child private CastNode castValue = newCastBuilder().allowNull().boxPrimitive().asStringVector(true, true, true).buildCastNode();
+        @Child private CastNode castValue = RContext.getRRuntimeASTAccess().getNamesAttributeValueCastNode();
         @Child private MaterializeNode materializeNode = MaterializeNode.create();
 
         protected SetNamesAttributeNode() {
@@ -486,7 +484,7 @@ public final class SpecialAttributesFunctions {
         private final ConditionProfile nullDimProfile = ConditionProfile.createBinaryProfile();
         @Child private VectorDataLibrary dimArgDataLib = VectorDataLibrary.getFactory().createDispatched(getGenericVectorAccessCacheSize());
         private final LoopConditionProfile verifyLoopProfile = LoopConditionProfile.createCountingProfile();
-        @Child private CastNode castValue = newCastBuilder().asIntegerVector().mustBe(notEmpty(), LENGTH_ZERO_DIM_INVALID).buildCastNode();
+        @Child private CastNode castValue = RContext.getRRuntimeASTAccess().getDimAttributeValueCastNode();
 
         protected SetDimAttributeNode() {
             super(RRuntime.DIM_ATTR_KEY);
