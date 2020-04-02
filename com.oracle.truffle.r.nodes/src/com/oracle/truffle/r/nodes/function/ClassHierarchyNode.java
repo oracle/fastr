@@ -34,7 +34,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNode;
 import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
 import com.oracle.truffle.r.runtime.RCaller;

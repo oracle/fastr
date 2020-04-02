@@ -35,7 +35,7 @@ import com.oracle.truffle.r.library.fastrGrid.GridColorUtils;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.GridState.GridPalette;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;

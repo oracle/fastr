@@ -41,7 +41,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AsRealNodeGen;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctions.SeqInt.IsIntegralNumericNode;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctionsFactory.GetIntegralNumericNodeGen;

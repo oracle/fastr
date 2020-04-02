@@ -29,7 +29,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.NodeInterface;
-import com.oracle.truffle.r.nodes.attributes.HasAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.HasAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtilsFactory.ConvertIndexNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtilsFactory.ConvertValueNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;

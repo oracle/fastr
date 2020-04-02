@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.attributes.HasFixedAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.HasFixedAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;

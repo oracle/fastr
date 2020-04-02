@@ -40,7 +40,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen;
-import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.RapplyNodeGen.RapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
