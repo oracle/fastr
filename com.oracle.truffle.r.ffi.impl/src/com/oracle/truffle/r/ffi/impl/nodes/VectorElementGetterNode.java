@@ -34,7 +34,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
-import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RExpression;

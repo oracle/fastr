@@ -28,7 +28,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;

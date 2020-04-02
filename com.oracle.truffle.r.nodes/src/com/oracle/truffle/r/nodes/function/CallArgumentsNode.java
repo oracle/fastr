@@ -34,7 +34,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
-import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
