@@ -329,6 +329,9 @@ void resizedJavaGD(NewDevDesc *dd) {
 
 SEXP newJavaGD(SEXP name, SEXP sw, SEXP sh, SEXP sps) {
     double w = isNull(sw) ? 400 : asReal(sw), h = isNull(sh) ? 300 : asReal(sh), ps = isNull(sps) ? 12 : asReal(sps);
+    w = ISNA(w) ? 400 : w;
+    h = ISNA(h) ? 300 : h;
+    ps = ISNA(ps) ? 12 : ps;
     if (TYPEOF(name) != STRSXP || LENGTH(name) < 1)
 	Rf_error("invalid name");
     if (ISNAN(w) || w <= 0.0 || ISNAN(h) || h <= 0.0 || ISNAN(ps) || ps <= 0.0)

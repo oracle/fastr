@@ -67,6 +67,8 @@ R_SYSTEM_ABI='osx,gcc,gxx,gfortran,?'
 ## FastR build time note: com.oracle.truffle.r.native/run/Makefile replaces the %%placeholders%% when deploying this file
 R_LIBS_USER=${R_LIBS_USER-'~/R/x86_64-apple-darwin-library/fastr-%%GRAALVM_VERSION%%-%%R_VERSION_MAJ_MIN%%'}
 
+R_DEFAULT_DEVICE=X11
+
 ### Local Variables: ***
 ### mode: sh ***
 ### sh-indentation: 2 ***
