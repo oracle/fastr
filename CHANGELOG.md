@@ -1,5 +1,9 @@
 # 20.1.0
 
+New features:
+
+* graphics package is now enabled. Supported image formats: PDF, PNG, JPEG, BMP
+
 Bug fixes:
 
 * `dyn.load` did not work with relative paths

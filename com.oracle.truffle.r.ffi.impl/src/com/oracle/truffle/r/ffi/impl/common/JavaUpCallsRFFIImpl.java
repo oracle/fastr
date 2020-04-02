@@ -44,6 +44,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.ffi.impl.javaGD.JavaGDContext;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
+import com.oracle.truffle.r.ffi.processor.RFFIInject;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -2464,8 +2465,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public void gdOpen(int gdId, String deviceName, double w, double h) {
-        JavaGDContext.getContext(RContext.getInstance()).newGD(gdId, deviceName).gdOpen(w, h);
+    public void gdOpen(int gdId, String deviceName, double w, double h, RContext ctx) {
+        JavaGDContext.getContext(ctx).newGD(gdId, deviceName).gdOpen(w, h);
     }
 
     @Override
