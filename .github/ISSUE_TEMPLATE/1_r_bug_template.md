@@ -6,13 +6,11 @@ labels: bug
 assignees: ''
 
 ---
-Thank you for reporting a bug in FastR. We will do our best to eventually address all open issues, however, 
-you can also help us and increase the chances of your issue being fixed sooner by following these guidelines:
+Thank you for reporting a bug in FastR. We will do our best to eventually address all open issues, however, you can also help us and increase the chances of your issue being fixed sooner by following these guidelines:
 
 #### Can you reproduce with the latest development build?
 
-The latest development build available at https://github.com/graalvm/graalvm-ce-dev-builds/releases. 
-Let us know even if the issue is fixed in development build, so that we can make sure that there is no regression.
+The latest development build available at https://github.com/graalvm/graalvm-ce-dev-builds/releases. Let us know even if the issue is fixed in development build, so that we can make sure that there is no regression.
 
 #### Include the following info
 
