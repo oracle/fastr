@@ -13,12 +13,16 @@ The R language runtime can be installed to a GraalVM build the [GraalVM Updater]
 See `$GRAALVM_HOME/bin/gu --help` for more information.
 
 ### Requirements
-GraalVM R engine requires the [OpenMP runtime library](https://www.openmprtl.org/) and [GFortran 3](https://gcc.gnu.org/wiki/GFortranBinaries) runtime libraries to be installed
+GraalVM R engine requires the [OpenMP runtime library](https://www.openmprtl.org/) and [GFortran 8](https://gcc.gnu.org/wiki/GFortranBinaries) runtime libraries to be installed
 on the target system. Following commands should install those dependencies.
 
 * Ubuntu 18.04 and 19.10: `apt-get install libgfortran-8-dev libgomp1`
 * Oracle Linux 8: `yum install libgfortran`
 * MacOS: `brew install gcc@4.9`
+
+As of version 20.0.1 and later, FastR on Linux supports and bundles GFortran version 3
+runtime libraries. It is not necessary to install them. These libraries are compatible
+with GFortran compiler version 3 and later.
 
 On macOS it is necessary to run `$GRAALVM_HOME/bin/configure_fastr`.
 This script will attempt to locate the necessary runtime libraries on your computer
@@ -59,14 +63,14 @@ $ R [polyglot options] [R options] [filename]
 $ Rscript [polyglot options] [R options] [filename]
 ```
 
-GraalVM R engine uses the same [polyglot options]({{ "/docs/reference-manual/polyglot/#polyglot-options" | relative_url}}) as other GraalVM languages and the same R options as [GNU R](https://cran.r-project.org/doc/manuals/r-release/R-intro.html#Invoking-R-from-the-command-line), e.g., `bin/R --vanilla`.
+GraalVM R engine uses the same [polyglot options](http://graalvm.org/docs/reference-manual/polyglot/#polyglot-options) as other GraalVM languages and the same R options as [GNU R](https://cran.r-project.org/doc/manuals/r-release/R-intro.html#Invoking-R-from-the-command-line), e.g., `bin/R --vanilla`.
 Use `--help` to print the list of supported options. The most important options include:
   - `--jvm` to enable Java interoperability
   - `--polyglot` to enable interoperability with other GraalVM languages
   - `--vm.Djava.net.useSystemProxies=true` to pass any options to the JVM, this will be translated to `-Djava.net.useSystemProxies=true`.
 
 Note: unlike other GraalVM languages, R does not yet ship with a
-[Native Image]({{"/docs/reference-manual/aot-compilation/" | relative_url }}) of its runtime.
+[Native Image](http://graalvm.org/docs/reference-manual/aot-compilation/) of its runtime.
 Therefore the `--native` option, which is the default, will still start Rscript on top of JVM,
 but for the sake of future compatibility the Java interoperability will not be available in such case.
 
@@ -85,9 +89,9 @@ The GraalVM R engine can run [R extensions](https://cran.r-project.org/doc/manua
 The *native* mode is better suited for code that does not extensively interact with the R API, for example,
 plain C or Fortran numerical computations working on primitive arrays. The *llvm* mode provides significantly
 better performance for extensions that frequently call between R and the C/C++ code, because GraalVM LLVM
-interpreter is also partially evaluated by the [Truffle library](https://github.com/oracle/graal/tree/master/truffle) like the R code, both can be inlined and optimized
+interpreter is also partially evaluated by the [Truffle compiler](https://github.com/oracle/graal/tree/master/truffle) like the R code, both can be inlined and optimized
 as one compilation unit. Moreover, GraalVM LLVM is supported by
-[GraalVM tools]({{ "/docs/reference-manual/tools/" | relative_url }}) which allows to, for instance,
+[GraalVM tools](http://graalvm.org/docs/reference-manual/tools/) which allows to, for instance,
 debug R and C code together.
 
 In one GraalVM R process, any R package can be loaded in either mode. That is, GraalVM R supports
@@ -96,7 +100,7 @@ mixing packages loaded in the *native* mode with packages loaded in the *llvm* m
 ### Generating LLVM Bitcode
 
 As of version 19.3.0, the GraalVM R engine is configured to use the
-[LLVM toolchain]({{ "/docs/reference-manual/languages/llvm/#llvm-toolchain" | relative_url }})
+[LLVM toolchain](http://graalvm.org/docs/reference-manual/languages/llvm/#llvm-toolchain)
 to compile R packages native code. This toolchain produces standard executable binaries for
 a given system, but it also embeds the corresponding LLVM bitcode into them.
 The binaries produced by the LLVM Toolchain can be loaded in both modes: *native* or *llvm*.
@@ -159,7 +163,7 @@ Known limitations of GraalVM implementation of R compared to GNU R:
    but do not execute any useful code. Character vectors are represented as Java Strings and therefore encoded in UTF-16 format. GraalVM implementation of R will add support for encoding in future releases.
    - Some parts of the native API (e.g., `DATAPTR`) expose implementation details that are hard to emulate for alternative implementations of R. These are implemented as needed while testing the GraalVM implementation of R with various CRAN packages.
 
-You can use the [compatibility checker]({{"/docs/reference-manual/compatibility/" | relative_url}}) to find whether the CRAN packages you are interested in are tested on GraalVM and whether the tests pass successfully.
+You can use the [compatibility checker](http://graalvm.org/docs/reference-manual/compatibility) to find whether the CRAN packages you are interested in are tested on GraalVM and whether the tests pass successfully.
 
 ## High Performance
 GraalVM runtime optimizes R code that runs for extended periods of time.
@@ -206,7 +210,7 @@ system.time(mutual_cpp(x))
 #   user  system elapsed
 #  0.037   0.003   0.040
 ```
-(Uses [r_mutual.cpp]({{"/docs/examples/r_mutual.cpp" | relative_url }}).)
+(Uses [r_mutual.cpp](http://graalvm.org/docs/examples/r_mutual.cpp).)
 However, after a few iterations, GraalVM runs the R code efficiently enough to
 make the performance advantage of C/C++ negligible:
 ```
@@ -221,9 +225,9 @@ GraalVM implementation of R is primarily aimed at long-running applications. The
 
 The R language integration with the GraalVM ecosystem includes:
    - seamless interop with other GraalVM languages and with Java
-   - debugging with [Chrome DevTools]({{"/docs/reference-manual/tools/#debugger" | relative_url }})
+   - debugging with [Chrome DevTools](http://graalvm.org/docs/reference-manual/tools/#debugger)
    - [CPU and memory profiling]({{"/docs/reference-manual/tools/#profiler" | relative_url }})
-   - [VisualVM integration]({{"/docs/reference-manual/tools/#heap-viewer" | relative_url }})
+   - [VisualVM integration](http://graalvm.org/docs/reference-manual/tools/#heap-viewer)
 
 To start debugging the code start the R script with `--inspect` option
 ```shell
@@ -269,7 +273,7 @@ eval.polyglot('js', paste0(
 # JavaScript: 3
 # NULL -- the return value of eval.polyglot
 ```
-(Uses [r_example.js]({{"/docs/examples/r_example.js" | relative_url }}).)
+(Uses [r_example.js](http://graalvm.org/docs/examples/r_example.js).)
 
 R vectors are presented as arrays to other languages. This includes single element vectors, e.g., `42L` or `NA`.
 However, single element vectors that do not contain `NA` can be typically used in places where the other
@@ -336,8 +340,8 @@ of the implicit and explicit foreign objects conversions.
 Note that R contexts started from other languages or Java (as opposed to via the `bin/R` script) will default to non-interactive mode, similar to `bin/Rscript`.
 This has implications on console output (results are not echoed) and graphics (output defaults to a file instead of a window), and some packages may behave differently in non-interactive mode.  
 
-See the [Polyglot Reference]({{ "/docs/reference-manual/polyglot/" | relative_url }}) and the
-[Embedding documentation]({{ "/docs/graalvm-as-a-platform/embed/" | relative_url }})
+See the [Polyglot Reference](http://graalvm.org/docs/reference-manual/polyglot/) and the
+[Embedding documentation](http://graalvm.org/docs/graalvm-as-a-platform/embed/)
 for more information about interoperability with other programming languages.
 
 
