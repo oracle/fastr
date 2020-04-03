@@ -108,7 +108,7 @@ public interface RRuntimeASTAccess {
      */
     Object forcePromise(RPromise promise);
 
-    interface ExplicitFunctionCall extends NodeInterface {
+    public interface ExplicitFunctionCall extends NodeInterface {
         Object call(VirtualFrame frame, RFunction function, RArgsValuesAndNames args);
     }
 

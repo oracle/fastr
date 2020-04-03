@@ -97,7 +97,7 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
                     args[i] = new NativeCharArray(getStringBytes((String) obj));
                 }
             }
-            return RContext.getInstance().getRFFI(TruffleLLVM_Context.class).beforeDowncall(frame == null || !nativeFunction.hasComplexInteraction() ? null : frame.materialize(),
+            return RContext.getInstance().getRFFI(TruffleLLVM_Context.class).beforeDowncall(maybeMaterializeFrame(frame, nativeFunction),
                             RFFIFactory.Type.LLVM);
         }
 

@@ -39,14 +39,12 @@ import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
-import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairList.RPairListSnapshotNode;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -160,15 +158,6 @@ public abstract class ArgValueSupplierNode extends Node {
                     @CachedLibrary(limit = "1") RPairListLibrary plLib) {
         Closure closure = createClosure(a, i, plLib);
         return RDataFactory.createPromise(PromiseState.Supplied, closure, promiseEvalFrame);
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    Object buildRForeignObjectWrapper(RForeignObjectWrapper x, @SuppressWarnings("unused") int i, CallInfo.ArgumentBuilderState argBuilderState,
-                    @SuppressWarnings("unused") MaterializedFrame currentFrame,
-                    MaterializedFrame promiseEvalFrame, PromiseHelperNode promiseHelper) {
-        assert x.getDelegate() instanceof NativeMirror;
-        return ((NativeMirror) x.getDelegate()).getDelegate();
     }
 
     @Fallback

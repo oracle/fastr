@@ -1204,7 +1204,7 @@ public final class RContext {
      * A special caller object for the {@link ReturnException} thrown by
      * {@link RContext#checkPendingRepaintRequest()}.
      */
-    private static final RCaller dispatchPrimFunNodeCaller = RCaller.createInvalid(null);
+    public static final RCaller dispatchPrimFunNodeCaller = RCaller.createInvalid(null);
 
     /**
      * Check whether we are running as a display list callback and whether there is a new repaint

@@ -27,6 +27,7 @@ import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -106,5 +107,10 @@ public abstract class DownCallNodeFactory {
          * the {@code before} parameter will have value {@code -1}.
          */
         protected abstract void afterCall(Frame frame, Object before, NativeFunction f, TruffleObject t, Object[] args);
+
+        protected static MaterializedFrame maybeMaterializeFrame(Frame frame, NativeFunction nativeFunction) {
+            return frame == null || !nativeFunction.hasComplexInteraction() ? null : frame.materialize();
+        }
+
     }
 }

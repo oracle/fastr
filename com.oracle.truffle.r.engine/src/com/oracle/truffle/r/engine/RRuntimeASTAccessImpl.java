@@ -63,6 +63,7 @@ import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
+import com.oracle.truffle.r.nodes.function.call.SlowPathExplicitCall;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -149,7 +150,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public ExplicitFunctionCall createSlowPathExplicitFunctionCall() {
-        return RExplicitCallNode.SlowPathExplicitCallNode.create();
+        return SlowPathExplicitCall.create();
     }
 
     @Override

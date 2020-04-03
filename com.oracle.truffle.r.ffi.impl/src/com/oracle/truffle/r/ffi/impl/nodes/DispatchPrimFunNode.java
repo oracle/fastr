@@ -96,7 +96,11 @@ public abstract class DispatchPrimFunNode extends FFIUpCallNode.Arg4 {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (ReturnException e) {
-            return e.getResult();
+            if (e.getTarget() == RContext.dispatchPrimFunNodeCaller) {
+                return e.getResult();
+            } else {
+                throw e;
+            }
         } finally {
             ctxRef.get().getStateRFFI().rffiContextState.primFunBeingDispatched = primFunBeingDispatchedSaved;
         }

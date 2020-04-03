@@ -52,8 +52,6 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  * changed). The visible behavior is that a e.g. rectangle created via {@code recordGraphics}
  * maintains its size regardless of resizes of the device (e.g. window).
  *
- * TODO: the current implementation is a stub that only runs the command, but does not fiddle with
- * the recording like GnuR does.
  */
 @RBuiltin(name = "recordGraphics", kind = INTERNAL, parameterNames = {"expr", "list", "env"}, behavior = COMPLEX)
 public abstract class RecordGraphics extends RBuiltinNode.Arg3 {
