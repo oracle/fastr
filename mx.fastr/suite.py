@@ -252,7 +252,8 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
          "com.oracle.truffle.r.ffi.processor",
-         "com.oracle.truffle.r.nodes"
+         "com.oracle.truffle.r.nodes",
+         "org.rosuda.javaGD",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "8+",
@@ -334,6 +335,15 @@ suite = {
       "workingSets" : "FastR",
       "jacoco" : "include",
 
+    },
+
+    "org.rosuda.javaGD" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [],
+      "checkstyle" : "org.rosuda.javaGD",
+      "javaCompliance" : "8+",
+      "workingSets" : "FastR",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.release" : {

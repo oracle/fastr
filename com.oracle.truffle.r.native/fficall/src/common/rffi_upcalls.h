@@ -463,4 +463,32 @@ typedef int (*call_R_insideBrowser)();
 typedef int (*call_R_isGlobal)(void* c);
 typedef int (*call_R_isEqual)(void* x, void* y);
 
+// JavaGD
+typedef void (*call_gdOpen)(int gdId, const char *name, double w, double h);
+typedef void (*call_gdClose)(int gdId);
+typedef void (*call_gdActivate)(int gdId);
+typedef void (*call_gdDeactivate)(int gdId);
+typedef void (*call_gdcSetColor)(int gdId, int cc);
+typedef void (*call_gdPolygon)(int gdId, int n, double* x, double* y);
+typedef double* (*call_gdLocator)(int gdId);
+typedef double* (*call_gdSize)(int gdId);
+typedef void (*call_gdRaster)(int gdId, int, int, unsigned int *, double, double, double, double, double, Rboolean);
+typedef void (*call_gdcSetFill)(int gdId, int cc);
+typedef void (*call_gdcSetLine)(int gdId, double, int);
+typedef void (*call_gdcSetFont)(int gdId, double, double, double, int, const char *);
+typedef void (*call_gdNewPage)(int gdId, int devId, int pageNumber);
+typedef void (*call_gdCircle)(int gdId, double, double, double);
+typedef void (*call_gdClip)(int gdId, double, double, double, double);
+typedef void (*call_gdHold)(int gdId);
+typedef void (*call_gdFlush)(int gdId, int);
+typedef void (*call_gdLine)(int gdId, double, double, double, double);
+typedef void (*call_gdMode)(int gdId, int);
+typedef void (*call_gdPath)(int gdId, int, int*, int, double*, double*, Rboolean);
+typedef void (*call_gdPolyline)(int gdId, int, double*, double*);
+typedef void (*call_gdRect)(int gdId, double, double, double, double);
+typedef double (*call_getStrWidth)(int gdId, const char*);
+typedef void (*call_gdText)(int gdId, double, double, const char*, double, double);
+typedef double* (*call_gdMetricInfo)(int gdId, int);
+typedef SEXP (*call_DispatchPRIMFUN)(SEXP call, SEXP op, SEXP args, SEXP env);
+
 #endif

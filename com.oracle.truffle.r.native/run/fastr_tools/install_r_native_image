@@ -120,6 +120,7 @@ fastr_launcher_ni_args=(
     -Dorg.graalvm.launcher.relative.language.home=bin/RMain
     -Dorg.graalvm.launcher.classpath=${fastr_home}/../../lib/graalvm/launcher-common.jar:${fastr_home}/fastr-launcher.jar
     -Dorg.graalvm.launcher.relative.home=${launcher_relative_home}
+	-Dfastr.awt.support=false
     -H:Class=com.oracle.truffle.r.launcher.RMain
 )
 if [[ $verbose -eq 1 ]]; then

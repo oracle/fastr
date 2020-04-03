@@ -204,6 +204,8 @@ public final class FFIProcessor extends AbstractProcessor {
         StringBuilder unwrapNodes = new StringBuilder();
         StringBuilder unwrappedArgs = new StringBuilder();
         boolean needsUnwrapImport = false;
+        Set<String> unwrapArrayImports = new HashSet<>();
+        int injectedArgsCount = 0;
 
         if (!needsCallTarget && needsFunction) {
             arguments.append("function, ");
@@ -216,12 +218,18 @@ public final class FFIProcessor extends AbstractProcessor {
 
             RFFICpointer[] pointerAnnotations = params.get(i).getAnnotationsByType(RFFICpointer.class);
             RFFICstring[] stringAnnotations = params.get(i).getAnnotationsByType(RFFICstring.class);
+            RFFICarray[] arrayAnnotations = params.get(i).getAnnotationsByType(RFFICarray.class);
+            RFFIInject[] injectAnnotations = params.get(i).getAnnotationsByType(RFFIInject.class);
+            boolean needsArrayUnwrap = arrayAnnotations.length > 0;
 
             String paramName = params.get(i).getSimpleName().toString();
             String paramTypeName = getTypeName(paramType);
-            boolean needsUnwrap = !paramType.getKind().isPrimitive() &&
+            boolean needsInject = injectAnnotations.length > 0;
+            boolean needsUnwrap = !needsInject &&
+                            !paramType.getKind().isPrimitive() &&
                             !paramTypeName.equals("java.lang.String") &&
                             pointerAnnotations.length == 0 &&
+                            !needsArrayUnwrap &&
                             (stringAnnotations.length == 0 || stringAnnotations[0].convert());
             boolean needCast = !paramTypeName.equals("java.lang.Object");
             if (needCast) {
@@ -229,22 +237,59 @@ public final class FFIProcessor extends AbstractProcessor {
             }
             needsUnwrapImport |= needsUnwrap;
             unwrappedArgs.append("        final Object ").append(paramName).append("Unwrapped = ");
-            if (needsUnwrap) {
+            if (needsInject) {
+                if (nodeAnnotation != null) {
+                    // TODO: report an error, injections are for non-node invocations only
+                }
+                if (paramTypeName.equals("com.oracle.truffle.r.runtime.context.RContext")) {
+                    unwrappedArgs.append("ctx");
+                } else {
+                    // TODO: report an error
+                }
+                injectedArgsCount++;
+            } else if (needsUnwrap) {
                 unwrapNodes.append("                @Cached() FFIUnwrapNode ").append(paramName).append("Unwrap,\n");
                 unwrappedArgs.append(paramName).append("Unwrap").append(".execute(");
+            } else if (needsArrayUnwrap) {
+                RFFICarray arrAnnot = arrayAnnotations[0];
+                processingEnv.getMessager().printMessage(Kind.NOTE, "Element type: ");
+                processingEnv.getMessager().printMessage(Kind.NOTE, "" + arrAnnot.element());
+                String arrayUnwrapSimpleName = arrAnnot.element().wrapperSimpleClassName;
+                unwrapArrayImports.add(arrAnnot.element().wrapperClassPackage + "." + arrayUnwrapSimpleName);
+                unwrapNodes.append("                @Cached() ").append(arrayUnwrapSimpleName).append(' ').append(paramName).append("Unwrap,\n");
+                unwrappedArgs.append(paramName).append("Unwrap").append(".execute(");
+                if (!"".equals(arrAnnot.length())) {
+                    String lengthExpr = arrAnnot.length();
+                    lengthExpr = lengthExpr.replaceAll("\\{(.*?)\\}", "(int) arg$1");
+                    unwrappedArgs.append(lengthExpr);
+                } else {
+                    // TODO: report an error
+                }
+                unwrappedArgs.append(", ");
             }
-            unwrappedArgs.append("arguments[").append(i).append("]");
-            arguments.append(paramName).append("Unwrapped");
-            if (needsUnwrap) {
-                unwrappedArgs.append(')');
+            if (!needsInject) {
+                unwrappedArgs.append("arguments[").append(i).append("]");
+                arguments.append(paramName).append("Unwrapped");
+                if (needsUnwrap || needsArrayUnwrap) {
+                    unwrappedArgs.append(')');
+                }
+            } else {
+                arguments.append(paramName).append("Unwrapped");
             }
             unwrappedArgs.append(";\n");
+            // add an indexed copy of the unwrapped parameter for a potential referencing from
+            // an array length expression in RFFICarray
+            unwrappedArgs.append("        final Object arg").append(i).append(" = ").append(paramName).append("Unwrapped;\n");
+
         }
 
         TypeKind returnKind = m.getReturnType().getKind();
-        boolean needsReturnWrap = returnKind != TypeKind.VOID && !returnKind.isPrimitive() &&
+        boolean needsReturnArrayWrap = m.getAnnotationsByType(RFFICarray.class).length > 0;
+        boolean needsReturnWrap = (returnKind != TypeKind.VOID && !returnKind.isPrimitive() &&
                         !"java.lang.String".equals(getTypeName(m.getReturnType())) &&
-                        m.getAnnotationsByType(RFFICpointer.class).length == 0;
+                        m.getAnnotationsByType(RFFICpointer.class).length == 0) ||
+                        needsReturnArrayWrap;
+
         if (needsReturnWrap) {
             unwrapNodes.append("                @Cached() FFIMaterializeNode materializeNode,\n");
             unwrapNodes.append("                @Cached() FFIToNativeMirrorNode toNativeWrapperNode,\n");
@@ -292,6 +337,11 @@ public final class FFIProcessor extends AbstractProcessor {
         if (needsUnwrapImport) {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;\n");
         }
+        if (!unwrapArrayImports.isEmpty()) {
+            for (String unwrapArrayImport : unwrapArrayImports) {
+                w.append("import ").append(unwrapArrayImport).append(";\n");
+            }
+        }
         if (needsReturnWrap) {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIUpCallWrap;\n");
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIUpCallWrap.FFIWrapResult;\n");
@@ -321,6 +371,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("    }\n");
         w.append("\n");
         w.append("    @ExportMessage\n");
+        w.append("    @SuppressWarnings(\"unused\")\n");
         w.append("    Object execute(Object[] arguments,\n");
         if (unwrapNodes.length() > 0) {
             w.append(unwrapNodes);
@@ -352,7 +403,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                @Cached(value = \"this.upCallsImpl.createHandleUpCallExceptionNode()\", uncached = \"this.upCallsImpl.getUncachedHandleUpCallExceptionNode()\") HandleUpCallExceptionNode handleExceptionNode");
         w.append(") {\n");
         w.append("\n");
-        w.append("        assert arguments.length == " + params.size() + " : \"wrong number of arguments passed to " + name + "\";\n");
+        w.append("        assert arguments.length == " + (params.size() - injectedArgsCount) + " : \"wrong number of arguments passed to " + name + "\";\n");
         w.append("        if (RFFILog.logEnabled()) {\n");
         w.append("            RFFILog.logUpCall(\"" + name + "\", arguments);\n");
         w.append("        }\n");
@@ -395,8 +446,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
         if (returnKind != TypeKind.VOID) {
             if (needsReturnWrap) {
-                w.append("            FFIUpCallWrap ffiWrap = new FFIUpCallWrap();\n");
-                w.append("            FFIWrapResult result = ffiWrap.wrap(resultRObj0, materializeNode, toNativeWrapperNode);\n");
+                w.append("            FFIWrapResult result = FFIUpCallWrap.wrap(resultRObj0, materializeNode, toNativeWrapperNode);\n");
                 w.append("            resultRObj = result.nativeMirror;\n");
                 w.append("            registerRObj = result.materialized;\n");
             } else {
@@ -567,14 +617,20 @@ public final class FFIProcessor extends AbstractProcessor {
         int lparams = params.size();
         StringBuilder sb = new StringBuilder();
         sb.append('(');
+        int realArgsCounter = 0;
         for (int i = 0; i < lparams; i++) {
             VariableElement param = params.get(i);
+            RFFIInject[] injectAnnotations = params.get(i).getAnnotationsByType(RFFIInject.class);
+            if (injectAnnotations.length > 0) {
+                continue;
+            }
+            if (realArgsCounter > 0) {
+                sb.append(", ");
+            }
+            realArgsCounter++;
             RFFICstring[] annotations = param.getAnnotationsByType(RFFICstring.class);
             String nfiParam = nfiParamName(param.asType(), annotations.length == 0 ? null : annotations[0], false, param);
             sb.append(nfiParam);
-            if (i != lparams - 1) {
-                sb.append(", ");
-            }
         }
         sb.append(')');
         sb.append(" : ");

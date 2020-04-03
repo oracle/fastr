@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,12 +24,14 @@ package com.oracle.truffle.r.nodes.function.call;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess.ExplicitFunctionCall;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
-public final class SlowPathExplicitCall extends TruffleBoundaryNode {
+public final class SlowPathExplicitCall extends TruffleBoundaryNode implements ExplicitFunctionCall {
     @Child private RExplicitCallNode slowPathCallNode;
 
     public static SlowPathExplicitCall create() {
@@ -40,5 +42,10 @@ public final class SlowPathExplicitCall extends TruffleBoundaryNode {
     public Object execute(MaterializedFrame evalFrame, Object callerFrame, RCaller caller, RFunction func, RArgsValuesAndNames args) {
         slowPathCallNode = insert(RExplicitCallNode.create());
         return slowPathCallNode.execute(evalFrame, func, args, caller, callerFrame);
+    }
+
+    @Override
+    public Object call(VirtualFrame frame, RFunction function, RArgsValuesAndNames args) {
+        return execute(frame.materialize(), null, null, function, args);
     }
 }

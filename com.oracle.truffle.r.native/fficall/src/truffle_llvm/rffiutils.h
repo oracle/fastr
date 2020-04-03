@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ extern int dispatchHandlers();
 char *ensure_truffle_chararray(const char *x);
 void *ensure_string(const char *x);
 void *ensure_function(void *fptr);
-void checkExitCall();
+int checkExitCall();
 SEXP unimplemented(const char *name);
 
 #endif /* RFFIUTILS_H */

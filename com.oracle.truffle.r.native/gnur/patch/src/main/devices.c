@@ -130,6 +130,9 @@ int NumDevices(void)
     return R_NumDevices;
 }
 
+/** Explicitly declared as a workaround to a Sulong issue with the return type */
+SEXP installTrChar(const char* name);
+
 pGEDevDesc GEcurrentDevice(void)
 {
     /* If there are no active devices
@@ -322,6 +325,16 @@ void removeDevice(int devNum, Rboolean findNext)
 		    if(gdd->dev->activate) gdd->dev->activate(gdd->dev);
 		}
 	    }
+	}
+	// In FastR, in contrast to GNUR, display lists and saved snapshots are not intrinsically 
+	// protected from garbage collecting, so we have to explicitly preserve and release them.
+	if (g->displayList != R_NilValue) {
+		R_ReleaseObject(g->displayList);
+		g->displayList = R_NilValue;
+	}
+	if (g->savedSnapshot != R_NilValue) {
+		R_ReleaseObject(g->savedSnapshot);
+		g->savedSnapshot = R_NilValue;
 	}
 	g->dev->close(g->dev);
 	GEdestroyDevDesc(g);

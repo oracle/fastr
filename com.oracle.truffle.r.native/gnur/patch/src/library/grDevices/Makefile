@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,12 @@ GNUR_SRC_CAIRO := $(GNUR_HOME)/src/library/grDevices/src/cairo
 GNUR_CAIRO_C_SOURCES := $(notdir $(wildcard $(GNUR_SRC_CAIRO)/*.c))
 # not compiling Cairo currently
 
+JAVAGD_SRC := $(GNUR_HOME)/src/library/grDevices/src/JavaGD
+JAVAGD_C_SOURCES := src/JavaGD/$(notdir $(wildcard $(JAVAGD_SRC)/*.c))
+JAVAGD_OBJECTS := $(subst src/JavaGD/,lib/,$(JAVAGD_C_SOURCES:.c=.o))
+
+XTRA_C_OBJECTS := $(JAVAGD_OBJECTS)
+
 ifeq ($(OS_NAME), Darwin)
 ifeq ($(shell grep HAVE_AQUA $(GNUR_HOME)/config.log),)
   C_SOURCES_EXCLUDED := src/qdBitmap.c src/qdPDF.c
@@ -50,6 +56,9 @@ PKG_INCLUDES := $(GNUR_INCLUDES) $(GNUR_HEADER_DEFS) $(GRDEV_INCLUDES)
 XTRA_C_OPTS := -Wno-int-conversion -Wno-implicit-function-declaration
 
 include ../lib.mk
+
+$(OBJ)/%.o: $(JAVAGD_SRC)/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_INCLUDES) $(GNUR_HEADER_DEFS) $(GRDEV_INCLUDES) -c $< -o $@
 
 $(OBJ)/%.o: $(GNUR_SRC_CAIRO)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_INCLUDES) $(GNUR_HEADER_DEFS) $(GRDEV_INCLUDES) -c $< -o $@

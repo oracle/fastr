@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,7 +108,7 @@ public interface RRuntimeASTAccess {
      */
     Object forcePromise(RPromise promise);
 
-    interface ExplicitFunctionCall extends NodeInterface {
+    public interface ExplicitFunctionCall extends NodeInterface {
         Object call(VirtualFrame frame, RFunction function, RArgsValuesAndNames args);
     }
 
@@ -116,6 +116,11 @@ public interface RRuntimeASTAccess {
      * Access to RExplicitCallNode.
      */
     ExplicitFunctionCall createExplicitFunctionCall();
+
+    /**
+     * Access to RExplicitCallNode.
+     */
+    ExplicitFunctionCall createSlowPathExplicitFunctionCall();
 
     /**
      * Returns the {@link ArgumentsSignature} for {@code f}.

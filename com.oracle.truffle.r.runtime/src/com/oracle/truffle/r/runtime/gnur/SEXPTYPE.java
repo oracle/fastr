@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.data.closures.RToComplexVectorClosure;
 import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -143,6 +144,9 @@ public enum SEXPTYPE {
         }
         if (value instanceof RForeignObjectWrapper) {
             return VECSXP;
+        }
+        if (value instanceof RWeakRef) {
+            return WEAKREFSXP;
         }
         Class<?> fastRClass = value.getClass();
         for (SEXPTYPE type : values()) {

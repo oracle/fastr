@@ -162,3 +162,5 @@ extern SEXP test_lapplyWithForceAndCall(SEXP list, SEXP fn, SEXP fa, SEXP rho);
 extern SEXP benchProtect(SEXP x, SEXP nn);
 
 extern SEXP testMissingArgWithATTRIB();
+
+extern SEXP testPRIMFUN(SEXP fun, SEXP args);

@@ -46,6 +46,13 @@ public abstract class NativeUInt8Array extends NativeArray {
     private byte[] array;
     private int effectiveLength;
 
+    public NativeUInt8Array(long address, int length) {
+        this.array = new byte[length];
+        this.effectiveLength = length;
+        this.nativeMirror = NativeMemory.wrapExternalNativeMemory(address, this);
+        refresh();
+    }
+
     protected NativeUInt8Array(byte[] array, boolean nullTerminate) {
         this.array = array;
         this.effectiveLength = array.length + (nullTerminate ? 1 : 0);
@@ -57,6 +64,10 @@ public abstract class NativeUInt8Array extends NativeArray {
 
     @Override
     protected Object getArray() {
+        return array;
+    }
+
+    public byte[] getByteArray() {
         return array;
     }
 

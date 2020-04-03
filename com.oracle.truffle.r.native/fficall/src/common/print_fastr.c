@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -105,7 +105,7 @@ static char tagbuf[TAGBUFLEN0];
 /* Used in X11 module for dataentry */
 /* NB this is called by R.app even though it is in no public header, so
    alter there if you alter this */
-void PrintDefaults(void)
+int PrintDefaults(void)
 {
     R_print.na_string = NA_STRING;
     R_print.na_string_noquote = mkChar("<NA>");

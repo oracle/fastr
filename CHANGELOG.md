@@ -1,5 +1,12 @@
 # 20.1.0
 
+New features:
+
+* `graphics` and `grDevices` packages are now enabled by incorporating the `JavaGD` package. Supported image formats: PDF, PNG, JPEG, BMP. Use `--R.UseInternalGridGraphics=false` to activate this feature.
+	* SVG support will be added in the future
+	* Display lists are fully implemented, which, e.g., makes Shiny work better in FastR
+* Java API for implementing custom graphics devices based on `JavaGD`
+
 Bug fixes:
 
 * `dyn.load` did not work with relative paths

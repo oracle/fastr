@@ -331,3 +331,7 @@ rffi.test_lapplyWithForceAndCall <- function(list, fn, fa, ...) {
 rffi.testMissingArgWithATTRIB <- function() {
     .Call('testMissingArgWithATTRIB')
 }
+
+rffi.testPRIMFUN <- function(fun, args) {
+    .Call('testPRIMFUN', fun, args)
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.managed;
 
-import com.oracle.truffle.api.TruffleFile;
-import com.oracle.truffle.api.TruffleLanguage;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.attribute.FileAttribute;
@@ -32,10 +30,13 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
 import java.util.Set;
 
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -69,9 +70,9 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Specialization
-        protected Object doCall(NativeFunction f, Object[] args,
+        protected Object doCall(Frame frame, NativeFunction f, Object[] args,
                         @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-            return doCallImpl(f, args, ctxRef);
+            return doCallImpl(frame, f, args, ctxRef);
         }
 
         @Override
@@ -89,7 +90,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Override
-        protected Object beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args) {
+        protected Object beforeCall(Frame frame, NativeFunction nativeFunction, TruffleObject function, Object[] args) {
             // Report unsupported functions at invocation time
             if (function instanceof DummyFunctionObject) {
                 throw Managed_RFFIFactory.unsupported(((DummyFunctionObject) function).function.getCallName());
@@ -98,7 +99,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Override
-        protected void afterCall(Object before, NativeFunction function, TruffleObject target, Object[] args) {
+        protected void afterCall(Frame frame, Object before, NativeFunction function, TruffleObject target, Object[] args) {
             // nop
         }
     }

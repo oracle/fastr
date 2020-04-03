@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
@@ -848,4 +851,13 @@ public final class Utils {
         s.append('$');
         return (s.toString());
     }
+
+    public static byte[] intArrayToByteArray(int[] intArr, ByteOrder o) {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(intArr.length * 4);
+        byteBuffer.order(o);
+        IntBuffer intBuffer = byteBuffer.asIntBuffer();
+        intBuffer.put(intArr);
+        return byteBuffer.array();
+    }
+
 }

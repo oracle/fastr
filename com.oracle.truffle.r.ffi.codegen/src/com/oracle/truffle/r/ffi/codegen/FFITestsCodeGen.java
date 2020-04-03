@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import com.oracle.truffle.r.ffi.impl.upcalls.StdUpCallsRFFI;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
+import com.oracle.truffle.r.ffi.processor.RFFIInject;
 
 /**
  * Generates 1) C wrapper that calls each RFFI function and converts between SEXP and primitive
@@ -48,7 +49,7 @@ public final class FFITestsCodeGen extends CodeGenBase {
     private static final String FUN_PREFIX = "api_";
     private static final HashSet<String> IGNORE_FUNS = new HashSet<>(
                     Arrays.asList("Rf_cospi", "Rf_sinpi", "Rf_tanpi", "R_forceAndCall", "Rf_duplicate", "R_ToplevelExec", "R_CleanUp", "R_ParseVector", "octsize", "R_NewHashedEnv", "Rf_ScalarComplex",
-                                    "Rf_ScalarRaw", "Rf_allocList", "Rf_allocSExp"));
+                                    "Rf_ScalarRaw", "Rf_allocList", "Rf_allocSExp", "DispatchPRIMFUN"));
 
     public static void main(String[] args) {
         new FFITestsCodeGen().run(args);
@@ -88,7 +89,7 @@ public final class FFITestsCodeGen extends CodeGenBase {
         out.println("// RFFI functions that take/return C pointers are ignored");
         out.println("// This code is '#included' into init.c ");
         getFFIMethods().forEach(method -> {
-            out.printf("CALLDEF(%s%s, %d),\n", FUN_PREFIX, getName(method), method.getParameterCount());
+            out.printf("CALLDEF(%s%s, %d),\n", FUN_PREFIX, getName(method), getNonInjectedParameterCount(method));
         });
         out.println("// ---- end of generated code");
     }
@@ -118,7 +119,8 @@ public final class FFITestsCodeGen extends CodeGenBase {
         out.println("#pragma GCC diagnostic ignored \"-Wincompatible-pointer-types\"\n");
         getFFIMethods().forEach(method -> {
             out.println(getDeclaration(method) + " {");
-            String stmt = String.format("%s(%s)", getName(method), Arrays.stream(method.getParameters()).map(FFITestsCodeGen::toCValue).collect(Collectors.joining(", ")));
+            String stmt = String.format("%s(%s)", getName(method),
+                            Arrays.stream(method.getParameters()).filter(FFITestsCodeGen::isNotInjected).map(FFITestsCodeGen::toCValue).collect(Collectors.joining(", ")));
             out.println("    " + getReturnStmt(method.getReturnType(), stmt) + ';');
             if (method.getReturnType() == void.class) {
                 out.println("    return R_NilValue;");
@@ -129,9 +131,22 @@ public final class FFITestsCodeGen extends CodeGenBase {
         out.println("#pragma GCC diagnostic pop");
     }
 
+    private static int getNonInjectedParameterCount(Method m) {
+        Annotation[][] parameterAnnotations = m.getParameterAnnotations();
+        int injectedArgCounter = 0;
+        for (int i = 0; i < parameterAnnotations.length; i++) {
+            for (int j = 0; j < parameterAnnotations[i].length; j++) {
+                if (parameterAnnotations[i][j] instanceof RFFIInject) {
+                    injectedArgCounter++;
+                }
+            }
+        }
+        return m.getParameterCount() - injectedArgCounter;
+    }
+
     private static String getDeclaration(Method method) {
         return String.format("SEXP %s%s(", FUN_PREFIX, getName(method)) +
-                        Arrays.stream(method.getParameters()).map(p -> "SEXP " + p.getName()).collect(Collectors.joining(", ")) + ')';
+                        Arrays.stream(method.getParameters()).filter(FFITestsCodeGen::isNotInjected).map(p -> "SEXP " + p.getName()).collect(Collectors.joining(", ")) + ')';
     }
 
     private static String getName(Method m) {
@@ -158,6 +173,10 @@ public final class FFITestsCodeGen extends CodeGenBase {
     private static boolean ignoreMethod(Method method) {
         return IGNORE_FUNS.contains(method.getName()) || method.getAnnotation(RFFICpointer.class) != null ||
                         Arrays.stream(method.getParameterAnnotations()).anyMatch(FFITestsCodeGen::anyCPointer);
+    }
+
+    private static boolean isNotInjected(Parameter param) {
+        return param.getAnnotation(RFFIInject.class) == null;
     }
 
     private static String toCValue(Parameter param) {

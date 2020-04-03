@@ -29,8 +29,9 @@ import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -40,6 +41,7 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
@@ -65,9 +67,9 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
         }
 
         @Specialization
-        protected Object doCall(NativeFunction f, Object[] args,
+        protected Object doCall(Frame frame, NativeFunction f, Object[] args,
                         @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-            return doCallImpl(f, args, ctxRef);
+            return doCallImpl(frame, f, args, ctxRef);
         }
 
         @Override
@@ -80,7 +82,7 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
 
         @Override
         @ExplodeLoop
-        protected Object beforeCall(NativeFunction nativeFunction, TruffleObject fn, Object[] args) {
+        protected Object beforeCall(Frame frame, NativeFunction nativeFunction, TruffleObject fn, Object[] args) {
             assert !(fn instanceof RFunction);
 
             for (int i = 0; i < args.length; i++) {
@@ -95,7 +97,8 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
                     args[i] = new NativeCharArray(getStringBytes((String) obj));
                 }
             }
-            return 0;
+            return RContext.getInstance().getRFFI(TruffleLLVM_Context.class).beforeDowncall(maybeMaterializeFrame(frame, nativeFunction),
+                            RFFIFactory.Type.LLVM);
         }
 
         @TruffleBoundary
@@ -105,8 +108,10 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
 
         @Override
         @ExplodeLoop
-        protected void afterCall(Object before, NativeFunction fn, TruffleObject target, Object[] args) {
+        protected void afterCall(Frame frame, Object before, NativeFunction fn, TruffleObject target, Object[] args) {
             assert !(target instanceof RFunction);
+
+            (RContext.getInstance().getRFFI(TruffleLLVM_Context.class)).afterDowncall(before, RFFIFactory.Type.LLVM);
 
             for (int i = 0; i < args.length; i++) {
                 Object obj = args[i];

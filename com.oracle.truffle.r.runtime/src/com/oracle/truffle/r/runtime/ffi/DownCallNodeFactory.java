@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,8 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -48,7 +50,7 @@ public abstract class DownCallNodeFactory {
     @GenerateUncached
     public abstract static class DownCallNode extends Node {
 
-        protected abstract Object execute(NativeFunction f, Object[] args);
+        protected abstract Object execute(Frame frame, NativeFunction f, Object[] args);
 
         /**
          * The arguments may contain primitive java types, Strings, arrays of any primitive Java
@@ -61,24 +63,28 @@ public abstract class DownCallNodeFactory {
          * NFI where the array should be passed as Java array, not as Truffle Object.
          */
         public final Object call(NativeFunction f, Object... args) {
+            return call(null, f, args);
+        }
+
+        public final Object call(Frame frame, NativeFunction f, Object... args) {
             assert f != null;
-            return execute(f, args);
+            return execute(frame, f, args);
         }
 
         /**
          * The implementations should declare one specialization that forwards to this method.
          */
-        protected Object doCallImpl(NativeFunction f, Object[] args, @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
+        protected Object doCallImpl(Frame frame, NativeFunction f, Object[] args, @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
             CompilerAsserts.partialEvaluationConstant(f);
             TruffleObject target = createTarget(ctxRef, f);
             Object before = -1;
             try {
-                before = beforeCall(f, target, args);
+                before = beforeCall(frame, f, target, args);
                 return InteropLibrary.getFactory().getUncached().execute(target, args);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             } finally {
-                afterCall(before, f, target, args);
+                afterCall(frame, before, f, target, args);
             }
         }
 
@@ -92,14 +98,19 @@ public abstract class DownCallNodeFactory {
          * Allows to transform the arguments before the execute message is sent to the result of
          * {@link #createTarget(ContextReference, NativeFunction)}.
          */
-        protected abstract Object beforeCall(NativeFunction nativeFunction, TruffleObject f, Object[] args);
+        protected abstract Object beforeCall(Frame frame, NativeFunction nativeFunction, TruffleObject f, Object[] args);
 
         /**
          * Allows to post-process the arguments after the execute message was sent to the result of
          * {@link #createTarget(ContextReference, NativeFunction)}. If the call to
-         * {@link #beforeCall(NativeFunction, TruffleObject, Object[])} was not successful, the
-         * {@code before} parameter will have value {@code -1}.
+         * {@link #beforeCall(Frame, NativeFunction, TruffleObject, Object[])} was not successful,
+         * the {@code before} parameter will have value {@code -1}.
          */
-        protected abstract void afterCall(Object before, NativeFunction f, TruffleObject t, Object[] args);
+        protected abstract void afterCall(Frame frame, Object before, NativeFunction f, TruffleObject t, Object[] args);
+
+        protected static MaterializedFrame maybeMaterializeFrame(Frame frame, NativeFunction nativeFunction) {
+            return frame == null || !nativeFunction.hasComplexInteraction() ? null : frame.materialize();
+        }
+
     }
 }

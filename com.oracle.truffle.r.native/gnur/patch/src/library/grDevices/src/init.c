@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2004-2017   The R Core Team.
+ *  Copyright (C) 2004-2020   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@
 #include "grDevices.h"
 #include <R_ext/Rdynload.h>
 #include <R_ext/Visibility.h>
+
+#include "JavaGD/JavaGDwrappers.h"
 
 #ifndef _WIN32
 /* This really belongs with the X11 module, but it is about devices */
@@ -81,6 +83,7 @@ static const R_CallMethodDef CallEntries[] = {
     CALLDEF(bringToTop, 2),
     CALLDEF(msgWindow, 2),
 #endif
+	#include "JavaGD/init_JavaGD.h"
     {NULL, NULL, 0}
 };
 

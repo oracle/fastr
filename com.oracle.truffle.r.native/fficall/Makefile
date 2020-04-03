@@ -77,9 +77,9 @@ ifeq ($(FASTR_RFFI),managed)
 	# nop
 else
 ifeq ($(OS_NAME),Darwin)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(VERSION_FLAGS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
 
 	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRblas.dylib
 	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRlapack.dylib
@@ -102,12 +102,12 @@ ifeq ($(OS_NAME),Darwin)
 	python $(FASTR_R_HOME)/mx.fastr/copylib.py updatelib $(FASTR_LIB_DIR) $(FASTR_R_HOME)
 else
 	# not Darwin:
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz $(F2C)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz $(F2C)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
     # We do not link with Rlapack and Rblas so that we can load those libraries manually later after loading libR
     # Otherwise Sulong would attempt to load Rlapack and Rblas and fail, because there is a dependency cycle:
     #     libR provides xerbla_, but Rlapack/Rblas depend on it, it seems that Sulong is not able to resolve this unlike the native loader
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) -L$(FASTR_LIB_DIR) -ldl -lpcre -lz $(F2C)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lpcre -lz $(F2C)
 endif # Darwin
 endif # managed
 
@@ -115,7 +115,7 @@ ifeq ($(FASTR_RFFI),managed)
 fficall.done: common.done
 	touch fficall.done
 else
-fficall.done: common.done fficallllvm.done
+fficall.done: JavaGD.done common.done fficallllvm.done
 	$(MAKE) -C src/truffle_nfi all
 	touch fficall.done
 
@@ -124,6 +124,10 @@ fficallllvm.done: common.done
 	$(MAKE) -C src/truffle_llvm all
 	touch fficallllvm.done
 endif #managed
+
+JavaGD.done:
+	$(MAKE) -C src/JavaGD all
+	touch JavaGD.done
 
 common.done:
 	$(MAKE) -C src/common all
@@ -136,6 +140,8 @@ clean:
 	rm -rf fficall.done
 	rm -rf common.done
 	rm -rf fficallllvm.done
+	$(MAKE) -C src/JavaGD clean
+	rm -rf JavaGD.done
 ifneq ($(FASTR_RFFI),managed)
 	$(MAKE) -C src/truffle_nfi clean
 	$(MAKE) -C src/truffle_llvm clean

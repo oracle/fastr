@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(NativeTypeLibrary.class)
 public abstract class NativeArray implements RTruffleObject {
-    private NativeMemoryWrapper nativeMirror;
+    protected NativeMemoryWrapper nativeMirror;
 
     @SuppressWarnings("static-method")
     @ExportMessage

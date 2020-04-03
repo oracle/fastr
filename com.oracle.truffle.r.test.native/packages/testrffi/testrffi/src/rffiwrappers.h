@@ -36,6 +36,8 @@
 
 SEXP api_OBJECT(SEXP x);
 
+SEXP api_Rf_cons(SEXP car, SEXP cdr);
+
 SEXP api_Rf_ScalarInteger(SEXP value);
 
 SEXP api_Rf_ScalarLogical(SEXP value);
@@ -55,8 +57,6 @@ SEXP api_Rf_asChar(SEXP x);
 SEXP api_Rf_coerceVector(SEXP x, SEXP mode);
 
 SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding);
-
-SEXP api_Rf_cons(SEXP car, SEXP cdr);
 
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg);
 
@@ -273,8 +273,6 @@ SEXP api_R_ExternalPtrAddr(SEXP x);
 SEXP api_R_ExternalPtrTag(SEXP x);
 
 SEXP api_R_ExternalPtrProtected(SEXP x);
-
-SEXP api_R_SetExternalPtrAddr(SEXP x, SEXP addr);
 
 SEXP api_R_SetExternalPtrTag(SEXP x, SEXP tag);
 

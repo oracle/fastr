@@ -100,6 +100,22 @@ assertEquals(globalenv(), getDotsPrenv(2L))      # constant
 assertEquals(globalenv(), getDotsPrenv(bar()))   # call
 
 # ----------------------------------------------------------------------------------------
+# PRIMFUN: dispatches a call to a primitive function. This test uses the fact that FastR 
+# accepts any R function, not only primite ones. There is no GNUR counterpart of this test 
+# as it would be quite difficult to use PRIMFUN that is defined as a macro in Defn.h that
+# is not available for non-internal packages, such as testrffi.
+
+if (!is.null(version$engine) && version$engine=="FastR") {
+	f1 <- function(x) x + 1
+	res <- rffi.testPRIMFUN(f1, pairlist(1))
+	assertEquals(2, res)
+} else {
+	# A fake assertion in GNU-R
+	res <- 2
+	assertEquals(2, res)
+}
+
+# ----------------------------------------------------------------------------------------
 # .C downcall interface
 
 dotC <- load.C(function(a = 'int*', b = 'double*') '

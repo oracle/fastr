@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,7 @@
  * questions.
  */
 
+#include <Defn.h>
 #include <rffiutils.h>
 #include "rffi_upcalls.h"
 
@@ -49,4 +50,23 @@ Rboolean isOrdered(SEXP s)
 SEXP octsize(SEXP s)
 {
 	return ((call_octsize) callbacks[octsize_x])(s);
+}
+
+#define NAMEDMAX 7
+
+void (ENSURE_NAMEDMAX)(SEXP v) { 
+	SEXP __enm_v__ = v;
+	if (NAMED(__enm_v__) < NAMEDMAX) {
+	    SET_NAMED( __enm_v__, NAMEDMAX);
+	}
+}
+
+SEXP DispatchPRIMFUN(SEXP call, SEXP op, SEXP args, SEXP env) {
+    SEXP result = ((call_DispatchPRIMFUN) callbacks[DispatchPRIMFUN_x])(call, op, args, env);
+	checkExitCall();
+    return result;
+}
+
+CCODE PRIMFUN(SEXP x) {
+	return &DispatchPRIMFUN;
 }

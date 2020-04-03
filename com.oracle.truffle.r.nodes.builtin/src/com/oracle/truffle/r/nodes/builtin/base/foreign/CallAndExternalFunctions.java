@@ -19,6 +19,16 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -82,11 +92,13 @@ import com.oracle.truffle.r.library.utils.RprofNodeGen;
 import com.oracle.truffle.r.library.utils.RprofmemNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.UnzipNodeGen;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
+import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -98,13 +110,17 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.NativeSymbolType;
+import com.oracle.truffle.r.runtime.ffi.MiscRFFI.AbstractAfterGraphicsOpNode;
+import com.oracle.truffle.r.runtime.ffi.MiscRFFI.AbstractBeforeGraphicsOpNode;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nmath.distr.Cauchy;
@@ -198,16 +214,6 @@ import com.oracle.truffle.r.runtime.nmath.distr.Wilcox.DWilcox;
 import com.oracle.truffle.r.runtime.nmath.distr.Wilcox.PWilcox;
 import com.oracle.truffle.r.runtime.nmath.distr.Wilcox.QWilcox;
 import com.oracle.truffle.r.runtime.nmath.distr.Wilcox.RWilcox;
-
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
 
 /**
  * {@code .Call}, {@code .Call.graphics}, {@code .External}, {@code .External2},
@@ -469,7 +475,8 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         public final RExternalBuiltinNode lookupBuiltin(String name) {
-            if (getContext().getOption(UseInternalGridGraphics) && name != null) {
+            assert name != null;
+            if (getContext().getOption(UseInternalGridGraphics)) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(getContext(), name);
                 if (gridExternal != null) {
                     return gridExternal;
@@ -973,8 +980,37 @@ public class CallAndExternalFunctions {
         }
     }
 
+    public abstract static class DisplayListRecordingDot extends Dot implements RBuiltinNode.WithSideEffect {
+
+        @Child private AbstractBeforeGraphicsOpNode beforeGraphicsOpNode = RFFIFactory.getMiscRFFI().createBeforeGraphicsOpNode();
+        @Child private AbstractAfterGraphicsOpNode afterGraphicsOpNode = RFFIFactory.getMiscRFFI().createAfterGraphicsOpNode();
+
+        @Override
+        public Object beforeCall(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
+            return beforeGraphicsOpNode.execute();
+        }
+
+        @Override
+        public void afterCall(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args, Object savedReturn) {
+            Object opArgs = orderedArguments.getArgument(1);
+            assert opArgs instanceof RArgsValuesAndNames;
+            Object opArgsPL = ((RArgsValuesAndNames) opArgs).toPairlist();
+            Object op = orderedArguments.getArgument(0);
+            RPairList opCall;
+            if (opArgsPL == RMissing.instance) {
+                opCall = RDataFactory.createPairList(op);
+            } else {
+                opCall = RDataFactory.createPairList(op, opArgsPL);
+            }
+            int res = afterGraphicsOpNode.execute(currentFunction, opCall, (int) savedReturn);
+            if (res < 0) {
+                throw RInternalError.shouldNotReachHere("invalid graphics state");
+            }
+        }
+    }
+
     @RBuiltin(name = ".External.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotExternalGraphics extends Dot {
+    public abstract static class DotExternalGraphics extends DisplayListRecordingDot {
         static {
             applyCommonCasts(new Casts(DotExternalGraphics.class));
         }
@@ -997,7 +1033,7 @@ public class CallAndExternalFunctions {
     }
 
     @RBuiltin(name = ".Call.graphics", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotCallGraphics extends Dot {
+    public abstract static class DotCallGraphics extends DisplayListRecordingDot {
         static {
             applyCommonCasts(new Casts(DotCallGraphics.class));
         }
