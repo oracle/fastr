@@ -880,25 +880,7 @@ def build_binary_pkgs(args_in, **kwargs):
     return 0
 
 def checkout_downstream_revision(args):
-    if len(args) != 2:
-        mx.abort("Give two arguments: main suite name and the downstream suite name")
-
-    main_suite = mx.suite(args[0])
-    downstream_suite = mx.suite(args[1])
-
-    main_commit = mx.OutputCapture()
-    mx.run(['git', '-C', main_suite.vc_dir, 'log', '--pretty=%H', '--grep=PullRequest', '--merges', '--max-count=1'], nonZeroIsFatal=True, out=main_commit)
-
-    downstream_commit = mx.OutputCapture()
-    suite_file = os.path.relpath(os.path.join(downstream_suite.mxDir, 'suite.py'), downstream_suite.vc_dir)
-    main_commit = main_commit.data.rstrip('\n')
-    mx.log("Main repo commit for which the downstream repo will be searched: " + main_commit)
-    mx.run(['git', '-C', downstream_suite.vc_dir, 'log', 'origin/master', '--pretty=%H', '--grep=PullRequest:', '--reverse', '-m', '-S', main_commit, '--', suite_file], out=downstream_commit, nonZeroIsFatal=True)
-
-    downstream_commit = downstream_commit.data.split('\n')[0].rstrip('\n')
-    mx.log("Checking out downstream repo commit " + downstream_commit)
-    mx.run(['git', '-C', downstream_suite.vc_dir, 'checkout', downstream_commit], nonZeroIsFatal=True)
-    return 0
+    mx.mx_downstream.checkout_downstream(args)
 
 mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents  # pylint: disable=C0103
 
