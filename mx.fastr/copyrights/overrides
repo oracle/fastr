@@ -1038,8 +1038,8 @@ org.rosuda.javaGD/src/org/rosuda/javaGD/JGDBufferedPanel.java,simon_urbanek.copy
 org.rosuda.javaGD/src/org/rosuda/javaGD/JavaGD.java,simon_urbanek.copyright
 org.rosuda.javaGD/src/org/rosuda/javaGD/LocatorSync.java,simon_urbanek.copyright
 org.rosuda.javaGD/src/org/rosuda/javaGD/XGDserver.java,simon_urbanek.copyright
-com.oracle.truffle.r.native/fficall/src/JavaGD/javaGD.h,gnu_r_gentleman_ihaka3.copyright
+com.oracle.truffle.r.native/fficall/src/JavaGD/javaGD.h,no.copyright
 com.oracle.truffle.r.native/fficall/src/JavaGD/javaGD.c,gnu_r_gentleman_ihaka3.copyright
-com.oracle.truffle.r.native/fficall/src/JavaGD/jGDtalk.h,gnu_r_gentleman_ihaka3.copyright
-com.oracle.truffle.r.native/fficall/src/JavaGD/jGDtalk.c,gnu_r_gentleman_ihaka3.copyright
+com.oracle.truffle.r.native/fficall/src/JavaGD/jGDtalk.h,no.copyright
+com.oracle.truffle.r.native/fficall/src/JavaGD/jGDtalk.c,no.copyright
 com.oracle.truffle.r.native/fficall/src/JavaGD/Makefile,no.copyright
