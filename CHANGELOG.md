@@ -28,6 +28,10 @@ New features:
   by editing variable `FC` in `{FASTR_HOME}/etc/Makeconf`.
 * print stacktraces (in `traceback()`) for errors coming from C/C++ code when FastR is running in the LLVM mode (`--R.BackEnd=llvm`) and errors coming from other languages, e.g., GraalPython.
 * `@` can be also used to access members of polyglot values originating from other languages. This was previously possible only with `$`, now both operators work.
+* `graphics` and `grDevices` packages are now enabled by incorporating the `JavaGD` package. Supported image formats: PDF, PNG, JPEG, BMP. Use `--R.UseInternalGridGraphics=false` to activate this feature.
+	* SVG support will be added in the future
+	* Display lists are fully implemented, which, e.g., makes Shiny work better in FastR
+* Java API for implementing custom graphics devices based on `JavaGD`
 
 Bug fixes:
 
