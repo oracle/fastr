@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -132,8 +132,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 } else {
                     pbuf = "Character," + sv.getLength();
                 }
-            } else if (tmp instanceof RAbstractRawVector) {
-                pbuf = "Raw," + ((RAbstractRawVector) (tmp)).getLength();
+            } else if (tmp instanceof RRawVector) {
+                pbuf = "Raw," + ((RRawVector) (tmp)).getLength();
             } else if (tmp instanceof RAbstractListVector) {
                 pbuf = "List," + ((RAbstractListVector) (tmp)).getLength();
             } else if ((tmp instanceof RPairList && ((RPairList) tmp).isLanguage())) {

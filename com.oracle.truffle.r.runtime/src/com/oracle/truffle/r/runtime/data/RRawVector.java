@@ -33,19 +33,19 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromRawAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromRawAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
-public final class RRawVector extends RAbstractRawVector implements RMaterializedVector, Shareable {
+public final class RRawVector extends RAbstractNumericVector implements RMaterializedVector, Shareable {
 
     private int length;
 
@@ -181,18 +181,17 @@ public final class RRawVector extends RAbstractRawVector implements RMaterialize
         return VectorDataLibrary.getFactory().getUncached().getRawDataCopy(data);
     }
 
-    @Override
     public byte getRawDataAt(int index) {
         return VectorDataLibrary.getFactory().getUncached().getRawAt(data, index);
     }
 
-    @Override
     public byte getRawDataAt(Object store, int index) {
+        assert data == store;
         return VectorDataLibrary.getFactory().getUncached().getRawAt(store, index);
     }
 
-    @Override
     public void setRawDataAt(Object store, int index, byte value) {
+        assert data == store;
         VectorDataLibrary.getFactory().getUncached().setRawAt(store, index, value);
     }
 

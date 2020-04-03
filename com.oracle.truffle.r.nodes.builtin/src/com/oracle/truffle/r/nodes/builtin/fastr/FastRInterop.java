@@ -103,7 +103,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
@@ -849,14 +849,14 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractRawVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+        public Object toArray(RRawVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             return toArray(ctxRef.get(), vec, flat, byte.class, (array, i) -> Array.set(array, i, vec.getRawDataAt(i)));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractRawVector vec, String className, boolean flat,
+        public Object toArray(RRawVector vec, String className, boolean flat,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             RContext context = ctxRef.get();
             return toArray(context, vec, flat, getClazz(context, className), (array, i) -> Array.set(array, i, vec.getRawDataAt(i)));
@@ -1007,7 +1007,7 @@ public class FastRInterop {
                             vec instanceof RIntVector ||
                             vec instanceof RDoubleVector ||
                             vec instanceof RAbstractStringVector ||
-                            vec instanceof RAbstractRawVector;
+                            vec instanceof RRawVector;
         }
     }
 

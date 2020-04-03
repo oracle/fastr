@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -80,7 +80,7 @@ public class RClosures {
         return new RDoubleToListVectorClosure(vector, keepAttributes);
     }
 
-    public static RAbstractListVector createToListVector(RAbstractRawVector vector, boolean keepAttributes) {
+    public static RAbstractListVector createToListVector(RRawVector vector, boolean keepAttributes) {
         return new RRawToListVectorClosure(vector, keepAttributes);
     }
 

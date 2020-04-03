@@ -51,12 +51,11 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "unique", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast", "nmax"}, behavior = PURE)
@@ -461,7 +460,7 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, int nmax,
+    protected RRawVector doUnique(RRawVector vec, byte incomparables, byte fromLast, int nmax,
                     @Cached("createBinaryProfile()") ConditionProfile needsCopyProfile) {
         reportWork(vec.getLength());
         BitSet bitset = new BitSet(256);

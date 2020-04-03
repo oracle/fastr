@@ -112,12 +112,11 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -885,7 +884,7 @@ public abstract class ConnectionFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object readBin(RAbstractRawVector vec, String what, int n, int sizeInput, boolean signed, boolean swap) {
+        protected Object readBin(RRawVector vec, String what, int n, int sizeInput, boolean signed, boolean swap) {
             Object result;
             switch (what) {
                 case "character":
@@ -1060,10 +1059,10 @@ public abstract class ConnectionFunctions {
             return RDataFactory.createStringVector(stringData, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private static RStringVector readString(RAbstractRawVector vec, int n) {
+        private static RStringVector readString(RRawVector vec, int n) {
             String[] stringData = new String[n];
             byte[] chars;
-            chars = ((RRawVector) vec).getReadonlyData();
+            chars = vec.getReadonlyData();
             stringData[0] = new String(chars, 0, vec.getLength());
             for (int i = 1; i < stringData.length; i++) {
                 stringData[i] = "";
@@ -1072,11 +1071,11 @@ public abstract class ConnectionFunctions {
             return RDataFactory.createStringVector(stringData, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private static RAbstractRawVector readRaw(RAbstractRawVector vec, int n) {
+        private static RRawVector readRaw(RRawVector vec, int n) {
             byte[] b;
             int length = Math.min(vec.getLength(), n);
             b = new byte[length];
-            System.arraycopy(((RRawVector) vec).getReadonlyData(), 0, b, 0, length);
+            System.arraycopy(vec.getReadonlyData(), 0, b, 0, length);
             return RDataFactory.createRawVector(b);
         }
 
@@ -1088,7 +1087,7 @@ public abstract class ConnectionFunctions {
         }
 
         /*
-         * private static RRawVector readRaw(RAbstractRawVector raw, int n) { ByteBuffer buffer =
+         * private static RRawVector readRaw(RRawVector raw, int n) { ByteBuffer buffer =
          * ByteBuffer.allocate(n); int bytesRead = con.readBin(buffer); if (bytesRead == 0) { return
          * RDataFactory.createEmptyRawVector(); } buffer.flip(); byte[] data = new byte[bytesRead];
          * buffer.get(data); return RDataFactory.createRawVector(data); }
@@ -1235,7 +1234,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-        protected RRawVector writeBin(RAbstractVector object, @SuppressWarnings("unused") RAbstractRawVector con, int size, boolean swap, boolean useBytes,
+        protected RRawVector writeBin(RAbstractVector object, @SuppressWarnings("unused") RRawVector con, int size, boolean swap, boolean useBytes,
                         @Cached("create()") WriteDataNode writeData) {
             ByteBuffer buffer = writeData.execute(object, size, swap, useBytes);
             buffer.flip();

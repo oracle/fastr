@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "packBits", kind = INTERNAL, parameterNames = {"x", "type"}, behavior = PURE)
@@ -143,7 +143,7 @@ public abstract class PackBits extends RBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractVector packBits(RAbstractRawVector x, String type) {
+    protected RAbstractVector packBits(RRawVector x, String type) {
         checkLength(x.getLength(), type);
 
         BitSet bitSet = new BitSet();

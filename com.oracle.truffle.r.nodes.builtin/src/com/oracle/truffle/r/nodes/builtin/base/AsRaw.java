@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 
@@ -57,38 +56,38 @@ public abstract class AsRaw extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RAbstractRawVector asRaw(@SuppressWarnings("unused") RNull n) {
+    protected RRawVector asRaw(@SuppressWarnings("unused") RNull n) {
         return RDataFactory.createEmptyRawVector();
     }
 
     @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
-    protected RAbstractRawVector asRawVec(RAbstractRawVector v,
+    protected RRawVector asRawVec(RRawVector v,
                     @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
                     @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            RRawVector res = (RRawVector) reuseTemporaryNode.getMaterializedResult(v);
+            RRawVector res = reuseTemporaryNode.getMaterializedResult(v);
             res.resetAllAttributes(true);
             return res;
         }
     }
 
     @Specialization(replaces = "asRawVec")
-    protected RAbstractRawVector asRawVecGeneric(RAbstractRawVector v,
+    protected RRawVector asRawVecGeneric(RRawVector v,
                     @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
                     @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         return asRawVec(v, reuseTemporaryNode, noAttributes);
     }
 
     @Specialization(guards = "isForeignObject(obj)")
-    protected RAbstractRawVector asRawForeign(VirtualFrame frame, TruffleObject obj,
+    protected RRawVector asRawForeign(VirtualFrame frame, TruffleObject obj,
                     @Cached("create()") ConvertForeignObjectNode convertForeign,
                     @Cached("createNonPreserving()") CastRawNode castRaw,
                     @Cached("create()") AsRaw asRaw) {
         Object o = convertForeign.convert(obj, true, false, true);
         if (!RRuntime.isForeignObject(o)) {
-            return (RAbstractRawVector) asRaw.execute(frame, castRaw.executeRaw(o));
+            return (RRawVector) asRaw.execute(frame, castRaw.executeRaw(o));
         }
         throw error(RError.Message.CANNOT_COERCE, "polyglot.value", "raw");
     }

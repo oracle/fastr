@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
@@ -97,7 +97,7 @@ public abstract class FirstBooleanNode extends CastNode {
     }
 
     @Specialization
-    protected boolean firstVector(RAbstractRawVector argument) {
+    protected boolean firstVector(RRawVector argument) {
         checkLength(argument);
         return firstScalar(RRuntime.raw2logical(argument.getRawDataAt(0)));
     }

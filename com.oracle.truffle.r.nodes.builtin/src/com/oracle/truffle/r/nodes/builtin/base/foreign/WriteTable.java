@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -283,8 +283,8 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
             RAbstractComplexVector v = (RAbstractComplexVector) x;
             return ComplexVectorPrinter.encodeComplex(v.getDataAt(indx));
         }
-        if (x instanceof RAbstractRawVector) {
-            RAbstractRawVector v = (RAbstractRawVector) x;
+        if (x instanceof RRawVector) {
+            RRawVector v = (RRawVector) x;
             return RRuntime.rawToHexString(v.getRawDataAt(indx));
         }
         throw RInternalError.unimplemented();

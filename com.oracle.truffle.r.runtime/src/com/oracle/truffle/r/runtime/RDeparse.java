@@ -60,7 +60,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.TruffleObjectConverter;
@@ -970,7 +970,7 @@ public class RDeparse {
             int len = vec.getLength();
             if (len == 0) {
                 append(vec.getRType().getClazz() + "(0)");
-            } else if (vec instanceof RAbstractRawVector) {
+            } else if (vec instanceof RRawVector) {
                 append("as.raw(c(");
                 RStringVector names = vec.getNames();
                 for (int i = 0; i < len; i++) {

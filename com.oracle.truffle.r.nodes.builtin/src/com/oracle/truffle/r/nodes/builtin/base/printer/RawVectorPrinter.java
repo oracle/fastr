@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,9 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 
-final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
+final class RawVectorPrinter extends VectorPrinter<RRawVector> {
 
     static final RawVectorPrinter INSTANCE = new RawVectorPrinter();
 
@@ -37,13 +37,13 @@ final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
     }
 
     @Override
-    protected RawVectorPrintJob createJob(RAbstractRawVector vector, int indx, PrintContext printCtx) {
+    protected RawVectorPrintJob createJob(RRawVector vector, int indx, PrintContext printCtx) {
         return new RawVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class RawVectorPrintJob extends VectorPrintJob {
 
-        protected RawVectorPrintJob(RAbstractRawVector vector, int indx, PrintContext printCtx) {
+        protected RawVectorPrintJob(RRawVector vector, int indx, PrintContext printCtx) {
             super(vector, indx, printCtx);
         }
 
