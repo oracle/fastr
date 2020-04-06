@@ -204,6 +204,7 @@ public final class FFIProcessor extends AbstractProcessor {
         StringBuilder unwrapNodes = new StringBuilder();
         StringBuilder unwrappedArgs = new StringBuilder();
         boolean needsUnwrapImport = false;
+        boolean needsStringUnwrapImport = false;
         Set<String> unwrapArrayImports = new HashSet<>();
         int injectedArgsCount = 0;
 
@@ -217,7 +218,6 @@ public final class FFIProcessor extends AbstractProcessor {
             TypeMirror paramType = params.get(i).asType();
 
             RFFICpointer[] pointerAnnotations = params.get(i).getAnnotationsByType(RFFICpointer.class);
-            RFFICstring[] stringAnnotations = params.get(i).getAnnotationsByType(RFFICstring.class);
             RFFICarray[] arrayAnnotations = params.get(i).getAnnotationsByType(RFFICarray.class);
             RFFIInject[] injectAnnotations = params.get(i).getAnnotationsByType(RFFIInject.class);
             boolean needsArrayUnwrap = arrayAnnotations.length > 0;
@@ -229,13 +229,14 @@ public final class FFIProcessor extends AbstractProcessor {
                             !paramType.getKind().isPrimitive() &&
                             !paramTypeName.equals("java.lang.String") &&
                             pointerAnnotations.length == 0 &&
-                            !needsArrayUnwrap &&
-                            (stringAnnotations.length == 0 || stringAnnotations[0].convert());
+                            !needsArrayUnwrap;
+            boolean needsStringUnwrap = paramTypeName.equals("java.lang.String");
             boolean needCast = !paramTypeName.equals("java.lang.Object");
             if (needCast) {
                 arguments.append('(').append(paramTypeName).append(") ");
             }
             needsUnwrapImport |= needsUnwrap;
+            needsStringUnwrapImport |= needsStringUnwrap;
             unwrappedArgs.append("        final Object ").append(paramName).append("Unwrapped = ");
             if (needsInject) {
                 if (nodeAnnotation != null) {
@@ -256,7 +257,7 @@ public final class FFIProcessor extends AbstractProcessor {
                 processingEnv.getMessager().printMessage(Kind.NOTE, "" + arrAnnot.element());
                 String arrayUnwrapSimpleName = arrAnnot.element().wrapperSimpleClassName;
                 unwrapArrayImports.add(arrAnnot.element().wrapperClassPackage + "." + arrayUnwrapSimpleName);
-                unwrapNodes.append("                @Cached() ").append(arrayUnwrapSimpleName).append(' ').append(paramName).append("Unwrap,\n");
+                unwrapNodes.append("                @Cached ").append(arrayUnwrapSimpleName).append(' ').append(paramName).append("Unwrap,\n");
                 unwrappedArgs.append(paramName).append("Unwrap").append(".execute(");
                 if (!"".equals(arrAnnot.length())) {
                     String lengthExpr = arrAnnot.length();
@@ -266,11 +267,14 @@ public final class FFIProcessor extends AbstractProcessor {
                     // TODO: report an error
                 }
                 unwrappedArgs.append(", ");
+            } else if (needsStringUnwrap) {
+                unwrapNodes.append("                @Cached FFIUnwrapString ").append(paramName).append("Unwrap,\n");
+                unwrappedArgs.append(paramName).append("Unwrap").append(".execute(");
             }
             if (!needsInject) {
                 unwrappedArgs.append("arguments[").append(i).append("]");
                 arguments.append(paramName).append("Unwrapped");
-                if (needsUnwrap || needsArrayUnwrap) {
+                if (needsUnwrap || needsArrayUnwrap || needsStringUnwrap) {
                     unwrappedArgs.append(')');
                 }
             } else {
@@ -337,6 +341,9 @@ public final class FFIProcessor extends AbstractProcessor {
         if (needsUnwrapImport) {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;\n");
         }
+        if (needsStringUnwrapImport) {
+            w.append("import com.oracle.truffle.r.runtime.ffi.FFIUnwrapString;\n");
+        }
         if (!unwrapArrayImports.isEmpty()) {
             for (String unwrapArrayImport : unwrapArrayImports) {
                 w.append("import ").append(unwrapArrayImport).append(";\n");
@@ -371,7 +378,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("    }\n");
         w.append("\n");
         w.append("    @ExportMessage\n");
-        w.append("    @SuppressWarnings(\"unused\")\n");
+        w.append("    @SuppressWarnings({\"unused\", \"cast\"})\n");
         w.append("    Object execute(Object[] arguments,\n");
         if (unwrapNodes.length() > 0) {
             w.append(unwrapNodes);
@@ -546,7 +553,7 @@ public final class FFIProcessor extends AbstractProcessor {
                 }
                 TypeMirror paramType = params.get(i).asType();
                 String paramTypeName = getTypeName(paramType);
-                boolean needCast = !paramTypeName.equals("java.lang.Object");
+                boolean needCast = !paramTypeName.equals("java.lang.Object") && !paramTypeName.equals("java.lang.String");
                 if (needCast) {
                     args.append('(').append(paramTypeName).append(") ");
                 }
@@ -628,25 +635,20 @@ public final class FFIProcessor extends AbstractProcessor {
                 sb.append(", ");
             }
             realArgsCounter++;
-            RFFICstring[] annotations = param.getAnnotationsByType(RFFICstring.class);
-            String nfiParam = nfiParamName(param.asType(), annotations.length == 0 ? null : annotations[0], false, param);
+            String nfiParam = nfiParamName(param.asType(), false, param);
             sb.append(nfiParam);
         }
         sb.append(')');
         sb.append(" : ");
-        sb.append(nfiParamName(m.getReturnType(), null, true, m));
+        sb.append(nfiParamName(m.getReturnType(), true, m));
         return sb.toString();
     }
 
-    private String nfiParamName(TypeMirror paramType, RFFICstring rffiCstring, boolean isReturn, Element m) {
+    private String nfiParamName(TypeMirror paramType, boolean isReturn, Element m) {
         String paramTypeName = getTypeName(paramType);
         switch (paramTypeName) {
             case "java.lang.Object":
-                if (rffiCstring == null) {
-                    return "pointer";
-                } else {
-                    return rffiCstring.convert() ? "string" : "pointer";
-                }
+                return "pointer";
             case "boolean":
                 return "uint8";
             case "int":
@@ -667,14 +669,7 @@ public final class FFIProcessor extends AbstractProcessor {
                 return "[uint8]";
             default:
                 if ("java.lang.String".equals(paramTypeName)) {
-                    if (isReturn) {
-                        return "string";
-                    } else if (rffiCstring != null) {
-                        if (!rffiCstring.convert()) {
-                            processingEnv.getMessager().printMessage(Kind.ERROR, "Invalid parameter type (without conversion) " + paramTypeName, m);
-                        }
-                        return "string";
-                    }
+                    return "string";
                 }
                 if (isReturn) {
                     processingEnv.getMessager().printMessage(Kind.ERROR, "Invalid return type " + paramTypeName, m);

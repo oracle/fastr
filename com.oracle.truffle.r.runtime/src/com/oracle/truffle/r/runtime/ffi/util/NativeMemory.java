@@ -27,6 +27,7 @@ import java.io.StringWriter;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -148,6 +149,24 @@ public abstract class NativeMemory {
     private static void copyMemory(long source, int elementBase, int elementSize, Object destination, int elementsCount) {
         // this takes relevant args as longs to make sure any calculations do not overflow
         UNSAFE.copyMemory(null, source, destination, elementBase, (long) elementSize * (long) elementsCount);
+    }
+
+    public static String copyCString(long address, Charset encoding) {
+        return copyCString(address, Integer.MAX_VALUE, encoding);
+    }
+
+    public static String copyCString(NativeMemoryWrapper address, long maxLength, Charset encoding) {
+        return copyCString(address.getAddress(), maxLength, encoding);
+    }
+
+    public static String copyCString(long address, long maxLength, Charset encoding) {
+        int length = 0;
+        while (length < maxLength && NativeMemory.getByte(address, length) != 0) {
+            length++;
+        }
+        byte[] bytes = new byte[length];
+        NativeMemory.copyMemory(address, bytes, ElementType.BYTE, length);
+        return new String(bytes, encoding);
     }
 
     public static void putByte(NativeMemoryWrapper address, long offset, byte value) {

@@ -201,17 +201,17 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(CoerceVectorNode.class)
     Object Rf_coerceVector(Object x, int mode);
 
-    Object Rf_mkCharLenCE(@RFFICstring(convert = false) Object bytes, int len, int encoding);
+    Object Rf_mkCharLenCE(@RFFICpointer(isString = true) Object bytes, int len, int encoding);
 
     Object Rf_cons(Object car, Object cdr);
 
     void Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
     @RFFIUpCallNode(GetClassDefNode.class)
-    Object R_getClassDef(@RFFIResultOwner @RFFICstring(convert = false) Object clazz);
+    Object R_getClassDef(@RFFIResultOwner @RFFICpointer(isString = true) Object clazz);
 
     @RFFIUpCallNode(DoMakeClassNode.class)
-    Object R_do_MAKE_CLASS(@RFFICstring(convert = false) Object clazz);
+    Object R_do_MAKE_CLASS(@RFFICpointer(isString = true) Object clazz);
 
     @RFFIUpCallNode(value = MiscNodes.RDoNewObjectNode.class, needsCallTarget = true)
     Object R_do_new_object(Object classDef);
@@ -530,7 +530,7 @@ public interface StdUpCallsRFFI {
     Object R_CHAR(Object x);
 
     @RFFIUpCallNode(NewCustomConnectionNode.class)
-    Object R_new_custom_connection(@RFFICstring(convert = false) Object description, @RFFICstring(convert = false) Object mode, @RFFICstring(convert = false) Object className, Object readAddr);
+    Object R_new_custom_connection(@RFFICpointer(isString = true) Object description, @RFFICpointer(isString = true) Object mode, @RFFICpointer(isString = true) Object className, Object readAddr);
 
     int R_ReadConnection(int fd, long bufAddress, int size);
 
@@ -545,7 +545,7 @@ public interface StdUpCallsRFFI {
     Object R_do_slot_assign(Object o, Object name, Object value);
 
     @RFFIUpCallNode(Str2TypeNode.class)
-    int Rf_str2type(@RFFICstring(convert = false) Object name);
+    int Rf_str2type(@RFFICpointer(isString = true) Object name);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Unif.DUnif.class)
     double Rf_dunif(double a, double b, double c, int d);
@@ -964,7 +964,7 @@ public interface StdUpCallsRFFI {
     void Rf_PrintValue(Object value);
 
     @RFFIUpCallNode(RNCharNode.class)
-    int R_nchar(Object string, int type, int allowNA, int keepNA, @RFFICstring Object msgName);
+    int R_nchar(Object string, int type, int allowNA, int keepNA, @RFFICstring String msgName);
 
     @RFFIUpCallNode(value = RForceAndCallNode.class, needsCallTarget = true)
     Object R_forceAndCall(Object e, Object f, int n, Object args);
