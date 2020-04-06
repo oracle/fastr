@@ -11,6 +11,7 @@ Bug fixes:
 
 * `dyn.load` did not work with relative paths
 * missing warnings on integer overflow #136
+* the f2c script fixed to handle extra dotted file extensions #143
 
 # 20.0.0
 

@@ -86,7 +86,7 @@ log other args: "$other_args"
 
 target_dir=$(dirname "$output_file")
 target_file=$(basename "$source_file")
-target_file_no_ext=${target_file%%.*}
+target_file_no_ext=${target_file%.*}
 target_file="${target_dir}/${target_file_no_ext}.c"
 
 # Actual conversion from C to Fortran
