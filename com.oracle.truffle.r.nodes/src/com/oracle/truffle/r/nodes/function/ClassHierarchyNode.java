@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,9 +34,9 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.GetFixedPropertyNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.nodes.unary.UnaryNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.GetFixedPropertyNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;

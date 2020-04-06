@@ -26,7 +26,9 @@ import com.oracle.truffle.api.library.GenerateLibrary;
 import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @GenerateLibrary
 public abstract class AbstractContainerLibrary extends Library {
@@ -37,9 +39,10 @@ public abstract class AbstractContainerLibrary extends Library {
         return FACTORY;
     }
 
-    @SuppressWarnings("unused")
+    public abstract RType getType(Object container);
+
     public int getLength(Object container) {
-        throw RInternalError.shouldNotReachHere();
+        throw RInternalError.shouldNotReachHere(container.getClass().getSimpleName());
     }
 
     /**
@@ -47,25 +50,40 @@ public abstract class AbstractContainerLibrary extends Library {
      * any {@code NA} value. If this method returns {@code false}, then this data may or may not
      * contain {@code NA} values.
      */
-    @SuppressWarnings("unused")
     public boolean isComplete(Object container) {
-        throw RInternalError.shouldNotReachHere();
+        throw RInternalError.shouldNotReachHere(container.getClass().getSimpleName());
     }
 
     /**
-     * Transforms this vector into another that is writeable. This is deprecated legacy method, use
-     * {@link #materializeData(Object)} instead.
+     * Creates an empty vector of the same type and of the given length. Defined only for
+     * {@link com.oracle.truffle.r.runtime.data.model.RAbstractVector} subtypes.
+     */
+    public RAbstractVector createEmptySameType(Object container, @SuppressWarnings("unused") int newLength, @SuppressWarnings("unused") boolean fillWithNA) {
+        throw RInternalError.unimplemented("TODO:" + container.getClass().getSimpleName());
+    }
+
+    /**
+     * Transforms this vector into another that is writeable (both data and attributes). This is
+     * deprecated legacy method, use {@link #materializeData(Object)} instead.
      */
     public abstract RAbstractContainer materialize(Object container);
+
+    /**
+     * @see #materialize(Object)
+     */
+    public abstract boolean isMaterialized(Object container);
 
     /**
      * After this operation is performed the vector must be able to handle operations that write
      * into the vector data.
      */
     public void materializeData(@SuppressWarnings("unused") Object container) {
-        throw RInternalError.unimplemented("TODO");
+        throw RInternalError.unimplemented("TODO:" + container.getClass().getSimpleName());
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * Creates a copy of the container. Note that attributes are not copied, use dedicated node
+     * {@link com.oracle.truffle.r.runtime.data.nodes.CopyWithAttributes} in such case.
+     */
     public abstract RAbstractContainer copy(Object container);
 }

@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.engine;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+import static com.oracle.truffle.r.runtime.RError.Message.LENGTH_ZERO_DIM_INVALID;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,8 +47,8 @@ import com.oracle.truffle.r.launcher.RMain;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNodeGen;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.builtin.base.Rm;
@@ -97,6 +101,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 /**
  * This class contains functions that need access to actual implementation classes but which are
@@ -554,4 +559,13 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         return SlotNodeGen.create();
     }
 
+    @Override
+    public CastNode getNamesAttributeValueCastNode() {
+        return newCastBuilder().allowNull().boxPrimitive().asStringVector(true, true, true).buildCastNode();
+    }
+
+    @Override
+    public CastNode getDimAttributeValueCastNode() {
+        return newCastBuilder().asIntegerVector().mustBe(notEmpty(), LENGTH_ZERO_DIM_INVALID).buildCastNode();
+    }
 }

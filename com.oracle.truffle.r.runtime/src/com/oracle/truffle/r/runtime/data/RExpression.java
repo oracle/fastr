@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -195,6 +196,7 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public RExpression createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createExpression(newLength);
     }

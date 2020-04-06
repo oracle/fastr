@@ -117,6 +117,7 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public boolean isMaterialized() {
         return VectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
     }
@@ -282,12 +283,7 @@ public final class RIntVector extends RAbstractNumericVector {
     @Override
     @ExportMessage.Ignore
     public RIntVector materialize() {
-        if (VectorDataLibrary.getFactory().getUncached().isWriteable(data)) {
-            return this;
-        }
-        // To retain the semantics of the original materialize, for sequences and such we return new
-        // vector
-        return new RIntVector(getDataCopy(), isComplete());
+        return containerLibMaterialize(VectorDataLibrary.getFactory().getUncached(data));
     }
 
     @ExportMessage(library = AbstractContainerLibrary.class)
@@ -295,7 +291,25 @@ public final class RIntVector extends RAbstractNumericVector {
         setData(dataLib.materialize(data), getLength());
     }
 
+    @ExportMessage(name = "materialize", library = AbstractContainerLibrary.class)
+    RIntVector containerLibMaterialize(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (dataLib.isWriteable(data)) {
+            return this;
+        }
+        // To retain the semantics of the original materialize, for sequences and such we return new
+        // vector
+        return new RIntVector(dataLib.getIntDataCopy(data), isComplete());
+    }
+
+    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
+    RIntVector containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        RIntVector result = new RIntVector(dataLib.copy(data, false), dataLib.getLength(data));
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
     @Override
+    @Ignore // AbstractContainerLibrary
     public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
         return new RIntVector(new int[newLength], newIsComplete);
     }
@@ -438,10 +452,5 @@ public final class RIntVector extends RAbstractNumericVector {
     private int[] getArrayForNativeDataAccess() {
         materializeData(VectorDataLibrary.getFactory().getUncached());
         return data instanceof RIntArrayVectorData ? ((RIntArrayVectorData) data).getReadonlyIntData() : null;
-    }
-
-    @ExportMessage(name = "getLength", library = AbstractContainerLibrary.class)
-    public int containerLibGetLength(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
-        return dataLib.getLength(data);
     }
 }

@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 /**
  * A collection of methods that need access to the AST types, needed by code that resides in the
@@ -212,4 +213,7 @@ public interface RRuntimeASTAccess {
 
     AccessSlotAccess createAccessSlotAccess();
 
+    CastNode getNamesAttributeValueCastNode();
+
+    CastNode getDimAttributeValueCastNode();
 }

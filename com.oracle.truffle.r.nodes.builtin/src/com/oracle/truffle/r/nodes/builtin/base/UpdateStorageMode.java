@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,11 +29,11 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
-import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.ArrayAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.TypeFromModeNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;

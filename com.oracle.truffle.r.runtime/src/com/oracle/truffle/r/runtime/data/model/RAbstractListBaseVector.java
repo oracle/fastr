@@ -143,6 +143,7 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public RAbstractVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createList(newLength);
     }

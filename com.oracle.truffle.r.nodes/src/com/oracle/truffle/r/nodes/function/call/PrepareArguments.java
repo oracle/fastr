@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareArgumentsDefaultNodeGen;
 import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareArgumentsExplicitNodeGen;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
-import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
+import com.oracle.truffle.r.runtime.data.nodes.UnShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;

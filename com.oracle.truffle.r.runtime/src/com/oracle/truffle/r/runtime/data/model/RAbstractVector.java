@@ -33,7 +33,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -69,13 +68,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(AbstractContainerLibrary.class)
 public abstract class RAbstractVector extends RAbstractContainer implements RFFIAccess {
-
-    public static final String DATA_LIB_LIMIT = "getDataLibCacheSize()";
-
-    public static int getDataLibCacheSize() {
-        // this has to be a method, because DSLConfig gets initialized lazily
-        return DSLConfig.getCacheSize(3);
-    }
 
     /**
      * Debugging aid: changing to {@code false} turns off all "complete" flag optimizations and all
@@ -468,6 +460,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     }
 
+    @Ignore // AbstractContainerLibrary
     public boolean isMaterialized() {
         return this instanceof RMaterializedVector;
     }
@@ -921,6 +914,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     @Ignore // AbstractContainerLibrary
     public abstract RAbstractVector materialize();
 
+    @Ignore // AbstractContainerLibrary
     public abstract RAbstractVector createEmptySameType(int newLength, boolean newIsComplete);
 
     /**

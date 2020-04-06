@@ -225,6 +225,7 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public final RComplexVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createComplexVector(new double[newLength << 1], newIsComplete);
     }

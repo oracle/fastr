@@ -172,6 +172,7 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public final RStringVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createStringVector(new String[newLength], newIsComplete);
     }

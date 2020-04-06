@@ -27,7 +27,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -45,17 +46,25 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  * {@code names<-}. Builtins are normally not allowed to modify their arguments (unless temporary),
  * but this is a hack also used in GNU-R that avoids creating a copy in {@code names(a) <- val},
  * which get rewritten to {@code a <- `names<-`(a, val)}.
+ *
+ * This node specializes its instances for the input vector type, but also for the input vector
+ * reference count creating separate specializations for the cases where copying is necessary and
+ * where the input vector can be reused.
  */
 public final class VectorReuse extends Node {
 
     @Child private VectorAccess access;
 
     private final boolean isShareableClass;
-    private final boolean isTempOrNonShared;
-    private final boolean needsTemporary;
+    private final boolean isTempOrNonShared; // is this instance specialized to no-copying (true) or
+                                             // copying the input
+    private final boolean needsTemporary; // can we reuse only temporary vectors or also non-shared
     protected final boolean isGeneric;
     protected final Class<? extends RAbstractContainer> clazz;
     @CompilationFinal private ValueProfile copiedValueProfile;
+    @Child private AbstractContainerLibrary containerLib;
+    @Child private CopyWithAttributes copyWithAttributesNode;
+    @Child private AbstractContainerLibrary copyResultContainerLib;
 
     public VectorReuse(RAbstractContainer vector, boolean needsTemporary, boolean isGeneric) {
         this.isShareableClass = isGeneric ? false : RSharingAttributeStorage.isShareable(vector);
@@ -63,6 +72,7 @@ public final class VectorReuse extends Node {
         this.needsTemporary = needsTemporary;
         this.isGeneric = isGeneric;
         this.isTempOrNonShared = isShareableClass && isTempOrNonShared(vector);
+        this.containerLib = isGeneric ? AbstractContainerLibrary.getFactory().getUncached() : AbstractContainerLibrary.getFactory().create(vector);
     }
 
     protected RAbstractContainer cast(RAbstractContainer value) {
@@ -90,17 +100,25 @@ public final class VectorReuse extends Node {
         if (isTempOrNonShared && !access.supports(value)) {
             return false;
         }
+        if (!containerLib.accepts(value)) {
+            return false;
+        }
         RSharingAttributeStorage vector = cast(value);
         return needsTemporary ? vector.isTemporary() == isTempOrNonShared : !vector.isShared() == isTempOrNonShared;
     }
 
     @TruffleBoundary
-    private static RAbstractContainer copyVector(RAbstractContainer vector) {
+    private static RAbstractContainer copyVectorSlowPath(RAbstractContainer vector) {
         return vector.copy();
     }
 
+    @TruffleBoundary
+    private static RAbstractContainer materializeSlowPath(RAbstractContainer vector) {
+        return vector.materialize();
+    }
+
     private boolean isTempOrNonShared(RAbstractContainer vector) {
-        return needsTemporary ? ((RSharingAttributeStorage) vector).isTemporary() : !((RSharingAttributeStorage) vector).isShared();
+        return needsTemporary ? vector.isTemporary() : !vector.isShared();
     }
 
     @SuppressWarnings("unchecked")
@@ -110,11 +128,11 @@ public final class VectorReuse extends Node {
             if (RSharingAttributeStorage.isShareable(vector) && isTempOrNonShared(vector)) {
                 result = vector;
             } else {
-                result = copyVector(vector);
+                result = copyVectorSlowPath(vector);
             }
         } else {
             if (!isShareableClass || !isTempOrNonShared) {
-                result = cast(vector).copy();
+                result = copyWithAttributes(cast(vector));
             } else {
                 result = cast(vector);
             }
@@ -122,27 +140,57 @@ public final class VectorReuse extends Node {
         return (T) result;
     }
 
+    private <T extends RAbstractContainer> RAbstractContainer reuse(T vector) {
+        RAbstractContainer result = vector;
+        if (!isTempOrNonShared || (isGeneric && isTempOrNonShared(vector))) {
+            result = copyWithAttributes(vector);
+        }
+        return result;
+    }
+
+    /**
+     * Should be used in cases where the data of the resulting vector will be written.
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends RAbstractContainer> T getMaterializedDataResult(T vector) {
+        RAbstractContainer result = reuse(vector);
+        containerLib.materializeData(vector);
+        return (T) result;
+    }
+
+    /**
+     * Should be used in cases where the attributes of the resulting vector will be written.
+     */
+    public <T extends RAbstractContainer> T getMaterializedAttributesResult(T vector) {
+        // TODO: when all vectors can have attributes will be just: return reuse(vector)
+        return getMaterializedResult(vector);
+    }
+
+    /**
+     * Should be used in cases where both the attributes and data of the resulting vector will be
+     * written.
+     */
     @SuppressWarnings("unchecked")
     public <T extends RAbstractContainer> T getMaterializedResult(T vector) {
-        RAbstractContainer result;
+        RAbstractContainer result = vector;
         if (isGeneric) {
-            if (RSharingAttributeStorage.isShareable(vector) && isTempOrNonShared(vector)) {
-                result = vector.materialize();
-            } else {
-                result = copyVector(vector).materialize();
+            if (!RSharingAttributeStorage.isShareable(vector) || !isTempOrNonShared(vector)) {
+                result = copyVectorSlowPath(vector);
             }
+            result = materializeSlowPath(result);
         } else {
             if (!isShareableClass || !isTempOrNonShared) {
-                if (!RRuntime.isMaterializedVector(vector) && RAbstractVector.class.isAssignableFrom(clazz)) {
+                if (!containerLib.isMaterialized(vector) && RAbstractVector.class.isAssignableFrom(clazz)) {
                     // materialization of non RMaterializedVector subclasses
                     // create a copy in materialize already
-                    result = cast(vector).materialize();
+                    result = containerLib.materialize(cast(vector));
                     assert result != vector : result.getClass().getSimpleName() + " " + vector.getClass().getSimpleName();
                 } else {
-                    result = profileCopiedValue(cast(vector).copy()).materialize();
+                    RAbstractContainer vectorCopy = profileCopiedValue(copyWithAttributes(cast(vector)));
+                    result = getCopyResultContainerLib().materialize(vectorCopy);
                 }
             } else {
-                result = cast(vector).materialize();
+                result = containerLib.materialize(cast(vector));
             }
         }
         return (T) result;
@@ -154,6 +202,22 @@ public final class VectorReuse extends Node {
             copiedValueProfile = ValueProfile.createClassProfile();
         }
         return copiedValueProfile.profile(vec);
+    }
+
+    public AbstractContainerLibrary getCopyResultContainerLib() {
+        if (copyResultContainerLib == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            copyResultContainerLib = insert(AbstractContainerLibrary.getFactory().createDispatched(DSLConfig.getCacheSize(1)));
+        }
+        return copyResultContainerLib;
+    }
+
+    public RAbstractContainer copyWithAttributes(RAbstractContainer container) {
+        if (copyWithAttributesNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            copyWithAttributesNode = insert(CopyWithAttributes.create());
+        }
+        return copyWithAttributesNode.execute(containerLib, container);
     }
 
     public static VectorReuse createTemporaryGeneric() {

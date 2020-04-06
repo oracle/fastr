@@ -36,7 +36,7 @@ import com.oracle.truffle.r.library.stats.StatsFunctionsNodesFactory.Function3_1
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodesFactory.Function3_2NodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodesFactory.Function4_1NodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodesFactory.Function4_2NodeGen;
-import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
