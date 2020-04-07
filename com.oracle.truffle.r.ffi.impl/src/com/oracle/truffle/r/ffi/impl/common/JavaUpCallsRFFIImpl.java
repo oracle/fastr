@@ -43,7 +43,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.ffi.impl.javaGD.JavaGDContext;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
-import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -2436,7 +2435,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int R_nchar(@RFFICstring Object string, int type, int allowNA, int keepNA, @RFFICstring Object msgName) {
+    public int R_nchar(Object string, int type, int allowNA, int keepNA, String msgName) {
         throw implementedAsNode();
     }
 

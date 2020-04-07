@@ -1060,13 +1060,7 @@ public final class NativeDataAccess {
         } else {
             NativeMirror mirror = charSXPWrapper.getNativeMirror();
             assert mirror.getDataAddress() != 0;
-            int length = 0;
-            while (length < mirror.length && NativeMemory.getByte(mirror.dataAddress, length) != 0) {
-                length++;
-            }
-            byte[] bytes = new byte[length];
-            NativeMemory.copyMemory(mirror.dataAddress, bytes, ElementType.BYTE, length);
-            return new String(bytes, StandardCharsets.UTF_8);
+            return NativeMemory.copyCString(mirror.dataAddress, mirror.length, StandardCharsets.UTF_8);
         }
     }
 
