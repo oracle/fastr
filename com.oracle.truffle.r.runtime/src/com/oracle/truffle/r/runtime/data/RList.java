@@ -25,9 +25,13 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -42,23 +46,36 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVect
  * A note on the RList complete flag {@link RAbstractVector#isComplete() } - it is always
  * initialized with {@code false} and never expected to change.
  */
+@ExportLibrary(InteropLibrary.class)
 public final class RList extends RAbstractListVector implements RMaterializedVector, Shareable {
-
-    /**
-     * After nativized, the data array degenerates to a reference holder.
-     */
-    private Object[] data;
+    private int length;
 
     RList(Object[] data) {
         super(false);
         assert data.getClass().isAssignableFrom(Object[].class) : data;
-        this.data = data;
+        setData(data, data.length);
         assert RAbstractVector.verifyVector(this);
     }
 
     RList(Object[] data, int[] dims, RStringVector names, RList dimNames) {
         this(data);
         initDimsNamesDimNames(dims, names, dimNames);
+    }
+
+    private RList(Object data, int length) {
+        super(false);
+        assert data.getClass().isAssignableFrom(Object[].class) : data;
+        setData(data, length);
+        assert RAbstractVector.verifyVector(this);
+    }
+
+    private void setData(Object data, int newLen) {
+        this.data = data;
+        if (data instanceof VectorDataWithOwner) {
+            ((VectorDataWithOwner) data).setOwner(this);
+        }
+        // Temporary solution to keep getLength() be a fast-path operation
+        length = newLen;
     }
 
     boolean isNativized() {
@@ -71,29 +88,16 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
     }
 
     @Override
+    @Ignore // VectorDataLibrary
     public int getLength() {
-        return NativeDataAccess.getDataLength(this, getInternalStore());
+        return length;
     }
 
     @Override
     public void setLength(int l) {
-        if (!isNativized()) {
-            if (l != data.length) {
-                try {
-                    Object[] newData = new Object[l];
-                    System.arraycopy(data, 0, newData, 0, l < data.length ? l : data.length);
-                    for (int i = data.length; i < l; i++) {
-                        newData[i] = RNull.instance;
-                    }
-                    NativeDataAccess.setDataLength(this, data, l);
-                } finally {
-                    assert NativeDataAccess.isAllocated(this);
-                    setComplete(false);
-                }
-            }
-        } else {
-            NativeDataAccess.setDataLength(this, null, l);
-        }
+        allocateNativeContents();
+        NativeDataAccess.setDataLength(this, null, l);
+        length = l;
     }
 
     @Override
@@ -103,12 +107,13 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
 
     @Override
     public void setTrueLength(int truelength) {
+        allocateNativeContents();
         NativeDataAccess.setTrueDataLength(this, truelength);
     }
 
     @Override
-    public Object[] getInternalStore() {
-        return isNativized() ? null : data;
+    public Object getInternalStore() {
+        return data;
     }
 
     /**
@@ -117,9 +122,10 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
      * documentation of {@code ExtractListElement}.
      */
     @Override
+    @Ignore // VectorDataLibrary
     public Object getDataAtAsObject(Object store, int index) {
         assert store == getInternalStore();
-        return NativeDataAccess.getData(this, (Object[]) store, index);
+        return VectorDataLibrary.getFactory().getUncached().getElementAt(data, index);
     }
 
     public void setDataAt(int index, Object value) {
@@ -130,36 +136,22 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
     public void setDataAt(Object store, int index, Object value) {
         assert value != null : "lists must not contain nulls";
         assert isNativized() || store == getInternalStore();
-        NativeDataAccess.setData(this, ((Object[]) store), index, value);
+        VectorDataLibrary.getFactory().getUncached().setElementAt(data, index, value);
     }
 
     @Override
     public Object[] getInternalManagedData() {
-        return getInternalStore();
+        return (Object[]) data;
     }
 
     @Override
     public Object[] getReadonlyData() {
-        if (!isNativized()) {
-            return data;
-        } else {
-            return NativeDataAccess.copyListNativeData(getNativeMirror());
-        }
-    }
-
-    public Object[] getDataWithoutCopying() {
-        return getReadonlyData();
+        return VectorDataLibrary.getFactory().getUncached().getReadonlyListData(data);
     }
 
     @Override
     public Object[] getDataCopy() {
-        if (!isNativized()) {
-            Object[] copy = new Object[data.length];
-            System.arraycopy(data, 0, copy, 0, data.length);
-            return copy;
-        } else {
-            return NativeDataAccess.copyListNativeData(getNativeMirror());
-        }
+        return VectorDataLibrary.getFactory().getUncached().getListDataCopy(data);
     }
 
     /**
@@ -169,13 +161,13 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
      */
     @Override
     public Object getDataAt(int i) {
-        return NativeDataAccess.getData(this, getInternalStore(), i);
+        return VectorDataLibrary.getFactory().getUncached().getElementAt(data, i);
     }
 
     public RList updateDataAt(int i, Object right, @SuppressWarnings("unused") NACheck rightNACheck) {
         assert !this.isShared() : "data in shared list must not be updated, make a copy";
         assert right != null : "lists must not contain nulls";
-        NativeDataAccess.setData(this, data, i, right);
+        setDataAt(getInternalStore(), i, right);
         return this;
     }
 
@@ -197,32 +189,38 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
      * documentation of {@code ExtractListElement}.
      */
     @Override
+    @Ignore // VectorDataLibrary
     public Object getDataAtAsObject(int index) {
         return this.getDataAt(index);
     }
 
     @Override
+    @Ignore // VectorDataLibrary
     public void setElement(int i, Object value) {
         setDataAt(i, value);
     }
 
     public long allocateNativeContents() {
-        try {
-            return NativeDataAccess.allocateNativeContents(this, getInternalStore(), data.length);
-        } finally {
+        if (!NativeDataAccess.isAllocated(this)) {
+            assert data instanceof Object[]; // this assumes only two impls. list data: array and
+                                             // native memory
+            Object[] arr = (Object[]) data;
+            NativeDataAccess.allocateNativeContents(this, arr, arr.length);
+            setData(new RListNativeData(this, arr), arr.length);
             assert NativeDataAccess.isAllocated(this);
-            setComplete(false);
         }
+        return NativeDataAccess.getNativeDataAddress(this);
     }
 
     @Override
+    @Ignore // VectorDataLibrary
     public RList materialize() {
-        return this;
+        return containerLibMaterialize(VectorDataLibrary.getFactory().getUncached(data));
     }
 
     @Override
     protected RList internalCopy() {
-        Object[] localData = getDataWithoutCopying();
+        Object[] localData = getReadonlyData();
         return new RList(Arrays.copyOf(localData, localData.length), getDimensionsInternal(), null, null);
     }
 
@@ -235,7 +233,7 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
     protected RList internalDeepCopy() {
         // TOOD: only used for nested list updates, but still could be made faster (through a
         // separate AST node?)
-        Object[] localData = getDataWithoutCopying();
+        Object[] localData = getReadonlyData();
         RList listCopy = new RList(Arrays.copyOf(localData, localData.length), getDimensionsInternal(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
@@ -245,6 +243,23 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
             }
         }
         return listCopy;
+    }
+
+    @ExportMessage(library = AbstractContainerLibrary.class)
+    public void materializeData(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        setData(dataLib.materialize(data), dataLib.getLength(data));
+    }
+
+    @ExportMessage(name = "materialize", library = AbstractContainerLibrary.class)
+    RList containerLibMaterialize(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return dataLib.isWriteable(data) ? this : new RList(dataLib.materialize(data), dataLib.getLength(data));
+    }
+
+    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
+    RList containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        RList result = new RList(dataLib.copy(data, false), dataLib.getLength(data));
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
     }
 
     private static final class FastPathAccess extends FastPathFromListAccess {
@@ -260,20 +275,12 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
 
         @Override
         protected Object getListElementImpl(AccessIterator accessIter, int index) {
-            if (hasStore) {
-                return ((Object[]) accessIter.getStore())[index];
-            } else {
-                return NativeDataAccess.getListElementNativeMirrorData((NativeMirror) accessIter.getStore(), index);
-            }
+            return dataLib.getElementAt(accessIter.getStore(), index);
         }
 
         @Override
         protected void setListElementImpl(AccessIterator accessIter, int index, Object value) {
-            if (hasStore) {
-                ((Object[]) accessIter.getStore())[index] = value;
-            } else {
-                NativeDataAccess.setNativeMirrorListData((NativeMirror) accessIter.getStore(), index, value);
-            }
+            dataLib.setElementAt(accessIter.getStore(), index, value);
         }
     }
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -425,10 +425,9 @@ public class RErrorHandling {
     private static ReturnException gotoExitingHandler(Object cond, Object call, RList entry) throws ReturnException {
         REnvironment rho = (REnvironment) entry.getDataAt(ENTRY_TARGET_ENVIR);
         RList result = (RList) entry.getDataAt(ENTRY_RETURN_RESULT);
-        Object[] resultData = result.getDataWithoutCopying();
-        resultData[RESULT_COND] = cond;
-        resultData[RESULT_CALL] = call;
-        resultData[RESULT_HANDLER] = entry.getDataAt(ENTRY_HANDLER);
+        result.setDataAt(RESULT_COND, cond);
+        result.setDataAt(RESULT_CALL, call);
+        result.setDataAt(RESULT_HANDLER, entry.getDataAt(ENTRY_HANDLER));
         throw new ReturnException(result, RArguments.getCall(rho.getFrame()));
     }
 

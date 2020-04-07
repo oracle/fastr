@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.library.GenerateLibrary;
+import com.oracle.truffle.api.library.GenerateLibrary.DefaultExport;
 import com.oracle.truffle.api.library.Library;
 import com.oracle.truffle.api.library.LibraryFactory;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -99,6 +100,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * check for NA values.
  */
 @GenerateLibrary(assertions = Asserts.class)
+@DefaultExport(RListArrayDataLibrary.class)
 public abstract class VectorDataLibrary extends Library {
 
     private static final boolean ENABLE_VERY_SLOW_ASSERTS = false;
