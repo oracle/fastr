@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -45,10 +45,12 @@ def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, cu
     fastr_start = _find_start(fastr_content)
     fastr_len = len(fastr_content)
     if not gnur_start or not gnur_end or not fastr_start:
-        if not gnur_start or not gnur_end:
-            logging.info("malformed GnuR output file {0}: ########\n{1}########".format(gnur_filename, gnur_content))
+        if not gnur_start:
+            logging.info("malformed start of the GnuR output")
+        if not gnur_end:
+            logging.info("malformed end of the GnuR output")
         if not fastr_start:
-            logging.info("malformed FastR output file {0}: ########\n{1}########".format(fastr_filename, fastr_content))
+            logging.info("malformed start of the FastR output")
         return -1, 0, 0
     gnur_i = gnur_start
     fastr_i = fastr_start
@@ -72,7 +74,7 @@ def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, cu
         if gnur_line is None or fastr_line is None:
             # fail if FastR's output is shorter than GnuR's
             if gnur_line is not None and fastr_line is None:
-                logging.debug("FastR's output is shorter than GnuR's")
+                logging.info("FastR's output is shorter than GnuR's")
                 overall_result = 1
             break
 
@@ -131,9 +133,9 @@ def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, cu
 
         # report a mismatch or success
         if result == 1:
-            logging.debug(gnur_filename + ':%d' % (gnur_cur_statement_start + 1) + ' vs. ' + fastr_filename + ':%d' % (
+            logging.info(gnur_filename + ':%d' % (gnur_cur_statement_start + 1) + ' vs. ' + fastr_filename + ':%d' % (
                     fastr_cur_statement_start + 1))
-            logging.debug("%s\nvs.\n%s" % (gnur_line.strip(), fastr_line.strip()))
+            logging.info("%s\nvs.\n%s" % (gnur_line.strip(), fastr_line.strip()))
 
             # we need to synchronize the indices such that we can continue
             gnur_i = gnur_i + 1
