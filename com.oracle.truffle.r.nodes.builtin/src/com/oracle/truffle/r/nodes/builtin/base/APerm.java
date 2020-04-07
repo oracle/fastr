@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -164,7 +165,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = "!isIdentityPermutation(vector, permVector, getDimsNode)", limit = "getGenericVectorAccessCacheSize()")
-    protected RAbstractVector aPerm(RAbstractVector vector, RIntVector permVector, byte resize,
+    protected RAbstractVector doNonIdentity(RAbstractVector vector, RIntVector permVector, byte resize,
                     @CachedLibrary("vector") AbstractContainerLibrary vectorLib,
                     @CachedLibrary("vector.getData()") VectorDataLibrary vectorDataLib,
                     @CachedLibrary(limit = "getCacheSize(1)") VectorDataLibrary resultDataLib,
@@ -225,6 +226,18 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         return result;
     }
 
+    @TruffleBoundary
+    @Specialization(replaces = "doNonIdentity", guards = "!isIdentityPermutation(vector, permVector, getDimsNode)")
+    protected RAbstractVector doNonIdentityGeneric(RAbstractVector vector, RIntVector permVector, byte resize,
+                    @Cached("create()") GetNamesAttributeNode getNames,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") SetDimAttributeNode setDimsNode,
+                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+        AbstractContainerLibrary containerLib = AbstractContainerLibrary.getFactory().getUncached();
+        VectorDataLibrary dataLib = VectorDataLibrary.getFactory().getUncached();
+        return doNonIdentity(vector, permVector, resize, containerLib, dataLib, dataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode);
+    }
+
     protected boolean isIdentityPermutation(RAbstractVector v, RIntVector permVector, GetDimAttributeNode getDimAttributeNode) {
         int[] dimensions = getDimAttributeNode.getDimensions(v);
         if (dimensions != null) {
@@ -274,7 +287,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         }
 
         // Note: if this turns out to be slow, we can cache the permutation
-        return aPerm(vector, permIntVector, resize, vectorLib, vectorDataLib, resultDataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode);
+        return doNonIdentity(vector, permIntVector, resize, vectorLib, vectorDataLib, resultDataLib, getNames, getDimsNode, setDimsNode, getDimNamesNode);
     }
 
     @Specialization(replaces = "aPerm", limit = "getGenericVectorAccessCacheSize()")
