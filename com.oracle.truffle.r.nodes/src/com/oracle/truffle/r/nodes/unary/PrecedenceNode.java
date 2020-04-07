@@ -55,6 +55,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -134,6 +135,12 @@ public abstract class PrecedenceNode extends RBaseNode {
     @SuppressWarnings("unused")
     protected int doLogicalScalar(byte s, boolean recursive) {
         return LOGICAL_PRECEDENCE;
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
+    protected int doRRaw(RRaw s, boolean recursive) {
+        return RAW_PRECEDENCE;
     }
 
     @Specialization(guards = "vector.getClass() == clazz", limit = "getCacheSize(16)")

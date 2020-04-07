@@ -576,10 +576,6 @@ public final class RDataFactory {
             return traceDataCreated(RRawVector.fromNative(address, length));
         }
 
-        public final RRaw createRaw(byte value) {
-            return traceDataCreated(new RRaw(value));
-        }
-
         /*
          * Shared scalar conversion functions: these need to be replaced with
          * createXyzVectorFromScalar(...).makeSharedPermanent() if scalar types are removed.
@@ -752,6 +748,10 @@ public final class RDataFactory {
 
         public RRawVector createRawVectorFromScalar(RRaw value) {
             return traceDataCreated(RDataFactory.createRawVectorFromScalar(value));
+        }
+
+        public final RRawVector createRawVectorFromScalar(byte value) {
+            return traceDataCreated(new RRawVector(new byte[]{value}));
         }
     }
 
@@ -1050,10 +1050,6 @@ public final class RDataFactory {
         return traceDataCreated(RRawVector.fromNative(address, length));
     }
 
-    public static RRaw createRaw(byte value) {
-        return traceDataCreated(new RRaw(value));
-    }
-
     public static RStringVector createStringVectorFromScalar(String value) {
         return createStringVector(new String[]{value}, !RRuntime.isNA(value));
     }
@@ -1084,6 +1080,10 @@ public final class RDataFactory {
 
     public static RRawVector createRawVectorFromScalar(RRaw value) {
         return createRawVector(new byte[]{value.getValue()});
+    }
+
+    public static RRawVector createRawVectorFromScalar(byte value) {
+        return createRawVector(new byte[]{value});
     }
 
     /*

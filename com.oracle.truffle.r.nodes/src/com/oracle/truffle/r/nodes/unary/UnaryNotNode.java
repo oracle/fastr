@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -104,8 +105,8 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RRaw doRaw(RRaw operand) {
-        return RDataFactory.createRaw(notRaw(operand));
+    protected RRawVector doRaw(RRaw operand) {
+        return RDataFactory.createRawVectorFromScalar(notRaw(operand));
     }
 
     @Specialization(guards = {"vectorAccess.supports(vector)", "reuse.supports(vector)"})

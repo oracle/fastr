@@ -128,7 +128,7 @@ public class SampleCollectorTest {
     @Test
     public void testAsRawVector() {
         arg.asRawVector();
-        assertSamples((byte) 0, vector(RType.Raw, RDataFactory.createRaw((byte) 0)), RNull.instance, RMissing.instance);
+        assertSamples((byte) 0, vector(RType.Raw, RDataFactory.createRawVectorFromScalar((byte) 0)), RNull.instance, RMissing.instance);
     }
 
     @Test

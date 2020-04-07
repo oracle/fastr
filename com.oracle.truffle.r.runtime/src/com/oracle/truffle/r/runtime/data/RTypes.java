@@ -117,6 +117,11 @@ public class RTypes {
     }
 
     @ImplicitCast
+    public static RAbstractContainer toAbstractContainer(RRaw value) {
+        return RDataFactory.createRawVectorFromScalar(value);
+    }
+
+    @ImplicitCast
     public static RAbstractVector toAbstractVector(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
@@ -134,6 +139,11 @@ public class RTypes {
     @ImplicitCast
     public static RAbstractVector toAbstractVector(String value) {
         return RDataFactory.createStringVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public static RAbstractVector toAbstractVector(RRaw value) {
+        return RDataFactory.createRawVectorFromScalar(value);
     }
 
     @ImplicitCast
@@ -157,6 +167,11 @@ public class RTypes {
     }
 
     @ImplicitCast
+    public static RAbstractRawVector toAbstractRawVector(RRaw vector) {
+        return RDataFactory.createRawVectorFromScalar(vector);
+    }
+
+    @ImplicitCast
     public static RAbstractAtomicVector toAbstractAtomicVector(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
@@ -174,6 +189,11 @@ public class RTypes {
     @ImplicitCast
     public static RAbstractAtomicVector toAbstractAtomicVector(String value) {
         return RDataFactory.createStringVectorFromScalar(value);
+    }
+
+    @ImplicitCast
+    public static RAbstractAtomicVector toAbstractAtomicVector(RRaw value) {
+        return RDataFactory.createRawVectorFromScalar(value);
     }
 
     @ImplicitCast

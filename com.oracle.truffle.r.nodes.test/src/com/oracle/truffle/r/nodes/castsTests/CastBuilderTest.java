@@ -899,7 +899,7 @@ public class CastBuilderTest {
         arg.mustNotBeNull().mustBe(integerValue().or(rawValue()));
         assertCastPreserves(1);
         assertCastPreserves(RDataFactory.createIntVector(new int[]{1, 2}, true));
-        assertCastPreserves(RDataFactory.createRaw((byte) 2));
+        assertCastPreserves(RDataFactory.createRawVectorFromScalar((byte) 2));
         assertCastPreserves(RDataFactory.createRawVector(new byte[]{1, 2}));
         assertCastFail(RNull.instance);
         assertCastFail("abc");

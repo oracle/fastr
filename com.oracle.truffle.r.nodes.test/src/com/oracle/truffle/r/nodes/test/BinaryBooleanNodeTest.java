@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyIntVecto
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyLogicalVector;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyRawVector;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createEmptyStringVector;
-import static com.oracle.truffle.r.runtime.data.RDataFactory.createRaw;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createRawVector;
 import static com.oracle.truffle.r.runtime.data.RDataFactory.createStringVector;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -59,6 +58,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import static com.oracle.truffle.r.runtime.data.RDataFactory.createRawVectorFromScalar;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
@@ -82,7 +82,8 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
     @DataPoint public static final RAbstractVector EMPTY_STRING = createEmptyStringVector();
     @DataPoint public static final RAbstractVector EMPTY_RAW = createEmptyRawVector();
 
-    @DataPoint public static final RAbstractVector RAW = createRaw((byte) 0xA);
+    @DataPoint public static final RAbstractVector RAW = createRawVectorFromScalar((byte) 0xA);
+
     @DataPoint public static final RAbstractVector RAW2 = createRawVector(new byte[]{0xF, 0x3, 0xF});
 
     @DataPoint public static final RAbstractVector STRING1 = createStringVector("42");

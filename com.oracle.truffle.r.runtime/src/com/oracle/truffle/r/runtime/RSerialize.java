@@ -86,6 +86,7 @@ import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -391,7 +392,7 @@ public class RSerialize {
     }
 
     @TruffleBoundary
-    public static Object unserialize(RAbstractRawVector data) {
+    public static Object unserialize(RRawVector data) {
         byte[] buffer = data.materialize().getReadonlyData();
         try {
             return new Input(new ByteArrayInputStream(buffer)).unserialize();

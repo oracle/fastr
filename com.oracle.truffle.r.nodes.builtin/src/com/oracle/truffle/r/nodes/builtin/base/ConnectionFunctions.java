@@ -112,7 +112,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
@@ -505,7 +504,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RIntVector rawConnection(String description, RAbstractRawVector text, String open) {
+        protected RIntVector rawConnection(String description, RRawVector text, String open) {
             try {
                 return new RawRConnection(description, text.getDataTemp(), open).asVector();
             } catch (IOException ex) {
@@ -1064,12 +1063,7 @@ public abstract class ConnectionFunctions {
         private static RStringVector readString(RAbstractRawVector vec, int n) {
             String[] stringData = new String[n];
             byte[] chars;
-            if (vec instanceof RRaw) {
-                chars = new byte[1];
-                chars[0] = ((RRaw) vec).getRawDataAt(0);
-            } else {
-                chars = ((RRawVector) vec).getReadonlyData();
-            }
+            chars = ((RRawVector) vec).getReadonlyData();
             stringData[0] = new String(chars, 0, vec.getLength());
             for (int i = 1; i < stringData.length; i++) {
                 stringData[i] = "";
@@ -1080,9 +1074,6 @@ public abstract class ConnectionFunctions {
 
         private static RAbstractRawVector readRaw(RAbstractRawVector vec, int n) {
             byte[] b;
-            if (vec instanceof RRaw) {
-                return vec;
-            }
             int length = Math.min(vec.getLength(), n);
             b = new byte[length];
             System.arraycopy(((RRawVector) vec).getReadonlyData(), 0, b, 0, length);

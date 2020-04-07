@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,22 +97,22 @@ public abstract class CastRawNode extends CastBaseNode {
         return RMissing.instance;
     }
 
-    private RRaw checkOutOfRange(int operand, int intResult) {
+    private RRawVector checkOutOfRange(int operand, int intResult) {
         if (intResult != operand) {
             warning(warningContext(), RError.Message.OUT_OF_RANGE);
-            return factory().createRaw((byte) 0);
+            return factory().createRawVectorFromScalar((byte) 0);
         }
-        return factory().createRaw((byte) intResult);
+        return factory().createRawVectorFromScalar((byte) intResult);
     }
 
     @Specialization
-    protected RRaw doInt(int operand) {
+    protected RRawVector doInt(int operand) {
         int intResult = RRuntime.int2rawIntValue(operand);
         return checkOutOfRange(operand, intResult);
     }
 
     @Specialization
-    protected RRaw doDouble(double operand,
+    protected RRawVector doDouble(double operand,
                     @Cached("create()") NAProfile naProfile) {
         int intResult;
         if (naProfile.isNA(operand)) {
@@ -130,7 +130,7 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RRaw doComplex(RComplex operand,
+    protected RRawVector doComplex(RComplex operand,
                     @Cached("create()") NAProfile naProfile) {
         int intResult;
         if (naProfile.isNA(operand)) {
@@ -152,12 +152,12 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RRaw doRaw(RRaw operand) {
-        return operand;
+    protected RRawVector doRaw(RRaw operand) {
+        return factory().createRawVectorFromScalar(operand.getValue());
     }
 
     @Specialization
-    protected RRaw doLogical(byte operand) {
+    protected RRawVector doLogical(byte operand) {
         // need to convert to int so that NA-related warning is caught
         int intVal = RRuntime.logical2int(operand);
         return doInt(intVal);
@@ -166,7 +166,7 @@ public abstract class CastRawNode extends CastBaseNode {
     protected final NACheck naCheck = NACheck.create();
 
     @Specialization
-    protected RRaw doString(String operand,
+    protected RRawVector doString(String operand,
                     @Cached("create()") NAProfile naProfile,
                     @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         int intValue;
@@ -191,9 +191,9 @@ public abstract class CastRawNode extends CastBaseNode {
         int intRawValue = RRuntime.int2rawIntValue(intValue);
         if (intRawValue != intValue) {
             warning(warningContext(), RError.Message.OUT_OF_RANGE);
-            return RRaw.valueOf((byte) 0);
+            return factory().createRawVectorFromScalar((byte) 0);
         }
-        return RRaw.valueOf((byte) intRawValue);
+        return factory().createRawVectorFromScalar(((byte) intRawValue));
     }
 
     private RRawVector vectorCopy(RAbstractVector operand, byte[] bdata) {

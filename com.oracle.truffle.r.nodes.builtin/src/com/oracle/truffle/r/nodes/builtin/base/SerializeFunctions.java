@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -82,7 +82,7 @@ public class SerializeFunctions {
     }
 
     @TruffleBoundary
-    protected static Object doUnserializeFromRaw(RAbstractRawVector data, @SuppressWarnings("unused") REnvironment refhook) {
+    protected static Object doUnserializeFromRaw(RRawVector data, @SuppressWarnings("unused") REnvironment refhook) {
         return RSerialize.unserialize(data);
     }
 
@@ -196,7 +196,7 @@ public class SerializeFunctions {
         }
 
         @Specialization
-        protected Object unSerialize(RAbstractRawVector data, @SuppressWarnings("unused") RNull refhook) {
+        protected Object unSerialize(RRawVector data, @SuppressWarnings("unused") RNull refhook) {
             return doUnserializeFromRaw(data, null);
         }
     }

@@ -83,7 +83,7 @@ public class RawFunctions {
 
         static {
             Casts casts = new Casts(RawToChar.class);
-            casts.arg("x").mustBe(instanceOf(RAbstractRawVector.class), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
+            casts.arg("x").boxPrimitive().mustBe(instanceOf(RAbstractRawVector.class), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
             casts.arg("multiple").defaultError(RError.Message.INVALID_LOGICAL).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
@@ -134,7 +134,7 @@ public class RawFunctions {
 
         static {
             Casts casts = new Casts(RawShift.class);
-            casts.arg("x").mustBe(instanceOf(RAbstractRawVector.class), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
+            casts.arg("x").boxPrimitive().mustBe(instanceOf(RAbstractRawVector.class), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
             casts.arg("n").defaultError(RError.Message.MUST_BE_SMALL_INT, "shift").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(-8).and(lte(8)));
         }
 

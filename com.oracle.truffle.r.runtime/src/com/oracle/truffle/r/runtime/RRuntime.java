@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -583,9 +584,9 @@ public class RRuntime {
     @TruffleBoundary
     public static RRaw string2raw(String v) {
         if (v.length() == 2 && (Utils.isIsoLatinDigit(v.charAt(0)) || Utils.isRomanLetter(v.charAt(0))) && (Utils.isIsoLatinDigit(v.charAt(1)) || Utils.isRomanLetter(v.charAt(1)))) {
-            return RDataFactory.createRaw(Byte.parseByte(v, 16));
+            return RRaw.valueOf(Byte.parseByte(v, 16));
         } else {
-            return RDataFactory.createRaw((byte) 0);
+            return RRaw.valueOf((byte) 0);
         }
     }
 
@@ -645,7 +646,7 @@ public class RRuntime {
     }
 
     public static RRaw int2raw(int i) {
-        return RDataFactory.createRaw((byte) int2rawIntValue(i));
+        return RRaw.valueOf((byte) int2rawIntValue(i));
     }
 
     // conversions from double
@@ -679,7 +680,7 @@ public class RRuntime {
     }
 
     public static RRaw double2raw(double operand) {
-        return RDataFactory.createRaw((byte) double2rawIntValue(operand));
+        return RRaw.valueOf((byte) double2rawIntValue(operand));
     }
 
     // conversions from complex
@@ -713,7 +714,7 @@ public class RRuntime {
     }
 
     public static RRaw complex2raw(RComplex c) {
-        return RDataFactory.createRaw((byte) complex2rawIntValue(c));
+        return RRaw.valueOf((byte) complex2rawIntValue(c));
     }
 
     private static int getSignIdx(int plusIdx, int minusIdx) throws NumberFormatException {
@@ -998,6 +999,8 @@ public class RRuntime {
             return RDataFactory.createLogicalVectorFromScalar((Byte) obj);
         } else if (obj instanceof String) {
             return RDataFactory.createStringVectorFromScalar((String) obj);
+        } else if (obj instanceof RRaw) {
+            return RDataFactory.createRawVectorFromScalar((RRaw) obj);
         } else {
             return obj;
         }
@@ -1057,7 +1060,7 @@ public class RRuntime {
 
     public static boolean hasVectorData(Object o) {
         // TODO: for the time beeeing, until all vectors switch to RVectorData
-        return o instanceof RIntVector || o instanceof RDoubleVector;
+        return o instanceof RIntVector || o instanceof RDoubleVector || o instanceof RRawVector;
     }
 
     public static boolean isSequence(Object o) {

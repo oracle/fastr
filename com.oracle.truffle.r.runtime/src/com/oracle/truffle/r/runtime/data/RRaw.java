@@ -23,75 +23,15 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromRawAccess;
-import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromRawAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
-public final class RRaw extends RAbstractRawVector implements RScalarVector {
+public final class RRaw {
 
     protected final byte value;
 
     RRaw(byte value) {
-        super(RDataFactory.COMPLETE_VECTOR);
         this.value = value;
-    }
-
-    @Override
-    public boolean isNA() {
-        return false;
-    }
-
-    @Override
-    public int getLength() {
-        return 1;
-    }
-
-    @Override
-    public RAbstractVector copy() {
-        return this;
-    }
-
-    @Override
-    public RRawVector materialize() {
-        RRawVector result = RDataFactory.createRawVector(new byte[]{getValue()});
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
-    }
-
-    @Override
-    public byte[] getDataCopy() {
-        return new byte[]{value};
-    }
-
-    @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
-        switch (type) {
-            case Raw:
-                return this;
-            case Integer:
-                return RDataFactory.createIntVectorFromScalar(value);
-            case Double:
-                return RDataFactory.createDoubleVectorFromScalar(value);
-            case Complex:
-                return RComplex.valueOf(value, 0.0);
-            case Character:
-                return RString.valueOf(RRuntime.rawToHexString(value));
-            default:
-                return null;
-        }
-    }
-
-    @Override
-    public byte getRawDataAt(int index) {
-        assert index == 0;
-        return value;
     }
 
     public byte getValue() {
@@ -120,34 +60,4 @@ public final class RRaw extends RAbstractRawVector implements RScalarVector {
         return new RRaw(value);
     }
 
-    private static final class FastPathAccess extends FastPathFromRawAccess {
-
-        FastPathAccess(RAbstractContainer value) {
-            super(value);
-        }
-
-        @Override
-        protected byte getRawImpl(AccessIterator accessIter, int index) {
-            assert index == 0;
-            return ((RRaw) accessIter.getStore()).value;
-        }
-    }
-
-    @Override
-    public VectorAccess access() {
-        return new FastPathAccess(this);
-    }
-
-    private static final SlowPathFromRawAccess SLOW_PATH_ACCESS = new SlowPathFromRawAccess() {
-        @Override
-        protected byte getRawImpl(AccessIterator accessIter, int index) {
-            assert index == 0;
-            return ((RRaw) accessIter.getStore()).value;
-        }
-    };
-
-    @Override
-    public VectorAccess slowPathAccess() {
-        return SLOW_PATH_ACCESS;
-    }
 }

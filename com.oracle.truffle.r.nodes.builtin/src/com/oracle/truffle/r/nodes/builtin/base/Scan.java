@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -546,7 +547,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
                     }
                 case Raw:
                     if (isNaString(buffer, 0, data)) {
-                        return RDataFactory.createRaw((byte) 0);
+                        return RRaw.valueOf((byte) 0);
                     } else {
                         return RRuntime.string2raw(buffer);
                     }
