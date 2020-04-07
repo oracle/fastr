@@ -281,8 +281,8 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     ],
     post_install_msg="NOTES:\n---------------\n" +
             "FastR needs a system-dependent configuration because it links with some system libraries. " +
-            "A generic configuration that works out of the box on most Linux distributions is provided by default. " +
-            "If you are on another system (e.g., MacOS), wish to fine-tune the configuration to your system, or should you encounter any " +
+            "A generic configuration that works out of the box on most Linux and MacOS distributions is provided by default. " +
+            "If you are on another system, wish to fine-tune the configuration to your system, or should you encounter any " +
             "issues when running FastR or during R packages installation, try running the following script that adjusts " +
             "the configuration to your system: \n" +
             "    ${graalvm_languages_dir}/R/bin/configure_fastr\n\n" +
