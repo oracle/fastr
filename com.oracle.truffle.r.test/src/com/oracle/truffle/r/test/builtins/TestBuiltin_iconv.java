@@ -100,6 +100,7 @@ public class TestBuiltin_iconv extends TestBase {
         assertEval(Ignored.Unimplemented, template("iconv('foo²²', 'UTF8', 'ASCII', sub='fooooo', %0)", TO_RAW));
         assertEval(template("iconv('foo²²', 'UTF8', 'ASCII', sub='f', %0)", TO_RAW));
         assertEval(template("iconv('foo²²', 'UTF8', 'ASCII', sub='', %0)", TO_RAW));
+        assertEval(template("iconv('foo²²', 'UTF8', 'latin1', %0)", TO_RAW));
 
         assertEval(template("x <- 'fa\\xE7ile'; Encoding(x) <- 'latin1'; %0 iconv(x, 'latin1', 'ASCII', %1)", ATTR, TO_RAW));
         assertEval(template("x <- 'fa\\xE7ile'; Encoding(x) <- 'latin1'; %0 iconv(x, 'latin1', 'ASCII', '?', %1)", ATTR, TO_RAW));
