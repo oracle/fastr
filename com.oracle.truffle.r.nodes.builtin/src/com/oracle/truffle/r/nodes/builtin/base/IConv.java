@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
@@ -89,64 +90,80 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
         Charset fromCharset = getCharset(from, from, to);
         Charset toCharset = getCharset(to, from, to);
         boolean complete = x.isComplete();
-        if ((fromCharset == StandardCharsets.UTF_8 || fromCharset == StandardCharsets.UTF_16) && (toCharset == StandardCharsets.UTF_8 || toCharset == StandardCharsets.UTF_16)) {
-            // this conversion cannot change anything
-            return x;
+        // simulate the results of charset conversion
+        CharsetEncoder fromEncoder = fromCharset.newEncoder();
+        CharsetEncoder toEncoder = toCharset.newEncoder();
+        CharsetDecoder toDecoder = toCharset.newDecoder();
+        if (RRuntime.isNA(sub)) {
+            fromEncoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            fromEncoder.onMalformedInput(CodingErrorAction.REPORT);
+            toEncoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            toEncoder.onMalformedInput(CodingErrorAction.REPORT);
+            toDecoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            toDecoder.onMalformedInput(CodingErrorAction.REPORT);
+        } else if ("byte".equals(sub)) {
+            // TODO: special mode that inserts <hexcode>
+            fromEncoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+            fromEncoder.onMalformedInput(CodingErrorAction.IGNORE);
+            toEncoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+            toEncoder.onMalformedInput(CodingErrorAction.IGNORE);
+            toDecoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+            toDecoder.onMalformedInput(CodingErrorAction.IGNORE);
+        } else if (sub.isEmpty()) {
+            fromEncoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+            fromEncoder.onMalformedInput(CodingErrorAction.IGNORE);
+            toEncoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+            toEncoder.onMalformedInput(CodingErrorAction.IGNORE);
+            toDecoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+            toDecoder.onMalformedInput(CodingErrorAction.IGNORE);
         } else {
-            // simulate the results of charset conversion
-            CharsetEncoder encoder = fromCharset.newEncoder();
-            CharsetDecoder decoder = toCharset.newDecoder();
-            if (RRuntime.isNA(sub)) {
-                encoder.onUnmappableCharacter(CodingErrorAction.REPORT);
-                encoder.onMalformedInput(CodingErrorAction.REPORT);
-                decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
-                decoder.onMalformedInput(CodingErrorAction.REPORT);
-            } else if ("byte".equals(sub)) {
-                // TODO: special mode that inserts <hexcode>
-                encoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
-                encoder.onMalformedInput(CodingErrorAction.IGNORE);
-                decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
-                decoder.onMalformedInput(CodingErrorAction.IGNORE);
-            } else if (sub.isEmpty()) {
-                encoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
-                encoder.onMalformedInput(CodingErrorAction.IGNORE);
-                decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
-                decoder.onMalformedInput(CodingErrorAction.IGNORE);
-            } else {
-                // ignore encoding errors
-                encoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
-                encoder.onMalformedInput(CodingErrorAction.IGNORE);
-                // TODO: support more than one character in "replacement"
-                decoder.replaceWith(sub.substring(0, 1));
-                decoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
-                decoder.onMalformedInput(CodingErrorAction.REPLACE);
+            // ignore encoding errors
+            fromEncoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+            fromEncoder.onMalformedInput(CodingErrorAction.IGNORE);
+            toEncoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+            toEncoder.onMalformedInput(CodingErrorAction.IGNORE);
+            // TODO: support more than one character in "replacement"
+            toEncoder.replaceWith(sub.substring(0, 1).getBytes());
+            toDecoder.replaceWith(sub.substring(0, 1));
+            toDecoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+            toDecoder.onMalformedInput(CodingErrorAction.REPLACE);
+        }
+        int length = x.getLength();
+        String[] data = new String[length];
+        for (int i = 0; i < length; i++) {
+            String value = x.getDataAt(i);
+            if (!RRuntime.isNA(value)) {
+                try {
+                    data[i] = toEncoder.canEncode(value) ? value : toDecoder.decode(fromEncoder.encode(CharBuffer.wrap(value))).toString();
+                } catch (CharacterCodingException e) {
+                    complete = false;
+                    data[i] = RRuntime.STRING_NA;
+                }
             }
-            int length = x.getLength();
-            String[] data = new String[length];
-            for (int i = 0; i < length; i++) {
-                String value = x.getDataAt(i);
-                if (!RRuntime.isNA(value)) {
+        }
+        RAbstractVector result;
+        if (toRaw) {
+            Object[] listData = new Object[data.length];
+            for (int i = 0; i < listData.length; i++) {
+                if (RRuntime.isNA(data[i])) {
+                    listData[i] = RNull.instance;
+                } else {
                     try {
-                        data[i] = decoder.decode(encoder.encode(CharBuffer.wrap(value))).toString();
+                        ByteBuffer buffer = toEncoder.encode(CharBuffer.wrap(data[i]));
+                        byte[] bytes = new byte[buffer.remaining()];
+                        buffer.get(bytes);
+                        listData[i] = RDataFactory.createRawVector(bytes);
                     } catch (CharacterCodingException e) {
-                        complete = false;
-                        data[i] = RRuntime.STRING_NA;
+                        listData[i] = RNull.instance;
                     }
                 }
             }
-            RAbstractVector result;
-            if (toRaw) {
-                Object[] listData = new Object[data.length];
-                for (int i = 0; i < listData.length; i++) {
-                    listData[i] = RRuntime.isNA(data[i]) ? RNull.instance : RawFunctions.stringToRaw(data[i]);
-                }
-                result = RDataFactory.createList(listData);
-            } else {
-                result = RDataFactory.createStringVector(data, complete);
-            }
-            copyAttributesNode.execute(result, x);
-            return result;
+            result = RDataFactory.createList(listData);
+        } else {
+            result = RDataFactory.createStringVector(data, complete);
         }
+        copyAttributesNode.execute(result, x);
+        return result;
     }
 
     private Charset getCharset(String name, String from, String to) {
