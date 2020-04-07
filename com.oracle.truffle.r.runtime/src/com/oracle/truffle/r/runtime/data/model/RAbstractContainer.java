@@ -34,6 +34,8 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
+import com.oracle.truffle.r.runtime.data.InternalDeprecation;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -84,6 +86,17 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
     public abstract RAbstractContainer materialize();
 
     public abstract Object getDataAtAsObject(int index);
+
+    /**
+     * Copies attributes from this container to the given one. It is a verbatim copy without any
+     * checks and it preserves the order of the attributes.
+     */
+    @InternalDeprecation("This should be rewritten to a node. Unlike with UnaryCopyAttributesNode, the semantics of this method is that it preserves the shape, which means that it preserves the order of attributes.")
+    public final void setAttributes(RAbstractContainer result) {
+        if (this.attributes != null) {
+            result.initAttributes(RAttributesLayout.copy(this.attributes));
+        }
+    }
 
     @Ignore
     @Override

@@ -561,12 +561,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return (RAbstractContainer) setClassAttrInternal(vector, classAttr);
     }
 
-    public final void setAttributes(RAbstractVector result) {
-        if (this.attributes != null) {
-            result.initAttributes(RAttributesLayout.copy(this.attributes));
-        }
-    }
-
     // public interface *copy* methods are final and delegate to *internalCopyAndReport* methods
 
     /**
