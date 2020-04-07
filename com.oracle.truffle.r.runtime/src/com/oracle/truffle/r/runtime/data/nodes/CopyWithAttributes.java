@@ -22,18 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Copies a container and all its attributes (shallow copy). The reference counts of the attributes
- * is set accordingly.
+ * is set accordingly. The copying preserves the order of the attributes and does not do any
+ * validation of the attribute values.
  */
 public final class CopyWithAttributes extends RBaseNode {
-    @Child private UnaryCopyAttributesNode unaryCopyAttributesNode = UnaryCopyAttributesNode.create();
-
     private CopyWithAttributes() {
     }
 
@@ -41,8 +40,16 @@ public final class CopyWithAttributes extends RBaseNode {
         return new CopyWithAttributes();
     }
 
+    @SuppressWarnings("static-method")
     public RAbstractContainer execute(AbstractContainerLibrary containerLibrary, RAbstractContainer container) {
         RAbstractContainer result = containerLibrary.copy(container);
-        return unaryCopyAttributesNode.execute(result, container);
+        setAttributes(container, result);
+        return result;
+    }
+
+    // TODO: this should be a node
+    @TruffleBoundary
+    private static void setAttributes(RAbstractContainer container, RAbstractContainer result) {
+        container.setAttributes(result);
     }
 }

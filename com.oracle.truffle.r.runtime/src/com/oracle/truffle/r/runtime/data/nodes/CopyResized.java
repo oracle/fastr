@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -43,25 +44,26 @@ public abstract class CopyResized extends RBaseNode {
 
     public abstract RAbstractVector execute(RAbstractContainer container, int newSize, boolean fillWithNA);
 
-    @Specialization(guards = {"fillWithNA == fillWithNAIn", "xClass == xIn.getClass()"}, limit = "getGenericVectorAccessCacheSize()")
-    RAbstractVector doIt(RAbstractVector xIn, int newSize, boolean fillWithNAIn,
-                    @Cached("xIn.getClass()") Class<? extends RAbstractVector> xClass,
+    @Specialization(guards = "fillWithNA == fillWithNAIn", limit = "getGenericVectorAccessCacheSize()")
+    RAbstractVector doIt(RAbstractVector x, int newSize, boolean fillWithNAIn,
                     @Cached("fillWithNAIn") boolean fillWithNA,
-                    @CachedLibrary("xIn.getData()") VectorDataLibrary xDataLib,
+                    @CachedLibrary("x") AbstractContainerLibrary xLib,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
                     @Cached CopyResizedToPreallocated copyResizedToPreallocated) {
-        Object xData = xIn.getData();
+        Object xData = x.getData();
         // empty input is allowed only if fillWithNA is true
         assert fillWithNAIn || xDataLib.getLength(xData) > 0;
-        RAbstractVector x = xClass.cast(xIn);
-        RAbstractVector result = x.createEmptySameType(newSize, xDataLib.isComplete(xData));
+        RAbstractVector result = xLib.createEmptySameType(x, newSize, false);
         copyResizedToPreallocated.execute(xDataLib, xData, result.getData(), fillWithNA);
         return result;
     }
 
-    @Specialization(replaces = "doIt")
     @TruffleBoundary
+    @Specialization(replaces = "doIt")
     RAbstractVector doUncached(RAbstractVector x, int newSize, boolean fillWithNA,
                     @Cached CopyResizedToPreallocated copyResizedToPreallocated) {
-        return doIt(x, newSize, fillWithNA, x.getClass(), fillWithNA, VectorDataLibrary.getFactory().getUncached(), copyResizedToPreallocated);
+        AbstractContainerLibrary continerLib = AbstractContainerLibrary.getFactory().getUncached();
+        VectorDataLibrary dataLib = VectorDataLibrary.getFactory().getUncached();
+        return doIt(x, newSize, fillWithNA, fillWithNA, continerLib, dataLib, copyResizedToPreallocated);
     }
 }

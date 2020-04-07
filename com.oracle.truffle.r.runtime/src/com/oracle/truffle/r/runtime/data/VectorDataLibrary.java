@@ -332,6 +332,17 @@ public abstract class VectorDataLibrary extends Library {
      * their {@link #isComplete(Object)} state. It is left to the user to track the {@code NA}
      * values, for example, using {@link NACheck}.
      *
+     * One pattern is to pass the {@link NACheck#neverSeenNA()} of the {@link #getNACheck(Object)}
+     * of the input vector (one we took that data from) as the {@code neverSeenNA} parameter. On top
+     * of that, if we know that there was no conversion that could have introduced {@code NA} values
+     * (e.g. , in
+     * {@link #transfer(Object, RandomAccessWriteIterator, int, VectorDataLibrary, RandomAccessIterator, Object, int)}
+     * ), we can use the following pattern:
+     *
+     * <pre>
+     * inputDataLib.isComplete(inputData) || dataLib.getNACheck(inputData).neverSeenNA()
+     * </pre>
+     *
      * Notes for implementors:
      *
      * Make sure to update the {@link SeqWriteIterator#committed} flag to {@code true}. It is

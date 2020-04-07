@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
+import com.oracle.truffle.r.runtime.data.InternalDeprecation;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -466,6 +467,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
+    @InternalDeprecation("Use dedicated node for attributes manipulation: applies to all the hasXYZ methods")
     public final boolean hasDimensions() {
         if (!RRuntime.hasVectorData(this) && !isMaterialized()) {
             return false;
@@ -494,6 +496,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return attributes == null ? false : attributes.containsKey(RRuntime.NAMES_ATTR_KEY);
     }
 
+    @InternalDeprecation("Use dedicated node for attributes manipulation")
     public final boolean isMatrix() {
         if (!RRuntime.hasVectorData(this) && !isMaterialized()) {
             return false;
@@ -502,6 +505,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return dimensions != null && dimensions.length == 2;
     }
 
+    @InternalDeprecation("Use dedicated node for attributes manipulation")
     public final boolean isArray() {
         if (!RRuntime.hasVectorData(this) && !isMaterialized()) {
             return false;
@@ -511,6 +515,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
+    @InternalDeprecation("Use dedicated node for attributes manipulation")
     public final int[] getDimensions() {
         if (!RRuntime.hasVectorData(this) && !isMaterialized()) {
             return null;
@@ -523,6 +528,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      *
      * @param newDimensions
      */
+    @InternalDeprecation("Use dedicated node for attributes manipulation")
     public final void setDimensionsNoCheck(int[] newDimensions) {
         if (newDimensions == null) {
             removeAttributeMapping(RRuntime.DIM_ATTR_KEY);
@@ -532,6 +538,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
+    @InternalDeprecation("Use dedicated node for attributes manipulation")
     public final void setDimensions(int[] newDimensions) {
         if (!RRuntime.hasVectorData(this) && !isMaterialized()) {
             // should only be used on materialized vector
@@ -554,21 +561,14 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return (RAbstractContainer) setClassAttrInternal(vector, classAttr);
     }
 
-    public final void setAttributes(RAbstractVector result) {
-        if (this.attributes != null) {
-            result.initAttributes(RAttributesLayout.copy(this.attributes));
-        }
-    }
-
     // public interface *copy* methods are final and delegate to *internalCopyAndReport* methods
 
     /**
-     * Creates a copy of the vector. This copies all of the contained data as well. If the data in
-     * the vector is to be updated upon copying, the corresponding {@code copyResetData()} method
-     * should be used.
+     * Creates a copy of the vector. This copies all of the contained data as well.
      */
     @Override
     @Ignore // AbstractContainerLibrary
+    @InternalDeprecation("Use AbstractContainerLibrary#copy or CopyWithAttributesNode (note: this method copies with attributes by default)")
     public RAbstractVector copy() {
         RAbstractVector result = internalCopyAndReport();
         setAttributes(result);
@@ -576,6 +576,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return result;
     }
 
+    @InternalDeprecation("Use AbstractContainerLibrary#copy")
     public RAbstractVector copyDropAttributes() {
         RAbstractVector materialized = materialize();
         assert materialized.isMaterialized();
@@ -583,26 +584,18 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @Override
+    @InternalDeprecation("Should be rewritten to a new node like CopyWithAttributes/CopyResized. Semantics should be documented better: does it copy the attributes deeply? Does it copy deeply recursively?")
     public final RAbstractVector deepCopy() {
         RAbstractVector result = internalDeepCopyAndReport();
         setAttributes(result);
         return result;
     }
 
+    @InternalDeprecation("Should use CopyResized node.")
     public RAbstractVector copyResized(int size, boolean fillNA) {
         RAbstractVector materialized = materialize();
         assert materialized.isMaterialized();
         RAbstractVector result = materialized.internalCopyResized(size, fillNA, null);
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
-    }
-
-    public RAbstractVector copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        RAbstractVector materialized = materialize();
-        assert materialized.isMaterialized();
-        // TODO support for higher dimensions
-        assert newDimensions.length == 2;
-        RAbstractVector result = materialized.internalCopyResized(newDimensions[0] * newDimensions[1], fillNA, newDimensions);
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }
@@ -654,15 +647,18 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      * @return updated vector
      */
     @SuppressWarnings("unused")
+    @InternalDeprecation("Use VectorDataLibrary")
     public RAbstractVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
+    @InternalDeprecation("Use VectorDataLibrary#transfer")
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         throw new UnsupportedOperationException();
     }
 
+    @InternalDeprecation("Use dedicated node for attributes manipulation")
     public final RAttributable copyAttributesFrom(RAbstractContainer vector) {
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
         assert (!hasNames());
@@ -698,6 +694,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         }
     }
 
+    @InternalDeprecation("Use dedicated node for attributes manipulation")
     public final void copyNamesDimsDimNamesFrom(RAbstractVector vector, RBaseNode invokingNode) {
         // it's meant to be used on a "fresh" vector with only dimensions potentially set
         assert (!hasDimNames());
@@ -718,6 +715,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
      * Inits dims, names and dimnames attributes and it should only be invoked if no attributes were
      * initialized yet.
      */
+    @InternalDeprecation("Use dedicated node for attributes manipulation")
     public final void initDimsNamesDimNames(int[] dimensions, RStringVector names, RList dimNames) {
         assert (this.attributes == null) : "Vector attributes must be null";
         assert names != this;
