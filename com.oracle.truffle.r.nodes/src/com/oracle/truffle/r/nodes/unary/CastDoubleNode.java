@@ -34,11 +34,11 @@ import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
@@ -195,8 +195,8 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return value instanceof RForeignVectorWrapper;
     }
 
-    @Specialization
-    protected RDoubleVector doForeignWrapper(RForeignBooleanWrapper operand) {
+    @Specialization(guards = "operand.isForeignWrapper()")
+    protected RDoubleVector doForeignWrapper(RLogicalVector operand) {
         return RClosures.createToDoubleVector(operand, true);
     }
 

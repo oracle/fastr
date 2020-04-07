@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
-import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -78,7 +78,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
     }
 
     public final Object applyAccessField(Object vector, String singlePosition) {
-        return apply(vector, new Object[]{singlePosition}, RLogical.valueOf(false), RMissing.instance);
+        return apply(vector, new Object[]{singlePosition}, RDataFactory.createLogicalVectorFromScalar(false), RMissing.instance);
     }
 
     public final Object apply(Object vector, Object[] positions, Object exact, Object dropDimensions) {

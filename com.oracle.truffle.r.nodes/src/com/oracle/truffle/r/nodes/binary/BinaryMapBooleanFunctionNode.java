@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNAFunctionNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.And;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic.Or;
 import com.oracle.truffle.r.runtime.ops.BooleanOperation;
@@ -47,8 +46,8 @@ public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode 
 
     @Override
     public byte applyLogical(byte left, byte right) {
-        assert RLogical.isValid(left);
-        assert RLogical.isValid(right);
+        assert RRuntime.isValidLogical(left);
+        assert RRuntime.isValidLogical(right);
         if (leftNACheck.check(left)) {
             if (operation instanceof And && right == 0) {
                 return RRuntime.LOGICAL_FALSE;

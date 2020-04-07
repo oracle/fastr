@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -59,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -899,7 +899,7 @@ public class RRuntime {
         } else if (obj instanceof RDoubleVector) {
             return double2logical(((RDoubleVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractLogicalVector) {
-            return ((RAbstractLogicalVector) obj).getDataAt(0);
+            return ((RLogicalVector) obj).getDataAt(0);
         } else if (obj instanceof RAbstractComplexVector) {
             return complex2logical(((RAbstractComplexVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractStringVector) {
@@ -907,6 +907,10 @@ public class RRuntime {
         } else {
             return LOGICAL_NA;
         }
+    }
+
+    public static boolean isValidLogical(byte value) {
+        return value == RRuntime.LOGICAL_NA || value == RRuntime.LOGICAL_FALSE || value == RRuntime.LOGICAL_TRUE;
     }
 
     /**
@@ -1012,7 +1016,7 @@ public class RRuntime {
         } else if (obj instanceof Double) {
             return RDataFactory.createDoubleVectorFromScalar((double) obj);
         } else if (obj instanceof Byte) {
-            return RLogical.valueOf((byte) obj);
+            return RDataFactory.createLogicalVectorFromScalar((byte) obj);
         } else if (obj instanceof String) {
             return RString.valueOf((String) obj);
         } else {
@@ -1059,7 +1063,7 @@ public class RRuntime {
 
     public static boolean hasVectorData(Object o) {
         // TODO: for the time beeeing, until all vectors switch to RVectorData
-        return o instanceof RIntVector || o instanceof RDoubleVector || o instanceof RRawVector;
+        return o instanceof RIntVector || o instanceof RDoubleVector || o instanceof RRawVector || o instanceof RLogicalVector;
     }
 
     public static boolean isSequence(Object o) {

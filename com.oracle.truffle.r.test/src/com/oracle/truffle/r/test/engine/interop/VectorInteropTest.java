@@ -40,9 +40,9 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RInteropComplex;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -122,7 +122,7 @@ public class VectorInteropTest extends AbstractInteropTest {
     public void testReadingNAReturnsTruffleObjectThatIsNull() throws Exception {
         // logical
         testRNARTOTIN(RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR), true);
-        testRNARTOTIN(new RForeignBooleanWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new Boolean[]{true, null})), true);
+        testRNARTOTIN(RLogicalVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new Boolean[]{true, null})), true);
         getInterop().isNull(RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR));
 
         // int
@@ -284,9 +284,9 @@ public class VectorInteropTest extends AbstractInteropTest {
                         RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA, RRuntime.LOGICAL_TRUE}, RDataFactory.INCOMPLETE_VECTOR),
                         RDataFactory.createEmptyLogicalVector(),
                         // logical foreign wrapper
-                        new RForeignBooleanWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new boolean[]{true})),
-                        new RForeignBooleanWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new boolean[]{true, false})),
-                        new RForeignBooleanWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new boolean[]{})),
+                        RLogicalVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new boolean[]{true})),
+                        RLogicalVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new boolean[]{true, false})),
+                        RLogicalVector.createForeignWrapper(RContext.getInstance().getEnv().asGuestValue(new boolean[]{})),
 
                         // raw array
                         RDataFactory.createRawVector(new byte[]{1}),

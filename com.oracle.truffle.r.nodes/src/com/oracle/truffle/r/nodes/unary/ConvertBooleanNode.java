@@ -30,14 +30,16 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -114,15 +116,20 @@ public abstract class ConvertBooleanNode extends RNode {
         return logicalValue;
     }
 
-    @Specialization
-    protected byte doRaw(RRaw value) {
-        return RRuntime.raw2logical(value.getValue());
+    @Specialization(guards = "value.getLength() == 1", limit = "getGenericVectorAccessCacheSize()")
+    protected byte doRLogical(RLogicalVector value,
+                    @CachedLibrary("value.getData()") VectorDataLibrary library) {
+        // fast path for very common case, handled also in doAtomicVector
+        byte res = library.getLogicalAt(value.getData(), 0);
+        if (naProfile.isNA(res)) {
+            throw error(RError.Message.NA_UNEXP);
+        }
+        return res;
     }
 
     @Specialization
-    protected byte doRLogical(RLogical value) {
-        // fast path for very common case, handled also in doAtomicVector
-        return value.getValue();
+    protected byte doRaw(RRaw value) {
+        return RRuntime.raw2logical(value.getValue());
     }
 
     private void checkLength(int length) {

@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypes;
@@ -119,7 +118,7 @@ public abstract class Subscript extends RBuiltinNode.Arg4 {
                 args[i] = REmpty.instance;
             }
         }
-        return extractNode.apply(x, args, exact, RLogical.TRUE);
+        return extractNode.apply(x, args, exact, RRuntime.LOGICAL_TRUE);
     }
 
     @Specialization(guards = "!indexes.isEmpty()", replaces = "getIndexes")
@@ -134,6 +133,6 @@ public abstract class Subscript extends RBuiltinNode.Arg4 {
                 args[i] = REmpty.instance;
             }
         }
-        return extractNode.apply(x, args, exact, RLogical.TRUE);
+        return extractNode.apply(x, args, exact, RRuntime.LOGICAL_TRUE);
     }
 }

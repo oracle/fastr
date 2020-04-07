@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RLogical;
 
 /**
  * All methods must be invoked with non-NA values.
@@ -103,8 +102,8 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public boolean opLogical(byte left, byte right) {
-            assert RLogical.isValid(left) && !RRuntime.isNA(left);
-            assert RLogical.isValid(right) && !RRuntime.isNA(right);
+            assert RRuntime.isValidLogical(left) && !RRuntime.isNA(left);
+            assert RRuntime.isValidLogical(right) && !RRuntime.isNA(right);
             return (left & right) != 0x0;
         }
 
@@ -158,8 +157,8 @@ public abstract class BinaryLogic extends BooleanOperation {
 
         @Override
         public boolean opLogical(byte left, byte right) {
-            assert RLogical.isValid(left);
-            assert RLogical.isValid(right);
+            assert RRuntime.isValidLogical(left);
+            assert RRuntime.isValidLogical(right);
             return (left | right) != 0x0;
         }
 

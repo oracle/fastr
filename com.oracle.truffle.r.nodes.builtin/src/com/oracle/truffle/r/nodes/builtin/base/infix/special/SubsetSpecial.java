@@ -33,7 +33,6 @@ import com.oracle.truffle.r.nodes.helpers.SpecialsUtils.ConvertIndex;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -67,7 +66,7 @@ public abstract class SubsetSpecial extends AccessSpecial {
     @Specialization(guards = {"simpleVector(vector)", "!inReplacement"})
     protected Object accessObject(RAbstractVector vector, Object index,
                     @Cached("createAccess()") ExtractVectorNode extract) {
-        return extract.apply(vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
+        return extract.apply(vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
     }
 
     public static RNode create(boolean inReplacement, RNode vectorNode, ConvertIndex index) {

@@ -43,10 +43,10 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.RRuntime;
 
 @ImportStatic(DSLConfig.class)
 @RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...",
@@ -107,7 +107,7 @@ public abstract class Subset extends RBuiltinNode.Arg3 {
                 args[i] = REmpty.instance;
             }
         }
-        return extractNode.apply(x, args, RLogical.TRUE, drop);
+        return extractNode.apply(x, args, RRuntime.LOGICAL_TRUE, drop);
     }
 
     @Specialization(guards = "!indexes.isEmpty()", replaces = "getIndexes")
@@ -118,6 +118,6 @@ public abstract class Subset extends RBuiltinNode.Arg3 {
                 args[i] = REmpty.instance;
             }
         }
-        return extractNode.apply(x, args, RLogical.TRUE, drop);
+        return extractNode.apply(x, args, RRuntime.LOGICAL_TRUE, drop);
     }
 }

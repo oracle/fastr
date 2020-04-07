@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
@@ -59,7 +59,7 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
 
     @TruffleBoundary
     @Specialization
-    protected Object parseRd(Object conObj, REnvironment srcfile, @SuppressWarnings("unused") Object encoding, RAbstractLogicalVector verbose, RAbstractStringVector basename, Object fragmentObj,
+    protected Object parseRd(Object conObj, REnvironment srcfile, @SuppressWarnings("unused") Object encoding, RLogicalVector verbose, RAbstractStringVector basename, Object fragmentObj,
                     Object warningCallsObj, Object macros, Object warndupsObj,
                     @Cached("create()") AsIntegerNode conAsInteger,
                     @Cached("create()") AsLogicalNode fragmentAsLogical,
