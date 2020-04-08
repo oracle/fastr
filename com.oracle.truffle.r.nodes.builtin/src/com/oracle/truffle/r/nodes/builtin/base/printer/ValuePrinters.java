@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.TruffleObjectConverter;
@@ -98,7 +98,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
                     printer = LogicalVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractComplexVector) {
                     printer = ComplexVectorPrinter.INSTANCE;
-                } else if (x instanceof RAbstractRawVector) {
+                } else if (x instanceof RRawVector) {
                     printer = RawVectorPrinter.INSTANCE;
                 } else if (x instanceof RAbstractListVector) {
                     printer = ListPrinter.INSTANCE;

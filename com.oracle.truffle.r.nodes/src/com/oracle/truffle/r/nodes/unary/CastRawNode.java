@@ -39,10 +39,9 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -88,7 +87,7 @@ public abstract class CastRawNode extends CastBaseNode {
     public abstract Object executeRaw(Object o);
 
     @Specialization
-    protected RAbstractRawVector doNull(@SuppressWarnings("unused") RNull operand) {
+    protected RRawVector doNull(@SuppressWarnings("unused") RNull operand) {
         return RDataFactory.createEmptyRawVector();
     }
 
@@ -226,7 +225,7 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RAbstractRawVector doRawVector(RAbstractRawVector operand) {
+    protected RRawVector doRawVector(RRawVector operand) {
         return operand;
     }
 
@@ -244,8 +243,8 @@ public abstract class CastRawNode extends CastBaseNode {
                     Object castEntry = castRawRecursive(entry);
                     if (castEntry instanceof RRaw) {
                         bdata[i] = ((RRaw) castRawRecursive(castEntry)).getValue();
-                    } else if (castEntry instanceof RAbstractRawVector) {
-                        RAbstractRawVector rawVector = (RAbstractRawVector) castEntry;
+                    } else if (castEntry instanceof RRawVector) {
+                        RRawVector rawVector = (RRawVector) castEntry;
                         if (rawVector.getLength() == 1) {
                             bdata[i] = rawVector.getRawDataAt(0);
                         } else if (rawVector.getLength() == 0) {
@@ -285,7 +284,7 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     protected boolean isRawVector(RAbstractAtomicVector x) {
-        return x instanceof RAbstractRawVector;
+        return x instanceof RRawVector;
     }
 
 }

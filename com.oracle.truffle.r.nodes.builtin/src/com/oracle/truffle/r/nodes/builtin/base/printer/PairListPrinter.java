@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 //Transcribed from GnuR, src/main/print.c
@@ -71,7 +71,7 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
                     pbuf = "Complex," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractStringVector) {
                     pbuf = "Character," + ((RAbstractContainer) tmp).getLength();
-                } else if (tmp instanceof RAbstractRawVector) {
+                } else if (tmp instanceof RRawVector) {
                     pbuf = "Raw," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractListVector) {
                     pbuf = "List," + ((RAbstractContainer) tmp).getLength();

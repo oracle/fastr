@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 
 /**
  * Distinguishes what R considers an "atomic" vector, e.g. {@code integer()} from other "vectors",
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
  * <li>{@link RDoubleVector}</li>
  * <li>{@link RAbstractComplexVector}</li>
  * <li>{@link RAbstractStringVector}</li>
- * <li>{@link RAbstractRawVector}</li>
+ * <li>{@link RRawVector}</li>
  * </ul>
  */
 public abstract class RAbstractAtomicVector extends RAbstractVector {

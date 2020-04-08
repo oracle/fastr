@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -81,7 +81,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization
-        public RLogicalVector doRaw(RAbstractRawVector x) {
+        public RLogicalVector doRaw(RRawVector x) {
             return doFunConstant(x, RRuntime.LOGICAL_FALSE);
         }
 

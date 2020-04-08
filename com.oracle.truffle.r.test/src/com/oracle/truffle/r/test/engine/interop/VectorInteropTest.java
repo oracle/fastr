@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import static org.junit.Assert.fail;
@@ -316,8 +316,8 @@ public class VectorInteropTest extends AbstractInteropTest {
         if (vec instanceof RAbstractLogicalVector) {
             return RRuntime.fromLogical(((RAbstractLogicalVector) vec).getDataAt(0));
         }
-        if (vec instanceof RAbstractRawVector) {
-            return ((RAbstractRawVector) vec).getRawDataAt(0);
+        if (vec instanceof RRawVector) {
+            return ((RRawVector) vec).getRawDataAt(0);
         }
         return vec.getDataAtAsObject(0);
     }
@@ -331,7 +331,7 @@ public class VectorInteropTest extends AbstractInteropTest {
             return RRuntime.isNA(((RAbstractLogicalVector) vec).getDataAt(0));
         } else if (vec instanceof RAbstractStringVector) {
             return RRuntime.isNA(((RAbstractStringVector) vec).getDataAt(0));
-        } else if (vec instanceof RAbstractComplexVector || vec instanceof RAbstractRawVector) {
+        } else if (vec instanceof RAbstractComplexVector || vec instanceof RRawVector) {
             return false;
         }
         assertTrue("unexpected type of RAbstractVector " + vec != null ? vec.getClass().getSimpleName() : "null", false);
@@ -365,7 +365,7 @@ public class VectorInteropTest extends AbstractInteropTest {
         if (vec instanceof RAbstractComplexVector) {
             return RRuntime.isNA(((RAbstractComplexVector) vec).getDataAt(0));
         }
-        if (vec instanceof RAbstractRawVector) {
+        if (vec instanceof RRawVector) {
             return false;
         }
         fail();

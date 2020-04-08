@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -488,7 +488,7 @@ public class CastUtils {
         if (RAbstractComplexVector.class.isAssignableFrom(vectorType) || RComplex.class.isAssignableFrom(vectorType)) {
             return RComplex.class;
         }
-        if (RAbstractRawVector.class.isAssignableFrom(vectorType)) {
+        if (RRawVector.class.isAssignableFrom(vectorType)) {
             return RRaw.class;
         }
         if (RAbstractListBaseVector.class.isAssignableFrom(vectorType)) {
@@ -576,7 +576,7 @@ public class CastUtils {
             case Complex:
                 return new Class<?>[]{RAbstractComplexVector.class};
             case Raw:
-                return new Class<?>[]{RAbstractRawVector.class};
+                return new Class<?>[]{RRawVector.class};
             case Any:
                 return new Class<?>[]{Object.class};
         }
@@ -868,7 +868,7 @@ public class CastUtils {
             samples.add(RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, false));
         }
 
-        if (RAbstractRawVector.class.isAssignableFrom(cls)) {
+        if (RRawVector.class.isAssignableFrom(cls)) {
             samples.add((byte) 0);
             samples.add(RDataFactory.createRawVector(new byte[]{0}));
         }

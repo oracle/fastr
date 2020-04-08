@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Asserts;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -2260,8 +2259,8 @@ public abstract class VectorDataLibrary extends Library {
         return (RAbstractLogicalVector) obj;
     }
 
-    private static RAbstractRawVector asRaw(Object obj) {
-        return (RAbstractRawVector) obj;
+    private static RRawVector asRaw(Object obj) {
+        return (RRawVector) obj;
     }
 
     private static RAbstractStringVector asString(Object obj) {

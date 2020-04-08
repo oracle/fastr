@@ -91,7 +91,7 @@ import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -310,7 +310,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
             case Character:
                 return visit(new TypeFilter<>(String.class, RAbstractStringVector.class), previous);
             case Raw:
-                return visit(new TypeFilter<>(RAbstractRawVector.class), previous);
+                return visit(new TypeFilter<>(RRawVector.class), previous);
             default:
                 throw RInternalError.unimplemented("TODO: more types here");
         }

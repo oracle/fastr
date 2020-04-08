@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -83,7 +82,7 @@ public class RawFunctions {
 
         static {
             Casts casts = new Casts(RawToChar.class);
-            casts.arg("x").boxPrimitive().mustBe(instanceOf(RAbstractRawVector.class), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
+            casts.arg("x").boxPrimitive().mustBe(instanceOf(RRawVector.class), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
             casts.arg("multiple").defaultError(RError.Message.INVALID_LOGICAL).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
@@ -98,7 +97,7 @@ public class RawFunctions {
         }
 
         @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
-        protected Object rawToChar(RAbstractRawVector x, boolean multiple,
+        protected Object rawToChar(RRawVector x, boolean multiple,
                         @Cached("x.access()") VectorAccess xAccess) {
             try (SequentialIterator iter = xAccess.access(x)) {
                 if (multiple) {
@@ -124,7 +123,7 @@ public class RawFunctions {
 
         @Specialization(replaces = "rawToChar")
         @TruffleBoundary
-        protected Object rawToCharGeneric(RAbstractRawVector x, boolean multiple) {
+        protected Object rawToCharGeneric(RRawVector x, boolean multiple) {
             return rawToChar(x, multiple, x.slowPathAccess());
         }
     }
@@ -134,12 +133,12 @@ public class RawFunctions {
 
         static {
             Casts casts = new Casts(RawShift.class);
-            casts.arg("x").boxPrimitive().mustBe(instanceOf(RAbstractRawVector.class), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
+            casts.arg("x").boxPrimitive().mustBe(instanceOf(RRawVector.class), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
             casts.arg("n").defaultError(RError.Message.MUST_BE_SMALL_INT, "shift").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(-8).and(lte(8)));
         }
 
         @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
-        protected RRawVector rawShift(RAbstractRawVector x, int n,
+        protected RRawVector rawShift(RRawVector x, int n,
                         @Cached("createBinaryProfile()") ConditionProfile negativeShiftProfile,
                         @Cached("x.access()") VectorAccess xAccess) {
             try (SequentialIterator iter = xAccess.access(x)) {
@@ -159,7 +158,7 @@ public class RawFunctions {
 
         @Specialization(replaces = "rawShift")
         @TruffleBoundary
-        protected RRawVector rawShiftGeneric(RAbstractRawVector x, int n,
+        protected RRawVector rawShiftGeneric(RRawVector x, int n,
                         @Cached("createBinaryProfile()") ConditionProfile negativeShiftProfile) {
             return rawShift(x, n, negativeShiftProfile, x.slowPathAccess());
         }

@@ -95,7 +95,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNodeGen;
@@ -349,7 +349,7 @@ public final class PipelineToCastNode {
                         }
                     };
                 case Raw:
-                    return x -> x instanceof RAbstractRawVector;
+                    return x -> x instanceof RRawVector;
                 default:
                     throw RInternalError.unimplemented("type " + filter.getType());
             }
