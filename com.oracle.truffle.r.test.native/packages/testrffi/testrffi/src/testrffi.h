@@ -164,3 +164,7 @@ extern SEXP benchProtect(SEXP x, SEXP nn);
 extern SEXP testMissingArgWithATTRIB();
 
 extern SEXP testPRIMFUN(SEXP fun, SEXP args);
+
+extern SEXP testTrace();
+
+extern SEXP testdiv(SEXP n);

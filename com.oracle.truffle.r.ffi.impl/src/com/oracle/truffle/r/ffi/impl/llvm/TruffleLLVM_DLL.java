@@ -78,7 +78,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             if (!isInitialization) {
                 before = stateRFFI.beforeDowncall(null, Type.LLVM);
             }
-            Source src = Source.newBuilder("llvm", file).internal(true).build();
+            Source src = Source.newBuilder("llvm", file).internal(isLibR).build();
             Object lib = context.getEnv().parseInternal(src).call();
             assert lib instanceof TruffleObject;
             if (isLibR) {

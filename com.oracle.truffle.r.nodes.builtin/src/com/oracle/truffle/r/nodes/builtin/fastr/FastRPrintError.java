@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,31 +28,27 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notLogicalNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-@RBuiltin(name = ".fastr.printError", visibility = OFF, kind = PRIMITIVE, parameterNames = {"txt", "newLine"}, behavior = COMPLEX)
-public abstract class FastRPrintError extends RBuiltinNode.Arg2 {
+@RBuiltin(name = ".fastr.printError", visibility = OFF, kind = PRIMITIVE, parameterNames = {"txt"}, behavior = COMPLEX)
+public abstract class FastRPrintError extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(FastRPrintError.class);
         casts.arg("txt").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-        casts.arg("newLine").mapMissing(Predef.constant(RRuntime.LOGICAL_TRUE)).mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(notLogicalNA()).map(
-                        Predef.toBoolean());
     }
 
     @TruffleBoundary
     @Specialization
-    public Object printError(String txt, boolean nl) {
-        Utils.writeStderr(txt, nl);
+    public Object printError(String txt) {
+        if (!txt.trim().isEmpty()) {
+            Utils.writeStderr(txt, true);
+        }
         return RNull.instance;
     }
 }

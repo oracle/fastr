@@ -1103,3 +1103,24 @@ SEXP testPRIMFUN(SEXP fun, SEXP args) {
 	return R_NilValue;
 }
 #endif
+
+void testTrace3() {
+  Rf_error("native test error");
+}
+
+void testTrace2() {
+    testTrace3();
+}
+
+SEXP testTrace() {
+  testTrace2();
+}
+
+SEXP testdiv(SEXP n) {
+    int y = 5 / INTEGER_VALUE(n);      
+    SEXP resVec;
+    PROTECT(resVec = allocVector(INTSXP, 1));
+    INTEGER(resVec)[0] = y;
+    UNPROTECT(1);
+    return resVec;
+}

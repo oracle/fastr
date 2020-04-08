@@ -6,6 +6,7 @@ New features:
 	* SVG support will be added in the future
 	* Display lists are fully implemented, which, e.g., makes Shiny work better in FastR
 * Java API for implementing custom graphics devices based on `JavaGD`
+* print stacktraces (aka traceback()) for errors coming from c-code when FastR running in llvm mode
 
 Bug fixes:
 

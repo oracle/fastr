@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,19 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
+import static com.oracle.truffle.r.runtime.RError.findParentRBase;
+
 import java.util.ArrayList;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleException;
+import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleStackTrace;
+import com.oracle.truffle.api.TruffleStackTraceElement;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -492,18 +499,32 @@ public class RErrorHandling {
         return RContext.getRRuntimeASTAccess().findCaller(callObj);
     }
 
-    static RError errorcallDflt(boolean showCall, RBaseNode callObj, Message msg, Object... objects) throws RError {
+    static RError errorcallDflt(boolean showCall, RBaseNode callObj, Message msg, Object... objects) {
         return errorcallDfltWithCall(callObj, showCall ? findCaller(callObj) : RNull.instance, msg, objects);
+    }
+
+    static RError errorcallDflt(RuntimeException customException, boolean showCall, RBaseNode callObj, Message msg, Object... objects) {
+        return errorcallDfltWithCall(customException, callObj, showCall ? findCaller(callObj) : RNull.instance, msg, objects);
+    }
+
+    private static RError errorcallDfltWithCall(Node location, Object call, Message msg, Object... objects) {
+        return errorcallDfltWithCall(null, location, call, msg, objects);
     }
 
     /**
      * The default error handler. This is where all the error message formatting is done and the
      * output.
      */
-    private static RError errorcallDfltWithCall(Node location, Object call, Message msg, Object... objects) throws RError {
+    private static RError errorcallDfltWithCall(RuntimeException customException, Node location, Object call, Message msg, Object... objects) {
         String fmsg = formatMessage(msg, objects);
 
-        String errorMessage = createErrorMessage(call, fmsg);
+        RContext context = RContext.getInstance();
+        String errorMessage;
+        if (customException == null) {
+            errorMessage = createErrorMessage(call, fmsg);
+        } else {
+            errorMessage = getPolyglotErrorMessage(context, customException);
+        }
 
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         if (errorHandlingState.inError > 0) {
@@ -519,7 +540,7 @@ public class RErrorHandling {
             throw new RError(null, location);
         }
 
-        Object errorExpr = RContext.getInstance().stateROptions.getValue("error");
+        Object errorExpr = context.stateROptions.getValue("error");
         boolean printNow = errorExpr != RNull.instance || RContext.isEmbedded();
 
         if (printNow) {
@@ -576,16 +597,44 @@ public class RErrorHandling {
             }
         }
 
-        if (RContext.getInstance().isInteractive() || errorExpr != RNull.instance) {
-            Object trace = Utils.createTraceback(0);
+        if (context.isInteractive() || errorExpr != RNull.instance) {
+            Object lastInteropTrace = getLastInteropTrace(context);
+            Object trace = lastInteropTrace != null ? lastInteropTrace : Utils.createTraceback(0);
             try {
+                // TODO: create second traceback with all interop/native frames -> put into
+                // .FastRTraceback (or it can be something in RContext not env)
+                // fastr.traceback without argument -> use .FastRTraceback
                 REnvironment env = RContext.getInstance().stateREnvironment.getBaseEnv();
                 env.put(".Traceback", trace);
             } catch (PutException x) {
                 throw RInternalError.shouldNotReachHere("cannot write .Traceback");
             }
         }
-        throw new RError(printNow ? null : errorMessage, location);
+        context.lastInteropTrace = null;
+        throw customException != null ? customException : new RError(printNow ? null : errorMessage, location);
+    }
+
+    public static Object getLastInteropTrace(RContext context) {
+        if (context.lastInteropTrace != null) {
+            Object pl = Utils.toPairList(context.lastInteropTrace, 0);
+            if (pl instanceof RPairList) {
+                return pl;
+            }
+        }
+        return null;
+    }
+
+    private static String getPolyglotErrorMessage(RContext context, RuntimeException customException) {
+        String errorMessage;
+        String str;
+        TruffleLanguage.Env env = context.getEnv();
+        if (env.isHostException(customException)) {
+            str = env.asHostException(customException).toString();
+        } else {
+            str = customException.getMessage();
+        }
+        errorMessage = "Error in polyglot evaluation : " + str;
+        return errorMessage;
     }
 
     private static MaterializedFrame safeCurrentFrame() {
@@ -608,7 +657,25 @@ public class RErrorHandling {
                 }
             }
         }
-        throw e;
+
+        // TODO: probably some special handling for case e instanceof HostException
+
+        // Save the interop trace so that we can use it in traceback(..., interop=T)
+        List<TruffleStackTraceElement> interopTrace = TruffleStackTrace.getStackTrace(e);
+        RContext.getInstance().lastInteropTrace = interopTrace;
+
+        // Run the R error handling machinery:
+        RBaseNode parentRBase = findParentRBase(callObj);
+        String message = getPolyglotErrorMessage(RContext.getInstance(), e);
+        // Runs signal handlers, e.g., "error" handler in tryCatch(some-expression, error =
+        // function(...) ...)
+        // The handler usually throws another exception and so the following step is skipped
+        // (In the case of tryCatch(...) the handler throws ReturnException that falls through to
+        // the tryCatch R function
+        RErrorHandling.signalError(parentRBase, Message.GENERIC, message);
+        // Default error handling: print the error and run options(error = handler) if set, also
+        // throw Java exception which will fall-through to the REPL/embedder
+        return RErrorHandling.errorcallDflt(e, callObj != NO_CALLER, parentRBase, Message.GENERIC, message);
     }
 
     /**
