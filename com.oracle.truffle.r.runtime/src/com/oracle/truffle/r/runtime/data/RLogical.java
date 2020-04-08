@@ -95,7 +95,7 @@ public final class RLogical extends RAbstractLogicalVector implements RScalarVec
             case Character:
                 return RString.valueOf(RRuntime.logicalToString(value));
             case List:
-                return RScalarList.valueOf(this);
+                return RDataFactory.createListFromScalar(this);
             default:
                 return null;
         }

@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RScalar;
-import com.oracle.truffle.r.runtime.data.RScalarList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RString;
@@ -133,17 +132,6 @@ public abstract class FFIMaterializeNode extends Node {
             return protectMaterialized(value, v -> RDataFactory.createLogicalVectorFromScalar(v.getValue()));
         } else {
             return value.materialize();
-        }
-    }
-
-    @Specialization
-    protected static Object wrap(RScalarList value, boolean protect,
-                    @Cached("createBinaryProfile()") ConditionProfile isProtected) {
-        if (isProtected.profile(protect)) {
-            return protectMaterialized(value, v -> RDataFactory.createList(new Object[]{v.getValue()}));
-        } else {
-            return value.materialize();
-
         }
     }
 

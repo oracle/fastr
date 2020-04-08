@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,7 +80,7 @@ public final class RString extends RAbstractStringVector implements RScalarVecto
             case Character:
                 return this;
             case List:
-                return RScalarList.valueOf(this);
+                return RDataFactory.createListFromScalar(this);
             default:
                 return null;
         }
