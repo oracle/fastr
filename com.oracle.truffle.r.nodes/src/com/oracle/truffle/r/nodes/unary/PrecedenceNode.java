@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -180,12 +179,6 @@ public abstract class PrecedenceNode extends RBaseNode {
         return doListRecursiveInternal(val, precedenceNode, recursive);
     }
 
-    @Specialization(guards = "recursive")
-    protected int doListRecursive(RForeignListWrapper val, boolean recursive,
-                    @Cached("createRecursive()") PrecedenceNode precedenceNode) {
-        return doListRecursiveInternal(val, precedenceNode, recursive);
-    }
-
     private static int doListRecursiveInternal(RAbstractListVector val, PrecedenceNode precedenceNode, boolean recursive) {
         int precedence = -1;
         for (int i = 0; i < val.getLength(); i++) {
@@ -212,12 +205,6 @@ public abstract class PrecedenceNode extends RBaseNode {
     @Specialization(guards = "!recursive")
     @SuppressWarnings("unused")
     protected int doList(RList val, boolean recursive) {
-        return LIST_PRECEDENCE;
-    }
-
-    @Specialization(guards = "!recursive")
-    @SuppressWarnings("unused")
-    protected int doList(RForeignListWrapper val, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 

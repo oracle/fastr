@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -64,9 +65,14 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
 
     private RList(Object data, int length) {
         super(false);
-        assert data.getClass().isAssignableFrom(Object[].class) : data;
+        // if data is array => it must be Object array
+        assert !data.getClass().isArray() || data.getClass().isAssignableFrom(Object[].class) : data;
         setData(data, length);
         assert RAbstractVector.verifyVector(this);
+    }
+
+    public static RList createForeignWrapper(TruffleObject obj, int size) {
+        return new RList(new RListForeignObjData(obj), size);
     }
 
     private void setData(Object data, int newLen) {
