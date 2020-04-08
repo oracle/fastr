@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.model;
 
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 
 /**
@@ -31,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
  * e.g., {@code list()}. Specifically these are the FastR atomic vector types:
  * <ul>
  * <li>{@link RIntVector}</li>
- * <li>{@link RAbstractLogicalVector}</li>
+ * <li>{@link RLogicalVector}</li>
  * <li>{@link RDoubleVector}</li>
  * <li>{@link RAbstractComplexVector}</li>
  * <li>{@link RAbstractStringVector}</li>

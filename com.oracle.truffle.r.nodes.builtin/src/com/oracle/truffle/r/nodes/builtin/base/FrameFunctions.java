@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,7 +80,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -297,8 +297,8 @@ public class FrameFunctions {
             Object keepSourceOpt = RContext.getInstance().stateROptions.getValue("keep.source");
             boolean keepSource = false;
             if (keepSourceOpt != RNull.instance) {
-                assert keepSourceOpt instanceof RAbstractLogicalVector;
-                keepSource = RRuntime.fromLogical(((RAbstractLogicalVector) keepSourceOpt).getDataAt(0));
+                assert keepSourceOpt instanceof RLogicalVector;
+                keepSource = RRuntime.fromLogical(((RLogicalVector) keepSourceOpt).getDataAt(0));
             }
             return keepSource;
         }

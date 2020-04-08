@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -59,7 +59,7 @@ public class WhichFunctions {
         }
 
         @Specialization
-        protected RIntVector which(RAbstractLogicalVector x,
+        protected RIntVector which(RLogicalVector x,
                         @Cached("create()") VectorLengthProfile lengthProfile,
                         @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                         @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,

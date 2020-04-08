@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -111,7 +111,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
     }
 
     protected static boolean isNumericVector(RAbstractVector value) {
-        return value instanceof RIntVector || value instanceof RDoubleVector || value instanceof RAbstractComplexVector || value instanceof RAbstractLogicalVector;
+        return value instanceof RIntVector || value instanceof RDoubleVector || value instanceof RAbstractComplexVector || value instanceof RLogicalVector;
     }
 
     @Specialization

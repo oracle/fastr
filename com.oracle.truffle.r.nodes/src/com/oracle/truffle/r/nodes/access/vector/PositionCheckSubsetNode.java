@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -69,7 +69,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
     }
 
     @Specialization(guards = {"isMultiplesOf(dimensionLength, positionLength)", "positionLength <= dimensionLength"})
-    protected RAbstractVector doLogicalMultiplesInBounds(PositionProfile statistics, int dimensionLength, RAbstractLogicalVector position, int positionLength,
+    protected RAbstractVector doLogicalMultiplesInBounds(PositionProfile statistics, int dimensionLength, RLogicalVector position, int positionLength,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
                     @Cached("createBinaryProfile()") ConditionProfile equalsProfile) {
         assert positionLength > 0;
@@ -99,7 +99,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
 
     @Specialization(replaces = "doLogicalMultiplesInBounds")
     protected RAbstractVector doLogicalGenericInBounds(PositionProfile statistics,  //
-                    int dimensionLength, RAbstractLogicalVector position, int positionLength,
+                    int dimensionLength, RLogicalVector position, int positionLength,
                     @Cached("create()") BranchProfile outOfBoundsProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile,
                     @Cached("createBinaryProfile()") ConditionProfile incModProfile) {

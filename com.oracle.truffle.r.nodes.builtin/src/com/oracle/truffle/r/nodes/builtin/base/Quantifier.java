@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -148,8 +148,8 @@ public abstract class Quantifier extends RBuiltinNode.Arg2 {
                 createArgCast(index);
             }
             Object castValue = argCastNodes[index].doCast(argValue);
-            if (castValue instanceof RAbstractLogicalVector) {
-                RAbstractLogicalVector vector = (RAbstractLogicalVector) castValue;
+            if (castValue instanceof RLogicalVector) {
+                RLogicalVector vector = (RLogicalVector) castValue;
                 naCheck.enable(vector);
                 for (int i = 0; i < vector.getLength(); i++) {
                     byte b = vector.getDataAt(i);

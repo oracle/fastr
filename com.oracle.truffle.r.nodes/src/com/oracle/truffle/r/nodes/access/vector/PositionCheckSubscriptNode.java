@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -66,7 +66,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
     }
 
     @Specialization(limit = "getGenericVectorAccessCacheSize()")
-    protected RAbstractVector doLogical(PositionProfile statistics, int dimSize, RAbstractLogicalVector position, int positionLength,
+    protected RAbstractVector doLogical(PositionProfile statistics, int dimSize, RLogicalVector position, int positionLength,
                     @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
                     @CachedLibrary("position.getData()") VectorDataLibrary positionLibrary) {
         positionNACheck.enable(positionLibrary, position.getData());

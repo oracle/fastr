@@ -77,7 +77,6 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -85,7 +84,7 @@ import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -121,7 +120,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAsLogicalVector() {
         arg.asLogicalVector();
-        assertTypes(RNull.class, RMissing.class, byte.class, RAbstractLogicalVector.class, RLogicalVector.class);
+        assertTypes(RNull.class, RMissing.class, byte.class, RLogicalVector.class, RLogicalVector.class);
     }
 
     @Test
@@ -460,7 +459,7 @@ public class ResultTypesAnalyserTest {
     public void testAnalyseRealPipeline() {
         arg.mustBe(numericValue()).asVector().mustBe(matrix(), RError.Message.MUST_BE_NUMERIC_MATRIX, "a").mustBe(not(dimEq(0, 0)),
                         RError.Message.GENERIC, "'a' is 0-diml").mustBe(squareMatrix(), RError.Message.MUST_BE_SQUARE_MATRIX_SPEC, "a", getDimVal(0), getDimVal(1));
-        assertTypes(TypeExpr.union(RDoubleVector.class, RIntVector.class, RAbstractLogicalVector.class), true);
+        assertTypes(TypeExpr.union(RDoubleVector.class, RIntVector.class, RLogicalVector.class), true);
     }
 
     // utilities

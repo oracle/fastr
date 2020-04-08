@@ -59,7 +59,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -747,7 +747,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         public abstract int executeInt(Object v, int i, int j, boolean naLast);
 
         @Specialization
-        protected int lcmp(RAbstractLogicalVector v, int i, int j, boolean naLast) {
+        protected int lcmp(RLogicalVector v, int i, int j, boolean naLast) {
             byte x = v.getDataAt(i);
             byte y = v.getDataAt(j);
             boolean nax = RRuntime.isNA(x);

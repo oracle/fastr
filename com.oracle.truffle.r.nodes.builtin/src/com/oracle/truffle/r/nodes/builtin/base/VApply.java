@@ -64,7 +64,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -188,7 +188,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         } else if (funValueVec instanceof RDoubleVector) {
             double[] data = applyResultZeroLength ? new double[0] : convertDoubleVector(applyResult, funValueVecLen);
             result = RDataFactory.createDoubleVector(data, naCheck.neverSeenNA());
-        } else if (funValueVec instanceof RAbstractLogicalVector) {
+        } else if (funValueVec instanceof RLogicalVector) {
             byte[] data = applyResultZeroLength ? new byte[0] : convertLogicalVector(applyResult, funValueVecLen);
             result = RDataFactory.createLogicalVector(data, naCheck.neverSeenNA());
         } else if (funValueVec instanceof RAbstractStringVector) {
@@ -287,7 +287,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         byte[] newArray = new byte[values.length * len];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractLogicalVector v = (RAbstractLogicalVector) castLogical(values[i]);
+            RLogicalVector v = (RLogicalVector) castLogical(values[i]);
             checkValueLength(v, i, len);
             for (int j = 0; j < v.getLength(); j++) {
                 byte val = v.getDataAt(j);

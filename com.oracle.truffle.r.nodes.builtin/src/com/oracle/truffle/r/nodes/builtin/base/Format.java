@@ -61,7 +61,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -142,7 +142,7 @@ public abstract class Format extends RBuiltinNode.Arg9 {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector format(RAbstractLogicalVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
+    protected RStringVector format(RLogicalVector value, boolean trim, int digits, int nsmall, int width, int justify, boolean naEncode, int scientific, String decimalMark) {
         String[] result = LogicalVectorPrinter.format(value, trim, width, getParameters(digits, scientific));
         return createResult(value, result);
     }

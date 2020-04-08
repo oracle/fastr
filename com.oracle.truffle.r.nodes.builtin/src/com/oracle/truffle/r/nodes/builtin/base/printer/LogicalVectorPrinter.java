@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,13 +22,13 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/printutils.c, src/main/format.c
 
-public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVector> {
+public final class LogicalVectorPrinter extends VectorPrinter<RLogicalVector> {
 
     static final LogicalVectorPrinter INSTANCE = new LogicalVectorPrinter();
 
@@ -37,13 +37,13 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
     }
 
     @Override
-    protected VectorPrinter<RAbstractLogicalVector>.VectorPrintJob createJob(RAbstractLogicalVector vector, int indx, PrintContext printCtx) {
+    protected VectorPrinter<RLogicalVector>.VectorPrintJob createJob(RLogicalVector vector, int indx, PrintContext printCtx) {
         return new LogicalVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class LogicalVectorPrintJob extends VectorPrintJob {
 
-        protected LogicalVectorPrintJob(RAbstractLogicalVector vector, int indx, PrintContext printCtx) {
+        protected LogicalVectorPrintJob(RLogicalVector vector, int indx, PrintContext printCtx) {
             super(vector, indx, printCtx);
         }
 
@@ -114,7 +114,7 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
         return str.toString();
     }
 
-    public static String[] format(RAbstractLogicalVector value, boolean trim, int width, PrintParameters pp) {
+    public static String[] format(RLogicalVector value, boolean trim, int width, PrintParameters pp) {
         VectorAccess access = value.slowPathAccess();
         try (RandomIterator iter = access.randomAccess(value)) {
             int length = access.getLength(iter);

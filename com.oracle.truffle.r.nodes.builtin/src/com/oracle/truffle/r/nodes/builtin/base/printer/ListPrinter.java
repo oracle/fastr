@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -83,8 +83,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
             final String pbuf;
             if (tmp == null || tmp == RNull.instance) {
                 pbuf = RRuntime.NULL;
-            } else if (tmp instanceof RAbstractLogicalVector) {
-                RAbstractLogicalVector lv = (RAbstractLogicalVector) tmp;
+            } else if (tmp instanceof RLogicalVector) {
+                RLogicalVector lv = (RLogicalVector) tmp;
                 if (lv.getLength() == 1) {
                     pbuf = LogicalVectorPrinter.format(lv, false, 0, pp)[0];
                 } else {

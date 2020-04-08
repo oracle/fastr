@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "rank", kind = INTERNAL, parameterNames = {"x", "len", "ties.method"}, behavior = PURE)
@@ -117,7 +117,7 @@ public abstract class Rank extends RBuiltinNode.Arg3 {
         for (int i = 0; i < n; i++) {
             indx[i] = i;
         }
-        RAbstractVector x = xa instanceof RAbstractLogicalVector ? xa.castSafe(RType.Integer, isNAProfile) : xa;
+        RAbstractVector x = xa instanceof RLogicalVector ? xa.castSafe(RType.Integer, isNAProfile) : xa;
         initOrderVector1().execute(indx, x, RRuntime.LOGICAL_TRUE, false, false);
         initOrderCmp();
         int j;

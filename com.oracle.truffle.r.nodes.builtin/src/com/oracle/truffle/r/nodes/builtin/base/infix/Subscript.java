@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 @ImportStatic(DSLConfig.class)
@@ -94,19 +94,19 @@ public abstract class Subscript extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "indexes.isEmpty()")
-    protected Object getNoInd(Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, RAbstractLogicalVector drop) {
+    protected Object getNoInd(Object x, RArgsValuesAndNames indexes, RLogicalVector exact, RLogicalVector drop) {
         throw error(RError.Message.NO_INDEX);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected Object get(Object x, RMissing indexes, RAbstractLogicalVector exact, RAbstractLogicalVector drop) {
+    protected Object get(Object x, RMissing indexes, RLogicalVector exact, RLogicalVector drop) {
         throw error(RError.Message.NO_INDEX);
     }
 
     @Specialization(guards = {"!indexes.isEmpty()", "argsLen == indexes.getLength()"}, limit = "getCacheSize(CACHE_LIMIT)")
     @ExplodeLoop
-    protected Object getIndexes(Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, @SuppressWarnings("unused") Object drop,
+    protected Object getIndexes(Object x, RArgsValuesAndNames indexes, RLogicalVector exact, @SuppressWarnings("unused") Object drop,
                     @Cached("indexes.getLength()") int argsLen) {
         /*
          * "drop" is not actually used by this builtin, but it needs to be in the argument list
@@ -122,7 +122,7 @@ public abstract class Subscript extends RBuiltinNode.Arg4 {
     }
 
     @Specialization(guards = "!indexes.isEmpty()", replaces = "getIndexes")
-    protected Object getIndexesGeneric(Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, @SuppressWarnings("unused") Object drop) {
+    protected Object getIndexesGeneric(Object x, RArgsValuesAndNames indexes, RLogicalVector exact, @SuppressWarnings("unused") Object drop) {
         /*
          * "drop" is not actually used by this builtin, but it needs to be in the argument list
          * (because the "drop" argument needs to be skipped).

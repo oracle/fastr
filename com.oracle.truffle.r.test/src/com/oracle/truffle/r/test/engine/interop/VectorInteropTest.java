@@ -42,10 +42,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RInteropComplex;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -313,8 +312,8 @@ public class VectorInteropTest extends AbstractInteropTest {
         if ((vec.getLength() != 1 || isNA(vec))) {
             return null;
         }
-        if (vec instanceof RAbstractLogicalVector) {
-            return RRuntime.fromLogical(((RAbstractLogicalVector) vec).getDataAt(0));
+        if (vec instanceof RLogicalVector) {
+            return RRuntime.fromLogical(((RLogicalVector) vec).getDataAt(0));
         }
         if (vec instanceof RRawVector) {
             return ((RRawVector) vec).getRawDataAt(0);
@@ -327,8 +326,8 @@ public class VectorInteropTest extends AbstractInteropTest {
             return RRuntime.isNA(((RDoubleVector) vec).getDataAt(0));
         } else if (vec instanceof RIntVector) {
             return RRuntime.isNA(((RIntVector) vec).getDataAt(0));
-        } else if (vec instanceof RAbstractLogicalVector) {
-            return RRuntime.isNA(((RAbstractLogicalVector) vec).getDataAt(0));
+        } else if (vec instanceof RLogicalVector) {
+            return RRuntime.isNA(((RLogicalVector) vec).getDataAt(0));
         } else if (vec instanceof RAbstractStringVector) {
             return RRuntime.isNA(((RAbstractStringVector) vec).getDataAt(0));
         } else if (vec instanceof RAbstractComplexVector || vec instanceof RRawVector) {
@@ -350,8 +349,8 @@ public class VectorInteropTest extends AbstractInteropTest {
         if (vec.getLength() != 1) {
             return false;
         }
-        if (vec instanceof RAbstractLogicalVector) {
-            return RRuntime.isNA(((RAbstractLogicalVector) vec).getDataAt(0));
+        if (vec instanceof RLogicalVector) {
+            return RRuntime.isNA(((RLogicalVector) vec).getDataAt(0));
         }
         if (vec instanceof RAbstractStringVector) {
             return RRuntime.isNA(((RAbstractStringVector) vec).getDataAt(0));

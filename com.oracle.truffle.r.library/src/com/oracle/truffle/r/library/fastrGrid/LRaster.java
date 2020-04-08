@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -67,7 +67,7 @@ public abstract class LRaster extends RExternalBuiltinNode.Arg8 {
     @Specialization
     @TruffleBoundary
     Object doRaster(RAbstractVector raster, RAbstractVector xVec, RAbstractVector yVec, RAbstractVector widthVec, RAbstractVector heightVec, RDoubleVector hjust, RDoubleVector vjust,
-                    RAbstractLogicalVector interpolate) {
+                    RLogicalVector interpolate) {
         GridContext ctx = GridContext.getContext();
         GridDevice dev = ctx.getCurrentDevice();
 
@@ -117,7 +117,7 @@ public abstract class LRaster extends RExternalBuiltinNode.Arg8 {
         return RNull.instance;
     }
 
-    private static ImageInterpolation getInterpolation(RAbstractLogicalVector interpolation, int idx) {
+    private static ImageInterpolation getInterpolation(RLogicalVector interpolation, int idx) {
         if (RRuntime.fromLogical(interpolation.getDataAt(idx % interpolation.getLength()))) {
             return ImageInterpolation.LINEAR_INTERPOLATION;
         }

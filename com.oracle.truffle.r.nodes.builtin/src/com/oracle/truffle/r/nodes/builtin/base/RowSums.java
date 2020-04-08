@@ -27,7 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 
 @RBuiltin(name = "rowSums", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class RowSums extends RowSumsBase {
@@ -47,7 +47,7 @@ public abstract class RowSums extends RowSumsBase {
     }
 
     @Specialization
-    protected RDoubleVector rowSums(RAbstractLogicalVector x, int rowNum, int colNum, boolean naRm) {
+    protected RDoubleVector rowSums(RLogicalVector x, int rowNum, int colNum, boolean naRm) {
         return accumulateRows(x, rowNum, colNum, naRm, (sum, cnt) -> sum, (v, nacheck, i) -> nacheck.convertLogicalToDouble(v.getDataAt(i)));
     }
 }

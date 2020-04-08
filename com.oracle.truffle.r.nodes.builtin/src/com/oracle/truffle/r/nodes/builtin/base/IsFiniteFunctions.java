@@ -44,11 +44,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -115,7 +114,7 @@ public class IsFiniteFunctions {
             return result;
         }
 
-        protected RLogicalVector doFunLogical(RAbstractLogicalVector x, LogicalPredicate fun) {
+        protected RLogicalVector doFunLogical(RLogicalVector x, LogicalPredicate fun) {
             byte[] b = new byte[x.getLength()];
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(fun.test(x.getDataAt(i)));
@@ -164,7 +163,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization(guards = "vec.isComplete()")
-        protected RLogicalVector doComplete(RAbstractLogicalVector vec) {
+        protected RLogicalVector doComplete(RLogicalVector vec) {
             return doFunConstant(vec, RRuntime.LOGICAL_TRUE);
         }
 
@@ -174,7 +173,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization(replaces = "doComplete")
-        protected RLogicalVector doIsFinite(RAbstractLogicalVector vec) {
+        protected RLogicalVector doIsFinite(RLogicalVector vec) {
             return doFunLogical(vec, value -> !RRuntime.isNA(value));
         }
 
@@ -202,7 +201,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doComplete(RAbstractLogicalVector vec) {
+        protected RLogicalVector doComplete(RLogicalVector vec) {
             return doFunConstant(vec, RRuntime.LOGICAL_FALSE);
         }
 
@@ -234,7 +233,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doIsNan(RAbstractLogicalVector vec) {
+        protected RLogicalVector doIsNan(RLogicalVector vec) {
             return doFunConstant(vec, RRuntime.LOGICAL_FALSE);
         }
 

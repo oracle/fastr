@@ -55,7 +55,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -759,7 +759,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     // logical-logical
 
     @Specialization
-    protected RIntVector multiply(RAbstractLogicalVector aOriginal, RAbstractLogicalVector bOriginal,
+    protected RIntVector multiply(RLogicalVector aOriginal, RLogicalVector bOriginal,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
@@ -769,7 +769,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     // to int
 
     @Specialization
-    protected RIntVector multiply(RAbstractLogicalVector aOriginal, RIntVector b,
+    protected RIntVector multiply(RLogicalVector aOriginal, RIntVector b,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
@@ -777,7 +777,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RIntVector multiply(RIntVector a, RAbstractLogicalVector bOriginal,
+    protected RIntVector multiply(RIntVector a, RLogicalVector bOriginal,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {

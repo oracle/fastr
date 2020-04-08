@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -92,7 +92,7 @@ public abstract class ColSums extends ColSumsBase {
     }
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
-    protected RDoubleVector colSums(RAbstractLogicalVector x, int rowNum, int colNum, boolean rnaParam,
+    protected RDoubleVector colSums(RLogicalVector x, int rowNum, int colNum, boolean rnaParam,
                     @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
         checkVectorLength(xDataLib, x, rowNum, colNum);
 

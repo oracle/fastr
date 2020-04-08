@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -198,7 +197,7 @@ public class RObjectSize {
             return DOUBLE_SIZE;
         } else if (vector instanceof RIntVector) {
             return INT_SIZE;
-        } else if (vector instanceof RAbstractLogicalVector || vector instanceof RRawVector) {
+        } else if (vector instanceof RLogicalVector || vector instanceof RRawVector) {
             return BYTE_SIZE;
         } else if (vector instanceof RAbstractComplexVector) {
             return DOUBLE_SIZE * 2;

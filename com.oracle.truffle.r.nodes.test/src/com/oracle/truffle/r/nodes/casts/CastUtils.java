@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -479,7 +479,7 @@ public class CastUtils {
         if (RDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType) || double.class.isAssignableFrom(vectorType)) {
             return Double.class;
         }
-        if (RAbstractLogicalVector.class.isAssignableFrom(vectorType) || Byte.class.isAssignableFrom(vectorType) || byte.class.isAssignableFrom(vectorType)) {
+        if (RLogicalVector.class.isAssignableFrom(vectorType) || Byte.class.isAssignableFrom(vectorType) || byte.class.isAssignableFrom(vectorType)) {
             return Byte.class;
         }
         if (RAbstractStringVector.class.isAssignableFrom(vectorType) || String.class.isAssignableFrom(vectorType)) {
@@ -529,7 +529,7 @@ public class CastUtils {
         if (RDoubleVector.class.isAssignableFrom(vectorType) || Double.class.isAssignableFrom(vectorType) || double.class.isAssignableFrom(vectorType)) {
             return RDataFactory.createDoubleVector(size);
         }
-        if (RAbstractLogicalVector.class.isAssignableFrom(vectorType) || Byte.class.isAssignableFrom(vectorType) || byte.class.isAssignableFrom(vectorType)) {
+        if (RLogicalVector.class.isAssignableFrom(vectorType) || Byte.class.isAssignableFrom(vectorType) || byte.class.isAssignableFrom(vectorType)) {
             return RDataFactory.createLogicalVector(size);
         }
         if (RAbstractStringVector.class.isAssignableFrom(vectorType) || String.class.isAssignableFrom(vectorType)) {
@@ -570,7 +570,7 @@ public class CastUtils {
             case Double:
                 return new Class<?>[]{Double.class, RDoubleVector.class};
             case Logical:
-                return new Class<?>[]{Byte.class, RAbstractLogicalVector.class};
+                return new Class<?>[]{Byte.class, RLogicalVector.class};
             case Character:
                 return new Class<?>[]{String.class, RAbstractStringVector.class};
             case Complex:
@@ -727,8 +727,8 @@ public class CastUtils {
                 if (vectorOrScalar instanceof RAbstractComplexVector) {
                     return Optional.of((T) ((RAbstractComplexVector) vectorOrScalar).getDataAtAsObject(0));
                 }
-                if (vectorOrScalar instanceof RAbstractLogicalVector) {
-                    return Optional.of((T) ((RAbstractLogicalVector) vectorOrScalar).getDataAtAsObject(0));
+                if (vectorOrScalar instanceof RLogicalVector) {
+                    return Optional.of((T) ((RLogicalVector) vectorOrScalar).getDataAtAsObject(0));
                 }
                 if (vectorOrScalar instanceof RAbstractStringVector) {
                     return Optional.of((T) ((RAbstractStringVector) vectorOrScalar).getDataAtAsObject(0));
@@ -751,7 +751,7 @@ public class CastUtils {
             if (vector instanceof RAbstractComplexVector) {
                 return Optional.of(RComplex.class);
             }
-            if (vector instanceof RAbstractLogicalVector) {
+            if (vector instanceof RLogicalVector) {
                 return Optional.of(Byte.class);
             }
             if (vector instanceof RAbstractStringVector) {
@@ -792,7 +792,7 @@ public class CastUtils {
             samples.add(RRuntime.LOGICAL_FALSE);
         }
 
-        if (cls == Object.class || RAbstractLogicalVector.class.isAssignableFrom(cls)) {
+        if (cls == Object.class || RLogicalVector.class.isAssignableFrom(cls)) {
             samples.add(RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_TRUE));
             samples.add(RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE));
             samples.add(RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_TRUE}, true));
