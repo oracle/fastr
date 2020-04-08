@@ -85,6 +85,8 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
                 return new RawClosure(delegate, data, targetType);
             case Character:
                 return new StringClosure(delegate, data, targetType);
+            case List:
+                return new ListClosure(delegate, data, targetType);
             default:
                 throw RInternalError.shouldNotReachHere();
         }
@@ -146,10 +148,11 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     @ExportMessage
     public NACheck getNACheck() {
         // the contract is that the check is enabled if the vector may contain NA values,
-        // we cannot say that upfront, because NAs can occur as the result of type conversions
+        // we cannot say upfront that it does not, because NAs can occur as the result of type
+        // conversions
         // NOTE: this method and "isComplete" can be improved for type conversions that are known to
         // never introduce NA values (e.g., int -> double)
-        return NACheck.getDisabled();
+        return NACheck.getEnabled();
     }
 
     // Integer
@@ -340,6 +343,37 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
         return dataLib.getString(data, it, index);
     }
 
+    // List
+
+    @ExportMessage
+    public Object[] getListDataCopy(@CachedLibrary("this.data") VectorDataLibrary dataLib) {
+        assert getTargetType() == RType.List;
+        Object[] result = new Object[getLength(dataLib)];
+        SeqIterator it = dataLib.iterator(data);
+        while (dataLib.next(data, it)) {
+            result[it.getIndex()] = dataLib.getNextElement(data, it);
+        }
+        return result;
+    }
+
+    @ExportMessage
+    public Object getElementAt(int index,
+                    @CachedLibrary("this.data") VectorDataLibrary dataLib) {
+        return dataLib.getElementAt(data, index);
+    }
+
+    @ExportMessage
+    public Object getNextElement(SeqIterator it,
+                    @CachedLibrary("this.data") VectorDataLibrary dataLib) {
+        return dataLib.getNextElement(data, it);
+    }
+
+    @ExportMessage
+    public Object getElement(RandomAccessIterator it, int index,
+                    @CachedLibrary("this.data") VectorDataLibrary dataLib) {
+        return dataLib.getElement(data, it, index);
+    }
+
     // Support of the RClosure interface
 
     @Override
@@ -376,7 +410,7 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     }
 
     @ExportLibrary(VectorDataLibrary.class)
-    static class DoubleClosure extends VectorDataClosure {
+    static final class DoubleClosure extends VectorDataClosure {
         DoubleClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
         }
@@ -393,7 +427,7 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     }
 
     @ExportLibrary(VectorDataLibrary.class)
-    static class LogicalClosure extends VectorDataClosure {
+    static final class LogicalClosure extends VectorDataClosure {
         LogicalClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
         }
@@ -410,7 +444,7 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     }
 
     @ExportLibrary(VectorDataLibrary.class)
-    static class RawClosure extends VectorDataClosure {
+    static final class RawClosure extends VectorDataClosure {
         RawClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
         }
@@ -427,7 +461,7 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     }
 
     @ExportLibrary(VectorDataLibrary.class)
-    static class ComplexClosure extends VectorDataClosure {
+    static final class ComplexClosure extends VectorDataClosure {
         ComplexClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
         }
@@ -444,7 +478,7 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     }
 
     @ExportLibrary(VectorDataLibrary.class)
-    static class StringClosure extends VectorDataClosure {
+    static final class StringClosure extends VectorDataClosure {
         StringClosure(RAbstractVector delegate, Object data, RType targetType) {
             super(delegate, data, targetType);
         }
@@ -457,6 +491,23 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
         @Override
         protected VectorDataClosure copyDataClosure() {
             return new StringClosure(delegate, data, RType.Character);
+        }
+    }
+
+    @ExportLibrary(VectorDataLibrary.class)
+    static final class ListClosure extends VectorDataClosure {
+        ListClosure(RAbstractVector delegate, Object data, RType targetType) {
+            super(delegate, data, targetType);
+        }
+
+        @Override
+        protected RType getTargetType() {
+            return RType.List;
+        }
+
+        @Override
+        protected VectorDataClosure copyDataClosure() {
+            return new ListClosure(delegate, data, RType.Integer);
         }
     }
 }

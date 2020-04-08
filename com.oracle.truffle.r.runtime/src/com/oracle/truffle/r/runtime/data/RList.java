@@ -33,6 +33,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -73,6 +74,16 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
 
     public static RList createForeignWrapper(TruffleObject obj, int size) {
         return new RList(new RListForeignObjData(obj), size);
+    }
+
+    public static RList createClosure(RAbstractVector delegate, boolean keepAttrs) {
+        RList result = new RList(VectorDataClosure.fromVector(delegate, RType.List), delegate.getLength());
+        if (keepAttrs) {
+            result.initAttributes(delegate.getAttributes());
+        } else {
+            RClosures.initRegAttributes(result, delegate);
+        }
+        return result;
     }
 
     private void setData(Object data, int newLen) {

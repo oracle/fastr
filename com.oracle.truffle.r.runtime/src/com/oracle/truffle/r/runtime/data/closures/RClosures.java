@@ -25,12 +25,11 @@ package com.oracle.truffle.r.runtime.data.closures;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -68,28 +67,8 @@ public class RClosures {
 
     // ... To List
 
-    public static RAbstractListVector createToListVector(RAbstractLogicalVector vector, boolean keepAttributes) {
-        return new RLogicalToListVectorClosure(vector, keepAttributes);
-    }
-
-    public static RAbstractListVector createToListVector(RIntVector vector, boolean keepAttributes) {
-        return new RIntToListVectorClosure(vector, keepAttributes);
-    }
-
-    public static RAbstractListVector createToListVector(RDoubleVector vector, boolean keepAttributes) {
-        return new RDoubleToListVectorClosure(vector, keepAttributes);
-    }
-
-    public static RAbstractListVector createToListVector(RRawVector vector, boolean keepAttributes) {
-        return new RRawToListVectorClosure(vector, keepAttributes);
-    }
-
-    public static RAbstractListVector createToListVector(RAbstractComplexVector vector, boolean keepAttributes) {
-        return new RComplexToListVectorClosure(vector, keepAttributes);
-    }
-
-    public static RAbstractListVector createToListVector(RAbstractStringVector vector, boolean keepAttributes) {
-        return new RStringToListVectorClosure(vector, keepAttributes);
+    public static RAbstractListVector createToListVector(RAbstractVector vector, boolean keepAttributes) {
+        return RList.createClosure(vector, keepAttributes);
     }
 
     /**
