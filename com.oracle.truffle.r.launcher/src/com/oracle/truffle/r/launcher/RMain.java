@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,14 +70,6 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         }
     }
 
-    /**
-     * Tells this R launcher to not process the {@code --jvm} and {@code --jvm.help}. Normally such
-     * arguments are processed by the native launcher, but if there is no native launcher, we need
-     * to explicitly process them in this class since the Truffle launcher does not count on this
-     * eventuality.
-     */
-    private static final boolean ignoreJvmArguments = "true".equals(System.getProperty("fastr.internal.ignorejvmargs"));
-
     protected final InputStream inStream;
     protected final OutputStream outStream;
     protected final OutputStream errStream;
@@ -95,7 +87,6 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
     private RCmdOptions options;
     private ConsoleHandler consoleHandler;
     private String[] rArguments;
-    private boolean useJVM;
     private Context preparedContext; // to transfer between launch and execute when !launcherMode
 
     private RMain(boolean launcherMode, InputStream inStream, OutputStream outStream, OutputStream errStream, int timeoutSecs) {
@@ -135,15 +126,6 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
         List<String> unrecognizedArgs = new ArrayList<>();
         for (int i = 0; i < arguments.size(); i++) {
-            if (!ignoreJvmArguments && ("--jvm.help".equals(arguments.get(i)) || "--vm.help".equals(arguments.get(i)))) {
-                // This condition should be removed when FastR always ships with native launcher
-                // that handles this option for us
-                printJvmHelp();
-                throw exit();
-            } else if (!ignoreJvmArguments && "--jvm".equals(arguments.get(i))) {
-                useJVM = true;
-            } else
-
             if (!recognizedArgsIndices[i]) {
                 unrecognizedArgs.add(arguments.get(i));
             }
@@ -176,9 +158,6 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         }
         this.consoleHandler = ConsoleHandler.createConsoleHandler(options, null, inStream, outStream);
         Builder contextBuilder = contextBuilderIn;
-        if (!ignoreJvmArguments && !useJVM) {
-            contextBuilder.allowHostClassLookup(null);
-        }
 
         boolean isLLVMBackEnd = false;
         boolean debugLLVMLibs = false;
@@ -331,67 +310,4 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             return this;
         }
     }
-
-    // The following code is copied from org.graalvm.launcher.Launcher and it should be removed
-    // when the R launcher always ships native version that handles --vm.help for us.
-
-    private static void printJvmHelp() {
-        System.out.println("JVM options:");
-        printOption("--vm.classpath <...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's classpath");
-        printOption("--vm.D<name>=<value>", "Set a system property");
-        printOption("--vm.esa", "Enable system assertions");
-        printOption("--vm.ea[:<packagename>...|:<classname>]", "Enable assertions with specified granularity");
-        printOption("--vm.agentlib:<libname>[=<options>]", "Load native agent library <libname>");
-        printOption("--vm.agentpath:<pathname>[=<options>]", "Load native agent library by full pathname");
-        printOption("--vm.javaagent:<jarpath>[=<options>]", "Load Java programming language agent");
-        printOption("--vm.Xbootclasspath/a:<...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's boot classpath");
-        printOption("--vm.Xmx<size>", "Set maximum Java heap size");
-        printOption("--vm.Xms<size>", "Set initial Java heap size");
-        printOption("--vm.Xss<size>", "Set java thread stack size");
-    }
-
-    private static void printOption(String option, String description, int indentation) {
-        String indent = spaces(indentation);
-        String desc = wrap(description != null ? description : "");
-        String nl = System.lineSeparator();
-        String[] descLines = desc.split(nl);
-        int optionWidth = 45;
-        if (option.length() >= optionWidth && description != null) {
-            System.out.println(indent + option + nl + indent + spaces(optionWidth) + descLines[0]);
-        } else {
-            System.out.println(indent + option + spaces(optionWidth - option.length()) + descLines[0]);
-        }
-        for (int i = 1; i < descLines.length; i++) {
-            System.out.println(indent + spaces(optionWidth) + descLines[i]);
-        }
-    }
-
-    static void printOption(String option, String description) {
-        printOption(option, description, 2);
-    }
-
-    private static String spaces(int length) {
-        return new String(new char[length]).replace('\0', ' ');
-    }
-
-    private static String wrap(String s) {
-        final int width = 120;
-        StringBuilder sb = new StringBuilder(s);
-        int cursor = 0;
-        while (cursor + width < sb.length()) {
-            int i = sb.lastIndexOf(" ", cursor + width);
-            if (i == -1 || i < cursor) {
-                i = sb.indexOf(" ", cursor + width);
-            }
-            if (i != -1) {
-                sb.replace(i, i + 1, System.lineSeparator());
-                cursor = i;
-            } else {
-                break;
-            }
-        }
-        return sb.toString();
-    }
-
-    // End of copied code
 }

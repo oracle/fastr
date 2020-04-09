@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
-# Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,26 +22,28 @@
 # questions.
 #
 
-# Startup FastR (Rscript) using the mx tool (development)
-# This is exec'ed by the (generic) Rscript script in the parent directory.
-# NOTE: this is used only in the development build,
-# com.oracle.truffle.r.release/src/Rscript_launcher is used in the release
+# This script is deployed as
+# jre/languages/R/bin/Rscript in JDK8
+# languages/R/bin/Rscript in JDK11
+# It forwards to the RMain launcher, which is a regular Graal SDK launcher
 
 source="${BASH_SOURCE[0]}"
-while [ -h "$source" ] ; do source="$(readlink "$source")"; done
-PRIMARY_PATH="$( cd -P "$( dirname "$source" )" && pwd )"/../..
-
-which mx >/dev/null 2>&1
-whichrc=$?
-if [ $whichrc == 1 ] ; then
-    if [ -z "$MX_HOME" ] ; then
-	    echo "Error: mx cannot be found: add to PATH or set MX_HOME"
-	    exit 1
-    else
-	    mx=$MX_HOME/mx
+while [ -h "$source" ] ; do
+    prev_source="$source"
+    source="$(readlink "$source")";
+    if [[ "$source" != /* ]]; then
+        # if the link was relative, it was relative to where it came from
+        dir="$( cd -P "$( dirname "$prev_source" )" && pwd )"
+        source="$dir/$source"
     fi
-else
-    mx=`which mx`
-fi
+done
+location="$( cd -P "$( dirname "$source" )" && pwd )"
+fastr_home="$( dirname "${location}" )"
 
-exec $mx --no-warning --primary-suite-path $PRIMARY_PATH $MX_R_GLOBAL_ARGS Rscript $FASTR_INTERNAL_ARGS $MX_R_CMD_ARGS "$@"
+# we can invoke FastR directly, but we do have to set R_HOME
+export R_HOME="${fastr_home}"
+
+# In GNU-R the Rscript is executable that seems to be setting up LD_LIBRARY_PATH like ldpaths under the hood:
+. "${fastr_home}/etc/ldpaths"
+
+exec "${fastr_home}/bin/RMain" Rscript ${FASTR_INTERNAL_ARGS[@]} "$@"

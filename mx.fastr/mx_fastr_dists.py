@@ -136,11 +136,11 @@ class ReleaseBuildTask(mx.NativeBuildTask):
 
         # replace the mx exec scripts with native Java launchers, setting the classpath from above
         bin_exec_dir = join(bin_dir, 'exec')
-        r_launcher = join(self.subject.dir, 'src', 'R_legacy')
+        r_launcher = join(self.subject.dir, 'src', 'R_launcher')
         template_dict = {'CLASSPATH': classpath_string}
         self._template(r_launcher, join(bin_exec_dir, 'R'), template_dict)
         shutil.rmtree(join(bin_dir, 'execRextras'))
-        rscript_launcher = join(self.subject.dir, 'src', 'Rscript_legacy')
+        rscript_launcher = join(self.subject.dir, 'src', 'Rscript_launcher')
         self._template(rscript_launcher, join(bin_dir, 'Rscript'), template_dict)
 
 
@@ -207,6 +207,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
     register_distribution(fastr_release_distribution)
     register_distribution(fastr_graalvm_release)
 
+
     fastr_graalvm_release_support = mx.LayoutTARDistribution(
         suite=_fastr_suite,
         name="FASTR_GRAALVM_SUPPORT",
@@ -241,8 +242,8 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
             "LICENSE_FASTR" : "file:LICENSE",
             "3rd_party_licenses_fastr.txt" : "file:3rd_party_licenses.txt",
             "README_FASTR": "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/README.md",
-            "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_legacy",
-            "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_legacy",
+            "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_launcher",
+            "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_launcher",
             "native-image.properties": "file:mx.fastr/native-image.properties",
         },
         path=None,
@@ -266,6 +267,17 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
         'bin/R',
     ],
     include_in_polyglot=False,
+    launcher_configs=[
+        mx_sdk.LanguageLauncherConfig(
+            destination='bin/RMain',
+            jar_distributions=['fastr:FASTR_LAUNCHER'],
+            main_class='com.oracle.truffle.r.launcher.RMain',
+            build_args=[],
+            language='R',
+            is_main_launcher=False,
+            default_symlinks=False,
+        )
+    ],
     post_install_msg="NOTES:\n---------------\n" +
             "FastR needs a system-dependent configuration because it links with some system libraries. " +
             "A generic configuration that works out of the box on most Linux distributions is provided by default. " +
