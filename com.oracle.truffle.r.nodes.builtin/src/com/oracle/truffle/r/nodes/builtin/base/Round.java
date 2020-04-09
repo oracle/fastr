@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -41,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -92,46 +94,50 @@ public abstract class Round extends RBuiltinNode.Arg2 {
         return check.check(x) ? RRuntime.DOUBLE_NA : zeroDigitProfile.profile(digitsInt == 0) ? roundOp.op(x) : roundOp.opd(x, digitsInt);
     }
 
-    @Specialization
-    protected RDoubleVector round(RAbstractLogicalVector x, @SuppressWarnings("unused") double digits) {
-        double[] data = new double[x.getLength()];
-        check.enable(x);
-        for (int i = 0; i < data.length; i++) {
-            byte val = x.getDataAt(i);
-            data[i] = check.check(val) ? RRuntime.DOUBLE_NA : val;
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(data, check.neverSeenNA());
-        ret.copyAttributesFrom(x);
-        return ret;
-    }
-
-    @Specialization
-    protected RDoubleVector round(RIntVector x, @SuppressWarnings("unused") double digits) {
-        double[] data = new double[x.getLength()];
-        check.enable(x);
-        for (int i = 0; i < data.length; i++) {
-            int val = x.getDataAt(i);
-            data[i] = check.check(val) ? RRuntime.DOUBLE_NA : val;
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(data, check.neverSeenNA());
-        ret.copyAttributesFrom(x);
-        return ret;
-    }
-
-    protected double roundDigits(double x, int digits) {
-        return check.check(x) ? RRuntime.DOUBLE_NA : zeroDigitProfile.profile(digits == 0) ? roundOp.op(x) : roundOp.opd(x, digits);
-    }
-
-    @Specialization
-    protected RDoubleVector round(RDoubleVector x, double digits) {
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector round(RAbstractLogicalVector x, @SuppressWarnings("unused") double digits,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
         double[] result = new double[x.getLength()];
-        check.enable(x);
-        int digitsInt = (int) Math.round(digits);
-        for (int i = 0; i < x.getLength(); i++) {
-            double value = x.getDataAt(i);
-            result[i] = check.check(value) ? RRuntime.DOUBLE_NA : zeroDigitProfile.profile(digitsInt == 0) ? roundOp.op(value) : roundOp.opd(value, digitsInt);
+        Object xData = x.getData();
+        VectorDataLibrary.SeqIterator xIt = xDataLib.iterator(xData);
+        NACheck xnaCheck = xDataLib.getNACheck(xData);
+        while (xDataLib.next(xData, xIt)) {
+            byte val = xDataLib.getNextLogical(xData, xIt);
+            result[xIt.getIndex()] = xnaCheck.check(val) ? RRuntime.DOUBLE_NA : val;
         }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, xnaCheck.neverSeenNA());
+        ret.copyAttributesFrom(x);
+        return ret;
+    }
+
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector round(RIntVector x, @SuppressWarnings("unused") double digits,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+        double[] data = new double[x.getLength()];
+        Object xData = x.getData();
+        VectorDataLibrary.SeqIterator xIt = xDataLib.iterator(xData);
+        while (xDataLib.next(xData, xIt)) {
+            // getNextDouble takes care of the int NA -> double NA conversion
+            data[xIt.getIndex()] = xDataLib.getNextDouble(xData, xIt);
+        }
+        RDoubleVector ret = RDataFactory.createDoubleVector(data, xDataLib.getNACheck(xData).neverSeenNA());
+        ret.copyAttributesFrom(x);
+        return ret;
+    }
+
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector round(RDoubleVector x, double digits,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
+        double[] result = new double[x.getLength()];
+        Object xData = x.getData();
+        VectorDataLibrary.SeqIterator xIt = xDataLib.iterator(xData);
+        NACheck xnaCheck = xDataLib.getNACheck(xData);
+        int digitsInt = (int) Math.round(digits);
+        while (xDataLib.next(xData, xIt)) {
+            double value = xDataLib.getNextDouble(xData, xIt);
+            result[xIt.getIndex()] = xnaCheck.check(value) ? RRuntime.DOUBLE_NA : zeroDigitProfile.profile(digitsInt == 0) ? roundOp.op(value) : roundOp.opd(value, digitsInt);
+        }
+        RDoubleVector ret = RDataFactory.createDoubleVector(result, xnaCheck.neverSeenNA());
         ret.copyAttributesFrom(x);
         return ret;
     }
