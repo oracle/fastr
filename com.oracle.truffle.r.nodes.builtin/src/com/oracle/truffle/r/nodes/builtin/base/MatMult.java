@@ -28,9 +28,13 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
@@ -53,7 +57,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -89,6 +92,8 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     @Child private SetDimNamesAttributeNode setDimNamesNode = SetDimNamesAttributeNode.create();
     @Child private GetDimNamesAttributeNode getADimNamesNode = GetDimNamesAttributeNode.create();
     @Child private GetDimNamesAttributeNode getBDimNamesNode = GetDimNamesAttributeNode.create();
+
+    @Child private VectorDataLibrary coercionResultDataLib;
 
     protected abstract Object executeObject(Object a, Object b);
 
@@ -186,18 +191,20 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     private final BranchProfile incompleteProfile = BranchProfile.create();
     @CompilationFinal private boolean seenLargeMatrix;
 
-    @Child private GetReadonlyData.Double aToArrayNode = GetReadonlyData.Double.create();
-    @Child private GetReadonlyData.Double bToArrayNode = GetReadonlyData.Double.create();
-
-    private RDoubleVector doubleMatrixMultiply(RDoubleVector a, RDoubleVector b, int aRows, int aCols, int bRows, int bCols) {
-        return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols, 1, aRows, 1, bRows, false);
+    private RDoubleVector doubleMatrixMultiply(VectorDataLibrary aDataLib, Object aData, RAbstractVector a, VectorDataLibrary bDataLib, Object bData, RAbstractVector b, int aRows, int aCols,
+                    int bRows, int bCols) {
+        return doubleMatrixMultiply(aDataLib, aData, a, bDataLib, bData, b, aRows, aCols, bRows, bCols, 1, aRows, 1, bRows, false);
     }
 
     /**
      * Performs matrix multiplication, generating the appropriate error if the input matrices are
      * not of compatible size.
      *
+     * @param aDataLib vector data library for the first input matrix
+     * @param aData data of the first input matrix (potentially coerced to double)
      * @param a the first input matrix
+     * @param bDataLib vector data library for the second input matrix
+     * @param bData data of the second input matrix (potentially coerced to double)
      * @param b the second input matrix
      * @param aRows the number of rows in the first input matrix
      * @param aCols the number of columns in the first input matrix
@@ -210,13 +217,14 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
      * @param mirrored true if only the upper right triangle of the result needs to be calculated
      * @return the result vector
      */
-    public RDoubleVector doubleMatrixMultiply(RDoubleVector a, RDoubleVector b, int aRows, int aCols, int bRows, int bCols, int aRowStride, int aColStride, int bRowStride,
+    public RDoubleVector doubleMatrixMultiply(VectorDataLibrary aDataLib, Object aData, RAbstractVector a, VectorDataLibrary bDataLib, Object bData, RAbstractVector b, int aRows, int aCols, int bRows,
+                    int bCols, int aRowStride, int aColStride, int bRowStride,
                     int bColStride, boolean mirrored) {
         if (aCols != bRows) {
             throw error(RError.Message.NON_CONFORMABLE_ARGS);
         }
-        double[] dataA = aToArrayNode.execute(a.materialize());
-        double[] dataB = bToArrayNode.execute(b.materialize());
+        double[] dataA = aDataLib.getReadonlyDoubleData(aData);
+        double[] dataB = bDataLib.getReadonlyDoubleData(bData);
         double[] result = new double[aRows * bCols];
 
         if (!seenLargeMatrix && (aRows > BLOCK_SIZE || aCols > BLOCK_SIZE || bRows > BLOCK_SIZE || bCols > BLOCK_SIZE)) {
@@ -246,12 +254,12 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
         }
         // NAs are checked in bulk here, because doing so during multiplication is too costly
         boolean complete = true;
-        if (!b.isComplete()) {
+        if (!bDataLib.isComplete(bData)) {
             incompleteProfile.enter();
             fixNAColumns(dataB, aRows, aCols, bCols, bRowStride, bColStride, result);
             complete = false;
         }
-        if (!complete || !a.isComplete()) {
+        if (!complete || !aDataLib.isComplete(aData)) {
             /*
              * In case b is not complete, NaN rows need to be restored because the NaN in a takes
              * precedence over the NA in b.
@@ -323,64 +331,60 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
         }
     }
 
-    @Specialization(guards = {"a.getClass() == aClass", "b.getClass() == bClass"})
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected RDoubleVector multiplyDouble(RDoubleVector a, RDoubleVector b,
-                    @Cached("a.getClass()") Class<? extends RDoubleVector> aClass,
-                    @Cached("b.getClass()") Class<? extends RDoubleVector> bClass,
+                    @CachedLibrary("a.getData()") VectorDataLibrary aDataLib,
+                    @CachedLibrary("b.getData()") VectorDataLibrary bDataLib,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
-        return doubleMultiply(aClass.cast(a), bClass.cast(b), aIsMatrix, bIsMatrix, lengthEquals);
+        return doubleMultiply(aDataLib, a.getData(), a, bDataLib, b.getData(), b, aIsMatrix, bIsMatrix, lengthEquals);
     }
 
-    @Specialization(replaces = "multiplyDouble")
-    protected RDoubleVector multiply(RDoubleVector a, RDoubleVector b,
-                    @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
-        return doubleMultiply(a, b, aIsMatrix, bIsMatrix, lengthEquals);
-    }
-
-    private RDoubleVector doubleMultiply(RDoubleVector a, RDoubleVector b, ConditionProfile aIsMatrix, ConditionProfile bIsMatrix, ConditionProfile lengthEquals) {
+    private RDoubleVector doubleMultiply(VectorDataLibrary aDataLib, Object aData, RAbstractVector a, VectorDataLibrary bDataLib, Object bData, RAbstractVector b, ConditionProfile aIsMatrix,
+                    ConditionProfile bIsMatrix, ConditionProfile lengthEquals) {
+        // Note: aData/bData may be coerced data of a, i.e., not the original data of a
         int[] aDimensions = getADimsNode.getDimensions(a);
         int[] bDimensions = getBDimsNode.getDimensions(b);
+        final int bLength = bDataLib.getLength(bData);
         if (aIsMatrix.profile(isMatrix(aDimensions))) {
             if (bIsMatrix.profile(isMatrix(bDimensions))) {
-                return doubleMatrixMultiply(a, b, aDimensions[0], aDimensions[1], bDimensions[0], bDimensions[1]);
+                return doubleMatrixMultiply(aDataLib, aData, a, bDataLib, bData, b, aDimensions[0], aDimensions[1], bDimensions[0], bDimensions[1]);
             } else {
                 int aRows = aDimensions[0];
                 int aCols = aDimensions[1];
                 int bRows;
                 int bCols;
-                if (lengthEquals.profile(aCols == b.getLength())) {
-                    bRows = b.getLength();
+                if (lengthEquals.profile(aCols == bLength)) {
+                    bRows = bLength;
                     bCols = 1;
                 } else {
                     bRows = 1;
-                    bCols = b.getLength();
+                    bCols = bLength;
                 }
-                return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
+                return doubleMatrixMultiply(aDataLib, aData, a, bDataLib, bData, b, aRows, aCols, bRows, bCols);
             }
         } else {
+            final int aLength = aDataLib.getLength(aData);
             if (bIsMatrix.profile(isMatrix(bDimensions))) {
                 int bRows = bDimensions[0];
                 int bCols = bDimensions[1];
                 int aRows;
                 int aCols;
-                if (lengthEquals.profile(bRows == a.getLength())) {
+                if (lengthEquals.profile(bRows == aLength)) {
                     aRows = 1;
-                    aCols = a.getLength();
+                    aCols = aLength;
                 } else {
-                    aRows = a.getLength();
+                    aRows = aLength;
                     aCols = 1;
                 }
-                return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
+                return doubleMatrixMultiply(aDataLib, aData, a, bDataLib, bData, b, aRows, aCols, bRows, bCols);
             } else {
-                if (a.getLength() == 1) {
-                    na.enable(a);
-                    na.enable(b);
-                    double aValue = a.getDataAt(0);
-                    double[] result = new double[b.getLength()];
+                if (aLength == 1) {
+                    na.enable(aDataLib, aData);
+                    na.enable(bDataLib, bData);
+                    double aValue = aDataLib.getDoubleAt(aData, 0);
+                    double[] result = new double[bLength];
                     if (na.checkNAorNaN(aValue)) {
                         if (na.check(aValue)) {
                             Arrays.fill(result, RRuntime.DOUBLE_NA);
@@ -388,8 +392,8 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                             Arrays.fill(result, Double.NaN);
                         }
                     } else {
-                        for (int k = 0; k < b.getLength(); k++) {
-                            double bValue = b.getDataAt(k);
+                        for (int k = 0; k < bLength; k++) {
+                            double bValue = bDataLib.getDoubleAt(bData, k);
                             if (na.check(bValue)) {
                                 result[k] = RRuntime.DOUBLE_NA;
                             } else {
@@ -397,17 +401,19 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                             }
                         }
                     }
-                    return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{1, b.getLength()});
+                    return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{1, bLength});
                 }
-                if (a.getLength() != b.getLength()) {
+                if (aLength != bLength) {
                     throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 double result = 0.0;
-                na.enable(a);
-                na.enable(b);
-                for (int k = 0; k < a.getLength(); k++) {
-                    double aValue = a.getDataAt(k);
-                    double bValue = b.getDataAt(k);
+                na.enable(aDataLib, aData);
+                na.enable(bDataLib, bData);
+                RandomAccessIterator aIt = aDataLib.randomAccessIterator(aData);
+                RandomAccessIterator bIt = bDataLib.randomAccessIterator(bData);
+                for (int k = 0; k < bLength; k++) {
+                    double aValue = aDataLib.getDouble(aData, aIt, k);
+                    double bValue = bDataLib.getDouble(bData, bIt, k);
                     /*
                      * The ordering matters: have to check aValue first, NA before NaN, then check
                      * for bValue, again NA before NaN
@@ -753,7 +759,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     // logical-logical
 
     @Specialization
-    protected com.oracle.truffle.r.runtime.data.RIntVector multiply(RAbstractLogicalVector aOriginal, RAbstractLogicalVector bOriginal,
+    protected RIntVector multiply(RAbstractLogicalVector aOriginal, RAbstractLogicalVector bOriginal,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
@@ -763,7 +769,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     // to int
 
     @Specialization
-    protected com.oracle.truffle.r.runtime.data.RIntVector multiply(RAbstractLogicalVector aOriginal, RIntVector b,
+    protected RIntVector multiply(RAbstractLogicalVector aOriginal, RIntVector b,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
@@ -771,7 +777,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected com.oracle.truffle.r.runtime.data.RIntVector multiply(RIntVector a, RAbstractLogicalVector bOriginal,
+    protected RIntVector multiply(RIntVector a, RAbstractLogicalVector bOriginal,
                     @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix) {
@@ -780,22 +786,26 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
 
     // to double
 
-    @Specialization(guards = {"!isRAbstractComplexVector(a)"})
+    @Specialization(guards = {"!isRAbstractComplexVector(a)"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected RDoubleVector multiply(RAbstractAtomicVector a, RDoubleVector b,
+                    @CachedLibrary("a.getData()") VectorDataLibrary aDataLib,
+                    @CachedLibrary("b.getData()") VectorDataLibrary bDataLib,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
-        return doubleMultiply((RDoubleVector) a.castSafe(RType.Double, isNAProfile), b, aIsMatrix, bIsMatrix, lengthEquals);
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
+        Object coercedAData = aDataLib.cast(a.getData(), RType.Double);
+        return doubleMultiply(getCoercionResultDataLib(), coercedAData, a, bDataLib, b.getData(), b, aIsMatrix, bIsMatrix, lengthEquals);
     }
 
-    @Specialization(guards = {"!isRAbstractComplexVector(b)"})
+    @Specialization(guards = {"!isRAbstractComplexVector(b)"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected RDoubleVector multiply(RDoubleVector a, RAbstractAtomicVector b,
+                    @CachedLibrary("a.getData()") VectorDataLibrary aDataLib,
+                    @CachedLibrary("b.getData()") VectorDataLibrary bDataLib,
                     @Cached("createBinaryProfile()") ConditionProfile aIsMatrix,
                     @Cached("createBinaryProfile()") ConditionProfile bIsMatrix,
-                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals,
-                    @Cached("createBinaryProfile()") ConditionProfile isNAProfile) {
-        return doubleMultiply(a, (RDoubleVector) b.castSafe(RType.Double, isNAProfile), aIsMatrix, bIsMatrix, lengthEquals);
+                    @Cached("createBinaryProfile()") ConditionProfile lengthEquals) {
+        Object coercedBData = bDataLib.cast(b.getData(), RType.Double);
+        return doubleMultiply(aDataLib, a.getData(), a, getCoercionResultDataLib(), coercedBData, b, aIsMatrix, bIsMatrix, lengthEquals);
     }
 
     // to complex
@@ -822,6 +832,16 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
     @TruffleBoundary
     protected RDoubleVector doRaw(@SuppressWarnings("unused") Object a, @SuppressWarnings("unused") Object b) {
         throw error(RError.Message.NUMERIC_COMPLEX_MATRIX_VECTOR);
+    }
+
+    // helpers
+
+    public VectorDataLibrary getCoercionResultDataLib() {
+        if (coercionResultDataLib == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            coercionResultDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getTypedVectorDataLibraryCacheSize()));
+        }
+        return coercionResultDataLib;
     }
 
     // guards

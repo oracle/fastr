@@ -30,7 +30,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.ExtractListElement;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
@@ -80,8 +82,10 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
         return CrossprodCommonNodeGen.create(false);
     }
 
-    @Specialization(guards = {"getXDimsNode.isMatrix(x)", "getYDimsNode.isMatrix(y)"})
+    @Specialization(guards = {"getXDimsNode.isMatrix(x)", "getYDimsNode.isMatrix(y)"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected RDoubleVector crossprod(RDoubleVector x, RDoubleVector y,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
+                    @CachedLibrary("y.getData()") VectorDataLibrary yDataLib,
                     @Cached("create()") GetDimAttributeNode getXDimsNode,
                     @Cached("create()") GetDimAttributeNode getYDimsNode) {
         int[] xDims = getXDimsNode.getDimensions(x);
@@ -90,7 +94,8 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
         int xCols = transposeX ? xDims[0] : xDims[1];
         int yRows = transposeX ? yDims[0] : yDims[1];
         int yCols = transposeX ? yDims[1] : yDims[0];
-        RDoubleVector result = matMult.doubleMatrixMultiply(x, y, xRows, xCols, yRows, yCols, getXRowStride(xDims[0]), getXColStride(xDims[0]), getYRowStride(yDims[0]), getYColStride(yDims[0]),
+        RDoubleVector result = matMult.doubleMatrixMultiply(xDataLib, x.getData(), x, yDataLib, y.getData(), y, xRows, xCols, yRows, yCols, getXRowStride(xDims[0]), getXColStride(xDims[0]),
+                        getYRowStride(yDims[0]), getYColStride(yDims[0]),
                         false);
         return copyDimNames(x, y, result);
     }
@@ -100,8 +105,9 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
         return copyDimNames(x, y, (RAbstractVector) matMult.executeObject(transposeX(x), transposeY(y)));
     }
 
-    @Specialization(guards = "getDimsNode.isMatrix(x)")
+    @Specialization(guards = "getDimsNode.isMatrix(x)", limit = "getTypedVectorDataLibraryCacheSize()")
     protected RDoubleVector crossprodDoubleMatrix(RDoubleVector x, @SuppressWarnings("unused") RNull y,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
                     @Cached("create()") GetReadonlyData.Double getReadonlyData,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") GetDimAttributeNode getResultDimsNode) {
@@ -110,8 +116,10 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
         int xCols = transposeX ? xDims[0] : xDims[1];
         int yRows = transposeX ? xDims[0] : xDims[1];
         int yCols = transposeX ? xDims[1] : xDims[0];
+        Object xData = x.getData();
         RDoubleVector result = mirror(
-                        matMult.doubleMatrixMultiply(x, x, xRows, xCols, yRows, yCols, getXRowStride(xDims[0]), getXColStride(xDims[0]), getYRowStride(xDims[0]), getYColStride(xDims[0]), true),
+                        matMult.doubleMatrixMultiply(xDataLib, xData, x, xDataLib, xData, x, xRows, xCols, yRows, yCols, getXRowStride(xDims[0]), getXColStride(xDims[0]), getYRowStride(xDims[0]),
+                                        getYColStride(xDims[0]), true),
                         getResultDimsNode,
                         getReadonlyData);
         return copyDimNames(x, x, result);
