@@ -399,9 +399,11 @@ rffi.test_sort_complex(x)
 # which returns NULL in case of an error
 stopifnot(!is.null(rffi.get_dataptr(api.Rf_allocVector(14, 268435457))))
 
-vec <- double(268435457)
-vec[[268435457]] <- 4.2
-stopifnot(!is.null(rffi.get_dataptr(vec)))
-stopifnot(vec[[268435457]] == 4.2)
+if (Sys.getenv("TESTRFFI_IGNORE_4GB_VECTOR_TEST") != "") {
+  vec <- double(268435457)
+  vec[[268435457]] <- 4.2
+  stopifnot(!is.null(rffi.get_dataptr(vec)))
+  stopifnot(vec[[268435457]] == 4.2)
+}
 
 is.null(rffi.testMissingArgWithATTRIB())

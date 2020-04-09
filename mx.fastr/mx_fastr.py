@@ -395,18 +395,7 @@ def _fastr_gate_runner(args, tasks):
 
     with mx_gate.Task('Internal pkg test', tasks, tags=[FastRGateTags.internal_pkgs_test]) as t:
         if t:
-            list_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages/pkg-filelist')
-            if os.environ.get('FASTR_RFFI') == 'llvm':
-                list_file_llvm = list_file + '.llvm'
-                if os.path.exists(list_file_llvm):
-                    list_file = list_file_llvm
-            if 'FASTR_GCTORTURE' in os.environ:
-                list_file_gctorture = list_file + '.gctorture'
-                if os.path.exists(list_file_gctorture):
-                    list_file = list_file_gctorture
-            result = pkgtest(["--verbose", "--repos", "FASTR", "--pkg-filelist", list_file])
-            if result != 0:
-                mx.abort("internal package test failed")
+            internal_pkg_tests()
 
     # CRAN packages are listed in files com.oracle.truffle.r.test.packages/gated0, gated1, ...
     # We loop over all such files and crete gate task for each of them
@@ -422,15 +411,39 @@ def _fastr_gate_runner(args, tasks):
                     next_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.packages/gated' + str(i + 1))
                     if os.path.exists(next_file):
                         mx.abort("File %s exists, but the gate thinks that %s is the last file. Did you forget to update the gate configuration?" % (next_file, list_file))
-                cache_arg = os.environ.get('FASTR_PKGS_CACHE_OPT')
-                if cache_arg is None:
-                    cache_arg = []
-                    mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
-                else:
-                    cache_arg = ['--cache-pkgs', cache_arg]
-                result = pkgtest(["--verbose"] + cache_arg + ["--repos", "SNAPSHOT", "--pkg-filelist", list_file])
-                if result != 0:
-                    mx.abort("package test failed")
+                cran_pkg_tests(list_file)
+
+def common_pkg_tests_args(graalvm_home):
+    gvm_home_arg = [] if graalvm_home is None else ['--graalvm-home', graalvm_home]
+    # SNAPSHOT is transformed by the pkgtest script, where it also checks for FASTR_MRAN_MIRROR env. variable
+    # FASTR cannot be transformed by the pkgtest script, because it may not know FastR repo home, just graalvm_home
+    fastr_pkgs_repo = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages', 'repo')
+    return gvm_home_arg + ["--gnur-home", gnur_path(), "--fastr-home", _fastr_suite.dir, "--repos", "SNAPSHOT,FASTR=file://" + fastr_pkgs_repo]
+
+def cran_pkg_tests(list_file, graalvm_home=None):
+    cache_args = []
+    cache = os.environ.get('FASTR_PKGS_CACHE_OPT')
+    if cache is None:
+        mx.warn("If you want to use R packages cache, export environment variable FASTR_PKGS_CACHE_OPT. See option '--cache-pkgs' of 'mx pkgtest' for the syntax.")
+    else:
+        cache_args += ['--cache-pkgs', cache]
+    result = pkgtest(["--verbose"] + cache_args + common_pkg_tests_args(graalvm_home) + ["--pkg-filelist", list_file])
+    if result != 0:
+        mx.abort("package test failed")
+
+def internal_pkg_tests(graalvm_home=None):
+    list_file = os.path.join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages/pkg-filelist')
+    if os.environ.get('FASTR_RFFI') == 'llvm':
+        list_file_llvm = list_file + '.llvm'
+        if os.path.exists(list_file_llvm):
+            list_file = list_file_llvm
+    if 'FASTR_GCTORTURE' in os.environ:
+        list_file_gctorture = list_file + '.gctorture'
+        if os.path.exists(list_file_gctorture):
+            list_file = list_file_gctorture
+    result = pkgtest(["--verbose", "--pkg-filelist", list_file] + common_pkg_tests_args(graalvm_home))
+    if result != 0:
+        mx.abort("internal package test failed")
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
 
