@@ -29,8 +29,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -69,14 +72,20 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "reuseNonSharedNode.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected RAbstractVector updateDim(RAbstractVector vector, RIntVector dimensions,
+                    @CachedLibrary("dimensions") AbstractContainerLibrary dimsLib,
+                    @CachedLibrary("vector") AbstractContainerLibrary vectorLib,
+                    @CachedLibrary("dimensions.getData()") VectorDataLibrary dimsDataLib,
                     @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                     @Cached("createDim()") SetFixedAttributeNode putDimensions,
                     @Cached("createNames()") RemoveFixedAttributeNode removeNames,
                     @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames,
                     @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
-        RIntVector dimensionsMaterialized = dimensions.materialize();
-        int[] dimsData = dimensionsMaterialized.getDataCopy();
-        RAbstractVector.verifyDimensions(vector.getLength(), dimsData, this);
+        // TODO: materialization of the dims may not be necessary anymore when all integer vectors
+        // are collapsed into RIntVector, the only issues may be if some code assumes that
+        // dimensions are always writeable
+        RIntVector dimensionsMaterialized = (RIntVector) dimsLib.materialize(dimensions);
+        int[] dimsData = dimsDataLib.getReadonlyIntData(dimensions.getData());
+        RAbstractVector.verifyDimensions(vectorLib.getLength(vector), dimsData, this);
         RAbstractVector result = reuseNonSharedNode.getMaterializedResult(vector);
         removeNames.execute(result);
         removeDimNames.execute(result);
@@ -91,14 +100,17 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
         return result;
     }
 
-    @Specialization(replaces = "updateDim")
+    @Specialization(replaces = "updateDim", limit = "getVectorAccessCacheSize()")
     protected RAbstractVector updateDimGeneric(RAbstractVector vector, RIntVector dimensions,
+                    @CachedLibrary("dimensions") AbstractContainerLibrary dimsLib,
+                    @CachedLibrary("vector") AbstractContainerLibrary vectorLib,
+                    @CachedLibrary("dimensions.getData()") VectorDataLibrary dimsDataLib,
                     @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                     @Cached("createDim()") SetFixedAttributeNode putDimensions,
                     @Cached("createNames()") RemoveFixedAttributeNode removeNames,
                     @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames,
                     @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
-        return updateDim(vector, dimensions, initAttrProfile, putDimensions, removeNames, removeDimNames, reuseNonSharedNode);
+        return updateDim(vector, dimensions, dimsLib, vectorLib, dimsDataLib, initAttrProfile, putDimensions, removeNames, removeDimNames, reuseNonSharedNode);
     }
 
     @Specialization(guards = "!isRAbstractVector(obj)")
