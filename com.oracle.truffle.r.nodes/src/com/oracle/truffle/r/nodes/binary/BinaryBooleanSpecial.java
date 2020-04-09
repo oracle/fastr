@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,11 +26,14 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BooleanOperation;
 import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
+
+import static com.oracle.truffle.r.nodes.helpers.SpecialsUtils.unboxValue;
 
 /**
  * Fast-path for scalar values: these cannot have any class attribute. Note: we intentionally use
@@ -48,7 +51,16 @@ public abstract class BinaryBooleanSpecial extends RNode {
     }
 
     public static RSpecialFactory createSpecialFactory(final BooleanOperationFactory opFactory) {
-        return (signature, arguments, inReplacement) -> signature.getNonNullCount() == 0 && arguments.length == 2 ? BinaryBooleanSpecialNodeGen.create(opFactory.createOperation(), arguments) : null;
+        return new RSpecialFactory() {
+            @Override
+            public RNode create(ArgumentsSignature signature, RNode[] arguments, boolean inReplacement) {
+                if (signature.getNonNullCount() != 0 || arguments.length != 2) {
+                    return null;
+                }
+                RNode[] newArguments = new RNode[]{unboxValue(arguments[0]), unboxValue(arguments[1])};
+                return BinaryBooleanSpecialNodeGen.create(opFactory.createOperation(), newArguments);
+            }
+        };
     }
 
     @Specialization

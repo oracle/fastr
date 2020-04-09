@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils;
+import com.oracle.truffle.r.nodes.helpers.SpecialsUtils;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.UpdateFieldSpecialNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;

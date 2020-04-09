@@ -26,7 +26,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.SubInterface;
+import com.oracle.truffle.r.nodes.helpers.SpecialsUtils.SubInterface;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;

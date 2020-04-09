@@ -29,8 +29,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.ProfiledSpecialsUtilsFactory.ProfiledUpdateSubscriptSpecial2NodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertIndex;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertValue;
+import com.oracle.truffle.r.nodes.helpers.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.helpers.SpecialsUtils.ConvertValue;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -81,7 +81,8 @@ public abstract class UpdateSubscriptSpecial2 extends IndexingSpecial2Common {
         return vector;
     }
 
-    @Specialization(guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index1, index2)", "dataLib.isWriteable(list.getData())"}, limit = "getVectorAccessCacheSize()")
+    @Specialization(guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index1, index2)", "dataLib.isWriteable(list.getData())",
+                    "isSingleElement(value)"}, limit = "getVectorAccessCacheSize()")
     protected Object setList(RList list, int index1, int index2, Object value,
                     @CachedLibrary("list.getData()") VectorDataLibrary dataLib) {
         Object vectorData = list.getData();

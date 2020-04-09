@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import static com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.convertIndex;
-import static com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.convertValue;
+import static com.oracle.truffle.r.nodes.helpers.SpecialsUtils.convertIndex;
+import static com.oracle.truffle.r.nodes.helpers.SpecialsUtils.unboxValue;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -35,8 +35,8 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.helpers.SpecialsUtils;
+import com.oracle.truffle.r.nodes.helpers.SpecialsUtils.ConvertIndex;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.UpdateSubscriptSpecial;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.UpdateSubscriptSpecial2;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -60,9 +60,9 @@ public abstract class UpdateSubset extends RBuiltinNode.Arg1 {
         if (SpecialsUtils.isCorrectUpdateSignature(signature) && (args.length == 3 || args.length == 4)) {
             ConvertIndex index = SpecialsUtils.convertIndex(args[1]);
             if (args.length == 3) {
-                return UpdateSubscriptSpecial.create(inReplacement, args[0], index, convertValue(args[2]));
+                return UpdateSubscriptSpecial.create(inReplacement, args[0], index, unboxValue(args[2]));
             } else {
-                return UpdateSubscriptSpecial2.create(inReplacement, args[0], index, convertIndex(args[2]), convertValue(args[3]));
+                return UpdateSubscriptSpecial2.create(inReplacement, args[0], index, convertIndex(args[2]), unboxValue(args[3]));
             }
         }
         return null;

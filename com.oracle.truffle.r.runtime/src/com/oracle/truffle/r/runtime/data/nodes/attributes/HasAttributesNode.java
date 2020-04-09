@@ -38,6 +38,7 @@ public abstract class HasAttributesNode extends RBaseNode {
 
     @Specialization
     protected boolean handleAttributable(RAttributable x) {
+        // TODO: this may need a check for implicit names (only pair-lists for now)
         return x.getAttributes() != null;
     }
 

@@ -26,7 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.nodes.ExtractListElement;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.ProfiledSpecialsUtilsFactory.ProfiledSubscriptSpecial2NodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.helpers.SpecialsUtils.ConvertIndex;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
