@@ -75,7 +75,7 @@ rcmds: $(FASTR_BIN_DIR)/R
 $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp -r $(BIN_FILES) $(FASTR_BIN_DIR)
 	# Note: in the GraalVM release support distribution we override exec/R and Rscript
-	# with scripts R_legacy and Rscript_legacy from com.oracle.truffle.r.release
+	# with scripts R_launcher and Rscript_launcher from com.oracle.truffle.r.release
 	# overide bin/exec/R
 	cp R.sh $(FASTR_BIN_DIR)/exec/R
 	# override bin/Rscript

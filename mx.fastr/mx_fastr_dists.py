@@ -136,11 +136,11 @@ class ReleaseBuildTask(mx.NativeBuildTask):
 
         # replace the mx exec scripts with native Java launchers, setting the classpath from above
         bin_exec_dir = join(bin_dir, 'exec')
-        r_launcher = join(self.subject.dir, 'src', 'R_legacy')
+        r_launcher = join(self.subject.dir, 'src', 'R_launcher')
         template_dict = {'CLASSPATH': classpath_string}
         self._template(r_launcher, join(bin_exec_dir, 'R'), template_dict)
         shutil.rmtree(join(bin_dir, 'execRextras'))
-        rscript_launcher = join(self.subject.dir, 'src', 'Rscript_legacy')
+        rscript_launcher = join(self.subject.dir, 'src', 'Rscript_launcher')
         self._template(rscript_launcher, join(bin_dir, 'Rscript'), template_dict)
 
 
@@ -242,8 +242,8 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
             "LICENSE_FASTR" : "file:LICENSE",
             "3rd_party_licenses_fastr.txt" : "file:3rd_party_licenses.txt",
             "README_FASTR": "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/README.md",
-            "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_legacy",
-            "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_legacy",
+            "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_launcher",
+            "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_launcher",
             "native-image.properties": "file:mx.fastr/native-image.properties",
         },
         path=None,

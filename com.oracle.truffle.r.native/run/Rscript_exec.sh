@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 # Startup FastR (Rscript) using the mx tool (development)
 # This is exec'ed by the (generic) Rscript script in the parent directory.
 # NOTE: this is used only in the development build,
-# com.oracle.truffle.r.release/src/Rscript_legacy is used in the release
+# com.oracle.truffle.r.release/src/Rscript_launcher is used in the release
 
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ] ; do source="$(readlink "$source")"; done
