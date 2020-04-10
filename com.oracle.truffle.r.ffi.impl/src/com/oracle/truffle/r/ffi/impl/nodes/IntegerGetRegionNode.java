@@ -22,20 +22,20 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.llvm.AltrepLLVMDownCallNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RIntVectorData;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 @GenerateUncached
@@ -58,38 +58,27 @@ public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
         }
     }
 
-    @Specialization(limit = "3", guards = {"isAltrep(altIntVec)", "!hasGetRegionMethodRegistered(altIntVec)"})
-    public long getRegionForAltIntegerVecWithoutRegisteredMethod(RIntVector altIntVec, long fromIdx, long size, Object buffer,
-                                                                 @CachedLibrary("buffer") InteropLibrary bufferInterop,
-                                                                 @CachedLibrary("altIntVec.getData()") RIntVectorDataLibrary altIntVecDataLibrary) {
+    @Specialization(limit = "3")
+    public long getRegionForOtherVectors(RIntVector intVector, long fromIdx, long size, Object buffer,
+                                         @CachedLibrary("buffer") InteropLibrary bufferInterop,
+                                         @Cached(value = "intVector.access()", allowUncached = true) VectorAccess access) {
         assert bufferInterop.isPointer(buffer);
-        long copied = 0;
-        for (long idx = fromIdx; idx < fromIdx + size; idx++) {
-            try {
-                int value = altIntVecDataLibrary.getIntAt(altIntVec.getData(), (int) idx);
-                bufferInterop.writeArrayElement(buffer, idx, value);
-                copied++;
-            } catch (Exception e) {
-                throw RInternalError.shouldNotReachHere(e, "Some exception");
-            }
+        if (fromIdx > Integer.MAX_VALUE || size > Integer.MAX_VALUE) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(RError.SHOW_CALLER, RError.Message.LONG_VECTORS_NOT_SUPPORTED);
         }
-        return copied;
-    }
 
-    @Specialization(guards = "!isAltrep(intVector)", limit = "3")
-    public long getRegionForNormalIntVector(RIntVector intVector, long fromIdx, long size, Object buffer,
-                                            @CachedLibrary("buffer") InteropLibrary bufferInterop,
-                                            @CachedLibrary("intVector.getData()") RIntVectorDataLibrary dataLibrary) {
-        assert bufferInterop.isPointer(buffer);
+        int fromIdxInt = (int) fromIdx;
+        int sizeInt = (int) size;
         long copied = 0;
-        for (long idx = fromIdx; idx < fromIdx + size; idx++) {
-            try {
-                int value = dataLibrary.getIntAt(intVector.getData(), (int) fromIdx);
+        try (RandomIterator it = access.randomAccess(intVector)) {
+            for (int idx = fromIdxInt; idx < fromIdxInt + sizeInt; idx++) {
+                int value = access.getInt(it, idx);
                 bufferInterop.writeArrayElement(buffer, idx, value);
                 copied++;
-            } catch (Exception e) {
-                throw RInternalError.shouldNotReachHere(e, "Some exception");
             }
+        } catch (Exception e) {
+            throw RInternalError.shouldNotReachHere(e, "Some exception in IntegerGetRegionNode");
         }
         return copied;
     }
