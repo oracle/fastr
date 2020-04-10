@@ -5,6 +5,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -15,13 +16,9 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RIntVectorData;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
-import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
@@ -43,7 +40,7 @@ public abstract class AltrepLLVMDownCallNode extends DownCallNode {
     }
 
     @Specialization
-    protected Object doCall(NativeFunction f, Object[] args,
+    protected Object doCall(Frame frame, NativeFunction func, Object[] args,
                             @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
         if (hasMirrorProfiles == null) {
             hasMirrorProfiles = createHasMirrorProfiles(args.length);
@@ -54,7 +51,7 @@ public abstract class AltrepLLVMDownCallNode extends DownCallNode {
             descriptor = descriptorFromArgs;
         }
 
-        return doCallImpl(f, args, ctxRef);
+        return doCallImpl(frame, func, args, ctxRef);
     }
 
     private static boolean isAltrep(Object object) {
@@ -67,8 +64,8 @@ public abstract class AltrepLLVMDownCallNode extends DownCallNode {
 
     @ExplodeLoop
     @Override
-    protected Object beforeCall(@SuppressWarnings("unused") NativeFunction nativeFunction, TruffleObject f, Object[] args) {
-        llvmDownCallNode.beforeCall(nativeFunction, f, args);
+    protected Object beforeCall(Frame frame, @SuppressWarnings("unused") NativeFunction nativeFunction, TruffleObject f, Object[] args) {
+        llvmDownCallNode.beforeCall(frame, nativeFunction, f, args);
         CompilerAsserts.partialEvaluationConstant(args.length);
         for (int i = 0; i < args.length; i++) {
             if (args[i] instanceof RBaseObject) {
@@ -81,7 +78,7 @@ public abstract class AltrepLLVMDownCallNode extends DownCallNode {
     }
 
     @Override
-    protected void afterCall(Object before, NativeFunction f, TruffleObject t, Object[] args) {
+    protected void afterCall(Frame frame, Object before, NativeFunction f, TruffleObject t, Object[] args) {
 
     }
 

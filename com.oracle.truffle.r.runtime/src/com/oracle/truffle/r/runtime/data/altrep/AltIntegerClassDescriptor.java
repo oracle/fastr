@@ -29,8 +29,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 import java.util.logging.Level;
 
@@ -257,11 +257,11 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     private Object convertNativeReturnValToIntOrDouble(Object returnValueFromNative) {
         assert returnValueFromNative instanceof NativeDataAccess.NativeMirror;
         RBaseObject returnValue = ((NativeDataAccess.NativeMirror) returnValueFromNative).getDelegate();
-        assert returnValue instanceof RIntVector || returnValue instanceof RAbstractDoubleVector;
+        assert returnValue instanceof RIntVector || returnValue instanceof RDoubleVector;
         if (returnValue instanceof RIntVector) {
             return ((RIntVector) returnValue).getDataAt(0);
-        } else if (returnValue instanceof RAbstractDoubleVector) {
-            return ((RAbstractDoubleVector) returnValue).getDataAt(0);
+        } else if (returnValue instanceof RDoubleVector) {
+            return ((RDoubleVector) returnValue).getDataAt(0);
         } else {
             throw RInternalError.shouldNotReachHere();
         }

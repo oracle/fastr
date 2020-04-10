@@ -74,7 +74,7 @@ public class RAltStringVector extends RAbstractStringVector implements RAbstract
         return this;
     }
 
-    public RAltRepData getData() {
+    public RAltRepData getAltrepData() {
         return data;
     }
 

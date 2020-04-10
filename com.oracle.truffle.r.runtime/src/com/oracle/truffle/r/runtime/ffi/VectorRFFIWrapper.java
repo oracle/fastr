@@ -50,24 +50,23 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
+import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RIntVectorData;
-import com.oracle.truffle.r.runtime.data.RIntVectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 
@@ -358,12 +357,10 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         @Specialization(guards = "isAltrep(altIntVector)", limit = "1")
         protected static long get(RIntVector altIntVector,
-                                  @CachedLibrary("altIntVector.getData()") RIntVectorDataLibrary altIntVecDataLibrary,
+                                  @CachedLibrary("altIntVector.getData()") VectorDataLibrary altIntDataLibrary,
                                   @CachedLibrary("getDescriptorFromVec(altIntVector).getDataptrMethod()") InteropLibrary dataptrMethodInteropLibrary,
                                   @CachedLibrary(limit = "1") InteropLibrary dataptrInteropLibrary,
                                   @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            // This should invoke Dataptr
-            altIntVector.materializeData(altIntVecDataLibrary);
             // TODO: dataptrAddr should be cached
             return ((RAltIntVectorData) altIntVector.getData()).getDescriptor().invokeDataptrMethodCached(altIntVector, true,
                     dataptrMethodInteropLibrary, dataptrInteropLibrary, hasMirrorProfile);

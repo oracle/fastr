@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
@@ -69,7 +70,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return descriptor;
     }
 
-    public RAltRepData getData() {
+    public RAltRepData getAltrepData() {
         return data;
     }
 
@@ -99,13 +100,19 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return owner;
     }
 
+    @ExportMessage
+    public NACheck getNACheck(@Cached() NACheck na) {
+        na.enable(false);
+        return na;
+    }
+
     @SuppressWarnings("static-method")
     @ExportMessage
     public final RType getType() {
         return RType.Integer;
     }
 
-    @ExportMessage
+    @ExportMessage(limit = "3")
     public int getLength(@CachedLibrary("this.descriptor.getLengthMethod()") InteropLibrary lengthMethodInterop,
                           @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
         return descriptor.invokeLengthMethodCached(getOwner(), lengthMethodInterop, hasMirrorProfile);
@@ -173,11 +180,11 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     // TODO: Implement with copy of FastPathAccess
-    @ExportMessage
+    @ExportMessage(limit = "3")
     public int getIntAt(int index,
                         @Cached("createBinaryProfile()") ConditionProfile isEltMethodRegisteredProfile,
                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile,
-                        @CachedLibrary("descriptor.getEltMethod()") InteropLibrary eltMethodInterop) {
+                        @CachedLibrary("this.descriptor.getEltMethod()") InteropLibrary eltMethodInterop) {
         if (isEltMethodRegisteredProfile.profile(descriptor.isEltMethodRegistered())) {
             return descriptor.invokeEltMethodCached(getOwner(), index, eltMethodInterop, hasMirrorProfile);
         } else {
@@ -190,10 +197,10 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return NativeMemory.getInt(address, index);
     }
 
-    @ExportMessage
+    @ExportMessage(limit = "3")
     public int getNextInt(SeqIterator it,
                           @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile,
-                          @CachedLibrary("descriptor.getEltMethod()") InteropLibrary eltMethodInterop) {
+                          @CachedLibrary("this.descriptor.getEltMethod()") InteropLibrary eltMethodInterop) {
         int value = getDescriptorFromIterator(it).invokeEltMethodCached(
                 getOwner(), it.getIndex(), eltMethodInterop, hasMirrorProfile);
         return value;
@@ -224,12 +231,13 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public void commitWriteIterator(SeqWriteIterator iterator) {
+    public void commitWriteIterator(SeqWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
         iterator.commit();
     }
 
     @ExportMessage
-    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator) {
+    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator,
+                                                @SuppressWarnings("unused") boolean neverSeenNA) {
         iterator.commit();
     }
 
