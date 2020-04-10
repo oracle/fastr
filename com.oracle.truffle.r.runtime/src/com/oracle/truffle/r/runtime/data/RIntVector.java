@@ -94,10 +94,10 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     public static RIntVector createAltInt(AltIntegerClassDescriptor descriptor, RAltRepData altrepData) {
+        RIntVector vector = new RIntVector();
+        int length = descriptor.invokeLengthMethodUncached(vector);
         RAltIntVectorData altIntVectorData = new RAltIntVectorData(descriptor, altrepData);
-        RIntVector vector = new RIntVector(altIntVectorData);
-        vector.setAltRep();
-        altIntVectorData.setVector(vector);
+        vector.setData(altIntVectorData, length);
         return vector;
     }
 
