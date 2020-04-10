@@ -24,39 +24,40 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.RandomAccessIterator;
-import com.oracle.truffle.r.runtime.data.VectorDataLibraryUtils.SeqIterator;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@ExportLibrary(RIntVectorDataLibrary.class)
-public class RAltIntVectorData extends RIntVectorData {
+@ExportLibrary(VectorDataLibrary.class)
+public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     private final RAltRepData data;
     protected final AltIntegerClassDescriptor descriptor;
-    private RIntVector vector;
     private boolean dataptrCalled;
+    private RIntVector owner;
 
-    public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data, RIntVector vector) {
+    public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data) {
         this.data = data;
         this.descriptor = descriptor;
-        this.vector = vector;
         this.dataptrCalled = false;
         assert hasDescriptorRegisteredNecessaryMethods(descriptor):
                 "Descriptor " + descriptor.toString() + " does not have registered all necessary methods";
-    }
-
-    public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data) {
-        this(descriptor, data, null);
     }
 
     private boolean hasDescriptorRegisteredNecessaryMethods(AltIntegerClassDescriptor descriptor) {
@@ -88,47 +89,30 @@ public class RAltIntVectorData extends RIntVectorData {
         data.setData2(data2);
     }
 
-    public void setVector(RIntVector vector) {
-        this.vector = vector;
-    }
-
     @Override
-    public String toString() {
-        CompilerAsserts.neverPartOfCompilation();
-        return "AltIntegerVector: data={" + data.toString() + "}";
+    public void setOwner(RAbstractVector newOwner) {
+        owner = (RIntVector) newOwner;
     }
 
-    @Override
-    @Ignore
-    public int getIntAt(int index) {
-        ConditionProfile isEltMethodRegisteredProfile = ConditionProfile.getUncached();
-        return getIntAt(index, isEltMethodRegisteredProfile);
+    private RIntVector getOwner() {
+        assert owner != null;
+        return owner;
     }
 
-    // TODO: Implement with copy of FastPathAccess
+    @SuppressWarnings("static-method")
     @ExportMessage
-    public int getIntAt(int index, @Cached("createBinaryProfile()") ConditionProfile isEltMethodRegisteredProfile) {
-        if (isEltMethodRegisteredProfile.profile(descriptor.isEltMethodRegistered())) {
-            // TODO: Invoke cached version
-            return descriptor.invokeEltMethodUncached(vector, index);
-        } else {
-            // Invoke uncached dataptr method
-            long address = invokeDataptrMethod();
-            return NativeMemory.getInt(address, index);
-        }
-    }
-
-    private long invokeDataptrMethod() {
-        // TODO: Exception handling?
-        dataptrCalled = true;
-        return descriptor.invokeDataptrMethodUncached(vector, true);
+    public final RType getType() {
+        return RType.Integer;
     }
 
     @ExportMessage
-    @Override
-    public void setIntAt(int index, int value, @SuppressWarnings("unused") NACheck naCheck) {
-        long address = invokeDataptrMethod();
-        NativeMemory.putInt(address, index, value);
+    public int getLength(@CachedLibrary("this.descriptor.getLengthMethod()") InteropLibrary lengthMethodInterop,
+                          @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+        return descriptor.invokeLengthMethodCached(getOwner(), lengthMethodInterop, hasMirrorProfile);
+    }
+
+    private int getLengthUncached() {
+        return getLength(InteropLibrary.getFactory().getUncached(), ConditionProfile.getUncached());
     }
 
     @ExportMessage
@@ -136,27 +120,6 @@ public class RAltIntVectorData extends RIntVectorData {
         // TODO: TOhle by chtelo implementovat pomoci Dataptr
         int[] newData = getDataAsArray();
         return new RIntArrayVectorData(newData, true);
-    }
-
-    private int[] getDataAsArray() {
-        int[] newData = new int[getLength()];
-        for (int i = 0; i < getLength(); i++) {
-            newData[i] = getIntAt(i);
-        }
-        return newData;
-    }
-
-    @Override
-    @Ignore
-    public int getLength() {
-        return getLength(InteropLibrary.getFactory().getUncached(), ConditionProfile.getUncached());
-    }
-
-    @ExportMessage(limit = "3")
-    public int getLength(@CachedLibrary("this.descriptor.getLengthMethod()") InteropLibrary lengthMethodInterop,
-                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-        assert vector != null;
-        return descriptor.invokeLengthMethodCached(vector, lengthMethodInterop, hasMirrorProfile);
     }
 
     @ExportMessage
@@ -175,7 +138,6 @@ public class RAltIntVectorData extends RIntVectorData {
     }
 
     @ExportMessage
-    @Override
     public boolean isComplete() {
         return true;
     }
@@ -186,30 +148,128 @@ public class RAltIntVectorData extends RIntVectorData {
     }
 
     @ExportMessage
-    public SeqIterator iterator() {
-        // TODO: Use different store.
-        return new SeqIterator(this, getLength());
+    public SeqIterator iterator(
+            @Shared("SeqItLoopProfile") @Cached("createCountingProfile()")LoopConditionProfile loopProfile
+            ) {
+        SeqIterator it = new SeqIterator(descriptor, getLengthUncached());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
     }
 
     @ExportMessage
     public RandomAccessIterator randomAccessIterator() {
-        // TODO: Use different store.
-        return new RandomAccessIterator(this, getLength());
+        return new RandomAccessIterator(descriptor);
+    }
+
+    private static AltIntegerClassDescriptor getDescriptorFromIterator(Iterator it) {
+        assert it.getStore() instanceof AltIntegerClassDescriptor;
+        return (AltIntegerClassDescriptor) it.getStore();
     }
 
     @ExportMessage
-    public int getNext(SeqIterator it) {
-        assert this == it.getStore();
-        return getIntAt(it.getIndex());
+    public boolean next(SeqIterator it, boolean withWrap,
+                        @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopProfile, withWrap);
+    }
+
+    // TODO: Implement with copy of FastPathAccess
+    @ExportMessage
+    public int getIntAt(int index,
+                        @Cached("createBinaryProfile()") ConditionProfile isEltMethodRegisteredProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile,
+                        @CachedLibrary("descriptor.getEltMethod()") InteropLibrary eltMethodInterop) {
+        if (isEltMethodRegisteredProfile.profile(descriptor.isEltMethodRegistered())) {
+            return descriptor.invokeEltMethodCached(getOwner(), index, eltMethodInterop, hasMirrorProfile);
+        } else {
+            return getIntAtUncached(index);
+        }
+    }
+
+    private int getIntAtUncached(int index) {
+        long address = invokeDataptrMethod();
+        return NativeMemory.getInt(address, index);
     }
 
     @ExportMessage
-    public int getAt(RandomAccessIterator it, int index) {
-        assert this == it.getStore();
-        return getIntAt(index);
+    public int getNextInt(SeqIterator it,
+                          @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile,
+                          @CachedLibrary("descriptor.getEltMethod()") InteropLibrary eltMethodInterop) {
+        int value = getDescriptorFromIterator(it).invokeEltMethodCached(
+                getOwner(), it.getIndex(), eltMethodInterop, hasMirrorProfile);
+        return value;
+    }
+
+    @ExportMessage
+    public int getInt(RandomAccessIterator it, int index) {
+        return getDescriptorFromIterator(it).invokeEltMethodUncached(owner, index);
+    }
+
+    // Write access to elements:
+
+    private long invokeDataptrMethod() {
+        // TODO: Exception handling?
+        dataptrCalled = true;
+        return descriptor.invokeDataptrMethodUncached(getOwner(), true);
+    }
+
+    @ExportMessage
+    public SeqWriteIterator writeIterator() {
+        int length = getLengthUncached();
+        return new SeqWriteIterator(descriptor, length);
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(descriptor);
+    }
+
+    @ExportMessage
+    public void commitWriteIterator(SeqWriteIterator iterator) {
+        iterator.commit();
+    }
+
+    @ExportMessage
+    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator) {
+        iterator.commit();
+    }
+
+    @ExportMessage
+    public void setIntAt(int index, int value) {
+        long address = invokeDataptrMethod();
+        NativeMemory.putInt(address, index, value);
+    }
+
+    @ExportMessage
+    public void setNextInt(SeqWriteIterator it, int value) {
+        // TODO: invokeCached
+        long dataptrAddr = getDescriptorFromIterator(it).invokeDataptrMethodUncached(getOwner(), true);
+        NativeMemory.putInt(dataptrAddr, it.getIndex(), value);
+    }
+
+    @ExportMessage
+    public void setInt(RandomAccessWriteIterator it, int index, int value) {
+        // TODO: invokeCached
+        long dataptrAddr = getDescriptorFromIterator(it).invokeDataptrMethodUncached(getOwner(), true);
+        NativeMemory.putInt(dataptrAddr, index, value);
+    }
+
+    private int[] getDataAsArray() {
+        final int length = getLengthUncached();
+        int[] newData = new int[length];
+        for (int i = 0; i < length; i++) {
+            newData[i] = getIntAtUncached(i);
+        }
+        return newData;
+    }
+
+    @Override
+    public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
+        return "AltIntegerVector: data={" + data.toString() + "}";
     }
 
     /**
+     * TODO: Remove it when it is integrated into RAltIntVectorData
      * Specializes on every separate instance. Note that we cannot have one FastPathAccess for two instances with
      * same descriptor, because this descriptor may return different Dataptr or Elt for both instances (Dataptr or
      * Elt methods may be dependent on instance data).
