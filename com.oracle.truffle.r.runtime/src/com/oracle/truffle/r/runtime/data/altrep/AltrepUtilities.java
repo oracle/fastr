@@ -10,7 +10,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RIntVectorData;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 public class AltrepUtilities {
@@ -28,6 +28,12 @@ public class AltrepUtilities {
         return getAltIntVectorData(altIntVector).getDescriptor();
     }
 
+    public static RAltRepData getAltrepData(RIntVector altIntVector) {
+        assert altIntVector.isAltRep();
+        RAltIntVectorData altIntVectorData = getAltIntVectorData(altIntVector);
+        return altIntVectorData.getAltrepData();
+    }
+
     public static AltRepClassDescriptor getDescriptorFromAltrepObj(RBaseObject altrepObject) {
         assert altrepObject.isAltRep();
 
@@ -38,6 +44,17 @@ public class AltrepUtilities {
         } else {
             throw RInternalError.unimplemented();
         }
+    }
+
+    public static RPairList getPairListDataFromVec(RIntVector altIntVec) {
+        assert altIntVec.isAltRep();
+        assert altIntVec.getData() instanceof RAltIntVectorData;
+        RAltIntVectorData data = (RAltIntVectorData) altIntVec.getData();
+        return data.getAltrepData().getDataPairList();
+    }
+
+    public static RPairList getPairListDataFromVec(RAltStringVector altStringVec) {
+        throw RInternalError.unimplemented("AltrepUtilities.getPairListDataFromVec(RStringVector)");
     }
 
     public static boolean hasCoerceMethodRegistered(Object object) {

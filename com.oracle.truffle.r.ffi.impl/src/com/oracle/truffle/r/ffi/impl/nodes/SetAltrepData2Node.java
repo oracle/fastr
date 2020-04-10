@@ -3,11 +3,8 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 
@@ -20,8 +17,7 @@ public abstract class SetAltrepData2Node extends FFIUpCallNode.Arg2 {
 
     @Specialization(guards = "isAltrep(altIntVec)")
     public Object doAltInt(RIntVector altIntVec, Object data2) {
-        assert altIntVec.getData() instanceof RAltIntVectorData;
-        ((RAltIntVectorData) altIntVec.getData()).getData().setData2(data2);
+        AltrepUtilities.getAltrepData(altIntVec).setData2(data2);
         return null;
     }
 

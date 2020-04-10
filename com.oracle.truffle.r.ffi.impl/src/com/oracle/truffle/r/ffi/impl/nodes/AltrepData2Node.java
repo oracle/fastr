@@ -5,9 +5,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RIntVectorData;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
@@ -41,12 +39,10 @@ public abstract class AltrepData2Node extends FFIUpCallNode.Arg1 {
     }
 
     protected static RPairList getPairListDataFromVec(RIntVector altIntVec) {
-        RIntVectorData data = altIntVec.getData();
-        assert data instanceof RAltIntVectorData;
-        return ((RAltIntVectorData) data).getData().getDataPairList();
+        return AltrepUtilities.getPairListDataFromVec(altIntVec);
     }
 
     protected static RPairList getPairListDataFromVec(RAltStringVector altStringVec) {
-        return altStringVec.getData().getDataPairList();
+        return AltrepUtilities.getPairListDataFromVec(altStringVec);
     }
 }
