@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
 import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
@@ -94,9 +95,11 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     public static RIntVector createAltInt(AltIntegerClassDescriptor descriptor, RAltRepData altrepData) {
+        RAltIntVectorData altIntVectorData = RAltIntVectorData.createAltIntVectorData(descriptor, altrepData);
         RIntVector vector = new RIntVector();
+        vector.setAltRep();
+        vector.data = altIntVectorData;
         int length = descriptor.invokeLengthMethodUncached(vector);
-        RAltIntVectorData altIntVectorData = new RAltIntVectorData(descriptor, altrepData);
         vector.setData(altIntVectorData, length);
         return vector;
     }
