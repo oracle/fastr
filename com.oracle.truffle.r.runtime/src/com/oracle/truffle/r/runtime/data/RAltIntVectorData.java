@@ -122,10 +122,16 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return getLength(InteropLibrary.getFactory().getUncached(), ConditionProfile.getUncached());
     }
 
-    @ExportMessage
-    public RIntArrayVectorData materialize() {
-        // TODO: TOhle by chtelo implementovat pomoci Dataptr
-        int[] newData = getDataAsArray();
+    @ExportMessage(limit = "1")
+    public RIntArrayVectorData materialize(@CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
+                                           @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
+                                           @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+        int length = getLengthUncached();
+        long dataptr =
+                invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
+        int[] newData = new int[length];
+        NativeMemory.copyMemory(dataptr, newData, ElementType.INT, length);
+        // TODO: complete=true?
         return new RIntArrayVectorData(newData, true);
     }
 
