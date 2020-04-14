@@ -81,7 +81,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RString;
-import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -126,7 +125,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAsStringVector() {
         arg.asStringVector();
-        assertTypes(RNull.class, RMissing.class, String.class, RAbstractStringVector.class, RStringVector.class, RStringSequence.class);
+        assertTypes(RNull.class, RMissing.class, String.class, RAbstractStringVector.class, RStringVector.class);
     }
 
     @Test

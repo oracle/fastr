@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
@@ -90,7 +89,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization(guards = "vector.isSequence()")
-    protected RStringSequence doIntSequence(RIntVector vector) {
+    protected RStringVector doIntSequence(RIntVector vector) {
         RIntSeqVectorData seq = vector.getSequence();
         return factory().createStringSequence("", "", seq.getStart(), seq.getStride(), vector.getLength());
     }

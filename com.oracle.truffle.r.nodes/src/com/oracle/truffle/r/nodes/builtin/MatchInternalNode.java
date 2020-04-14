@@ -40,7 +40,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RStringSequence;
+import com.oracle.truffle.r.runtime.data.RStringSeqVectorData;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -370,15 +371,16 @@ public abstract class MatchInternalNode extends RBaseNode {
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
     }
 
-    @Specialization
+    @Specialization(guards = "isSequence(table)")
     @CompilerDirectives.TruffleBoundary
-    protected RIntVector matchInSequence(RAbstractStringVector x, RStringSequence table, int nomatch) {
+    protected RIntVector matchInSequence(RAbstractStringVector x, RStringVector table, int nomatch) {
         int[] result = initResult(x.getLength(), nomatch);
         boolean matchAll = true;
 
+        RStringSeqVectorData seq = table.getSequence();
         for (int i = 0; i < result.length; i++) {
             String xx = x.getDataAt(i);
-            int index = table.getIndexFor(xx);
+            int index = seq.getIndexFor(xx);
             if (index != -1) {
                 result[i] = index + 1;
             } else {

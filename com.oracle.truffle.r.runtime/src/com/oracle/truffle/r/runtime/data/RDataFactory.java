@@ -547,8 +547,8 @@ public final class RDataFactory {
             return createStringVector(new String[]{RRuntime.STRING_NA}, false);
         }
 
-        public final RStringSequence createStringSequence(String prefix, String suffix, int start, int stride, int length) {
-            return traceDataCreated(new RStringSequence(prefix, suffix, start, stride, length));
+        public final RStringVector createStringSequence(String prefix, String suffix, int start, int stride, int length) {
+            return traceDataCreated(new RStringVector(new RStringSeqVectorData(prefix, suffix, start, stride, length), length));
         }
 
         public final RComplexVector createEmptyComplexVector() {
@@ -1021,8 +1021,8 @@ public final class RDataFactory {
         return createStringVector(new String[]{RRuntime.STRING_NA}, false);
     }
 
-    public static RStringSequence createStringSequence(String prefix, String suffix, int start, int stride, int length) {
-        return traceDataCreated(new RStringSequence(prefix, suffix, start, stride, length));
+    public static RStringVector createStringSequence(String prefix, String suffix, int start, int stride, int length) {
+        return traceDataCreated(new RStringVector(new RStringSeqVectorData(prefix, suffix, start, stride, length), length));
     }
 
     public static RComplexVector createEmptyComplexVector() {

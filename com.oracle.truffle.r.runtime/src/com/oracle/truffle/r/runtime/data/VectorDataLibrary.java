@@ -906,7 +906,7 @@ public abstract class VectorDataLibrary extends Library {
         return getStringImpl(receiver, type, it, index);
     }
 
-    public String getStringImpl(Object receiver, RType type, RandomAccessIterator it, int index) {
+    public final String getStringImpl(Object receiver, RType type, RandomAccessIterator it, int index) {
         switch (type) {
             case Integer:
                 return int2string(getNACheck(receiver), getInt(receiver, it, index));

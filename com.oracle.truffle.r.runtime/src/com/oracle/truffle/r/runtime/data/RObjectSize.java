@@ -159,12 +159,12 @@ public class RObjectSize {
                         obj instanceof RS4Object) {
             // promise: there is no value allocated yet, we may use the size of the closure
             return OBJECT_HEADER_SIZE + attributesSize;
-        } else if (obj instanceof RStringSequence) {
-            RStringSequence seq = (RStringSequence) obj;
+        } else if (obj instanceof RStringVector && ((RStringVector) obj).isSequence()) {
+            RStringSeqVectorData seq = ((RStringVector) obj).getSequence();
             if (seq.getLength() == 0) {
                 return OBJECT_HEADER_SIZE + INT_SIZE * 2;  // we cannot get prefix/suffix...
             } else {
-                return OBJECT_HEADER_SIZE + seq.getDataAt(0).length() * CHAR_SIZE;
+                return OBJECT_HEADER_SIZE + seq.getStringAt(0).length() * CHAR_SIZE;
             }
         } else if (RRuntime.isSequence(obj)) {
             // count: start, stride, length

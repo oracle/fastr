@@ -41,6 +41,8 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public final class RStringVector extends RAbstractStringVector implements RMaterializedVector, Shareable {
 
     private int length;
@@ -78,12 +80,12 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         // The assumption is that length of vectors can only change in infrequently used setLength
         // operation where we update the field accordingly
         length = newLen;
-        shareable = !(data instanceof RStringSeq);
+        shareable = !(data instanceof RStringSeqVectorData);
         // Only array storage strategy is handling the complete flag dynamically,
         // for other strategies, the complete flag is determined solely by the type of the strategy
         if (!(data instanceof RStringArrayVectorData)) {
             // only sequences are always complete, everything else is always incomplete
-            setComplete(data instanceof RStringSeq);
+            setComplete(data instanceof RStringSeqVectorData);
         }
     }
 
@@ -95,6 +97,16 @@ public final class RStringVector extends RAbstractStringVector implements RMater
 
     boolean isNativized() {
         return NativeDataAccess.isAllocated(this);
+    }
+
+    @Override
+    public boolean isSequence() {
+        return data instanceof RStringSeqVectorData;
+    }
+
+    @Override
+    public RStringSeqVectorData getSequence() {
+        return (RStringSeqVectorData) data;
     }
 
     @Override
@@ -219,7 +231,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     @Override
     @Ignore
     public RStringVector materialize() {
-        return this;
+        return containerLibMaterialize(VectorDataLibrary.getFactory().getUncached(data));
     }
 
     @ExportMessage(library = AbstractContainerLibrary.class)
@@ -242,6 +254,15 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         RStringVector result = new RStringVector(dataLib.copy(data, false), dataLib.getLength(data));
         MemoryCopyTracer.reportCopying(this, result);
         return result;
+    }
+
+    private AtomicReference<RStringVector> materialized = new AtomicReference<>();
+
+    public Object cachedMaterialize() {
+        if (materialized.get() == null) {
+            materialized.compareAndSet(null, materialize());
+        }
+        return materialized.get();
     }
 
     @Override
@@ -294,6 +315,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
             if (needsWrapping.profile(oldData instanceof CharSXPWrapper[])) {
                 return;
             }
+            oldData = VectorDataLibrary.getFactory().getUncached().materialize(oldData);
             Object newData = ((RStringArrayVectorData) oldData).wrapStrings();
             fence = 42; // make sure the array is really initialized before we set it to this.data
             this.data = newData;

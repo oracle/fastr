@@ -55,7 +55,6 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalar;
-import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -308,7 +307,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         return dataAt instanceof RScalar || dataAt instanceof String || dataAt instanceof Double || dataAt instanceof Integer || dataAt instanceof Byte;
     }
 
-    private RStringSequence createStringSequence(VirtualFrame frame, RAbstractListVector values, int length, int seqPos, String sep) {
+    private RStringVector createStringSequence(VirtualFrame frame, RAbstractListVector values, int length, int seqPos, String sep) {
         assert isStringSequence(values, length) != -1;
 
         String[] prefix = new String[seqPos];
@@ -332,7 +331,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     }
 
     @TruffleBoundary
-    private static RStringSequence buildStringSequence(String[] prefixArr, RIntSeqVectorData seq, String[] suffixArr, String sep) {
+    private static RStringVector buildStringSequence(String[] prefixArr, RIntSeqVectorData seq, String[] suffixArr, String sep) {
         StringBuilder prefix = new StringBuilder();
         for (int i = 0; i < prefixArr.length; i++) {
             prefix.append(prefixArr[i]).append(sep);
