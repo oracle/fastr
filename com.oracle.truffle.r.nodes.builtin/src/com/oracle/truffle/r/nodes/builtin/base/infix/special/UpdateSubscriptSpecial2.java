@@ -26,6 +26,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.ProfiledSpecialsUtilsFactory.ProfiledUpdateSubscriptSpecial2NodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertIndex;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertValue;
@@ -35,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public abstract class UpdateSubscriptSpecial2 extends IndexingSpecial2Common {
@@ -46,88 +48,65 @@ public abstract class UpdateSubscriptSpecial2 extends IndexingSpecial2Common {
 
     protected abstract Object execute(VirtualFrame frame, Object vec, Object index1, Object index2, Object value);
 
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "vector.isMaterialized()"})
+    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "dataLib.isWriteable(vector.getData())"}, limit = "getVectorAccessCacheSize()")
     protected RIntVector setInt(RIntVector vector, int index1, int index2, int value,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            access.setInt(iter, matrixIndex(vector, index1, index2), value);
-            if (RRuntime.isNA(value)) {
-                vector.setComplete(false);
-            }
-            return vector;
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        Object vectorData = vector.getData();
+        try (VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData)) {
+            dataLib.setInt(vectorData, it, matrixIndex(vector, index1, index2), value);
+            dataLib.commitRandomAccessWriteIterator(vectorData, it, !RRuntime.isNA(value));
         }
+        return vector;
     }
 
-    @Specialization(replaces = "setInt", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "vector.isMaterialized()"})
-    protected RIntVector setIntGeneric(RIntVector vector, int index1, int index2, int value) {
-        return setInt(vector, index1, index2, value, vector.slowPathAccess());
-    }
-
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "vector.isMaterialized()"})
+    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "dataLib.isWriteable(vector.getData())"}, limit = "getVectorAccessCacheSize()")
     protected RDoubleVector setDouble(RDoubleVector vector, int index1, int index2, double value,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            access.setDouble(iter, matrixIndex(vector, index1, index2), value);
-            if (RRuntime.isNA(value)) {
-                vector.setComplete(false);
-            }
-            return vector;
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        Object vectorData = vector.getData();
+        try (VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData)) {
+            dataLib.setDouble(vectorData, it, matrixIndex(vector, index1, index2), value);
+            dataLib.commitRandomAccessWriteIterator(vectorData, it, !RRuntime.isNA(value));
         }
+        return vector;
     }
 
-    @Specialization(replaces = "setDouble", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "vector.isMaterialized()"})
-    protected RDoubleVector setDoubleGeneric(RDoubleVector vector, int index1, int index2, double value) {
-        return setDouble(vector, index1, index2, value, vector.slowPathAccess());
-    }
-
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "vector.isMaterialized()"})
+    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "dataLib.isWriteable(vector.getData())"}, limit = "getVectorAccessCacheSize()")
     protected RStringVector setString(RStringVector vector, int index1, int index2, String value,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            access.setString(iter, matrixIndex(vector, index1, index2), value);
-            if (RRuntime.isNA(value)) {
-                vector.setComplete(false);
-            }
-            return vector;
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        Object vectorData = vector.getData();
+        try (VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData)) {
+            dataLib.setString(vectorData, it, matrixIndex(vector, index1, index2), value);
+            dataLib.commitRandomAccessWriteIterator(vectorData, it, !RRuntime.isNA(value));
         }
+        return vector;
     }
 
-    @Specialization(replaces = "setString", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "vector.isMaterialized()"})
-    protected RStringVector setStringGeneric(RStringVector vector, int index1, int index2, String value) {
-        return setString(vector, index1, index2, value, vector.slowPathAccess());
-    }
-
-    @Specialization(guards = {"access.supports(list)", "simpleVector(list)", "!list.isShared()", "isValidIndex(list, index1, index2)", "isSingleElement(value)"})
+    @Specialization(guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index1, index2)", "dataLib.isWriteable(list.getData())"}, limit = "getVectorAccessCacheSize()")
     protected Object setList(RList list, int index1, int index2, Object value,
-                    @Cached("list.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(list)) {
-            access.setListElement(iter, matrixIndex(list, index1, index2), value);
-            return list;
+                    @CachedLibrary("list.getData()") VectorDataLibrary dataLib) {
+        Object vectorData = list.getData();
+        try (VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData)) {
+            dataLib.setElement(vectorData, it, matrixIndex(list, index1, index2), value);
+            dataLib.commitRandomAccessWriteIterator(vectorData, it, false);
         }
+        return list;
     }
 
-    @Specialization(replaces = "setList", guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index1, index2)", "isSingleElement(value)"})
-    protected Object setListGeneric(RList list, int index1, int index2, Object value) {
-        return setList(list, index1, index2, value, list.slowPathAccess());
-    }
-
-    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "vector.isMaterialized()"})
+    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "dataLib.isWriteable(vector.getData())"}, limit = "getVectorAccessCacheSize()")
     protected RDoubleVector setDoubleIntIndexIntValue(RDoubleVector vector, int index1, int index2, int value,
-                    @Cached("vector.access()") VectorAccess access) {
-        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
-            if (RRuntime.isNA(value)) {
-                access.setDouble(iter, matrixIndex(vector, index1, index2), RRuntime.DOUBLE_NA);
-                vector.setComplete(false);
+                    @Cached("createBinaryProfile()") ConditionProfile naProfile,
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+        Object vectorData = vector.getData();
+        try (VectorDataLibrary.RandomAccessWriteIterator it = dataLib.randomAccessWriteIterator(vectorData)) {
+            if (naProfile.profile(RRuntime.isNA(value))) {
+                dataLib.setDouble(vectorData, it, matrixIndex(vector, index1, index2), RRuntime.DOUBLE_NA);
+                dataLib.commitRandomAccessWriteIterator(vectorData, it, false);
             } else {
-                access.setDouble(iter, matrixIndex(vector, index1, index2), value);
+                dataLib.setDouble(vectorData, it, matrixIndex(vector, index1, index2), value);
+                dataLib.commitRandomAccessWriteIterator(vectorData, it, true);
             }
-            return vector;
         }
-    }
-
-    @Specialization(replaces = "setDoubleIntIndexIntValue", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)", "vector.isMaterialized()"})
-    protected RDoubleVector setDoubleIntIndexIntValueGeneric(RDoubleVector vector, int index1, int index2, int value) {
-        return setDoubleIntIndexIntValue(vector, index1, index2, value, vector.slowPathAccess());
+        return vector;
     }
 
     @SuppressWarnings("unused")

@@ -36,11 +36,13 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AsRealNodeGen;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.SeqFunctions.SeqInt.IsIntegralNumericNode;
@@ -516,9 +518,11 @@ public final class SeqFunctions {
         /**
          * A length-1 REAL. Return "1:(int) from" where from is positive integral
          */
-        @Specialization(guards = {"fromVec.getLength() == 1", "isPositiveIntegralDouble(fromVec.getDataAt(0))"})
-        protected RAbstractVector seqFromOneArgIntDouble(RDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
-            int len = (int) fromVec.getDataAt(0);
+        @Specialization(guards = {"fromDataLib.getLength(fromVec.getData()) == 1",
+                        "isPositiveIntegralDouble(fromDataLib.getDoubleAt(fromVec.getData(), 0))"}, limit = "getTypedVectorDataLibraryCacheSize()")
+        protected RAbstractVector seqFromOneArgIntDouble(RDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+                        @CachedLibrary("fromVec.getData()") VectorDataLibrary fromDataLib) {
+            int len = (int) fromDataLib.getDoubleAt(fromVec.getData(), 0);
             return RDataFactory.createIntSequence(1, 1, len);
         }
 
@@ -526,9 +530,10 @@ public final class SeqFunctions {
          * A length-1 REAL. Return "1:(int) from" (N.B. from may be negative) EXCEPT
          * {@code seq(0.2)} is NOT the same as {@code seq(0.0)} (according to GNU R)
          */
-        @Specialization(guards = "fromVec.getLength() == 1")
-        protected RAbstractVector seqFromOneArgDouble(RDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
-            double from = validateDoubleParam(fromVec.getDataAt(0), fromVec, "from");
+        @Specialization(guards = "fromDataLib.getLength(fromVec.getData()) == 1", limit = "getTypedVectorDataLibraryCacheSize()")
+        protected RAbstractVector seqFromOneArgDouble(RDoubleVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+                        @CachedLibrary("fromVec.getData()") VectorDataLibrary fromDataLib) {
+            double from = validateDoubleParam(fromDataLib.getDoubleAt(fromVec.getData(), 0), fromVec, "from");
             int len = effectiveLength(1, from);
             return RDataFactory.createIntSequence(1, from > 0 ? 1 : -1, len);
         }
@@ -536,9 +541,10 @@ public final class SeqFunctions {
         /**
          * A length-1 INT. Return "1:from" (N.B. from may be negative)
          */
-        @Specialization(guards = "fromVec.getLength() == 1")
-        protected RIntVector seqFromOneArgInt(RIntVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot) {
-            int from = validateIntParam(fromVec.getDataAt(0), "from");
+        @Specialization(guards = "fromDataLib.getLength(fromVec.getData()) == 1", limit = "getTypedVectorDataLibraryCacheSize()")
+        protected RIntVector seqFromOneArgInt(RIntVector fromVec, RMissing to, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+                        @CachedLibrary("fromVec.getData()") VectorDataLibrary fromDataLib) {
+            int from = validateIntParam(fromDataLib.getIntAt(fromVec.getData(), 0), "from");
             int len = from > 0 ? from : 2 - from;
             return RDataFactory.createIntSequence(1, from > 0 ? 1 : -1, len);
         }

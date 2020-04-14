@@ -22,13 +22,18 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 
@@ -38,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
  * return {@code NA}.
  */
 @TypeSystemReference(RTypes.class)
+@ImportStatic(DSLConfig.class)
 public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
 
     public abstract double execute(Object obj);
@@ -48,35 +54,55 @@ public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization
-    protected double asReal(int obj) {
-        return RRuntime.isNA(obj) ? RRuntime.DOUBLE_NA : obj;
+    protected double asReal(int obj,
+                    @Cached BranchProfile naBranchProfile) {
+        if (RRuntime.isNA(obj)) {
+            naBranchProfile.enter();
+            return RRuntime.DOUBLE_NA;
+        } else {
+            return obj;
+        }
     }
 
-    @Specialization
-    protected double asReal(RDoubleVector obj) {
-        if (obj.getLength() == 0) {
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected double asReal(RDoubleVector obj,
+                    @Cached BranchProfile naBranchProfile,
+                    @CachedLibrary("obj.getData()") VectorDataLibrary dataLib) {
+        Object data = obj.getData();
+        if (dataLib.getLength(data) == 0) {
+            naBranchProfile.enter();
             return RRuntime.DOUBLE_NA;
         }
-        return obj.getDataAt(0);
+        return dataLib.getDoubleAt(data, 0);
     }
 
-    @Specialization
-    protected double asReal(RIntVector obj) {
-        if (obj.getLength() == 0) {
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected double asReal(RIntVector obj,
+                    @Cached BranchProfile naBranchProfile,
+                    @CachedLibrary("obj.getData()") VectorDataLibrary dataLib) {
+        Object data = obj.getData();
+        if (dataLib.getLength(data) == 0) {
+            naBranchProfile.enter();
             return RRuntime.DOUBLE_NA;
         }
-        int result = obj.getDataAt(0);
-        return RRuntime.isNA(result) ? RRuntime.DOUBLE_NA : result;
+        int result = dataLib.getIntAt(data, 0);
+        if (RRuntime.isNA(result)) {
+            naBranchProfile.enter();
+            return RRuntime.DOUBLE_NA;
+        } else {
+            return result;
+        }
     }
 
     @Specialization(guards = "obj.getLength() > 0")
     protected double asReal(RAbstractAtomicVector obj,
+                    @CachedLibrary(limit = "getCacheSize(2)") VectorDataLibrary dataLib,
                     @Cached("createNonPreserving()") CastDoubleNode castDoubleNode) {
         Object castObj = castDoubleNode.executeDouble(obj);
         if (castObj instanceof Double) {
             return (double) castObj;
         } else if (castObj instanceof RDoubleVector) {
-            return ((RDoubleVector) castObj).getDataAt(0);
+            return dataLib.getDoubleAt(((RDoubleVector) castObj).getData(), 0);
         } else {
             throw RInternalError.shouldNotReachHere();
         }
