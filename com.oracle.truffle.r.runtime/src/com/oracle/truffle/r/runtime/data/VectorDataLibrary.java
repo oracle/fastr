@@ -100,6 +100,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 @GenerateLibrary(assertions = Asserts.class)
 @DefaultExport(RListArrayDataLibrary.class)
+@DefaultExport(RStringCharSXPData.class)
 public abstract class VectorDataLibrary extends Library {
 
     public static final boolean ENABLE_VERY_SLOW_ASSERTS = "true".equals(System.getenv().get("FASTR_TEST_VERY_SLOW_ASSERTS"));

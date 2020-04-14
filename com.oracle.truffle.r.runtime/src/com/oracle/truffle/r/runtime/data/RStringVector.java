@@ -22,46 +22,38 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.Assumption;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
 public final class RStringVector extends RAbstractStringVector implements RMaterializedVector, Shareable {
 
-    static final Assumption noWrappedStrings = Truffle.getRuntime().createAssumption("noWrappedStrings");
-
-    /**
-     * After nativized, the data array degenerates to a reference holder.
-     */
-    private Object[] data;
-
-    private RStringVector() {
-        super(false);
-    }
+    private int length;
 
     RStringVector(Object[] data, boolean complete) {
         super(complete);
-        assert data instanceof String[] || data instanceof CharSXPWrapper[];
-        if (noWrappedStrings.isValid() && data instanceof CharSXPWrapper[]) {
-            noWrappedStrings.invalidate();
+        if (data instanceof String[]) {
+            setData(new RStringArrayVectorData((String[]) data, complete), data.length);
+        } else if (data instanceof CharSXPWrapper[]) {
+            setData(data, data.length);
+        } else {
+            assert false : data;
         }
-        this.data = data;
         assert RAbstractVector.verifyVector(this);
     }
 
@@ -70,9 +62,35 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    RStringVector(Object data, int length) {
+        super(false);
+        setData(data, length);
+        assert RAbstractVector.verifyVector(this);
+    }
+
+    private void setData(Object data, int newLen) {
+        this.data = data;
+        if (data instanceof VectorDataWithOwner) {
+            ((VectorDataWithOwner) data).setOwner(this);
+        }
+        // Temporary solution to keep getLength(), isComplete(), and isShareable be fast-path
+        // operations (they only read a field, no polymorphism).
+        // The assumption is that length of vectors can only change in infrequently used setLength
+        // operation where we update the field accordingly
+        length = newLen;
+        shareable = !(data instanceof RStringSeq);
+        // Only array storage strategy is handling the complete flag dynamically,
+        // for other strategies, the complete flag is determined solely by the type of the strategy
+        if (!(data instanceof RStringArrayVectorData)) {
+            // only sequences are always complete, everything else is always incomplete
+            setComplete(data instanceof RStringSeq);
+        }
+    }
+
     @Override
+    @Ignore // AbstractContainerLibrary
     public boolean isMaterialized() {
-        return true;
+        return VectorDataLibrary.getFactory().getUncached().isWriteable(data);
     }
 
     boolean isNativized() {
@@ -93,50 +111,47 @@ public final class RStringVector extends RAbstractStringVector implements RMater
 
     @Override
     public Object[] getInternalManagedData() {
-        return getInternalStore();
+        if (data instanceof RStringVecNativeData) {
+            return null;
+        }
+        // TODO: get rid of this method
+        return VectorDataLibrary.getFactory().getUncached().getReadonlyStringData(data);
     }
 
     @Override
-    public Object[] getInternalStore() {
-        return isNativized() ? null : data;
+    public Object getInternalStore() {
+        return data;
     }
 
     @Override
     public void setDataAt(Object store, int index, String value) {
-        assert canBeValidStore(store, getInternalStore());
-        NativeDataAccess.setData(this, data, index, value);
+        VectorDataLibrary.getFactory().getUncached().setStringAt(data, index, value);
     }
 
     @Override
     public String getDataAt(Object store, int index) {
-        assert canBeValidStore(store, getInternalStore());
-        return NativeDataAccess.getData(this, store, index);
+        return VectorDataLibrary.getFactory().getUncached().getStringAt(data, index);
     }
 
     @Override
+    @Ignore
     public int getLength() {
-        return NativeDataAccess.getDataLength(this, getInternalStore());
+        return length;
     }
 
     @Override
     public void setLength(int l) {
-        if (!isNativized()) {
-            if (l != data.length) {
-                try {
-                    wrapStrings();
-                    Object[] newData = new CharSXPWrapper[l];
-                    System.arraycopy(data, 0, newData, 0, l < data.length ? l : data.length);
-                    for (int i = data.length; i < l; i++) {
-                        newData[i] = CharSXPWrapper.create("");
-                    }
-                    NativeDataAccess.setDataLength(this, (CharSXPWrapper[]) data, l);
-                } finally {
-                    assert NativeDataAccess.isAllocated(this);
-                    setComplete(false);
-                }
+        wrapStrings();
+        assert data instanceof CharSXPWrapper[] || data instanceof RStringVecNativeData;
+        CharSXPWrapper[] dataForNativeAccess = data instanceof CharSXPWrapper[] ? (CharSXPWrapper[]) data : null;
+        try {
+            NativeDataAccess.setDataLength(this, dataForNativeAccess, l);
+        } finally {
+            if (!(data instanceof RStringVecNativeData)) {
+                setData(new RStringVecNativeData(this, dataForNativeAccess), l);
+            } else {
+                length = l;
             }
-        } else {
-            NativeDataAccess.setDataLength(this, null, l);
         }
     }
 
@@ -152,71 +167,34 @@ public final class RStringVector extends RAbstractStringVector implements RMater
 
     @Override
     public String[] getDataCopy() {
-        if (!isNativized()) {
-            Object[] localData = data;
-            String[] copy = new String[localData.length];
-            if (noWrappedStrings.isValid() || localData instanceof String[]) {
-                System.arraycopy(localData, 0, copy, 0, localData.length);
-            } else {
-                CharSXPWrapper[] wrappers = (CharSXPWrapper[]) localData;
-                for (int i = 0; i < localData.length; i++) {
-                    copy[i] = wrappers[i].getContents();
-                }
-            }
-            return copy;
-        } else {
-            return NativeDataAccess.copyStringNativeData(getNativeMirror());
-        }
+        return VectorDataLibrary.getFactory().getUncached().getStringDataCopy(data);
     }
 
     @Override
     public Object[] getReadonlyData() {
-        if (!isNativized()) {
-            return data;
-        } else {
-            return NativeDataAccess.copyStringNativeData(getNativeMirror());
-        }
+        return VectorDataLibrary.getFactory().getUncached().getReadonlyStringData(data);
     }
 
     /**
      * Like {@link #getReadonlyData()}, but always returns Strings. If this vectors holds Strings
      * wrapped in {@link CharSXPWrapper}, then it unwraps them to a newly allocated array.
      */
+    @Ignore // VectorDataLibrary
     public String[] getReadonlyStringData() {
-        if (!isNativized()) {
-            Object[] localData = data;
-            if (noWrappedStrings.isValid() || localData instanceof String[]) {
-                return (String[]) localData;
-            }
-            assert localData instanceof CharSXPWrapper[] : localData;
-            return createStringArray((CharSXPWrapper[]) localData);
-        } else {
-            return NativeDataAccess.copyStringNativeData(getNativeMirror());
-        }
-    }
-
-    @TruffleBoundary
-    private static String[] createStringArray(CharSXPWrapper[] data) {
-        String[] result = new String[data.length];
-        for (int i = 0; i < data.length; i++) {
-            result[i] = data[i].getContents();
-        }
-        return result;
+        return VectorDataLibrary.getFactory().getUncached().getReadonlyStringData(data);
     }
 
     @Override
     public String getDataAt(int i) {
-        return NativeDataAccess.getData(this, getInternalStore(), i);
+        return VectorDataLibrary.getFactory().getUncached().getStringAt(data, i);
     }
 
     private RStringVector updateDataAt(int i, String right, NACheck rightNACheck) {
         if (this.isShared()) {
             throw RInternalError.shouldNotReachHere("update shared vector");
         }
-        NativeDataAccess.setData(this, data, i, right);
-        if (rightNACheck.check(right)) {
-            setComplete(false);
-        }
+        VectorDataLibrary.getFactory().getUncached().setStringAt(data, i, right);
+        rightNACheck.check(right);
         assert !isComplete() || !RRuntime.isNA(right);
         return this;
     }
@@ -228,39 +206,56 @@ public final class RStringVector extends RAbstractStringVector implements RMater
 
     @Override
     protected boolean isResizedComplete(int newSize, boolean filledNAs) {
-        return !isNativized() && isComplete() && ((data.length >= newSize) || !filledNAs);
-    }
-
-    public RStringVector resizeWithEmpty(int size) {
-        return createStringVector(copyResizedData(size, RRuntime.NAMES_ATTR_EMPTY_VALUE), isComplete(), null);
+        return !isNativized() && isComplete() && ((getLength() >= newSize) || !filledNAs);
     }
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         Object[] localData = getReadonlyData();
         RAbstractStringVector other = (RAbstractStringVector) fromVector;
-        if (noWrappedStrings.isValid()) {
-            localData[toIndex] = other.getDataAt(fromIndex);
-        } else {
-            setDataAt(localData, toIndex, other.getDataAt(fromIndex));
-        }
+        setDataAt(localData, toIndex, other.getDataAt(fromIndex));
     }
 
     @Override
+    @Ignore
     public RStringVector materialize() {
         return this;
     }
 
+    @ExportMessage(library = AbstractContainerLibrary.class)
+    public void materializeData(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        setData(dataLib.materialize(data), getLength());
+    }
+
+    @ExportMessage(name = "materialize", library = AbstractContainerLibrary.class)
+    RStringVector containerLibMaterialize(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (dataLib.isWriteable(data)) {
+            return this;
+        }
+        // To retain the semantics of the original materialize, for sequences and such we return new
+        // vector
+        return new RStringVector(dataLib.getStringDataCopy(data), isComplete());
+    }
+
+    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
+    RStringVector containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        RStringVector result = new RStringVector(dataLib.copy(data, false), dataLib.getLength(data));
+        MemoryCopyTracer.reportCopying(this, result);
+        return result;
+    }
+
     @Override
+    @Ignore // VectorDataLibrary
     public Object getDataAtAsObject(int index) {
         return getDataAt(index);
     }
 
     @Override
+    @Ignore // VectorDataLibrary
     public void setElement(int i, Object value) {
         assert value instanceof CharSXPWrapper;
         wrapStrings();
-        NativeDataAccess.setData(this, (CharSXPWrapper[]) data, i, (CharSXPWrapper) value);
+        setWrappedDataAt(i, (CharSXPWrapper) value);
     }
 
     /**
@@ -269,20 +264,19 @@ public final class RStringVector extends RAbstractStringVector implements RMater
      * vector contains plain Strings, they will be first wrapped to {@link CharSXPWrapper}s.
      */
     public long allocateNativeContents() {
+        wrapStrings();
+        assert data instanceof CharSXPWrapper[] || data instanceof RStringVecNativeData;
+        CharSXPWrapper[] dataForNativeAccess = data instanceof CharSXPWrapper[] ? (CharSXPWrapper[]) data : null;
+        int len = getLength();
         try {
-            wrapStrings();
-            return NativeDataAccess.allocateNativeContents(this, (CharSXPWrapper[]) getInternalStore(), getLength());
+            NativeDataAccess.allocateNativeContents(this, dataForNativeAccess, len);
         } finally {
+            if (!(data instanceof RStringVecNativeData)) {
+                setData(new RStringVecNativeData(this, dataForNativeAccess), len);
+            }
             assert NativeDataAccess.isAllocated(this);
-            setComplete(false);
         }
-    }
-
-    static RStringVector fromNative(long address, int length) {
-        RStringVector result = new RStringVector();
-        NativeDataAccess.toNative(result);
-        NativeDataAccess.setNativeContents(result, address, length);
-        return result;
+        return NativeDataAccess.getNativeDataAddress(this);
     }
 
     public void wrapStrings() {
@@ -296,16 +290,11 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
     public void wrapStrings(ConditionProfile isNativized, ConditionProfile needsWrapping) {
         if (isNativized.profile(!isNativized())) {
-            Object[] oldData = data;
+            Object oldData = data;
             if (needsWrapping.profile(oldData instanceof CharSXPWrapper[])) {
                 return;
             }
-            noWrappedStrings.invalidate();
-            String[] oldStrings = (String[]) oldData;
-            CharSXPWrapper[] newData = new CharSXPWrapper[oldStrings.length];
-            for (int i = 0; i < oldData.length; i++) {
-                newData[i] = CharSXPWrapper.create(oldStrings[i]);
-            }
+            Object newData = ((RStringArrayVectorData) oldData).wrapStrings();
             fence = 42; // make sure the array is really initialized before we set it to this.data
             this.data = newData;
         }
@@ -314,7 +303,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     public CharSXPWrapper getWrappedDataAt(int index) {
         if (!isNativized()) {
             assert data instanceof CharSXPWrapper[] : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
-            return (CharSXPWrapper) data[index];
+            return ((CharSXPWrapper[]) data)[index];
         } else {
             return NativeDataAccess.getStringNativeMirrorData(getNativeMirror(), index);
         }
@@ -324,16 +313,15 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         if (!isNativized()) {
             wrapStrings();
             assert data instanceof CharSXPWrapper[] : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
-            data[index] = elem;
+            ((CharSXPWrapper[]) data)[index] = elem;
         } else {
-            data[index] = elem;
-            NativeDataAccess.setNativeMirrorStringData(getNativeMirror(), index, elem);
+            ((RStringVecNativeData) data).setWrappedStringAt(index, elem);
         }
     }
 
     @Override
     protected RStringVector createStringVector(Object[] vecData, boolean isComplete, int[] dims) {
-        if (noWrappedStrings.isValid() || vecData instanceof String[]) {
+        if (vecData instanceof String[]) {
             return RDataFactory.createStringVector((String[]) vecData, isComplete, dims);
         } else {
             return RDataFactory.createStringVector((CharSXPWrapper[]) vecData, isComplete, dims);
@@ -341,44 +329,25 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     }
 
     private static final class FastPathAccess extends FastPathFromStringAccess {
-
-        private final boolean containsWrappers;
-
         FastPathAccess(RAbstractContainer value) {
             super(value);
-            containsWrappers = !noWrappedStrings.isValid() && value.getInternalStore() instanceof CharSXPWrapper[];
-            assert !hasStore || containsWrappers || value.getInternalStore() instanceof String[];
         }
 
         @Override
         public boolean supports(Object value) {
-            return super.supports(value) && (!hasStore || ((RStringVector) value).getInternalStore() instanceof CharSXPWrapper[] == containsWrappers);
+            return super.supports(value) && dataLib.accepts(((RStringVector) value).getData());
         }
 
         @Override
-        protected String getStringImpl(AccessIterator accessIter, int index) {
-            if (hasStore) {
-                if (containsWrappers) {
-                    return ((CharSXPWrapper[]) accessIter.getStore())[index].getContents();
-                } else {
-                    return ((String[]) accessIter.getStore())[index];
-                }
-            } else {
-                return NativeDataAccess.getStringNativeMirrorData((NativeMirror) accessIter.getStore(), index).getContents();
-            }
+        public String getStringImpl(AccessIterator accessIter, int index) {
+            String value = dataLib.getStringAt(accessIter.getStore(), index);
+            na.check(value);
+            return value;
         }
 
         @Override
         protected void setStringImpl(AccessIterator accessIter, int index, String value) {
-            if (hasStore) {
-                if (containsWrappers) {
-                    ((CharSXPWrapper[]) accessIter.getStore())[index] = CharSXPWrapper.create(value);
-                } else {
-                    ((String[]) accessIter.getStore())[index] = value;
-                }
-            } else {
-                NativeDataAccess.setNativeMirrorStringData((NativeMirror) accessIter.getStore(), index, CharSXPWrapper.create(value));
-            }
+            dataLib.setStringAt(accessIter.getStore(), index, value);
         }
     }
 

@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.InternalDeprecation;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
@@ -58,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
+import com.oracle.truffle.r.runtime.data.nodes.CopyResizedWithEmpty;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -843,7 +843,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
             res.setDimNamesNoCheck(null);
         }
         if (oldNames != null) {
-            oldNames = oldNames.resizeWithEmpty(size);
+            oldNames = CopyResizedWithEmpty.executeSlowPath(oldNames, size);
             res.putAttribute(RRuntime.NAMES_ATTR_KEY, oldNames);
         }
         return res;
@@ -905,11 +905,6 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
             }
         }
         return str.append(']').toString();
-    }
-
-    protected boolean canBeValidStore(Object store, Object dataArg) {
-        // We can be only sure if there is only one thread
-        return !RContext.isSingle() || store == dataArg;
     }
 
     @Override

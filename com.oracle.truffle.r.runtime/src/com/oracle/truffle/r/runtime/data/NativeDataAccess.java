@@ -1100,7 +1100,7 @@ public final class NativeDataAccess {
     static String getData(RStringVector vector, Object data, int index) {
         if (noStringNative.isValid() || data != null) {
             Object localData = data;
-            if (RStringVector.noWrappedStrings.isValid() || localData instanceof String[]) {
+            if (localData instanceof String[]) {
                 return ((String[]) localData)[index];
             }
             assert data instanceof CharSXPWrapper[] : localData;
@@ -1113,7 +1113,7 @@ public final class NativeDataAccess {
 
     static void setData(RStringVector vector, Object data, int index, String value) {
         assert data != null;
-        if (RStringVector.noWrappedStrings.isValid() || data instanceof String[]) {
+        if (data instanceof String[]) {
             assert !vector.isNativized();
             ((String[]) data)[index] = value;
         } else {
