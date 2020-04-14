@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.data.RInteropRaw;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import org.junit.Test;
 
@@ -46,7 +45,7 @@ public class RRawInteropTest extends AbstractInteropTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{new RInteropRaw(RRaw.valueOf((byte) 1))};
+        return new TruffleObject[]{RRaw.valueOf((byte) 1)};
     }
 
     @Test
@@ -57,7 +56,7 @@ public class RRawInteropTest extends AbstractInteropTest {
 
     @Override
     protected Object getUnboxed(TruffleObject obj) {
-        return ((RRaw) ((RInteropRaw) obj).getValue()).getValue();
+        return ((RRaw) obj).getValue();
     }
 
     @Override
