@@ -1,5 +1,5 @@
 ## signed vs unsigned ints
-len <- 100000
+len <- 5000
 zz <- rawConnection(raw(0), "wb")
 x <- as.raw((1:len) %% 255)
 writeBin(x, zz)

@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RunWith(Theories.class)
@@ -247,7 +248,7 @@ public class ExtractVectorNodeTest extends TestBase {
     @Theory
     public void testCompletenessAfterExtraction(RType targetType) {
         execInContext(() -> {
-            if (RContext.getInstance().getOption(FastROptions.DSLCacheSizeFactor) == 0.0) {
+            if (RContext.getInstance().getOption(FastROptions.DSLCacheSizeFactor) == 0.0 || VectorDataLibrary.ENABLE_VERY_SLOW_ASSERTS) {
                 return null;
             }
 

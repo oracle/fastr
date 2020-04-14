@@ -102,7 +102,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 @DefaultExport(RListArrayDataLibrary.class)
 public abstract class VectorDataLibrary extends Library {
 
-    private static final boolean ENABLE_VERY_SLOW_ASSERTS = false;
+    public static final boolean ENABLE_VERY_SLOW_ASSERTS = "true".equals(System.getenv().get("FASTR_TEST_VERY_SLOW_ASSERTS"));
 
     static final LibraryFactory<VectorDataLibrary> FACTORY = LibraryFactory.resolve(VectorDataLibrary.class);
 
@@ -1443,7 +1443,6 @@ public abstract class VectorDataLibrary extends Library {
 
         @Override
         public int getLength(Object data) {
-            verifyIfSlowAssertsEnabled(data);
             int result = delegate.getLength(data);
             assert result >= 0;
             return result;
@@ -1456,7 +1455,6 @@ public abstract class VectorDataLibrary extends Library {
 
         @Override
         public RType getType(Object data) {
-            verifyIfSlowAssertsEnabled(data);
             RType result = delegate.getType(data);
             assert result != null;
             return result;
@@ -1629,14 +1627,14 @@ public abstract class VectorDataLibrary extends Library {
                 case Raw:
                     for (int i = 0; i < len; i++) {
                         byte rawVal = lib.getRawAt(data, i);
-                        assert lib.getDataAtAsObject(data, i).equals(rawVal);
+                        assert ((RRaw) lib.getDataAtAsObject(data, i)).getValue() == rawVal;
                     }
                     break;
                 case Character:
                     for (int i = 0; i < len; i++) {
                         String stringVal = lib.getStringAt(data, i);
                         assert !isComplete || !RRuntime.isNA(stringVal);
-                        assert lib.getDataAtAsObject(data, i).equals(stringVal);
+                        assert stringVal == null && lib.getDataAtAsObject(data, i) == null || lib.getDataAtAsObject(data, i).equals(stringVal);
                     }
                     break;
                 case Complex:
