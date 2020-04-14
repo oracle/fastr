@@ -247,23 +247,30 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         iterator.commit();
     }
 
-    @ExportMessage
-    public void setIntAt(int index, int value) {
-        long address = invokeDataptrMethod();
+    @ExportMessage(limit = "1")
+    public void setIntAt(int index, int value,
+                         @CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
+                         @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
+                         @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+        long address = invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
         NativeMemory.putInt(address, index, value);
     }
 
-    @ExportMessage
-    public void setNextInt(SeqWriteIterator it, int value) {
-        // TODO: invokeCached
-        long dataptrAddr = getDescriptorFromIterator(it).invokeDataptrMethodUncached(getOwner(), true);
+    @ExportMessage(limit = "1")
+    public void setNextInt(SeqWriteIterator it, int value,
+                           @CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
+                           @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
+                           @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+        long dataptrAddr = invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
         NativeMemory.putInt(dataptrAddr, it.getIndex(), value);
     }
 
-    @ExportMessage
-    public void setInt(RandomAccessWriteIterator it, int index, int value) {
-        // TODO: invokeCached
-        long dataptrAddr = getDescriptorFromIterator(it).invokeDataptrMethodUncached(getOwner(), true);
+    @ExportMessage(limit = "1")
+    public void setInt(RandomAccessWriteIterator it, int index, int value,
+                       @CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
+                       @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
+                       @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+        long dataptrAddr = invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
         NativeMemory.putInt(dataptrAddr, index, value);
     }
 
