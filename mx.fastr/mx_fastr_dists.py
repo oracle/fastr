@@ -24,6 +24,9 @@ import mx
 import mx_sdk
 import os, string, shutil
 from os.path import join, basename, isfile
+import distutils
+# for some reason the script fails without this import:
+from distutils import dir_util # pylint: disable=unused-import,no-name-in-module
 
 _fastr_suite = mx.suite('fastr')
 
@@ -81,9 +84,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         fastr_dir = _fastr_suite.dir
         for d in ['bin', 'include', 'library', 'etc', 'share', 'doc']:
             target_dir = join(output_dir, d)
-            if os.path.exists(target_dir):
-                shutil.rmtree(target_dir)
-            shutil.copytree(join(fastr_dir, d), target_dir)
+            distutils.dir_util.copy_tree(join(fastr_dir, d), target_dir, update=True)
 
         lib_fastr_dir = join(fastr_dir, 'lib')
         lib_output_dir = join(output_dir, 'lib')
