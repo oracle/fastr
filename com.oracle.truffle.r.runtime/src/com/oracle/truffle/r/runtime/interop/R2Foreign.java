@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RInteropNA.RInteropComplexNA;
-import com.oracle.truffle.r.runtime.data.RInteropRaw;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropChar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
@@ -152,11 +151,6 @@ public abstract class R2Foreign extends RBaseNode {
     @Specialization(guards = "!boxPrimitives")
     public Object doRawNoBox(RRaw vec, @SuppressWarnings("unused") boolean boxPrimitives) {
         return vec.getValue();
-    }
-
-    @Specialization(guards = "boxPrimitives")
-    public Object doRawBox(RRaw vec, @SuppressWarnings("unused") boolean boxPrimitives) {
-        return new RInteropRaw(vec);
     }
 
     @Specialization
