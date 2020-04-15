@@ -55,12 +55,12 @@ class RStringArrayVectorData implements TruffleObject, VectorDataWithOwner {
         this.complete = complete && ENABLE_COMPLETE;
     }
 
-    public CharSXPWrapper[] wrapStrings() {
+    public RStringCharSXPData wrapStrings() {
         CharSXPWrapper[] result = new CharSXPWrapper[data.length];
         for (int i = 0; i < result.length; i++) {
             result[i] = CharSXPWrapper.create(data[i]);
         }
-        return result;
+        return new RStringCharSXPData(result);
     }
 
     @Override

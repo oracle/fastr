@@ -70,7 +70,7 @@ public class RStringVecNativeData implements TruffleObject {
     @SuppressWarnings("static-method")
     @ExportMessage
     public final RType getType() {
-        return RType.List;
+        return RType.Character;
     }
 
     @ExportMessage

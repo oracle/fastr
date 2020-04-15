@@ -56,7 +56,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         if (data instanceof String[]) {
             setData(new RStringArrayVectorData((String[]) data, complete), data.length);
         } else if (data instanceof CharSXPWrapper[]) {
-            setData(data, data.length);
+            setData(new RStringCharSXPData((CharSXPWrapper[]) data), data.length);
         } else {
             assert false : data;
         }
@@ -123,12 +123,17 @@ public final class RStringVector extends RAbstractStringVector implements RMater
             // only sequences are always complete, everything else is always incomplete
             setComplete(data instanceof RStringSeqVectorData);
         }
+        verifyData();
+    }
+
+    private static VectorDataLibrary getUncachedDataLib() {
+        return VectorDataLibrary.getFactory().getUncached();
     }
 
     @Override
     @Ignore // AbstractContainerLibrary
     public boolean isMaterialized() {
-        return VectorDataLibrary.getFactory().getUncached().isWriteable(data);
+        return getUncachedDataLib().isWriteable(data);
     }
 
     boolean isNativized() {
@@ -178,7 +183,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
             return null;
         }
         // TODO: get rid of this method
-        return VectorDataLibrary.getFactory().getUncached().getReadonlyStringData(data);
+        return getUncachedDataLib().getReadonlyStringData(data);
     }
 
     @Override
@@ -188,12 +193,12 @@ public final class RStringVector extends RAbstractStringVector implements RMater
 
     @Override
     public void setDataAt(Object store, int index, String value) {
-        VectorDataLibrary.getFactory().getUncached().setStringAt(data, index, value);
+        getUncachedDataLib().setStringAt(data, index, value);
     }
 
     @Override
     public String getDataAt(Object store, int index) {
-        return VectorDataLibrary.getFactory().getUncached().getStringAt(data, index);
+        return getUncachedDataLib().getStringAt(data, index);
     }
 
     @Override
@@ -205,8 +210,8 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     @Override
     public void setLength(int l) {
         wrapStrings();
-        assert data instanceof CharSXPWrapper[] || data instanceof RStringVecNativeData;
-        CharSXPWrapper[] dataForNativeAccess = data instanceof CharSXPWrapper[] ? (CharSXPWrapper[]) data : null;
+        assert data instanceof RStringCharSXPData || data instanceof RStringVecNativeData;
+        CharSXPWrapper[] dataForNativeAccess = data instanceof RStringCharSXPData ? ((RStringCharSXPData) data).getData() : null;
         try {
             NativeDataAccess.setDataLength(this, dataForNativeAccess, l);
         } finally {
@@ -216,6 +221,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
                 length = l;
             }
         }
+        verifyData();
     }
 
     @Override
@@ -230,12 +236,12 @@ public final class RStringVector extends RAbstractStringVector implements RMater
 
     @Override
     public String[] getDataCopy() {
-        return VectorDataLibrary.getFactory().getUncached().getStringDataCopy(data);
+        return getUncachedDataLib().getStringDataCopy(data);
     }
 
     @Override
     public Object[] getReadonlyData() {
-        return VectorDataLibrary.getFactory().getUncached().getReadonlyStringData(data);
+        return getUncachedDataLib().getReadonlyStringData(data);
     }
 
     /**
@@ -244,19 +250,19 @@ public final class RStringVector extends RAbstractStringVector implements RMater
      */
     @Ignore // VectorDataLibrary
     public String[] getReadonlyStringData() {
-        return VectorDataLibrary.getFactory().getUncached().getReadonlyStringData(data);
+        return getUncachedDataLib().getReadonlyStringData(data);
     }
 
     @Override
     public String getDataAt(int i) {
-        return VectorDataLibrary.getFactory().getUncached().getStringAt(data, i);
+        return getUncachedDataLib().getStringAt(data, i);
     }
 
     private RStringVector updateDataAt(int i, String right, NACheck rightNACheck) {
         if (this.isShared()) {
             throw RInternalError.shouldNotReachHere("update shared vector");
         }
-        VectorDataLibrary.getFactory().getUncached().setStringAt(data, i, right);
+        getUncachedDataLib().setStringAt(data, i, right);
         rightNACheck.check(right);
         assert !isComplete() || !RRuntime.isNA(right);
         return this;
@@ -337,8 +343,8 @@ public final class RStringVector extends RAbstractStringVector implements RMater
      */
     public long allocateNativeContents() {
         wrapStrings();
-        assert data instanceof CharSXPWrapper[] || data instanceof RStringVecNativeData;
-        CharSXPWrapper[] dataForNativeAccess = data instanceof CharSXPWrapper[] ? (CharSXPWrapper[]) data : null;
+        assert data instanceof RStringCharSXPData || data instanceof RStringVecNativeData;
+        CharSXPWrapper[] dataForNativeAccess = data instanceof RStringCharSXPData ? ((RStringCharSXPData) data).getData() : null;
         int len = getLength();
         try {
             NativeDataAccess.allocateNativeContents(this, dataForNativeAccess, len);
@@ -348,6 +354,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
             }
             assert NativeDataAccess.isAllocated(this);
         }
+        verifyData();
         return NativeDataAccess.getNativeDataAddress(this);
     }
 
@@ -363,20 +370,21 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     public void wrapStrings(ConditionProfile isNativized, ConditionProfile needsWrapping) {
         if (isNativized.profile(!isNativized())) {
             Object oldData = data;
-            if (needsWrapping.profile(oldData instanceof CharSXPWrapper[])) {
+            if (needsWrapping.profile(oldData instanceof RStringCharSXPData)) {
                 return;
             }
-            oldData = VectorDataLibrary.getFactory().getUncached().materialize(oldData);
+            oldData = getUncachedDataLib().materialize(oldData);
             Object newData = ((RStringArrayVectorData) oldData).wrapStrings();
             fence = 42; // make sure the array is really initialized before we set it to this.data
-            this.data = newData;
+            setData(newData, getUncachedDataLib().getLength(newData));
         }
+        verifyData();
     }
 
     public CharSXPWrapper getWrappedDataAt(int index) {
         if (!isNativized()) {
-            assert data instanceof CharSXPWrapper[] : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
-            return ((CharSXPWrapper[]) data)[index];
+            assert data instanceof RStringCharSXPData : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
+            return ((RStringCharSXPData) data).getWrappedAt(index);
         } else {
             return NativeDataAccess.getStringNativeMirrorData(getNativeMirror(), index);
         }
@@ -385,8 +393,8 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     public void setWrappedDataAt(int index, CharSXPWrapper elem) {
         if (!isNativized()) {
             wrapStrings();
-            assert data instanceof CharSXPWrapper[] : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
-            ((CharSXPWrapper[]) data)[index] = elem;
+            assert data instanceof RStringCharSXPData : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
+            ((RStringCharSXPData) data).setWrappedAt(index, elem);
         } else {
             ((RStringVecNativeData) data).setWrappedStringAt(index, elem);
         }
@@ -445,5 +453,11 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     @Override
     public VectorAccess slowPathAccess() {
         return SLOW_PATH_ACCESS;
+    }
+
+    private void verifyData() {
+        assert getUncachedDataLib().getType(data) == RType.Character;
+        assert getUncachedDataLib().getLength(data) == length;
+        assert getUncachedDataLib().isComplete(data) == isComplete();
     }
 }

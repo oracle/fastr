@@ -157,6 +157,7 @@ public abstract class FFIMaterializeNode extends Node {
         return value.cachedMaterialize();
     }
 
+    @Specialization
     protected static Object wrap(RStringVector value, @SuppressWarnings("unused") boolean protect) {
         return value.cachedMaterialize();
     }

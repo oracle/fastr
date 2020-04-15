@@ -92,15 +92,9 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * iterators usage, the memory write of the "complete" field is moved to
  * {@link #commitWriteIterator(Object, SeqWriteIterator, boolean)}, so that the memory write is
  * outside of the loop that usually writes values to the vector object.
- * <p>
- * Write operations with iterators may be configured to check incoming values for NAs. If they are
- * not configured to do so, then whether or not to update the complete flag is determined solely by
- * the argument passed to the "commit" method. In such case, it is responsibility of the user to
- * check for NA values.
  */
 @GenerateLibrary(assertions = Asserts.class)
 @DefaultExport(RListArrayDataLibrary.class)
-@DefaultExport(RStringCharSXPData.class)
 public abstract class VectorDataLibrary extends Library {
 
     public static final boolean ENABLE_VERY_SLOW_ASSERTS = "true".equals(System.getenv().get("FASTR_TEST_VERY_SLOW_ASSERTS"));
