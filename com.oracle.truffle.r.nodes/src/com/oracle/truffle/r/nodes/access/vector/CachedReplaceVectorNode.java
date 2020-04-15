@@ -58,7 +58,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RScalarList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -200,7 +199,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         } else {
             if ((castType == RType.List || castType == RType.Expression) && mode.isSubscript() && !isDeleteElements() && !(castValue instanceof RScalarVector)) {
                 // wrap into a list when
-                value = RScalarList.valueOf(castValue);
+                value = RDataFactory.createListFromScalar(castValue);
             } else {
                 value = (RAbstractContainer) castValue;
             }

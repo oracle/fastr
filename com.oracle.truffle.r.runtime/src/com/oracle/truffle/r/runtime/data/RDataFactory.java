@@ -1143,6 +1143,11 @@ public final class RDataFactory {
         return createList(new Object[0]);
     }
 
+    public static RList createListFromScalar(Object value) {
+        assert value != null;
+        return new RList(new Object[]{value});
+    }
+
     public static RList createList(int n) {
         return createList(createRNullArray(n));
     }

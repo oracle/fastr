@@ -164,10 +164,9 @@ public final class ViewPort {
 
             GridDevice device = GridContext.getContext().getCurrentDevice();
             // TODO: properly set the scale according to the current device
-            Object[] data = topVP.getDataWithoutCopying();
-            data[ViewPort.VP_XSCALE] = RDataFactory.createDoubleVector(new double[]{0, device.getNativeWidth()}, RDataFactory.COMPLETE_VECTOR);
-            data[ViewPort.VP_YSCALE] = RDataFactory.createDoubleVector(new double[]{device.getNativeHeight(), 0}, RDataFactory.COMPLETE_VECTOR);
-            data[ViewPort.PVP_GPAR] = GridContext.getContext().getGridState().getGpar();
+            topVP.setDataAt(ViewPort.VP_XSCALE, RDataFactory.createDoubleVector(new double[]{0, device.getNativeWidth()}, RDataFactory.COMPLETE_VECTOR));
+            topVP.setDataAt(ViewPort.VP_YSCALE, RDataFactory.createDoubleVector(new double[]{device.getNativeHeight(), 0}, RDataFactory.COMPLETE_VECTOR));
+            topVP.setDataAt(ViewPort.PVP_GPAR, GridContext.getContext().getGridState().getGpar());
             return DoSetViewPort.doSetViewPort(topVP, false, true);
         }
     }

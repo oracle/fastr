@@ -241,7 +241,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         for (int i = 0; i < argsArray.length; i++) {
             Object arg = argsArray[i];
             if (arg instanceof RList) {
-                Object[] argsFromList = ((RList) arg).getDataWithoutCopying();
+                Object[] argsFromList = ((RList) arg).getReadonlyData();
                 newArgsArray[i] = recursiveCombine.executeCombine(new RArgsValuesAndNames(argsFromList,
                                 ArgumentsSignature.empty(argsFromList.length)), true);
                 useNewArgs = true;

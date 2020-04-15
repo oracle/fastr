@@ -432,10 +432,9 @@ public class RErrorHandling {
     private static ReturnException gotoExitingHandler(Object cond, Object call, RList entry) throws ReturnException {
         REnvironment rho = (REnvironment) entry.getDataAt(ENTRY_TARGET_ENVIR);
         RList result = (RList) entry.getDataAt(ENTRY_RETURN_RESULT);
-        Object[] resultData = result.getDataWithoutCopying();
-        resultData[RESULT_COND] = cond;
-        resultData[RESULT_CALL] = call;
-        resultData[RESULT_HANDLER] = entry.getDataAt(ENTRY_HANDLER);
+        result.setDataAt(RESULT_COND, cond);
+        result.setDataAt(RESULT_CALL, call);
+        result.setDataAt(RESULT_HANDLER, entry.getDataAt(ENTRY_HANDLER));
         throw new ReturnException(result, RArguments.getCall(rho.getFrame()));
     }
 

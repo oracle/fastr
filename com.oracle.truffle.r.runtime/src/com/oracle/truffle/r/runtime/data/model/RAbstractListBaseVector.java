@@ -76,30 +76,30 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    boolean hasMembers() {
+    public boolean hasMembers() {
         return true;
     }
 
     @ExportMessage
-    Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
+    public Object getMembers(@SuppressWarnings("unused") boolean includeInternal) {
         RStringVector names = getNames();
         return names != null ? names : RDataFactory.createEmptyStringVector();
     }
 
     @ExportMessage
-    boolean isMemberReadable(String member) {
+    public boolean isMemberReadable(String member) {
         int idx = getElementIndexByName(member);
         return isArrayElementReadable(idx);
     }
 
     @ExportMessage
-    boolean isMemberInvocable(String member) {
+    public boolean isMemberInvocable(String member) {
         int idx = getElementIndexByName(member);
         return isArrayElementReadable(idx) && getDataAt(idx) instanceof RFunction;
     }
 
     @ExportMessage
-    Object readMember(String member,
+    public Object readMember(String member,
                     @Cached.Exclusive @Cached() R2Foreign r2Foreign,
                     @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException {
         int idx = getElementIndexByName(member);
@@ -110,7 +110,7 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
     }
 
     @ExportMessage
-    Object invokeMember(String member, Object[] arguments,
+    public Object invokeMember(String member, Object[] arguments,
                     @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
                     @Cached() RFunction.ExplicitCall c) throws UnknownIdentifierException, UnsupportedMessageException {
         int idx = getElementIndexByName(member);
