@@ -56,6 +56,7 @@ public class TestJavaInterop extends TestBase {
     private static final String INT_CLOSURE_CLASS = "VectorDataClosure$IntClosure";
     private static final String DOUBLE_CLOSURE_CLASS = "VectorDataClosure$DoubleClosure";
     private static final String COMPLEX_CLOSURE_CLASS = "VectorDataClosure$ComplexClosure";
+    private static final String STRING_CLOSURE_CLASS = "VectorDataClosure$StringClosure";
 
     private static final String TEST_CLASS = TestClass.class.getName();
     private static final String CREATE_TRUFFLE_OBJECT = "to <- .fastr.interop.new(java.type('" + TEST_CLASS + "'));";
@@ -1235,8 +1236,13 @@ public class TestJavaInterop extends TestBase {
     public void testNoCopyOnCast() throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
         testNoCopyOnCast("integer", INT_CLOSURE_CLASS, new String[]{"fieldBooleanArray", "fieldDoubleArray", "fieldStringArray"});
         testNoCopyOnCast("double", DOUBLE_CLOSURE_CLASS, new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldStringArray"});
+<<<<<<< HEAD
         testNoCopyOnCast("complex", COMPLEX_CLOSURE_CLASS, new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray", "fieldStringArray"});
         testNoCopyOnCast("character", "RToStringVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray"});
+=======
+        testNoCopyOnCast("complex", "RToComplexVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray", "fieldStringArray"});
+        testNoCopyOnCast("character", STRING_CLOSURE_CLASS, new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray"});
+>>>>>>> Remove RString
     }
 
     public void testNoCopyOnCast(String type, String closure, String... fields) throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
@@ -1248,7 +1254,11 @@ public class TestJavaInterop extends TestBase {
             } else {
                 assertEvalFastR(cmd, gnur);
             }
+<<<<<<< HEAD
             gnur = INT_CLOSURE_CLASS.equals(closure) || DOUBLE_CLOSURE_CLASS.equals(closure) || COMPLEX_CLOSURE_CLASS.equals(closure) ? "cat('com.oracle.truffle.r.runtime.data." + closure + "\n')"
+=======
+            gnur = INT_CLOSURE_CLASS.equals(closure) || DOUBLE_CLOSURE_CLASS.equals(closure) || STRING_CLOSURE_CLASS.equals(closure) ? "cat('com.oracle.truffle.r.runtime.data." + closure + "\n')"
+>>>>>>> Remove RString
                             : "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')";
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as." + type + "(as.vector(to$" + field + ")), inspectVectorData=TRUE)", gnur);
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as.vector(as.vector(to$" + field + "), '" + type + "'), inspectVectorData=TRUE)", gnur);

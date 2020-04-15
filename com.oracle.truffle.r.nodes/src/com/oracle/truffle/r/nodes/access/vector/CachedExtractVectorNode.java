@@ -54,7 +54,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -497,8 +496,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         @Specialization
         protected void setNames(RAbstractVector container, String newNames) {
-            // TODO: why materialize()?
-            setNames(container, RString.valueOf(newNames).materialize());
+            setNames(container, RDataFactory.createStringVectorFromScalar(newNames));
         }
 
         @Specialization

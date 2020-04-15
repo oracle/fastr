@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -85,6 +86,26 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         }
     }
 
+    public static RStringVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
+        RStringVector result = new RStringVector(VectorDataClosure.fromVector(delegate, RType.Character), delegate.getLength());
+        if (keepAttrs) {
+            result.initAttributes(delegate.getAttributes());
+        } else {
+            RClosures.initRegAttributes(result, delegate);
+        }
+        return result;
+    }
+
+    public static RStringVector createFactorClosure(RIntVector factor, RAbstractStringVector levels, boolean keepAttrs) {
+        RStringVector result = new RStringVector(new RStringFactorClosure(factor, levels), factor.getLength());
+        if (keepAttrs) {
+            result.initAttributes(factor.getAttributes());
+        } else {
+            RClosures.initRegAttributes(result, factor);
+        }
+        return result;
+    }
+
     private void setData(Object data, int newLen) {
         this.data = data;
         if (data instanceof VectorDataWithOwner) {
@@ -127,6 +148,16 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     @Override
     public RStringSeqVectorData getSequence() {
         return (RStringSeqVectorData) data;
+    }
+
+    @Override
+    public boolean isClosure() {
+        return data instanceof RClosure;
+    }
+
+    @Override
+    public RClosure getClosure() {
+        return (RClosure) data;
     }
 
     @Override

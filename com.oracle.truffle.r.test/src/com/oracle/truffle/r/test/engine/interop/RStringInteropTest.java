@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,8 @@ package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import org.junit.Test;
 
 public class RStringInteropTest extends AbstractInteropTest {
@@ -37,8 +38,8 @@ public class RStringInteropTest extends AbstractInteropTest {
 
     @Override
     protected boolean isNull(TruffleObject obj) {
-        assert obj instanceof RString;
-        return ((RString) obj).isNA();
+        assert obj instanceof RStringVector && ((RStringVector) obj).getLength() == 1;
+        return RRuntime.isNA(((RStringVector) obj).getDataAt(0));
     }
 
     @Override
@@ -53,12 +54,12 @@ public class RStringInteropTest extends AbstractInteropTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RString.valueOf("abc"), RString.valueOf(RRuntime.STRING_NA)};
+        return new TruffleObject[]{RDataFactory.createStringVectorFromScalar("abc"), RDataFactory.createStringVectorFromScalar(RRuntime.STRING_NA)};
     }
 
     @Override
     protected Object getUnboxed(TruffleObject obj) {
-        String unboxed = ((RString) obj).getValue();
+        String unboxed = ((RStringVector) obj).getDataAt(0);
         return RRuntime.isNA(unboxed) ? null : unboxed;
     }
 

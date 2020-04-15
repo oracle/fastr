@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -87,7 +86,7 @@ abstract class PositionCastNode extends RBaseNode {
 
     @Specialization
     protected RAbstractVector doString(String position) {
-        return RString.valueOf(position);
+        return RDataFactory.createStringVectorFromScalar(position);
     }
 
     @Specialization

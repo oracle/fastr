@@ -80,11 +80,10 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -161,7 +160,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testBoxPrimitive() {
         arg.boxPrimitive();
-        TypeExpr expected = TypeExpr.union(RIntVector.class, RDoubleVector.class, RString.class);
+        TypeExpr expected = TypeExpr.union(RIntVector.class, RDoubleVector.class, RStringVector.class);
         expected = expected.or((expected.not().and(atom(String.class).not()).and(atom(Double.class).not()).and(atom(Integer.class).not()).and(atom(Byte.class).not())));
         assertTypes(expected);
     }
@@ -210,14 +209,14 @@ public class ResultTypesAnalyserTest {
 
     @Test
     public void testTypeFilter() {
-        arg.mustBe(instanceOf(RString.class));
-        assertTypes(RString.class);
+        arg.mustBe(instanceOf(RStringVector.class));
+        assertTypes(RStringVector.class);
     }
 
     @Test
     public void testTypeFilterInSeries() {
-        arg.mustBe(instanceOf(RAbstractVector.class)).mustBe(instanceOf(RString.class));
-        assertTypes(RString.class);
+        arg.mustBe(instanceOf(RAbstractVector.class)).mustBe(instanceOf(RStringVector.class));
+        assertTypes(RStringVector.class);
     }
 
     @Test

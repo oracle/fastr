@@ -60,7 +60,7 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean isNull(
+    public final boolean isNull(
                     @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
                     @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
         if (!isScalar.profile(isScalar(dataLib))) {
@@ -70,7 +70,7 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean isString(
+    public final boolean isString(
                     @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         if (!isScalar(dataLib)) {
             return false;
@@ -79,7 +79,7 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final String asString(
+    public final String asString(
                     @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
                     @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isString) throws UnsupportedMessageException {
         if (!isString.profile(isString(dataLib))) {

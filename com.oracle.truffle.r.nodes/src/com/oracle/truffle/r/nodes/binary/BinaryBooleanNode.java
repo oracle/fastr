@@ -31,6 +31,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.CopyAttributesNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -48,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -161,8 +162,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
         return recursive.execute(frame, recursiveLeft, recursiveRight);
     }
 
-    private static RString deparseSymbolOrLang(Object val) {
-        return RString.valueOf(RDeparse.deparse(val, RDeparse.MAX_CUTOFF, false, RDeparse.KEEPINTEGER, -1));
+    private static RStringVector deparseSymbolOrLang(Object val) {
+        return RDataFactory.createStringVectorFromScalar(RDeparse.deparse(val, RDeparse.MAX_CUTOFF, false, RDeparse.KEEPINTEGER, -1));
     }
 
     protected static boolean isOneList(Object left, Object right) {

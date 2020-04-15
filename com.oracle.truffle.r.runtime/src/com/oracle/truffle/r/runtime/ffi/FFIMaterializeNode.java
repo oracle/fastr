@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 
@@ -97,11 +96,6 @@ public abstract class FFIMaterializeNode extends Node {
     @Specialization
     protected static Object wrap(String value, @SuppressWarnings("unused") boolean protect) {
         return RDataFactory.createStringVectorFromScalar(value);
-    }
-
-    @Specialization
-    protected static Object wrap(RString value, @SuppressWarnings("unused") boolean protect) {
-        return RDataFactory.createStringVectorFromScalar(value.getValue());
     }
 
     @Specialization

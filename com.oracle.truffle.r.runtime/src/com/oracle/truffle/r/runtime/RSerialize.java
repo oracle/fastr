@@ -83,7 +83,6 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
-import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
@@ -1693,9 +1692,9 @@ public class RSerialize {
                         RIntSeqVectorData vec = ((RIntVector) obj).getSequence();
                         data = RDataFactory.createDoubleVector(new double[]{vec.getLength(), vec.getStart(), vec.getStride()}, RDataFactory.COMPLETE_VECTOR);
                         cls = "compact_intseq";
-                    } else if (obj instanceof RToStringVectorClosure) {
+                    } else if (obj instanceof RStringVector && ((RStringVector) obj).isClosure()) {
                         info = RDataFactory.createPairList(RDataFactory.createIntVectorFromScalar(SEXPTYPE.STRSXP.code));
-                        data = RDataFactory.createPairList(((RToStringVectorClosure) obj).getDelegate(), RDataFactory.createIntVectorFromScalar(0));
+                        data = RDataFactory.createPairList((((RStringVector) obj).getClosure()).getDelegate(), RDataFactory.createIntVectorFromScalar(0));
                         cls = "deferred_string";
                     }
                     assert info != null && data != null & cls != null;
@@ -2094,7 +2093,7 @@ public class RSerialize {
         }
 
         private static boolean isALTREP(Object obj) {
-            return (obj instanceof RIntVector && ((RIntVector) obj).isSequence()) || obj instanceof RToStringVectorClosure;
+            return (obj instanceof RIntVector && ((RIntVector) obj).isSequence()) || (obj instanceof RStringVector && ((RStringVector) obj).isClosure());
         }
     }
 

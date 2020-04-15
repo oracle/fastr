@@ -71,7 +71,6 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -216,7 +215,7 @@ public class SampleCollectorTest {
 
     @Test
     public void testTypeFilterInSeries() {
-        arg.mustBe(instanceOf(RAbstractVector.class)).mustBe(instanceOf(RString.class));
+        arg.mustBe(instanceOf(RAbstractVector.class)).mustBe(instanceOf(RStringVector.class));
         assertSamples(vector(RType.Character, ""), vector(RType.Character, RRuntime.STRING_NA), RNull.instance, RMissing.instance);
     }
 

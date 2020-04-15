@@ -24,6 +24,7 @@ import static com.oracle.truffle.r.runtime.RError.findParentRBase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -45,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -312,11 +312,16 @@ public class RErrorHandling {
     }
 
     private static Object restartExit(RList restart) {
+        CompilerAsserts.neverPartOfCompilation();
         Object dataAt = restart.getDataAt(0);
         if (dataAt == RNull.instance) {
             return dataAt;
+        } else if (dataAt instanceof String) {
+            return dataAt;
+        } else if (dataAt instanceof RAbstractStringVector && ((RAbstractStringVector) dataAt).getLength() >= 1) {
+            return ((RAbstractStringVector) dataAt).getDataAt(0);
         } else {
-            return RString.assumeSingleString(dataAt);
+            throw RInternalError.shouldNotReachHere(Objects.toString(dataAt));
         }
     }
 
