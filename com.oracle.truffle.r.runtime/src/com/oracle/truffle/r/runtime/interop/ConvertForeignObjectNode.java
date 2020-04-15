@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -408,7 +409,11 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                 }
             case Character:
                 if (arrayInfo.isOneDim()) {
-                    return new RForeignStringWrapper(truffleObject);
+                    try {
+                        return RStringVector.createForeignWrapper(truffleObject, (int) interop.getArraySize(truffleObject));
+                    } catch (UnsupportedMessageException e) {
+                        throw RInternalError.shouldNotReachHere();
+                    }
                 } else {
                     if (arrayInfo.isRectMultiDim()) {
                         return getArrayToVectorNode().toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);

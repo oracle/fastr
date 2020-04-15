@@ -28,6 +28,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -144,7 +145,7 @@ public class VectorInteropTest extends AbstractInteropTest {
         // string
         testRNARTOTIN(RDataFactory.createStringVector(new String[]{"42", RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR), "42");
         testRNARTOTIN(RClosures.createToStringVector(RDataFactory.createIntVector(new int[]{42, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true), "42");
-        testRNARTOTIN(new RForeignStringWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{"42", RRuntime.STRING_NA})), "42");
+        testRNARTOTIN(RStringVector.createForeignWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{"42", RRuntime.STRING_NA})), "42");
         getInterop().isNull(RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR));
 
         // complex
@@ -256,11 +257,11 @@ public class VectorInteropTest extends AbstractInteropTest {
                         RClosures.createToStringVector(RDataFactory.createIntVector(new int[]{1, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true),
                         RClosures.createToStringVector(RDataFactory.createEmptyIntVector(), true),
                         // string foreign wrapper
-                        new RForeignStringWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{"test1"})),
-                        new RForeignStringWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{"test2", "test2", "test2"})),
-                        new RForeignStringWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{RRuntime.STRING_NA})),
-                        new RForeignStringWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{"test1", RRuntime.STRING_NA})),
-                        new RForeignStringWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{})),
+                        RStringVector.createForeignWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{"test1"})),
+                        RStringVector.createForeignWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{"test2", "test2", "test2"})),
+                        RStringVector.createForeignWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{RRuntime.STRING_NA})),
+                        RStringVector.createForeignWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{"test1", RRuntime.STRING_NA})),
+                        RStringVector.createForeignWrapper((TruffleObject) RContext.getInstance().getEnv().asGuestValue(new String[]{})),
 
                         // complex array
                         RDataFactory.createComplexVector(new double[]{1, 1}, true),

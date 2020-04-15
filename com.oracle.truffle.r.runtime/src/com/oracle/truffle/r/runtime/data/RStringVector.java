@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
@@ -64,10 +67,22 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
-    RStringVector(Object data, int length) {
+    public RStringVector(Object data, int length) {
         super(false);
         setData(data, length);
         assert RAbstractVector.verifyVector(this);
+    }
+
+    public static RStringVector createForeignWrapper(TruffleObject obj, int size) {
+        return new RStringVector(new RStringForeignObjData(obj), size);
+    }
+
+    public static RStringVector createForeignWrapper(TruffleObject obj) {
+        try {
+            return new RStringVector(new RStringForeignObjData(obj), (int) InteropLibrary.getFactory().getUncached().getArraySize(obj));
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     private void setData(Object data, int newLen) {
@@ -97,6 +112,11 @@ public final class RStringVector extends RAbstractStringVector implements RMater
 
     boolean isNativized() {
         return NativeDataAccess.isAllocated(this);
+    }
+
+    @Override
+    public boolean isForeignWrapper() {
+        return data instanceof RStringForeignObjData;
     }
 
     @Override
