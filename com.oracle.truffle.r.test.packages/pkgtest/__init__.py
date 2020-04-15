@@ -370,7 +370,7 @@ class OutputCapture:
 
     def __call__(self, data):
         # The logger is always appending a newline at the end but we want to avoid double newlines.
-        logging.info(data[:-1] if data.endswith('\n') else data)
+        logging.info('subprocess output: ' + data[:-1] if data.endswith('\n') else data)
         if data == "BEGIN package installation\n":
             self.mode = "install"
             return

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -174,6 +174,7 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
             stream.close()
         stdout = out if not callable(out) else subprocess.PIPE
         stderr = err if not callable(err) else subprocess.PIPE
+        logging.debug("Running subprocess: " + str(args))
         p = subprocess.Popen(args, cwd=cwd, stdout=stdout, stderr=stderr, preexec_fn=preexec_fn, creationflags=creationflags, env=env, universal_newlines=True, **kwargs)
         sub = _addSubprocess(p, args)
         joiners = []

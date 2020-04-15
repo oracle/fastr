@@ -783,7 +783,7 @@ def _pkgtest_args(args):
     elif 'GRAALVM_FASTR' in os.environ:
         graalvm_home = os.environ['GRAALVM_FASTR']
 
-    pkgtest_args = []
+    pkgtest_args = ['--very-verbose']
     pkgtest_args += ["--fastr-home"]
     pkgtest_args += [_fastr_suite.dir]
     if graalvm_home:
