@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import static com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.convertIndex;
+import static com.oracle.truffle.r.nodes.helpers.SpecialsUtils.convertIndex;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.ArgumentMatchingMode.MATCH_BY_NAME_EXACT_SKIP_FIRST;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUBSET;
@@ -35,7 +35,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.helpers.SpecialsUtils.ConvertIndex;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecial;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecial2;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;

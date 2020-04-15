@@ -570,22 +570,24 @@ public final class SeqFunctions {
          * third specialization handles other types and invalid arguments.
          */
 
-        @Specialization(guards = "validDoubleParams(fromVec, toVec)")
+        @Specialization(guards = "validDoubleParams(fromDataLib, fromVec, toDataLib, toVec)", limit = "getTypedVectorDataLibraryCacheSize()")
         protected RAbstractVector seqLengthByMissingDouble(RDoubleVector fromVec, RDoubleVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+                        @CachedLibrary("fromVec.getData()") VectorDataLibrary fromDataLib,
+                        @CachedLibrary("toVec.getData()") VectorDataLibrary toDataLib,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
-            double from = fromVec.getDataAt(0);
-            double to = toVec.getDataAt(0);
-            RAbstractVector result = createRSequence(from, to, directionProfile);
-            return result;
+            double from = fromDataLib.getDoubleAt(fromVec.getData(), 0);
+            double to = toDataLib.getDoubleAt(toVec.getData(), 0);
+            return createRSequence(from, to, directionProfile);
         }
 
-        @Specialization(guards = "validIntParams(fromVec, toVec)")
+        @Specialization(guards = "validIntParams(fromDataLib, fromVec, toDataLib, toVec)", limit = "getTypedVectorDataLibraryCacheSize()")
         protected RAbstractVector seqLengthByMissingInt(RIntVector fromVec, RIntVector toVec, RMissing by, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+                        @CachedLibrary("fromVec.getData()") VectorDataLibrary fromDataLib,
+                        @CachedLibrary("toVec.getData()") VectorDataLibrary toDataLib,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
-            int from = fromVec.getDataAt(0);
-            int to = toVec.getDataAt(0);
-            RIntVector result = createRIntSequence(from, to, directionProfile);
-            return result;
+            int from = fromDataLib.getIntAt(fromVec.getData(), 0);
+            int to = toDataLib.getIntAt(toVec.getData(), 0);
+            return createRIntSequence(from, to, directionProfile);
         }
 
         /**
@@ -620,20 +622,26 @@ public final class SeqFunctions {
          * handled in the "One" specializations.
          */
 
-        @Specialization(guards = {"validDoubleParams(fromVec, toVec)", "!isMissing(byObj)"})
+        @Specialization(guards = {"validDoubleParams(fromDataLib, fromVec, toDataLib, toVec)", "!isMissing(byObj)"}, limit = "getTypedVectorDataLibraryCacheSize()")
         protected Object seqLengthMissing(RDoubleVector fromVec, RDoubleVector toVec, Object byObj, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+                        @CachedLibrary("fromVec.getData()") VectorDataLibrary fromDataLib,
+                        @CachedLibrary("toVec.getData()") VectorDataLibrary toDataLib,
                         @Cached("create()") AsRealNode asRealby) {
             validateLength(byObj, "by");
             double by = asRealby.execute(byObj);
-            return doSeqLengthMissing(fromVec.getDataAt(0), toVec.getDataAt(0), by, false);
+            return doSeqLengthMissing(fromDataLib.getDoubleAt(fromVec.getData(), 0), toDataLib.getDoubleAt(toVec.getData(), 0), by, false);
         }
 
-        @Specialization(guards = {"validIntParams(fromVec, toVec)", "validIntParam(byVec)", "byVec.getDataAt(0) != 0"})
+        @Specialization(guards = {"validIntParams(fromDataLib, fromVec, toDataLib, toVec)", "validIntParam(byDataLib, byVec)",
+                        "byDataLib.getIntAt(byVec.getData(), 0) != 0"}, limit = "getTypedVectorDataLibraryCacheSize()")
         protected RAbstractVector seqLengthMissing(RIntVector fromVec, RIntVector toVec, RIntVector byVec, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+                        @CachedLibrary("fromVec.getData()") VectorDataLibrary fromDataLib,
+                        @CachedLibrary("toVec.getData()") VectorDataLibrary toDataLib,
+                        @CachedLibrary("byVec.getData()") VectorDataLibrary byDataLib,
                         @Cached("createBinaryProfile()") ConditionProfile directionProfile) {
-            int by = byVec.getDataAt(0);
-            int from = fromVec.getDataAt(0);
-            int to = toVec.getDataAt(0);
+            int by = byDataLib.getIntAt(byVec.getData(), 0);
+            int from = fromDataLib.getIntAt(fromVec.getData(), 0);
+            int to = toDataLib.getIntAt(toVec.getData(), 0);
             RIntVector result;
             if (directionProfile.profile(from < to)) {
                 if (by < 0) {
@@ -975,16 +983,19 @@ public final class SeqFunctions {
 
         // Guard methods
 
-        public static boolean validDoubleParams(RDoubleVector from, RDoubleVector to) {
-            return from.getLength() == 1 && to.getLength() == 1 && isFinite(from.getDataAt(0)) && isFinite(to.getDataAt(0));
+        public static boolean validDoubleParams(VectorDataLibrary fromDataLib, RDoubleVector from, VectorDataLibrary toDataLib, RDoubleVector to) {
+            Object fromData = from.getData();
+            Object toData = to.getData();
+            return fromDataLib.getLength(fromData) == 1 && toDataLib.getLength(toData) == 1 && isFinite(fromDataLib.getDoubleAt(fromData, 0)) && isFinite(toDataLib.getDoubleAt(toData, 0));
         }
 
-        public static boolean validIntParams(RIntVector from, RIntVector to) {
-            return validIntParam(from) && validIntParam(to);
+        public static boolean validIntParams(VectorDataLibrary fromDataLib, RIntVector from, VectorDataLibrary toDataLib, RIntVector to) {
+            return validIntParam(fromDataLib, from) && validIntParam(toDataLib, to);
         }
 
-        public static boolean validIntParam(RIntVector vec) {
-            return vec.getLength() == 1 && vec.getDataAt(0) != RRuntime.INT_NA;
+        public static boolean validIntParam(VectorDataLibrary dataLib, RIntVector vec) {
+            Object data = vec.getData();
+            return dataLib.getLength(data) == 1 && dataLib.getIntAt(data, 0) != RRuntime.INT_NA;
         }
 
         public final int getLength(Object obj) {

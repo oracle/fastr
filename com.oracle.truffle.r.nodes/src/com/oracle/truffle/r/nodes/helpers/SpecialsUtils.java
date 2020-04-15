@@ -20,24 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base.infix.special;
+package com.oracle.truffle.r.nodes.helpers;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.nodes.NodeInterface;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.HasAttributesNode;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtilsFactory.ConvertIndexNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtilsFactory.ConvertValueNodeGen;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.helpers.SpecialsUtilsFactory.ConvertIndexNodeGen;
+import com.oracle.truffle.r.nodes.helpers.SpecialsUtilsFactory.ConvertValueNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -116,54 +117,56 @@ public class SpecialsUtils {
     @NodeInfo(cost = NodeCost.NONE)
     @NodeChild(value = "delegate", type = RNode.class)
     public abstract static class ConvertValue extends RNode {
+        @Child private HasAttributesNode hasAttrsNode;
+
+        protected boolean hasAttributes(Object value) {
+            if (hasAttrsNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                hasAttrsNode = insert(HasAttributesNode.create());
+            }
+            return hasAttrsNode.execute(value);
+        }
 
         protected abstract RNode getDelegate();
 
         @Specialization
-        protected static int convert(int value) {
+        protected static int convertInt(int value) {
             return value;
         }
 
         @Specialization
-        protected static double convert(double value) {
+        protected static double convertDouble(double value) {
             return value;
         }
 
-        @Specialization(guards = {"access.supports(value)", "value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
-        protected static int convertIntVector(RIntVector value,
-                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
-                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode,
-                        @Cached("value.access()") VectorAccess access) {
-            try (VectorAccess.RandomIterator iter = access.randomAccess(value)) {
-                return access.getInt(iter, 0);
+        @Specialization
+        protected static byte convertLogical(byte value) {
+            return value;
+        }
+
+        @Specialization
+        protected static String convertString(String value) {
+            return value;
+        }
+
+        @Specialization(guards = {"!hasAttributes(vec)"}, limit = "getTypedVectorDataLibraryCacheSize()")
+        Object doSimpleVectors(RAbstractAtomicVector vec,
+                        @Cached("createBinaryProfile()") ConditionProfile isLengthOneProfile,
+                        @CachedLibrary("vec.getData()") VectorDataLibrary dataLib) {
+            Object data = vec.getData();
+            if (isLengthOneProfile.profile(dataLib.getLength(data) == 1)) {
+                return dataLib.getDataAtAsObject(data, 0);
+            } else {
+                return vec;
             }
         }
 
-        @Specialization(replaces = "convertIntVector", guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
-        protected static int convertIntVectorGeneric(RIntVector value,
-                        @Cached("create()") ClassHierarchyNode hierarchyNode,
-                        @Cached("create()") HasAttributesNode hasAttrsNode) {
-            return convertIntVector(value, hierarchyNode, hasAttrsNode, value.slowPathAccess());
+        @Specialization(guards = {"hasAttributes(vec)"})
+        RAbstractAtomicVector doVectorsWithAttrs(RAbstractAtomicVector vec) {
+            return vec;
         }
 
-        @Specialization(guards = {"access.supports(value)", "value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
-        protected static double convertDoubleVector(RDoubleVector value,
-                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
-                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode,
-                        @Cached("value.access()") VectorAccess access) {
-            try (VectorAccess.RandomIterator iter = access.randomAccess(value)) {
-                return access.getDouble(iter, 0);
-            }
-        }
-
-        @Specialization(replaces = "convertDoubleVector", guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
-        protected static double convertDoubleVectorGeneric(RDoubleVector value,
-                        @Cached("create()") ClassHierarchyNode hierarchyNode,
-                        @Cached("create()") HasAttributesNode hasAttrsNode) {
-            return convertDoubleVector(value, hierarchyNode, hasAttrsNode, value.slowPathAccess());
-        }
-
-        @Specialization(replaces = {"convertIntVector", "convertDoubleVector"})
+        @Fallback
         protected Object convert(Object value) {
             return value;
         }
@@ -178,7 +181,7 @@ public class SpecialsUtils {
         return ConvertIndexNodeGen.create(value);
     }
 
-    public static ConvertValue convertValue(RNode value) {
+    public static ConvertValue unboxValue(RNode value) {
         return ConvertValueNodeGen.create(value);
     }
 }

@@ -28,12 +28,15 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
+
+import static com.oracle.truffle.r.nodes.helpers.SpecialsUtils.unboxValue;
 
 /**
  * Fast-path for scalar values: these cannot have any class attribute. Note: we intentionally use
@@ -53,9 +56,14 @@ public abstract class UnaryArithmeticSpecial extends RNode {
     }
 
     public static RSpecialFactory createSpecialFactory(UnaryArithmeticFactory unaryFactory) {
-        return (signature, arguments, inReplacement) -> signature.getNonNullCount() == 0 && arguments.length == 1
-                        ? UnaryArithmeticSpecialNodeGen.create(unaryFactory, arguments[0])
-                        : null;
+        return new RSpecialFactory() {
+            @Override
+            public RNode create(ArgumentsSignature signature, RNode[] arguments, boolean inReplacement) {
+                return signature.getNonNullCount() == 0 && arguments.length == 1
+                                ? UnaryArithmeticSpecialNodeGen.create(unaryFactory, unboxValue(arguments[0]))
+                                : null;
+            }
+        };
     }
 
     @Specialization

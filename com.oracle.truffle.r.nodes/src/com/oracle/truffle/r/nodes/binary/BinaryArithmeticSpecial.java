@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -31,17 +32,23 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryArithmeticSpecialNodeGen.IntegerBinaryArithmeticSpecialNodeGen;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticSpecialNodeGen;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 import com.oracle.truffle.r.runtime.data.WarningInfo;
+
+import static com.oracle.truffle.r.nodes.helpers.SpecialsUtils.unboxValue;
 
 /**
  * Fast-path for scalar values: these cannot have any class attribute. Note: we intentionally use
@@ -51,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.WarningInfo;
  */
 @NodeChild(value = "left", type = RNode.class)
 @NodeChild(value = "right", type = RNode.class)
+@ImportStatic(DSLConfig.class)
 public abstract class BinaryArithmeticSpecial extends RNode {
 
     private final boolean handleNA;
@@ -67,20 +75,23 @@ public abstract class BinaryArithmeticSpecial extends RNode {
     }
 
     public static RSpecialFactory createSpecialFactory(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
-        return (signature, arguments, inReplacement) -> {
-            if (signature.getNonNullCount() == 0) {
-                if (arguments.length == 2) {
-                    boolean handleIntegers = !(binaryFactory == BinaryArithmetic.POW || binaryFactory == BinaryArithmetic.DIV);
-                    if (handleIntegers) {
-                        return IntegerBinaryArithmeticSpecialNodeGen.create(binaryFactory, unaryFactory, arguments[0], arguments[1]);
-                    } else {
-                        return BinaryArithmeticSpecialNodeGen.create(binaryFactory, unaryFactory, arguments[0], arguments[1]);
+        return new RSpecialFactory() {
+            @Override
+            public RNode create(ArgumentsSignature signature, RNode[] arguments, boolean inReplacement) {
+                if (signature.getNonNullCount() == 0) {
+                    if (arguments.length == 2) {
+                        boolean handleIntegers = !(binaryFactory == BinaryArithmetic.POW || binaryFactory == BinaryArithmetic.DIV);
+                        if (handleIntegers) {
+                            return IntegerBinaryArithmeticSpecialNodeGen.create(binaryFactory, unaryFactory, unboxValue(arguments[0]), unboxValue(arguments[1]));
+                        } else {
+                            return BinaryArithmeticSpecialNodeGen.create(binaryFactory, unaryFactory, unboxValue(arguments[0]), unboxValue(arguments[1]));
+                        }
+                    } else if (arguments.length == 1 && unaryFactory != null) {
+                        return UnaryArithmeticSpecialNodeGen.create(unaryFactory, unboxValue(arguments[0]));
                     }
-                } else if (arguments.length == 1 && unaryFactory != null) {
-                    return UnaryArithmeticSpecialNodeGen.create(unaryFactory, arguments[0]);
                 }
+                return null;
             }
-            return null;
         };
     }
 
@@ -129,6 +140,10 @@ public abstract class BinaryArithmeticSpecial extends RNode {
 
     protected static boolean isNaN(double value) {
         return Double.isNaN(value) && !RRuntime.isNA(value);
+    }
+
+    protected static boolean areLength1(VectorDataLibrary aDataLib, RAbstractVector a, VectorDataLibrary bDataLib, RAbstractVector b) {
+        return aDataLib.getLength(a.getData()) == 1 && bDataLib.getLength(b.getData()) == 1;
     }
 
     /**
