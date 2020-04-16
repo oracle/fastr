@@ -370,7 +370,10 @@ set.repos <- function() {
         log.message("'--repos FASTR' specified but no CRAN mirror set; setting 'CRAN=", get.default.cran.mirror(), "'\n", level=1)
         repos[["CRAN"]] <- get.default.cran.mirror()
     }
-	log.message("Setting option(repos = ", deparse(repos), ")")
+	if (verbose) {
+		cat("Setting option repos to:\n")
+		print(repos); cat('----\n')
+	}
 	options(repos = repos)
 }
 
@@ -486,20 +489,35 @@ check.installed.pkgs <- function() {
 get.pkgs <- function() {
 	my.warning <- function(war) {
 		if (!quiet) {
-			cat("Fatal error:", war$message, "\n")
+			cat("Fatal error druing retrieval of available packages:", war$message, ". Value of option repos:\n", sep='')
+			print(options('repos'))
 		}
 		quit(save="no", status=100)
 	}
 	tryCatch({
-	    avail.pkgs <<- available.packages(type="source", filters = list(add=TRUE, function(x) x))
-    }, warning=my.warning)
+			avail.pkgs <<- available.packages(type="source", filters = list(add=TRUE, function(x) x))
+		}, warning=my.warning)
 
-    # Owing to a FastR bug, we may not invoke the handler above, but
+	log.repos.info <- function() {
+		cat("\n=========\nDebugging info:\n")
+		cat("Value of option repos:\n")
+		print(options('repos'))
+		availDF <- as.data.frame(avail.pkgs)
+		repoUrls <- unique(availDF$Repository)
+		for(url in repoUrls) {
+			cat("-----\nFirst 30 packages from repo ", url, ":\n", sep='')
+			print(head(availDF[availDF$Repository == url,c('Package', 'Version', 'Repository')]))
+		}
+		cat("\n=========\n\n")
+	}
+
+	# Owing to a FastR bug, we may not invoke the handler above, but
 	# if length(avail.pkgs) == 0, that also means it failed
 	if (length(avail.pkgs) == 0) {
 		if (!quiet) {
-		  print("Fatal error: no packages found in repo(s)")
-    	}
+			cat("Fatal error: no packages found in repo(s).\n")
+			log.repos.info()
+		}
 		quit(save="no", status=100)
 	}
 
@@ -545,12 +563,18 @@ get.pkgs <- function() {
 	}
 
 	match.fun <- set.match.fun()
+	if (verbose) {
+		cat("Filtering the packages to install: invert.pkgset=", invert.pkgset, ", pkg.pattern=", pkg.pattern, ".\n")
+		cat("pkg.filelist:\n"); print(pkg.filelist)
+		cat("blacklist:\n"); print(blacklist)
+	}
 
 	matched.avail.pkgs <- apply(avail.pkgs, 1, match.fun)
 	toinstall.pkgs <<- avail.pkgs[matched.avail.pkgs, , drop=F]
 
 	if (length(toinstall.pkgs) == 0 && !use.installed.pkgs) {
-		print("Fatal error: requested package(s) found in repo(s)")
+		cat("Fatal error: requested package(s) found in repo(s).\n")
+		log.repos.info()
 		quit(save="no", status=100)
 	}
 
@@ -772,7 +796,7 @@ do.it <- function() {
 
 	if (install) {
 		cat("BEGIN package installation\n")
-        log.timestamp()
+		log.timestamp()
 		install.pkgs(test.pkgnames)
 		cat("END package installation\n")
 		show.install.status(test.pkgnames)
@@ -1239,6 +1263,7 @@ run.setup <- function() {
 	set.initial.package.blacklist()
 	set.package.blacklist()
 	lib.install <<- normalizePath(lib.install)
+	.libPaths(c(.libPaths(), lib.install))
 	cat.args()
 }
 
