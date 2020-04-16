@@ -55,14 +55,14 @@ public abstract class AltrepLLVMDownCallNode extends LLVMDownCallNode {
     @ExplodeLoop
     @Override
     protected Object beforeCall(Frame frame, @SuppressWarnings("unused") NativeFunction nativeFunction, TruffleObject f, Object[] args) {
-        super.beforeCall(frame, nativeFunction, f, args);
+        Object savedDownCallFrame = super.beforeCall(frame, nativeFunction, f, args);
         CompilerAsserts.partialEvaluationConstant(args.length);
         for (int i = 0; i < args.length; i++) {
             if (args[i] instanceof RBaseObject) {
                 args[i] = wrapInNativeMirror((RBaseObject) args[i]);
             }
         }
-        return 0;
+        return savedDownCallFrame;
     }
 
     @Override
