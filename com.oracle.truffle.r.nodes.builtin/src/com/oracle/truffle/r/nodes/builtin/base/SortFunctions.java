@@ -142,7 +142,7 @@ public class SortFunctions {
         return RDataFactory.createStringVector(sort(data, decreasing), vec.isComplete());
     }
 
-    protected static RLogicalVector jdkSort(RAbstractLogicalVector vec, boolean decreasing) {
+    protected static RLogicalVector jdkSort(RLogicalVector vec, boolean decreasing) {
         byte[] data = vec.materialize().getDataCopy();
         return RDataFactory.createLogicalVector(sort(data, decreasing), vec.isComplete());
     }
@@ -179,7 +179,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RLogicalVector sort(RAbstractLogicalVector vec, boolean decreasing) {
+        protected RLogicalVector sort(RLogicalVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
@@ -243,7 +243,7 @@ public class SortFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RLogicalVector sort(RAbstractLogicalVector vec, Object partial) {
+        protected RLogicalVector sort(RLogicalVector vec, Object partial) {
             return jdkSort(vec, false);
         }
 

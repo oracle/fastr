@@ -28,7 +28,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -66,7 +65,7 @@ public enum SEXPTYPE {
     BUILTINSXP(8), /* builtin non-special forms */
     CHARSXP(9), /* "scalar" string type (GnuR internal only) */
     /* logical vectors */
-    LGLSXP(10, RLogicalVector.class, Byte.class, RForeignBooleanWrapper.class),
+    LGLSXP(10, RLogicalVector.class, Byte.class),
     /* integer vectors */
     INTSXP(13, RIntVector.class, Integer.class),
     /* real vectors */

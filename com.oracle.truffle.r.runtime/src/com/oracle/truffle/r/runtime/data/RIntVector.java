@@ -391,7 +391,7 @@ public final class RIntVector extends RAbstractNumericVector {
         }
     }
 
-    private AtomicReference<RIntVector> materialized = new AtomicReference<>();
+    private final AtomicReference<RIntVector> materialized = new AtomicReference<>();
 
     public Object cachedMaterialize() {
         if (materialized.get() == null) {

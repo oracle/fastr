@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
@@ -95,7 +95,7 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
                 if (!(currentVector instanceof RAbstractListVector)) {
                     throw indexingFailed(i);
                 }
-                currentVector = recursiveSubscriptExtract.apply(currentVector, new Object[]{parentPosition}, RLogical.TRUE, RLogical.TRUE);
+                currentVector = recursiveSubscriptExtract.apply(currentVector, new Object[]{parentPosition}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
                 if (currentVector == RNull.instance) {
                     throw noSuchIndex(i);
                 }
@@ -120,6 +120,6 @@ abstract class RecursiveReplaceSubscriptNode extends RecursiveSubscriptNode {
     }
 
     private Object getPositionValue(Object firstPosition, int i) {
-        return getPositionExtract.apply(firstPosition, new Object[]{RDataFactory.createIntVectorFromScalar(i + 1)}, RLogical.TRUE, RLogical.TRUE);
+        return getPositionExtract.apply(firstPosition, new Object[]{RDataFactory.createIntVectorFromScalar(i + 1)}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
     }
 }

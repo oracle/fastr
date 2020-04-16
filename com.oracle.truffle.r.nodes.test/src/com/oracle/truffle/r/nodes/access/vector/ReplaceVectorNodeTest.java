@@ -50,7 +50,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -184,7 +183,7 @@ public class ReplaceVectorNodeTest extends TestBase {
             RStringVector valueNames = (RStringVector) generateVector(RType.Character, 4, true);
             value.setNames(valueNames);
 
-            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, value, RLogical.TRUE);
+            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, value, RRuntime.LOGICAL_TRUE);
 
             RStringVector newNames = result.getNames();
             assertThat(newNames.getLength(), is(names.getLength()));
@@ -220,7 +219,7 @@ public class ReplaceVectorNodeTest extends TestBase {
             RAbstractVector replaceWith = generateVector(targetType, 1, true);
 
             assumeThat(vector.isComplete(), is(false));
-            executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RLogical.valueOf(true));
+            executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RDataFactory.createLogicalVectorFromScalar(true));
 
             // TODO we would need to find out if we replace all elements. we should support this.
             // assertThat(result.isComplete(), is(true));
@@ -237,7 +236,7 @@ public class ReplaceVectorNodeTest extends TestBase {
             RAbstractVector vector = generateVector(targetType, 4, true);
             RAbstractVector replaceWith = generateVector(targetType, 1, true);
 
-            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RLogical.NA);
+            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RRuntime.LOGICAL_NA);
 
             assertThat(result.isComplete(), is(true));
             return null;

@@ -100,11 +100,6 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
     }
 
     @Override
-    public boolean isForeignWrapper() {
-        return false;
-    }
-
-    @Override
     protected Object getScalarValue() {
         assert getLength() == 1;
         return getRawDataAt(0);
@@ -126,6 +121,11 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
             default:
                 return null;
         }
+    }
+
+    @Override
+    public boolean isForeignWrapper() {
+        return false;
     }
 
     @Override

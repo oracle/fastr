@@ -39,8 +39,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -636,12 +634,7 @@ public abstract class BinaryMapNode extends RBaseNode {
     public abstract Object apply(RAbstractVector originalLeft, RAbstractVector originalRight);
 
     protected static Class<?> getDataClass(RAbstractVector vec) {
-        if (vec instanceof RIntVector) {
-            return ((RIntVector) vec).getData().getClass();
-        } else if (vec instanceof RDoubleVector) {
-            return ((RDoubleVector) vec).getData().getClass();
-        }
-        return vec.getClass();
+        return vec.getData().getClass();
     }
 
 }

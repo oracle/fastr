@@ -83,13 +83,13 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -244,7 +244,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
         // cancel potential primitive types in the input
         TypeExpr noPrimInput = inputType.and(noPrimType);
         // the positive output type union
-        TypeExpr res = TypeExpr.union(RIntVector.class, RLogical.class, RDoubleVector.class, RString.class);
+        TypeExpr res = TypeExpr.union(RIntVector.class, RLogicalVector.class, RDoubleVector.class, RString.class);
         // intersect the to stop propagating the primitive types, such as String
         res = res.and(noPrimInput);
         // the output of the boxing is actually the union of the positive union with its negation

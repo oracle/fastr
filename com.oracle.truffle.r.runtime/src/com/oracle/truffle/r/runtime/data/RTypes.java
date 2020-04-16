@@ -161,6 +161,11 @@ public class RTypes {
     }
 
     @ImplicitCast
+    public static RLogicalVector toLogicalVector(byte vector) {
+        return RDataFactory.createLogicalVectorFromScalar(vector);
+    }
+
+    @ImplicitCast
     public static RAbstractStringVector toAbstractStringVector(String vector) {
         return RDataFactory.createStringVectorFromScalar(vector);
     }

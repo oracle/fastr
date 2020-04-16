@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -271,7 +270,7 @@ public class ExtractVectorNodeTest extends TestBase {
             RAbstractVector vector = generateVector(targetType, 4, false);
 
             assumeThat(vector.isComplete(), is(false));
-            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RLogical.valueOf(true));
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RDataFactory.createLogicalVectorFromScalar(true));
 
             assertThat(result.isComplete(), is(false));
             return null;
@@ -288,7 +287,7 @@ public class ExtractVectorNodeTest extends TestBase {
 
             RAbstractVector vector = generateVector(targetType, 4, true);
 
-            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RLogical.NA);
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RRuntime.LOGICAL_NA);
 
             assertThat(result.isComplete(), is(false));
             return null;
@@ -358,6 +357,6 @@ public class ExtractVectorNodeTest extends TestBase {
 
     private static NodeHandle<ExtractVectorNode> create(ElementAccessMode mode, boolean exact, boolean dropDimension) {
         return createHandle(ExtractVectorNode.create(mode, false),
-                        (node, args) -> node.apply(args[0], (Object[]) args[1], RLogical.valueOf(exact), RLogical.valueOf(dropDimension)));
+                        (node, args) -> node.apply(args[0], (Object[]) args[1], RDataFactory.createLogicalVectorFromScalar(exact), RDataFactory.createLogicalVectorFromScalar(dropDimension)));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,9 +39,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -164,7 +164,7 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 {
             String name = RRuntime.asString(nameExtract.execute(symbol, "name"));
             SymbolHandle address = ((RExternalPtr) addressExtract.execute(symbol, "address")).getAddr();
             // field name may be "package" or "dll", but always at (R) index 3
-            RList packageList = (RList) packageExtract.apply(symbol, new Object[]{3}, RLogical.valueOf(false), RMissing.instance);
+            RList packageList = (RList) packageExtract.apply(symbol, new Object[]{3}, RDataFactory.createLogicalVectorFromScalar(false), RMissing.instance);
             DLLInfo dllInfo = (DLLInfo) ((RExternalPtr) infoExtract.execute(packageList, "info")).getExternalObject();
             return new NativeCallInfo(name, address, dllInfo);
         }

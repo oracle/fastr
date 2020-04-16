@@ -22,16 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.util.function.Function;
-
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -41,14 +37,12 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RString;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 
 /**
@@ -118,23 +112,6 @@ public abstract class FFIMaterializeNode extends Node {
         return RDataFactory.createComplexVectorFromScalar(value);
     }
 
-    // Scalar vectors: so far protected via weak hash map, should not occur here often
-    // Maybe we should get rid of the scalar vectors altogether
-
-    private static <T extends RScalar> RAbstractVector protectMaterialized(T scalar, Function<T, RAbstractVector> factory) {
-        return RContext.getInstance().getRFFI().getOrCreateMaterialized(scalar, factory);
-    }
-
-    @Specialization
-    protected static Object wrap(RLogical value, boolean protect,
-                    @Cached("createBinaryProfile()") ConditionProfile isProtected) {
-        if (isProtected.profile(protect)) {
-            return protectMaterialized(value, v -> RDataFactory.createLogicalVectorFromScalar(v.getValue()));
-        } else {
-            return value.materialize();
-        }
-    }
-
     // Sequences: life-cycle of the materialized vector is cached and tied with the sequence via a
     // field inside the sequence
 
@@ -174,6 +151,11 @@ public abstract class FFIMaterializeNode extends Node {
         return value.cachedMaterialize();
     }
 
+    @Specialization
+    protected static Object wrap(RLogicalVector value, @SuppressWarnings("unused") boolean protect) {
+        return value.cachedMaterialize();
+    }
+
     // Symbol holds the address as a field
 
     @Specialization
@@ -197,7 +179,7 @@ public abstract class FFIMaterializeNode extends Node {
 
     static boolean isForeignObject(Object value) {
         // in case somebody calls wrap for an already wrapped RBaseObject
-        assert value instanceof NativeDataAccess.NativeMirror;
+        assert value instanceof NativeDataAccess.NativeMirror : value.getClass().getSimpleName() + " has to be a NativeMirror";
         return RRuntime.isForeignObject(value);
     }
 

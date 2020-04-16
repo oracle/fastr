@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RString;
@@ -414,7 +414,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 Object position = positions[currentPositionIndex];
 
                 Object newNames = extractNames((RAbstractStringVector) RRuntime.asAbstractVector(srcNames), new Object[]{position}, new PositionProfile[]{profile}, currentPositionIndex,
-                                RLogical.valueOf(true), RLogical.valueOf(dropDimensions));
+                                RDataFactory.createLogicalVectorFromScalar(true), RDataFactory.createLogicalVectorFromScalar(dropDimensions));
                 if (newNames != RNull.instance) {
                     if (newNamesProfile == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -520,11 +520,12 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         protected abstract Object execute(int dimensionIndex, RAbstractStringVector vector, Object position, PositionProfile profile);
 
         protected boolean isSupported(CachedExtractVectorNode cachedExtractNode, RAbstractStringVector vector, Object position) {
-            return cachedExtractNode.isSupported(vector, new Object[]{position}, RLogical.TRUE, RLogical.TRUE);
+            return cachedExtractNode.isSupported(vector, new Object[]{position}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
         }
 
         protected CachedExtractVectorNode createCached(RAbstractStringVector vector, Object position) {
-            return new CachedExtractVectorNode(ElementAccessMode.SUBSET, vector, new Object[]{position}, RLogical.TRUE, RLogical.TRUE, true);
+            RLogicalVector t = RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_TRUE);
+            return new CachedExtractVectorNode(ElementAccessMode.SUBSET, vector, new Object[]{position}, t, t, true);
         }
 
         @Specialization(limit = "limit", guards = {"dimensionIndex == cachedIndex", "isSupported(cachedExtractNode, vector, position)"})
@@ -533,7 +534,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                         @SuppressWarnings("unused") @Cached("dimensionIndex") int cachedIndex) {
             PositionProfile[] profiles = new PositionProfile[]{profile};
             CompilerAsserts.partialEvaluationConstant(dimensionIndex);
-            return cachedExtractNode.apply(vector, new Object[]{position}, profiles, RLogical.TRUE, RLogical.TRUE);
+            return cachedExtractNode.apply(vector, new Object[]{position}, profiles, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
         }
 
         @Specialization(replaces = "extractDimNamesCached")
@@ -544,7 +545,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             }
             CompilerAsserts.partialEvaluationConstant(dimensionIndex);
             Object[] positions = new Object[]{position};
-            return fallbackExtractNode.apply(vector, positions, RLogical.TRUE, RLogical.TRUE);
+            return fallbackExtractNode.apply(vector, positions, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
         }
     }
 

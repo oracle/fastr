@@ -281,20 +281,6 @@ public abstract class RFFIContext extends RFFI {
     }
 
     /**
-     * Maintains a weak-reference 1:1 relationship between the scalar vector and its materialized
-     * counterpart.
-     */
-    @TruffleBoundary
-    public final <T extends RScalar> RAbstractVector getOrCreateMaterialized(T scalar, Function<T, RAbstractVector> factory) {
-        RAbstractVector result = rffiContextState.protectedMaterializedScalarVectors.get(scalar);
-        if (result == null) {
-            result = (RAbstractVector) factory.apply(scalar).makeSharedPermanent();
-            rffiContextState.protectedMaterializedScalarVectors.put(scalar, result);
-        }
-        return result;
-    }
-
-    /**
      * Maintains a weak-reference 1:1 relationship between the promise and its closure presented as
      * pair-list to the native code.
      */

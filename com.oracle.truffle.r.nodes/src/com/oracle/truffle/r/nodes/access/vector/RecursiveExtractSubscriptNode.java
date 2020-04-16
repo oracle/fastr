@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -79,7 +79,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
         Object firstPosition = positionCast.execute(originalFirstPosition);
         Object currentVector = vector;
         for (int i = 1; i < positionLength; i++) {
-            Object selection = getPositionExtract.apply(firstPosition, new Object[]{RDataFactory.createIntVectorFromScalar(i)}, RLogical.TRUE, RLogical.TRUE);
+            Object selection = getPositionExtract.apply(firstPosition, new Object[]{RDataFactory.createIntVectorFromScalar(i)}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
             try {
                 if (!(currentVector instanceof RAbstractListVector || currentVector instanceof RPairList)) {
                     throw indexingFailed(i);
@@ -93,7 +93,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
                 throw noSuchIndex(i);
             }
         }
-        Object selection = getPositionExtract.apply(firstPosition, new Object[]{RDataFactory.createIntVectorFromScalar(positionLength)}, RLogical.TRUE, RLogical.TRUE);
+        Object selection = getPositionExtract.apply(firstPosition, new Object[]{RDataFactory.createIntVectorFromScalar(positionLength)}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
         try {
             return subscriptExtract.apply(currentVector, new Object[]{selection}, exact, dropDimensions);
         } catch (RecursiveIndexNotFoundError e) {

@@ -50,13 +50,13 @@ import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -133,7 +133,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
         public abstract Object[] execute(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector additionalArguments);
 
         private static Object getVecElement(RAbstractListVector dots, int i, int listIndex, int[] lengths, ExtractVectorNode extractNode) {
-            return extractNode.apply(dots.getDataAt(listIndex), new Object[]{i % lengths[listIndex] + 1}, RLogical.TRUE, RLogical.TRUE);
+            return extractNode.apply(dots.getDataAt(listIndex), new Object[]{i % lengths[listIndex] + 1}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
         }
 
         @Specialization(limit = "getCacheSize(5)", guards = {"dots.getLength() == dotsLength", "moreArgs.getLength() == moreArgsLength",

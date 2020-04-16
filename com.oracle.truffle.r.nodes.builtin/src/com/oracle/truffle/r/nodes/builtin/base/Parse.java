@@ -190,7 +190,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         if (srcFile instanceof REnvironment) {
             REnvironment srcFileEnv = (REnvironment) srcFile;
             Object b = srcFileEnv.get("isFile");
-            boolean isFile = RRuntime.fromLogical(b != null ? (byte) b : 0);
+            boolean isFile = RRuntime.fromLogical(RRuntime.asLogicalObject(b));
             if (isFile) {
                 // Might be a URL
                 String urlFileName = RRuntime.asString(srcFileEnv.get("filename"));

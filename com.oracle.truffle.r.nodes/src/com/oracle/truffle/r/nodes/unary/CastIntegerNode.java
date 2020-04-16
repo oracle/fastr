@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -44,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -208,8 +208,8 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return RRuntime.hasVectorData(operand) && operand.isForeignWrapper();
     }
 
-    @Specialization
-    protected RIntVector doForeignWrapper(RForeignBooleanWrapper operand) {
+    @Specialization(guards = "operand.isForeignWrapper()")
+    protected RIntVector doForeignWrapper(RLogicalVector operand) {
         return RClosures.createToIntVector(operand, true);
     }
 
