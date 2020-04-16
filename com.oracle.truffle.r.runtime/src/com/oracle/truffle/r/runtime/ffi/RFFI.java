@@ -51,6 +51,7 @@ public abstract class RFFI implements ContextState {
 
     public final CRFFI cRFFI;
     public final BaseRFFI baseRFFI;
+    public final AltrepRFFI altrepRFFI;
     public final CallRFFI callRFFI;
     public final DLLRFFI dllRFFI;
     public final UserRngRFFI userRngRFFI;
@@ -62,10 +63,11 @@ public abstract class RFFI implements ContextState {
     public final REmbedRFFI embedRFFI;
     public final MiscRFFI miscRFFI;
 
-    protected RFFI(CRFFI cRFFI, BaseRFFI baseRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI, PCRERFFI pcreRFFI, LapackRFFI lapackRFFI, StatsRFFI statsRFFI,
-                    ToolsRFFI toolsRFFI, REmbedRFFI embedRFFI, MiscRFFI miscRFFI) {
+    protected RFFI(CRFFI cRFFI, BaseRFFI baseRFFI, AltrepRFFI altrepRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI, PCRERFFI pcreRFFI, LapackRFFI lapackRFFI, StatsRFFI statsRFFI,
+                   ToolsRFFI toolsRFFI, REmbedRFFI embedRFFI, MiscRFFI miscRFFI) {
         this.cRFFI = cRFFI;
         this.baseRFFI = baseRFFI;
+        this.altrepRFFI = altrepRFFI;
         this.callRFFI = callRFFI;
         this.dllRFFI = dllRFFI;
         this.userRngRFFI = userRngRFFI;

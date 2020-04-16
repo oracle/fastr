@@ -101,6 +101,10 @@ public abstract class RFFIFactory {
         return getRFFI().baseRFFI;
     }
 
+    public static AltrepRFFI getAltrepRFFI() {
+        return getRFFI().altrepRFFI;
+    }
+
     public static LapackRFFI getLapackRFFI() {
         return getRFFI().lapackRFFI;
     }

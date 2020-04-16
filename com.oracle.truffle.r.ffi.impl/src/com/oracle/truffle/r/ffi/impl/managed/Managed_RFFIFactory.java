@@ -25,8 +25,10 @@ package com.oracle.truffle.r.ffi.impl.managed;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.ffi.impl.altrep.TruffleAltrep_DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
@@ -57,7 +59,9 @@ public final class Managed_RFFIFactory extends RFFIFactory {
                 public InvokeCNode createInvokeCNode() {
                     throw unsupported("invoke");
                 }
-            }, new BaseRFFI(Managed_DownCallNodeFactory.INSTANCE, Managed_DownCallNodeFactory.INSTANCE), new CallRFFI() {
+            }, new BaseRFFI(Managed_DownCallNodeFactory.INSTANCE, Managed_DownCallNodeFactory.INSTANCE),
+            new AltrepRFFI(TruffleAltrep_DownCallNodeFactory.INSTANCE),
+            new CallRFFI() {
                 @Override
                 public InvokeCallNode createInvokeCallNode() {
                     throw unsupported("native code invocation");
