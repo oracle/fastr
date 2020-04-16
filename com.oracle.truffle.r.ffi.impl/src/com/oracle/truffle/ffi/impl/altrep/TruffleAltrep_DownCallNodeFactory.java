@@ -17,4 +17,9 @@ public class TruffleAltrep_DownCallNodeFactory extends DownCallNodeFactory {
     public DownCallNode createDownCallNode() {
         return AltrepLLVMDownCallNodeGen.create();
     }
+
+    @Override
+    public DownCallNode getUncachedDownCallNode() {
+        return AltrepLLVMDownCallNodeGen.getUncached();
+    }
 }

@@ -2,6 +2,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 
 public final class AltrepRFFI {
     private final DownCallNodeFactory downCallNodeFactory;
@@ -10,17 +11,30 @@ public final class AltrepRFFI {
         this.downCallNodeFactory = downCallNodeFactory;
     }
 
-    public AltIntEltNode createAltIntEltNode() {
-        return new AltIntEltNode(downCallNodeFactory);
+    private static DownCallNode createDownCallNode() {
+        return RFFIFactory.getAltrepRFFI().downCallNodeFactory.createDownCallNode();
     }
 
-    public final static class AltIntEltNode extends NativeCallNode {
-        private AltIntEltNode(DownCallNodeFactory downCallNodeFactory) {
-            super(downCallNodeFactory.createDownCallNode());
+    private static DownCallNode getUncachedDownCallNode() {
+        return RFFIFactory.getAltrepRFFI().downCallNodeFactory.getUncachedDownCallNode();
+    }
+
+    public static class AltIntEltNode extends NativeCallNode {
+        private AltIntEltNode(DownCallNode downCallNode) {
+            super(downCallNode);
         }
 
         public static AltIntEltNode create() {
-            return RFFIFactory.getAltrepRFFI().createAltIntEltNode();
+            return new AltIntEltNode(createDownCallNode());
+        }
+
+        public static AltIntEltNode getUncached() {
+            return new AltIntEltNode(getUncachedDownCallNode()) {
+                @Override
+                public boolean isAdoptable() {
+                    return false;
+                }
+            };
         }
 
         public int execute(RIntVector altIntVector, int index) {
