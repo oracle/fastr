@@ -1,9 +1,9 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -19,37 +19,27 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
-public abstract class AltrepLLVMDownCallNode extends DownCallNode {
-    @Child private LLVMDownCallNode llvmDownCallNode;
-    // TODO: Use descriptorHandle instead of descriptor
-    // TODO: Add CompilationFinal
-    private AltRepClassDescriptor descriptor;
-    @CompilationFinal(dimensions = 1) private ConditionProfile[] hasMirrorProfiles;
+@GenerateUncached
+public abstract class AltrepLLVMDownCallNode extends LLVMDownCallNode {
 
     public static AltrepLLVMDownCallNode create() {
         return AltrepLLVMDownCallNodeGen.create();
     }
 
     public AltrepLLVMDownCallNode() {
-        DownCallNode downCallNode = TruffleLLVM_DownCallNodeFactory.INSTANCE.createDownCallNode();
-        assert downCallNode instanceof LLVMDownCallNode;
-        this.llvmDownCallNode = (LLVMDownCallNode) downCallNode;
     }
 
     @Specialization
+    @Override
     protected Object doCall(Frame frame, NativeFunction func, Object[] args,
-                            @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
-        if (hasMirrorProfiles == null) {
-            hasMirrorProfiles = createHasMirrorProfiles(args.length);
-        }
+                                  @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
         assert isAltrep(args[0]);
         AltRepClassDescriptor descriptorFromArgs = getDescriptorFromAltrepObj((RBaseObject) args[0]);
-        if (descriptor != descriptorFromArgs) {
-            descriptor = descriptorFromArgs;
-        }
+
+        // FIXME: Ugly hack - save the descriptor inside altrep context
+        ctxRef.get().altRepContext.saveDescriptor(descriptorFromArgs);
 
         return doCallImpl(frame, func, args, ctxRef);
     }
@@ -65,27 +55,25 @@ public abstract class AltrepLLVMDownCallNode extends DownCallNode {
     @ExplodeLoop
     @Override
     protected Object beforeCall(Frame frame, @SuppressWarnings("unused") NativeFunction nativeFunction, TruffleObject f, Object[] args) {
-        llvmDownCallNode.beforeCall(frame, nativeFunction, f, args);
+        super.beforeCall(frame, nativeFunction, f, args);
         CompilerAsserts.partialEvaluationConstant(args.length);
         for (int i = 0; i < args.length; i++) {
             if (args[i] instanceof RBaseObject) {
-                args[i] = wrapInNativeMirror((RBaseObject) args[i], hasMirrorProfiles[i]);
+                args[i] = wrapInNativeMirror((RBaseObject) args[i]);
             }
         }
-
-        // TODO: Add RContext.getRFFIContext.beforeDownCall, and afterDownCall
         return 0;
     }
 
     @Override
     protected void afterCall(Frame frame, Object before, NativeFunction f, TruffleObject t, Object[] args) {
-
+        super.afterCall(frame, before, f, t, args);
     }
 
     @Override
     protected TruffleObject createTarget(ContextReference<RContext> ctxRef, NativeFunction f) {
-        // TODO: Get descriptor from ctxRef via descriptorHandle
         CompilerAsserts.partialEvaluationConstant(f);
+        AltRepClassDescriptor descriptor = ctxRef.get().altRepContext.loadDescriptor();
         switch (f) {
             case AltInteger_Is_sorted:
                 assert descriptor instanceof AltIntegerClassDescriptor;
@@ -136,9 +124,9 @@ public abstract class AltrepLLVMDownCallNode extends DownCallNode {
         return res;
     }
 
-    private static NativeMirror wrapInNativeMirror(RBaseObject object, ConditionProfile hasMirrorProfile) {
+    private static NativeMirror wrapInNativeMirror(RBaseObject object) {
         NativeMirror mirror = object.getNativeMirror();
-        if (hasMirrorProfile.profile(mirror != null)) {
+        if (mirror != null) {
             return mirror;
         } else {
             return NativeDataAccess.createNativeMirror(object);
