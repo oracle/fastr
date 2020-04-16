@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
+import com.oracle.truffle.r.runtime.nodes.altrep.AltIntGetIntAtNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
@@ -196,12 +197,8 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage(limit = "1")
     public int getIntAt(int index,
-                        @CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
-                        @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                        @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-        long dataptr =
-                invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-        return NativeMemory.getInt(dataptr, index);
+                        @Cached(value = "create()") AltIntGetIntAtNode getIntAtNode) {
+        return (int) getIntAtNode.execute(getOwner(), index);
     }
 
     @ExportMessage(limit = "1")
