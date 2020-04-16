@@ -42,4 +42,28 @@ public final class AltrepRFFI {
             return (int) call(NativeFunction.AltInteger_Elt, new Object[]{altIntVector, index});
         }
     }
+
+    public static class AltIntDataptrNode extends NativeCallNode {
+        private AltIntDataptrNode(DownCallNode downCallNode) {
+            super(downCallNode);
+        }
+
+        public static AltIntDataptrNode create() {
+            return new AltIntDataptrNode(createDownCallNode());
+        }
+
+        public static AltIntDataptrNode getUncached() {
+            return new AltIntDataptrNode(getUncachedDownCallNode()) {
+                @Override
+                public boolean isAdoptable() {
+                    return false;
+                }
+            };
+        }
+
+        public long execute(RIntVector altIntVector) {
+            assert AltrepUtilities.isAltrep(altIntVector);
+            return (long) call(NativeFunction.AltInteger_Dataptr, altIntVector);
+        }
+    }
 }

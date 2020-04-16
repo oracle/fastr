@@ -75,6 +75,11 @@ public abstract class AltrepLLVMDownCallNode extends LLVMDownCallNode {
         CompilerAsserts.partialEvaluationConstant(f);
         AltRepClassDescriptor descriptor = ctxRef.get().altRepContext.loadDescriptor();
         switch (f) {
+            case AltInteger_Dataptr:
+                assert descriptor instanceof AltIntegerClassDescriptor;
+                Object dataptrMethod = ((AltIntegerClassDescriptor) descriptor).getDataptrMethod();
+                assert dataptrMethod instanceof TruffleObject;
+                return (TruffleObject) dataptrMethod;
             case AltInteger_Is_sorted:
                 assert descriptor instanceof AltIntegerClassDescriptor;
                 Object isSortedMethod = ((AltIntegerClassDescriptor) descriptor).getIsSortedMethod();

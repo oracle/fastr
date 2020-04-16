@@ -113,6 +113,8 @@ public enum NativeFunction {
     initvar_string("(sint32, string): void", "Call_"),
     initvar_int("(sint32, sint32) : void", "Call_"),
     // AltInteger
+    // Dataptr(SEXP instance, Rboolean writeable)
+    AltInteger_Dataptr("(pointer, uint32) : pointer"),
     AltInteger_Is_sorted("(pointer) : sint32"),
     AltInteger_Elt("(pointer, sint32) : sint32"),
     AltInteger_Get_region("(pointer, sint32, sint32, [sint32]) : sint32"),
