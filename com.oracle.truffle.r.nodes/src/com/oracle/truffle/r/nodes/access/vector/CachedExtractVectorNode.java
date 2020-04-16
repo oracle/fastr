@@ -85,8 +85,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     @Child private GetNamesAttributeNode getNamesFromDimNamesNode;
     @Child private BoxPrimitiveNode boxOldDimNames;
     @Child private BoxPrimitiveNode boxNewDimName;
-    @Children private final CachedExtractVectorNode[] extractNames;
-    @Children private final CachedExtractVectorNode[] extractNamesAlternative;
+    @Children private final DispatchedCachedExtractVectorNode[] extractNames;
     @Child private VectorDataLibrary extractedVectorDataLib;
 
     @Child private GetFixedAttributeNode getSrcrefNode;
@@ -116,8 +115,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         this.exactClass = exact.getClass();
         this.dropDimensionsClass = dropDimensions.getClass();
         Object[] convertedPositions = filterPositions(positions);
-        this.extractNames = new CachedExtractVectorNode[convertedPositions.length];
-        this.extractNamesAlternative = new CachedExtractVectorNode[convertedPositions.length];
+        this.extractNames = new DispatchedCachedExtractVectorNode[convertedPositions.length];
         this.exact = logicalAsBoolean(VectorDataLibrary.getFactory().getUncached(), exact, DEFAULT_EXACT);
         this.dropDimensions = logicalAsBoolean(VectorDataLibrary.getFactory().getUncached(), dropDimensions, DEFAULT_DROP_DIMENSION);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, this.exact, false, recursive);
@@ -446,21 +444,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private Object extractNames(RAbstractStringVector originalNames, Object[] positions, PositionProfile[] profiles, int positionIdx, Object originalExact, Object originalDropDimensions) {
         if (extractNames[positionIdx] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            extractNames[positionIdx] = insert(new CachedExtractVectorNode(mode, originalNames, positions, (RBaseObject) originalExact, (RBaseObject) originalDropDimensions, recursive));
+            extractNames[positionIdx] = insert(DispatchedCachedExtractVectorNodeGen.create(mode, recursive));
         }
-
-        if (extractNames[positionIdx].isSupported(originalNames, positions, originalExact, originalDropDimensions)) {
-            return extractNames[positionIdx].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
-        } else {
-            // necessary because the positions might change to logical in case of negative indices
-            if (extractNamesAlternative[positionIdx] == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                extractNamesAlternative[positionIdx] = insert(
-                                new CachedExtractVectorNode(mode, originalNames, positions, (RBaseObject) originalExact, (RBaseObject) originalDropDimensions, recursive));
-            }
-            assert extractNamesAlternative[positionIdx].isSupported(originalNames, positions, originalExact, originalDropDimensions);
-            return extractNamesAlternative[positionIdx].apply(originalNames, positions, profiles, originalExact, originalDropDimensions);
-        }
+        return extractNames[positionIdx].execute(originalNames, positions, profiles, originalExact, originalDropDimensions);
     }
 
     private void setNames(RAbstractVector vector, Object newNames) {
