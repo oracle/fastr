@@ -78,12 +78,25 @@ ECHO_N =
 ECHO_T = 
 F_VISIBILITY = 
 ## FC is the compiler used for all Fortran as from R 3.6.0
-## FastR Note: the tool 'f2c-wrapper' tries to use f2c (bundled with FastR) and
-## if it fails it delegates to the fortran compiler given as the argument.
-## If gfortran is installed in a non-standard location on your system,
-## replace the second path pointing to "safe-forward-gfortran" with the correct
-## path to the gfortran executable on your system.
-FC = "$(R_HOME)/bin/f2c-wrapper" "$(R_HOME)/bin/safe-forward-gfortran"
+##
+## If gfortran is installed in a non-standard location, which is not on $PATH,
+## replace the "$(R_HOME)/bin/safe-forward-gfortran" with the path to gfortran
+## on your system.
+##
+## FastR uses gfortran even for the LLVM toolchain compilation, which implies
+## that R packages that contain Fortran code will not be runnable on the 
+## FastR's LLVM backend (--R.BackEnd=llvm). However, the default backend is
+## the "native" (--R.BackEnd=native) and one can choose to run only specific
+## packages via the LLVM backend (--R.BackEndLLVM=mypackage).
+##
+## FastR also provides tool 'f2c-wrapper' (disabled by default), which tries to
+## use f2c (bundled with FastR) and if it fails it delegates to the Fortran compiler
+## given as the first argument to 'f2c-wrapper'. If the F2C compilation succeedes
+## for all Fortran files in an R package, then the resulting library will contain
+## LLVM bitcode and will be runnable via FastR's LLVM backend.
+FC = "$(R_HOME)/bin/safe-forward-gfortran"
+## To use f2c uncomment the following line
+# FC = "$(R_HOME)/bin/f2c-wrapper" "$(FC)"
 FCFLAGS = -O2 $(LTO)
 ## additional libs needed when linking with $(FC), e.g. on some Oracle compilers
 FCLIBS_XTRA = 
