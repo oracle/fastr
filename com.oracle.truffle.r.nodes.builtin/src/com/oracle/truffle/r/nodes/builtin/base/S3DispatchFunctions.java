@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -241,7 +241,7 @@ public abstract class S3DispatchFunctions {
         }
 
         private static Object getFirstVarArg(RArgsValuesAndNames varArgs) {
-            return varArgs.isEmpty() ? null : varArgs.getArgument(0);
+            return varArgs.isEmpty() ? RNull.instance : varArgs.getArgument(0);
         }
     }
 
