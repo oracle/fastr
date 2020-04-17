@@ -26,6 +26,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 
 /**
  * Distinguishes what R considers an "atomic" vector, e.g. {@code integer()} from other "vectors",
@@ -45,8 +46,8 @@ public abstract class RAbstractAtomicVector extends RAbstractVector {
         super(complete);
     }
 
-    public final boolean isScalar() {
-        return getLength() == 1;
+    protected final boolean isScalar(VectorDataLibrary dataLib) {
+        return dataLib.getLength(getData()) == 1;
     }
 
     @Override

@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
@@ -55,6 +56,7 @@ import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -115,23 +117,25 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     @ExportMessage
-    public long getArraySize() {
-        return getLength();
+    public long getArraySize(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return dataLib.getLength(getData());
     }
 
     @ExportMessage
-    public boolean isArrayElementReadable(long index) {
-        return index >= 0 && index < getLength();
+    public boolean isArrayElementReadable(long index,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return index >= 0 && index < getArraySize(dataLib);
     }
 
     @ExportMessage
     public Object readArrayElement(long index,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
                     @Cached.Exclusive @Cached() R2Foreign r2Foreign,
                     @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile invalidIndex) throws InvalidArrayIndexException {
-        if (!invalidIndex.profile(isArrayElementReadable(index))) {
+        if (!invalidIndex.profile(isArrayElementReadable(index, dataLib))) {
             throw InvalidArrayIndexException.create(index);
         }
-        Object value = getDataAtAsObject((int) index);
+        Object value = dataLib.getDataAtAsObject(getData(), (int) index);
         return boxReadElements() ? r2Foreign.convert(value) : r2Foreign.convertNoBox(value);
     }
 

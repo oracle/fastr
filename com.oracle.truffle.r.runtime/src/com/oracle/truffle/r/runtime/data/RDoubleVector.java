@@ -125,12 +125,6 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
     }
 
     @Override
-    protected boolean isScalarNA() {
-        assert getLength() == 1;
-        return RRuntime.isNA(getDataAt(0));
-    }
-
-    @Override
     public boolean isForeignWrapper() {
         return data instanceof RDoubleForeignObjData;
     }

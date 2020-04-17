@@ -107,27 +107,31 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
     }
 
     @ExportMessage
-    boolean isNull(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
-        if (!isScalar.profile(isScalar())) {
+    boolean isNull(
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
+        if (!isScalar.profile(isScalar(dataLib))) {
             return false;
         }
-        return RRuntime.isNA(getDataAt(0));
+        return RRuntime.isNA(dataLib.getLogicalAt(getData(), 0));
     }
 
     @ExportMessage
-    boolean isBoolean() {
-        if (!isScalar()) {
+    boolean isBoolean(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (!isScalar(dataLib)) {
             return false;
         }
-        return !RRuntime.isNA(getDataAt(0));
+        return !RRuntime.isNA(dataLib.getLogicalAt(getData(), 0));
     }
 
     @ExportMessage
-    boolean asBoolean(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isBoolean) throws UnsupportedMessageException {
-        if (isBoolean.profile(!isBoolean())) {
+    boolean asBoolean(
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isBoolean) throws UnsupportedMessageException {
+        if (isBoolean.profile(!isBoolean(dataLib))) {
             throw UnsupportedMessageException.create();
         }
-        return RRuntime.fromLogical(getDataAt(0));
+        return RRuntime.fromLogical(dataLib.getLogicalAt(getData(), 0));
     }
 
     @Override
