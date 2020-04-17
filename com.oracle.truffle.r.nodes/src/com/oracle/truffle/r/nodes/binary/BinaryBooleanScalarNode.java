@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.binary;
 
-import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -41,8 +39,7 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -92,15 +89,12 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
     @ImportStatic({RRuntime.class, DSLConfig.class, ConvertForeignObjectNode.class})
     protected abstract static class LogicalScalarCastNode extends RBaseNode {
 
-        protected static final int CACHE_LIMIT = 3;
-
         public abstract byte executeCast(Object o);
 
         private final String opName;
         private final String argumentName;
 
         private final NACheck check;
-        private final BranchProfile seenEmpty = BranchProfile.create();
 
         LogicalScalarCastNode(String opName, String argumentName, NACheck check) {
             this.opName = opName;
@@ -108,49 +102,28 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
             this.check = check;
         }
 
-        @Specialization(limit = "getCacheSize(CACHE_LIMIT)", guards = {"cachedClass != null", "operand.getClass() == cachedClass"})
-        protected byte doCached(Object operand,
-                        @Cached("getNumericVectorClass(operand)") Class<? extends RAbstractVector> cachedClass) {
-            return castImpl(cachedClass.cast(operand));
-        }
-
-        @Specialization(replaces = "doCached", guards = {"operand.getRType().isNumeric()"})
-        @TruffleBoundary
-        protected byte doGeneric(RAbstractVector operand) {
-            return castImpl(operand);
-        }
-
-        private byte castImpl(RAbstractVector vector) {
-            if (vector.getLength() == 0) {
-                seenEmpty.enter();
-                this.check.enable(true);
-                return RRuntime.LOGICAL_NA;
-            }
-            this.check.enable(!vector.isComplete());
-            RType type = vector.getRType();
-            CompilerAsserts.compilationConstant(type);
-            switch (type) {
-                case Logical:
-                    return (byte) vector.getDataAtAsObject(0);
-                case Integer:
-                    return check.convertIntToLogical((int) vector.getDataAtAsObject(0));
-                case Double:
-                    return check.convertDoubleToLogical((double) vector.getDataAtAsObject(0));
-                case Complex:
-                    return check.convertComplexToLogical((RComplex) vector.getDataAtAsObject(0));
-                default:
-                    throw RInternalError.shouldNotReachHere();
-            }
-        }
-
-        protected static Class<? extends RAbstractVector> getNumericVectorClass(Object value) {
-            if (value instanceof RAbstractVector) {
-                RAbstractVector castVector = (RAbstractVector) value;
-                if (castVector.getRType().isNumeric()) {
-                    return castVector.getClass();
+        @Specialization(limit = "getGenericDataLibraryCacheSize()")
+        protected byte doCached(RAbstractVector operand,
+                        @Cached BranchProfile isNotNumeric,
+                        @Cached BranchProfile seenEmpty,
+                        @CachedLibrary("operand.getData()") VectorDataLibrary dataLib) {
+            Object data = operand.getData();
+            if (!dataLib.getType(data).isNumeric()) {
+                isNotNumeric.enter();
+                doFallback(operand);
+                throw RInternalError.shouldNotReachHere();
+            } else {
+                if (dataLib.getLength(data) == 0) {
+                    seenEmpty.enter();
+                    check.enable(true);
+                    check.check(RRuntime.LOGICAL_NA);
+                    return RRuntime.LOGICAL_NA;
                 }
+                check.enable(!dataLib.isComplete(data));
+                byte result = dataLib.getLogicalAt(data, 0);
+                check.check(result);    // we need to update the neverSeenNA flag
+                return result;
             }
-            return null;
         }
 
         @Specialization(guards = {"isForeignArray(operand, interop)"}, limit = "getInteropLibraryCacheSize()")
