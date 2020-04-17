@@ -40,18 +40,14 @@ FASTR_HOME_DIR="$( dirname "$r_bin" )"
 
 function printHelp {
   echo "Checks FastR requirements and creates personal library directory (R_LIBS_USER)."
-  echo "usage: configure_fastr [--help] [--no-ask]"
+  echo "usage: configure_fastr [--help]"
 }
 
-NO_ASK=0
 while [[ $# -gt 0 ]]; do
   case $1 in
     --help)
       printHelp
       exit 0
-    ;;
-    --no-ask)
-      NO_ASK=1
     ;;
     *)
       >&2 echo "Unknown option '$1'"
