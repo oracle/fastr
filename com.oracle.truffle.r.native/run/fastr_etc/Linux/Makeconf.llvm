@@ -91,7 +91,7 @@ F_VISIBILITY = -fvisibility=hidden
 ##
 ## FastR also provides tool 'f2c-wrapper' (disabled by default), which tries to
 ## use f2c (bundled with FastR) and if it fails it delegates to the Fortran compiler
-## given as the first argument to 'f2c-wrapper'. If the F2C compilation succeedes
+## given as the first argument to 'f2c-wrapper'. If the F2C compilation succeeds 
 ## for all Fortran files in an R package, then the resulting library will contain
 ## LLVM bitcode and will be runnable via FastR's LLVM backend.
 FC = "$(R_HOME)/bin/safe-forward-gfortran"

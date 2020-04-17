@@ -2,17 +2,33 @@
 
 New features:
 
-* `graphics` and `grDevices` packages are now enabled by incorporating the `JavaGD` package. Supported image formats: PDF, PNG, JPEG, BMP. Use `--R.UseInternalGridGraphics=false` to activate this feature.
-	* SVG support will be added in the future
-	* Display lists are fully implemented, which, e.g., makes Shiny work better in FastR
-* Java API for implementing custom graphics devices based on `JavaGD`
-* print stacktraces (aka traceback()) for errors coming from c-code when FastR running in llvm mode
+* Preview of improved graphical support.
+  * Use `--R.UseInternalGridGraphics=false` to activate this feature.
+  * `graphics` and `grDevices` packages are implemented by incorporating the `JavaGD` package.
+  * The standard `grid` package works out of the box as well as `lattice` and `ggplot2`.
+  * Supported image formats: PDF, PNG, JPEG, BMP.
+  * SVG support will be added in the future.
+  * Display lists are fully implemented, which, e.g., makes Shiny work better in FastR.
+  * Custom FastR `grid` package implementation, which is currently the default, will be deprecated and removed in future releases.
+* FastR ships with GCC runtime libraries on all supported systems (Linux and MacOS).
+  * GFortran is not a requirement anymore to run FastR, but it is still required to install R packages with Fortran code
+  * The GFortran runtime libraries versions are 4.8.5 on Linux and 8.3.0 on MacOS. When compiling additional R packages with Fortran code, one must use GFortran of the same or higher version.
+* GFortran is used as the default Fortran compiler even in the "LLVM" toolchain configuration.
+  * R packages that contain Fortran code will not be runnable on
+  the FastR's LLVM backend (`--R.BackEnd=llvm`). However, the default backend is
+  the "native" (`--R.BackEnd=native`). One can also choose to run only specific packages
+  via the LLVM backend (`--R.BackEndLLVM=mypackage`).
+  * Users can switch back to F2C, which can produce libraries runnable on the LLVM backend,
+  by editing variable `FC` in `{FASTR_HOME}/etc/Makeconf`.
+* print stacktraces (in `traceback()`) for errors coming from C/C++ code when FastR is running in the LLVM mode (`--R.BackEnd=llvm`) and errors coming from other languages, e.g., GraalPython.
+* `@` can be also used to access members of polyglot values originating from other languages. This was previously possible only with `$`, now both operators work.
 
 Bug fixes:
 
 * `dyn.load` did not work with relative paths
 * missing warnings on integer overflow #136
 * the f2c script fixed to handle extra dotted file extensions #143
+* `iconv` honors the `from` and `asRaw` parameters. Fixes, e.g.: `iconv('foo²²', 'UTF8', 'latin1')`
 
 # 20.0.0
 

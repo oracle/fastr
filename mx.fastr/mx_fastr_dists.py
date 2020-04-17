@@ -288,7 +288,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
             "    gu rebuild-images R\n\n" +
             "The native image is then used by default. Pass '--jvm' flag to the R or Rscript launcher to " +
             "use JVM instead of the native image. Note that the native image is not stable yet and is intended for evaluation " +
-            "and experiments for curious users. Some features may not work in the native image mode. " + 
+            "and experiments for curious users. Some features may not work in the native image mode. " +
             "Most notably, the --polyglot switch works only in JVM mode (when --jvm is used).\n\n" +
             "See http://www.graalvm.org/docs/reference-manual/languages/r for more."
 ))
