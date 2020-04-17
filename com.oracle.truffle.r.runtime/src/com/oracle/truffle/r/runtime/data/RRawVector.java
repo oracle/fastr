@@ -94,15 +94,9 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
     }
 
     @Override
-    protected boolean isScalarNA() {
+    protected Object getScalarValue(VectorDataLibrary dataLib) {
         assert getLength() == 1;
-        return false;
-    }
-
-    @Override
-    protected Object getScalarValue() {
-        assert getLength() == 1;
-        return getRawDataAt(0);
+        return dataLib.getRawAt(getData(), 0);
     }
 
     @Override
