@@ -70,14 +70,13 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -388,11 +387,11 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Logical, false);
         }
 
-        public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector() {
+        public static <T> PipelineStep<T, RLogicalVector> asLogicalVector() {
             return new CoercionStep<>(RType.Logical, true);
         }
 
-        public static <T> PipelineStep<T, RAbstractLogicalVector> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        public static <T> PipelineStep<T, RLogicalVector> asLogicalVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
             return new CoercionStep<>(RType.Logical, true, preserveNames, preserveDimensions, preserveAttributes, false, false);
         }
 
@@ -484,7 +483,7 @@ public final class CastBuilder {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Complex));
         }
 
-        public static <T extends RAbstractLogicalVector> CompareFilter<T> elementAt(int index, byte value) {
+        public static CompareFilter<RLogicalVector> elementAt(int index, byte value) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Logical));
         }
 
@@ -680,7 +679,7 @@ public final class CastBuilder {
             return new RTypeFilter<>(RType.Double);
         }
 
-        public static <R extends RAbstractLogicalVector> Filter<Object, R> logicalValue() {
+        public static Filter<Object, RLogicalVector> logicalValue() {
             return new RTypeFilter<>(RType.Logical);
         }
 

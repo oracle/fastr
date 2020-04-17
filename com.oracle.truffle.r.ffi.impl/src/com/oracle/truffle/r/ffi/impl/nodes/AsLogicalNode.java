@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 
 @TypeSystemReference(RTypes.class)
 public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
@@ -44,7 +44,7 @@ public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization
-    protected int asLogical(RAbstractLogicalVector obj) {
+    protected int asLogical(RLogicalVector obj) {
         if (obj.getLength() == 0) {
             return RRuntime.INT_NA;
         }
@@ -59,8 +59,8 @@ public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
         byte result;
         if (castObj instanceof Byte) {
             result = (byte) castObj;
-        } else if (castObj instanceof RAbstractLogicalVector) {
-            result = ((RAbstractLogicalVector) castObj).getDataAt(0);
+        } else if (castObj instanceof RLogicalVector) {
+            result = ((RLogicalVector) castObj).getDataAt(0);
         } else {
             throw RInternalError.shouldNotReachHere();
         }

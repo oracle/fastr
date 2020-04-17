@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.AccessForeignElementNode;
@@ -116,7 +116,7 @@ public abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
                         @CachedLibrary("object") InteropLibrary interop,
                         @Cached("create()") Foreign2R foreign2RNode) {
 
-            RAbstractLogicalVector positionsVector = (RAbstractLogicalVector) positions[0];
+            RLogicalVector positionsVector = (RLogicalVector) positions[0];
             ForeignTypeCheck typeCheck = new ForeignTypeCheck();
             int elementsIdx = 0;
             int positionsIdx = 0;
@@ -157,7 +157,7 @@ public abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
         }
 
         protected boolean positionsTRUE(Object[] positions) {
-            return RRuntime.fromLogical(((RAbstractLogicalVector) positions[0]).getDataAt(0));
+            return RRuntime.fromLogical(((RLogicalVector) positions[0]).getDataAt(0));
         }
 
         @Specialization(guards = "!isForeignObject(object)")
@@ -235,7 +235,7 @@ public abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
                         @Cached("create()") WritePositionNode write,
                         @CachedLibrary("object") InteropLibrary interop,
                         @Cached("createBinaryProfile()") ConditionProfile isValuesVector) {
-            RAbstractLogicalVector positionsVector = (RAbstractLogicalVector) positions[0];
+            RLogicalVector positionsVector = (RLogicalVector) positions[0];
             int size = RRuntime.getForeignArraySize(object, interop);
             int positionsIdx = 0;
             if (isValuesVector.profile(value instanceof RAbstractVector)) {
@@ -363,7 +363,7 @@ public abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
     }
 
     protected static boolean positionsByLogicalVector(Object[] positions) {
-        return positions.length == 1 && positions[0] instanceof RAbstractLogicalVector && ((RAbstractLogicalVector) positions[0]).getLength() > 1;
+        return positions.length == 1 && positions[0] instanceof RLogicalVector && ((RLogicalVector) positions[0]).getLength() > 1;
     }
 
     protected static boolean positionsByVector(Object[] positions) {

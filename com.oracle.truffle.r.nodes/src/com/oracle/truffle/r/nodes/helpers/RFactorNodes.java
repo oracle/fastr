@@ -34,7 +34,7 @@ import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -55,8 +55,8 @@ public final class RFactorNodes {
 
         public boolean execute(RIntVector factor) {
             Object value = isOrderedAccess.execute(factor);
-            if (value instanceof RAbstractLogicalVector) {
-                RAbstractLogicalVector vec = (RAbstractLogicalVector) value;
+            if (value instanceof RLogicalVector) {
+                RLogicalVector vec = (RLogicalVector) value;
                 return vec.getLength() > 0 && RRuntime.fromLogical(vec.getDataAt(0));
             }
 

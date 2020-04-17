@@ -29,7 +29,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 //Implements .colMeans
@@ -97,7 +97,7 @@ public abstract class ColMeans extends ColSumsBase {
     }
 
     @Specialization(guards = "!naRm")
-    protected RDoubleVector colMeansNaRmFalse(RAbstractLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected RDoubleVector colMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         checkVectorLength(x, rowNum, colNum);
 
         double[] result = new double[colNum];
@@ -118,7 +118,7 @@ public abstract class ColMeans extends ColSumsBase {
     }
 
     @Specialization(guards = "naRm")
-    protected RDoubleVector colMeansNaRmTrue(RAbstractLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected RDoubleVector colMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
         checkVectorLength(x, rowNum, colNum);
 
         double[] result = new double[colNum];

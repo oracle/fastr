@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -49,7 +48,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * @see RNode
  */
 @TypeSystem({
-                byte.class, RAbstractLogicalVector.class, RInteropByte.class,
+                byte.class, RLogicalVector.class, RInteropByte.class,
                 RInteropChar.class,
                 RInteropFloat.class,
                 RInteropLong.class,
@@ -156,7 +155,7 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractLogicalVector toAbstractLogicalVector(byte vector) {
+    public static RLogicalVector toAbstractLogicalVector(byte vector) {
         return RDataFactory.createLogicalVectorFromScalar(vector);
     }
 

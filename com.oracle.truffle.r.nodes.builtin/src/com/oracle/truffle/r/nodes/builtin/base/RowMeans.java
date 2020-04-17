@@ -27,7 +27,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 
 // Implements .rowMeans
 @RBuiltin(name = "rowMeans", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
@@ -48,7 +48,7 @@ public abstract class RowMeans extends RowSumsBase {
     }
 
     @Specialization
-    protected RDoubleVector rowMeans(RAbstractLogicalVector x, int rowNum, int colNum, boolean naRm) {
+    protected RDoubleVector rowMeans(RLogicalVector x, int rowNum, int colNum, boolean naRm) {
         return accumulateRows(x, rowNum, colNum, naRm, RowMeans::getMean, (v, nacheck, i) -> nacheck.convertLogicalToDouble(v.getDataAt(i)));
     }
 

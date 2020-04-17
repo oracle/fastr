@@ -90,7 +90,6 @@ import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -304,7 +303,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
             case Double:
                 return visit(new TypeFilter<>(Double.class, RDoubleVector.class), previous);
             case Logical:
-                return visit(new TypeFilter<>(Byte.class, RAbstractLogicalVector.class), previous);
+                return visit(new TypeFilter<>(Byte.class, RLogicalVector.class), previous);
             case Complex:
                 return visit(new TypeFilter<>(RAbstractComplexVector.class), previous);
             case Character:

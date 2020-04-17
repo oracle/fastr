@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 /**
@@ -63,14 +63,14 @@ public class StopifnotFastPath extends RFastPathNode {
         }
         RPromise resultPromise = (RPromise) dotdotdot.getArgument(0);
         Object result = resultProfile.profile(boxPrimitiveNode.execute(promiseHelperNode.evaluate(frame, resultPromise)));
-        if (!(result instanceof RAbstractLogicalVector)) {
+        if (!(result instanceof RLogicalVector)) {
             // We fallback to the R code, the promise will be already evaluated and not re-evaluated
             // Since the other arguments have only default values, there could not be any visible
             // side effect between now and the point when the promise should have been really
             // evaluated later in stopifnot R code
             return null;
         }
-        RAbstractLogicalVector resultVec = (RAbstractLogicalVector) result;
+        RLogicalVector resultVec = (RLogicalVector) result;
         if (resultVec.getLength() != 1 || !RRuntime.fromLogical(resultVec.getDataAt(0))) {
             return null;
         }

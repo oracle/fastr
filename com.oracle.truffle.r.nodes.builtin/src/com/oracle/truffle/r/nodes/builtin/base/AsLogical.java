@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "as.logical", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
@@ -49,20 +48,20 @@ public abstract class AsLogical extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
-    protected RAbstractLogicalVector asLogical(RAbstractLogicalVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
+    protected RLogicalVector asLogical(RLogicalVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
                     @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
                     @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            RLogicalVector res = (RLogicalVector) reuseTemporaryNode.getMaterializedResult(v);
+            RLogicalVector res = reuseTemporaryNode.getMaterializedResult(v);
             res.resetAllAttributes(true);
             return res;
         }
     }
 
     @Specialization(replaces = "asLogical")
-    protected RAbstractLogicalVector asLogicalGeneric(RAbstractLogicalVector v, RArgsValuesAndNames dotdotdot,
+    protected RLogicalVector asLogicalGeneric(RLogicalVector v, RArgsValuesAndNames dotdotdot,
                     @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
                     @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         return asLogical(v, dotdotdot, reuseTemporaryNode, noAttributes);

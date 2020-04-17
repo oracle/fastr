@@ -50,13 +50,12 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
@@ -279,7 +278,7 @@ public class SortFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object radixSort(byte naLast, RAbstractLogicalVector decreasingVec, boolean retgrp, boolean sortstr, RArgsValuesAndNames zz) {
+        protected Object radixSort(byte naLast, RLogicalVector decreasingVec, boolean retgrp, boolean sortstr, RArgsValuesAndNames zz) {
             // Partial implementation just to get startup to work
             if (retgrp) {
                 // sortstr only has an effect when retrgrp == true

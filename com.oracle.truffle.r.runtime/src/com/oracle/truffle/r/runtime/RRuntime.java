@@ -58,10 +58,9 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -898,7 +897,7 @@ public class RRuntime {
             return int2logical(((RIntVector) obj).getDataAt(0));
         } else if (obj instanceof RDoubleVector) {
             return double2logical(((RDoubleVector) obj).getDataAt(0));
-        } else if (obj instanceof RAbstractLogicalVector) {
+        } else if (obj instanceof RLogicalVector) {
             return ((RLogicalVector) obj).getDataAt(0);
         } else if (obj instanceof RAbstractComplexVector) {
             return complex2logical(((RAbstractComplexVector) obj).getDataAt(0));
@@ -929,8 +928,8 @@ public class RRuntime {
             return ((RIntVector) obj).getDataAt(0);
         } else if (obj instanceof RDoubleVector) {
             return double2int(((RDoubleVector) obj).getDataAt(0));
-        } else if (obj instanceof RAbstractLogicalVector) {
-            return logical2int(((RAbstractLogicalVector) obj).getDataAt(0));
+        } else if (obj instanceof RLogicalVector) {
+            return logical2int(((RLogicalVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractComplexVector) {
             return complex2int(((RAbstractComplexVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractStringVector) {
@@ -949,7 +948,7 @@ public class RRuntime {
             case Raw:
                 return obj instanceof RRawVector;
             case Logical:
-                return obj instanceof Byte || obj instanceof RAbstractLogicalVector;
+                return obj instanceof Byte || obj instanceof RLogicalVector;
             case Integer:
             case Double:
             case Numeric:

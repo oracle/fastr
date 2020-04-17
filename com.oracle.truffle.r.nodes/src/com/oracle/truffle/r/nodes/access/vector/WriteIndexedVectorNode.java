@@ -51,7 +51,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -195,8 +195,8 @@ abstract class WriteIndexedVectorAccessNode extends Node {
 
     /**
      * Positions is an array of instances of {@link RMissing} (What is that doing?), or
-     * {@link RIntVector}, or {@link RAbstractLogicalVector} (select only elements under
-     * {@code TRUE} indexes). Each dimension must have one entry in this array.
+     * {@link RIntVector}, or {@link RLogicalVector} (select only elements under {@code TRUE}
+     * indexes). Each dimension must have one entry in this array.
      * 
      * The left vector is either the result of read (newly created vector to hold the result) or the
      * target of write operation. The boolean flag {@link WriteIndexedVectorParameters#isReplace}
@@ -281,7 +281,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
 
     @Specialization(limit = "getGenericVectorAccessCacheSize()")
     protected int doLogicalPosition(RandomAccessWriteIterator leftIter, VectorDataLibrary leftDataLib, Object leftData, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
-                    Object[] positions, RAbstractLogicalVector position, int positionOffset, int positionLength,
+                    Object[] positions, RLogicalVector position, int positionOffset, int positionLength,
                     RandomAccessIterator rightIter, VectorDataLibrary rightDataLib, Object rightData, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("create()") BranchProfile wasTrue,
                     @Cached("create()") AlwaysOnBranchProfile outOfBounds,

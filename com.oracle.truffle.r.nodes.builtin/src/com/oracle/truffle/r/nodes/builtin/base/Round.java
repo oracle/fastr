@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -95,7 +95,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
-    protected RDoubleVector round(RAbstractLogicalVector x, @SuppressWarnings("unused") double digits,
+    protected RDoubleVector round(RLogicalVector x, @SuppressWarnings("unused") double digits,
                     @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
         double[] result = new double[x.getLength()];
         Object xData = x.getData();

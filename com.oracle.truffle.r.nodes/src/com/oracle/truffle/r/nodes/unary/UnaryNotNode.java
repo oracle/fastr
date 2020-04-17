@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -110,7 +110,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = {"vectorAccess.supports(vector)", "reuse.supports(vector)"})
-    protected RAbstractVector doLogicalVectorCached(RAbstractLogicalVector vector,
+    protected RAbstractVector doLogicalVectorCached(RLogicalVector vector,
                     @Cached("vector.access()") VectorAccess vectorAccess,
                     @Cached("createTemporary(vector)") VectorReuse reuse) {
         RAbstractVector result = reuse.getResult(vector);
@@ -127,7 +127,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
 
     @Specialization(replaces = "doLogicalVectorCached")
     @TruffleBoundary
-    protected RAbstractVector doLogicalGenericGeneric(RAbstractLogicalVector vector,
+    protected RAbstractVector doLogicalGenericGeneric(RLogicalVector vector,
                     @Cached("createTemporaryGeneric()") VectorReuse reuse) {
         return doLogicalVectorCached(vector, vector.slowPathAccess(), reuse);
     }

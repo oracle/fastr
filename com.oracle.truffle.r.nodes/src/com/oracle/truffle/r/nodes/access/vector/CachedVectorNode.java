@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 
 /**
@@ -117,7 +117,7 @@ abstract class CachedVectorNode extends RBaseNodeWithWarnings {
         if (cast instanceof RMissing) {
             return defaultValue;
         } else {
-            RAbstractLogicalVector logical = (RAbstractLogicalVector) cast;
+            RLogicalVector logical = (RLogicalVector) cast;
             if (logical.getLength() == 0) {
                 return defaultValue;
             } else {

@@ -102,7 +102,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -754,7 +754,7 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractLogicalVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+        public Object toArray(RLogicalVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
                         @Cached() R2Foreign r2Foreign,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             return toArray(ctxRef.get(), vec, flat, boolean.class, (array, i) -> Array.set(array, i, r2Foreign.convertNoBox(vec.getDataAt(i))));
@@ -762,7 +762,7 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractLogicalVector vec, String className, boolean flat,
+        public Object toArray(RLogicalVector vec, String className, boolean flat,
                         @Cached() R2Foreign r2Foreign,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             RContext context = ctxRef.get();
@@ -1003,7 +1003,7 @@ public class FastRInterop {
         }
 
         protected boolean isJavaLikeVector(RAbstractVector vec) {
-            return vec instanceof RAbstractLogicalVector ||
+            return vec instanceof RLogicalVector ||
                             vec instanceof RIntVector ||
                             vec instanceof RDoubleVector ||
                             vec instanceof RAbstractStringVector ||

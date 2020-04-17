@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RString;
@@ -55,7 +54,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -140,7 +139,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
     }
 
     protected boolean isSupportedVector(Object value) {
-        return value instanceof RIntVector || value instanceof RDoubleVector || value instanceof RAbstractComplexVector || value instanceof RAbstractLogicalVector ||
+        return value instanceof RIntVector || value instanceof RDoubleVector || value instanceof RAbstractComplexVector || value instanceof RLogicalVector ||
                         (!isLogicOp(factory) && (value instanceof RAbstractStringVector || value instanceof RRawVector));
     }
 

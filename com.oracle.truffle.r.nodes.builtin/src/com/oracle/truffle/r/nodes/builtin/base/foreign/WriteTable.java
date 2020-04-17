@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -249,8 +249,8 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
     }
 
     private static boolean isna(RAbstractContainer x, int indx) {
-        if (x instanceof RAbstractLogicalVector) {
-            return RRuntime.isNA(((RAbstractLogicalVector) x).getDataAt(indx));
+        if (x instanceof RLogicalVector) {
+            return RRuntime.isNA(((RLogicalVector) x).getDataAt(indx));
         } else if (x instanceof RDoubleVector) {
             return RRuntime.isNA(((RDoubleVector) x).getDataAt(indx));
         } else if (x instanceof RIntVector) {
@@ -275,8 +275,8 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
             RIntVector v = (RIntVector) x;
             return RRuntime.intToString(v.getDataAt(indx));
         }
-        if (x instanceof RAbstractLogicalVector) {
-            RAbstractLogicalVector v = (RAbstractLogicalVector) x;
+        if (x instanceof RLogicalVector) {
+            RLogicalVector v = (RLogicalVector) x;
             return RRuntime.logicalToString(v.getDataAt(indx));
         }
         if (x instanceof RAbstractComplexVector) {

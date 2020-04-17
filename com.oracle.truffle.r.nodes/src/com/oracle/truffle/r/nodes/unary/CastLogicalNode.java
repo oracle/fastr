@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,14 +36,13 @@ import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -99,7 +98,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     @Specialization
-    protected RAbstractLogicalVector doLogicalVector(RAbstractLogicalVector operand) {
+    protected RLogicalVector doLogicalVector(RLogicalVector operand) {
         return operand;
     }
 
@@ -181,16 +180,16 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     @Specialization(guards = "isForeignObject(obj)")
-    protected RAbstractLogicalVector doForeignObject(TruffleObject obj,
+    protected RLogicalVector doForeignObject(TruffleObject obj,
                     @Cached("create()") ConvertForeignObjectNode convertForeign) {
         Object o = convertForeign.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
-            if (o instanceof RAbstractLogicalVector) {
-                return (RAbstractLogicalVector) o;
+            if (o instanceof RLogicalVector) {
+                return (RLogicalVector) o;
             }
             o = castLogicalRecursive(o);
             if (o instanceof RLogicalVector) {
-                return (RAbstractLogicalVector) o;
+                return (RLogicalVector) o;
             }
         }
         throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
@@ -220,6 +219,6 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         if (x instanceof RIntVector && isFactor((RIntVector) x)) {
             return false;
         }
-        return !(x instanceof RAbstractLogicalVector);
+        return !(x instanceof RLogicalVector);
     }
 }

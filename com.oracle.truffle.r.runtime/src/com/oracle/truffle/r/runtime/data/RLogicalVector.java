@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromLogicalAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromLogicalAccess;
@@ -45,12 +44,13 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
-public final class RLogicalVector extends RAbstractLogicalVector implements RMaterializedVector, Shareable {
+public final class RLogicalVector extends RAbstractAtomicVector implements RMaterializedVector, Shareable {
 
     private int length;
 
@@ -191,13 +191,11 @@ public final class RLogicalVector extends RAbstractLogicalVector implements RMat
         return data;
     }
 
-    @Override
     public void setDataAt(Object store, int index, byte value) {
         assert data == store;
         VectorDataLibrary.getFactory().getUncached().setLogicalAt(store, index, value);
     }
 
-    @Override
     public byte getDataAt(Object store, int index) {
         assert data == store;
         return VectorDataLibrary.getFactory().getUncached().getLogicalAt(store, index);
@@ -236,7 +234,6 @@ public final class RLogicalVector extends RAbstractLogicalVector implements RMat
         }
     }
 
-    @Override
     public byte getDataAt(int index) {
         return getDataAt(getData(), index);
     }

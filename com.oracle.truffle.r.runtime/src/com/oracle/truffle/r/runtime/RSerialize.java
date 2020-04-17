@@ -88,7 +88,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -2890,7 +2890,7 @@ public class RSerialize {
                 RAbstractVector vector = (RAbstractVector) value;
                 if (vector.getLength() == 1 && (vector.getAttributes() == null || vector.getAttributes().getShape().getPropertyCount() == 0)) {
                     if (vector instanceof RDoubleVector || vector instanceof RIntVector || vector instanceof RAbstractStringVector ||
-                                    vector instanceof RAbstractLogicalVector || vector instanceof RRawVector || vector instanceof RAbstractComplexVector) {
+                                    vector instanceof RLogicalVector || vector instanceof RRawVector || vector instanceof RAbstractComplexVector) {
                         return vector.getDataAtAsObject(0);
                     }
                 }

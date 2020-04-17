@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
@@ -79,7 +79,7 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     }
 
     protected static boolean isNumericVector(RAbstractVector value) {
-        return value instanceof RIntVector || value instanceof RDoubleVector || value instanceof RAbstractComplexVector || value instanceof RAbstractLogicalVector;
+        return value instanceof RIntVector || value instanceof RDoubleVector || value instanceof RAbstractComplexVector || value instanceof RLogicalVector;
     }
 
     @Specialization(replaces = "doCached", guards = {"isNumericVector(operand)"})
