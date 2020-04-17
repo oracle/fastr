@@ -66,7 +66,7 @@ public abstract class Signif extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Signif.class);
-        casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(numericValue().or(complexValue())).mapIf(complexValue().not(),
+        casts.arg("x").defaultError(RError.Message.NON_NUMERIC_MATH).boxPrimitive().mustBe(numericValue().or(complexValue())).mapIf(complexValue().not(),
                         asDoubleVector(true, true, true));
         // TODO: for the error messages to be consistent with GNU R we should chack for notEmpty()
         // first but it does not seem to be possible currently as numericValue() cannot be used on

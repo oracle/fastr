@@ -1309,7 +1309,7 @@ public abstract class VectorDataLibrary extends Library {
                 setRaw(data, it, index, (byte) 0);
                 break;
             case Complex:
-                setComplex(data, it, index, RComplex.createNA());
+                setComplex(data, it, index, RRuntime.COMPLEX_NA);
                 break;
             case Character:
                 setString(data, it, index, RRuntime.STRING_NA);
@@ -1346,7 +1346,7 @@ public abstract class VectorDataLibrary extends Library {
                 setNextRaw(data, it, (byte) 0);
                 break;
             case Complex:
-                setNextComplex(data, it, RComplex.createNA());
+                setNextComplex(data, it, RRuntime.COMPLEX_NA);
                 break;
             case Character:
                 setNextString(data, it, RRuntime.STRING_NA);
@@ -2072,7 +2072,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     private static RComplex double2complex(NACheck naCheck, double value) {
-        return naCheck.check(value) ? RComplex.createNA() : RRuntime.double2complexNoCheck(value);
+        return naCheck.check(value) ? RRuntime.COMPLEX_NA : RRuntime.double2complexNoCheck(value);
     }
 
     private static int double2int(NACheck naCheck, double value) {
@@ -2110,7 +2110,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     private static RComplex int2complex(NACheck naCheck, int value) {
-        return naCheck.check(value) ? RComplex.createNA() : RRuntime.int2complexNoCheck(value);
+        return naCheck.check(value) ? RRuntime.COMPLEX_NA : RRuntime.int2complexNoCheck(value);
     }
 
     private static double int2double(NACheck naCheck, int value) {
@@ -2136,7 +2136,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     private static RComplex logical2complex(NACheck naCheck, byte value) {
-        return naCheck.check(value) ? RComplex.createNA() : RRuntime.logical2complexNoCheck(value);
+        return naCheck.check(value) ? RRuntime.COMPLEX_NA : RRuntime.logical2complexNoCheck(value);
     }
 
     private static double logical2double(NACheck naCheck, byte value) {
@@ -2205,7 +2205,7 @@ public abstract class VectorDataLibrary extends Library {
     private RComplex string2complex(NACheck naCheck, String value) {
         RComplex complexValue;
         if (naCheck.check(value) || emptyStringProfile.profile(value.isEmpty())) {
-            complexValue = RComplex.createNA();
+            complexValue = RRuntime.COMPLEX_NA;
         } else {
             complexValue = RRuntime.string2complexNoCheck(value);
             if (complexValue.isNA()) {

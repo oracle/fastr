@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -127,8 +126,8 @@ public class TestUtilities {
         double[] array = new double[size << 1];
         for (int i = 0; i < size; i++) {
             boolean useNA = !complete && i % (NA_INDEX + 1) == NA_INDEX;
-            array[i << 1 - 1] = useNA ? RComplex.createNA().getRealPart() : i;
-            array[i << 1] = useNA ? RComplex.createNA().getRealPart() : i;
+            array[i << 1 - 1] = useNA ? RRuntime.COMPLEX_NA.getRealPart() : i;
+            array[i << 1] = useNA ? RRuntime.COMPLEX_NA.getRealPart() : i;
         }
         return RDataFactory.createComplexVector(array, complete || !complete && size < NA_INDEX);
     }

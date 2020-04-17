@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base.printer;
+package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.data.RComplex;
-import static org.junit.Assert.assertEquals;
+// TODO used for a temporary hack in RTypes, 
+// remove once RComplexVector is completely rewriten to use the "storage strategy" pattern
+public interface ScalarWrapper {
 
-import org.junit.Test;
-
-public class ComplexVectorPrinterTest {
-
-    @Test
-    public void testEncodeComplex() {
-        assertEquals("3.14159265358979e-05+3.1415926535898e-06i", ComplexVectorPrinter.encodeComplex(RComplex.valueOf(Math.PI / 100000, Math.PI / 1000000)));
-    }
 }

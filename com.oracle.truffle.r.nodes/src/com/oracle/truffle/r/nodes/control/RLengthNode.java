@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -99,6 +100,11 @@ public abstract class RLengthNode extends RBaseNode {
 
     @Specialization
     protected int doChar(@SuppressWarnings("unused") RRaw operand) {
+        return 1;
+    }
+
+    @Specialization
+    protected int doComplex(@SuppressWarnings("unused") RComplex operand) {
         return 1;
     }
 

@@ -354,7 +354,7 @@ public final class RASTUtils {
                 } else {
                     defaultValue = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, symbol.getName(), false);
                 }
-            } else if (RRuntime.convertScalarVectors(arg) instanceof RAttributable) {
+            } else if (RRuntime.asAbstractVector(arg) instanceof RAttributable) {
                 defaultValue = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, arg);
             } else {
                 throw RInternalError.unimplemented();

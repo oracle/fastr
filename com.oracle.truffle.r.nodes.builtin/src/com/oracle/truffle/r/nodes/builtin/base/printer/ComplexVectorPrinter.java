@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@ import com.oracle.truffle.r.nodes.builtin.base.Round.RoundArithmetic;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.ScientificDouble;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -396,8 +398,9 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
 
     @TruffleBoundary
     public static String encodeComplex(RComplex x, int digits, int sciPen, String naString) {
-        VectorAccess access = x.slowPathAccess();
-        try (RandomIterator iter = access.randomAccess(x)) {
+        RComplexVector xVec = RDataFactory.createComplexVectorFromScalar(x);
+        VectorAccess access = xVec.slowPathAccess();
+        try (RandomIterator iter = access.randomAccess(xVec)) {
             ComplexVectorMetrics cvm = formatComplexVector(iter, access, 0, 1, 0, digits, sciPen, naString.length());
             return encodeComplex(x, cvm, '.', digits, naString);
         }

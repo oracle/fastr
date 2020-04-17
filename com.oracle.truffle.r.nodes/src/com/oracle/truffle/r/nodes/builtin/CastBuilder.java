@@ -76,6 +76,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
@@ -684,11 +685,21 @@ public final class CastBuilder {
             return new RTypeFilter<>(RType.Logical);
         }
 
-        public static <R extends RAbstractComplexVector> Filter<Object, R> complexValue() {
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        public static <R extends Object> Filter<Object, R> complexValue() {
+            return (Filter) complexVector().or(instanceOf(RComplex.class));
+        }
+
+        public static <R extends RAbstractComplexVector> Filter<Object, R> complexVector() {
             return new RTypeFilter<>(RType.Complex);
         }
 
-        public static Filter<Object, RRawVector> rawValue() {
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        public static <R extends Object> Filter<Object, R> rawValue() {
+            return (Filter) rawVector().or(instanceOf(RRaw.class));
+        }
+
+        public static Filter<Object, RRawVector> rawVector() {
             return new RTypeFilter<>(RType.Raw);
         }
 

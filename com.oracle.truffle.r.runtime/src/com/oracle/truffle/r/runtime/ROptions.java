@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -454,7 +454,7 @@ public class ROptions {
     }
 
     private static Object coerceStringVector(Object value, String name) throws OptionsException {
-        Object valueAbs = RRuntime.convertScalarVectors(value);
+        Object valueAbs = RRuntime.asAbstractVector(value);
         // TODO supposed to be coerced
         if (valueAbs instanceof RAbstractStringVector) {
             String p = ((RAbstractStringVector) valueAbs).getDataAt(0);

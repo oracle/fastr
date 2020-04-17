@@ -271,12 +271,12 @@ public class DatePOSIXFunctions {
         @Specialization
         @TruffleBoundary
         protected RDoubleVector asPOSIXct(RAbstractListVector x, String tz) {
-            RAbstractVector secVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(0));
-            RAbstractVector minVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(1));
-            RAbstractVector hourVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(2));
-            RAbstractVector mdayVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(3));
-            RAbstractVector monVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(4));
-            RAbstractVector yearVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(5));
+            RAbstractVector secVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(0));
+            RAbstractVector minVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(1));
+            RAbstractVector hourVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(2));
+            RAbstractVector mdayVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(3));
+            RAbstractVector monVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(4));
+            RAbstractVector yearVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(5));
             TimeZone zone;
             if (tz.isEmpty()) {
                 zone = RContext.getInstance().stateREnvVars.getSystemTimeZone();
@@ -330,12 +330,12 @@ public class DatePOSIXFunctions {
         @TruffleBoundary
         protected RDoubleVector posix2date(RAbstractListVector x,
                         @Cached("create()") SetClassAttributeNode setClassAttrNode) {
-            RAbstractVector secVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(0));
-            RAbstractVector minVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(1));
-            RAbstractVector hourVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(2));
-            RAbstractVector mdayVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(3));
-            RAbstractVector monVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(4));
-            RAbstractVector yearVector = (RAbstractVector) RRuntime.convertScalarVectors(x.getDataAt(5));
+            RAbstractVector secVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(0));
+            RAbstractVector minVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(1));
+            RAbstractVector hourVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(2));
+            RAbstractVector mdayVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(3));
+            RAbstractVector monVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(4));
+            RAbstractVector yearVector = (RAbstractVector) RRuntime.asAbstractVector(x.getDataAt(5));
 
             int length = max(secVector.getLength(), minVector.getLength(), hourVector.getLength(), mdayVector.getLength(), monVector.getLength(), yearVector.getLength());
             double[] data = new double[length];
@@ -389,12 +389,12 @@ public class DatePOSIXFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector format(RAbstractListVector x, RAbstractStringVector format, boolean usetz) {
-            RDoubleVector secVector = (RDoubleVector) RRuntime.convertScalarVectors(x.getDataAt(0));
-            RIntVector minVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(1));
-            RIntVector hourVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(2));
-            RIntVector mdayVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(3));
-            RIntVector monVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(4));
-            RIntVector yearVector = (RIntVector) RRuntime.convertScalarVectors(x.getDataAt(5));
+            RDoubleVector secVector = (RDoubleVector) RRuntime.asAbstractVector(x.getDataAt(0));
+            RIntVector minVector = (RIntVector) RRuntime.asAbstractVector(x.getDataAt(1));
+            RIntVector hourVector = (RIntVector) RRuntime.asAbstractVector(x.getDataAt(2));
+            RIntVector mdayVector = (RIntVector) RRuntime.asAbstractVector(x.getDataAt(3));
+            RIntVector monVector = (RIntVector) RRuntime.asAbstractVector(x.getDataAt(4));
+            RIntVector yearVector = (RIntVector) RRuntime.asAbstractVector(x.getDataAt(5));
             ZoneId zone;
             DateTimeFormatterBuilder[] builders = createFormatters(format, false);
             String tzone = getTimeZomeFromAttribute(x);
@@ -816,7 +816,7 @@ public class DatePOSIXFunctions {
 
     private static String getTimeZomeFromAttribute(RAbstractListVector x) {
         Object attr = x.getAttributes().get("tzone");
-        RAbstractVector vector = (RAbstractVector) RRuntime.convertScalarVectors(attr);
+        RAbstractVector vector = (RAbstractVector) RRuntime.asAbstractVector(attr);
         if (vector.getLength() == 0) {
             return "";
         }

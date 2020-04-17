@@ -99,7 +99,7 @@ public class ScalarUnaryArithmeticNode extends UnaryMapNAFunctionNode {
     @Override
     public final RComplex applyComplex(RComplex operand) {
         if (operandNACheck.check(operand)) {
-            return RComplex.createNA();
+            return RRuntime.COMPLEX_NA;
         }
         try {
             return arithmetic.op(operand.getRealPart(), operand.getImaginaryPart());

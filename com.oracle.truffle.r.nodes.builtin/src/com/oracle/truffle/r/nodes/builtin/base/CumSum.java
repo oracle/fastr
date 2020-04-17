@@ -168,7 +168,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
         naCheck.enable(xDataLib, xData);
         SeqIterator iter = xDataLib.iterator(xData);
         double[] array = new double[iter.getLength() * 2];
-        RComplex prev = RDataFactory.createComplex(0, 0);
+        RComplex prev = RComplex.valueOf(0, 0);
         while (xDataLib.next(xData, iter)) {
             RComplex curr = xDataLib.getNextComplex(xData, iter);
             double real = curr.getRealPart();

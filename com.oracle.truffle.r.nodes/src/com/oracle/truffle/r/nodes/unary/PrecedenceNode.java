@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -140,6 +141,12 @@ public abstract class PrecedenceNode extends RBaseNode {
     @SuppressWarnings("unused")
     protected int doRRaw(RRaw s, boolean recursive) {
         return RAW_PRECEDENCE;
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
+    protected int doRComplex(RComplex s, boolean recursive) {
+        return COMPLEX_PRECEDENCE;
     }
 
     @Specialization(guards = "vector.getClass() == clazz", limit = "getCacheSize(16)")

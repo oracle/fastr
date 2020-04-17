@@ -125,7 +125,7 @@ public class LogFunctions {
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NAProfile naBase) {
             if (naX.isNA(x)) {
-                return RComplex.createNA();
+                return RRuntime.COMPLEX_NA;
             }
             return logb(RComplex.valueOf(x, 0), base, divNode, naBase);
         }
@@ -135,7 +135,7 @@ public class LogFunctions {
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NAProfile naBase) {
             if (naX.isNA(x)) {
-                return RComplex.createNA();
+                return RRuntime.COMPLEX_NA;
             }
             return logb(RComplex.valueOf(x, 0), base, divNode, naBase);
         }
@@ -145,7 +145,7 @@ public class LogFunctions {
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NAProfile naBase) {
             if (naX.isNA(x)) {
-                return RComplex.createNA();
+                return RRuntime.COMPLEX_NA;
             }
             return logb(RComplex.valueOf(x, 0), base, divNode, naBase);
         }
@@ -155,7 +155,7 @@ public class LogFunctions {
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NAProfile naBase) {
             if (naX.isNA(x)) {
-                return RComplex.createNA();
+                return RRuntime.COMPLEX_NA;
             }
             return logb(x, base, divNode, naBase);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,7 +79,7 @@ public class ParserGeneration {
         "remove special handling for formulas",
         "remove source section identifiers",
         "transform parser to a generic class via the annotation processor",
-        "use RComplex.createNA()",
+        "use RRuntime.COMPLEX_NA",
         "inlined ParseUtils",
         "properly throw errors in lexer",
         "remove deprecated calls to SourceSection functions",

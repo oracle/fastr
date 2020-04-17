@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 
 /*
@@ -198,7 +197,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            return RDataFactory.createComplex(op(leftReal, rightReal), op(leftImag, rightImag));
+            return RComplex.valueOf(op(leftReal, rightReal), op(leftImag, rightImag));
         }
 
         @Override
@@ -270,7 +269,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            return RDataFactory.createComplex(op(leftReal, rightReal), op(leftImag, rightImag));
+            return RComplex.valueOf(op(leftReal, rightReal), op(leftImag, rightImag));
         }
 
         @Override
@@ -329,7 +328,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            return RDataFactory.createComplex(leftReal * rightReal - leftImag * rightImag, leftReal * rightImag + leftImag * rightReal);
+            return RComplex.valueOf(leftReal * rightReal - leftImag * rightImag, leftReal * rightImag + leftImag * rightReal);
         }
 
         @Override
@@ -405,7 +404,7 @@ public abstract class BinaryArithmetic extends Operation {
                 }
             }
 
-            return RDataFactory.createComplex(real, imag);
+            return RComplex.valueOf(real, imag);
         }
 
         @Override
@@ -706,8 +705,8 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         protected RComplex powk(double leftReal, double leftImag, int k) {
-            RComplex x = RDataFactory.createComplex(leftReal, leftImag);
-            RComplex z = RDataFactory.createComplex(1.0, 0.0);
+            RComplex x = RComplex.valueOf(leftReal, leftImag);
+            RComplex z = RComplex.valueOf(1.0, 0.0);
 
             int kk = k;
             while (kk > 0) {
@@ -735,7 +734,7 @@ public abstract class BinaryArithmetic extends Operation {
             theta += zr * rightImag;
             double rho = Math.exp(zr * rightReal - zi * rightImag);
 
-            return RDataFactory.createComplex(rho * Math.cos(theta), rho * Math.sin(theta));
+            return RComplex.valueOf(rho * Math.cos(theta), rho * Math.sin(theta));
         }
 
         @Override
@@ -798,7 +797,7 @@ public abstract class BinaryArithmetic extends Operation {
                         imag = Double.POSITIVE_INFINITY * (ra * rb);
                     }
                 }
-                return RDataFactory.createComplex(real, imag);
+                return RComplex.valueOf(real, imag);
             }
         }
     }
@@ -824,7 +823,7 @@ public abstract class BinaryArithmetic extends Operation {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new PowFull()).op(leftReal, leftImag, rightReal, rightImag);
             }
-            return RDataFactory.createComplex(1.0, 0.0);
+            return RComplex.valueOf(1.0, 0.0);
         }
     }
 
@@ -836,7 +835,7 @@ public abstract class BinaryArithmetic extends Operation {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 return replace(new PowFull()).op(leftReal, leftImag, rightReal, rightImag);
             }
-            return RDataFactory.createComplex(leftReal, leftImag);
+            return RComplex.valueOf(leftReal, leftImag);
         }
     }
 
@@ -902,7 +901,7 @@ public abstract class BinaryArithmetic extends Operation {
                         imag = 0.0 * (-rd);
                     }
                 }
-                return RDataFactory.createComplex(real, imag);
+                return RComplex.valueOf(real, imag);
             }
         }
     }

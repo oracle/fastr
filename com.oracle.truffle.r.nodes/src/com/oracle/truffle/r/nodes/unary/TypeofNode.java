@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.nodes.unary.UnaryNode;
@@ -78,6 +79,11 @@ public abstract class TypeofNode extends UnaryNode {
         return RType.Raw;
     }
 
+    @Specialization
+    protected static RType doRRaw(@SuppressWarnings("unused") RComplex x) {
+        return RType.Complex;
+    }
+
     @Specialization(guards = "isForeignObject(object)")
     protected RType doTruffleObject(@SuppressWarnings("unused") TruffleObject object) {
         return RType.TruffleObject;
@@ -109,7 +115,7 @@ public abstract class TypeofNode extends UnaryNode {
 
     public static RType getTypeof(Object operand) {
         CompilerAsserts.neverPartOfCompilation();
-        return ((RBaseObject) RRuntime.convertScalarVectors(operand)).getRType();
+        return ((RBaseObject) RRuntime.asAbstractVector(operand)).getRType();
     }
 
     public static TypeofNode create() {

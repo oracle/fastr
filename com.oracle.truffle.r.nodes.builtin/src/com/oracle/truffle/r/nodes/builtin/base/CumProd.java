@@ -101,7 +101,7 @@ public abstract class CumProd extends RBuiltinNode.Arg1 {
                     @Cached("x.access()") VectorAccess xAccess) {
         try (SequentialIterator iter = xAccess.access(x)) {
             double[] array = new double[xAccess.getLength(iter) * 2];
-            RComplex prev = RDataFactory.createComplex(1, 0);
+            RComplex prev = RComplex.valueOf(1, 0);
             while (xAccess.next(iter)) {
                 double real = xAccess.getComplexR(iter);
                 double imag = xAccess.getComplexI(iter);

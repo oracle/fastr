@@ -468,6 +468,11 @@ public class RDeparse {
             };
         }
 
+        private static boolean isComplex(RSyntaxConstant sc) {
+            Object value = sc.getValue();
+            return value instanceof RAbstractComplexVector || value instanceof RComplex;
+        }
+
         private final class Visitor extends RSyntaxVisitor<Void> {
 
             @Override
@@ -676,7 +681,7 @@ public class RDeparse {
             boolean needsParens = false;
             if (func == null) {
                 // put parens around complex values
-                needsParens = !isLeft && arg instanceof RSyntaxConstant && ((RSyntaxConstant) arg).getValue() instanceof RAbstractComplexVector;
+                needsParens = !isLeft && arg instanceof RSyntaxConstant && isComplex((RSyntaxConstant) arg);
                 if (arg instanceof RSyntaxConstant) {
                     shouldbreak = false;
                 }
@@ -731,7 +736,7 @@ public class RDeparse {
 
         @SuppressWarnings("try")
         private DeparseVisitor appendConstant(Object originalValue) {
-            Object value = RRuntime.convertScalarVectors(originalValue);
+            Object value = RRuntime.asAbstractVector(originalValue);
             if (value instanceof RExpression) {
                 append("expression(").appendListContents((RExpression) value).append(')');
             } else if (value instanceof RAbstractListVector) {
@@ -912,7 +917,7 @@ public class RDeparse {
                 return this;
             }
 
-            Object value = RRuntime.convertScalarVectors(v);
+            Object value = RRuntime.asAbstractVector(v);
             assert value instanceof RBaseObject : v.getClass();
 
             try {

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -76,12 +77,12 @@ public class RComplexInteropTest extends AbstractInteropTest {
 
     @Override
     protected boolean shouldTestToNative(TruffleObject obj) {
-        return true;
+        return false;
     }
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RComplex.valueOf(1, 1), RComplex.createNA()};
+        return new TruffleObject[]{RComplex.valueOf(1, 1), RRuntime.COMPLEX_NA};
     }
 
     @Override

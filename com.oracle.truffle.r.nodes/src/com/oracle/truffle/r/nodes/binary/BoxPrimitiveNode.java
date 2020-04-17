@@ -26,6 +26,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -73,6 +75,11 @@ public abstract class BoxPrimitiveNode extends CastNode {
     }
 
     @Specialization
+    protected static RComplexVector doComplex(RComplex value) {
+        return RDataFactory.createComplexVectorFromScalar(value);
+    }
+
+    @Specialization
     protected static CharSXPWrapper doCharSXPWrapper(CharSXPWrapper value) {
         return value;
     }
@@ -98,6 +105,7 @@ public abstract class BoxPrimitiveNode extends CastNode {
     }
 
     protected static boolean isPrimitive(Object value) {
-        return (value instanceof Integer) || (value instanceof Double) || (value instanceof Byte) || (value instanceof String) || (value instanceof RRaw);
+        return (value instanceof Integer) || (value instanceof Double) ||
+                        (value instanceof Byte) || (value instanceof String) || (value instanceof RRaw) || (value instanceof RComplex);
     }
 }

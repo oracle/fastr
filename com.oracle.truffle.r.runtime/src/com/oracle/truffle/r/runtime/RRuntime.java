@@ -51,7 +51,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
@@ -115,6 +114,10 @@ public class RRuntime {
     public static final byte LOGICAL_TRUE = 1;
     public static final byte LOGICAL_FALSE = 0;
     public static final byte LOGICAL_NA = -1;
+
+    public static final RComplex COMPLEX_NA = RComplex.valueOf(RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART);
+    public static final RComplex COMPLEX_ZERO = RComplex.valueOf(0.0, 0.0);
+    public static final RComplex COMPLEX_REAL_ONE = RComplex.valueOf(1.0, 0.0);
 
     public static final String CLASS_SYMBOL = "name";
     public static final String CLASS_LANGUAGE = "call";
@@ -298,11 +301,11 @@ public class RRuntime {
     }
 
     public static RComplex logical2complexNoCheck(byte value) {
-        return RDataFactory.createComplex(value, 0);
+        return RComplex.valueOf(value, 0);
     }
 
     public static RComplex logical2complex(byte value) {
-        return isNA(value) ? RComplex.createNA() : logical2complexNoCheck(value);
+        return isNA(value) ? RRuntime.COMPLEX_NA : logical2complexNoCheck(value);
     }
 
     public static String logicalToStringNoCheck(byte operand) {
@@ -549,7 +552,7 @@ public class RRuntime {
     public static RComplex string2complexNoCheck(String v) {
         double doubleValue = string2doubleNoCheck(v);
         if (!RRuntime.isNA(doubleValue)) {
-            return RDataFactory.createComplex(doubleValue, 0.0);
+            return RComplex.valueOf(doubleValue, 0.0);
         } else {
             try {
                 int startIdx = 0;
@@ -568,16 +571,16 @@ public class RRuntime {
                 double realPart = Double.parseDouble(v.substring(startIdx, signIdx));
                 double imaginaryPart = Double.parseDouble(v.substring(signIdx + 1, iIdx));
 
-                return RDataFactory.createComplex(realPart * (negativeReal ? -1 : 1), imaginaryPart * (negativeImaginary ? -1 : 1));
+                return RComplex.valueOf(realPart * (negativeReal ? -1 : 1), imaginaryPart * (negativeImaginary ? -1 : 1));
             } catch (NumberFormatException ex) {
-                return RComplex.createNA();
+                return RRuntime.COMPLEX_NA;
             }
         }
     }
 
     @TruffleBoundary
     public static RComplex string2complex(String v) {
-        return isNA(v) ? RComplex.createNA() : string2complexNoCheck(v);
+        return isNA(v) ? RRuntime.COMPLEX_NA : string2complexNoCheck(v);
     }
 
     @TruffleBoundary
@@ -608,11 +611,11 @@ public class RRuntime {
     }
 
     public static RComplex int2complexNoCheck(int i) {
-        return RDataFactory.createComplex(i, 0);
+        return RComplex.valueOf(i, 0);
     }
 
     public static RComplex int2complex(int i) {
-        return isNA(i) ? RComplex.createNA() : int2complexNoCheck(i);
+        return isNA(i) ? RRuntime.COMPLEX_NA : int2complexNoCheck(i);
     }
 
     public static String intToStringNoCheck(int operand) {
@@ -667,11 +670,11 @@ public class RRuntime {
     }
 
     public static RComplex double2complexNoCheck(double d) {
-        return RDataFactory.createComplex(d, 0);
+        return RComplex.valueOf(d, 0);
     }
 
     public static RComplex double2complex(double d) {
-        return isNAorNaN(d) ? RComplex.createNA() : double2complexNoCheck(d);
+        return isNAorNaN(d) ? RRuntime.COMPLEX_NA : double2complexNoCheck(d);
     }
 
     public static int double2rawIntValue(double operand) {
@@ -995,30 +998,17 @@ public class RRuntime {
      */
     public static Object asAbstractVector(Object obj) {
         if (obj instanceof Integer) {
-            return RDataFactory.createIntVectorFromScalar((Integer) obj);
-        } else if (obj instanceof Double) {
-            return RDataFactory.createDoubleVectorFromScalar((Double) obj);
-        } else if (obj instanceof Byte) {
-            return RDataFactory.createLogicalVectorFromScalar((Byte) obj);
-        } else if (obj instanceof String) {
-            return RDataFactory.createStringVectorFromScalar((String) obj);
-        } else if (obj instanceof RRaw) {
-            return RDataFactory.createRawVectorFromScalar((RRaw) obj);
-        } else {
-            return obj;
-        }
-    }
-
-    // TODO: should return RAbstractVector eventually once all RScalars are removed
-    public static Object convertScalarVectors(Object obj) {
-        if (obj instanceof Integer) {
             return RDataFactory.createIntVectorFromScalar((int) obj);
         } else if (obj instanceof Double) {
             return RDataFactory.createDoubleVectorFromScalar((double) obj);
         } else if (obj instanceof Byte) {
             return RDataFactory.createLogicalVectorFromScalar((byte) obj);
         } else if (obj instanceof String) {
-            return RString.valueOf((String) obj);
+            return RDataFactory.createStringVectorFromScalar((String) obj);
+        } else if (obj instanceof RComplex) {
+            return RDataFactory.createComplexVectorFromScalar((RComplex) obj);
+        } else if (obj instanceof RRaw) {
+            return RDataFactory.createRawVectorFromScalar((RRaw) obj);
         } else {
             return obj;
         }
@@ -1130,6 +1120,6 @@ public class RRuntime {
 
     public static String getRTypeName(Object arg) {
         CompilerAsserts.neverPartOfCompilation();
-        return isForeignObject(arg) ? "polyglot.value" : ((RBaseObject) convertScalarVectors(arg)).getRType().getName();
+        return isForeignObject(arg) ? "polyglot.value" : ((RBaseObject) asAbstractVector(arg)).getRType().getName();
     }
 }
