@@ -24,10 +24,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 
 // Implements .rowMeans
 @RBuiltin(name = "rowMeans", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
@@ -37,28 +39,36 @@ public abstract class RowMeans extends RowSumsBase {
         createCasts(RowMeans.class);
     }
 
-    @Specialization
-    protected RDoubleVector rowMeans(RDoubleVector x, int rowNum, int colNum, boolean naRm) {
-        return accumulateRows(x, rowNum, colNum, naRm, RowMeans::getMean, (v, nacheck, i) -> v.getDataAt(i));
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector rowMeans(RDoubleVector x, int rowNum, int colNum, boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        return accumulateRows(dataLib, x.getData(), rowNum, colNum, naRm, TransformMean.INSTANCE);
     }
 
-    @Specialization
-    protected RDoubleVector rowMeans(RIntVector x, int rowNum, int colNum, boolean naRm) {
-        return accumulateRows(x, rowNum, colNum, naRm, RowMeans::getMean, (v, nacheck, i) -> nacheck.convertIntToDouble(v.getDataAt(i)));
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector rowMeans(RIntVector x, int rowNum, int colNum, boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        return accumulateRows(dataLib, x.getData(), rowNum, colNum, naRm, TransformMean.INSTANCE);
     }
 
-    @Specialization
-    protected RDoubleVector rowMeans(RLogicalVector x, int rowNum, int colNum, boolean naRm) {
-        return accumulateRows(x, rowNum, colNum, naRm, RowMeans::getMean, (v, nacheck, i) -> nacheck.convertLogicalToDouble(v.getDataAt(i)));
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector rowMeans(RLogicalVector x, int rowNum, int colNum, boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        return accumulateRows(dataLib, x.getData(), rowNum, colNum, naRm, TransformMean.INSTANCE);
     }
 
-    private static double getMean(double sum, int notNACount) {
-        if (Double.isNaN(sum)) {
-            return sum;
-        } else if (notNACount == 0) {
-            return Double.NaN;
-        } else {
-            return sum / notNACount;
+    private static final class TransformMean extends FinalTransform {
+        private static final TransformMean INSTANCE = new TransformMean();
+
+        @Override
+        public double get(double sum, int notNACount) {
+            if (Double.isNaN(sum)) {
+                return sum;
+            } else if (notNACount == 0) {
+                return Double.NaN;
+            } else {
+                return sum / notNACount;
+            }
         }
     }
 }

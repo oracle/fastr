@@ -24,10 +24,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 
 @RBuiltin(name = "rowSums", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class RowSums extends RowSumsBase {
@@ -36,18 +38,30 @@ public abstract class RowSums extends RowSumsBase {
         createCasts(RowSums.class);
     }
 
-    @Specialization
-    protected RDoubleVector rowSums(RDoubleVector x, int rowNum, int colNum, boolean naRm) {
-        return accumulateRows(x, rowNum, colNum, naRm, (sum, cnt) -> sum, (v, nacheck, i) -> v.getDataAt(i));
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector rowSums(RDoubleVector x, int rowNum, int colNum, boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        return accumulateRows(dataLib, x.getData(), rowNum, colNum, naRm, SelectSum.INSTANCE);
     }
 
-    @Specialization
-    protected RDoubleVector rowSums(RIntVector x, int rowNum, int colNum, boolean naRm) {
-        return accumulateRows(x, rowNum, colNum, naRm, (sum, cnt) -> sum, (v, nacheck, i) -> nacheck.convertIntToDouble(v.getDataAt(i)));
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector rowSums(RIntVector x, int rowNum, int colNum, boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        return accumulateRows(dataLib, x.getData(), rowNum, colNum, naRm, SelectSum.INSTANCE);
     }
 
-    @Specialization
-    protected RDoubleVector rowSums(RLogicalVector x, int rowNum, int colNum, boolean naRm) {
-        return accumulateRows(x, rowNum, colNum, naRm, (sum, cnt) -> sum, (v, nacheck, i) -> nacheck.convertLogicalToDouble(v.getDataAt(i)));
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector rowSums(RLogicalVector x, int rowNum, int colNum, boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        return accumulateRows(dataLib, x.getData(), rowNum, colNum, naRm, SelectSum.INSTANCE);
+    }
+
+    private static final class SelectSum extends FinalTransform {
+        private static final SelectSum INSTANCE = new SelectSum();
+
+        @Override
+        public double get(double sum, int notNACount) {
+            return sum;
+        }
     }
 }

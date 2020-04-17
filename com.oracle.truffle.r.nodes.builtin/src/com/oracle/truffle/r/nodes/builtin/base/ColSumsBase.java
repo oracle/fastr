@@ -26,7 +26,9 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -35,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Base class that provides arguments handling and validation helper methods and trivial cases
@@ -44,7 +45,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public abstract class ColSumsBase extends RBuiltinNode.Arg4 {
 
-    protected final NACheck na = NACheck.create();
     private final ConditionProfile vectorLengthProfile = ConditionProfile.createBinaryProfile();
 
     protected static Casts createCasts(Class<? extends ColSumsBase> extCls) {
@@ -79,56 +79,61 @@ public abstract class ColSumsBase extends RBuiltinNode.Arg4 {
     }
 
     @Specialization(guards = "naRm")
-    protected final RDoubleVector doScalarNaRmTrue(double x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected final RDoubleVector doScalarNaRmTrue(double x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @Cached BranchProfile naProfile) {
         checkLengthOne(rowNum, colNum);
-        na.enable(x);
-        if (!na.check(x) && !Double.isNaN(x)) {
+        if (!RRuntime.isNA(x) && !Double.isNaN(x)) {
             return RDataFactory.createDoubleVectorFromScalar(x);
         } else {
+            naProfile.enter();
             return RDataFactory.createDoubleVectorFromScalar(Double.NaN);
         }
     }
 
     @Specialization(guards = "!naRm")
-    protected final RDoubleVector doScalarNaRmFalse(int x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected final RDoubleVector doScalarNaRmFalse(int x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @Cached BranchProfile naProfile) {
         checkLengthOne(rowNum, colNum);
-        na.enable(x);
-        if (!na.check(x)) {
+        if (!RRuntime.isNA(x)) {
             return RDataFactory.createDoubleVectorFromScalar(x);
         } else {
+            naProfile.enter();
             return RDataFactory.createDoubleVectorFromScalar(RRuntime.DOUBLE_NA);
         }
     }
 
     @Specialization(guards = "naRm")
-    protected final RDoubleVector doScalarNaRmTrue(int x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected final RDoubleVector doScalarNaRmTrue(int x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @Cached BranchProfile naProfile) {
         checkLengthOne(rowNum, colNum);
-        na.enable(x);
-        if (!na.check(x)) {
+        if (!RRuntime.isNA(x)) {
             return RDataFactory.createDoubleVectorFromScalar(x);
         } else {
+            naProfile.enter();
             return RDataFactory.createDoubleVectorFromScalar(Double.NaN);
         }
     }
 
     @Specialization(guards = "!naRm")
-    protected final RDoubleVector doScalarNaRmFalse(byte x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected final RDoubleVector doScalarNaRmFalse(byte x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @Cached BranchProfile naProfile) {
         checkLengthOne(rowNum, colNum);
-        na.enable(x);
-        if (!na.check(x)) {
+        if (!RRuntime.isNA(x)) {
             return RDataFactory.createDoubleVectorFromScalar(x);
         } else {
+            naProfile.enter();
             return RDataFactory.createDoubleVectorFromScalar(RRuntime.DOUBLE_NA);
         }
     }
 
     @Specialization(guards = "naRm")
-    protected final RDoubleVector doScalarNaRmTrue(byte x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
+    protected final RDoubleVector doScalarNaRmTrue(byte x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @Cached BranchProfile naProfile) {
         checkLengthOne(rowNum, colNum);
-        na.enable(x);
-        if (!na.check(x)) {
+        if (!RRuntime.isNA(x)) {
             return RDataFactory.createDoubleVectorFromScalar(x);
         } else {
+            naProfile.enter();
             return RDataFactory.createDoubleVectorFromScalar(Double.NaN);
         }
     }
