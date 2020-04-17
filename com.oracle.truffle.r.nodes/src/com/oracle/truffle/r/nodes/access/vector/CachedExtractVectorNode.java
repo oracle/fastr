@@ -216,7 +216,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             writeVectorNode.execute(extractedVector, positions, vector, dimensions);
             RBaseNode.reportWork(this, 1);
             assert extractedVectorLength == 1;
-            return extractedVector.getDataAtAsObject(0);
+            final Object extractedVecData = extractedVector.getData();
+            return getExtractedVectorDataLib(extractedVecData).getDataAtAsObject(extractedVecData, 0);
         }
     }
 
