@@ -31,11 +31,13 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 //Implements .colMeans
 @RBuiltin(name = "colMeans", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
 public abstract class ColMeans extends ColSumsBase {
 
+    protected final NACheck na = NACheck.create();
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
     static {
