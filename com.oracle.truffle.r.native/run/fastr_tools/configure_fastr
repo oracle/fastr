@@ -35,38 +35,23 @@ while [ -h "$source" ] ; do
     source="$dir/$source"
   fi
 done
+r_bin="$( cd -P "$( dirname "$source" )" && pwd )"
+FASTR_HOME_DIR="$( dirname "$r_bin" )"
 
 function printHelp {
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "Checks presence of FastR dependencies and configures the paths in dynamic libraries accordingly."
-    echo "usage: configure_fastr [--help] [--macos-no-homebrew] [--gcc-lib-path <path>]"
-  else
-    echo "Checks presence of FastR dependencies."
-    echo "usage: configure_fastr [--help]"
-  fi    
-    
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    echo ""
-    echo "optional arguments:"
-    echo "  --gcc-lib-path <path>                       Use the <path> to locate the required gfortran libraries."
-    echo "  --macos-no-homebrew                         Allows the script to proceed even if the target system does not have homebrew"
-  fi
+  echo "Checks FastR requirements and creates personal library directory (R_LIBS_USER)."
+  echo "usage: configure_fastr [--help] [--no-ask]"
 }
 
-GCC_LIB_PATH=""
-NO_BREW=0
+NO_ASK=0
 while [[ $# -gt 0 ]]; do
   case $1 in
     --help)
       printHelp
       exit 0
     ;;
-    --gcc-lib-path)
-      shift
-      GCC_LIB_PATH=$1
-    ;;
-    --macos-no-homebrew)
-      NO_BREW=1
+    --no-ask)
+      NO_ASK=1
     ;;
     *)
       >&2 echo "Unknown option '$1'"
@@ -94,43 +79,42 @@ done
     fi
     if [[ $res != 0 ]]; then
       echo "The basic configuration of FastR failed."
-      echo "To learn more:"
-      echo "  run this script with '--help'"
-      echo "  visit https://www.graalvm.org/docs/reference-manual/languages/r"
+      echo "To learn more visit https://www.graalvm.org/docs/reference-manual/languages/r"
       exit 1
     else
       echo "The basic configuration of FastR was successfull."
       echo ""
       echo "Note: if you intend to install R packages you may need additional dependencies."
-      echo "The following packages should cover the most commonly used R packages:"
+      echo "The following packages should cover depenedencies of the most commonly used R packages:"
       echo "    On Debian based systems: apt-get install build-essential gfortran libxml2 libc++-dev"
       echo "    On Oracle Linux: yum groupinstall 'Development Tools' && yum install gcc-gfortran"
     fi
   elif [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "The basic configuration of FastR was successfull."
+    echo ""
+    echo "Note: if you intend to install R packages you may need additional dependencies."
+    echo "The most common dependency is GFortran, which must be of version 8.3.0 or later."
+    echo "See https://gcc.gnu.org/wiki/GFortranBinaries."
+    echo "If the 'gfortran' binary is not on the system path, you need to configure the full path to it in $FASTR_HOME_DIR/etc/Makeconf (variable FC)"
   else
     echo "Unknown operating system."
     echo "FastR may still work."
-    echo "Make sure that GCC including gfortran and OpenMP is installed on your system."
+    echo "Make sure that OpenMP runtime library (libgomp.so.1) is installed on your system."
+    echo "If you intend to install R packages you may need additional dependencies."
+    echo "The most common dependency is GFortran."
   fi
 
-  if [[ $CONFIGURE_ETC = 1 ]]; then
-    export GRAALVM_VERSION=`grep -o 'GRAALVM_VERSION=.*' "../../../../release" | cut -d= -f2`
-    cd ../etc
-    echo "Running the configure script..."
-    ./configure --with-x=no --with-aqua=no --enable-memory-profiling FFLAGS=-O2 $CONFIGURE_ARGS > configure.log 2>&1
-    res=$?
-    if [[ $res != 0 ]]; then
-      echo "The configuration step failed."
-    echo "The log was saved into ${PWD}/configure.log"
-    echo "FastR may still work, but compilation of some R packages may fail"
-    exit 1
-  fi
-  ed Makeconf < edMakeconf.etc > /dev/null 2>/dev/null
   export R_DEFAULT_PACKAGES=base
-  R_LIBS_USER=`"../bin/R" --slave -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'`
-  echo "Creating user specific library directory: $R_LIBS_USER"
-  mkdir -p "$R_LIBS_USER"
-  echo "DONE"
+  R_LIBS_USER=`"$FASTR_HOME_DIR/bin/R" --slave -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'`
+  if [ ! -d "$R_LIBS_USER" ]; then
+    echo
+    read -p "Default personal library directory ($R_LIBS_USER) does exist. Do you wish to create it? (Yy/Nn) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      echo "Creating personal library directory: $R_LIBS_USER"
+      mkdir -p "$R_LIBS_USER"
+    fi
   fi
 
+  echo "DONE"
 )
