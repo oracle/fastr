@@ -26,8 +26,7 @@
 # it checks that gfortran exists and if not prints out some message suggesting what to do.
 # We do not use the generic safe-forward-tool, because we expect gfortran to be by far the
 # most problematic tool and we want to provide some more gfortan specific guidance.
-
-if [ "${FASTR_FC+dummy}" != dummy ]; then
+if [ ! -z "${FASTR_FC}" ]; then
   exec "$FASTR_FC" "$@"
 elif command -v gfortran>/dev/null; then
   exec gfortran "$@"

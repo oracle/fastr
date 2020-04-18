@@ -1,5 +1,5 @@
 H
 ,s/CC[[:space:]]=\(.*\)/CC = $(LABS_LLVM_CC)/g
-,s/FC[[:space:]]=\(.*\)/FC = $(FASTR_NATIVE_DIR)\/run\/fastr_tools\/f2c-wrapper\1/g
+,s/FC[[:space:]]=\(.*\)/FC = $(FASTR_NATIVE_DIR)\/run\/fastr_tools\/f2c-wrapper $(FASTR_NATIVE_DIR)\/run\/fastr_tools\/safe-forward-gfortran/g
 w
 q
