@@ -11,7 +11,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 
 @GenerateUncached
 public abstract class MakeAltStringClassNode extends FFIUpCallNode.Arg3 {
-    private static final TruffleLogger altrepLogger = RLogger.getLogger("altrep");
+    private static final TruffleLogger altrepLogger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     public static MakeAltStringClassNode create() {
         return MakeAltStringClassNodeGen.create();
@@ -23,6 +23,7 @@ public abstract class MakeAltStringClassNode extends FFIUpCallNode.Arg3 {
                                       @Cached("create()") NativeStringCastNode stringCastNode) {
         String className = stringCastNode.executeObject(classNameObj);
         String packageName = stringCastNode.executeObject(packageNameObj);
+        altrepLogger.fine(() -> "Making new alt string class " + packageName + ":" + className);
         AltRepContext altRepCtx = RContext.getInstance().altRepContext;
         return altRepCtx.registerNewAltStringClass(className, packageName, dllInfo);
     }

@@ -9,7 +9,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
-import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 
@@ -22,7 +21,7 @@ public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
     @Specialization
     public Object newIntAltRep(AltIntegerClassDescriptor classDescriptor, Object data1, Object data2) {
         RAltRepData altRepData = new RAltRepData(data1, data2);
-        RLogger.getLogger("altrep").fine(
+        RLogger.getLogger(RLogger.LOGGER_ALTREP).fine(
                 () -> "R_new_altrep: Returning vector with descriptor=" + classDescriptor.toString() + " to native."
         );
         return RDataFactory.createAltIntVector(classDescriptor, altRepData);

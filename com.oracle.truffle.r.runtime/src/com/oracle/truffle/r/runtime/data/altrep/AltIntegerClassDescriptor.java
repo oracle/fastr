@@ -55,7 +55,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     private Object sumMethod;
     private Object maxMethod;
     private Object minMethod;
-    private static final TruffleLogger logger = RLogger.getLogger("altrep");
+    private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     public AltIntegerClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);

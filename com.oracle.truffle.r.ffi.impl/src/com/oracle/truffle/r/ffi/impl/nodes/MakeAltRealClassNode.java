@@ -12,7 +12,7 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 @GenerateUncached
 public abstract class MakeAltRealClassNode extends FFIUpCallNode.Arg3 {
-    private static final TruffleLogger altrepLogger = RLogger.getLogger("altrep");
+    private static final TruffleLogger altrepLogger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     public static MakeAltRealClassNode create() {
         return MakeAltRealClassNodeGen.create();

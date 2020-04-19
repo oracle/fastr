@@ -37,7 +37,7 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
     private Object dataptrMethod;
     private Object dataptrOrNullMethod;
     private Object extractSubsetMethod;
-    private static final TruffleLogger logger = RLogger.getLogger("altrep");
+    private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     AltVecClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);

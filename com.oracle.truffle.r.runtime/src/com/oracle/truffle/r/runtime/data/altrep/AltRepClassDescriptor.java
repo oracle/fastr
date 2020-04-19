@@ -52,7 +52,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     private Object coerceMethod;
     private Object inspectMethod;
     private Object lengthMethod;
-    private static final TruffleLogger logger = RLogger.getLogger("altrep");
+    private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     AltRepClassDescriptor(String className, String packageName, Object dllInfo) {
         this.className = className;

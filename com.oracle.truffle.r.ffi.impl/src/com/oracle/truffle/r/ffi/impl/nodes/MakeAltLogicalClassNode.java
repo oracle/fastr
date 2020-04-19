@@ -11,7 +11,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 
 @GenerateUncached
 public abstract class MakeAltLogicalClassNode extends FFIUpCallNode.Arg3 {
-    private static final TruffleLogger altrepLogger = RLogger.getLogger("altrep");
+    private static final TruffleLogger altrepLogger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     public static MakeAltLogicalClassNode create() {
         return MakeAltLogicalClassNodeGen.create();

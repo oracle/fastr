@@ -11,7 +11,7 @@ import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 
 public class AltRepContext implements RContext.ContextState {
-    private static final TruffleLogger logger = RLogger.getLogger("altrep");
+    private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
     private AltRepClassDescriptor descriptor;
 
     private AltRepContext() {

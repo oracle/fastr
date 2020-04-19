@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
 @GenerateUncached
 public abstract class MakeAltIntegerClassNode extends FFIUpCallNode.Arg3 {
-    private static final TruffleLogger altrepLogger = RLogger.getLogger("altrep");
+    private static final TruffleLogger altrepLogger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     public static MakeAltIntegerClassNode create() {
         return MakeAltIntegerClassNodeGen.create();
@@ -49,6 +49,7 @@ public abstract class MakeAltIntegerClassNode extends FFIUpCallNode.Arg3 {
         String className = stringCastNode.executeObject(classNameObj);
         String packageName = stringCastNode.executeObject(packageNameObj);
         AltRepContext altRepCtx = context.altRepContext;
+        altrepLogger.fine(() -> "Making new altint class " + packageName + ":" + className);
         return altRepCtx.registerNewAltIntClass(className, packageName, dllInfo);
     }
 }
