@@ -9,10 +9,13 @@ import com.oracle.truffle.r.runtime.data.altrep.AltRawClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
+import org.graalvm.collections.EconomicMap;
 
 public class AltRepContext implements RContext.ContextState {
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
     private AltRepClassDescriptor descriptor;
+    EconomicMap<String, AltIntegerClassDescriptor> altIntDescriptors = EconomicMap.create();
+    EconomicMap<String, AltRealClassDescriptor> altRealDescriptors = EconomicMap.create();
 
     private AltRepContext() {
     }
@@ -23,12 +26,14 @@ public class AltRepContext implements RContext.ContextState {
 
     public AltIntegerClassDescriptor registerNewAltIntClass(String className, String packageName, Object dllInfo) {
         AltIntegerClassDescriptor descriptor = new AltIntegerClassDescriptor(className, packageName, dllInfo);
+        altIntDescriptors.put(descriptor.toString(), descriptor);
         logger.fine(() -> "Registered ALTINT class: " + descriptor.toString());
         return descriptor;
     }
 
     public AltRealClassDescriptor registerNewAltRealClass(String className, String packageName, Object dllInfo) {
         AltRealClassDescriptor descriptor = new AltRealClassDescriptor(className, packageName, dllInfo);
+        altRealDescriptors.put(descriptor.toString(), descriptor);
         logger.fine(() -> "Registered ALTREAL class: " + descriptor.toString());
         return descriptor;
     }
