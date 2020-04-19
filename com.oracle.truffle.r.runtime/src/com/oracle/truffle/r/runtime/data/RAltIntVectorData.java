@@ -141,6 +141,11 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
+    public boolean isComplete() {
+        return true;
+    }
+
+    @ExportMessage
     public RAltIntVectorData copy(boolean deep) {
         throw RInternalError.unimplemented("RAltIntVectorData.copy");
     }
@@ -150,11 +155,13 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         throw RInternalError.unimplemented("RAltIntVectorData.copyResized");
     }
 
+    // TODO: Cached version
     @ExportMessage
-    public boolean isComplete() {
-        return true;
+    public int[] getIntDataCopy() {
+        return getDataAsArray();
     }
 
+    // TODO: Cached version
     @ExportMessage
     public int[] getReadonlyIntData() {
         // TODO: DO not set dataptrCalled = true in this method.
