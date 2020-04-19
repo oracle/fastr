@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,9 @@
 # it checks that gfortran exists and if not prints out some message suggesting what to do.
 # We do not use the generic safe-forward-tool, because we expect gfortran to be by far the
 # most problematic tool and we want to provide some more gfortan specific guidance.
-
-if command -v gfortran>/dev/null; then
+if [ ! -z "${FASTR_FC}" ]; then
+  exec "$FASTR_FC" "$@"
+elif command -v gfortran>/dev/null; then
   exec gfortran "$@"
 else
   >&2 echo "R package installation or similar process tried to use the 'gfortran' tool, the Fortran compiler from the GNU Compiler Collection (GCC)."

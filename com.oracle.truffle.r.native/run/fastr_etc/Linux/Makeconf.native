@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,10 @@ ECHO_N = -n
 ECHO_T = 
 F_VISIBILITY = -fvisibility=hidden
 ## FC is the compiler used for all Fortran as from R 3.6.0
-## FastR Note: the wrapper tries to use f2c, if it fails it uses the tool given as the first argument
+##
+## If gfortran is installed in a non-standard location, which is not on $PATH,
+## replace the "$(R_HOME)/bin/safe-forward-gfortran" with the path to gfortran
+## on your system.
 FC = "$(R_HOME)/bin/safe-forward-gfortran"
 FCFLAGS = -O2 $(LTO)
 ## additional libs needed when linking with $(FC), e.g. on some Oracle compilers

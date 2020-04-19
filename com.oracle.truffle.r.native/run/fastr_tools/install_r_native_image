@@ -60,7 +60,9 @@ function log {
     fi
 }
 
+echo
 echo "Note: this script is deprecated use: \$GRAALVM_HOME/bin/gu rebuild-images R"
+echo
 if [[ $silent -eq 0 ]]; then
     echo "This script is going to build a native image of the R runtime and update the R launchers to use that image as the default, i.e., when '--jvm' option is not used."
     echo "The build takes several minutes and needs a minimum of 8GB of RAM and 200MB of free disk space. The computer may lag during the build."
