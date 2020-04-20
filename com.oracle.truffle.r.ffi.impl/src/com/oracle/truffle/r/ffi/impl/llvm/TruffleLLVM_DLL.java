@@ -36,6 +36,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -96,6 +97,13 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         } catch (UnknownIdentifierException e) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "Could not find function 'Rdynload_setSymbol' in libR on path: " + path);
+        } catch (Throwable e) {
+            RError.warning(RError.NO_CALLER, Message.GENERIC, String.format(
+                            "Loading of '%s' in LLVM mode failed. " +
+                                            "You may load this package via the native mode by adding it to %s/etc/native-packages " +
+                                            "or by running FastR with option --R.BackEndNative=packageName.",
+                            path, REnvVars.rHome(RContext.getInstance())));
+            throw e;
         } finally {
             if (!isInitialization) {
                 stateRFFI.afterDowncall(before, Type.LLVM);
