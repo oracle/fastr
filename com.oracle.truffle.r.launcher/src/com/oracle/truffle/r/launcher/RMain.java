@@ -186,10 +186,12 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
         this.consoleHandler.setContext(context);
         if (launcherMode) {
+            int exitCode = 0;
             try {
-                System.exit(execute(context));
+                exitCode = execute(context);
             } finally {
                 context.close();
+                System.exit(exitCode);
             }
         }
     }
