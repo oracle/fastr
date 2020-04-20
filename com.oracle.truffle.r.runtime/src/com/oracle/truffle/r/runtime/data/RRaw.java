@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RRaw implements RTruffleObject, ScalarWrapper {
+public final class RRaw implements RTruffleObject {
 
     private final byte value;
 

@@ -32,9 +32,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.RInteropNA;
-import com.oracle.truffle.r.runtime.data.RInteropNA.RInteropComplexNA;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropChar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
@@ -43,6 +41,8 @@ import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropShort;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -99,6 +99,20 @@ public abstract class R2Foreign extends RBaseNode {
         return result;
     }
 
+    @Specialization(guards = "boxPrimitives")
+    public RRawVector doRaw(RRaw vec, @SuppressWarnings("unused") boolean boxPrimitives) {
+        RRawVector result = RDataFactory.createRawVectorFromScalar(vec);
+        result.makeSharedPermanent();
+        return result;
+    }
+
+    @Specialization(guards = "boxPrimitives")
+    public RComplexVector doComplex(RComplex vec, @SuppressWarnings("unused") boolean boxPrimitives) {
+        RComplexVector result = RDataFactory.createComplexVectorFromScalar(vec);
+        result.makeSharedPermanent();
+        return result;
+    }
+
     @Specialization(guards = "!boxPrimitives")
     public Object doByteNoBox(byte obj, @SuppressWarnings("unused") boolean boxPrimitives,
                     @Cached("createBinaryProfile()") ConditionProfile isNaProfile) {
@@ -133,19 +147,6 @@ public abstract class R2Foreign extends RBaseNode {
             return RInteropNA.STRING;
         }
         return vec;
-    }
-
-    /*
-     * boxPrimitives not exactly correct, but guarding RComplex to be "converted" from a vector to a
-     * polyglot object when necessary
-     */
-    @Specialization(guards = "!boxPrimitives")
-    public Object doComplexNoBox(RComplex vec, @SuppressWarnings("unused") boolean boxPrimitives,
-                    @Cached("createBinaryProfile()") ConditionProfile isNaProfile) {
-        if (isNaProfile.profile(RRuntime.isNA(vec))) {
-            return new RInteropComplexNA(vec);
-        }
-        return new RInteropComplex(vec);
     }
 
     @Specialization(guards = "!boxPrimitives")

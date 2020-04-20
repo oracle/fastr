@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RWeakRef;
-import com.oracle.truffle.r.runtime.data.closures.RToComplexVectorClosure;
 import com.oracle.truffle.r.runtime.data.closures.RToStringVectorClosure;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -71,7 +70,7 @@ public enum SEXPTYPE {
     /* real vectors */
     REALSXP(14, RDoubleVector.class, Double.class),
     /* complex vectors */
-    CPLXSXP(15, RComplexVector.class, RComplex.class, RToComplexVectorClosure.class),
+    CPLXSXP(15, RComplexVector.class, RComplex.class),
     /* string vectors */
     STRSXP(16, RStringVector.class, RStringSequence.class, String.class, RForeignStringWrapper.class, RToStringVectorClosure.class),
     DOTSXP(17, RArgsValuesAndNames.class), /* dot-dot-dot object */

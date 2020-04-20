@@ -35,10 +35,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -122,7 +122,7 @@ public class TestUtilities {
         return RDataFactory.createDoubleVector(array, complete || !complete && size < 3);
     }
 
-    public static RAbstractComplexVector generateComplex(int size, boolean complete) {
+    public static RComplexVector generateComplex(int size, boolean complete) {
         double[] array = new double[size << 1];
         for (int i = 0; i < size; i++) {
             boolean useNA = !complete && i % (NA_INDEX + 1) == NA_INDEX;

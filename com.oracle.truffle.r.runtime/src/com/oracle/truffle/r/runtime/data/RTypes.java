@@ -26,7 +26,6 @@ import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.TypeCast;
 import com.oracle.truffle.api.dsl.TypeCheck;
 import com.oracle.truffle.api.dsl.TypeSystem;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropChar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
@@ -116,13 +115,12 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(ScalarWrapper vector) {
-        if (vector instanceof RComplex) {
-            return RDataFactory.createComplexVectorFromScalar((RComplex) vector);
-        } else if (vector instanceof RRaw) {
-            return RDataFactory.createRawVectorFromScalar((RRaw) vector);
-        }
-        throw RInternalError.shouldNotReachHere();
+    public static RAbstractContainer toAbstractContainer(RComplex vector) {
+        return RDataFactory.createComplexVectorFromScalar(vector);
+    }
+
+    public static RAbstractContainer toAbstractContainer(RRaw vector) {
+        return RDataFactory.createRawVectorFromScalar(vector);
     }
 
     @ImplicitCast
@@ -146,13 +144,13 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractVector toAbstractVector(ScalarWrapper vector) {
-        if (vector instanceof RComplex) {
-            return RDataFactory.createComplexVectorFromScalar((RComplex) vector);
-        } else if (vector instanceof RRaw) {
-            return RDataFactory.createRawVectorFromScalar((RRaw) vector);
-        }
-        throw RInternalError.shouldNotReachHere();
+    public static RAbstractVector toAbstractVector(RComplex vector) {
+        return RDataFactory.createComplexVectorFromScalar(vector);
+    }
+
+    @ImplicitCast
+    public static RAbstractVector toAbstractVector(RRaw vector) {
+        return RDataFactory.createRawVectorFromScalar(vector);
     }
 
     @ImplicitCast
@@ -216,13 +214,8 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractAtomicVector toAbstractAtomicVector(ScalarWrapper vector) {
-        if (vector instanceof RComplex) {
-            return RDataFactory.createComplexVectorFromScalar((RComplex) vector);
-        } else if (vector instanceof RRaw) {
-            return RDataFactory.createRawVectorFromScalar((RRaw) vector);
-        }
-        throw RInternalError.shouldNotReachHere();
+    public static RAbstractAtomicVector toAbstractAtomicVector(RComplex vector) {
+        return RDataFactory.createComplexVectorFromScalar(vector);
     }
 
     @ImplicitCast

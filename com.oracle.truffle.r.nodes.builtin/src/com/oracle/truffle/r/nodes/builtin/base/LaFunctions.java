@@ -403,7 +403,7 @@ public class LaFunctions {
         @Node.Child private LapackRFFI.ZtrtrsNode ztrtrsNode = LapackRFFI.ZtrtrsNode.create();
 
         @Specialization
-        Object doQrCoefCmplx(RList q, RAbstractComplexVector b,
+        Object doQrCoefCmplx(RList q, RComplexVector b,
                         @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary qrDataLib,
                         @CachedLibrary(limit = "getTypedVectorDataLibraryCacheSize()") VectorDataLibrary tauDataLib,
                         @Cached("create()") VectorDataReuse.Complex vectorDataReuse,
