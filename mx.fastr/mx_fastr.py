@@ -294,6 +294,7 @@ def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
 
 class FastRGateTags:
     unit_tests = 'unit_tests'
+    very_slow_asserts = 'very_slow_asserts'
     basic_tests = 'basic_tests'
     internal_pkgs_test = 'internal_pkgs_test' # runs pkgtest on internal packages in com.oracle.truffle.r.test.native/packages
     # cran_pkgs_testX runs pkgtest on selected CRAN packages listed in file com.oracle.truffle.r.test.packages/gatedX
@@ -331,6 +332,10 @@ def _fastr_gate_runner(args, tasks):
     with mx_gate.Task('GCTorture3', tasks, tags=[FastRGateTags.gc_torture3]) as t:
         if t:
             os.environ['FASTR_GCTORTURE'] = '3'
+
+    with mx_gate.Task('VerySlowAsserts', tasks, tags=[FastRGateTags.very_slow_asserts]) as t:
+        if t:
+            os.environ['FASTR_TEST_VERY_SLOW_ASSERTS'] = 'true'
 
     '''
     The specific additional gates tasks provided by FastR.

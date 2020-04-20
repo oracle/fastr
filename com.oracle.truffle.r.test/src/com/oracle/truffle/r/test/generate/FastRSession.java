@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,6 +74,7 @@ import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStackt
 import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktracesToFile;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.engine.interop.VectorInteropTest;
 
@@ -82,7 +83,7 @@ public final class FastRSession implements RSession {
     public static final Source GET_CONTEXT = createSource("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT.string);
 
     private static final String TEST_TIMEOUT_PROPERTY = "fastr.test.timeout";
-    private static int timeoutValue = 10000;
+    private static int timeoutValue = VectorDataLibrary.ENABLE_VERY_SLOW_ASSERTS ? 30000 : 10000;
 
     private static FastRSession singleton;
 
