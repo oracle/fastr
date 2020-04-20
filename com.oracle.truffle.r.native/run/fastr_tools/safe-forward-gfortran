@@ -27,7 +27,13 @@
 # We do not use the generic safe-forward-tool, because we expect gfortran to be by far the
 # most problematic tool and we want to provide some more gfortan specific guidance.
 if [ ! -z "${FASTR_FC}" ]; then
-  exec "$FASTR_FC" "$@"
+  # This is used internally when FastR is building itself and when building recommended packages,
+  # which we want to build using F2C as opposed to other packages which were not tested with F2C
+  if [ "${FASTR_USE_F2C}" = "true" ]; then
+    exec "$(R_HOME)/bin/f2c-wrapper" "$FASTR_FC" "$@"
+  else
+    exec "$FASTR_FC" "$@"
+  fi
 elif command -v gfortran>/dev/null; then
   exec gfortran "$@"
 else
