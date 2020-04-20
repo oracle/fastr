@@ -24,13 +24,17 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 //Implements .colMeans
 @RBuiltin(name = "colMeans", kind = INTERNAL, parameterNames = {"X", "m", "n", "na.rm"}, behavior = PURE)
@@ -42,17 +46,20 @@ public abstract class ColMeans extends ColSumsBase {
         createCasts(ColMeans.class);
     }
 
-    @Specialization(guards = "!naRm")
-    protected RDoubleVector colMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
-        checkVectorLength(x, rowNum, colNum);
+    @Specialization(guards = "!naRm", limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector colMeansNaRmFalse(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        checkVectorLength(dataLib, x, rowNum, colNum);
 
         double[] result = new double[colNum];
         boolean isComplete = true;
-        na.enable(x);
+        Object xData = x.getData();
+        RandomAccessIterator it = dataLib.randomAccessIterator(xData);
+        NACheck na = dataLib.getNACheck(xData);
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                double el = x.getDataAt(c * rowNum + i);
+                double el = dataLib.getDouble(xData, it, c * rowNum + i);
                 if (na.check(el)) {
                     result[c] = RRuntime.DOUBLE_NA;
                     continue nextCol;
@@ -69,18 +76,21 @@ public abstract class ColMeans extends ColSumsBase {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA() && isComplete);
     }
 
-    @Specialization(guards = "naRm")
-    protected RDoubleVector colMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
-        checkVectorLength(x, rowNum, colNum);
+    @Specialization(guards = "naRm", limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector colMeansNaRmTrue(RDoubleVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        checkVectorLength(dataLib, x, rowNum, colNum);
 
         double[] result = new double[colNum];
         boolean isComplete = true;
-        na.enable(x);
+        Object xData = x.getData();
+        RandomAccessIterator it = dataLib.randomAccessIterator(xData);
+        NACheck na = dataLib.getNACheck(xData);
         for (int c = 0; c < colNum; c++) {
             double sum = 0;
             int nonNaNumCount = 0;
             for (int i = 0; i < rowNum; i++) {
-                double el = x.getDataAt(c * rowNum + i);
+                double el = dataLib.getDouble(xData, it, c * rowNum + i);
                 if (!na.check(el) && !Double.isNaN(el)) {
                     sum = add.op(sum, el);
                     nonNaNumCount++;
@@ -96,16 +106,19 @@ public abstract class ColMeans extends ColSumsBase {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @Specialization(guards = "!naRm")
-    protected RDoubleVector colMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
-        checkVectorLength(x, rowNum, colNum);
+    @Specialization(guards = "!naRm", limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector colMeansNaRmFalse(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        checkVectorLength(dataLib, x, rowNum, colNum);
 
         double[] result = new double[colNum];
-        na.enable(x);
+        Object xData = x.getData();
+        RandomAccessIterator it = dataLib.randomAccessIterator(xData);
+        NACheck na = dataLib.getNACheck(xData);
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                byte el = x.getDataAt(c * rowNum + i);
+                byte el = dataLib.getLogical(xData, it, c * rowNum + i);
                 if (na.check(el)) {
                     result[c] = RRuntime.DOUBLE_NA;
                     continue nextCol;
@@ -117,18 +130,21 @@ public abstract class ColMeans extends ColSumsBase {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "naRm")
-    protected RDoubleVector colMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
-        checkVectorLength(x, rowNum, colNum);
+    @Specialization(guards = "naRm", limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector colMeansNaRmTrue(RLogicalVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        checkVectorLength(dataLib, x, rowNum, colNum);
 
         double[] result = new double[colNum];
         boolean isComplete = true;
-        na.enable(x);
+        Object xData = x.getData();
+        RandomAccessIterator it = dataLib.randomAccessIterator(xData);
+        NACheck na = dataLib.getNACheck(xData);
         for (int c = 0; c < colNum; c++) {
             double sum = 0;
             int nonNaNumCount = 0;
             for (int i = 0; i < rowNum; i++) {
-                byte el = x.getDataAt(c * rowNum + i);
+                byte el = dataLib.getLogical(xData, it, c * rowNum + i);
                 if (!na.check(el)) {
                     sum = add.op(sum, el);
                     nonNaNumCount++;
@@ -144,16 +160,19 @@ public abstract class ColMeans extends ColSumsBase {
         return RDataFactory.createDoubleVector(result, isComplete);
     }
 
-    @Specialization(guards = "!naRm")
-    protected RDoubleVector colMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
-        checkVectorLength(x, rowNum, colNum);
+    @Specialization(guards = "!naRm", limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector colMeansNaRmFalse(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        checkVectorLength(dataLib, x, rowNum, colNum);
 
         double[] result = new double[colNum];
-        na.enable(x);
+        Object xData = x.getData();
+        RandomAccessIterator it = dataLib.randomAccessIterator(xData);
+        NACheck na = dataLib.getNACheck(xData);
         nextCol: for (int c = 0; c < colNum; c++) {
             double sum = 0;
             for (int i = 0; i < rowNum; i++) {
-                int el = x.getDataAt(c * rowNum + i);
+                int el = dataLib.getInt(xData, it, c * rowNum + i);
                 if (na.check(el)) {
                     result[c] = RRuntime.DOUBLE_NA;
                     continue nextCol;
@@ -165,18 +184,21 @@ public abstract class ColMeans extends ColSumsBase {
         return RDataFactory.createDoubleVector(result, na.neverSeenNA());
     }
 
-    @Specialization(guards = "naRm")
-    protected RDoubleVector colMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm) {
-        checkVectorLength(x, rowNum, colNum);
+    @Specialization(guards = "naRm", limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RDoubleVector colMeansNaRmTrue(RIntVector x, int rowNum, int colNum, @SuppressWarnings("unused") boolean naRm,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        checkVectorLength(dataLib, x, rowNum, colNum);
 
         double[] result = new double[colNum];
         boolean isComplete = true;
-        na.enable(x);
+        Object xData = x.getData();
+        RandomAccessIterator it = dataLib.randomAccessIterator(xData);
+        NACheck na = dataLib.getNACheck(xData);
         for (int c = 0; c < colNum; c++) {
             double sum = 0;
             int nonNaNumCount = 0;
             for (int i = 0; i < rowNum; i++) {
-                int el = x.getDataAt(c * rowNum + i);
+                int el = dataLib.getInt(xData, it, c * rowNum + i);
                 if (!na.check(el)) {
                     sum = add.op(sum, el);
                     nonNaNumCount++;

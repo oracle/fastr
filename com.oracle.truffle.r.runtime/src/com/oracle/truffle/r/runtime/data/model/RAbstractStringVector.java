@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
@@ -58,27 +59,32 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean isNull(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
-        if (!isScalar.profile(isScalar())) {
+    final boolean isNull(
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
+        if (!isScalar.profile(isScalar(dataLib))) {
             return false;
         }
-        return RRuntime.isNA(getDataAt(0));
+        return RRuntime.isNA(dataLib.getStringAt(getData(), 0));
     }
 
     @ExportMessage
-    final boolean isString() {
-        if (!isScalar()) {
+    final boolean isString(
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (!isScalar(dataLib)) {
             return false;
         }
-        return !RRuntime.isNA(getDataAt(0));
+        return !RRuntime.isNA(dataLib.getStringAt(getData(), 0));
     }
 
     @ExportMessage
-    final String asString(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isString) throws UnsupportedMessageException {
-        if (!isString.profile(isString())) {
+    final String asString(
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isString) throws UnsupportedMessageException {
+        if (!isString.profile(isString(dataLib))) {
             throw UnsupportedMessageException.create();
         }
-        return getDataAt(0);
+        return dataLib.getStringAt(getData(), 0);
     }
 
     @Override

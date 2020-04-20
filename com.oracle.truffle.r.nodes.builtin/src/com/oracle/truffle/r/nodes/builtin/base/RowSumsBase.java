@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,8 @@ import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -48,31 +49,26 @@ public abstract class RowSumsBase extends ColSumsBase {
     private final LoopConditionProfile outerProfile = LoopConditionProfile.createCountingProfile();
     private final LoopConditionProfile innerProfile = LoopConditionProfile.createCountingProfile();
 
-    @FunctionalInterface
-    protected interface GetFunction<T extends RAbstractVector> {
-        double get(T vector, NACheck na, int index);
+    protected abstract static class FinalTransform {
+        abstract double get(double sum, int notNACount);
     }
 
-    @FunctionalInterface
-    protected interface FinalTransform {
-        double get(double sum, int notNACount);
-    }
-
-    protected final <T extends RAbstractVector> RDoubleVector accumulateRows(T x, int rowNum, int colNum, boolean naRm, FinalTransform finalTransform, RowSumsBase.GetFunction<T> get) {
-        reportWork(x.getLength());
+    protected final RDoubleVector accumulateRows(VectorDataLibrary dataLib, Object data, int rowNum, int colNum, boolean naRm, FinalTransform finalTransform) {
+        reportWork(dataLib.getLength(data));
         double[] result = new double[rowNum];
-        na.enable(x);
         outerProfile.profileCounted(rowNum / 4);
         innerProfile.profileCounted(colNum);
         int i = 0;
+        RandomAccessIterator it = dataLib.randomAccessIterator(data);
         // the unrolled loop cannot handle NA values
+        NACheck na = dataLib.getNACheck(data);
         if (!na.isEnabled()) {
             while (outerProfile.inject(i <= rowNum - UNROLL)) {
                 double[] sum = new double[UNROLL];
                 int pos = i;
                 for (int c = 0; innerProfile.inject(c < colNum); c++) {
                     for (int unroll = 0; unroll < UNROLL; unroll++) {
-                        sum[unroll] = add.op(sum[unroll], get.get(x, na, pos + unroll));
+                        sum[unroll] = add.op(sum[unroll], dataLib.getDouble(data, it, pos + unroll));
                     }
                     pos += rowNum;
                 }
@@ -88,7 +84,7 @@ public abstract class RowSumsBase extends ColSumsBase {
                 int pos = i;
                 int notNACount = 0;
                 for (int c = 0; innerProfile.inject(c < colNum); c++) {
-                    double el = get.get(x, na, pos);
+                    double el = dataLib.getDouble(data, it, pos);
                     pos += rowNum;
                     if (na.check(el)) {
                         if (!naRm) {
@@ -109,6 +105,6 @@ public abstract class RowSumsBase extends ColSumsBase {
                 i++;
             }
         }
-        return RDataFactory.createDoubleVector(result, na.neverSeenNA());
+        return RDataFactory.createDoubleVector(result, dataLib.getNACheck(data).neverSeenNA());
     }
 }

@@ -134,7 +134,6 @@ public abstract class ColSums extends ColSumsBase {
         final boolean rna = removeNA.profile(rnaParam);
         double[] result = new double[colNum];
         boolean isComplete = true;
-        na.enable(x);
         int pos = 0;
         Object xData = x.getData();
         RandomAccessIterator xIt = xDataLib.randomAccessIterator(xData);

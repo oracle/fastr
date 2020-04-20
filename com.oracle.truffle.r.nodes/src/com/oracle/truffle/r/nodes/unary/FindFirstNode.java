@@ -23,10 +23,12 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.MessageData;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
@@ -92,9 +94,10 @@ public abstract class FindFirstNode extends CastNode {
         }
     }
 
-    @Specialization(guards = "!isVectorEmpty(x)")
-    protected Object onVector(RAbstractVector x) {
-        return x.getDataAtAsObject(0);
+    @Specialization(guards = "!isVectorEmpty(x)", limit = "getGenericDataLibraryCacheSize()")
+    protected Object onVector(RAbstractVector x,
+                    @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
+        return dataLib.getDataAtAsObject(x.getData(), 0);
     }
 
     protected boolean isVectorEmpty(RAbstractVector x) {
