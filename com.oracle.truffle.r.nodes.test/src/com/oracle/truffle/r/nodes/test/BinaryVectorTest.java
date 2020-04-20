@@ -40,7 +40,6 @@ import org.junit.experimental.theories.DataPoint;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class BinaryVectorTest extends TestBase {
@@ -48,7 +47,7 @@ public class BinaryVectorTest extends TestBase {
     @DataPoint public static final RAbstractVector PRIMITIVE_LOGICAL = RDataFactory.createLogicalVectorFromScalar((byte) 1);
     @DataPoint public static final RAbstractVector PRIMITIVE_INTEGER = RDataFactory.createIntVectorFromScalar(42);
     @DataPoint public static final RAbstractVector PRIMITIVE_DOUBLE = RDataFactory.createDoubleVectorFromScalar(42d);
-    @DataPoint public static final RAbstractVector PRIMITIVE_COMPLEX = RComplex.valueOf(1.0, 1.0);
+    @DataPoint public static final RAbstractVector PRIMITIVE_COMPLEX = RDataFactory.createComplexVectorFromScalar(1.0, 1.0);
 
     @DataPoint public static final RAbstractVector EMPTY_LOGICAL = createEmptyLogicalVector();
     @DataPoint public static final RAbstractVector EMPTY_INTEGER = createEmptyIntVector();

@@ -472,12 +472,13 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 mult.enable(a, b);
                 for (int row = 0; row < aRows; row++) {
                     for (int col = 0; col < bCols; col++) {
-                        RComplex x = RDataFactory.createComplexZero();
+                        RComplex x = RRuntime.COMPLEX_ZERO;
                         na.enable(x);
                         RComplex tmp;
                         for (int k = 0; k < aCols; k++) {
                             tmp = mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k));
-                            add.enable(x, tmp);
+                            add.getLeftNACheck().enable(tmp);
+                            add.getRightNACheck().enable(tmp);
                             x = add.applyComplex(x, tmp);
                             na.check(x);
                         }
@@ -499,12 +500,13 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 if (notOneColumn.profile(aCols != 1)) {
                     double[] result = new double[aRows << 1];
                     for (int row = 0; row < aRows; row++) {
-                        RComplex x = RDataFactory.createComplexZero();
+                        RComplex x = RRuntime.COMPLEX_ZERO;
                         na.enable(x);
                         RComplex tmp;
                         for (int k = 0; k < b.getLength(); k++) {
                             tmp = mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(k));
-                            add.enable(x, tmp);
+                            add.getLeftNACheck().enable(tmp);
+                            add.getRightNACheck().enable(tmp);
                             x = add.applyComplex(x, tmp);
                             na.check(x);
                         }
@@ -538,12 +540,13 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 if (notOneRow.profile(bRows != 1)) {
                     double[] result = new double[bCols << 1];
                     for (int k = 0; k < bCols; k++) {
-                        RComplex x = RDataFactory.createComplexZero();
+                        RComplex x = RRuntime.COMPLEX_ZERO;
                         na.enable(x);
                         RComplex tmp;
                         for (int row = 0; row < a.getLength(); row++) {
                             tmp = mult.applyComplex(a.getDataAt(row), b.getDataAt(k * a.getLength() + row));
-                            add.enable(x, tmp);
+                            add.getLeftNACheck().enable(tmp);
+                            add.getRightNACheck().enable(tmp);
                             x = add.applyComplex(x, tmp);
                             na.check(x);
                         }
@@ -596,7 +599,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 if (a.getLength() != b.getLength()) {
                     throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
-                RComplex result = RDataFactory.createComplexZero();
+                RComplex result = RRuntime.COMPLEX_ZERO;
                 RComplex tmp;
                 na.enable(a);
                 na.enable(b);
@@ -606,7 +609,8 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                     RComplex aValue = a.getDataAt(k);
                     RComplex bValue = b.getDataAt(k);
                     tmp = mult.applyComplex(aValue, bValue);
-                    add.enable(result, tmp);
+                    add.getLeftNACheck().enable(tmp);
+                    add.getRightNACheck().enable(tmp);
                     result = add.applyComplex(result, tmp);
                     na.check(result);
                 }

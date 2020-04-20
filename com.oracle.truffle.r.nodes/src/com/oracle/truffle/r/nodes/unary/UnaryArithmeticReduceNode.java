@@ -176,7 +176,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
                 return operand;
             }
         } else {
-            return na.check(operand) ? RComplex.createNA() : operand;
+            return na.check(operand) ? RRuntime.COMPLEX_NA : operand;
         }
     }
 
@@ -344,7 +344,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
                 if (profiledNaRm) {
                     continue;
                 } else {
-                    return RComplex.createNA();
+                    return RRuntime.COMPLEX_NA;
                 }
             } else {
                 result = arithmetic.op(result.getRealPart(), result.getImaginaryPart(), current.getRealPart(), current.getImaginaryPart());

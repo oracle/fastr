@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ public class RInteropNAInteropTest extends AbstractInteropTest {
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
         return new TruffleObject[]{RInteropNA.DOUBLE, RInteropNA.INT, RInteropNA.LOGICAL, RInteropNA.STRING,
-                        new RInteropComplexNA(RComplex.createNA()),
+                        new RInteropComplexNA(RRuntime.COMPLEX_NA),
                         new RInteropComplexNA(RComplex.valueOf(1, RRuntime.COMPLEX_NA_IMAGINARY_PART)),
                         new RInteropComplexNA(RComplex.valueOf(RRuntime.COMPLEX_NA_REAL_PART, 1))};
     }

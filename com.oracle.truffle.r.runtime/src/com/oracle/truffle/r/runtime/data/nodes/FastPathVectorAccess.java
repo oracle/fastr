@@ -97,7 +97,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
         @Override
         protected final RComplex getComplexImpl(AccessIterator accessIter, int index) {
             int value = getIntImpl(accessIter, index);
-            return na.check(value) ? RComplex.createNA() : RRuntime.int2complexNoCheck(value);
+            return na.check(value) ? RRuntime.COMPLEX_NA : RRuntime.int2complexNoCheck(value);
         }
 
         @Override
@@ -195,7 +195,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
         @Override
         protected final RComplex getComplexImpl(AccessIterator accessIter, int index) {
             double value = getDoubleImpl(accessIter, index);
-            return na.check(value) ? RComplex.createNA() : RRuntime.double2complexNoCheck(value);
+            return na.check(value) ? RRuntime.COMPLEX_NA : RRuntime.double2complexNoCheck(value);
         }
 
         @Override
@@ -279,7 +279,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
         @Override
         protected final RComplex getComplexImpl(AccessIterator accessIter, int index) {
             byte value = getLogicalImpl(accessIter, index);
-            return na.check(value) ? RComplex.createNA() : RRuntime.logical2complexNoCheck(value);
+            return na.check(value) ? RRuntime.COMPLEX_NA : RRuntime.logical2complexNoCheck(value);
         }
 
         @Override
@@ -611,7 +611,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
             String value = getStringImpl(accessIter, index);
             RComplex complexValue;
             if (na.check(value) || emptyStringProfile.profile(value.isEmpty())) {
-                complexValue = RComplex.createNA();
+                complexValue = RRuntime.COMPLEX_NA;
             } else {
                 complexValue = RRuntime.string2complexNoCheck(value);
                 if (complexValue.isNA()) {

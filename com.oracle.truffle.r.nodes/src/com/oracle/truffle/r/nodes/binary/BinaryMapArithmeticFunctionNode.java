@@ -183,23 +183,23 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         if (leftNACheck.check(left)) {
             if (this.arithmetic instanceof BinaryArithmetic.Pow && right.isZero()) {
                 // CORNER: (0i + NA)^0 == 1
-                return RDataFactory.createComplexRealOne();
+                return RRuntime.COMPLEX_REAL_ONE;
             } else if (this.arithmetic instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
                 throw error(RError.Message.UNIMPLEMENTED_COMPLEX);
             }
-            return RComplex.createNA();
+            return RRuntime.COMPLEX_NA;
         }
         if (rightNACheck.check(right) && !(leftNACheck.checkNAorNaN(left.getRealPart()))) {
 
             if (this.arithmetic instanceof BinaryArithmetic.Pow && left.isZero()) {
                 // CORNER: 0^(0i + NA) == NaN + NaNi
-                return RDataFactory.createComplex(Double.NaN, Double.NaN);
+                return RComplex.valueOf(Double.NaN, Double.NaN);
             } else if (this.arithmetic instanceof BinaryArithmetic.Mod) {
                 // CORNER: Must throw error on modulo operation on complex numbers.
                 throw error(RError.Message.UNIMPLEMENTED_COMPLEX);
             }
-            return RComplex.createNA();
+            return RRuntime.COMPLEX_NA;
         }
         try {
             return arithmetic.op(left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart());

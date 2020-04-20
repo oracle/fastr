@@ -635,7 +635,7 @@ public class CastUtils {
             return RDataFactory.createStringVectorFromScalar(RRuntime.STRING_NA);
         }
         if (RComplex.class.isAssignableFrom(elementType)) {
-            return RDataFactory.createComplexVectorFromScalar(RComplex.createNA());
+            return RDataFactory.createComplexVectorFromScalar(RRuntime.COMPLEX_NA);
         }
         return null;
     }
@@ -657,7 +657,7 @@ public class CastUtils {
             return RRuntime.STRING_NA;
         }
         if (RComplex.class.isAssignableFrom(elementType)) {
-            return RComplex.createNA();
+            return RRuntime.COMPLEX_NA;
         }
         return null;
     }
@@ -842,8 +842,8 @@ public class CastUtils {
         }
 
         if (cls == Object.class || RAbstractComplexVector.class.isAssignableFrom(cls)) {
-            samples.add(RComplex.createNA());
-            samples.add(RDataFactory.createComplex(0, 0));
+            samples.add(RRuntime.COMPLEX_NA);
+            samples.add(RComplex.valueOf(0, 0));
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(0, 0)));
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(1, 1)));
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(-1, 1)));

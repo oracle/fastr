@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -107,7 +107,7 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
                     } else {
                         defaultValue = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, symbol.getName(), false).asRNode();
                     }
-                } else if (RRuntime.convertScalarVectors(arg) instanceof RAttributable) {
+                } else if (RRuntime.asAbstractVector(arg) instanceof RAttributable) {
                     defaultValue = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, arg).asRNode();
                 } else {
                     throw RInternalError.unimplemented();

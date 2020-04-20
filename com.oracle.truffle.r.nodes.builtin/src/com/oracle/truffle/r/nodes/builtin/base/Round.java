@@ -145,12 +145,12 @@ public abstract class Round extends RBuiltinNode.Arg2 {
     @Specialization(guards = "isZero(digits)")
     protected RComplex round(RComplex x, @SuppressWarnings("unused") double digits) {
         check.enable(x);
-        return check.check(x) ? RComplex.createNA() : RComplex.valueOf(roundOp.op(x.getRealPart()), roundOp.op(x.getImaginaryPart()));
+        return check.check(x) ? RRuntime.COMPLEX_NA : RComplex.valueOf(roundOp.op(x.getRealPart()), roundOp.op(x.getImaginaryPart()));
     }
 
     protected RComplex roundDigits(RComplex x, int digits) {
         check.enable(x);
-        return check.check(x) ? RComplex.createNA() : roundOp.opd(x.getRealPart(), x.getImaginaryPart(), digits);
+        return check.check(x) ? RRuntime.COMPLEX_NA : roundOp.opd(x.getRealPart(), x.getImaginaryPart(), digits);
     }
 
     @Specialization(guards = "!isZero(digits)")
@@ -164,7 +164,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
             RComplex z = x.getDataAt(i);
-            RComplex r = check.check(z) ? RComplex.createNA() : round(z, digits);
+            RComplex r = check.check(z) ? RRuntime.COMPLEX_NA : round(z, digits);
             result[2 * i] = r.getRealPart();
             result[2 * i + 1] = r.getImaginaryPart();
             check.check(r);
@@ -181,7 +181,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
             RComplex z = x.getDataAt(i);
-            RComplex r = check.check(z) ? RComplex.createNA() : roundDigits(z, digits);
+            RComplex r = check.check(z) ? RRuntime.COMPLEX_NA : roundDigits(z, digits);
             result[2 * i] = r.getRealPart();
             result[2 * i + 1] = r.getImaginaryPart();
             check.check(r);
@@ -355,7 +355,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
         }
 
         private RComplex zrround(double re, double im, int digits) {
-            return RDataFactory.createComplex(fround(re, digits), fround(im, digits));
+            return RComplex.valueOf(fround(re, digits), fround(im, digits));
         }
     }
 }

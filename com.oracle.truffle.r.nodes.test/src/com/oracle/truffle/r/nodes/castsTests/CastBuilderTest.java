@@ -95,6 +95,7 @@ import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -200,9 +201,9 @@ public class CastBuilderTest {
     public void testIsNumericOrComplex() {
         arg.mustBe(numericValue().or(complexValue()), RError.Message.SEED_NOT_VALID_INT);
 
-        assertCastPreserves(1, RRuntime.LOGICAL_FALSE, 1.3d, RDataFactory.createComplex(1, 2), RDataFactory.createIntVectorFromScalar(1));
+        assertCastPreserves(1, RRuntime.LOGICAL_FALSE, 1.3d, RComplex.valueOf(1, 2), RDataFactory.createIntVectorFromScalar(1));
         assertCastPreserves(RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE), RDataFactory.createDoubleVectorFromScalar(1.2));
-        assertCastPreserves(RDataFactory.createComplexVectorFromScalar(RDataFactory.createComplex(1, 2)));
+        assertCastPreserves(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(1, 2)));
 
         assertCastFail("x", RError.Message.SEED_NOT_VALID_INT.message);
         testPipeline();
@@ -216,7 +217,7 @@ public class CastBuilderTest {
         assertEquals(0, cast(RRuntime.LOGICAL_FALSE));
         assertEquals(1, cast(1.3d));
         assertEquals(42, cast("42"));
-        assertEquals(1, cast(RDataFactory.createComplex(1, 0)));
+        assertEquals(1, cast(RComplex.valueOf(1, 0)));
         assertEquals(RNull.instance, cast(RNull.instance));
         assertEquals(RMissing.instance, cast(RMissing.instance));
         testPipeline(NO_FILTER_EXPECT_EMPTY_SAMPLES);

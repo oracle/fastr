@@ -92,7 +92,7 @@ public class TrigExpFunctions {
                 calculatePowNode = insert(BinaryArithmetic.POW.createOperation());
             }
             RComplex x = calculatePowNode.op(Math.E, 0, re, im);
-            return RDataFactory.createComplex(x.getRealPart() - 1d, x.getImaginaryPart());
+            return RComplex.valueOf(x.getRealPart() - 1d, x.getImaginaryPart());
         }
     }
 
@@ -108,7 +108,7 @@ public class TrigExpFunctions {
         public RComplex op(double re, double im) {
             double sinRe = Math.sin(re) * Math.cosh(im);
             double sinIm = Math.cos(re) * Math.sinh(im);
-            return RDataFactory.createComplex(sinRe, sinIm);
+            return RComplex.valueOf(sinRe, sinIm);
         }
     }
 
@@ -124,7 +124,7 @@ public class TrigExpFunctions {
         public RComplex op(double re, double im) {
             double sinhRe = Math.sinh(re) * Math.cos(im);
             double sinhIm = Math.cosh(re) * Math.sin(im);
-            return RDataFactory.createComplex(sinhRe, sinhIm);
+            return RComplex.valueOf(sinhRe, sinhIm);
         }
     }
 
@@ -152,7 +152,7 @@ public class TrigExpFunctions {
         public RComplex op(double re, double im) {
             double cosRe = Math.cos(re) * Math.cosh(im);
             double cosIm = -Math.sin(re) * Math.sinh(im);
-            return RDataFactory.createComplex(cosRe, cosIm);
+            return RComplex.valueOf(cosRe, cosIm);
         }
     }
 
@@ -167,7 +167,7 @@ public class TrigExpFunctions {
         public RComplex op(double re, double im) {
             double cosRe = Math.cosh(re) * Math.cos(im);
             double cosIm = -Math.sinh(re) * Math.sin(im);
-            return RDataFactory.createComplex(cosRe, cosIm);
+            return RComplex.valueOf(cosRe, cosIm);
         }
     }
 
@@ -201,7 +201,7 @@ public class TrigExpFunctions {
             double denom = cos.getRealPart() * cos.getRealPart() + cos.getImaginaryPart() * cos.getImaginaryPart();
             double numRe = sin.getRealPart() * cos.getRealPart() + sin.getImaginaryPart() * cos.getImaginaryPart();
             double numIm = sin.getImaginaryPart() * cos.getRealPart() - sin.getRealPart() * cos.getImaginaryPart();
-            return RDataFactory.createComplex(numRe / denom, numIm / denom);
+            return RComplex.valueOf(numRe / denom, numIm / denom);
         }
     }
 
@@ -217,7 +217,7 @@ public class TrigExpFunctions {
         @Override
         public RComplex op(double re, double im) {
             RComplex tan = tanNode.op(Math.PI + im, -re);
-            return RDataFactory.createComplex(-tan.getImaginaryPart(), tan.getRealPart());
+            return RComplex.valueOf(-tan.getImaginaryPart(), tan.getRealPart());
         }
     }
 
@@ -274,7 +274,7 @@ public class TrigExpFunctions {
                 if (x > 1) {
                     ri *= -1;
                 }
-                return RDataFactory.createComplex(Math.asin(t1 - t2), ri);
+                return RComplex.valueOf(Math.asin(t1 - t2), ri);
             } else {
                 return casin(x, y);
             }
@@ -292,7 +292,7 @@ public class TrigExpFunctions {
             if (y < 0 || (y == 0 && x > 1)) {
                 ri *= -1;
             }
-            return RDataFactory.createComplex(Math.asin(t1 - t2), ri);
+            return RComplex.valueOf(Math.asin(t1 - t2), ri);
         }
     }
 
@@ -308,7 +308,7 @@ public class TrigExpFunctions {
         @Override
         public RComplex op(double re, double im) {
             RComplex asin = asinNode.op(-im, re);
-            return RDataFactory.createComplex(asin.getImaginaryPart(), -asin.getRealPart());
+            return RComplex.valueOf(asin.getImaginaryPart(), -asin.getRealPart());
         }
     }
 
@@ -324,7 +324,7 @@ public class TrigExpFunctions {
         @Override
         public RComplex op(double re, double im) {
             RComplex asin = asinNode.op(re, im);
-            return RDataFactory.createComplex(Math.PI / 2 - asin.getRealPart(), -asin.getImaginaryPart());
+            return RComplex.valueOf(Math.PI / 2 - asin.getRealPart(), -asin.getImaginaryPart());
         }
     }
 
@@ -341,7 +341,7 @@ public class TrigExpFunctions {
         @Override
         public RComplex op(double re, double im) {
             RComplex acos = acosNode.op(re, im);
-            return RDataFactory.createComplex(-acos.getImaginaryPart(), acos.getRealPart());
+            return RComplex.valueOf(-acos.getImaginaryPart(), acos.getRealPart());
         }
     }
 
@@ -357,7 +357,7 @@ public class TrigExpFunctions {
             if (x == 0 && Math.abs(y) > 1) {
                 double rr = (y > 0) ? Math.PI / 2 : -Math.PI / 2;
                 double ri = 0.25 * Math.log(((y + 1) * (y + 1)) / ((y - 1) * (y - 1)));
-                return RDataFactory.createComplex(rr, ri);
+                return RComplex.valueOf(rr, ri);
             } else {
                 return catan(x, y);
             }
@@ -366,7 +366,7 @@ public class TrigExpFunctions {
         private static RComplex catan(double x, double y) {
             double rr = 0.5 * Math.atan2(2 * x, (1 - x * x - y * y));
             double ri = 0.25 * Math.log((x * x + (y + 1) * (y + 1)) / (x * x + (y - 1) * (y - 1)));
-            return RDataFactory.createComplex(rr, ri);
+            return RComplex.valueOf(rr, ri);
         }
     }
 
@@ -383,7 +383,7 @@ public class TrigExpFunctions {
         @Override
         public RComplex op(double x, double y) {
             RComplex atan = atanNode.op(y, -x);
-            return RDataFactory.createComplex(-atan.getImaginaryPart(), atan.getRealPart());
+            return RComplex.valueOf(-atan.getImaginaryPart(), atan.getRealPart());
         }
     }
 

@@ -25,82 +25,93 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromComplexAccess;
-import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromComplexAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import static com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector.MEMBER_IM;
+import static com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector.MEMBER_RE;
 
 @ValueType
-public final class RComplex extends RAbstractComplexVector implements RScalarVector {
+@ExportLibrary(InteropLibrary.class)
+public final class RComplex implements RTruffleObject, ScalarWrapper {
 
     private final double realPart;
     private final double imaginaryPart;
 
     private RComplex(double realPart, double imaginaryPart) {
-        super(!RRuntime.isComplexNA(realPart, imaginaryPart));
         this.realPart = realPart;
         this.imaginaryPart = imaginaryPart;
     }
 
+    @ExportMessage
+    public boolean isNull() {
+        return RRuntime.isNA(this);
+    }
+
+    @SuppressWarnings("static-method")
+    @ExportMessage
+    boolean hasMembers() {
+        return true;
+    }
+
+    @ExportMessage
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal,
+                    @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers) throws UnsupportedMessageException {
+        if (noMembers.profile(!hasMembers())) {
+            throw UnsupportedMessageException.create();
+        }
+        return RDataFactory.createStringVector(new String[]{MEMBER_RE, MEMBER_IM}, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @ExportMessage
+    boolean isMemberReadable(String member,
+                    @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers) {
+        if (noMembers.profile(!hasMembers())) {
+            return false;
+        }
+        return MEMBER_RE.equals(member) || MEMBER_IM.equals(member);
+    }
+
+    @ExportMessage
+    Object readMember(String member,
+                    @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNullIdentifier) throws UnknownIdentifierException, UnsupportedMessageException {
+        if (noMembers.profile(!hasMembers())) {
+            throw UnsupportedMessageException.create();
+        }
+        if (unknownIdentifier.profile(!isMemberReadable(member, noMembers))) {
+            throw UnknownIdentifierException.create(member);
+        }
+        if (isNullIdentifier.profile(isNull())) {
+            return new RInteropNA.RInteropComplexNA(this);
+        }
+        if (MEMBER_RE.equals(member)) {
+            return getRealPart();
+        } else {
+            return getImaginaryPart();
+        }
+    }
+
     public static RComplex createNA() {
-        return RComplex.valueOf(RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART);
+        return RRuntime.COMPLEX_NA;
+    }
+
+    public static RComplex createRealOne() {
+        return RRuntime.COMPLEX_REAL_ONE;
+    }
+
+    public static RComplex createZero() {
+        return RRuntime.COMPLEX_ZERO;
     }
 
     public static RComplex valueOf(double real, double imaginary) {
         return new RComplex(real, imaginary);
-    }
-
-    @Override
-    public int getLength() {
-        return 1;
-    }
-
-    @Override
-    public RAbstractVector copy() {
-        return this;
-    }
-
-    @Override
-    public RComplexVector materialize() {
-        RComplexVector result = RDataFactory.createComplexVector(new double[]{realPart, imaginaryPart}, isComplete());
-        MemoryCopyTracer.reportCopying(this, result);
-        return result;
-    }
-
-    @Override
-    public double[] getDataCopy() {
-        return new double[]{realPart, imaginaryPart};
-    }
-
-    @Override
-    public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
-        switch (type) {
-            case Complex:
-                return this;
-            case Character:
-                return RString.valueOf(RContext.getRRuntimeASTAccess().encodeComplex(this));
-            case List:
-                return RDataFactory.createListFromScalar(this);
-            default:
-                return null;
-        }
-    }
-
-    @Override
-    public RComplex getDataAt(int index) {
-        assert index == 0;
-        return this;
-    }
-
-    @Override
-    public RType getRType() {
-        return RType.Complex;
     }
 
     public double getRealPart() {
@@ -123,7 +134,6 @@ public final class RComplex extends RAbstractComplexVector implements RScalarVec
         return isNA() ? "NA" : realPartString + (imaginaryPart < 0.0 ? "" : "+") + imaginaryPartString + "i";
     }
 
-    @Override
     public boolean isNA() {
         return RRuntime.isNA(this);
     }
@@ -162,60 +172,5 @@ public final class RComplex extends RAbstractComplexVector implements RScalarVec
         } else {
             return Math.sqrt(re * re + im * im);
         }
-    }
-
-    private static final class FastPathAccess extends FastPathFromComplexAccess {
-
-        FastPathAccess(RAbstractContainer value) {
-            super(value);
-        }
-
-        @Override
-        protected RComplex getComplexImpl(AccessIterator accessIter, int index) {
-            assert index == 0;
-            return (RComplex) accessIter.getStore();
-        }
-
-        @Override
-        protected double getComplexRImpl(AccessIterator accessIter, int index) {
-            assert index == 0;
-            return ((RComplex) accessIter.getStore()).realPart;
-        }
-
-        @Override
-        protected double getComplexIImpl(AccessIterator accessIter, int index) {
-            assert index == 0;
-            return ((RComplex) accessIter.getStore()).imaginaryPart;
-        }
-    }
-
-    @Override
-    public VectorAccess access() {
-        return new FastPathAccess(this);
-    }
-
-    private static final SlowPathFromComplexAccess SLOW_PATH_ACCESS = new SlowPathFromComplexAccess() {
-        @Override
-        protected RComplex getComplexImpl(AccessIterator accessIter, int index) {
-            assert index == 0;
-            return (RComplex) accessIter.getStore();
-        }
-
-        @Override
-        protected double getComplexRImpl(AccessIterator accessIter, int index) {
-            assert index == 0;
-            return ((RComplex) accessIter.getStore()).realPart;
-        }
-
-        @Override
-        protected double getComplexIImpl(AccessIterator accessIter, int index) {
-            assert index == 0;
-            return ((RComplex) accessIter.getStore()).imaginaryPart;
-        }
-    };
-
-    @Override
-    public VectorAccess slowPathAccess() {
-        return SLOW_PATH_ACCESS;
     }
 }

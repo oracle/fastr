@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -92,7 +92,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 if (dims.getLength() == 1) {
                     RList t = Utils.<RList> castTo(getDimNames(vector));
                     if (t != null && t.getDataAt(0) != null) {
-                        RAbstractStringVector nn = Utils.castTo(RRuntime.convertScalarVectors(t.getNames()));
+                        RAbstractStringVector nn = Utils.castTo(RRuntime.asAbstractVector(t.getNames()));
 
                         if (nn != null) {
                             title = nn.getDataAt(0);
@@ -101,7 +101,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                         }
 
                         jobMode = length == 0 ? JobMode.namedEmpty : JobMode.named;
-                        names = Utils.castTo(RRuntime.convertScalarVectors(t.getDataAt(0)));
+                        names = Utils.castTo(RRuntime.asAbstractVector(t.getDataAt(0)));
                     } else {
                         title = null;
                         names = null;
@@ -123,7 +123,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 Object namesAttr = Utils.castTo(getNames(vector));
                 if (namesAttr != null) {
                     if (length > 0) {
-                        names = Utils.castTo(RRuntime.convertScalarVectors(namesAttr));
+                        names = Utils.castTo(RRuntime.asAbstractVector(namesAttr));
                         jobMode = JobMode.named;
                     } else {
                         names = null;

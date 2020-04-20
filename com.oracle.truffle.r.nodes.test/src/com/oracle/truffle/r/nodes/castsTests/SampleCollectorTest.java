@@ -67,6 +67,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -134,9 +135,11 @@ public class SampleCollectorTest {
     @Test
     public void testAsComplexVector() {
         arg.asComplexVector();
-        RComplex na = RComplex.createNA();
-        RComplex z = RDataFactory.createComplex(0, 0);
+        RComplex na = RRuntime.COMPLEX_NA;
+        RComplex z = RComplex.valueOf(0, 0);
         assertSamples(z, na, vector(RType.Complex, z), vector(RType.Complex, na), RNull.instance, RMissing.instance);
+        RComplexVector zz = RDataFactory.createComplexVectorFromScalar(0, 0);
+        assertSamples(zz, na, vector(RType.Complex, z), vector(RType.Complex, na), RNull.instance, RMissing.instance);
     }
 
     @Test

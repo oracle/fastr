@@ -3,7 +3,7 @@
  * Copyright (c) 1998, Ross Ihaka
  * Copyright (c) 1998-2012, The R Core Team
  * Copyright (c) 2005, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -80,7 +79,7 @@ public abstract class UnaryArithmetic extends Operation {
 
     public RComplex op(double re, double im) {
         // default: perform operation on real and imaginary part
-        return RDataFactory.createComplex(op(re), op(im));
+        return RComplex.valueOf(op(re), op(im));
     }
 
     /**
@@ -154,7 +153,7 @@ public abstract class UnaryArithmetic extends Operation {
 
         @Override
         public RComplex op(double re, double im) {
-            return RDataFactory.createComplex(re, im);
+            return RComplex.valueOf(re, im);
         }
     }
 }

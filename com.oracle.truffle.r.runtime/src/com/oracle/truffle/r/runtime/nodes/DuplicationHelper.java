@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -129,7 +129,7 @@ public class DuplicationHelper {
         }
 
         static boolean equals(Object o1, Object o2) {
-            if (o1 instanceof RAbstractContainer && o2 instanceof RAbstractContainer && !(o1 instanceof RComplex) && !(o2 instanceof RComplex)) {
+            if (o1 instanceof RAbstractContainer && o2 instanceof RAbstractContainer) {
                 RAbstractContainer cont1 = (RAbstractContainer) o1;
                 RAbstractContainer cont2 = (RAbstractContainer) o2;
 

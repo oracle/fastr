@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,6 +63,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.NotNAStep;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -162,7 +163,7 @@ public class SamplesCollector extends ExecutionPathVisitor<Consumer<Object>>
         previous.accept(RRuntime.LOGICAL_NA);
         previous.accept(RRuntime.STRING_NA);
         previous.accept(RRuntime.LOGICAL_NA);
-        previous.accept(RDataFactory.createComplex(RRuntime.COMPLEX_NA_REAL_PART, 0));
+        previous.accept(RComplex.valueOf(RRuntime.COMPLEX_NA_REAL_PART, 0));
 
         return s -> {
             previous.accept(s);
@@ -357,7 +358,7 @@ public class SamplesCollector extends ExecutionPathVisitor<Consumer<Object>>
                 previous.accept(RRuntime.STRING_NA);
                 break;
             case Complex:
-                previous.accept(RDataFactory.createComplex(RRuntime.COMPLEX_NA_REAL_PART, 0));
+                previous.accept(RComplex.valueOf(RRuntime.COMPLEX_NA_REAL_PART, 0));
                 break;
             default:
                 throw RInternalError.shouldNotReachHere();

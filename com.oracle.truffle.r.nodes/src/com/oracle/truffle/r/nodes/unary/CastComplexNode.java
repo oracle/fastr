@@ -127,7 +127,7 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     @Specialization
     protected RComplex doRaw(RRaw operand) {
-        return factory().createComplex(operand.getValue(), 0);
+        return RComplex.valueOf(operand.getValue(), 0);
     }
 
     @Specialization
@@ -136,7 +136,7 @@ public abstract class CastComplexNode extends CastBaseNode {
                     @Cached("create()") NACheck naCheck) {
         naCheck.enable(operand);
         if (naCheck.check(operand) || emptyStringProfile.profile(operand.isEmpty())) {
-            return RComplex.createNA();
+            return RRuntime.COMPLEX_NA;
         }
         RComplex result = RRuntime.string2complexNoCheck(operand);
         if (RRuntime.isNA(result) && !operand.equals(RRuntime.STRING_NaN)) {

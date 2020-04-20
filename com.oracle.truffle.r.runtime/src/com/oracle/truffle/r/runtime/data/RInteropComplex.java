@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,9 +76,9 @@ public class RInteropComplex implements RTruffleObject {
             throw UnknownIdentifierException.create(member);
         }
         if (MEMBER_RE.equals(member)) {
-            return value.getDataAt(0).getRealPart();
+            return value.getRealPart();
         } else {
-            return value.getDataAt(0).getImaginaryPart();
+            return value.getImaginaryPart();
         }
     }
 

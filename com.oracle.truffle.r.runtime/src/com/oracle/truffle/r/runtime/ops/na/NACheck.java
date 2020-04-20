@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -354,9 +353,9 @@ public final class NACheck {
 
     public RComplex convertLogicalToComplex(byte value) {
         if (check(value)) {
-            return RComplex.createNA();
+            return RRuntime.COMPLEX_NA;
         }
-        return RDataFactory.createComplex(value, 0);
+        return RComplex.valueOf(value, 0);
     }
 
     public double convertIntToDouble(int value) {
@@ -368,16 +367,16 @@ public final class NACheck {
 
     public RComplex convertDoubleToComplex(double value) {
         if (check(value)) {
-            return RComplex.createNA();
+            return RRuntime.COMPLEX_NA;
         }
-        return RDataFactory.createComplex(value, 0);
+        return RComplex.valueOf(value, 0);
     }
 
     public RComplex convertIntToComplex(int value) {
         if (check(value)) {
-            return RComplex.createNA();
+            return RRuntime.COMPLEX_NA;
         }
-        return RDataFactory.createComplex(value, 0);
+        return RComplex.valueOf(value, 0);
     }
 
     public boolean isEnabled() {
@@ -416,7 +415,7 @@ public final class NACheck {
 
     public RComplex convertStringToComplex(String value) {
         if (check(value)) {
-            return RComplex.createNA();
+            return RRuntime.COMPLEX_NA;
         }
         RComplex result = RRuntime.string2complexNoCheck(value);
         check(result); // can be NA

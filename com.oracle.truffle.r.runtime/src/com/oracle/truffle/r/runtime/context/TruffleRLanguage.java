@@ -171,7 +171,7 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
             }
         }
         // Wrap scalars Integer, Double, etc.
-        unwrappedValue = RRuntime.convertScalarVectors(unwrappedValue);
+        unwrappedValue = RRuntime.asAbstractVector(unwrappedValue);
         if (unwrappedValue instanceof RBaseObject) {
             return ((RBaseObject) unwrappedValue).getRType().getName();
         } else {

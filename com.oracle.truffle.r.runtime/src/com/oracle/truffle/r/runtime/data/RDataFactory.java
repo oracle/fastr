@@ -98,8 +98,7 @@ public final class RDataFactory {
             if (RSharingAttributeStorage.isShareable(data)) {
                 ((RSharingAttributeStorage) data).makeSharedPermanent();
             } else {
-                assert data instanceof Integer || data instanceof Double || data instanceof Byte || data instanceof String || data instanceof RRaw ||
-                                data instanceof RComplex : "cannot make permanent instance of non-shareable object";
+                assert data instanceof Integer || data instanceof Double || data instanceof Byte || data instanceof String : "cannot make permanent instance of non-shareable object";
             }
             return super.traceDataCreated(data);
         }
@@ -568,10 +567,6 @@ public final class RDataFactory {
             return createList(new Object[0]);
         }
 
-        public final RComplex createComplex(double realPart, double imaginaryPart) {
-            return traceDataCreated(RComplex.valueOf(realPart, imaginaryPart));
-        }
-
         public final RRawVector createRawVectorFromNative(long address, int length) {
             return traceDataCreated(RRawVector.fromNative(address, length));
         }
@@ -602,7 +597,7 @@ public final class RDataFactory {
         }
 
         public final Object createSharedComplexVectorFromScalar(RComplex value) {
-            return value;
+            return createComplexVectorFromScalar(value);
         }
 
         public final Object createSharedRawVectorFromScalar(RRaw value) {
@@ -744,6 +739,10 @@ public final class RDataFactory {
 
         public RComplexVector createComplexVectorFromScalar(RComplex value) {
             return traceDataCreated(RDataFactory.createComplexVectorFromScalar(value));
+        }
+
+        public RComplexVector createComplexVectorFromScalar(double real, double imag) {
+            return traceDataCreated(RDataFactory.createComplexVectorFromScalar(real, imag));
         }
 
         public RRawVector createRawVectorFromScalar(RRaw value) {
@@ -1042,10 +1041,6 @@ public final class RDataFactory {
         return createRawVector(new byte[0]);
     }
 
-    public static RComplex createComplex(double realPart, double imaginaryPart) {
-        return traceDataCreated(RComplex.valueOf(realPart, imaginaryPart));
-    }
-
     public static RRawVector createRawVectorFromNative(long address, int length) {
         return traceDataCreated(RRawVector.fromNative(address, length));
     }
@@ -1076,6 +1071,10 @@ public final class RDataFactory {
 
     public static RComplexVector createComplexVectorFromScalar(RComplex value) {
         return createComplexVector(new double[]{value.getRealPart(), value.getImaginaryPart()}, !value.isNA());
+    }
+
+    public static RComplexVector createComplexVectorFromScalar(double real, double imag) {
+        return createComplexVector(new double[]{real, imag}, !RRuntime.isComplexNA(real, imag));
     }
 
     public static RRawVector createRawVectorFromScalar(RRaw value) {
@@ -1112,23 +1111,15 @@ public final class RDataFactory {
     }
 
     public static Object createSharedComplexVectorFromScalar(RComplex value) {
-        return value;
+        return createComplexVectorFromScalar(value);
     }
 
     public static Object createSharedRawVectorFromScalar(RRaw value) {
         return value;
     }
 
-    public static RComplex createComplexRealOne() {
-        return createComplex(1.0, 0.0);
-    }
-
     public static RList createList(Object[] data) {
         return traceDataCreated(new RList(data));
-    }
-
-    public static RComplex createComplexZero() {
-        return createComplex(0.0, 0.0);
     }
 
     public static RList createList(Object[] data, int[] newDimensions) {

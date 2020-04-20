@@ -315,7 +315,7 @@ public final class CoerceNodes {
             }
 
             private static String getTypeName(Object val) {
-                Object value = RRuntime.convertScalarVectors(val);
+                Object value = RRuntime.asAbstractVector(val);
                 if (value == null) {
                     return "null";
                 }

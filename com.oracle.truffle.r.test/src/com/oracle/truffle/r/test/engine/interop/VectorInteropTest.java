@@ -79,7 +79,6 @@ public class VectorInteropTest extends AbstractInteropTest {
         // scalar
 
         testReadComplexScalar(RDataFactory.createComplexVector(new double[]{1, 2}, true));
-        testReadComplexScalar(RComplex.valueOf(1, 2));
 
         // scalar NA
         RComplexVector complexScalar = RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, 1}, false);
