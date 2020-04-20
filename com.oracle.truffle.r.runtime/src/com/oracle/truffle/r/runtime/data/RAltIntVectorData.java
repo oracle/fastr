@@ -41,9 +41,11 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
-import com.oracle.truffle.r.runtime.nodes.altrep.AltIntGetIntAtNode;
+import com.oracle.truffle.r.runtime.nodes.altrep.AltrepGetIntAtNode;
+import com.oracle.truffle.r.runtime.nodes.altrep.AltrepSetElementAtNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
@@ -123,14 +125,11 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage(limit = "1")
-    public RIntArrayVectorData materialize(@CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
-                                           @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                                           @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
+    public RIntArrayVectorData materialize(@Cached("create()") AltrepRFFI.AltIntDataptrNode dataptrNode) {
         int length = getLengthUncached();
-        long dataptr =
-                invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
+        long dataptrAddr = dataptrNode.execute(getOwner(), true);
         int[] newData = new int[length];
-        NativeMemory.copyMemory(dataptr, newData, ElementType.INT, length);
+        NativeMemory.copyMemory(dataptrAddr, newData, ElementType.INT, length);
         // TODO: complete=true?
         return new RIntArrayVectorData(newData, true);
     }
@@ -204,28 +203,20 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage(limit = "1")
     public int getIntAt(int index,
-                        @Cached(value = "create()") AltIntGetIntAtNode getIntAtNode) {
+                        @Cached(value = "create()") AltrepGetIntAtNode getIntAtNode) {
         return (int) getIntAtNode.execute(getOwner(), index);
     }
 
     @ExportMessage(limit = "1")
     public int getNextInt(SeqIterator it,
-                          @CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
-                          @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                          @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-        long dataptr =
-                invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-        return NativeMemory.getInt(dataptr, it.getIndex());
+                          @Cached(value = "create()") AltrepGetIntAtNode getIntAtNode) {
+        return (int) getIntAtNode.execute(getOwner(), it.getIndex());
     }
 
     @ExportMessage(limit = "1")
     public int getInt(RandomAccessIterator it, int index,
-                      @CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
-                      @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                      @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-        long dataptr =
-                invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-        return NativeMemory.getInt(dataptr, index);
+                      @Cached(value = "create()") AltrepGetIntAtNode getIntAtNode) {
+        return (int) getIntAtNode.execute(getOwner(), index);
     }
 
     // Write access to elements:
@@ -234,11 +225,6 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         // TODO: Exception handling?
         dataptrCalled = true;
         return descriptor.invokeDataptrMethodUncached(getOwner(), true);
-    }
-
-    protected long invokeDataptrMethodCached(InteropLibrary dataptrMethodInterop, InteropLibrary dataptrInterop, ConditionProfile hasMirrorProfile) {
-        dataptrCalled = true;
-        return descriptor.invokeDataptrMethodCached(getOwner(), true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
     }
 
     @ExportMessage
@@ -265,29 +251,20 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage(limit = "1")
     public void setIntAt(int index, int value,
-                         @CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
-                         @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                         @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-        long address = invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-        NativeMemory.putInt(address, index, value);
+                         @Cached("create()") @Shared("setElementAtNode") AltrepSetElementAtNode setElementAtNode) {
+        setElementAtNode.execute(getOwner(), value, index);
     }
 
     @ExportMessage(limit = "1")
     public void setNextInt(SeqWriteIterator it, int value,
-                           @CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
-                           @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                           @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-        long dataptrAddr = invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-        NativeMemory.putInt(dataptrAddr, it.getIndex(), value);
+                           @Cached("create()") @Shared("setElementAtNode") AltrepSetElementAtNode setElementAtNode) {
+        setElementAtNode.execute(getOwner(), value, it.getIndex());
     }
 
     @ExportMessage(limit = "1")
     public void setInt(RandomAccessWriteIterator it, int index, int value,
-                       @CachedLibrary("this.descriptor.getDataptrMethod()") InteropLibrary dataptrMethodInterop,
-                       @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                       @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-        long dataptrAddr = invokeDataptrMethodCached(dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-        NativeMemory.putInt(dataptrAddr, index, value);
+                       @Cached("create()") @Shared("setElementAtNode") AltrepSetElementAtNode setElementAtNode) {
+        setElementAtNode.execute(getOwner(), value, index);
     }
 
     @Override

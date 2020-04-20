@@ -12,26 +12,30 @@ import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @GenerateUncached
-public abstract class AltIntGetIntAtNode extends RBaseNode {
-    public abstract Object execute(RIntVector altIntVector, int index);
+public abstract class AltrepGetIntAtNode extends RBaseNode {
+    public abstract Object execute(Object altVec, int index);
 
-    @Specialization(guards = "hasEltMethodRegistered(altIntVector)")
-    public int doWithElt(RIntVector altIntVector, int index,
-                         @Cached("create()") AltrepRFFI.AltIntEltNode altIntEltNode) {
+    @Specialization(guards = {"isAltrep(altIntVector)", "hasEltMethodRegistered(altIntVector)"})
+    public int doAltIntWithElt(RIntVector altIntVector, int index,
+                               @Cached("create()") AltrepRFFI.AltIntEltNode altIntEltNode) {
         return altIntEltNode.execute(altIntVector, index);
     }
 
-    @Specialization(guards = "!hasEltMethodRegistered(altIntVector)")
-    public int doWithoutElt(RIntVector altIntVector, int index,
-                            @Cached("create()") AltrepRFFI.AltIntDataptrNode altIntDataptrNode) {
+    @Specialization(guards = {"isAltrep(altIntVector)", "!hasEltMethodRegistered(altIntVector)"})
+    public int doAltIntWithoutElt(RIntVector altIntVector, int index,
+                                  @Cached("create()") AltrepRFFI.AltIntDataptrNode altIntDataptrNode) {
         long dataptrAddr = altIntDataptrNode.execute(altIntVector, false);
         return NativeMemory.getInt(dataptrAddr, index);
     }
 
     @Fallback
-    public int unexpected(@SuppressWarnings("unused") RIntVector altIntVector,
+    public int unexpected(@SuppressWarnings("unused") Object object,
                           @SuppressWarnings("unused") int index) {
-        throw RInternalError.shouldNotReachHere("Unexpected: AltIntGetIntAtNode");
+        throw RInternalError.shouldNotReachHere("Unexpected: AltrepGetIntAtNode, object = " + object.toString());
+    }
+
+    protected static boolean isAltrep(Object vector) {
+        return AltrepUtilities.isAltrep(vector);
     }
 
     protected static boolean hasEltMethodRegistered(RIntVector altIntVector) {
