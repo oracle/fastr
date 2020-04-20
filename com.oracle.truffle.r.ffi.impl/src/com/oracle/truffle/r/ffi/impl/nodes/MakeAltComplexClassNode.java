@@ -1,7 +1,6 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.context.AltRepContext;
@@ -15,10 +14,7 @@ public abstract class MakeAltComplexClassNode extends FFIUpCallNode.Arg3 {
 
     @TruffleBoundary
     @Specialization
-    public Object makeAltComplexClass(Object classNameObj, Object packageNameObj, Object dllInfo,
-                                  @Cached("create()") NativeStringCastNode stringCastNode) {
-        String className = stringCastNode.executeObject(classNameObj);
-        String packageName = stringCastNode.executeObject(packageNameObj);
+    public Object makeAltComplexClass(String className, String packageName, Object dllInfo) {
         AltRepContext altRepCtx = RContext.getInstance().altRepContext;
         return altRepCtx.registerNewAltComplexClass(className, packageName, dllInfo);
     }

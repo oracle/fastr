@@ -24,7 +24,6 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -43,11 +42,8 @@ public abstract class MakeAltIntegerClassNode extends FFIUpCallNode.Arg3 {
 
     @TruffleBoundary
     @Specialization
-    public Object makeAltIntegerClass(Object classNameObj, Object packageNameObj, Object dllInfo,
-                                      @Cached("create()") NativeStringCastNode stringCastNode,
+    public Object makeAltIntegerClass(String className, String packageName, Object dllInfo,
                                       @CachedContext(TruffleRLanguage.class) RContext context) {
-        String className = stringCastNode.executeObject(classNameObj);
-        String packageName = stringCastNode.executeObject(packageNameObj);
         AltRepContext altRepCtx = context.altRepContext;
         altrepLogger.fine(() -> "Making new altint class " + packageName + ":" + className);
         return altRepCtx.registerNewAltIntClass(className, packageName, dllInfo);

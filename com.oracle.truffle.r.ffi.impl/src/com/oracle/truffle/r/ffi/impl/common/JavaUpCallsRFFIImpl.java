@@ -22,16 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.common;
 
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guarantee;
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.function.Function;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
@@ -124,6 +114,14 @@ import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.function.Function;
+
+import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.*;
 
 /**
  * This class provides a simple Java-based implementation of {@link UpCallsRFFI}, where all the
@@ -1389,32 +1387,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_make_altinteger_class(Object className, Object packageName, Object dllInfo) {
+    public Object R_make_altinteger_class(String className, String packageName, Object dllInfo) {
         throw implementedAsNode();
     }
 
     @Override
-    public Object R_make_altreal_class(Object className, Object packageName, Object dllInfo) {
+    public Object R_make_altreal_class(String className, String packageName, Object dllInfo) {
         throw implementedAsNode();
     }
 
     @Override
-    public Object R_make_altlogical_class(Object className, Object packageName, Object dllInfo) {
+    public Object R_make_altlogical_class(String className, String packageName, Object dllInfo) {
         throw implementedAsNode();
     }
 
     @Override
-    public Object R_make_altstring_class(Object className, Object packageName, Object dllInfo) {
+    public Object R_make_altstring_class(String className, String packageName, Object dllInfo) {
         throw implementedAsNode();
     }
 
     @Override
-    public Object R_make_altraw_class(Object className, Object packageName, Object dllInfo) {
+    public Object R_make_altraw_class(String className, String packageName, Object dllInfo) {
         throw implementedAsNode();
     }
 
     @Override
-    public Object R_make_altcomplex_class(Object className, Object packageName, Object dllInfo) {
+    public Object R_make_altcomplex_class(String className, String packageName, Object dllInfo) {
         throw implementedAsNode();
     }
 

@@ -12,7 +12,6 @@ import com.oracle.truffle.r.ffi.impl.nodes.NewAltRepNode;
 import com.oracle.truffle.r.ffi.impl.nodes.SetAltrepData1Node;
 import com.oracle.truffle.r.ffi.impl.nodes.SetAltrepData2Node;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
-import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 
 public interface AltRepUpCalls {
@@ -27,17 +26,17 @@ public interface AltRepUpCalls {
     @RFFIUpCallNode(SetAltrepData2Node.class)
     void R_set_altrep_data2(Object instance, Object data2);
     @RFFIUpCallNode(MakeAltIntegerClassNode.class)
-    Object R_make_altinteger_class(@RFFICstring(convert = false) Object className, @RFFICstring(convert = false) Object packageName, @RFFICpointer Object dllInfo);
+    Object R_make_altinteger_class(String className, String packageName, @RFFICpointer Object dllInfo);
     @RFFIUpCallNode(MakeAltRealClassNode.class)
-    Object R_make_altreal_class(@RFFICstring(convert = false) Object className, @RFFICstring(convert = false) Object packageName, @RFFICpointer Object dllInfo);
+    Object R_make_altreal_class(String className, String packageName, @RFFICpointer Object dllInfo);
     @RFFIUpCallNode(MakeAltLogicalClassNode.class)
-    Object R_make_altlogical_class(@RFFICstring(convert = false) Object className, @RFFICstring(convert = false) Object packageName, @RFFICpointer Object dllInfo);
+    Object R_make_altlogical_class(String className, String packageName, @RFFICpointer Object dllInfo);
     @RFFIUpCallNode(MakeAltStringClassNode.class)
-    Object R_make_altstring_class(@RFFICstring(convert = false) Object className, @RFFICstring(convert = false) Object packageName, @RFFICpointer Object dllInfo);
+    Object R_make_altstring_class(String className, String packageName, @RFFICpointer Object dllInfo);
     @RFFIUpCallNode(MakeAltRawClassNode.class)
-    Object R_make_altraw_class(@RFFICstring(convert = false) Object className, @RFFICstring(convert = false) Object packageName, @RFFICpointer Object dllInfo);
+    Object R_make_altraw_class(String className, String packageName, @RFFICpointer Object dllInfo);
     @RFFIUpCallNode(MakeAltComplexClassNode.class)
-    Object R_make_altcomplex_class(@RFFICstring(convert = false) Object className, @RFFICstring(convert = false) Object packageName, @RFFICpointer Object dllInfo);
+    Object R_make_altcomplex_class(String className, String packageName, @RFFICpointer Object dllInfo);
 
     void R_set_altrep_Unserialize_method(Object classDescriptor, @RFFICpointer Object method);
     void R_set_altrep_UnserializeEX_method(Object classDescriptor, @RFFICpointer Object method);
