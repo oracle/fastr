@@ -122,7 +122,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     public RIntArrayVectorData materialize(@Cached("create()") AltrepRFFI.AltIntDataptrNode dataptrNode,
                                            @Cached AltrepLengthNode lengthNode) {
         int length = (int) lengthNode.execute(getOwner());
-        long dataptrAddr = dataptrNode.execute(getOwner(), true);
+        long dataptrAddr = invokeDataptrMethodCached(dataptrNode, true);
         int[] newData = new int[length];
         NativeMemory.copyMemory(dataptrAddr, newData, ElementType.INT, length);
         // TODO: complete=true?
@@ -154,10 +154,26 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         throw RInternalError.unimplemented("RAltIntVectorData.copyResized");
     }
 
+    /**
+     * TODO: This method gets called from Rf_duplicate which means that it eventually should make downcall into
+     *   Duplicate. The behavior may change, so the implementation is not optimized.
+     */
     @ExportMessage
-    public int[] getIntDataCopy(@Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
+    public int[] getIntDataCopy(@Cached AltrepDuplicateNode duplicateNode,
+                                @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
                                 @Cached AltrepLengthNode lengthNode) {
-        return getDataCopy(dataptrNode, lengthNode);
+        // TODO: deep?
+        Object duplicatedObject = duplicateNode.execute(getOwner(), false);
+        assert duplicatedObject instanceof RAltIntVectorData || duplicatedObject instanceof RIntArrayVectorData;
+        if (duplicatedObject instanceof RAltIntVectorData) {
+            return ((RAltIntVectorData) duplicatedObject).getDataCopy(dataptrNode, lengthNode);
+        } else if (duplicatedObject instanceof RIntArrayVectorData) {
+            return ((RIntArrayVectorData) duplicatedObject).getIntDataCopy();
+        } else {
+            throw RInternalError.shouldNotReachHere(
+                    "RAltIntVectorData.getIntDataCopy: Unexpected returned object = " + duplicatedObject.toString()
+            );
+        }
     }
 
     @ExportMessage
@@ -167,7 +183,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     private int[] getDataCopy(AltrepRFFI.AltIntDataptrNode dataptrNode, AltrepLengthNode lengthNode) {
-        long dataptrAddr = dataptrNode.execute(getOwner(), false);
+        long dataptrAddr = invokeDataptrMethodCached(dataptrNode, false);
         int length = (int) lengthNode.execute(getOwner());
         int[] dataCopy = new int[length];
         NativeMemory.copyMemory(dataptrAddr, dataCopy, ElementType.INT, length);
@@ -218,6 +234,11 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         // TODO: Exception handling?
         dataptrCalled = true;
         return descriptor.invokeDataptrMethodUncached(getOwner(), true);
+    }
+
+    private long invokeDataptrMethodCached(AltrepRFFI.AltIntDataptrNode dataptrNode, boolean writeable) {
+        dataptrCalled = true;
+        return dataptrNode.execute(getOwner(), writeable);
     }
 
     @ExportMessage
