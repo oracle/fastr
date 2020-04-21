@@ -502,7 +502,7 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
                     Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter,
                     Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
         leftLib.next(leftData, leftIter);
-        while (rightLib.next(rightData, rightIter)) {
+        while (rightLib.nextLoopCondition(rightData, rightIter)) {
             resultLib.next(resultData, resultIter);
             indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
         }
@@ -514,7 +514,7 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
                     Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter,
                     Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
         rightLib.next(rightData, rightIter);
-        while (leftLib.next(leftData, leftIter)) {
+        while (leftLib.nextLoopCondition(leftData, leftIter)) {
             resultLib.next(resultData, resultIter);
             indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
         }
@@ -525,7 +525,7 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
                     Object resultData, VectorDataLibrary resultLib, SeqWriteIterator resultIter,
                     Object leftData, VectorDataLibrary leftLib, SeqIterator leftIter,
                     Object rightData, VectorDataLibrary rightLib, SeqIterator rightIter) {
-        while (leftLib.next(leftData, leftIter)) {
+        while (leftLib.nextLoopCondition(leftData, leftIter)) {
             rightLib.next(rightData, rightIter);
             resultLib.next(resultData, resultIter);
             indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
@@ -550,12 +550,12 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
             rightIter.reset();
             if (smallRemainderProfile.profile((leftLength - leftIter.getIndex() - 1) >= rightLength)) {
                 // we need at least rightLength more elements
-                while (rightLib.next(rightData, rightIter) && leftLib.next(leftData, leftIter)) {
+                while (rightLib.nextLoopCondition(rightData, rightIter) && leftLib.nextLoopCondition(leftData, leftIter)) {
                     resultLib.next(resultData, resultIter);
                     indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
                 }
             } else {
-                while (rightLib.next(rightData, rightIter) && leftLib.next(leftData, leftIter)) {
+                while (rightLib.nextLoopCondition(rightData, rightIter) && leftLib.nextLoopCondition(leftData, leftIter)) {
                     resultLib.next(resultData, resultIter);
                     indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
                 }
@@ -578,12 +578,12 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
             leftIter.reset();
             if (smallRemainderProfile.profile((rightLength - rightIter.getIndex() - 1) >= leftLength)) {
                 // we need at least leftLength more elements
-                while (leftLib.next(leftData, leftIter) && rightLib.next(rightData, rightIter)) {
+                while (leftLib.nextLoopCondition(leftData, leftIter) && rightLib.nextLoopCondition(rightData, rightIter)) {
                     resultLib.next(resultData, resultIter);
                     indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
                 }
             } else {
-                while (leftLib.next(leftData, leftIter) && rightLib.next(rightData, rightIter)) {
+                while (leftLib.nextLoopCondition(leftData, leftIter) && rightLib.nextLoopCondition(rightData, rightIter)) {
                     resultLib.next(resultData, resultIter);
                     indexedAction.perform(node, resultData, resultLib, resultIter, leftData, leftLib, leftIter, rightData, rightLib, rightIter);
                 }

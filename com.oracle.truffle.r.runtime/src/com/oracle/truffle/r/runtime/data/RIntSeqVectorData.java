@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -166,9 +167,17 @@ public class RIntSeqVectorData implements RSeq, TruffleObject {
     }
 
     @ExportMessage
-    public boolean next(SeqIterator it, boolean withWrap,
+    @SuppressWarnings("static-method")
+    public boolean nextImpl(SeqIterator it, boolean loopCondition,
                     @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
-        return it.next(loopProfile, withWrap);
+        return it.next(loopCondition, loopProfile);
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public void nextWithWrap(SeqIterator it,
+                    @Cached("createBinaryProfile()") ConditionProfile wrapProfile) {
+        it.nextWithWrap(wrapProfile);
     }
 
     @ExportMessage

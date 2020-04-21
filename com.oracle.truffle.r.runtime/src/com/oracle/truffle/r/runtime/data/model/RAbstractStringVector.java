@@ -239,10 +239,17 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    @SuppressWarnings("static")
-    public boolean next(SeqIterator it, boolean withWrap,
+    @SuppressWarnings("static-method")
+    public boolean nextImpl(SeqIterator it, boolean loopCondition,
                     @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
-        return it.next(loopProfile, withWrap);
+        return it.next(loopCondition, loopProfile);
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public void nextWithWrap(SeqIterator it,
+                    @Cached("createBinaryProfile()") ConditionProfile wrapProfile) {
+        it.nextWithWrap(wrapProfile);
     }
 
     @ExportMessage
