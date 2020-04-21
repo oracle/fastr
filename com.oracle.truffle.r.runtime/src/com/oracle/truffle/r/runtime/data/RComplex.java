@@ -33,12 +33,12 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
-import static com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector.MEMBER_IM;
-import static com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector.MEMBER_RE;
+import static com.oracle.truffle.r.runtime.data.RComplexVector.MEMBER_IM;
+import static com.oracle.truffle.r.runtime.data.RComplexVector.MEMBER_RE;
 
 @ValueType
 @ExportLibrary(InteropLibrary.class)
-public final class RComplex implements RTruffleObject, ScalarWrapper {
+public final class RComplex implements RTruffleObject {
 
     private final double realPart;
     private final double imaginaryPart;
@@ -56,7 +56,7 @@ public final class RComplex implements RTruffleObject, ScalarWrapper {
     @SuppressWarnings("static-method")
     @ExportMessage
     boolean hasMembers() {
-        return true;
+        return !RRuntime.isNA(this);
     }
 
     @ExportMessage
@@ -80,16 +80,12 @@ public final class RComplex implements RTruffleObject, ScalarWrapper {
     @ExportMessage
     Object readMember(String member,
                     @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers,
-                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
-                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNullIdentifier) throws UnknownIdentifierException, UnsupportedMessageException {
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException, UnsupportedMessageException {
         if (noMembers.profile(!hasMembers())) {
             throw UnsupportedMessageException.create();
         }
         if (unknownIdentifier.profile(!isMemberReadable(member, noMembers))) {
             throw UnknownIdentifierException.create(member);
-        }
-        if (isNullIdentifier.profile(isNull())) {
-            return new RInteropNA.RInteropComplexNA(this);
         }
         if (MEMBER_RE.equals(member)) {
             return getRealPart();

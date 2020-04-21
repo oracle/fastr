@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -153,6 +154,11 @@ public abstract class FFIMaterializeNode extends Node {
 
     @Specialization
     protected static Object wrap(RLogicalVector value, @SuppressWarnings("unused") boolean protect) {
+        return value.cachedMaterialize();
+    }
+
+    @Specialization
+    protected static Object wrap(RComplexVector value, @SuppressWarnings("unused") boolean protect) {
         return value.cachedMaterialize();
     }
 

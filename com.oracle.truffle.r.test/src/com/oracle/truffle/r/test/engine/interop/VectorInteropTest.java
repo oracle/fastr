@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
-import com.oracle.truffle.r.runtime.data.RInteropComplex;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -72,12 +71,17 @@ public class VectorInteropTest extends AbstractInteropTest {
 
         TruffleObject vb = RDataFactory.createLogicalVector(new byte[]{1, 0, 1}, true);
         assertEquals(true, getInterop().readArrayElement(vb, 0));
+
+        TruffleObject vr = RDataFactory.createRawVector(new byte[]{1});
+        assertEquals((byte) 1, getInterop().readArrayElement(vr, 0));
+
+        TruffleObject vc = RDataFactory.createComplexVector(new double[]{1, 1}, true);
+        assertEquals(RComplex.valueOf(1, 1), getInterop().readArrayElement(vc, 0));
     }
 
     @Test
     public void testReadComplexMember() throws Exception {
         // scalar
-
         testReadComplexScalar(RDataFactory.createComplexVector(new double[]{1, 2}, true));
 
         // scalar NA
@@ -144,11 +148,10 @@ public class VectorInteropTest extends AbstractInteropTest {
         getInterop().isNull(RDataFactory.createStringVector(new String[]{RRuntime.STRING_NA}, RDataFactory.INCOMPLETE_VECTOR));
 
         // complex
-        testRNARTOTIN(RDataFactory.createComplexVector(new double[]{1, 1, 2, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR), new RInteropComplex(RComplex.valueOf(1, 1)));
-        testRNARTOTIN(RDataFactory.createComplexVector(new double[]{1, 1, RRuntime.COMPLEX_NA_REAL_PART, 2}, RDataFactory.INCOMPLETE_VECTOR), new RInteropComplex(RComplex.valueOf(1, 1)));
-        testRNARTOTIN(RDataFactory.createComplexVector(new double[]{1, 1, RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR),
-                        new RInteropComplex(RComplex.valueOf(1, 1)));
-        testRNARTOTIN(RClosures.createToComplexVector(RDataFactory.createIntVector(new int[]{1, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true), new RInteropComplex(RComplex.valueOf(1, 0)));
+        testRNARTOTIN(RDataFactory.createComplexVector(new double[]{1, 1, 2, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR), RComplex.valueOf(1, 1));
+        testRNARTOTIN(RDataFactory.createComplexVector(new double[]{1, 1, RRuntime.COMPLEX_NA_REAL_PART, 2}, RDataFactory.INCOMPLETE_VECTOR), RComplex.valueOf(1, 1));
+        testRNARTOTIN(RDataFactory.createComplexVector(new double[]{1, 1, RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR), RComplex.valueOf(1, 1));
+        testRNARTOTIN(RClosures.createToComplexVector(RDataFactory.createIntVector(new int[]{1, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR), true), RComplex.valueOf(1, 0));
         getInterop().isNull(RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR));
         getInterop().isNull(RDataFactory.createComplexVector(new double[]{RRuntime.COMPLEX_NA_REAL_PART, 1}, RDataFactory.INCOMPLETE_VECTOR));
         getInterop().isNull(RDataFactory.createComplexVector(new double[]{1, RRuntime.COMPLEX_NA_IMAGINARY_PART}, RDataFactory.INCOMPLETE_VECTOR));

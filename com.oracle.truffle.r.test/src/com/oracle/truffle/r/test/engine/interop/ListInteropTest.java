@@ -31,10 +31,13 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import static org.junit.Assert.assertTrue;
@@ -47,6 +50,21 @@ public class ListInteropTest extends AbstractInteropTest {
     @Override
     protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
         return true;
+    }
+
+    @Test
+    public void testReadBoxed() throws Exception {
+        // create list where raw and complex values
+        // are represented by the scalar non-vector types RRaw, RComplex
+        RList l = RDataFactory.createList(new Object[]{1, 1.1, (byte) 1, RRaw.valueOf((byte) 1), RComplex.valueOf(1, 1), "abc"},
+                        RDataFactory.createStringVector(new String[]{"i", "d", "b", "r", "c", "s"}, true));
+
+        assertSingletonVector(1, getInterop().readMember(l, "i"));
+        assertSingletonVector(1.1, getInterop().readMember(l, "d"));
+        assertSingletonVector(true, getInterop().readMember(l, "b"));
+        assertSingletonVector((byte) 1, getInterop().readMember(l, "r"));
+        assertSingletonVector(RComplex.valueOf(1, 1), getInterop().readMember(l, "c"));
+        assertSingletonVector("abc", getInterop().readMember(l, "s"));
     }
 
     @Test

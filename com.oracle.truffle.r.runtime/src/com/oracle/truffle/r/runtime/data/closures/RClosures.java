@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -44,7 +45,7 @@ public class RClosures {
     }
 
     public static RAbstractComplexVector createToComplexVector(RAbstractVector vector, boolean keepAttributes) {
-        return new RToComplexVectorClosure(vector, keepAttributes);
+        return RComplexVector.createClosure(vector, keepAttributes);
     }
 
     public static RAbstractStringVector createToStringVector(RAbstractVector vector, boolean keepAttributes) {

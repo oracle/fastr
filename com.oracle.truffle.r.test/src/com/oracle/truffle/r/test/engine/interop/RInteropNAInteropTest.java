@@ -23,10 +23,7 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RInteropNA;
-import com.oracle.truffle.r.runtime.data.RInteropNA.RInteropComplexNA;
 import org.junit.Test;
 
 public class RInteropNAInteropTest extends AbstractInteropTest {
@@ -44,10 +41,7 @@ public class RInteropNAInteropTest extends AbstractInteropTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RInteropNA.DOUBLE, RInteropNA.INT, RInteropNA.LOGICAL, RInteropNA.STRING,
-                        new RInteropComplexNA(RRuntime.COMPLEX_NA),
-                        new RInteropComplexNA(RComplex.valueOf(1, RRuntime.COMPLEX_NA_IMAGINARY_PART)),
-                        new RInteropComplexNA(RComplex.valueOf(RRuntime.COMPLEX_NA_REAL_PART, 1))};
+        return new TruffleObject[]{RInteropNA.DOUBLE, RInteropNA.INT, RInteropNA.LOGICAL, RInteropNA.STRING};
     }
 
     @Override

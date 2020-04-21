@@ -28,8 +28,8 @@ import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunct
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 public abstract class Fft extends RExternalBuiltinNode.Arg2 {
@@ -39,7 +39,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Fft.class);
-        casts.arg(0).mustNotBeMissing().mustBe(nullValue().not()).asComplexVector(false, true, false);
+        casts.arg(0).mustNotBeMissing().mustBe(nullValue().not()).boxPrimitive().asComplexVector(false, true, false);
         casts.arg(1).mustNotBeNull().asLogicalVector().findFirst().map(Predef.toBoolean());
     }
 
@@ -48,7 +48,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
 
     // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
     @Specialization
-    public Object execute(RAbstractComplexVector zVec, boolean inverse,
+    public Object execute(RComplexVector zVec, boolean inverse,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
         double[] z = zVec.getDataTemp();
         int inv = inverse ? 2 : -2;

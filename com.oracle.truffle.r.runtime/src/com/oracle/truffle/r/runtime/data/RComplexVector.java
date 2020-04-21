@@ -22,12 +22,20 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.Arrays;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.ExportMessage.Ignore;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -37,16 +45,23 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicReference;
 
+@ExportLibrary(InteropLibrary.class)
 public final class RComplexVector extends RAbstractComplexVector implements RMaterializedVector, Shareable {
 
-    private double[] data;
+    public static final String MEMBER_RE = "re";
+    public static final String MEMBER_IM = "im";
+
+    private int length;
 
     RComplexVector(double[] data, boolean complete) {
         super(complete);
         assert data.length % 2 == 0;
-        this.data = data;
+        setData(new RComplexArrayVectorData(data, complete), data.length >> 1);
         assert RAbstractVector.verifyVector(this);
     }
 
@@ -55,8 +70,43 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    RComplexVector(Object data, int newLen) {
+        super(false);
+        setData(data, newLen);
+        assert RAbstractVector.verifyVector(this);
+    }
+
     private RComplexVector() {
         super(false);
+    }
+
+    private void setData(Object data, int newLen) {
+        this.data = data;
+        if (data instanceof VectorDataWithOwner) {
+            ((VectorDataWithOwner) data).setOwner(this);
+        }
+        // Temporary solution to keep getLength(), isComplete(), and isShareable be fast-path
+        // operations (they only read a field, no polymorphism).
+        // The assumption is that length of vectors can only change in infrequently used setLength
+        // operation where we update the field accordingly
+        length = newLen;
+        shareable = data instanceof RComplexArrayVectorData || data instanceof RComplexNativeVectorData;
+        // Only array storage strategy is handling the complete flag dynamically,
+        // for other strategies, the complete flag is determined solely by the type of the strategy
+        if (!(data instanceof RComplexArrayVectorData)) {
+            // only sequences are always complete, everything else is always incomplete
+            setComplete(false);
+        }
+    }
+
+    public static RComplexVector createClosure(RAbstractVector delegate, boolean keepAttrs) {
+        RComplexVector result = new RComplexVector(VectorDataClosure.fromVector(delegate, RType.Complex), delegate.getLength());
+        if (keepAttrs) {
+            result.initAttributes(delegate.getAttributes());
+        } else {
+            RClosures.initRegAttributes(result, delegate);
+        }
+        return result;
     }
 
     static RComplexVector fromNative(long address, int length) {
@@ -66,27 +116,114 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
         return result;
     }
 
+    @ExportMessage
+    public boolean isNull(
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
+        if (!isScalar.profile(isScalar(dataLib))) {
+            return false;
+        }
+        return RRuntime.isNA(dataLib.getComplexAt(getData(), 0));
+    }
+
+    @ExportMessage
+    boolean hasMembers(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return isScalar(dataLib) && !RRuntime.isNA(dataLib.getComplexAt(getData(), 0));
+    }
+
+    @ExportMessage
+    Object getMembers(@SuppressWarnings("unused") boolean includeInternal,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers) throws UnsupportedMessageException {
+        if (noMembers.profile(!hasMembers(dataLib))) {
+            throw UnsupportedMessageException.create();
+        }
+        return RDataFactory.createStringVector(new String[]{MEMBER_RE, MEMBER_IM}, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @ExportMessage
+    boolean isMemberReadable(String member,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers) {
+        if (noMembers.profile(!hasMembers(dataLib))) {
+            return false;
+        }
+        return MEMBER_RE.equals(member) || MEMBER_IM.equals(member);
+    }
+
+    @ExportMessage
+    Object readMember(String member,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException, UnsupportedMessageException {
+        if (noMembers.profile(!hasMembers(dataLib))) {
+            throw UnsupportedMessageException.create();
+        }
+        if (unknownIdentifier.profile(!isMemberReadable(member, dataLib, noMembers))) {
+            throw UnknownIdentifierException.create(member);
+        }
+        RComplex singleValue = dataLib.getComplexAt(getData(), 0);
+        if (MEMBER_RE.equals(member)) {
+            return singleValue.getRealPart();
+        } else {
+            return singleValue.getImaginaryPart();
+        }
+    }
+
+    @Override
+    @ExportMessage.Ignore // AbstractContainerLibrary
+    public boolean isMaterialized() {
+        return VectorDataLibrary.getFactory().getUncached().isWriteable(this.data);
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.Complex;
+    }
+
+    @Override
+    public boolean isForeignWrapper() {
+        return false;
+    }
+
+    @Override
+    public boolean isClosure() {
+        return data instanceof RClosure;
+    }
+
+    @Override
+    public RClosure getClosure() {
+        return (RClosure) data;
+    }
+
     @Override
     public double[] getInternalManagedData() {
+        if (data instanceof RComplexNativeVectorData) {
+            return null;
+        }
+        // TODO: get rid of this method
+        assert data instanceof RComplexArrayVectorData : data.getClass().getName();
+        return ((RComplexArrayVectorData) data).getReadonlyComplexData();
+    }
+
+    @Override
+    public Object getInternalStore() {
         return data;
     }
 
     @Override
-    public double[] getInternalStore() {
-        return data;
-    }
-
-    @Override
+    @ExportMessage.Ignore
     public int getLength() {
-        return NativeDataAccess.getDataLength(this, data);
+        return length;
     }
 
     @Override
     public void setLength(int l) {
         try {
-            NativeDataAccess.setDataLength(this, data, l);
+            NativeDataAccess.setDataLength(this, getArrayForNativeDataAccess(), l);
         } finally {
-            data = null;
+            RComplexNativeVectorData newData = new RComplexNativeVectorData(this);
+            setData(newData, l);
             setComplete(false);
         }
     }
@@ -98,7 +235,13 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
 
     @Override
     public void setTrueLength(int l) {
-        NativeDataAccess.setTrueDataLength(this, l);
+        try {
+            NativeDataAccess.setTrueDataLength(this, l);
+        } finally {
+            RComplexNativeVectorData newData = new RComplexNativeVectorData(this);
+            setData(newData, VectorDataLibrary.getFactory().getUncached().getLength(newData));
+            setComplete(false);
+        }
     }
 
     @Override
@@ -118,23 +261,24 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
     @Override
     public void setDataAt(Object store, int index, RComplex value) {
         assert data == store;
-        NativeDataAccess.setData(this, (double[]) store, index, value.getRealPart(), value.getImaginaryPart());
+        VectorDataLibrary.getFactory().getUncached().setComplexAt(store, index, value);
     }
 
     @Override
     public void setDataAt(Object store, int index, double value) {
         assert data == store;
-        NativeDataAccess.setData(this, (double[]) store, index, value);
+        NativeDataAccess.setData(this, null, index * 2, value);
     }
 
     @Override
     public RComplex getDataAt(int index) {
-        return NativeDataAccess.getData(this, data, index);
+        return getDataAt(getData(), index);
     }
 
     @Override
     public RComplex getDataAt(Object store, int index) {
-        return NativeDataAccess.getData(this, (double[]) store, index);
+        assert data == store;
+        return VectorDataLibrary.getFactory().getUncached().getComplexAt(store, index);
     }
 
     /**
@@ -142,38 +286,23 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
      * numbers are flattened to an array: real part followed by the imaginary part.
      */
     public double getRawDataAt(int index) {
-        return NativeDataAccess.getRawComplexData(this, data, index);
-    }
-
-    @Override
-    public double getComplexPartAt(int index) {
-        return NativeDataAccess.getComplexPart(this, data, index);
+        return NativeDataAccess.getRawComplexData(this, null, index);
     }
 
     @Override
     public double[] getDataCopy() {
-        if (data != null) {
-            return Arrays.copyOf(data, data.length);
-        } else {
-            return NativeDataAccess.copyComplexNativeData(getNativeMirror());
-        }
+        return VectorDataLibrary.getFactory().getUncached().getComplexDataCopy(data);
     }
 
     @Override
     public double[] getReadonlyData() {
-        if (data != null) {
-            return data;
-        } else {
-            return NativeDataAccess.copyComplexNativeData(getNativeMirror());
-        }
+        return VectorDataLibrary.getFactory().getUncached().getReadonlyComplexData(data);
     }
 
-    private RComplexVector updateDataAt(int index, RComplex value, NACheck rightNACheck) {
+    private RComplexVector updateDataAt(int index, RComplex value, NACheck naCheck) {
         assert !this.isShared();
-        NativeDataAccess.setData(this, data, index, value.getRealPart(), value.getImaginaryPart());
-        if (rightNACheck.check(value)) {
-            setComplete(false);
-        }
+        assert !RRuntime.isNA(value) || naCheck.isEnabled();
+        VectorDataLibrary.getFactory().getUncached().setComplexAt(data, index, value);
         assert !isComplete() || !RRuntime.isNA(value);
         return this;
     }
@@ -184,24 +313,108 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
     public RComplexVector materialize() {
-        return this;
+        return containerLibMaterialize(VectorDataLibrary.getFactory().getUncached(data));
+    }
+
+    @ExportMessage(library = AbstractContainerLibrary.class)
+    public void materializeData(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        setData(dataLib.materialize(data), getLength());
+    }
+
+    @ExportMessage(name = "materialize", library = AbstractContainerLibrary.class)
+    RComplexVector containerLibMaterialize(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (dataLib.isWriteable(data)) {
+            return this;
+        }
+        // To retain the semantics of the original materialize, for sequences and such we return new
+        // vector
+        return new RComplexVector(dataLib.getComplexDataCopy(data), isComplete());
+    }
+
+    @Override
+    @Ignore // AbstractContainerLibrary
+    public RComplexVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return new RComplexVector(new double[newLength << 1], newIsComplete);
     }
 
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
-        RAbstractComplexVector other = (RAbstractComplexVector) fromVector;
-        RComplex value = other.getDataAt(fromIndex);
-        NativeDataAccess.setData(this, data, toIndex, value.getRealPart(), value.getImaginaryPart());
+        VectorDataLibrary lib = VectorDataLibrary.getFactory().getUncached();
+        RComplex value = lib.getComplexAt(((RComplexVector) fromVector).data, fromIndex);
+        lib.setComplexAt(data, toIndex, value);
+    }
+
+    @TruffleBoundary
+    protected void copyAttributes(RIntVector materializedVec) {
+        materializedVec.copyAttributesFrom(this);
+    }
+
+    @Override
+    protected RComplexVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        boolean isComplete = isResizedComplete(size, fillNA);
+        return RDataFactory.createComplexVector(copyResizedData(size, fillNA), isComplete, dimensions);
+    }
+
+    private double[] copyResizedData(int size, boolean fillNA) {
+        int csize = size << 1;
+        double[] localData = getReadonlyData();
+        double[] newData = Arrays.copyOf(localData, csize);
+        if (csize > localData.length) {
+            if (fillNA) {
+                for (int i = localData.length; i < csize; i++) {
+                    newData[i] = RRuntime.DOUBLE_NA;
+                }
+            } else {
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i <= csize - 2; i += 2, j = Utils.incMod(j + 1, localData.length)) {
+                    newData[i] = localData[j];
+                    newData[i + 1] = localData[j + 1];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    protected RComplexVector internalCopy() {
+        return RDataFactory.createComplexVector(getDataCopy(), isComplete());
+    }
+
+    @Override
+    public double[] getDataTemp() {
+        return (double[]) super.getDataTemp();
+    }
+
+    @Override
+    public Object getDataAtAsObject(int index) {
+        return getDataAt(index);
+    }
+
+    @Override
+    public void setElement(int index, Object value) {
+        setDataAt(getData(), index, (Double) value);
     }
 
     public long allocateNativeContents() {
         try {
-            return NativeDataAccess.allocateNativeContents(this, data, getLength());
+            data = VectorDataLibrary.getFactory().getUncached().materialize(data);
+            long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
+            setData(new RComplexNativeVectorData(this), getLength());
+            return result;
         } finally {
-            data = null;
             setComplete(false);
         }
+    }
+
+    private AtomicReference<RComplexVector> materialized = new AtomicReference<>();
+
+    public Object cachedMaterialize() {
+        if (materialized.get() == null) {
+            materialized.compareAndSet(null, materialize());
+        }
+        return materialized.get();
     }
 
     private static final class FastPathAccess extends FastPathFromComplexAccess {
@@ -212,29 +425,22 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
 
         @Override
         protected RComplex getComplexImpl(AccessIterator accessIter, int index) {
-            return RComplex.valueOf(getComplexRImpl(accessIter, index), getComplexIImpl(accessIter, index));
+            return dataLib.getComplexAt(accessIter.getStore(), index);
         }
 
         @Override
         protected double getComplexRImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((double[]) accessIter.getStore())[index * 2] : NativeDataAccess.getComplexNativeMirrorDataR((NativeMirror) accessIter.getStore(), index);
+            return dataLib.getComplexAt(accessIter.getStore(), index).getRealPart();
         }
 
         @Override
         protected double getComplexIImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((double[]) accessIter.getStore())[index * 2 + 1] : NativeDataAccess.getComplexNativeMirrorDataI((NativeMirror) accessIter.getStore(), index);
+            return dataLib.getComplexAt(accessIter.getStore(), index).getImaginaryPart();
         }
 
         @Override
         protected void setComplexImpl(AccessIterator accessIter, int index, double real, double imaginary) {
-            Object store = accessIter.getStore();
-            if (hasStore) {
-                ((double[]) store)[index * 2] = real;
-                ((double[]) store)[index * 2 + 1] = imaginary;
-            } else {
-                NativeDataAccess.setNativeMirrorComplexRealPartData((NativeMirror) store, index, real);
-                NativeDataAccess.setNativeMirrorComplexImaginaryPartData((NativeMirror) store, index, imaginary);
-            }
+            dataLib.setComplexAt(accessIter.getStore(), index, RComplex.valueOf(real, imaginary));
         }
     }
 
@@ -247,30 +453,37 @@ public final class RComplexVector extends RAbstractComplexVector implements RMat
         @Override
         protected RComplex getComplexImpl(AccessIterator accessIter, int index) {
             RComplexVector vector = (RComplexVector) accessIter.getStore();
-            return NativeDataAccess.getData(vector, vector.data, index);
+            return vector.getDataAt(index);
         }
 
         @Override
         protected double getComplexRImpl(AccessIterator accessIter, int index) {
             RComplexVector vector = (RComplexVector) accessIter.getStore();
-            return NativeDataAccess.getDataR(vector, vector.data, index);
+            return vector.getDataAt(index).getRealPart();
         }
 
         @Override
         protected double getComplexIImpl(AccessIterator accessIter, int index) {
             RComplexVector vector = (RComplexVector) accessIter.getStore();
-            return NativeDataAccess.getDataI(vector, vector.data, index);
+            return vector.getDataAt(index).getImaginaryPart();
         }
 
         @Override
         protected void setComplexImpl(AccessIterator accessIter, int index, double real, double imaginary) {
             RComplexVector vector = (RComplexVector) accessIter.getStore();
-            NativeDataAccess.setData(vector, vector.data, index, real, imaginary);
+            vector.setDataAt(vector.data, index, RComplex.valueOf(real, imaginary));
         }
     };
 
     @Override
     public VectorAccess slowPathAccess() {
         return SLOW_PATH_ACCESS;
+    }
+
+    // TODO: Hack: we make sure the vector is either array or native, so that we can call
+    // NativeDataAccess methods
+    private double[] getArrayForNativeDataAccess() {
+        materializeData(VectorDataLibrary.getFactory().getUncached());
+        return data instanceof RComplexArrayVectorData ? ((RComplexArrayVectorData) data).getReadonlyComplexData() : null;
     }
 }

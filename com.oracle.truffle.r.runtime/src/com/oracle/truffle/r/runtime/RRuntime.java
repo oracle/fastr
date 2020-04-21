@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -1052,7 +1053,7 @@ public class RRuntime {
 
     public static boolean hasVectorData(Object o) {
         // TODO: for the time beeeing, until all vectors switch to RVectorData
-        return o instanceof RIntVector || o instanceof RDoubleVector || o instanceof RRawVector || o instanceof RLogicalVector;
+        return o instanceof RIntVector || o instanceof RDoubleVector || o instanceof RRawVector || o instanceof RLogicalVector || o instanceof RComplexVector;
     }
 
     public static boolean isSequence(Object o) {
