@@ -98,6 +98,12 @@ Additional requirements in order to install and run some important R packages (r
     The xz package, version 5.2.2 or later
     The curl package, version 7.50.1 or later
 
+FastR uses the Labs LLVM Toolchain and `gfortran` to build its native sources.
+The Labs LLVM Toolchain is provided by the Sulong suite in Graal repository and
+MX handles that automatically. By default, FastR expects the `gfortran` executable
+to be on the system path. Path to gfortran can be configured by exporting environment
+variable `FASTR_FC`.
+
 ### Non standard system library locations
 
 Since different systems use different package managers some of which install packages in directories that are not

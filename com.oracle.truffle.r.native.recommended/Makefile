@@ -104,7 +104,7 @@ $(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
 
 %.ts: $(GNUR_RECOMMENDED_TAR_DIR)%.tgz
 	@echo Installing recommended package `basename $<`
-	@_R_CHECK_INSTALL_DEPENDS_=no $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
+	@_R_CHECK_INSTALL_DEPENDS_=no FASTR_USE_F2C=true $(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL $(INSTALL_OPTS) --library=$(FASTR_R_HOME)/library $< &> $@.out || (cat $@.out && exit 1)
 	@echo Finished installing recommended package `basename $<`
 
 install.recommended: $(GNUR_RECOMMENDED_PKGNAMES_TS)
