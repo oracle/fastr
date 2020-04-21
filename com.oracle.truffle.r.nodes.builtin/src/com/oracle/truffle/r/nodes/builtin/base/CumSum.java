@@ -113,7 +113,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
         int[] array = new int[iter.getLength()];
         int prev = 0;
         WarningInfo warningInfo = new WarningInfo();
-        while (xDataLib.next(xData, iter)) {
+        while (xDataLib.nextLoopCondition(xData, iter)) {
             int value = xDataLib.getNextInt(xData, iter);
             if (naCheck.check(value)) {
                 Arrays.fill(array, iter.getIndex(), array.length, RRuntime.INT_NA);
@@ -143,7 +143,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
         SeqIterator iter = xDataLib.iterator(xData);
         double[] array = new double[iter.getLength()];
         double prev = 0;
-        while (xDataLib.next(xData, iter)) {
+        while (xDataLib.nextLoopCondition(xData, iter)) {
             double value = xDataLib.getNextDouble(xData, iter);
             if (naCheck.check(value)) {
                 Arrays.fill(array, iter.getIndex(), array.length, RRuntime.DOUBLE_NA);
@@ -168,8 +168,8 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
         naCheck.enable(xDataLib, xData);
         SeqIterator iter = xDataLib.iterator(xData);
         double[] array = new double[iter.getLength() * 2];
-        RComplex prev = RDataFactory.createComplex(0, 0);
-        while (xDataLib.next(xData, iter)) {
+        RComplex prev = RComplex.valueOf(0, 0);
+        while (xDataLib.nextLoopCondition(xData, iter)) {
             RComplex curr = xDataLib.getNextComplex(xData, iter);
             double real = curr.getRealPart();
             double imag = curr.getImaginaryPart();

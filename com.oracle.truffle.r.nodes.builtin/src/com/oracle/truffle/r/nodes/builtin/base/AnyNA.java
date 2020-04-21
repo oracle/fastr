@@ -123,7 +123,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
                 // shortcut when we know there's no NAs
                 if (!xDataLib.isComplete(xData)) {
                     SeqIterator iter = xDataLib.iterator(xData);
-                    while (xDataLib.next(xData, iter)) {
+                    while (xDataLib.nextLoopCondition(xData, iter)) {
                         if (xDataLib.isNextNA(xData, iter)) {
                             return RRuntime.LOGICAL_TRUE;
                         }
@@ -134,7 +134,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
                 return RRuntime.LOGICAL_FALSE;
             case Double:
                 SeqIterator iterDouble = xDataLib.iterator(xData);
-                while (xDataLib.next(xData, iterDouble)) {
+                while (xDataLib.nextLoopCondition(xData, iterDouble)) {
                     if (nanCheck.checkNAorNaN(xDataLib.getNextDouble(xData, iterDouble))) {
                         return RRuntime.LOGICAL_TRUE;
                     }
@@ -142,7 +142,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
                 break;
             case Complex:
                 SeqIterator iterCmplx = xDataLib.iterator(xData);
-                while (xDataLib.next(xData, iterCmplx)) {
+                while (xDataLib.nextLoopCondition(xData, iterCmplx)) {
                     RComplex val = xDataLib.getNextComplex(xData, iterCmplx);
                     if (nanCheck.checkNAorNaN(val.getRealPart()) || nanCheck.checkNAorNaN(val.getImaginaryPart())) {
                         return RRuntime.LOGICAL_TRUE;

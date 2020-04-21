@@ -199,15 +199,20 @@ public abstract class VectorDataLibrary extends Library {
             profile.profileCounted(length);
         }
 
-        public final boolean next(LoopConditionProfile loopConditionProfile, boolean withWrap) {
-            if (withWrap) {
-                index++;
-                if (loopConditionProfile.inject(index == length)) {
-                    index = 0;
-                }
-                return true;
+        public final boolean next(boolean loopCondition, LoopConditionProfile loopConditionProfile) {
+            CompilerAsserts.partialEvaluationConstant(loopCondition);
+            if (loopCondition) {
+                return loopConditionProfile.inject(++index < length);
+            } else {
+                return ++index < length;
             }
-            return loopConditionProfile.inject(++index < length);
+        }
+
+        public final void nextWithWrap(ConditionProfile wrapConditionProfile) {
+            index++;
+            if (wrapConditionProfile.profile(index == length)) {
+                index = 0;
+            }
         }
 
         public final void reset() {
@@ -274,28 +279,58 @@ public abstract class VectorDataLibrary extends Library {
      * level overview.
      *
      * The implementation should use {@link LoopConditionProfile} shared with
-     * {@link #next(Object, SeqIterator, boolean)} message and it should initialize it using
+     * {@link #nextLoopCondition(Object, SeqIterator)} message and it should initialize it using
      * {@link SeqIterator#initLoopConditionProfile(LoopConditionProfile)}.
      */
     public abstract SeqIterator iterator(Object receiver);
 
     /**
-     * Advances the iterator to the next element. Prefer usage of one of the convenience overloads
-     * {@link #next(Object, SeqIterator)} or {@link #nextWithWrap(Object, SeqIterator)}.
+     * Single point for implementation of {@link #next(Object, SeqIterator)} and
+     * {@link #nextLoopCondition(Object, SeqIterator)}. The users of this library should not use
+     * this method directly!
+     */
+    public abstract boolean nextImpl(Object receiver, SeqIterator it, boolean loopCondition);
+
+    /**
+     * Advances the iterator to the next element. There are several overloads of this method:
+     * <ul>
+     * <li>{@link #nextLoopCondition(Object, SeqIterator)} should be used whenever the resulting
+     * {@code boolean} is used in a loop condition. This must not be used anywhere else!</li>
+     * <li>{@link #next(Object, SeqIterator)} variant of the previous that is safe to use in other
+     * contexts than loop conditions.</li>
+     * <li>{@link #nextWithWrap(Object, SeqIterator)} variant which wraps the index back to 0 when
+     * reaching the end of the vector.</li>
+     * <li>{@link #nextImpl(Object, SeqIterator, boolean)} simplifies the implementation, but should
+     * not be used directly.</li>
+     * </ul>
+     */
+    public final boolean next(Object receiver, SeqIterator it) {
+        return nextImpl(receiver, it, false);
+    }
+
+    /**
+     * Prefer usage of {@link #nextLoopCondition(Object, SeqIterator)} over
+     * {@link #next(Object, SeqIterator)} when used in a loop condition. This overload cannot be
+     * used with dispatched libraries (only with cached and uncached libraries), nor in other
+     * contexts than loop conditions, otherwise the compilation will fail!
      *
      * The implementation should use {@link LoopConditionProfile} shared with
      * {@link #iterator(Object)} message and should pass the profile to
-     * {@link SeqIterator#next(LoopConditionProfile,boolean)}.
+     * {@link SeqIterator#next(boolean, LoopConditionProfile)} in
+     * {@link #nextImpl(Object, SeqIterator, boolean)}.
+     *
+     * @see #next(Object, SeqIterator)
      */
-    public abstract boolean next(Object receiver, SeqIterator it, boolean withWrap);
-
-    public final boolean next(Object receiver, SeqIterator it) {
-        return next(receiver, it, false);
+    public final boolean nextLoopCondition(Object receiver, SeqIterator it) {
+        return nextImpl(receiver, it, true);
     }
 
-    public final void nextWithWrap(Object receiver, SeqIterator it) {
-        next(receiver, it, true);
-    }
+    /**
+     * Advances the iterator to the next element with a wrap from last element to the first.
+     *
+     * @see #next(Object, SeqIterator)
+     */
+    public abstract void nextWithWrap(Object receiver, SeqIterator it);
 
     /**
      * @see #iterator(Object)
@@ -1659,8 +1694,13 @@ public abstract class VectorDataLibrary extends Library {
         // TODO: there methods simply delegate, but may be enhanced with assertions
 
         @Override
-        public boolean next(Object receiver, SeqIterator it, boolean withWrap) {
-            return delegate.next(receiver, it, withWrap);
+        public boolean nextImpl(Object receiver, SeqIterator it, boolean loopCondition) {
+            return delegate.nextImpl(receiver, it, loopCondition);
+        }
+
+        @Override
+        public void nextWithWrap(Object receiver, SeqIterator it) {
+            delegate.nextWithWrap(receiver, it);
         }
 
         @Override

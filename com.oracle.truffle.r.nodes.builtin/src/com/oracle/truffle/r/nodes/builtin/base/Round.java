@@ -101,7 +101,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
         Object xData = x.getData();
         VectorDataLibrary.SeqIterator xIt = xDataLib.iterator(xData);
         NACheck xnaCheck = xDataLib.getNACheck(xData);
-        while (xDataLib.next(xData, xIt)) {
+        while (xDataLib.nextLoopCondition(xData, xIt)) {
             byte val = xDataLib.getNextLogical(xData, xIt);
             result[xIt.getIndex()] = xnaCheck.check(val) ? RRuntime.DOUBLE_NA : val;
         }
@@ -116,7 +116,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
         double[] data = new double[x.getLength()];
         Object xData = x.getData();
         VectorDataLibrary.SeqIterator xIt = xDataLib.iterator(xData);
-        while (xDataLib.next(xData, xIt)) {
+        while (xDataLib.nextLoopCondition(xData, xIt)) {
             // getNextDouble takes care of the int NA -> double NA conversion
             data[xIt.getIndex()] = xDataLib.getNextDouble(xData, xIt);
         }
@@ -133,7 +133,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
         VectorDataLibrary.SeqIterator xIt = xDataLib.iterator(xData);
         NACheck xnaCheck = xDataLib.getNACheck(xData);
         int digitsInt = (int) Math.round(digits);
-        while (xDataLib.next(xData, xIt)) {
+        while (xDataLib.nextLoopCondition(xData, xIt)) {
             double value = xDataLib.getNextDouble(xData, xIt);
             result[xIt.getIndex()] = xnaCheck.check(value) ? RRuntime.DOUBLE_NA : zeroDigitProfile.profile(digitsInt == 0) ? roundOp.op(value) : roundOp.opd(value, digitsInt);
         }
