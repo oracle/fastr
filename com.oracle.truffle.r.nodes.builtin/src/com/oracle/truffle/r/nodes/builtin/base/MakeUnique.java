@@ -55,13 +55,13 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RAbstractStringVector makeUnique(String names, @SuppressWarnings("unused") String sep) {
+    protected RAbstractStringVector makeUniqueSingle(String names, @SuppressWarnings("unused") String sep) {
         // a single string cannot have duplicates
         return RDataFactory.createStringVectorFromScalar(names);
     }
 
     @Specialization(guards = {"!hasCustomSpecialization(names)", "reuseNonSharedNode.supports(names)"}, limit = "getVectorAccessCacheSize()")
-    protected RAbstractStringVector makeUnique(RStringVector names, String sep,
+    protected RAbstractStringVector makeUniqueVec(RStringVector names, String sep,
                     @Cached("createNonShared(names)") VectorReuse reuseNonSharedNode,
                     @Cached("createBinaryProfile()") ConditionProfile trivialSizeProfile) {
         if (trivialSizeProfile.profile(names.getLength() == 0 || names.getLength() == 1)) {
@@ -71,11 +71,11 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
         return doLargeVector(reused, sep);
     }
 
-    @Specialization(replaces = "makeUnique", guards = "!hasCustomSpecialization(names)")
+    @Specialization(replaces = "makeUniqueVec", guards = "!hasCustomSpecialization(names)")
     protected RAbstractStringVector makeUniqueGeneric(RStringVector names, String sep,
                     @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode,
                     @Cached("createBinaryProfile()") ConditionProfile trivialSizeProfile) {
-        return makeUnique(names, sep, reuseNonSharedNode, trivialSizeProfile);
+        return makeUniqueVec(names, sep, reuseNonSharedNode, trivialSizeProfile);
     }
 
     @Specialization(guards = "names.isSequence()")
