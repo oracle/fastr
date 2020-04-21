@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
+import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDuplicateNode;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepGetIntAtNode;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepLengthNode;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepSetElementAtNode;
@@ -117,13 +118,10 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return (int) lengthNode.execute(getOwner());
     }
 
-    private int getLengthUncached() {
-        return getLength(AltrepLengthNode.getUncached());
-    }
-
     @ExportMessage(limit = "1")
-    public RIntArrayVectorData materialize(@Cached("create()") AltrepRFFI.AltIntDataptrNode dataptrNode) {
-        int length = getLengthUncached();
+    public RIntArrayVectorData materialize(@Cached("create()") AltrepRFFI.AltIntDataptrNode dataptrNode,
+                                           @Cached AltrepLengthNode lengthNode) {
+        int length = (int) lengthNode.execute(getOwner());
         long dataptrAddr = dataptrNode.execute(getOwner(), true);
         int[] newData = new int[length];
         NativeMemory.copyMemory(dataptrAddr, newData, ElementType.INT, length);
@@ -141,9 +139,14 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return true;
     }
 
+    /**
+     * May return either RAltIntVectorData or RIntArrayVectorData, depending whether this vector data has
+     * Duplicate method registered.
+     */
     @ExportMessage
-    public RAltIntVectorData copy(boolean deep) {
-        throw RInternalError.unimplemented("RAltIntVectorData.copy");
+    public Object copy(boolean deep,
+                       @Cached AltrepDuplicateNode duplicateNode) {
+        return duplicateNode.execute(getOwner(), deep);
     }
 
     @ExportMessage
@@ -151,38 +154,31 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         throw RInternalError.unimplemented("RAltIntVectorData.copyResized");
     }
 
-    // TODO: Cached version
     @ExportMessage
-    public int[] getIntDataCopy() {
-        return getDataAsArray();
+    public int[] getIntDataCopy(@Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
+                                @Cached AltrepLengthNode lengthNode) {
+        return getDataCopy(dataptrNode, lengthNode);
     }
 
-    // TODO: Cached version
     @ExportMessage
-    public int[] getReadonlyIntData() {
-        // TODO: DO not set dataptrCalled = true in this method.
-        return getDataAsArray();
+    public int[] getReadonlyIntData(@Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
+                                    @Cached AltrepLengthNode lengthNode) {
+        return getDataCopy(dataptrNode, lengthNode);
     }
 
-    private int[] getDataAsArray() {
-        final int length = getLengthUncached();
-        int[] newData = new int[length];
-        for (int i = 0; i < length; i++) {
-            newData[i] = getIntAtUncached(i);
-        }
-        return newData;
-    }
-
-    private int getIntAtUncached(int index) {
-        long address = invokeDataptrMethodUncached();
-        return NativeMemory.getInt(address, index);
+    private int[] getDataCopy(AltrepRFFI.AltIntDataptrNode dataptrNode, AltrepLengthNode lengthNode) {
+        long dataptrAddr = dataptrNode.execute(getOwner(), false);
+        int length = (int) lengthNode.execute(getOwner());
+        int[] dataCopy = new int[length];
+        NativeMemory.copyMemory(dataptrAddr, dataCopy, ElementType.INT, length);
+        return dataCopy;
     }
 
     @ExportMessage
     public SeqIterator iterator(
-            @Shared("SeqItLoopProfile") @Cached("createCountingProfile()")LoopConditionProfile loopProfile
-            ) {
-        SeqIterator it = new SeqIterator(this, getLengthUncached());
+            @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+            @Cached AltrepLengthNode lengthnode) {
+        SeqIterator it = new SeqIterator(this, (int) lengthnode.execute(getOwner()));
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -225,8 +221,8 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public SeqWriteIterator writeIterator() {
-        int length = getLengthUncached();
+    public SeqWriteIterator writeIterator(@Cached AltrepLengthNode lengthNode) {
+        int length = (int) lengthNode.execute(getOwner());
         return new SeqWriteIterator(this, length);
     }
 
