@@ -25,12 +25,9 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
@@ -45,6 +42,7 @@ import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepGetIntAtNode;
+import com.oracle.truffle.r.runtime.nodes.altrep.AltrepLengthNode;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepSetElementAtNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -115,13 +113,12 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage(limit = "1")
-    public int getLength(@CachedLibrary("this.descriptor.getLengthMethod()") InteropLibrary lengthMethodInterop,
-                          @Shared("hasMirrorProfile") @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-        return descriptor.invokeLengthMethodCached(getOwner(), lengthMethodInterop, hasMirrorProfile);
+    public int getLength(@Cached("create()") AltrepLengthNode lengthNode) {
+        return (int) lengthNode.execute(getOwner());
     }
 
     private int getLengthUncached() {
-        return getLength(InteropLibrary.getFactory().getUncached(), ConditionProfile.getUncached());
+        return getLength(AltrepLengthNode.getUncached());
     }
 
     @ExportMessage(limit = "1")
