@@ -33,11 +33,16 @@ import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.ne
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.QuantifierNodeGen.ProcessArgumentNodeGen;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
@@ -48,16 +53,13 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class Quantifier extends RBuiltinNode.Arg2 {
     protected static final int MAX_CACHED_LENGTH = 10;
 
-    private final NACheck naCheck = NACheck.create();
-    private final BranchProfile trueBranch = BranchProfile.create();
-    private final BranchProfile falseBranch = BranchProfile.create();
-
     @Children private final CastNode[] argCastNodes = new CastNode[Math.max(1, DSLConfig.getCacheSize(MAX_CACHED_LENGTH))];
+    @Children private final ProcessArgumentNode[] processArgumentNodes = new ProcessArgumentNode[Math.max(1, DSLConfig.getCacheSize(MAX_CACHED_LENGTH))];
+    private final BranchProfile nullBranch = BranchProfile.create();
 
     private static final class ProfileCastNode extends CastNode {
 
@@ -141,37 +143,61 @@ public abstract class Quantifier extends RBuiltinNode.Arg2 {
     }
 
     private byte processArgument(Object argValue, int index, boolean naRm) {
-        byte result = RRuntime.asLogical(emptyVectorResult());
         if (argValue != RNull.instance) {
             if (argCastNodes[index] == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 createArgCast(index);
             }
             Object castValue = argCastNodes[index].doCast(argValue);
-            if (castValue instanceof RLogicalVector) {
-                RLogicalVector vector = (RLogicalVector) castValue;
-                naCheck.enable(vector);
-                for (int i = 0; i < vector.getLength(); i++) {
-                    byte b = vector.getDataAt(i);
-                    if (!naRm && naCheck.check(b)) {
-                        result = RRuntime.LOGICAL_NA;
-                    } else if (b == RRuntime.asLogical(!emptyVectorResult())) {
-                        trueBranch.enter();
-                        return RRuntime.asLogical(!emptyVectorResult());
-                    }
-                }
-            } else {
-                byte b = (byte) castValue;
-                naCheck.enable(true);
-                if (!naRm && naCheck.check(b)) {
+            if (processArgumentNodes[index] == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                processArgumentNodes[index] = insert(ProcessArgumentNodeGen.create(this));
+            }
+            return processArgumentNodes[index].execute(castValue, naRm);
+        }
+        nullBranch.enter();
+        return RRuntime.asLogical(emptyVectorResult());
+    }
+
+    abstract static class ProcessArgumentNode extends RBaseNode {
+        private final Quantifier parent;
+
+        protected ProcessArgumentNode(Quantifier parent) {
+            this.parent = parent;
+        }
+
+        public abstract byte execute(Object vector, boolean naRm);
+
+        @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+        byte doVector(RLogicalVector vector, boolean naRm,
+                        @CachedLibrary("vector.getData()") VectorDataLibrary argDataLib) {
+            Object data = vector.getData();
+            SeqIterator it = argDataLib.iterator(data);
+            byte result = RRuntime.asLogical(parent.emptyVectorResult());
+            while (argDataLib.next(data, it)) {
+                byte b = argDataLib.getNextLogical(data, it);
+                if (!naRm && argDataLib.getNACheck(data).check(b)) {
                     result = RRuntime.LOGICAL_NA;
-                } else if (b == RRuntime.asLogical(!emptyVectorResult())) {
-                    trueBranch.enter();
-                    return RRuntime.asLogical(!emptyVectorResult());
+                } else if (b == RRuntime.asLogical(!parent.emptyVectorResult())) {
+                    return RRuntime.asLogical(!parent.emptyVectorResult());
                 }
             }
+            return result;
         }
-        falseBranch.enter();
-        return result;
+
+        @Specialization
+        byte doSingleByte(byte value, boolean naRm,
+                        @Cached BranchProfile isNAProfile,
+                        @Cached BranchProfile trueBranchProfile) {
+            if (!naRm && RRuntime.isNA(value)) {
+                isNAProfile.enter();
+                return RRuntime.LOGICAL_NA;
+            } else if (value == RRuntime.asLogical(!parent.emptyVectorResult())) {
+                return RRuntime.asLogical(!parent.emptyVectorResult());
+            } else {
+                trueBranchProfile.enter();
+                return RRuntime.asLogical(parent.emptyVectorResult());
+            }
+        }
     }
 }

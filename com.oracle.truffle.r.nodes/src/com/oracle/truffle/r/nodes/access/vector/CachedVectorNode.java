@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -54,6 +57,7 @@ abstract class CachedVectorNode extends RBaseNodeWithWarnings {
     private final int filteredPositionsLength;
 
     @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
+    @Child private VectorDataLibrary asLogicalVectorDataLib;
 
     CachedVectorNode(ElementAccessMode mode, RBaseObject vector, Object[] positions, boolean recursive) {
         this.mode = mode;
@@ -113,17 +117,26 @@ abstract class CachedVectorNode extends RBaseNodeWithWarnings {
         return position instanceof RMissing;
     }
 
-    protected static boolean logicalAsBoolean(RBaseObject cast, boolean defaultValue) {
+    protected static boolean logicalAsBoolean(VectorDataLibrary dataLib, RBaseObject cast, boolean defaultValue) {
         if (cast instanceof RMissing) {
             return defaultValue;
         } else {
             RLogicalVector logical = (RLogicalVector) cast;
-            if (logical.getLength() == 0) {
+            Object data = logical.getData();
+            if (dataLib.getLength(data) == 0) {
                 return defaultValue;
             } else {
-                return RRuntime.fromLogical(logical.getDataAt(0));
+                return RRuntime.fromLogical(dataLib.getLogicalAt(data, 0));
             }
         }
+    }
+
+    protected VectorDataLibrary getAsLogicalVectorDataLib() {
+        if (asLogicalVectorDataLib == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            asLogicalVectorDataLib = insert(VectorDataLibrary.getFactory().createDispatched(DSLConfig.getTypedVectorDataLibraryCacheSize()));
+        }
+        return asLogicalVectorDataLib;
     }
 
     protected final int[] loadVectorDimensions(RAbstractContainer vector) {

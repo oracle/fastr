@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -37,6 +38,7 @@ import com.oracle.truffle.r.nodes.builtin.base.Colon.ColonCastNode;
 import com.oracle.truffle.r.nodes.builtin.base.Colon.ColonInternal;
 import com.oracle.truffle.r.nodes.builtin.base.ColonNodeGen.ColonCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.ColonNodeGen.ColonInternalNodeGen;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -244,22 +246,28 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             }
         }
 
-        @Specialization
-        protected int doSequence(RIntVector vector) {
-            checkLength(vector.getLength());
-            return vector.getDataAt(0);
+        @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+        protected int doSequence(RIntVector vector,
+                        @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+            Object data = vector.getData();
+            checkLength(dataLib.getLength(data));
+            return dataLib.getIntAt(data, 0);
         }
 
-        @Specialization(guards = "isFirstIntValue(vector)")
-        protected int doDoubleVectorFirstIntValue(RDoubleVector vector) {
-            checkLength(vector.getLength());
-            return (int) vector.getDataAt(0);
+        @Specialization(guards = "isFirstIntValue(dataLib, vector.getData())", limit = "getTypedVectorDataLibraryCacheSize()")
+        protected int doDoubleVectorFirstIntValue(RDoubleVector vector,
+                        @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+            Object data = vector.getData();
+            checkLength(dataLib.getLength(data));
+            return (int) dataLib.getDoubleAt(data, 0);
         }
 
-        @Specialization(guards = "!isFirstIntValue(vector)")
-        protected double doDoubleVector(RDoubleVector vector) {
-            checkLength(vector.getLength());
-            return vector.getDataAt(0);
+        @Specialization(guards = "!isFirstIntValue(dataLib, vector.getData())", limit = "getTypedVectorDataLibraryCacheSize()")
+        protected double doDoubleVector(RDoubleVector vector,
+                        @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
+            Object data = vector.getData();
+            checkLength(dataLib.getLength(data));
+            return dataLib.getDoubleAt(data, 0);
         }
 
         @Specialization
@@ -292,8 +300,8 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             return (((int) d)) == d && !RRuntime.isNA((int) d);
         }
 
-        protected static boolean isFirstIntValue(RDoubleVector d) {
-            return d.getLength() > 0 && isIntValue(d.getDataAt(0));
+        protected static boolean isFirstIntValue(VectorDataLibrary dataLib, Object data) {
+            return dataLib.getLength(data) > 0 && isIntValue(dataLib.getDoubleAt(data, 0));
         }
     }
 }
