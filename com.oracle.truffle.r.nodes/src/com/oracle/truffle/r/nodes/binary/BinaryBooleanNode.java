@@ -211,10 +211,15 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                 return null;
             }
             if (type == RType.Character) {
-                if (!(value instanceof String)) {
-                    value = RDeparse.deparse(value);
+                String str;
+                if (value instanceof String) {
+                    str = (String) value;
+                } else if (value instanceof RStringVector && ((RStringVector) value).getLength() == 1) {
+                    str = ((RStringVector) value).getDataAt(0);
+                } else {
+                    str = RDeparse.deparse(value);
                 }
-                ((RStringVector) result).setDataAt(store, i, (String) value);
+                ((RStringVector) result).setDataAt(store, i, str);
             } else {
                 value = cast.execute(value, type);
                 if (value instanceof RAbstractVector && ((RAbstractVector) value).getLength() == 1) {
