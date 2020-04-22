@@ -5,6 +5,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 
@@ -82,6 +83,32 @@ public final class AltrepRFFI {
             assert AltrepUtilities.isAltrep(altIntVec);
             RAltIntVectorData altIntVectorData = (RAltIntVectorData) altIntVec.getData();
             altIntVectorData.setDataptrCalled();
+        }
+    }
+
+    public static class AltIntIsSortedNode extends NativeCallNode {
+        private AltIntIsSortedNode(DownCallNode downCallNode) {
+            super(downCallNode);
+        }
+
+        public static AltIntIsSortedNode create() {
+            return new AltIntIsSortedNode(createDownCallNode());
+        }
+
+        public static AltIntIsSortedNode getUncached() {
+            return new AltIntIsSortedNode(getUncachedDownCallNode()) {
+                @Override
+                public boolean isAdoptable() {
+                    return false;
+                }
+            };
+        }
+
+        public AltrepSortedness execute(RIntVector altIntVector) {
+            assert AltrepUtilities.isAltrep(altIntVector);
+            // TODO: Accept more return values - maybe use InteropLibrary?
+            int retValue = (int) call(NativeFunction.AltInteger_Is_sorted, new Object[]{altIntVector});
+            return AltrepSortedness.fromInt(retValue);
         }
     }
 }

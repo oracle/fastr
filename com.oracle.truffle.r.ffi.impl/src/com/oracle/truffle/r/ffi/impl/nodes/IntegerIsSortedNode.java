@@ -4,12 +4,10 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.ffi.impl.llvm.AltrepLLVMDownCallNode;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
-import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 
 @GenerateUncached
 public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
@@ -18,10 +16,11 @@ public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
         return IntegerIsSortedNodeGen.create();
     }
 
-    @Specialization(guards = {"isAltrep(altIntVec)", "isIsSortedMethodRegistered(altIntVec)"})
-    public int isSortedForAltIntVec(RIntVector altIntVec,
-                                    @Cached("createDispatchNode()") IsSortedDispatchNode dispatchNode) {
-        return (int) dispatchNode.executeObject(altIntVec);
+    @Specialization(guards = {"isAltrep(altIntVec)", "hasSortedMethod(altIntVec)"})
+    public int doForAltIntVec(RIntVector altIntVec,
+                              @Cached AltrepRFFI.AltIntIsSortedNode isSortedNode) {
+        AltrepSortedness sortedness = isSortedNode.execute(altIntVec);
+        return sortedness.getValue();
     }
 
     @Fallback
@@ -33,26 +32,7 @@ public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
         return AltrepUtilities.isAltrep(object);
     }
 
-    protected static boolean isIsSortedMethodRegistered(Object x) {
+    protected static boolean hasSortedMethod(Object x) {
         return AltrepUtilities.hasSortedMethodRegistered(x);
-    }
-
-    protected static IsSortedDispatchNode createDispatchNode() {
-        return IntegerIsSortedNode.IsSortedDispatchNode.create();
-    }
-
-    @GenerateUncached
-    static abstract class IsSortedDispatchNode extends FFIUpCallNode.Arg1 {
-        public static IsSortedDispatchNode create() {
-            return IntegerIsSortedNodeGen.IsSortedDispatchNodeGen.create();
-        }
-
-        @Specialization
-        public int isSortedForAltIntVec(RAltIntVectorData altIntVec,
-                                        @Cached(value = "create()", allowUncached = true) AltrepLLVMDownCallNode altrepLLVMDownCallNode) {
-            Object ret = altrepLLVMDownCallNode.call(NativeFunction.AltInteger_Is_sorted, altIntVec);
-            assert ret instanceof Integer;
-            return (int) ret;
-        }
     }
 }
