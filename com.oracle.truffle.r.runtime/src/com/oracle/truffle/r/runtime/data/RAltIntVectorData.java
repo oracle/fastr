@@ -101,6 +101,14 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return owner;
     }
 
+    public void setDataptrCalled() {
+        dataptrCalled = true;
+    }
+
+    public boolean wasDataptrCalled() {
+        return dataptrCalled;
+    }
+
     @ExportMessage
     public NACheck getNACheck(@Cached() NACheck na) {
         na.enable(false);
@@ -122,7 +130,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     public RIntArrayVectorData materialize(@Cached("create()") AltrepRFFI.AltIntDataptrNode dataptrNode,
                                            @Cached AltrepLengthNode lengthNode) {
         int length = (int) lengthNode.execute(getOwner());
-        long dataptrAddr = invokeDataptrMethodCached(dataptrNode, true);
+        long dataptrAddr = dataptrNode.execute(getOwner(), true);
         int[] newData = new int[length];
         NativeMemory.copyMemory(dataptrAddr, newData, ElementType.INT, length);
         // TODO: complete=true?
@@ -183,7 +191,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     private int[] getDataCopy(AltrepRFFI.AltIntDataptrNode dataptrNode, AltrepLengthNode lengthNode) {
-        long dataptrAddr = invokeDataptrMethodCached(dataptrNode, false);
+        long dataptrAddr = dataptrNode.execute(getOwner(), false);
         int length = (int) lengthNode.execute(getOwner());
         int[] dataCopy = new int[length];
         NativeMemory.copyMemory(dataptrAddr, dataCopy, ElementType.INT, length);
@@ -229,17 +237,6 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     // Write access to elements:
-
-    private long invokeDataptrMethodUncached() {
-        // TODO: Exception handling?
-        dataptrCalled = true;
-        return descriptor.invokeDataptrMethodUncached(getOwner(), true);
-    }
-
-    private long invokeDataptrMethodCached(AltrepRFFI.AltIntDataptrNode dataptrNode, boolean writeable) {
-        dataptrCalled = true;
-        return dataptrNode.execute(getOwner(), writeable);
-    }
 
     @ExportMessage
     public SeqWriteIterator writeIterator(@Cached AltrepLengthNode lengthNode) {

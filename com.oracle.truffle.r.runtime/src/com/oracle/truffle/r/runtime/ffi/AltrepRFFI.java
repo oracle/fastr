@@ -3,6 +3,7 @@ package com.oracle.truffle.r.runtime.ffi;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
@@ -66,6 +67,7 @@ public final class AltrepRFFI {
 
         public long execute(RIntVector altIntVector, boolean writeable) {
             assert AltrepUtilities.isAltrep(altIntVector);
+            setDataptrCalled(altIntVector);
             Object ret = call(NativeFunction.AltInteger_Dataptr, altIntVector, writeable);
             InteropLibrary interop = InteropLibrary.getFactory().getUncached(ret);
             interop.toNative(ret);
@@ -74,6 +76,12 @@ public final class AltrepRFFI {
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere();
             }
+        }
+
+        private static void setDataptrCalled(RIntVector altIntVec) {
+            assert AltrepUtilities.isAltrep(altIntVec);
+            RAltIntVectorData altIntVectorData = (RAltIntVectorData) altIntVec.getData();
+            altIntVectorData.setDataptrCalled();
         }
     }
 }
