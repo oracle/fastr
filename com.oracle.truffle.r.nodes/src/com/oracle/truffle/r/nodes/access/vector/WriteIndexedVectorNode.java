@@ -99,7 +99,6 @@ abstract class WriteIndexedVectorNode extends Node {
             RandomAccessIterator rightIter = rightDataLib.randomAccessIterator(rightData);
             write.apply(positionContainerLibrary, leftIter, leftDataLib, leftData, positions, rightIter, rightDataLib, rightData, right, positionTargetDimensions);
             leftDataLib.commitRandomAccessWriteIterator(leftData, leftIter, rightDataLib.getNACheck(rightData).neverSeenNA());
-            assert RAbstractVector.verifyVector(left);
         }
     }
 
