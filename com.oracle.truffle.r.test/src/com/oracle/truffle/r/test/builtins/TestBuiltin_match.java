@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -227,22 +227,26 @@ public class TestBuiltin_match extends TestBase {
         assertEval("{ match(T, T) }");
         assertEval("{ match(F, c(T,F)) }");
         assertEval("{ match(c(T, F), T) }");
-        assertEval("{ match(c(T, F), c(T,F)) }");
+        assertEval("{ match(c(T, F, NA), c(T,F, NA)) }");
 
         assertEval("{ match(T, 1) }");
-        assertEval("{ match(F, c(1,0)) }");
+        assertEval("{ match(T, 1.1) }");
+        assertEval("{ match(F, c(1, 0)) }");
+        assertEval("{ match(F, c(1.1, 0)) }");
         assertEval("{ match(c(T, F), 1) }");
-        assertEval("{ match(c(T, F), c(1,0)) }");
+        assertEval("{ match(c(T, F, NA), c(1, 0, NA)) }");
+        assertEval("{ match(c(T, F, NA), c(1, 0, -1)) }");
 
         assertEval("{ match(T, 1L) }");
         assertEval("{ match(F, c(1L, 0L)) }");
         assertEval("{ match(T, c(1L,0L)) }");
-        assertEval("{ match(c(T, F), c(1L,0L)) }");
+        assertEval("{ match(c(T, F, NA), c(1L,0L, NA_integer_)) }");
+        assertEval("{ match(c(T, F, NA), c(1L,0L, -1L)) }");
 
         assertEval("{ match(T, 1+0i) }");
         assertEval("{ match(F, c(1+0i, 0+0i)) }");
         assertEval("{ match(T, c(1+0i,0+0i)) }");
-        assertEval("{ match(c(T, F), c(1+0i, 0+0i)) }");
+        assertEval("{ match(c(T, F, NA), c(1+0i, 0+0i, NA_complex_)) }");
 
         assertEval("{ match(T, as.raw(1)) }");
         assertEval("{ match(T, as.raw(c(1, 0))) }");
@@ -252,7 +256,8 @@ public class TestBuiltin_match extends TestBase {
         assertEval("{ match(T, 'TRUE') }");
         assertEval("{ match(T, c('TRUE', 'FALSE')) }");
         assertEval("{ match(c(T,F), 'TRUE') }");
-        assertEval("{ match(c(T,F), c('TRUE', 'FALSE')) }");
+        assertEval("{ match(c(T,F, NA), c('TRUE', 'FALSE', NA_character_)) }");
+        assertEval("{ match(c(T,F, NA), c('TRUE', 'FALSE', '-1')) }");
 
         // raw
         assertEval("{ match(as.raw(1), as.raw(1)) }");
@@ -261,7 +266,9 @@ public class TestBuiltin_match extends TestBase {
         assertEval("{ match(as.raw(c(1,0)), as.raw(c(1, 0))) }");
 
         assertEval("{ match(as.raw(16), 10) }");
+        assertEval("{ match(as.raw(16), 10.1) }");
         assertEval("{ match(as.raw(c(16, 17)), 10) }");
+        assertEval("{ match(as.raw(c(16, 17)), 10.1) }");
         assertEval("{ match(as.raw(16), c(16, 11)) }");
         assertEval("{ match(as.raw(c(16, 17)), c(10,11)) }");
 
@@ -291,12 +298,13 @@ public class TestBuiltin_match extends TestBase {
         assertEval("{ match(1L, 1L) }");
         assertEval("{ match(0L, c(1L, 0L)) }");
         assertEval("{ match(c(1L, 0L), 1L) }");
-        assertEval("{ match(c(1L, 0L), c(1L, 0L)) }");
+        assertEval("{ match(c(1L, 0L, NA_integer_), c(1L, 0L, NA_integer_)) }");
 
         assertEval("{ match(1L, T) }");
         assertEval("{ match(0L, c(T, F)) }");
         assertEval("{ match(c(1L, 0L), T) }");
-        assertEval("{ match(c(1L, 0L), c(T, F)) }");
+        assertEval("{ match(c(1L, 0L, NA_integer_), c(T, F, NA)) }");
+        assertEval("{ match(c(1L, 0L, -1L), c(T, F, NA)) }");
 
         assertEval("{ match(10L, as.raw(16)) }");
         assertEval("{ match(10L, as.raw(c(16, 17))) }");
@@ -306,59 +314,77 @@ public class TestBuiltin_match extends TestBase {
         assertEval("{ match(1L, 1) }");
         assertEval("{ match(1L, c(1, 0)) }");
         assertEval("{ match(c(1L,0L), 1) }");
-        assertEval("{ match(c(1L,0L), c(1, 0)) }");
+        assertEval("{ match(c(1L,0L, NA_integer_), c(1, 0, NA)) }");
+        assertEval("{ match(c(1L,0L, NA_integer_), c(1, 0, -2147483648)) }");
 
         assertEval("{ match(1L, 1+0i) }");
         assertEval("{ match(1L, c(1+0i, 0+0i)) }");
         assertEval("{ match(c(1L,0L), 1+0i) }");
-        assertEval("{ match(c(1L,0L), c(1+0i, 0+0i)) }");
+        assertEval("{ match(c(1L,0L,NA_integer_), c(1+0i, 0+0i, NA_complex_)) }");
 
         assertEval("{ match(1L, '1') }");
         assertEval("{ match(1L, c('1', '0')) }");
         assertEval("{ match(c(1L,0L), '1') }");
-        assertEval("{ match(c(1L,0L), c('1', '0')) }");
+        assertEval("{ match(c(1L,0L,NA_integer_), c('1', '0', NA_character_)) }");
 
         // double
         assertEval("{ match(1, 1) }");
+        assertEval("{ match(1.1, 1.1) }");
         assertEval("{ match(0, c(1, 0)) }");
         assertEval("{ match(c(1, 0), 1) }");
-        assertEval("{ match(c(1, 0), c(1, 0)) }");
+        assertEval("{ match(c(1, 0, NA), c(1, 0, NA)) }");
+        assertEval("{ match(c(1, 1.1, NA), c(1, 1.1, NA)) }");
 
         assertEval("{ match(1, T) }");
+        assertEval("{ match(1.1, T) }");
         assertEval("{ match(0, c(T, F)) }");
         assertEval("{ match(c(1, 0), T) }");
-        assertEval("{ match(c(1, 0), c(T, F)) }");
+        assertEval("{ match(c(1, 0, NA), c(T, F, NA)) }");
+        assertEval("{ match(c(1, 1.1, NA), c(T, F, NA)) }");
+        assertEval("{ match(c(1, NA, 1), c(T, F, NA)) }");
+        assertEval("{ match(c(1, 0, 2, 3, NA), c(T, F, NA)) }");
+        assertEval("{ match(c(1, 0, 2, 3, NA, -1), c(T, T, T, T, NA)) }");
+        assertEval("{ match(c(1, 1.1, NA,  -2147483648), c(T, F, NA)) }");
 
         assertEval("{ match(10, as.raw(16)) }");
+        assertEval("{ match(10.1, as.raw(16)) }");
         assertEval("{ match(10, as.raw(c(16, 17))) }");
         assertEval("{ match(c(10, 11), as.raw(16)) }");
+        assertEval("{ match(c(10.1, 11), as.raw(16)) }");
         assertEval("{ match(c(10, 11), as.raw(c(16, 17))) }");
 
         assertEval("{ match(1, 1L) }");
+        assertEval("{ match(1.1, 1L) }");
         assertEval("{ match(0, c(1L, 0L)) }");
         assertEval("{ match(c(1, 0), 1L) }");
-        assertEval("{ match(c(1, 0), c(1L, 0L)) }");
+        assertEval("{ match(c(1.1, 0), 1L) }");
+        assertEval("{ match(c(1, 0, NA), c(1L, 0L, NA_integer_)) }");
+        assertEval("{ match(c(1, -2147483648), c(1L, 0L, NA_integer_)) }");
 
         assertEval("{ match(1, 1+0i) }");
+        assertEval("{ match(1.1, 1+0i) }");
         assertEval("{ match(0, c(1+0i, 0+0i)) }");
         assertEval("{ match(c(1, 0), 1+0i) }");
-        assertEval("{ match(c(1, 0), c(1+0i, 0+0i)) }");
+        assertEval("{ match(c(1.1, 0), 1+0i) }");
+        assertEval("{ match(c(1, 0, NA), c(1+0i, 0+0i, NA_complex_)) }");
 
         assertEval("{ match(1, '1') }");
+        assertEval("{ match(1.1, '1') }");
         assertEval("{ match(0, c('1', '0')) }");
         assertEval("{ match(c(1, 0), '1') }");
-        assertEval("{ match(c(1, 0), c('1', '0')) }");
+        assertEval("{ match(c(1.1, 0), '1') }");
+        assertEval("{ match(c(1, 0, NA), c('1', '0', NA_character_)) }");
 
         // complex
         assertEval("{ match(1+0i, 1+0i) }");
         assertEval("{ match(1+0i, c(1+0i, 0+0i)) }");
         assertEval("{ match(c(1+0i,0+0i), 1+0i) }");
-        assertEval("{ match(c(1+0i,0+0i), c(1+0i, 0+0i)) }");
+        assertEval("{ match(c(1+0i,0+0i, NA_complex_), c(1+0i, 0+0i, NA_complex_)) }");
 
         assertEval("{ match(1+0i, T) }");
         assertEval("{ match(1+0i, c(T, F)) }");
         assertEval("{ match(c(1+0i,0+0i), T) }");
-        assertEval("{ match(c(1+0i,0+0i), c(T, F)) }");
+        assertEval("{ match(c(1+0i,0+0i, NA_complex_), c(T, F, NA)) }");
 
         assertEval("{ match(10+0i, as.raw(16)) }");
         assertEval("{ match(10+0i, as.raw(c(16, 17))) }");
@@ -368,28 +394,31 @@ public class TestBuiltin_match extends TestBase {
         assertEval("{ match(10+0i, 10L) }");
         assertEval("{ match(10+0i, c(10L, 11L)) }");
         assertEval("{ match(c(10+0i,11+0i), 10L) }");
-        assertEval("{ match(c(10+0i,11+0i), c(10L, 11L)) }");
+        assertEval("{ match(c(10+0i,11+0i, NA_complex_), c(10L, 11L, NA_integer_)) }");
 
         assertEval("{ match(10+0i, 10) }");
+        assertEval("{ match(10+0i, 10.1) }");
         assertEval("{ match(10+0i, c(10, 11)) }");
+        assertEval("{ match(10+0i, c(10.1, 11)) }");
         assertEval("{ match(c(10+0i,11+0i), 10) }");
-        assertEval("{ match(c(10+0i,11+0i), c(10, 11)) }");
+        assertEval("{ match(c(10+0i,11+0i, NA_complex_), c(10, 11, NA)) }");
 
         assertEval("{ match(10+0i, '10') }");
         assertEval("{ match(10+0i, c('10', '11')) }");
         assertEval("{ match(c(10+0i,11+0i), '10') }");
-        assertEval("{ match(c(10+0i,11+0i), c('10', '11')) }");
+        assertEval("{ match(c(10+0i,11+0i, NA_complex_), c('10', '11', NA_character_)) }");
 
         // string
         assertEval("{ match('a', 'a') }");
         assertEval("{ match('a', c('a', 'b')) }");
         assertEval("{ match(c('a', 'b'), 'a') }");
-        assertEval("{ match(c('a', 'b'), c('a', 'b')) }");
+        assertEval("{ match(c('a', 'b', NA_character_), c('a', 'b', NA_character_)) }");
 
         assertEval("{ match('TRUE', T) }");
         assertEval("{ match('TRUE', c(T, F)) }");
         assertEval("{ match(c('TRUE', 'FALSE'), T) }");
-        assertEval("{ match(c('TRUE', 'FALSE'), c(T, F)) }");
+        assertEval("{ match(c('TRUE', 'FALSE', NA_character_), c(T, F, NA)) }");
+        assertEval("{ match(c('TRUE', 'FALSE', '-2147483648'), c(T, F, NA)) }");
 
         assertEval("{ match('10', as.raw(16)) }");
         assertEval("{ match('10', as.raw(c(16, 17))) }");
@@ -397,19 +426,22 @@ public class TestBuiltin_match extends TestBase {
         assertEval("{ match(c('10', '11'), as.raw(c(16, 17))) }");
 
         assertEval("{ match('1', 1) }");
+        assertEval("{ match('1', 1.1) }");
         assertEval("{ match('1', c(1, 0)) }");
+        assertEval("{ match('1', c(1.1, 0)) }");
         assertEval("{ match(c('1', '0'), 1) }");
-        assertEval("{ match(c('1', '1'), c(1, 0)) }");
+        assertEval("{ match(c('1', '1',NA_character_), c(1, 0, NA)) }");
 
         assertEval("{ match('1', 1L) }");
         assertEval("{ match('1', c(1L, 0L)) }");
         assertEval("{ match(c('1', '0'), 1L) }");
-        assertEval("{ match(c('1', '1'), c(1L, 0L)) }");
+        assertEval("{ match(c('1', '1', NA_character_), c(1L, 0L, NA_integer_)) }");
+        assertEval("{ match(c('1', '1', '-2147483648'), c(1L, 0L, NA_integer_)) }");
 
         assertEval("{ match('1+0i', 1+0i) }");
         assertEval("{ match('1+0i', c(1+0i, 0+0i)) }");
         assertEval("{ match(c('1+0i', '0+0i'), 1+0i) }");
-        assertEval("{ match(c('1+0i', '0+0i'), c(1+0i, 0+0i)) }");
+        assertEval("{ match(c('1+0i', '0+0i', NA_character_), c(1+0i, 0+0i, NA_complex_)) }");
     }
 
     @Test
