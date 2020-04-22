@@ -96,12 +96,6 @@ public class RStringVecNativeData implements TruffleObject {
     }
 
     @ExportMessage
-    @SuppressWarnings("unused")
-    public Object copyResized(int newSize, boolean deep, boolean fillNA) {
-        throw RInternalError.unimplemented("this method should be removed");
-    }
-
-    @ExportMessage
     public String[] getStringDataCopy() {
         return NativeDataAccess.copyStringNativeData(vec.getNativeMirror());
     }

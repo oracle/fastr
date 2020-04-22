@@ -34,14 +34,11 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-
-import java.util.Arrays;
 
 @ExportLibrary(VectorDataLibrary.class)
 public class RIntSeqVectorData implements RSeq, TruffleObject {
@@ -128,16 +125,6 @@ public class RIntSeqVectorData implements RSeq, TruffleObject {
     @ExportMessage
     public RIntSeqVectorData copy(@SuppressWarnings("unused") boolean deep) {
         return new RIntSeqVectorData(start, stride, length);
-    }
-
-    @ExportMessage
-    public RIntArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
-                    @Shared("naCheck") @Cached() NACheck naCheck) {
-        int[] newData = getDataAsArray(newSize, naCheck);
-        if (fillNA) {
-            Arrays.fill(newData, length, newData.length, RRuntime.INT_NA);
-        }
-        return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage

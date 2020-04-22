@@ -242,11 +242,6 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
         return copy();
     }
 
-    @ExportMessage(name = "copyResized", library = VectorDataLibrary.class)
-    public Object dataLibCopyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
-        return this.copyResized(newSize, fillNA);
-    }
-
     @ExportMessage
     public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(getInternalStore(), getLength());

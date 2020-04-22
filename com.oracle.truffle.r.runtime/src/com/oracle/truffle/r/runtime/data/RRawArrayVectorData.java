@@ -30,7 +30,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
@@ -84,19 +83,6 @@ class RRawArrayVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public RRawArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
         return new RRawArrayVectorData(Arrays.copyOf(data, data.length));
-    }
-
-    @ExportMessage
-    public RRawArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
-        byte[] newData = Arrays.copyOf(data, newSize);
-        if (!fillNA) {
-            assert data.length > 0 : "cannot call resize on empty vector if fillNA == false";
-            // NA is 00 for raw
-            for (int i = data.length, j = 0; i < newSize; ++i, j = Utils.incMod(j, data.length)) {
-                newData[i] = data[j];
-            }
-        }
-        return new RRawArrayVectorData(newData);
     }
 
     @ExportMessage

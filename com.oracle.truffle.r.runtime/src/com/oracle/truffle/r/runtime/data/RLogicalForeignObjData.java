@@ -36,7 +36,6 @@ import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -87,20 +86,6 @@ class RLogicalForeignObjData implements TruffleObject {
                     @CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop) {
         return new RLogicalArrayVectorData(getLogicalDataCopy(valueInterop, interop), RDataFactory.INCOMPLETE_VECTOR);
-    }
-
-    @ExportMessage
-    public RLogicalArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
-                    @CachedLibrary(limit = "5") InteropLibrary valueInterop,
-                    @CachedLibrary("this.foreign") InteropLibrary interop) {
-        int length = getLength(interop);
-        byte[] newData = getDataAsArray(newSize, length, interop, valueInterop);
-        if (fillNA) {
-            for (int i = length, j = 0; i < newSize; ++i, j = Utils.incMod(j, length)) {
-                newData[i] = getLogicalAt(i, valueInterop, interop);
-            }
-        }
-        return new RLogicalArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage

@@ -34,14 +34,11 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-
-import java.util.Arrays;
 
 @ExportLibrary(VectorDataLibrary.class)
 public class RDoubleSeqVectorData implements RSeq, TruffleObject {
@@ -103,15 +100,6 @@ public class RDoubleSeqVectorData implements RSeq, TruffleObject {
     @ExportMessage
     public RDoubleSeqVectorData copy(@SuppressWarnings("unused") boolean deep) {
         return new RDoubleSeqVectorData(start, stride, length);
-    }
-
-    @ExportMessage
-    public RDoubleArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
-        double[] newData = getDataAsArray(newSize);
-        if (fillNA) {
-            Arrays.fill(newData, length, newData.length, RRuntime.DOUBLE_NA);
-        }
-        return new RDoubleArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage

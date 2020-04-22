@@ -145,9 +145,6 @@ public abstract class VectorDataLibrary extends Library {
 
     public abstract Object copy(Object data, boolean deep);
 
-    // TODO: do we really need this?
-    public abstract Object copyResized(Object data, int newSize, boolean deep, boolean fillNA);
-
     /**
      * Iterator objects should be opaque to the users of {@link VectorDataLibrary} any state except
      * for {@link SeqIterator#getLength()} is intentionally package private.
@@ -1540,23 +1537,6 @@ public abstract class VectorDataLibrary extends Library {
         public Object copy(Object data, boolean deep) {
             verifyIfSlowAssertsEnabled(data);
             return delegate.copy(data, deep);
-        }
-
-        @Override
-        public Object copyResized(Object data, int newSize, boolean deep, boolean fillNA) {
-            verifyIfSlowAssertsEnabled(data);
-            assert newSize >= 0;
-            Object result = delegate.copyResized(data, newSize, deep, fillNA);
-            assert getUncachedLib().getLength(result) == newSize;
-            // data is not complete => result is not complete
-            assert delegate.isComplete(data) || !getUncachedLib().isComplete(result);
-            // we filled the tail with NAs => result is not complete + there should be NAs at the
-            // end
-            if (fillNA && newSize > delegate.getLength(data)) {
-                assert !getUncachedLib().isComplete(result);
-                assert getUncachedLib().isNAAt(result, getUncachedLib().getLength(result) - 1);
-            }
-            return result;
         }
 
         @Override

@@ -93,12 +93,6 @@ public class RListNativeData implements TruffleObject {
     }
 
     @ExportMessage
-    @SuppressWarnings("unused")
-    public Object copyResized(int newSize, boolean deep, boolean fillNA) {
-        throw RInternalError.unimplemented("this method should be removed");
-    }
-
-    @ExportMessage
     public Object[] getListDataCopy() {
         return NativeDataAccess.copyListNativeData(vec.getNativeMirror());
     }

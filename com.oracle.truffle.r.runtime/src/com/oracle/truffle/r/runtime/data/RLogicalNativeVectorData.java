@@ -84,12 +84,6 @@ public class RLogicalNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
-    public RLogicalArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA,
-                    @Cached BranchProfile ownerIsNull) {
-        return copy(deep).copyResized(newSize, deep, fillNA, ownerIsNull);
-    }
-
-    @ExportMessage
     public byte[] getLogicalDataCopy() {
         int[] idata = NativeDataAccess.copyIntNativeData(vec.getNativeMirror());
         byte[] data = new byte[idata.length];

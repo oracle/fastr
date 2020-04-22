@@ -96,15 +96,6 @@ class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RIntArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        int[] newData = Arrays.copyOf(data, newSize);
-        if (fillNA) {
-            Arrays.fill(newData, data.length, newData.length, RRuntime.INT_NA);
-        }
-        return new RIntArrayVectorData(newData, isComplete(ownerIsNull));
-    }
-
-    @ExportMessage
     public boolean isComplete(@Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
         if (owner != null) {
             return owner.isComplete() && ENABLE_COMPLETE;

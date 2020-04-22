@@ -123,12 +123,6 @@ public class RStringSeqVectorData implements RSeq {
     }
 
     @ExportMessage
-    @SuppressWarnings("unused")
-    public RStringArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere("this method will be removed");
-    }
-
-    @ExportMessage
     public boolean isComplete() {
         return true;
     }

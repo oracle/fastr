@@ -105,11 +105,6 @@ class RStringArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RStringArrayVectorData copyResized(@SuppressWarnings("unused") int newSize, @SuppressWarnings("unused") boolean deep, @SuppressWarnings("unused") boolean fillNA) {
-        throw RInternalError.shouldNotReachHere("this method will be removed");
-    }
-
-    @ExportMessage
     public boolean isComplete(@Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
         if (owner != null) {
             return owner.isComplete() && ENABLE_COMPLETE;

@@ -94,19 +94,6 @@ class RStringForeignObjData implements TruffleObject {
     }
 
     @ExportMessage
-    public RStringArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
-                    @CachedLibrary(limit = "5") InteropLibrary valueInterop,
-                    @Shared("isNullCheck") @Cached("createBinaryProfile()") ConditionProfile isNullProfile,
-                    @CachedLibrary("this.foreign") InteropLibrary interop) {
-        int length = getLength(interop);
-        String[] newData = getDataAsArray(newSize, length, interop, valueInterop, isNullProfile);
-        if (fillNA) {
-            Arrays.fill(newData, length, newData.length, RRuntime.INT_NA);
-        }
-        return new RStringArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
-    }
-
-    @ExportMessage
     public String[] getStringDataCopy(@CachedLibrary(limit = "5") InteropLibrary valueInterop,
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("isNullCheck") @Cached("createBinaryProfile()") ConditionProfile isNullProfile) {

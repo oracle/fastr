@@ -1345,12 +1345,6 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
         return this;
     }
 
-    @ExportMessage(name = "copyResized", library = VectorDataLibrary.class)
-    @SuppressWarnings("static-method")
-    public Object dataLibCopyResized(@SuppressWarnings("unused") int newSize, @SuppressWarnings("unused") boolean deep, @SuppressWarnings("unused") boolean fillNA) {
-        throw RInternalError.unimplemented();
-    }
-
     @ExportMessage
     public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(getInternalStore(), getLength());

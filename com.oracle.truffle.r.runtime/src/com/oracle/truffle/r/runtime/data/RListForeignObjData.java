@@ -87,12 +87,6 @@ class RListForeignObjData implements TruffleObject {
     }
 
     @ExportMessage
-    @SuppressWarnings("unused")
-    public RListForeignObjData copyResized(int newSize, boolean deep, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere("this method will be removed");
-    }
-
-    @ExportMessage
     public Object[] getListDataCopy(@CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("foreign2R") @Cached Foreign2R foreign2R) {
         int length = getLength(interop);

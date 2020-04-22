@@ -72,12 +72,6 @@ public class RListArrayDataLibrary {
     }
 
     @ExportMessage
-    @SuppressWarnings("unused")
-    public static Object copyResized(Object[] receiver, int newSize, boolean deep, boolean fillNA) {
-        throw RInternalError.unimplemented("this method should be removed");
-    }
-
-    @ExportMessage
     public static Object[] getListDataCopy(Object[] receiver) {
         Object[] result = new Object[receiver.length];
         System.arraycopy(receiver, 0, result, 0, receiver.length);

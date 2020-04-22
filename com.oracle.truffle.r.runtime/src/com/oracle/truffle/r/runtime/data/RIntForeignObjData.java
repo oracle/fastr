@@ -42,8 +42,6 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import java.util.Arrays;
-
 @ExportLibrary(VectorDataLibrary.class)
 class RIntForeignObjData implements TruffleObject {
     protected final Object foreign;
@@ -96,21 +94,6 @@ class RIntForeignObjData implements TruffleObject {
                     @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
                     @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
         return new RIntArrayVectorData(getIntDataCopy(valueInterop, interop, resultProfile, isTruffleObjectProfile, isIntProfile), RDataFactory.INCOMPLETE_VECTOR);
-    }
-
-    @ExportMessage
-    public RIntArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
-                    @CachedLibrary(limit = "5") InteropLibrary valueInterop,
-                    @CachedLibrary("this.foreign") InteropLibrary interop,
-                    @Shared("resultProfile") @Cached("createClassProfile()") ValueProfile resultProfile,
-                    @Shared("isTOProfile") @Cached("createBinaryProfile()") ConditionProfile isTruffleObjectProfile,
-                    @Shared("isIntProfile") @Cached("createBinaryProfile()") ConditionProfile isIntProfile) {
-        int length = getLength(interop);
-        int[] newData = getDataAsArray(newSize, length, interop, valueInterop, resultProfile, isTruffleObjectProfile, isIntProfile);
-        if (fillNA) {
-            Arrays.fill(newData, length, newData.length, RRuntime.INT_NA);
-        }
-        return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage

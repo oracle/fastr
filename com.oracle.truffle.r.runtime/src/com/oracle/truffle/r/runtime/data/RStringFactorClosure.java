@@ -98,12 +98,6 @@ class RStringFactorClosure implements RClosure {
     }
 
     @ExportMessage
-    @SuppressWarnings("unused")
-    public RStringArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere("this method will be removed");
-    }
-
-    @ExportMessage
     public boolean isComplete() {
         return false;
     }
