@@ -38,12 +38,11 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -159,7 +158,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "isZero(digits)")
-    protected RComplexVector round(RAbstractComplexVector x, double digits) {
+    protected RComplexVector round(RComplexVector x, double digits) {
         double[] result = new double[x.getLength() << 1];
         check.enable(x);
         for (int i = 0; i < x.getLength(); i++) {
@@ -175,7 +174,7 @@ public abstract class Round extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "!isZero(dDigits)")
-    protected RComplexVector roundDigits(RAbstractComplexVector x, double dDigits) {
+    protected RComplexVector roundDigits(RComplexVector x, double dDigits) {
         int digits = (int) Math.round(dDigits);
         double[] result = new double[x.getLength() << 1];
         check.enable(x);

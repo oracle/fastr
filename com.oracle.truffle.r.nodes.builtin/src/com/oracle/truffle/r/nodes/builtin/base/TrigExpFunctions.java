@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Pow.CHypot;
@@ -511,7 +511,7 @@ public class TrigExpFunctions {
         @Fallback
         protected Object atan2(Object x, Object y) {
             CompilerDirectives.transferToInterpreter();
-            if (x instanceof RAbstractComplexVector || y instanceof RAbstractComplexVector) {
+            if (x instanceof RComplexVector || y instanceof RComplexVector) {
                 throw RInternalError.unimplemented("atan2 for complex values");
             }
             throw error(RError.Message.NON_NUMERIC_MATH);

@@ -27,7 +27,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FindFirstStep;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -80,11 +80,11 @@ public final class FindFirstNodeBuilder {
         return create(String.class, defaultValue);
     }
 
-    public PipelineStep<RAbstractComplexVector, RComplex> complexElement() {
+    public PipelineStep<RComplexVector, RComplex> complexElement() {
         return create(String.class, null);
     }
 
-    public PipelineStep<RAbstractComplexVector, RComplex> complexElement(RComplex defaultValue) {
+    public PipelineStep<RComplexVector, RComplex> complexElement(RComplex defaultValue) {
         return create(String.class, defaultValue);
     }
 

@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -332,7 +332,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
     }
 
     @Specialization(guards = "supportComplex")
-    protected RComplex doComplexVector(RAbstractComplexVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected RComplex doComplexVector(RComplexVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         RComplex result = RRuntime.double2complex(semantics.getDoubleStart());

@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.nodes.casts.CastUtils.Cast;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -52,7 +52,7 @@ public final class TypeExpr {
     private static final Set<Set<Class<?>>> mutuallyExclusiveInterfaces = new HashSet<>();
 
     static {
-        registerMutuallyExclusiveInterfaces(RIntVector.class, RDoubleVector.class, RLogicalVector.class, RAbstractComplexVector.class, RRawVector.class,
+        registerMutuallyExclusiveInterfaces(RIntVector.class, RDoubleVector.class, RLogicalVector.class, RComplexVector.class, RRawVector.class,
                         RAbstractStringVector.class, RAbstractListVector.class);
     }
 

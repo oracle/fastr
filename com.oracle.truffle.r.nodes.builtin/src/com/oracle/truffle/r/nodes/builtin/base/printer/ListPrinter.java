@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -109,8 +109,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 } else {
                     pbuf = "Numeric," + dv.getLength();
                 }
-            } else if (tmp instanceof RAbstractComplexVector) {
-                RAbstractComplexVector cv = (RAbstractComplexVector) tmp;
+            } else if (tmp instanceof RComplexVector) {
+                RComplexVector cv = (RComplexVector) tmp;
                 if (cv.getLength() == 1) {
                     pbuf = ComplexVectorPrinter.format(cv, false, 0, 0, '.', pp)[0];
                 } else {

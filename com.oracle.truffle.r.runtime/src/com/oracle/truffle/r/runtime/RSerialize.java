@@ -83,7 +83,7 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -1800,7 +1800,7 @@ public class RSerialize {
                             }
 
                             case CPLXSXP: {
-                                RAbstractComplexVector vector = (RAbstractComplexVector) obj;
+                                RComplexVector vector = (RComplexVector) obj;
                                 VectorAccess access = vector.slowPathAccess();
                                 try (SequentialIterator iter = access.access(vector)) {
                                     stream.writeInt(access.getLength(iter));
@@ -2889,7 +2889,7 @@ public class RSerialize {
                 RAbstractVector vector = (RAbstractVector) value;
                 if (vector.getLength() == 1 && (vector.getAttributes() == null || vector.getAttributes().getShape().getPropertyCount() == 0)) {
                     if (vector instanceof RDoubleVector || vector instanceof RIntVector || vector instanceof RAbstractStringVector ||
-                                    vector instanceof RLogicalVector || vector instanceof RRawVector || vector instanceof RAbstractComplexVector) {
+                                    vector instanceof RLogicalVector || vector instanceof RRawVector || vector instanceof RComplexVector) {
                         return vector.getDataAtAsObject(0);
                     }
                 }

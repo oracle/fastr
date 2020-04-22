@@ -92,7 +92,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
@@ -338,7 +338,7 @@ public final class PipelineToCastNode {
                         }
                     };
                 case Complex:
-                    return x -> x instanceof RAbstractComplexVector;
+                    return x -> x instanceof RComplexVector;
                 case Character:
                     return new ArgumentFilter<Object, Object>() {
                         private final ConditionProfile profile = ConditionProfile.createBinaryProfile();

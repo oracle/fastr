@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropLong;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropShort;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -57,7 +56,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
                 double.class, RDoubleVector.class,
                 String.class, RAbstractStringVector.class,
                 RRaw.class, RRawVector.class,
-                RComplex.class, RAbstractComplexVector.class,
+                RComplex.class, RComplexVector.class,
                 RAbstractListVector.class,
                 RNull.class,
                 RExpression.class,
@@ -164,11 +163,6 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RLogicalVector toAbstractLogicalVector(byte vector) {
-        return RDataFactory.createLogicalVectorFromScalar(vector);
-    }
-
-    @ImplicitCast
     public static RLogicalVector toLogicalVector(byte vector) {
         return RDataFactory.createLogicalVectorFromScalar(vector);
     }
@@ -179,12 +173,12 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RRawVector toAbstractRawVector(RRaw vector) {
+    public static RRawVector toRawVector(RRaw vector) {
         return RDataFactory.createRawVectorFromScalar(vector);
     }
 
     @ImplicitCast
-    public static RAbstractComplexVector toAbstractComplexVector(RComplex vector) {
+    public static RComplexVector toComplexVector(RComplex vector) {
         return RDataFactory.createComplexVectorFromScalar(vector);
     }
 
