@@ -28,6 +28,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
@@ -106,9 +107,17 @@ public class RIntNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
-    public boolean next(SeqIterator it, boolean withWrap,
+    @SuppressWarnings("static-method")
+    public boolean nextImpl(SeqIterator it, boolean loopCondition,
                     @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
-        return it.next(loopProfile, withWrap);
+        return it.next(loopCondition, loopProfile);
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public void nextWithWrap(SeqIterator it,
+                    @Cached("createBinaryProfile()") ConditionProfile wrapProfile) {
+        it.nextWithWrap(wrapProfile);
     }
 
     @ExportMessage

@@ -135,9 +135,15 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     }
 
     @ExportMessage
-    public boolean next(SeqIterator it, boolean withWrap,
+    public boolean nextImpl(SeqIterator it, boolean loopCondition,
                     @CachedLibrary("this.data") VectorDataLibrary dataLib) {
-        return dataLib.next(data, it, withWrap);
+        return dataLib.nextImpl(data, it, loopCondition);
+    }
+
+    @ExportMessage
+    public void nextWithWrap(SeqIterator it,
+                    @CachedLibrary("this.data") VectorDataLibrary dataLib) {
+        dataLib.nextWithWrap(data, it);
     }
 
     @ExportMessage

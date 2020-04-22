@@ -248,7 +248,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         int maxOutOfBoundsIndex = 0;
         Object positionsData = position.getData();
         SeqIterator it = positionLibrary.iterator(positionsData);
-        while (positionLibrary.next(positionsData, it)) {
+        while (positionLibrary.nextLoopCondition(positionsData, it)) {
             int positionValue = positionLibrary.getNextInt(positionsData, it);
             if (positionValue > 0) {
                 seenPositiveProfile.enter();
@@ -319,7 +319,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         int newPositionIndex = 0;
         Object posData = position.getData();
         SeqIterator posIt = posDataLibrary.iterator(posData);
-        while (posDataLibrary.next(posData, posIt)) {
+        while (posDataLibrary.nextLoopCondition(posData, posIt)) {
             int positionValue = posDataLibrary.getNextInt(posData, posIt);
             if (zeroCount > 0 && positionValue == 0) {
                 continue;
@@ -338,7 +338,7 @@ abstract class PositionCheckSubsetNode extends PositionCheckNode {
         int allPositionsNum = dimLength;
         Object posData = position.getData();
         SeqIterator posIt = posDataLibrary.iterator(posData);
-        while (posDataLibrary.next(posData, posIt)) {
+        while (posDataLibrary.nextLoopCondition(posData, posIt)) {
             int pos = -posDataLibrary.getNextInt(posData, posIt);
             if (hasZeros && pos == 0) {
                 continue;

@@ -377,7 +377,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
         int rightIndex = rightBase;
 
         SeqIterator it = positionLibrary.iterator(positionData);
-        while (positionLibrary.next(positionData, it)) {
+        while (positionLibrary.nextLoopCondition(positionData, it)) {
             int positionValue = positionLibrary.getNextInt(positionData, it);
             boolean isNA = getPositionNACheck().check(positionValue);
             if (isNA) {

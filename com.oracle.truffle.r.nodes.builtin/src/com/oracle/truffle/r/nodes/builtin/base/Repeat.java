@@ -310,7 +310,7 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
                 // iterate once over the times vector to determine result vector size
                 int resultLength = 0;
                 SeqIterator it = timesDataLib.iterator(timesData);
-                while (timesDataLib.next(timesData, it)) {
+                while (timesDataLib.nextLoopCondition(timesData, it)) {
                     int t = timesDataLib.getNextInt(timesData, it);
                     if (t < 0) {
                         throw error(RError.Message.INVALID_ARGUMENT, "times");
