@@ -85,7 +85,7 @@ ifdef FASTR_RECOMMENDED_BINARY
 $(info Using FastR recommended packages binary: $(FASTR_RECOMMENDED_BINARY))
 
 install.recommended: $(GNUR_RECOMMENDED_TARS)
-	if ! (mx -p $(FASTR_R_HOME) r-pkgcache --print-api-checksum --vm fastr | diff -q $(FASTR_RECOMMENDED_BINARY)/api-checksum.txt -); then \
+	if ! (mx -p $(FASTR_R_HOME) r-pkgcache --print-api-checksum --vm fastr | tail -n 1 | diff -q $(FASTR_RECOMMENDED_BINARY)/api-checksum.txt -); then \
 		echo "******************************"; \
 		echo "ERROR:"; \
 		echo "The checksum of FastR header files does not match the checksum that the recommended packages were build against."; \

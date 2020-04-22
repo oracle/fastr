@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,8 @@ repo:
 		$(MAKE) PACKAGE=$$dir -C $$dir || exit 1; \
 	done
 	(cd $(REPO_DIR); $(GNUR_HOME_BINARY)/bin/R --vanilla --slave -e "tools::write_PACKAGES('.', type='source')")
+	ls -R $(REPO_DIR) || true
+	cat $(REPO_DIR)/PACKAGES || true
 
 copy_recommended:
 	mkdir -p recommended
