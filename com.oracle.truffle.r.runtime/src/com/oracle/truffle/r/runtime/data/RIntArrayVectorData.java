@@ -22,10 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
-
-import java.util.Arrays;
-
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -44,13 +40,17 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+import java.util.Arrays;
+
+import static com.oracle.truffle.r.runtime.data.model.RAbstractVector.ENABLE_COMPLETE;
+
 @ExportLibrary(VectorDataLibrary.class)
-class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
+public class RIntArrayVectorData implements TruffleObject, VectorDataWithOwner {
     private final int[] data;
     private RIntVector owner;
     private boolean complete;
 
-    RIntArrayVectorData(int[] data, boolean complete) {
+    public RIntArrayVectorData(int[] data, boolean complete) {
         this.data = data;
         this.complete = complete && ENABLE_COMPLETE;
     }

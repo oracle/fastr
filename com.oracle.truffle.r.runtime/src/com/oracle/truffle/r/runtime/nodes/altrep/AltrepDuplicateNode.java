@@ -6,13 +6,21 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
+import com.oracle.truffle.r.runtime.data.RIntArrayVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.data.nodes.CopyWithAttributes;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+/**
+ * Note that the behavior of GNU-R's Rf_duplicate in duplicate.c is a bit weird: When the altrep vector
+ * does not have <code>Duplicate</code> method registered, then calling <code>Rf_duplicate</code> on such
+ * altrep vector creates an atomic vector, not an altrep vector.
+ */
 @GenerateUncached
 public abstract class AltrepDuplicateNode extends RBaseNode {
     public abstract Object execute(Object altVec, boolean deep);
@@ -20,25 +28,33 @@ public abstract class AltrepDuplicateNode extends RBaseNode {
     @Specialization(guards = {"isAltrep(altIntVec)", "hasDuplicateMethod(altIntVec)"}, limit = "1")
     public Object doAltIntWithDuplicateMethod(RIntVector altIntVec, boolean deep,
                                               @CachedLibrary("getDuplicateMethod(altIntVec)") InteropLibrary duplicateMethodInterop,
-                                              @CachedLibrary("altIntVec") AbstractContainerLibrary containerLibrary,
                                               @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile,
                                               @Cached("createBinaryProfile()") ConditionProfile duplicateReturnsNullProfile,
-                                              @Cached CopyWithAttributes copyWithAttributes) {
+                                              @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
+                                              @Cached AltrepLengthNode lengthNode) {
         AltIntegerClassDescriptor descriptor = getAltIntDescriptor(altIntVec);
         Object duplicatedObject = descriptor.invokeDuplicateMethodCached(altIntVec, deep, duplicateMethodInterop, hasMirrorProfile);
         if (duplicateReturnsNullProfile.profile(duplicatedObject == null)) {
-            return doStandardDuplicate(altIntVec, deep, copyWithAttributes, containerLibrary);
+            return doStandardDuplicate(altIntVec, deep, dataptrNode, lengthNode);
         } else {
-            // TODO: Duplicate also attributes (as in GNU-R's DuplicateEX)
-            return duplicatedObject;
+            assert duplicatedObject instanceof NativeMirror; // TODO: debug this line
+            assert ((NativeMirror) duplicatedObject).getDelegate() instanceof RIntVector;
+            RIntVector duplicatedVector = (RIntVector) ((NativeMirror) duplicatedObject).getDelegate();
+            // We have to return data, not the whole vector. However, the Duplicate method returns whole vector.
+            return duplicatedVector.getData();
         }
     }
 
-    @Specialization(replaces = {"doAltIntWithDuplicateMethod"}, limit = "3")
-    public Object doStandardDuplicate(RIntVector intVector, boolean deep,
-                                      @Cached(allowUncached = true) CopyWithAttributes copyWithAttributes,
-                                      @CachedLibrary("intVector") AbstractContainerLibrary containerLibrary) {
-        return copyWithAttributes.execute(containerLibrary, intVector);
+    @Specialization(guards = {"isAltrep(altIntVec)"}, replaces = {"doAltIntWithDuplicateMethod"}, limit = "3")
+    public Object doStandardDuplicate(RIntVector altIntVec, @SuppressWarnings("unused") boolean deep,
+                                      @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
+                                      @Cached AltrepLengthNode lengthNode) {
+        int length = (int) lengthNode.execute(altIntVec);
+        long dataptrAddr = dataptrNode.execute(altIntVec, false);
+        int[] newData = new int[length];
+        NativeMemory.copyMemory(dataptrAddr, newData, ElementType.INT, length);
+        // TODO: complete=true?
+        return new RIntArrayVectorData(newData, true);
     }
 
     protected static boolean isAltrep(Object vector) {
