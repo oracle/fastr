@@ -1,3 +1,9 @@
+# 20.2.0
+
+Bug fixes:
+
+* FastR cleans-up the temporary directory created for internal implementation of the R input handlers
+
 # 20.1.0
 
 New features:

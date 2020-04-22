@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.EventLoopState;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -63,11 +64,13 @@ public abstract class FastRInitEventLoop extends RBuiltinNode.Arg0 {
     public Object initEventLoop(@CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         if (FastRConfig.UseNativeEventLoop) {
             TruffleFile tmpDir;
+            final RContext ctx = ctxRef.get();
             try {
-                tmpDir = ctxRef.get().getEnv().createTempDirectory(null, "fastr-fifo");
+                tmpDir = ctx.getEnv().createTempDirectory(null, "fastr-fifo");
             } catch (Exception e) {
                 return RDataFactory.createList(new Object[]{1}, RDataFactory.createStringVector("result"));
             }
+            ctx.eventLoopState = new EventLoopState(tmpDir);
             String fifoInPath = tmpDir.resolve("event-loop-fifo-in").toString();
             String fifoOutPath = tmpDir.resolve("event-loop-fifo-out").toString();
             int result = initEventLoopNode.execute(fifoInPath, fifoOutPath);
