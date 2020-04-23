@@ -22,12 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 /**
  * Interface for vector data objects (see {@link VectorDataLibrary}) that need a reference to their
  * owning vector.
  */
-interface VectorDataWithOwner {
-    void setOwner(RAbstractVector owner);
+public interface VectorDataWithOwner {
+    void setOwner(RAbstractContainer owner);
 }

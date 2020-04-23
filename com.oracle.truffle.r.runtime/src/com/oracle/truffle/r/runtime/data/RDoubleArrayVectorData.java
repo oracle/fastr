@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIter
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
@@ -56,7 +56,7 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @Override
-    public void setOwner(RAbstractVector newOwner) {
+    public void setOwner(RAbstractContainer newOwner) {
         owner = (RDoubleVector) newOwner;
         owner.setComplete(complete);
     }

@@ -73,22 +73,11 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
     }
 
     private void setData(Object data, int newLen) {
-        this.data = data;
-        if (data instanceof VectorDataWithOwner) {
-            ((VectorDataWithOwner) data).setOwner(this);
-        }
-        // Temporary solution to keep getLength(), isComplete(), and isShareable be fast-path
-        // operations (they only read a field, no polymorphism).
+        // Temporary solution to keep getLength() fast
         // The assumption is that length of vectors can only change in infrequently used setLength
         // operation where we update the field accordingly
         length = newLen;
-        shareable = data instanceof RDoubleArrayVectorData || data instanceof RDoubleNativeVectorData;
-        // Only array storage strategy is handling the complete flag dynamically,
-        // for other strategies, the complete flag is determined solely by the type of the strategy
-        if (!(data instanceof RDoubleArrayVectorData)) {
-            // only sequences are always complete, everything else is always incomplete
-            setComplete(data instanceof RDoubleSeqVectorData);
-        }
+        super.setData(data);
     }
 
     public static RDoubleVector createForeignWrapper(Object foreign) {

@@ -51,11 +51,13 @@ import com.oracle.truffle.r.runtime.data.RFFIAccess;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataWithOwner;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.nodes.CopyResizedWithEmpty;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
@@ -88,6 +90,18 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     protected RAbstractVector(boolean complete) {
         this.complete = complete && ENABLE_COMPLETE;
+    }
+
+    public final void setData(Object data) {
+        this.data = data;
+        if (data instanceof VectorDataWithOwner) {
+            // "setOwner" may be a message in the VectorDataLibrary to make this fast
+            ((VectorDataWithOwner) data).setOwner(this);
+        }
+        // temporary solution to keep isShareable() fast
+        shareable = VectorDataLibrary.getFactory().getUncached().isWriteable(data);
+        // temporary solution to keep isComplete() fast
+        complete = VectorDataLibrary.getFactory().getUncached().isComplete(data);
     }
 
     public boolean isSequence() {
@@ -948,12 +962,23 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         }
     }
 
+    protected static VectorDataLibrary getUncachedDataLib() {
+        return VectorDataLibrary.getFactory().getUncached();
+    }
+
+    protected void verifyData() {
+        assert getUncachedDataLib().getType(data) == getRType();
+        assert this instanceof RRawVector || this instanceof RList || getUncachedDataLib().isComplete(data) == isComplete();
+        assert getUncachedDataLib().getLength(data) == getLength();
+    }
+
     /**
      * Verifies the integrity of the vector, mainly whether a vector that claims to be
      * {@link #isComplete()} contains NA values.
      */
     public static boolean verifyVector(RAbstractVector vector) {
         CompilerAsserts.neverPartOfCompilation();
+        vector.verifyData();
         VectorAccess access = vector.slowPathAccess();
         assert access.getType().isVector();
         if (!access.getType().isAtomic()) {

@@ -87,12 +87,11 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
     }
 
     private void setData(Object data, int newLen) {
-        this.data = data;
-        if (data instanceof VectorDataWithOwner) {
-            ((VectorDataWithOwner) data).setOwner(this);
-        }
-        // Temporary solution to keep getLength() be a fast-path operation
+        // Temporary solution to keep getLength() fast
+        // The assumption is that length of vectors can only change in infrequently used setLength
+        // operation where we update the field accordingly
         length = newLen;
+        super.setData(data);
     }
 
     boolean isNativized() {
