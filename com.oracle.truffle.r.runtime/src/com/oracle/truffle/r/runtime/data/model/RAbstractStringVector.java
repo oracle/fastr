@@ -34,6 +34,7 @@ import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
@@ -59,7 +60,7 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean isNull(
+    public final boolean isNull(
                     @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
                     @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
         if (!isScalar.profile(isScalar(dataLib))) {
@@ -69,7 +70,7 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final boolean isString(
+    public final boolean isString(
                     @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         if (!isScalar(dataLib)) {
             return false;
@@ -78,7 +79,7 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    final String asString(
+    public final String asString(
                     @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
                     @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isString) throws UnsupportedMessageException {
         if (!isString.profile(isString(dataLib))) {
@@ -129,8 +130,8 @@ public abstract class RAbstractStringVector extends RAbstractAtomicVector {
         return createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete, dimensions);
     }
 
-    protected RStringVector createStringVector(Object[] dataArg, boolean isComplete, int[] dims) {
-        return RDataFactory.createStringVector((String[]) dataArg, isComplete, dims);
+    protected RStringVector createStringVector(@SuppressWarnings("unused") Object[] dataArg, @SuppressWarnings("unused") boolean isComplete, @SuppressWarnings("unused") int[] dims) {
+        throw RInternalError.unimplemented();
     }
 
     protected Object[] copyResizedData(int size, String fill) {

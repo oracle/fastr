@@ -71,6 +71,7 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNode;
 import com.oracle.truffle.r.nodes.unary.CastStringBaseNode;
@@ -86,7 +87,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -243,7 +243,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
         // cancel potential primitive types in the input
         TypeExpr noPrimInput = inputType.and(noPrimType);
         // the positive output type union
-        TypeExpr res = TypeExpr.union(RIntVector.class, RLogicalVector.class, RDoubleVector.class, RString.class);
+        TypeExpr res = TypeExpr.union(RIntVector.class, RLogicalVector.class, RDoubleVector.class, RStringVector.class);
         // intersect the to stop propagating the primitive types, such as String
         res = res.and(noPrimInput);
         // the output of the boxing is actually the union of the positive union with its negation

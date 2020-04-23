@@ -35,8 +35,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Asserts;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -92,11 +90,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * iterators usage, the memory write of the "complete" field is moved to
  * {@link #commitWriteIterator(Object, SeqWriteIterator, boolean)}, so that the memory write is
  * outside of the loop that usually writes values to the vector object.
- * <p>
- * Write operations with iterators may be configured to check incoming values for NAs. If they are
- * not configured to do so, then whether or not to update the complete flag is determined solely by
- * the argument passed to the "commit" method. In such case, it is responsibility of the user to
- * check for NA values.
  */
 @GenerateLibrary(assertions = Asserts.class)
 @DefaultExport(RListArrayDataLibrary.class)
@@ -456,7 +449,8 @@ public abstract class VectorDataLibrary extends Library {
         RType type = getType(receiver);
         switch (type) {
             case Integer:
-                throw RInternalError.shouldNotReachHere("should be exported elsewhere");
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Double:
                 return double2int(getNACheck(receiver), getDoubleAt(receiver, index));
             case Logical:
@@ -482,7 +476,8 @@ public abstract class VectorDataLibrary extends Library {
         RType type = getType(receiver);
         switch (type) {
             case Integer:
-                throw RInternalError.shouldNotReachHere("should be exported elsewhere");
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Double:
                 return double2int(getNACheck(receiver), getNextDouble(receiver, it));
             case Logical:
@@ -508,6 +503,7 @@ public abstract class VectorDataLibrary extends Library {
         RType type = getType(receiver);
         switch (type) {
             case Integer:
+                CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Double:
                 return double2int(getNACheck(receiver), getDouble(receiver, it, index));
@@ -580,6 +576,7 @@ public abstract class VectorDataLibrary extends Library {
             case Integer:
                 return int2double(getNACheck(receiver), getIntAt(receiver, index));
             case Double:
+                CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Logical:
                 return logical2double(getNACheck(receiver), getLogicalAt(receiver, index));
@@ -601,7 +598,8 @@ public abstract class VectorDataLibrary extends Library {
             case Integer:
                 return int2double(getNACheck(receiver), getNextInt(receiver, it));
             case Double:
-                throw RInternalError.shouldNotReachHere("should be exported elsewhere");
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Logical:
                 return logical2double(getNACheck(receiver), getNextLogical(receiver, it));
             case Raw:
@@ -622,6 +620,7 @@ public abstract class VectorDataLibrary extends Library {
             case Integer:
                 return int2double(getNACheck(receiver), getInt(receiver, it, index));
             case Double:
+                CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Logical:
                 return logical2double(getNACheck(receiver), getLogical(receiver, it, index));
@@ -671,9 +670,8 @@ public abstract class VectorDataLibrary extends Library {
             case Double:
                 return double2logical(getNACheck(receiver), getDoubleAt(receiver, index));
             case Logical:
-                byte value = asLogical(receiver).getDataAt(index);
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Raw:
                 return raw2logical(getRawAt(receiver, index));
             case Complex:
@@ -694,9 +692,8 @@ public abstract class VectorDataLibrary extends Library {
             case Double:
                 return double2logical(getNACheck(receiver), getNextDouble(receiver, it));
             case Logical:
-                byte value = asLogical(receiver).getDataAt(it.getIndex());
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Raw:
                 return raw2logical(getNextRaw(receiver, it));
             case Complex:
@@ -717,9 +714,8 @@ public abstract class VectorDataLibrary extends Library {
             case Double:
                 return double2logical(getNACheck(receiver), getDouble(receiver, it, index));
             case Logical:
-                byte value = asLogical(receiver).getDataAt(index);
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Raw:
                 return raw2logical(getRaw(receiver, it, index));
             case Complex:
@@ -768,9 +764,8 @@ public abstract class VectorDataLibrary extends Library {
             case Logical:
                 return logical2raw(getNACheck(receiver), getLogicalAt(receiver, index));
             case Raw:
-                byte value = asRaw(receiver).getRawDataAt(index);
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Complex:
                 return complex2raw(getNACheck(receiver), getComplexAt(receiver, index));
             case Character:
@@ -791,9 +786,8 @@ public abstract class VectorDataLibrary extends Library {
             case Logical:
                 return logical2raw(getNACheck(receiver), getNextLogical(receiver, it));
             case Raw:
-                byte value = asRaw(receiver).getRawDataAt(it.getIndex());
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Complex:
                 return complex2raw(getNACheck(receiver), getNextComplex(receiver, it));
             case Character:
@@ -814,9 +808,8 @@ public abstract class VectorDataLibrary extends Library {
             case Logical:
                 return logical2raw(getNACheck(receiver), getLogical(receiver, it, index));
             case Raw:
-                byte value = asRaw(receiver).getRawDataAt(index);
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Complex:
                 return complex2raw(getNACheck(receiver), getComplex(receiver, it, index));
             case Character:
@@ -868,9 +861,8 @@ public abstract class VectorDataLibrary extends Library {
             case Complex:
                 return complex2string(getNACheck(receiver), getComplexAt(receiver, index));
             case Character:
-                String value = asString(receiver).getDataAt(index);
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             default:
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere(type.toString());
@@ -891,9 +883,8 @@ public abstract class VectorDataLibrary extends Library {
             case Complex:
                 return complex2string(getNACheck(receiver), getNextComplex(receiver, it));
             case Character:
-                String value = asString(receiver).getDataAt(it.getIndex());
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             default:
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere(type.toString());
@@ -905,7 +896,7 @@ public abstract class VectorDataLibrary extends Library {
         return getStringImpl(receiver, type, it, index);
     }
 
-    public String getStringImpl(Object receiver, RType type, RandomAccessIterator it, int index) {
+    public final String getStringImpl(Object receiver, RType type, RandomAccessIterator it, int index) {
         switch (type) {
             case Integer:
                 return int2string(getNACheck(receiver), getInt(receiver, it, index));
@@ -918,9 +909,8 @@ public abstract class VectorDataLibrary extends Library {
             case Complex:
                 return complex2string(getNACheck(receiver), getComplex(receiver, it, index));
             case Character:
-                String value = asString(receiver).getDataAt(index);
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             default:
                 CompilerDirectives.transferToInterpreter();
                 throw RInternalError.shouldNotReachHere(type.toString());
@@ -967,9 +957,8 @@ public abstract class VectorDataLibrary extends Library {
             case Raw:
                 return raw2complex(getRawAt(getNACheck(receiver), index));
             case Complex:
-                RComplex value = asComplex(receiver).getDataAt(index);
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Character:
                 return string2complex(getNACheck(receiver), getStringAt(receiver, index));
             default:
@@ -990,9 +979,8 @@ public abstract class VectorDataLibrary extends Library {
             case Raw:
                 return raw2complex(getNextRaw(receiver, it));
             case Complex:
-                RComplex value = asComplex(receiver).getDataAt(it.getIndex());
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Character:
                 return string2complex(getNACheck(receiver), getNextString(receiver, it));
             default:
@@ -1017,9 +1005,8 @@ public abstract class VectorDataLibrary extends Library {
             case Raw:
                 return raw2complex(getRaw(receiver, it, index));
             case Complex:
-                RComplex value = asComplex(receiver).getDataAt(index);
-                getNACheck(receiver).check(value);
-                return value;
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("should be exported elsewhere " + receiver);
             case Character:
                 return string2complex(getNACheck(receiver), getString(receiver, it, index));
             default:
@@ -2292,22 +2279,6 @@ public abstract class VectorDataLibrary extends Library {
             return RRuntime.INT_NA;
         }
         return value;
-    }
-
-    private static RLogicalVector asLogical(Object obj) {
-        return (RLogicalVector) obj;
-    }
-
-    private static RRawVector asRaw(Object obj) {
-        return (RRawVector) obj;
-    }
-
-    private static RAbstractStringVector asString(Object obj) {
-        return (RAbstractStringVector) obj;
-    }
-
-    private static RAbstractComplexVector asComplex(Object obj) {
-        return (RAbstractComplexVector) obj;
     }
 
     // Private utility methods

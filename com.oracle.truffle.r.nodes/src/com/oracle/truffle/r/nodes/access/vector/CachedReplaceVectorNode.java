@@ -40,6 +40,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedReplaceVectorNodeFactory.ValueProfileNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
+import com.oracle.truffle.r.runtime.data.nodes.CopyResizedWithEmpty;
 import com.oracle.truffle.r.runtime.data.nodes.CopyWithAttributes;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
@@ -414,7 +415,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         res.setDimensionsNoCheck(null);
         res.setDimNamesNoCheck(null);
         if (oldNames != null) {
-            oldNames = oldNames.resizeWithEmpty(size);
+            oldNames = CopyResizedWithEmpty.executeSlowPath(oldNames, size);
             res.setNames(oldNames);
         }
         return res;

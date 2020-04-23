@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
+
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -259,8 +260,8 @@ public abstract class CastComplexNode extends CastBaseNode {
         return RClosures.createToComplexVector(operand, true);
     }
 
-    @Specialization
-    protected RAbstractComplexVector doForeignWrapper(RForeignStringWrapper operand) {
+    @Specialization(guards = "operand.isForeignWrapper()")
+    protected RAbstractComplexVector doForeignWrapper(RStringVector operand) {
         return RClosures.createToComplexVector(operand, true);
     }
 

@@ -547,8 +547,8 @@ public final class RDataFactory {
             return createStringVector(new String[]{RRuntime.STRING_NA}, false);
         }
 
-        public final RStringSequence createStringSequence(String prefix, String suffix, int start, int stride, int length) {
-            return traceDataCreated(new RStringSequence(prefix, suffix, start, stride, length));
+        public final RStringVector createStringSequence(String prefix, String suffix, int start, int stride, int length) {
+            return traceDataCreated(new RStringVector(new RStringSeqVectorData(prefix, suffix, start, stride, length), length));
         }
 
         public final RComplexVector createEmptyComplexVector() {
@@ -715,10 +715,6 @@ public final class RDataFactory {
 
         public RStringVector createStringVectorFromScalar(String value) {
             return traceDataCreated(RDataFactory.createStringVectorFromScalar(value));
-        }
-
-        public RStringVector createStringVectorFromNative(long address, int length) {
-            return traceDataCreated(RStringVector.fromNative(address, length));
         }
 
         public RLogicalVector createLogicalVectorFromScalar(boolean value) {
@@ -1025,8 +1021,8 @@ public final class RDataFactory {
         return createStringVector(new String[]{RRuntime.STRING_NA}, false);
     }
 
-    public static RStringSequence createStringSequence(String prefix, String suffix, int start, int stride, int length) {
-        return traceDataCreated(new RStringSequence(prefix, suffix, start, stride, length));
+    public static RStringVector createStringSequence(String prefix, String suffix, int start, int stride, int length) {
+        return traceDataCreated(new RStringVector(new RStringSeqVectorData(prefix, suffix, start, stride, length), length));
     }
 
     public static RComplexVector createEmptyComplexVector() {
@@ -1047,10 +1043,6 @@ public final class RDataFactory {
 
     public static RStringVector createStringVectorFromScalar(String value) {
         return createStringVector(new String[]{value}, !RRuntime.isNA(value));
-    }
-
-    public static RStringVector createStringVectorFromNative(long address, int length) {
-        return traceDataCreated(RStringVector.fromNative(address, length));
     }
 
     public static RLogicalVector createLogicalVectorFromScalar(boolean value) {

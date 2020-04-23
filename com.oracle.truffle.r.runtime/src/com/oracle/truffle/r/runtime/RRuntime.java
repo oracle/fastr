@@ -1053,7 +1053,7 @@ public class RRuntime {
 
     public static boolean hasVectorData(Object o) {
         // TODO: for the time beeeing, until all vectors switch to RVectorData
-        return o instanceof RIntVector || o instanceof RDoubleVector || o instanceof RRawVector || o instanceof RLogicalVector || o instanceof RComplexVector;
+        return o instanceof RIntVector || o instanceof RDoubleVector || o instanceof RRawVector || o instanceof RLogicalVector || o instanceof RComplexVector || o instanceof RStringVector;
     }
 
     public static boolean isSequence(Object o) {

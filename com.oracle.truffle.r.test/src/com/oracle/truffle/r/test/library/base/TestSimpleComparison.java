@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -269,6 +269,11 @@ public class TestSimpleComparison extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
 
         assertEval("{ list(a=\"1\", NULL) == \"bbb\" }");
+
+        assertEval("as.character(list(c('ahoj', 'svete'), '!')) == c('ahoj', 'svete')");
+        assertEval("as.character(list(c('ahoj'), c('svete'), '!')) == c('ahoj', 'svete', '!')");
+        assertEval("as.character(list(c('ahoj'), c('svete'), '!')) == list('ahoj', 'svete', '!')");
+        assertEval("c('ahoj', 'svete', '!') == list('ahoj', 'svete', '!')");
     }
 
     @Test

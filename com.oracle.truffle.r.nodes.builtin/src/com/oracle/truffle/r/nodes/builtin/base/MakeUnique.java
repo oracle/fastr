@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,8 +39,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -57,40 +55,40 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RAbstractStringVector makeUnique(String names, @SuppressWarnings("unused") String sep) {
+    protected RAbstractStringVector makeUniqueSingle(String names, @SuppressWarnings("unused") String sep) {
         // a single string cannot have duplicates
         return RDataFactory.createStringVectorFromScalar(names);
     }
 
     @Specialization(guards = {"!hasCustomSpecialization(names)", "reuseNonSharedNode.supports(names)"}, limit = "getVectorAccessCacheSize()")
-    protected RAbstractStringVector makeUnique(RAbstractStringVector names, String sep,
+    protected RAbstractStringVector makeUniqueVec(RStringVector names, String sep,
                     @Cached("createNonShared(names)") VectorReuse reuseNonSharedNode,
                     @Cached("createBinaryProfile()") ConditionProfile trivialSizeProfile) {
         if (trivialSizeProfile.profile(names.getLength() == 0 || names.getLength() == 1)) {
             return names;
         }
-        RStringVector reused = (RStringVector) reuseNonSharedNode.getMaterializedResult(names);
+        RStringVector reused = reuseNonSharedNode.getMaterializedResult(names);
         return doLargeVector(reused, sep);
     }
 
-    @Specialization(replaces = "makeUnique", guards = "!hasCustomSpecialization(names)")
-    protected RAbstractStringVector makeUniqueGeneric(RAbstractStringVector names, String sep,
+    @Specialization(replaces = "makeUniqueVec", guards = "!hasCustomSpecialization(names)")
+    protected RAbstractStringVector makeUniqueGeneric(RStringVector names, String sep,
                     @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode,
                     @Cached("createBinaryProfile()") ConditionProfile trivialSizeProfile) {
-        return makeUnique(names, sep, reuseNonSharedNode, trivialSizeProfile);
+        return makeUniqueVec(names, sep, reuseNonSharedNode, trivialSizeProfile);
     }
 
-    @Specialization
-    protected RAbstractStringVector makeUniqueSequence(RStringSequence names, @SuppressWarnings("unused") String sep) {
+    @Specialization(guards = "names.isSequence()")
+    protected RAbstractStringVector makeUniqueSequence(RStringVector names, @SuppressWarnings("unused") String sep) {
         // a string sequence cannot have duplicates if stride is not zero
-        if (names.getStride() != 0) {
+        if (names.getSequence().getStride() != 0) {
             return names;
         }
         throw RInternalError.unimplemented("make.unique for string sequence with zero stride is not implemented");
     }
 
-    protected static boolean hasCustomSpecialization(RAbstractStringVector vector) {
-        return vector instanceof RSequence;
+    protected static boolean hasCustomSpecialization(RStringVector vector) {
+        return vector.isSequence();
     }
 
     @TruffleBoundary
