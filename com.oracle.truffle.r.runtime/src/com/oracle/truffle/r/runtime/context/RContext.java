@@ -367,6 +367,7 @@ public final class RContext {
     public final ContextStateImpl stateInternalCode;
     public final DLL.ContextStateImpl stateDLL;
     public final GCTortureState gcTorture;
+    public volatile EventLoopState eventLoopState;
 
     public final RFFIUpCallTargets rffiUpCallTargets;
 
@@ -646,6 +647,10 @@ public final class RContext {
             assert !initial || EvalThread.threadCnt.get() == 0 : "Did not close all children contexts";
 
             this.allocationReporter.removeActiveListener(ALLOCATION_ACTIVATION_LISTENER);
+            EventLoopState eventLoopStateLocal = this.eventLoopState;
+            if (eventLoopStateLocal != null) {
+                eventLoopStateLocal.removeTemporaryDirectory();
+            }
         }
     }
 
