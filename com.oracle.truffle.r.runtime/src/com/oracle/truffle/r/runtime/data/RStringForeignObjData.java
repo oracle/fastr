@@ -41,8 +41,6 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import java.util.Arrays;
-
 @ExportLibrary(VectorDataLibrary.class)
 class RStringForeignObjData implements TruffleObject {
     protected final Object foreign;
