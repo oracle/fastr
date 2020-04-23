@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -76,7 +76,7 @@ public class RowsumFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object rowsum(RAbstractVector xv, RAbstractVector g, RAbstractVector uniqueg, boolean narm, RAbstractStringVector rn) {
+        protected Object rowsum(RAbstractVector xv, RAbstractVector g, RAbstractVector uniqueg, boolean narm, RStringVector rn) {
             int p = xv.isMatrix() ? xv.getDimensions()[1] : 1;
             int n = g.getLength();
             int ng = uniqueg.getLength();

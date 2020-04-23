@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,7 +62,7 @@ import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class TraceFunctions {
@@ -96,7 +96,7 @@ public class TraceFunctions {
         public abstract Object execute(VirtualFrame frame, RFunction func);
 
         @Specialization
-        protected RNull primTrace(VirtualFrame frame, RAbstractStringVector funcName) {
+        protected RNull primTrace(VirtualFrame frame, RStringVector funcName) {
             return primTrace((RFunction) getFunction(frame, funcName.getDataAt(0)));
         }
 
@@ -122,7 +122,7 @@ public class TraceFunctions {
         public abstract Object execute(VirtualFrame frame, RFunction func);
 
         @Specialization
-        protected RNull primUnTrace(VirtualFrame frame, RAbstractStringVector funcName) {
+        protected RNull primUnTrace(VirtualFrame frame, RStringVector funcName) {
             return primUnTrace((RFunction) getFunction(frame, funcName.getDataAt(0)));
         }
 

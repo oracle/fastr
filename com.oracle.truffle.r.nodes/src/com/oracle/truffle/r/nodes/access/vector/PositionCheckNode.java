@@ -46,11 +46,10 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -107,7 +106,7 @@ abstract class PositionCheckNode extends RBaseNode {
         this.replace = replace;
         this.containerType = containerType;
         this.castNode = PositionCastNode.create(mode, replace);
-        if (positionValue instanceof String || positionValue instanceof RAbstractStringVector) {
+        if (positionValue instanceof String || positionValue instanceof RStringVector) {
             boolean useNAForNotFound = !replace && isListLike(containerType) && mode.isSubscript();
             characterLookup = new PositionCharacterLookupNode(mode, numPositions, positionIndex, useNAForNotFound, exact);
         }
@@ -217,7 +216,7 @@ abstract class PositionCheckNode extends RBaseNode {
         }
 
         if (!positionCasted && characterLookup != null) {
-            castPosition = characterLookup.execute(vector, (RAbstractStringVector) castPosition, dimensionLength);
+            castPosition = characterLookup.execute(vector, (RStringVector) castPosition, dimensionLength);
         }
 
         RBaseObject positionVector = (RBaseObject) profilePosition(castPosition);
@@ -243,8 +242,8 @@ abstract class PositionCheckNode extends RBaseNode {
         if (posDim[1] == vectorDim.length) {
             if (matrixPosition instanceof RIntVector || matrixPosition instanceof RDoubleVector) {
                 return matrix2IndexCache.mat2indsub.execute(vectorDim, matrixPosition, posDim);
-            } else if (matrixPosition instanceof RAbstractStringVector) {
-                return matrix2IndexCache.strmat2indsub.execute(vector, vectorDim, (RAbstractStringVector) matrixPosition, posDim);
+            } else if (matrixPosition instanceof RStringVector) {
+                return matrix2IndexCache.strmat2indsub.execute(vector, vectorDim, (RStringVector) matrixPosition, posDim);
             }
         }
         return null;
@@ -357,7 +356,7 @@ abstract class PositionCheckNode extends RBaseNode {
             searchNode = SearchFirstStringNode.createNode(exact, false);
         }
 
-        public RAbstractVector execute(RAbstractContainer vector, int[] vectorDimensions, RAbstractStringVector matrixStringPos, int[] positionDimensions) {
+        public RAbstractVector execute(RAbstractContainer vector, int[] vectorDimensions, RStringVector matrixStringPos, int[] positionDimensions) {
             final RList dimNames = getDimNamesNode.getDimNames(vector);
             final int numDimensions = vectorDimensions.length;
             assert numDimensions >= 2;
@@ -368,7 +367,7 @@ abstract class PositionCheckNode extends RBaseNode {
             return indexArrayDimNamesByMatrix(dimNames, vectorDimensions, matrixStringPos, positionDimensions);
         }
 
-        private RAbstractVector indexArrayDimNamesByMatrix(RList dimNames, int[] vectorDimensions, RAbstractStringVector matrixStringPos, int[] positionDimensions) {
+        private RAbstractVector indexArrayDimNamesByMatrix(RList dimNames, int[] vectorDimensions, RStringVector matrixStringPos, int[] positionDimensions) {
             final int numberOfPositions = positionDimensions[0];
             int[] flatIndexes = new int[numberOfPositions];
             Arrays.fill(flatIndexes, 1);
@@ -382,8 +381,8 @@ abstract class PositionCheckNode extends RBaseNode {
                         // TODO: Throw something more informative
                         throw error(Message.SUBSCRIPT_BOUNDS);
                     }
-                    assert namesForCurrentDimObj instanceof RAbstractStringVector;
-                    RAbstractStringVector namesForCurrentDim = (RAbstractStringVector) namesForCurrentDimObj;
+                    assert namesForCurrentDimObj instanceof RStringVector;
+                    RStringVector namesForCurrentDim = (RStringVector) namesForCurrentDimObj;
 
                     String nameToFind = matrixStringPos.getDataAt(positionIdx + dimIdx * numberOfPositions);
                     if (RRuntime.isNA(nameToFind)) {

@@ -96,7 +96,7 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -345,7 +345,7 @@ public final class PipelineToCastNode {
 
                         @Override
                         public boolean test(Object x) {
-                            return profile.profile(x instanceof String) || x instanceof RAbstractStringVector;
+                            return profile.profile(x instanceof String) || x instanceof RStringVector;
                         }
                     };
                 case Raw:

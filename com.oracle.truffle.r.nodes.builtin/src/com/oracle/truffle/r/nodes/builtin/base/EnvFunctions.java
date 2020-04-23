@@ -81,12 +81,11 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.ContextStateImpl;
@@ -160,7 +159,7 @@ public class EnvFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected REnvironment asEnvironment(RAbstractStringVector nameVec) {
+        protected REnvironment asEnvironment(RStringVector nameVec) {
             String name = nameVec.getDataAt(0);
             String[] searchPath = REnvironment.searchPath();
             for (String e : searchPath) {

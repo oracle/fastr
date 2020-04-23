@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "readline", kind = INTERNAL, parameterNames = "prompt", behavior = IO)
 public abstract class Readline extends RBuiltinNode.Arg1 {
@@ -43,7 +43,7 @@ public abstract class Readline extends RBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    protected String readline(RAbstractStringVector prompt) {
+    protected String readline(RStringVector prompt) {
         if (!RContext.getInstance().isInteractive()) {
             return "";
         }

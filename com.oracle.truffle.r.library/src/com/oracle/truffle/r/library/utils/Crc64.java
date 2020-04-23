@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
 
@@ -38,12 +38,12 @@ public abstract class Crc64 extends RExternalBuiltinNode.Arg1 {
     }
 
     @Specialization
-    public String crc64(RAbstractStringVector x) {
+    public String crc64(RStringVector x) {
         return crc(x);
     }
 
     @TruffleBoundary
-    public static String crc(RAbstractStringVector x) {
+    public static String crc(RStringVector x) {
         final String string = x.getDataAt(0);
         byte[] bytes = string.getBytes();
         bytes = crc64(bytes);

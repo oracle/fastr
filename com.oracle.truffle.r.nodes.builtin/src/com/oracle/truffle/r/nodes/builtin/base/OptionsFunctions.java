@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,6 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class OptionsFunctions {
 
@@ -207,7 +206,7 @@ public class OptionsFunctions {
 
         @TruffleBoundary
         @Specialization
-        protected Object getOption(RAbstractStringVector x) {
+        protected Object getOption(RStringVector x) {
             if (x.getLength() != 1) {
                 throw error(RError.Message.MUST_BE_STRING);
             }

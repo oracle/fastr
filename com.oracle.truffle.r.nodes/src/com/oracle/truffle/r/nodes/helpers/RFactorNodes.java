@@ -32,10 +32,9 @@ import com.oracle.truffle.r.runtime.data.nodes.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -102,14 +101,14 @@ public final class RFactorNodes {
             }
 
             // Convert to string vector if necessary
-            if (stringVectorLevels.profile(vec instanceof RAbstractStringVector)) {
-                return ((RAbstractStringVector) vec).materialize();
+            if (stringVectorLevels.profile(vec instanceof RStringVector)) {
+                return ((RStringVector) vec).materialize();
             } else {
                 if (castString == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     castString = insert(CastStringNodeGen.create(false, false, false));
                 }
-                RStringVector slevels = ((RAbstractStringVector) castString.executeString(vec)).materialize();
+                RStringVector slevels = ((RStringVector) castString.executeString(vec)).materialize();
                 assert slevels.isTemporary() : "cast should create a new tmp vector since !(vec instanceof RStringVector)";
                 return slevels;
             }

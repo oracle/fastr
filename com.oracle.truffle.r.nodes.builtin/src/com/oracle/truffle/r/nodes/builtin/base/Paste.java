@@ -55,9 +55,8 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalar;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
 public abstract class Paste extends RBuiltinNode.Arg3 {
@@ -88,15 +87,15 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         casts.arg("collapse").allowNull().mustBe(stringValue()).asStringVector().findFirst();
     }
 
-    private RAbstractStringVector castCharacterVector(VirtualFrame frame, Object o) {
+    private RStringVector castCharacterVector(VirtualFrame frame, Object o) {
         // Note: GnuR does not actually invoke as.character for character values, even if they have
         // class and uses their value directly
         Object result = o;
-        if (isNotStringProfile.profile(!(o instanceof String || o instanceof RAbstractStringVector))) {
+        if (isNotStringProfile.profile(!(o instanceof String || o instanceof RStringVector))) {
             result = castNonStringToCharacterVector(frame, result);
         }
-        // box String to RAbstractStringVector
-        return (RAbstractStringVector) boxPrimitiveNode.execute(result);
+        // box String to RStringVector
+        return (RStringVector) boxPrimitiveNode.execute(result);
     }
 
     private Object castNonStringToCharacterVector(VirtualFrame frame, Object result) {
@@ -111,7 +110,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     }
 
     @Specialization
-    protected RAbstractStringVector pasteListNullSep(VirtualFrame frame, RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse) {
+    protected RStringVector pasteListNullSep(VirtualFrame frame, RAbstractListVector values, String sep, @SuppressWarnings("unused") RNull collapse) {
         int length = lengthProfile.profile(values.getLength());
         if (hasNonNullElements(values, length)) {
             int seqPos = isStringSequence(values, length);

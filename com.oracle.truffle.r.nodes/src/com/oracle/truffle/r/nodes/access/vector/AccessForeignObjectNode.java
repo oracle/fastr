@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.AccessForeignElementNode;
 import com.oracle.truffle.r.runtime.interop.AccessForeignElementNode.WriteElementNode;
@@ -342,7 +342,7 @@ public abstract class AccessForeignObjectNode extends RBaseNodeWithWarnings {
         }
 
         @Specialization
-        public Object doStringVector(RAbstractStringVector vector,
+        public Object doStringVector(RStringVector vector,
                         @Cached("create()") CastStringNode castNode,
                         @Cached("createFirstString()") FirstStringNode firstString) {
             return firstString.executeString(castNode.doCast(vector));

@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -192,7 +192,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
         }
 
         @Specialization(guards = "access.supports(value)", limit = "getVectorAccessCacheSize()")
-        protected static String extractCached(RAbstractStringVector value,
+        protected static String extractCached(RStringVector value,
                         @Cached("value.access()") VectorAccess access) {
             try (RandomIterator iter = access.randomAccess(value)) {
                 if (access.getLength(iter) == 1) {
@@ -204,7 +204,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
         @Specialization(replaces = "extractCached")
         @TruffleBoundary
-        protected static String extractGeneric(RAbstractStringVector value) {
+        protected static String extractGeneric(RStringVector value) {
             return extractCached(value, value.slowPathAccess());
         }
 

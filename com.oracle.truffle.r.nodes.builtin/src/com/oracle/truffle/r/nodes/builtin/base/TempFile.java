@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "tempfile", kind = INTERNAL, parameterNames = {"pattern", "tempdir", "fileext"}, behavior = COMPLEX)
 public abstract class TempFile extends RBuiltinNode.Arg3 {
@@ -51,7 +50,7 @@ public abstract class TempFile extends RBuiltinNode.Arg3 {
 
     @TruffleBoundary
     @Specialization
-    protected RStringVector tempfile(RAbstractStringVector pattern, String tempDir, RAbstractStringVector fileExt) {
+    protected RStringVector tempfile(RStringVector pattern, String tempDir, RStringVector fileExt) {
         int patternLength = pattern.getLength();
         int fileExtLength = fileExt.getLength();
         int maxLength = Math.max(patternLength, fileExtLength);

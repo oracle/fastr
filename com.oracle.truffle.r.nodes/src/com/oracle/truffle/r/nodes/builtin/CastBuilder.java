@@ -71,14 +71,13 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class CastBuilder {
@@ -367,11 +366,11 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Character, false);
         }
 
-        public static <T> PipelineStep<T, RAbstractStringVector> asStringVector() {
+        public static <T> PipelineStep<T, RStringVector> asStringVector() {
             return new CoercionStep<>(RType.Character, true);
         }
 
-        public static <T> PipelineStep<T, RAbstractStringVector> asStringVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+        public static <T> PipelineStep<T, RStringVector> asStringVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
             return new CoercionStep<>(RType.Character, true, preserveNames, preserveDimensions, preserveAttributes);
         }
 
@@ -467,7 +466,7 @@ public final class CastBuilder {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.VectorSize(s));
         }
 
-        public static <T extends RAbstractStringVector> CompareFilter<T> elementAt(int index, String value) {
+        public static CompareFilter<RStringVector> elementAt(int index, String value) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Character));
         }
 
@@ -671,7 +670,7 @@ public final class CastBuilder {
             return new RTypeFilter<>(RType.Integer);
         }
 
-        public static <R extends RAbstractStringVector> Filter<Object, R> stringValue() {
+        public static Filter<Object, RStringVector> stringValue() {
             return new RTypeFilter<>(RType.Character);
         }
 

@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,7 +28,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "class", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
 public abstract class GetClass extends RBuiltinNode.Arg1 {
@@ -40,7 +40,7 @@ public abstract class GetClass extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RAbstractStringVector getClass(Object x) {
+    protected RStringVector getClass(Object x) {
         return classHierarchy.execute(x);
     }
 }

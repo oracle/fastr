@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -60,7 +60,7 @@ public abstract class Rm extends RBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
-    protected Object rm(RAbstractStringVector list, REnvironment envir, boolean inherits,
+    protected Object rm(RStringVector list, REnvironment envir, boolean inherits,
                     @Cached("createSlowPath(list)") VectorAccess listAccess) {
         try (SequentialIterator listIter = listAccess.access(list)) {
             while (listAccess.next(listIter)) {

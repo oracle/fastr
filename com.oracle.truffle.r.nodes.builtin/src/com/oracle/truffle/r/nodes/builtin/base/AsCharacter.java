@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,9 +42,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "as.character", kind = PRIMITIVE, parameterNames = {"x", "..."}, argumentMatchingMode = NO_MATCH_BY_NAME, dispatch = INTERNAL_GENERIC, behavior = PURE)
@@ -56,20 +55,20 @@ public abstract class AsCharacter extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
-    protected RAbstractStringVector asCharacterVec(RAbstractStringVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
+    protected RStringVector asCharacterVec(RStringVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
                     @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
                     @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            RStringVector res = (RStringVector) reuseTemporaryNode.getMaterializedResult(v);
+            RStringVector res = reuseTemporaryNode.getMaterializedResult(v);
             res.resetAllAttributes(true);
             return res;
         }
     }
 
     @Specialization(replaces = "asCharacterVec")
-    protected RAbstractStringVector asCharacterVecGeneric(RAbstractStringVector v, RArgsValuesAndNames dotdotdot,
+    protected RStringVector asCharacterVecGeneric(RStringVector v, RArgsValuesAndNames dotdotdot,
                     @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
                     @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         return asCharacterVec(v, dotdotdot, reuseTemporaryNode, noAttributes);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -82,8 +81,8 @@ public final class Closure implements Cloneable {
             Object constant = ((RSyntaxConstant) expr.asRSyntaxNode()).getValue();
             if (constant instanceof String) {
                 this.stringConstant = (String) constant;
-            } else if (constant instanceof RAbstractStringVector && ((RAbstractStringVector) constant).getLength() == 1) {
-                this.stringConstant = ((RAbstractStringVector) constant).getDataAt(0);
+            } else if (constant instanceof RStringVector && ((RStringVector) constant).getLength() == 1) {
+                this.stringConstant = ((RStringVector) constant).getDataAt(0);
             } else {
                 this.stringConstant = null;
             }

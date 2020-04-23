@@ -132,7 +132,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
         return doLogicalVectorCached(vector, vector.slowPathAccess(), reuse);
     }
 
-    @Specialization(guards = {"vectorAccess.supports(vector)", "!isRAbstractLogicalVector(vector)"})
+    @Specialization(guards = {"vectorAccess.supports(vector)", "!isRLogicalVector(vector)"})
     protected RAbstractVector doVectorCached(RAbstractVector vector,
                     @Cached("vector.access()") VectorAccess vectorAccess,
                     @Cached("createNew(Logical)") VectorAccess resultAccess,
@@ -181,7 +181,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
         }
     }
 
-    @Specialization(replaces = "doVectorCached", guards = "!isRAbstractLogicalVector(vector)")
+    @Specialization(replaces = "doVectorCached", guards = "!isRLogicalVector(vector)")
     @TruffleBoundary
     protected RAbstractVector doGenericGeneric(RAbstractVector vector,
                     @Cached("create()") VectorFactory factory) {

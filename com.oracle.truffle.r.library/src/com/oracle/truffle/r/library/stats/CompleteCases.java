@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 // Transcribed from GnuR, library/stats/src/complete_cases.c
@@ -159,8 +159,8 @@ public final class CompleteCases extends RExternalBuiltinNode {
                     result[e % len] = RRuntime.LOGICAL_FALSE;
                 }
             }
-        } else if (entry instanceof RAbstractStringVector) {
-            RAbstractStringVector v = (RAbstractStringVector) entry;
+        } else if (entry instanceof RStringVector) {
+            RStringVector v = (RStringVector) entry;
             for (int e = 0; e < v.getLength(); e++) {
                 if (RRuntime.isNA(v.getDataAt(e))) {
                     result[e % len] = RRuntime.LOGICAL_FALSE;

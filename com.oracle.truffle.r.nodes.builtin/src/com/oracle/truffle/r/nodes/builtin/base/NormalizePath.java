@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "normalizePath", kind = INTERNAL, parameterNames = {"path", "winslash", "mustwork"}, behavior = IO)
 public abstract class NormalizePath extends RBuiltinNode.Arg3 {
@@ -64,7 +63,7 @@ public abstract class NormalizePath extends RBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector doNormalizePath(RAbstractStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork,
+    protected RStringVector doNormalizePath(RStringVector pathVec, @SuppressWarnings("unused") String winslash, byte mustWork,
                     @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         String[] results = new String[pathVec.getLength()];
         for (int i = 0; i < results.length; i++) {

@@ -40,7 +40,7 @@ import com.oracle.truffle.r.nodes.casts.Not;
 import com.oracle.truffle.r.nodes.casts.TypeExpr;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class CastUtilsTest {
@@ -101,7 +101,7 @@ public class CastUtilsTest {
         Assert.assertEquals(CastUtils.Cast.Coverage.potential, CastUtils.Casts.isConvertible(Serializable.class, RSequence.class, false));
 
         // implicit conversions are by default "potential"
-        Assert.assertEquals(CastUtils.Cast.Coverage.potential, CastUtils.Casts.isConvertible(String.class, RAbstractStringVector.class, true));
+        Assert.assertEquals(CastUtils.Cast.Coverage.potential, CastUtils.Casts.isConvertible(String.class, RStringVector.class, true));
     }
 
     @Test

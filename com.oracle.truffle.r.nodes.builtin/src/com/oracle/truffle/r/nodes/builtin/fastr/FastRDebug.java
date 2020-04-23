@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = ".fastr.debug", visibility = OFF, kind = PRIMITIVE, parameterNames = {"values"}, behavior = COMPLEX)
 public abstract class FastRDebug extends RBuiltinNode.Arg1 {
@@ -46,7 +46,7 @@ public abstract class FastRDebug extends RBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    protected RNull debug(RAbstractStringVector values) {
+    protected RNull debug(RStringVector values) {
         for (int i = 0; i < values.getLength(); i++) {
             RContext.getInstance().updateOption(FastROptions.Debug, values.getDataAt(i));
         }

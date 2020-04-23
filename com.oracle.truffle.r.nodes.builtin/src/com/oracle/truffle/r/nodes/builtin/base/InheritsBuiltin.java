@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -34,7 +34,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.InheritsNode;
 import com.oracle.truffle.r.nodes.unary.InheritsNodeGen;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "inherits", kind = INTERNAL, parameterNames = {"x", "what", "which"}, behavior = PURE)
 public abstract class InheritsBuiltin extends RBuiltinNode.Arg3 {
@@ -50,7 +50,7 @@ public abstract class InheritsBuiltin extends RBuiltinNode.Arg3 {
     }
 
     @Specialization
-    protected Object doesInherit(Object x, RAbstractStringVector what, boolean which) {
+    protected Object doesInherit(Object x, RStringVector what, boolean which) {
         return inheritsNode.execute(x, what, which);
     }
 }

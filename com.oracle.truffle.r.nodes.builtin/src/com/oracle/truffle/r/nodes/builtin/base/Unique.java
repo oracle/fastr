@@ -49,12 +49,11 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "unique", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast", "nmax"}, behavior = PURE)
 // TODO A more efficient implementation is in order; GNU R uses hash tables so perhaps we should
@@ -89,9 +88,9 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "vecIn.getClass() == vecClass")
-    protected RStringVector doUniqueCachedString(RAbstractStringVector vecIn, byte incomparables, byte fromLast, int nmax,
-                    @Cached("vecIn.getClass()") Class<? extends RAbstractStringVector> vecClass) {
-        RAbstractStringVector vec = vecClass.cast(vecIn);
+    protected RStringVector doUniqueCachedString(RStringVector vecIn, byte incomparables, byte fromLast, int nmax,
+                    @Cached("vecIn.getClass()") Class<? extends RStringVector> vecClass) {
+        RStringVector vec = vecClass.cast(vecIn);
         reportWork(vec.getLength());
         if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
             NonRecursiveHashSet<String> set = new NonRecursiveHashSet<>(vec.getLength());
@@ -119,8 +118,8 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
     }
 
     @Specialization(replaces = "doUniqueCachedString")
-    protected RStringVector doUnique(RAbstractStringVector vec, byte incomparables, byte fromLast, int nmax) {
-        return doUniqueCachedString(vec, incomparables, fromLast, nmax, RAbstractStringVector.class);
+    protected RStringVector doUnique(RStringVector vec, byte incomparables, byte fromLast, int nmax) {
+        return doUniqueCachedString(vec, incomparables, fromLast, nmax, RStringVector.class);
     }
 
     // these are intended to stay private as they will go away once we figure out which external

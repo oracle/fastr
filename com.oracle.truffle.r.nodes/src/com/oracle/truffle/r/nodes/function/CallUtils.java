@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -48,8 +48,8 @@ public final class CallUtils {
             value = ((RSyntaxConstant) argNode).getValue();
             if (value instanceof String) {
                 return (String) value;
-            } else if (value instanceof RAbstractStringVector && ((RAbstractStringVector) value).getLength() == 1) {
-                return ((RAbstractStringVector) value).getDataAt(0);
+            } else if (value instanceof RStringVector && ((RStringVector) value).getLength() == 1) {
+                return ((RStringVector) value).getDataAt(0);
             }
         }
         throw raiseInvalidSubscript(callNode, value);

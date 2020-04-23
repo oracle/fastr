@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public abstract class Rmd5 extends RExternalBuiltinNode.Arg1 {
 
@@ -54,7 +53,7 @@ public abstract class Rmd5 extends RExternalBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector rmd5(RAbstractStringVector files,
+    protected RStringVector rmd5(RStringVector files,
                     @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         MessageDigest digest;
         boolean complete = RDataFactory.COMPLETE_VECTOR;

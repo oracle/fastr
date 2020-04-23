@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RSrcref.SrcrefFields;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -205,8 +205,8 @@ public class RSource {
 
     private static String getPath(REnvironment env, String name) {
         Object o = env.get(name);
-        if (o instanceof RAbstractStringVector) {
-            return ((RAbstractStringVector) o).getDataAt(0);
+        if (o instanceof RStringVector) {
+            return ((RStringVector) o).getDataAt(0);
         }
         return (String) o;
     }

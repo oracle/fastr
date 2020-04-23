@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -70,7 +70,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         return RError.SHOW_CALLER;
     }
 
-    private static boolean isNA(String s, RAbstractStringVector naStrings) {
+    private static boolean isNA(String s, RStringVector naStrings) {
         // naStrings are in addition to NA_character_
         if (RRuntime.isNA(s) || s.isEmpty()) { // Blank treated as NA too
             return true;
@@ -88,7 +88,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
      * not isNA(elem, naStrings). However, there may be isNA values after that.
      */
 
-    private static RIntVector readIntVector(RAbstractStringVector x, int firstPos, int firstVal, RAbstractStringVector naStrings) {
+    private static RIntVector readIntVector(RStringVector x, int firstPos, int firstVal, RStringVector naStrings) {
         int[] data = new int[x.getLength()];
         Arrays.fill(data, 0, firstPos, RRuntime.INT_NA);
         boolean complete = canBeComplete(firstPos);
@@ -109,7 +109,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         return RDataFactory.createIntVector(data, complete);
     }
 
-    private static RDoubleVector readDoubleVector(RAbstractStringVector x, int firstPos, double firstVal, RAbstractStringVector naStrings) {
+    private static RDoubleVector readDoubleVector(RStringVector x, int firstPos, double firstVal, RStringVector naStrings) {
         double[] data = new double[x.getLength()];
         Arrays.fill(data, 0, firstPos, RRuntime.DOUBLE_NA);
         boolean complete = canBeComplete(firstPos);
@@ -123,7 +123,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
         return RDataFactory.createDoubleVector(data, complete);
     }
 
-    private static RLogicalVector readLogicalVector(RAbstractStringVector x, int firstPos, byte firstVal, RAbstractStringVector naStrings) {
+    private static RLogicalVector readLogicalVector(RStringVector x, int firstPos, byte firstVal, RStringVector naStrings) {
         byte[] data = new byte[x.getLength()];
         Arrays.fill(data, 0, firstPos, RRuntime.LOGICAL_NA);
         boolean complete = canBeComplete(firstPos);
@@ -143,7 +143,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
 
     @Specialization
     @TruffleBoundary
-    protected Object typeConvert(RAbstractStringVector x, RAbstractStringVector naStrings, boolean asIs, @SuppressWarnings("unused") Object dec, @SuppressWarnings("unused") Object numeral) {
+    protected Object typeConvert(RStringVector x, RStringVector naStrings, boolean asIs, @SuppressWarnings("unused") Object dec, @SuppressWarnings("unused") Object numeral) {
         if (x.getLength() == 0) {
             return RDataFactory.createEmptyLogicalVector();
         }

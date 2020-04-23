@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -267,19 +266,19 @@ public class LoadSaveFunctions {
         }
 
         @Specialization
-        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, @SuppressWarnings("unused") RNull version, REnvironment envir, boolean evalPromises,
+        protected Object saveToConn(VirtualFrame frame, RStringVector list, int con, boolean ascii, @SuppressWarnings("unused") RNull version, REnvironment envir, boolean evalPromises,
                         @Cached("new()") PromiseHelperNode promiseHelper) {
             return saveToConn(list, envir, evalPromises, promiseHelper, frame, con, ascii, DEFAULT_SAVE_VERSION);
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, int version, REnvironment envir, boolean evalPromises,
+        protected Object saveToConn(VirtualFrame frame, RStringVector list, int con, boolean ascii, int version, REnvironment envir, boolean evalPromises,
                         @Cached("new()") PromiseHelperNode promiseHelper) {
             return saveToConn(list, envir, evalPromises, promiseHelper, frame, con, ascii, version);
         }
 
-        private Object saveToConn(RAbstractStringVector list, REnvironment envir, boolean evalPromises, PromiseHelperNode promiseHelper, VirtualFrame frame, int con, boolean ascii, int version)
+        private Object saveToConn(RStringVector list, REnvironment envir, boolean evalPromises, PromiseHelperNode promiseHelper, VirtualFrame frame, int con, boolean ascii, int version)
                         throws RError {
             RPairList prev = null;
             Object toSave = RNull.instance;

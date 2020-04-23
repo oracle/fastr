@@ -51,12 +51,11 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
  * The internal functions mandated by {@code base/sort.R}. N.B. We use the standard JDK sorting
@@ -136,7 +135,7 @@ public class SortFunctions {
         return RDataFactory.createIntVector(sort(data, decreasing), vec.isComplete());
     }
 
-    protected static RStringVector jdkSort(RAbstractStringVector vec, boolean decreasing) {
+    protected static RStringVector jdkSort(RStringVector vec, boolean decreasing) {
         String[] data = vec.materialize().getDataCopy();
         return RDataFactory.createStringVector(sort(data, decreasing), vec.isComplete());
     }
@@ -173,7 +172,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RStringVector sort(RAbstractStringVector vec, boolean decreasing) {
+        protected RStringVector sort(RStringVector vec, boolean decreasing) {
             return jdkSort(vec, decreasing);
         }
 
@@ -236,7 +235,7 @@ public class SortFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RStringVector sort(RAbstractStringVector vec, Object partial) {
+        protected RStringVector sort(RStringVector vec, Object partial) {
             return jdkSort(vec, false);
         }
 

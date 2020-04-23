@@ -83,7 +83,6 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class ResultTypesAnalyserTest {
@@ -123,7 +122,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAsStringVector() {
         arg.asStringVector();
-        assertTypes(RNull.class, RMissing.class, String.class, RAbstractStringVector.class, RStringVector.class);
+        assertTypes(RNull.class, RMissing.class, String.class, RStringVector.class, RStringVector.class);
     }
 
     @Test
@@ -275,8 +274,8 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAndAsNegationOfOrFilter() {
         // !(!A || !B) = A && B
-        arg.mustBe(instanceOf(RAbstractStringVector.class).not().or(instanceOf(RIntVector.class).not()).not());
-        assertTypes(atom(RAbstractStringVector.class).and(atom(RIntVector.class)));
+        arg.mustBe(instanceOf(RStringVector.class).not().or(instanceOf(RIntVector.class).not()).not());
+        assertTypes(atom(RStringVector.class).and(atom(RIntVector.class)));
     }
 
     @Test
@@ -327,15 +326,15 @@ public class ResultTypesAnalyserTest {
 
     @Test
     public void testNotFilter3() {
-        // !(x instanceof RStringVector) && (x instanceof RAbstractStringVector)
-        arg.mustBe(instanceOf(RStringVector.class).not()).mustBe(instanceOf(RAbstractStringVector.class));
-        assertTypes(atom(RAbstractStringVector.class).and(atom(RStringVector.class).not()));
+        // !(x instanceof RStringVector) && (x instanceof RStringVector)
+        arg.mustBe(instanceOf(RStringVector.class).not()).mustBe(instanceOf(RStringVector.class));
+        assertTypes(atom(RStringVector.class).and(atom(RStringVector.class).not()));
     }
 
     @Test
     public void testNotFilter4() {
-        arg.mustBe(instanceOf(RAbstractStringVector.class)).mustBe(mark(elementAt(1, "abc"), "x").not());
-        assertTypes(atom(RAbstractStringVector.class).and(atom(RAbstractStringVector.class).lower(m("x")).not()));
+        arg.mustBe(instanceOf(RStringVector.class)).mustBe(mark(elementAt(1, "abc"), "x").not());
+        assertTypes(atom(RStringVector.class).and(atom(RStringVector.class).lower(m("x")).not()));
     }
 
     @Test
@@ -353,13 +352,13 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testNullFilter() {
         arg.mustBe(nullValue().or(stringValue()));
-        assertTypes(TypeExpr.union(RNull.class, RAbstractStringVector.class, String.class));
+        assertTypes(TypeExpr.union(RNull.class, RStringVector.class, String.class));
     }
 
     @Test
     public void testMissingFilter() {
         arg.mustBe(missingValue().or(stringValue()));
-        assertTypes(TypeExpr.union(RMissing.class, RAbstractStringVector.class, String.class));
+        assertTypes(TypeExpr.union(RMissing.class, RStringVector.class, String.class));
     }
 
     @Test
@@ -433,13 +432,13 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testMustNotBeMissingAndBoxPrimitive() {
         arg.mustNotBeMissing().returnIf(nullValue(), nullConstant()).mustBe(stringValue()).boxPrimitive().asStringVector();
-        assertTypes(atom(RNull.class).or(atom(RStringVector.class).or(atom(RAbstractStringVector.class))), true);
+        assertTypes(atom(RNull.class).or(atom(RStringVector.class).or(atom(RStringVector.class))), true);
     }
 
     @Test
     public void testAllowMissing() {
         arg.allowMissing().mustBe(stringValue());
-        assertTypes(RMissing.class, String.class, RAbstractStringVector.class);
+        assertTypes(RMissing.class, String.class, RStringVector.class);
     }
 
     @Test

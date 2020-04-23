@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,9 +57,8 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
  * The {@code cat .Internal}.
@@ -92,7 +91,7 @@ public abstract class Cat extends RBuiltinNode.Arg6 {
 
     @Specialization
     @TruffleBoundary
-    protected RNull cat(RList args, int file, RAbstractStringVector sepVec, boolean fill, RAbstractStringVector labels, boolean append) {
+    protected RNull cat(RList args, int file, RStringVector sepVec, boolean fill, RStringVector labels, boolean append) {
         int fillWidth = -1;
         if (fill) {
             fillWidth = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("width"));
@@ -102,7 +101,7 @@ public abstract class Cat extends RBuiltinNode.Arg6 {
 
     @TruffleBoundary
     @Specialization
-    protected RNull cat(RList args, int file, RAbstractStringVector sepVec, int givenFillWidth, RAbstractStringVector labels, boolean append) {
+    protected RNull cat(RList args, int file, RStringVector sepVec, int givenFillWidth, RStringVector labels, boolean append) {
         int fillWidth = -1;
         if (givenFillWidth < 0) {
             warning(Message.NON_POSITIVE_FILL);
@@ -113,7 +112,7 @@ public abstract class Cat extends RBuiltinNode.Arg6 {
     }
 
     @TruffleBoundary
-    private RNull output(RList args, int file, RAbstractStringVector sepVec, int fillWidth, RAbstractStringVector labels, @SuppressWarnings("unused") boolean append) {
+    private RNull output(RList args, int file, RStringVector sepVec, int fillWidth, RStringVector labels, @SuppressWarnings("unused") boolean append) {
         for (int i = 0; i < args.getLength(); i++) {
             Object obj = args.getDataAt(i);
             if (obj == REmpty.instance) {
@@ -224,7 +223,7 @@ public abstract class Cat extends RBuiltinNode.Arg6 {
         }
     }
 
-    private static boolean sepContainsNewline(RAbstractStringVector sepVec) {
+    private static boolean sepContainsNewline(RStringVector sepVec) {
         for (int i = 0; i < sepVec.getLength(); i++) {
             if (sepVec.getDataAt(i).contains("\n")) {
                 return true;

@@ -61,9 +61,8 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
@@ -237,7 +236,7 @@ public class GrepFunctions {
     protected static final class GrepCommonCodeNode extends CommonCodeNode {
         @Child private PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
 
-        protected Object doGrep(String patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean value, boolean perlPar, boolean fixed,
+        protected Object doGrep(String patternArg, RStringVector vector, boolean ignoreCase, boolean value, boolean perlPar, boolean fixed,
                         @SuppressWarnings("unused") boolean useBytes, boolean invert, boolean grepl) {
             try {
                 boolean perl = perlPar;
@@ -321,7 +320,7 @@ public class GrepFunctions {
             }
         }
 
-        protected static void findAllMatches(boolean[] result, String pattern, RAbstractStringVector vector, boolean fixed, boolean ignoreCase) {
+        protected static void findAllMatches(boolean[] result, String pattern, RStringVector vector, boolean fixed, boolean ignoreCase) {
             for (int i = 0; i < result.length; i++) {
                 String text = vector.getDataAt(i);
                 if (!RRuntime.isNA(text)) {
@@ -374,7 +373,7 @@ public class GrepFunctions {
 
         @Specialization(guards = {"checkContains(value, perl, fixed, useBytes)"})
         @TruffleBoundary
-        protected Object grepValueFixed(String patternPar, RAbstractStringVector vector, boolean ignoreCase, @SuppressWarnings("unused") boolean value,
+        protected Object grepValueFixed(String patternPar, RStringVector vector, boolean ignoreCase, @SuppressWarnings("unused") boolean value,
                         @SuppressWarnings("unused") boolean perl,
                         @SuppressWarnings("unused") boolean fixed, @SuppressWarnings("unused") boolean useBytes, boolean invert) {
 
@@ -399,7 +398,7 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object grepValueFalse(String patternArgVec, RAbstractStringVector vector, boolean ignoreCaseLogical, boolean valueLogical, boolean perlLogical, boolean fixedLogical,
+        protected Object grepValueFalse(String patternArgVec, RStringVector vector, boolean ignoreCaseLogical, boolean valueLogical, boolean perlLogical, boolean fixedLogical,
                         boolean useBytes, boolean invertLogical,
                         @Cached("createGrepCommon()") GrepCommonCodeNode common) {
             return common.doGrep(patternArgVec, vector, ignoreCaseLogical, valueLogical, perlLogical, fixedLogical, useBytes, invertLogical, false);
@@ -424,7 +423,7 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object grepl(String pattern, RAbstractStringVector vector, boolean ignoreCaseLogical, boolean valueLogical, boolean perlLogical, boolean fixedLogical, boolean useBytes,
+        protected Object grepl(String pattern, RStringVector vector, boolean ignoreCaseLogical, boolean valueLogical, boolean perlLogical, boolean fixedLogical, boolean useBytes,
                         boolean invertLogical,
                         @Cached("createGrepCommon()") GrepCommonCodeNode common) {
             // invert is passed but is always FALSE
@@ -444,7 +443,7 @@ public class GrepFunctions {
         private static final String APPEND_MISSING_NL_PATTERN = "([^\n])$";
         private static final String APPEND_MISSING_NL_REPLACEMENT = "\\1\n";
 
-        protected RAbstractStringVector doSub(String patternArg, String replacementArg, RAbstractStringVector vector, boolean ignoreCase, boolean perlPar,
+        protected RStringVector doSub(String patternArg, String replacementArg, RStringVector vector, boolean ignoreCase, boolean perlPar,
                         boolean fixedPar, @SuppressWarnings("unused") boolean useBytes, boolean gsub) {
             try {
 
@@ -594,7 +593,7 @@ public class GrepFunctions {
             }
         }
 
-        private static RAbstractStringVector appendMissingNewLine(RAbstractStringVector vector) {
+        private static RStringVector appendMissingNewLine(RStringVector vector) {
             String[] newElems = null;
             for (int i = 0; i < vector.getLength(); i++) {
                 String elem = vector.getDataAt(i);
@@ -773,7 +772,7 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractStringVector subRegexp(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical,
+        protected RStringVector subRegexp(String patternArgVec, String replacementVec, RStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical,
                         boolean useBytes,
                         @Cached("createSubCommon()") SubCommonCodeNode common) {
             return common.doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, false);
@@ -797,7 +796,7 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractStringVector gsub(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical,
+        protected RStringVector gsub(String patternArgVec, String replacementVec, RStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical,
                         boolean useBytes,
                         @Cached("createSubCommon()") SubCommonCodeNode common) {
             return common.doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, true);
@@ -858,7 +857,7 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean perl, boolean fixed, boolean useBytesL,
+        protected Object regexp(RStringVector patternArg, RStringVector vector, boolean ignoreCase, boolean perl, boolean fixed, boolean useBytesL,
                         @Cached("createCommon()") CommonCodeNode common) {
             try {
                 common.checkExtraArgs(false, false, false, useBytesL, false);
@@ -1092,14 +1091,14 @@ public class GrepFunctions {
         }
 
         @Specialization
-        protected Object regexp(RAbstractStringVector patternArgIn, RAbstractStringVector vector, boolean ignoreCaseIn, boolean fixedIn, boolean useBytesL,
+        protected Object regexp(RStringVector patternArgIn, RStringVector vector, boolean ignoreCaseIn, boolean fixedIn, boolean useBytesL,
                         @Cached("createClassProfile()") ValueProfile patternProfile,
                         @Cached("createIdentityProfile()") ValueProfile fixedProfile,
                         @Cached("createIdentityProfile()") ValueProfile ignoreCaseProfile,
                         @Cached("createCountingProfile()") LoopConditionProfile loopConditionProfile,
                         @Cached("createCommon()") CommonCodeNode common) {
             try {
-                RAbstractStringVector patternArg = patternProfile.profile(patternArgIn);
+                RStringVector patternArg = patternProfile.profile(patternArgIn);
                 boolean fixed = fixedProfile.profile(fixedIn);
                 boolean ignoreCase = ignoreCaseProfile.profile(ignoreCaseIn);
                 common.checkExtraArgs(false, false, false, useBytesL, false);
@@ -1223,7 +1222,7 @@ public class GrepFunctions {
         @Specialization
         @TruffleBoundary
         @Override
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCaseL, boolean perlL, boolean fixedL, boolean useBytesL,
+        protected Object regexp(RStringVector patternArg, RStringVector vector, boolean ignoreCaseL, boolean perlL, boolean fixedL, boolean useBytesL,
                         @Cached("createCommon()") CommonCodeNode common) {
             try {
                 common.checkExtraArgs(false, false, false, useBytesL, false);
@@ -1360,7 +1359,7 @@ public class GrepFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RIntVector costs, RDoubleVector bounds, boolean useBytes, boolean fixed,
+        protected Object aGrep(String pattern, RStringVector vector, boolean ignoreCase, boolean value, RIntVector costs, RDoubleVector bounds, boolean useBytes, boolean fixed,
                         @Cached("createCommon()") CommonCodeNode common) {
             // TODO implement completely; this is a very basic implementation for fixed=TRUE only.
             common.checkExtraArgs(!fixed && ignoreCase, false, false, useBytes, false);
@@ -1482,7 +1481,7 @@ public class GrepFunctions {
         @SuppressWarnings("unused")
         @Specialization
         @TruffleBoundary
-        protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RIntVector costs, RDoubleVector bounds, boolean useBytes, boolean fixed,
+        protected Object aGrep(String pattern, RStringVector vector, boolean ignoreCase, boolean value, RIntVector costs, RDoubleVector bounds, boolean useBytes, boolean fixed,
                         @Cached("createCommon()") CommonCodeNode common) {
             // TODO implement properly, this only supports strict equality!
             common.checkExtraArgs(ignoreCase, false, false, useBytes, false);
@@ -1512,12 +1511,12 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RList split(RAbstractStringVector x, RAbstractStringVector splitArg, boolean fixed, boolean perlLogical, @SuppressWarnings("unused") boolean useBytes,
+        protected RList split(RStringVector x, RStringVector splitArg, boolean fixed, boolean perlLogical, @SuppressWarnings("unused") boolean useBytes,
                         @Cached("createCommon()") CommonCodeNode common) {
             boolean perl = common.checkPerlFixed(perlLogical, fixed);
             Object[] result = new Object[x.getLength()];
             // treat split = NULL as split = ""
-            RAbstractStringVector split = splitArg.getLength() == 0 ? RDataFactory.createStringVectorFromScalar("") : splitArg;
+            RStringVector split = splitArg.getLength() == 0 ? RDataFactory.createStringVectorFromScalar("") : splitArg;
             String[] splits = new String[split.getLength()];
             long pcreTables = perl ? common.maketablesNode.execute() : 0;
             PCRERFFI.Result[] pcreSplits = perl ? new PCRERFFI.Result[splits.length] : null;
@@ -1586,7 +1585,7 @@ public class GrepFunctions {
         @TruffleBoundary
         @Fallback
         protected RList split(Object x, Object splitArg, Object fixedLogical, Object perlLogical, Object useBytes) {
-            if (!(x instanceof RAbstractStringVector)) {
+            if (!(x instanceof RStringVector)) {
                 throw error(RError.Message.NON_CHARACTER);
             } else {
                 throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);

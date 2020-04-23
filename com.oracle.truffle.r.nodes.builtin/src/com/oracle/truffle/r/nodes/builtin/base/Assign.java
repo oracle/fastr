@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -76,7 +76,7 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
         this.direct = direct;
     }
 
-    public abstract Object execute(VirtualFrame frame, RAbstractStringVector x, Object value, REnvironment pos, byte inherits);
+    public abstract Object execute(VirtualFrame frame, RStringVector x, Object value, REnvironment pos, byte inherits);
 
     @Override
     public RBaseNode getErrorContext() {
@@ -87,7 +87,7 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
      * TODO: This method becomes obsolete when Assign and AssignFastPaths are modified to have the
      * (String, Object, REnvironment, boolean) signature.
      */
-    private String checkVariable(RAbstractStringVector xVec) {
+    private String checkVariable(RStringVector xVec) {
         int len = xVec.getLength();
         if (len == 1) {
             return xVec.getDataAt(0);
@@ -114,7 +114,7 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
      * The general case that requires searching the environment hierarchy.
      */
     @Specialization
-    protected Object assign(VirtualFrame frame, RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits,
+    protected Object assign(VirtualFrame frame, RStringVector xVec, Object value, REnvironment envir, byte inherits,
                     @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,
                     @Cached("create()") ShareObjectNode share,
                     @Cached("create()") AssignInternalNode assign) {

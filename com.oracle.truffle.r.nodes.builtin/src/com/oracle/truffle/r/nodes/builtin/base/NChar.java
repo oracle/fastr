@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 // TODO interpret "type" and "allowNA" arguments
 @RBuiltin(name = "nchar", kind = INTERNAL, parameterNames = {"x", "type", "allowNA", "keepNA"}, behavior = PURE)
@@ -108,7 +108,7 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector nchar(RAbstractStringVector vector, String type, byte allowNA, byte keepNAIn,
+    protected RIntVector nchar(RStringVector vector, String type, byte allowNA, byte keepNAIn,
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                     @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
                     @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,

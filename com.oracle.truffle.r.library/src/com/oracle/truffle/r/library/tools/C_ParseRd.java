@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
@@ -59,7 +59,7 @@ public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
 
     @TruffleBoundary
     @Specialization
-    protected Object parseRd(Object conObj, REnvironment srcfile, @SuppressWarnings("unused") Object encoding, RLogicalVector verbose, RAbstractStringVector basename, Object fragmentObj,
+    protected Object parseRd(Object conObj, REnvironment srcfile, @SuppressWarnings("unused") Object encoding, RLogicalVector verbose, RStringVector basename, Object fragmentObj,
                     Object warningCallsObj, Object macros, Object warndupsObj,
                     @Cached("create()") AsIntegerNode conAsInteger,
                     @Cached("create()") AsLogicalNode fragmentAsLogical,

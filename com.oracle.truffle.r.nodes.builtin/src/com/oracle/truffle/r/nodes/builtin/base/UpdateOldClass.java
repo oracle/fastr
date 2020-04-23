@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 // oldClass<- (as opposed to class<-), simply sets the attribute (without handling "implicit" attributes)
 @RBuiltin(name = "oldClass<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
@@ -55,7 +55,7 @@ public abstract class UpdateOldClass extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object setOldClass(RAttributable arg, RAbstractStringVector className) {
+    protected Object setOldClass(RAttributable arg, RStringVector className) {
         if (className.getLength() == 0) {
             return setOldClass(arg, RNull.instance);
         }

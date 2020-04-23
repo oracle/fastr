@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public final class TypeExpr {
 
@@ -53,7 +53,7 @@ public final class TypeExpr {
 
     static {
         registerMutuallyExclusiveInterfaces(RIntVector.class, RDoubleVector.class, RLogicalVector.class, RComplexVector.class, RRawVector.class,
-                        RAbstractStringVector.class, RAbstractListVector.class);
+                        RStringVector.class, RAbstractListVector.class);
     }
 
     private TypeExpr(Set<Set<Type>> disjNormForm, Samples<?> samples) {

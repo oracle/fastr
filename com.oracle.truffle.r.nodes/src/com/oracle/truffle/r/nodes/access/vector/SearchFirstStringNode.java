@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,9 +34,8 @@ import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashMapCharacter;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
@@ -75,9 +74,9 @@ final class SearchFirstStringNode extends Node {
         }
     }
 
-    public RIntVector apply(RAbstractStringVector target, RAbstractStringVector elements, int notFoundStartIndex, RStringVector names) {
-        RAbstractStringVector targetProfiled = targetClassProfile.profile(target);
-        RAbstractStringVector elementsProfiled = elementsClassProfile.profile(elements);
+    public RIntVector apply(RStringVector target, RStringVector elements, int notFoundStartIndex, RStringVector names) {
+        RStringVector targetProfiled = targetClassProfile.profile(target);
+        RStringVector elementsProfiled = elementsClassProfile.profile(elements);
 
         int targetLength = targetLengthProfile.profile(targetProfiled.getLength());
         int elementsLength = elementsLengthProfile.profile(elementsProfiled.getLength());
@@ -107,7 +106,7 @@ final class SearchFirstStringNode extends Node {
         return new SearchFirstStringNode(exactMatch, useNAForNotFound);
     }
 
-    private int[] searchCached(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength, RStringVector names) {
+    private int[] searchCached(RStringVector target, int targetLength, RStringVector elements, int elementsLength, RStringVector names) {
         if (exactMatch) {
             RIntVector genericResult = searchGeneric(target, targetLength, elements, elementsLength, -1, true, names);
             if (genericResult != null) {
@@ -117,8 +116,8 @@ final class SearchFirstStringNode extends Node {
         return null;
     }
 
-    private boolean isCacheValid(RAbstractStringVector target, int targetLength,
-                    RAbstractStringVector elements, int elementsLength, int[] cached) {
+    private boolean isCacheValid(RStringVector target, int targetLength,
+                    RStringVector elements, int elementsLength, int[] cached) {
         int cachedLength = cached.length;
         if (elementsLength != cachedLength) {
             seenInvalid.enter();
@@ -174,7 +173,7 @@ final class SearchFirstStringNode extends Node {
     private final BranchProfile notFoundProfile = BranchProfile.create();
     private final ConditionProfile hashingProfile = ConditionProfile.createBinaryProfile();
 
-    private RIntVector searchGeneric(RAbstractStringVector target, int targetLength, RAbstractStringVector elements, int elementsLength, int notFoundStartIndex, boolean nullOnNotFound,
+    private RIntVector searchGeneric(RStringVector target, int targetLength, RStringVector elements, int elementsLength, int notFoundStartIndex, boolean nullOnNotFound,
                     RStringVector names) {
         int[] indices = new int[elementsLength];
         boolean resultComplete = true;
@@ -239,7 +238,7 @@ final class SearchFirstStringNode extends Node {
         return RDataFactory.createIntVector(indices, resultComplete && elements.isComplete(), names);
     }
 
-    private int findNonExactIndex(RAbstractStringVector target, int targetLength, String element) {
+    private int findNonExactIndex(RStringVector target, int targetLength, String element) {
         assert !exactMatch;
         int nonExactIndex = -1;
         for (int j = 0; j < targetLength; j++) {
@@ -257,7 +256,7 @@ final class SearchFirstStringNode extends Node {
         return nonExactIndex;
     }
 
-    private int findIndex(RAbstractStringVector target, int targetLength, String element) {
+    private int findIndex(RStringVector target, int targetLength, String element) {
         int nonExactIndex = -1;
         int elementHash = element.hashCode();
         for (int j = 0; j < targetLength; j++) {
@@ -280,7 +279,7 @@ final class SearchFirstStringNode extends Node {
         return nonExactIndex;
     }
 
-    private int findFirstDuplicate(RAbstractStringVector elements, String element, int currentIndex) {
+    private int findFirstDuplicate(RStringVector elements, String element, int currentIndex) {
         if (equalsDuplicate == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             equalsDuplicate = insert(CompareStringNode.createEquals());

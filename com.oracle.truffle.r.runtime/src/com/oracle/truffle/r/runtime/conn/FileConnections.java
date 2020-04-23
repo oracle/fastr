@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.DelegateRConnection.CompressedInputRConnection;
 import com.oracle.truffle.r.runtime.conn.DelegateRConnection.CompressedOutputRConnection;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import java.nio.channels.SeekableByteChannel;
 import java.util.Collections;
 import java.util.HashSet;
@@ -516,7 +516,7 @@ public class FileConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+        public void writeLines(RStringVector lines, String sep, boolean useBytes) throws IOException {
             setWritePosition();
             super.writeLines(lines, sep, useBytes);
             writeOffset = channel.position();
@@ -714,7 +714,7 @@ public class FileConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+        public void writeLines(RStringVector lines, String sep, boolean useBytes) throws IOException {
             setWritePosition();
             super.writeLines(lines, sep, useBytes);
             writeOffset = raf.getFilePointer();

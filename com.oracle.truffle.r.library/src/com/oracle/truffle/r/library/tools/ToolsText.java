@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 import java.nio.file.StandardOpenOption;
 
@@ -55,7 +55,7 @@ public class ToolsText {
 
         @Specialization
         @TruffleBoundary
-        protected Object doTabExpand(RAbstractStringVector strings, RIntVector starts) {
+        protected Object doTabExpand(RStringVector strings, RIntVector starts) {
             String[] data = new String[strings.getLength()];
             for (int i = 0; i < data.length; i++) {
                 String input = strings.getDataAt(i);
@@ -97,7 +97,7 @@ public class ToolsText {
 
         @Specialization
         @TruffleBoundary
-        protected Object codeFilesAppend(String file1, RAbstractStringVector file2,
+        protected Object codeFilesAppend(String file1, RStringVector file2,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             if (file2.getLength() < 1) {
                 return RDataFactory.createEmptyLogicalVector();

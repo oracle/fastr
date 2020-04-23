@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "readDCF", kind = INTERNAL, parameterNames = {"conn", "fields", "keepwhite"}, behavior = IO)
 public abstract class ReadDCF extends RBuiltinNode.Arg3 {
@@ -63,7 +62,7 @@ public abstract class ReadDCF extends RBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector doReadDCF(int conn, RAbstractStringVector fields, RAbstractStringVector keepWhite) {
+    protected RStringVector doReadDCF(int conn, RStringVector fields, RStringVector keepWhite) {
         DCF dcf = null;
         try (RConnection openConn = RConnection.fromIndex(conn).forceOpen("r")) {
             Set<String> keepWhiteSet = null;
@@ -124,7 +123,7 @@ public abstract class ReadDCF extends RBuiltinNode.Arg3 {
 
     }
 
-    private static boolean needField(String fieldName, RAbstractStringVector fields) {
+    private static boolean needField(String fieldName, RStringVector fields) {
         if (fields.getLength() == 0) {
             return true;
         }

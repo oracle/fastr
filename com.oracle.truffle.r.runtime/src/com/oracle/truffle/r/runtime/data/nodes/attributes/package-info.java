@@ -112,7 +112,7 @@
  * private SetFixedAttributeNode setAttrNode = SetAttributeNode.create();
  *
  * &#64;Specialization
- * protected Object handleStringVector(RAbstractStringVector v, String attrName, Object attrValue) {
+ * protected Object handleStringVector(RStringVector v, String attrName, Object attrValue) {
  *    ...
  *    setAttrNode.execute(vector, attrName, attrValue);
  *    ...
@@ -133,7 +133,7 @@
  * &#64;Child private IterableAttributeNode iterAttrAccess = IterableAttributeNode.create();
  *
  * &#64;Specialization
- * protected Object handleStringVector(RAbstractStringVector v) {
+ * protected Object handleStringVector(RStringVector v) {
  *    ...
  *    for (RAttribute a : iterAttrAccess.execute(v)) {
  *      if ("foo".equals(a.getName())) {

@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "drop", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
@@ -142,8 +141,8 @@ public abstract class Drop extends RBuiltinNode.Arg1 {
     }
 
     private static RStringVector ensureStringVector(Object value) {
-        if (value instanceof RAbstractStringVector) {
-            return ((RAbstractStringVector) value).materialize();
+        if (value instanceof RStringVector) {
+            return ((RStringVector) value).materialize();
         } else {
             assert value instanceof String : value;
             return RDataFactory.createStringVector(new String[]{(String) value}, true);

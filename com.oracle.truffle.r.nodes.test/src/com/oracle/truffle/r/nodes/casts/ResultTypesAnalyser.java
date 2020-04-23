@@ -71,7 +71,6 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalBaseNode;
 import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNode;
 import com.oracle.truffle.r.nodes.unary.CastStringBaseNode;
@@ -91,7 +90,7 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implements MapperVisitor<TypeExpr>, FilterVisitor<TypeExpr>, SubjectVisitor<TypeExpr> {
@@ -307,7 +306,7 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
             case Complex:
                 return visit(new TypeFilter<>(RComplexVector.class), previous);
             case Character:
-                return visit(new TypeFilter<>(String.class, RAbstractStringVector.class), previous);
+                return visit(new TypeFilter<>(String.class, RStringVector.class), previous);
             case Raw:
                 return visit(new TypeFilter<>(RRawVector.class), previous);
             default:

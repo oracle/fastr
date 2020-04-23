@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
@@ -362,7 +362,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
     // "largest" String for the implementation of max function
 
     @Specialization(guards = {"supportString", "operand.getLength() == 0"})
-    protected String doStringVectorEmpty(@SuppressWarnings("unused") RAbstractStringVector operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected String doStringVectorEmpty(@SuppressWarnings("unused") RStringVector operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
         if (semantics.getEmptyWarning() != null) {
             warning(semantics.emptyWarningCharacter);
         }
@@ -370,7 +370,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
     }
 
     @Specialization(guards = {"supportString", "operand.getLength() == 1"})
-    protected String doStringVectorOneElem(RAbstractStringVector operand, boolean naRm, boolean finite) {
+    protected String doStringVectorOneElem(RStringVector operand, boolean naRm, boolean finite) {
         boolean profiledNaRm = naRmProfile.profile(naRm);
         String result = operand.getDataAt(0);
         if (profiledNaRm) {
@@ -383,7 +383,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNodeWithWarnings {
     }
 
     @Specialization(guards = {"supportString", "operand.getLength() > 1"})
-    protected String doStringVector(RAbstractStringVector operand, boolean naRm, boolean finite) {
+    protected String doStringVector(RStringVector operand, boolean naRm, boolean finite) {
         boolean profiledNaRm = naRmProfile.profile(naRm);
         na.enable(operand);
         int offset = 0;

@@ -37,10 +37,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -344,7 +343,7 @@ public final class GPar {
         }
 
         private static boolean isStringValue(Object lty) {
-            return lty instanceof String || lty instanceof RAbstractStringVector;
+            return lty instanceof String || lty instanceof RStringVector;
         }
 
         // NA indicates error

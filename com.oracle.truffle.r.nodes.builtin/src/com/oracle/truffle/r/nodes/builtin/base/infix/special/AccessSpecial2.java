@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 /**
@@ -60,7 +60,7 @@ public abstract class AccessSpecial2 extends IndexingSpecial2Common implements S
     }
 
     @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected String accessString(RAbstractStringVector vector, int index1, int index2,
+    protected String accessString(RStringVector vector, int index1, int index2,
                     @Cached("vector.access()") VectorAccess access) {
         try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
             return access.getString(iter, matrixIndex(vector, index1, index2));
@@ -68,7 +68,7 @@ public abstract class AccessSpecial2 extends IndexingSpecial2Common implements S
     }
 
     @Specialization(replaces = "accessString", guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected String accessStringGeneric(RAbstractStringVector vector, int index1, int index2) {
+    protected String accessStringGeneric(RStringVector vector, int index1, int index2) {
         return accessString(vector, index1, index2, vector.slowPathAccess());
     }
 

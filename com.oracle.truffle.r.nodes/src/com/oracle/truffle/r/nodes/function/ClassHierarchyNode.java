@@ -52,9 +52,8 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RWeakRef;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -200,8 +199,8 @@ public abstract class ClassHierarchyNode extends UnaryNode {
                 access = insert(GetFixedPropertyNode.createClass());
             }
             Object classHierarchyObj = access.execute(attributes);
-            if (nullAttributeProfile.profile(classHierarchyObj instanceof RAbstractStringVector)) {
-                RAbstractStringVector classHierarchy = valueClassProfile.profile((RAbstractStringVector) classHierarchyObj);
+            if (nullAttributeProfile.profile(classHierarchyObj instanceof RStringVector)) {
+                RStringVector classHierarchy = valueClassProfile.profile((RStringVector) classHierarchyObj);
                 if (withS4 && argProfile.profile(arg).isS4() && isS4Profile.profile(classHierarchy.getLength() > 0)) {
                     if (s4Class == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -257,7 +256,7 @@ abstract class S4Class extends RBaseNode {
             RFunction sExtendsForS3Function = ReadVariableNode.lookupFunction(".extendsForS3", methodsEnv.getFrame());
             // the assumption here is that the R function can only return either a String or
             // RStringVector
-            RAbstractStringVector s4ExtendsAbstract = (RAbstractStringVector) castToVector.doCast(
+            RStringVector s4ExtendsAbstract = (RStringVector) castToVector.doCast(
                             RContext.getEngine().evalFunction(sExtendsForS3Function, methodsEnv.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), true, null, classAttr));
             s4Extends = s4ExtendsAbstract.materialize();
             RContext.getInstance().putS4Extends(classAttr, s4Extends);

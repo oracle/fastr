@@ -26,7 +26,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.unary.CastNode;
 
 public abstract class FirstStringNode extends CastNode {
@@ -49,7 +49,7 @@ public abstract class FirstStringNode extends CastNode {
     }
 
     @Specialization(replaces = "firstScalar")
-    protected String firstVector(RAbstractStringVector argument) {
+    protected String firstVector(RStringVector argument) {
         if (argument.getLength() != 1) {
             throw error(emptyError, argumentName);
         }

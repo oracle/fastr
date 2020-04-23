@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2014,  The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "abbreviate", kind = INTERNAL, parameterNames = {"x", "minlength", "use.classes"}, behavior = PURE)
@@ -45,7 +44,7 @@ public abstract class Abbrev extends RBuiltinNode.Arg3 {
     }
 
     @Specialization
-    protected RStringVector abbrev(RAbstractStringVector x, int minlength, boolean useClasses) {
+    protected RStringVector abbrev(RStringVector x, int minlength, boolean useClasses) {
         int len = x.getLength();
         String[] data = new String[len];
         naCheck.enable(true);

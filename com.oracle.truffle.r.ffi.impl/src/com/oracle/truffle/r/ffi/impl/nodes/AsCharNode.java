@@ -32,12 +32,11 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @TypeSystemReference(RTypes.class)
 public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
@@ -78,8 +77,8 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
         CharSXPWrapper result;
         if (castObj instanceof String) {
             result = CharSXPWrapper.create((String) castObj);
-        } else if (castObj instanceof RAbstractStringVector) {
-            result = CharSXPWrapper.create(((RAbstractStringVector) castObj).getDataAt(0));
+        } else if (castObj instanceof RStringVector) {
+            result = CharSXPWrapper.create(((RStringVector) castObj).getDataAt(0));
         } else {
             throw RInternalError.shouldNotReachHere();
         }
@@ -102,7 +101,7 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
 
     protected static boolean isNotStringVec(RAbstractAtomicVector obj) {
         // assertion: only materialized string vectors should ever appear in native code
-        assert !(obj instanceof RAbstractStringVector) || obj instanceof RStringVector : obj;
+        assert !(obj instanceof RStringVector) || ((RStringVector) obj).isMaterialized() : obj;
         return !(obj instanceof RStringVector);
     }
 

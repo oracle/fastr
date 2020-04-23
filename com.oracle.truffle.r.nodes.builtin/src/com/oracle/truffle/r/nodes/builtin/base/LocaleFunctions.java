@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class LocaleFunctions {
 
@@ -232,7 +231,7 @@ public class LocaleFunctions {
         }
 
         @Specialization
-        protected Object enc2Native(RAbstractStringVector x) {
+        protected Object enc2Native(RStringVector x) {
             // TODO implement properly
             return x;
         }
@@ -247,7 +246,7 @@ public class LocaleFunctions {
         }
 
         @Specialization
-        protected Object enc2Native(RAbstractStringVector x) {
+        protected Object enc2Native(RStringVector x) {
             // TODO implement properly
             return x;
         }
@@ -263,7 +262,7 @@ public class LocaleFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RNull bindtextdomain(RAbstractStringVector domain, Object dirname) {
+        protected RNull bindtextdomain(RStringVector domain, Object dirname) {
             // TODO implement properly
             return RNull.instance;
         }

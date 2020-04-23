@@ -64,7 +64,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -198,7 +198,7 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected RIntVector spawn(RAbstractStringVector exprs, String kind) {
+        protected RIntVector spawn(RStringVector exprs, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
             if (RContext.getInstance().getOption(SharedContexts) && contextKind != ContextKind.SHARE_ALL) {
                 throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Only shared contexts are allowed");
@@ -329,7 +329,7 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected Object eval(RAbstractStringVector exprs, String kind) {
+        protected Object eval(RStringVector exprs, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
             if (RContext.getInstance().getOption(SharedContexts) && contextKind != ContextKind.SHARE_ALL) {
                 throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Only shared contexts are allowed");
@@ -388,11 +388,11 @@ public class FastRContext {
             casts.arg("timeout").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(0));
         }
 
-        public abstract Object execute(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs);
+        public abstract Object execute(VirtualFrame frame, RStringVector args, RStringVector env, boolean intern, int timeoutSecs);
 
         @Specialization
         @TruffleBoundary
-        protected Object r(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs,
+        protected Object r(RStringVector args, RStringVector env, boolean intern, int timeoutSecs,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             Object rc = RContext.getRRuntimeASTAccess().rcommandMain(ctxRef.get(), prependCommand(args, "R"), env.materialize().getDataCopy(), intern, timeoutSecs);
             return rc;
@@ -406,7 +406,7 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected Object r(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern, int timeoutSecs,
+        protected Object r(@SuppressWarnings("unused") RMissing args, RStringVector env, boolean intern, int timeoutSecs,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             return r(RDataFactory.createEmptyStringVector(), env, intern, timeoutSecs, ctxRef);
         }
@@ -415,7 +415,7 @@ public class FastRContext {
     @RBuiltin(name = ".fastr.context.rscript", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern", "timeout"}, behavior = COMPLEX)
     public abstract static class Rscript extends RBuiltinNode.Arg4 {
 
-        public abstract Object execute(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs);
+        public abstract Object execute(RStringVector args, RStringVector env, boolean intern, int timeoutSecs);
 
         @Override
         public Object[] getDefaultParameterValues() {
@@ -432,20 +432,20 @@ public class FastRContext {
 
         @Specialization
         @TruffleBoundary
-        protected Object rscript(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs,
+        protected Object rscript(RStringVector args, RStringVector env, boolean intern, int timeoutSecs,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             return RContext.getRRuntimeASTAccess().rscriptMain(ctxRef.get(), prependCommand(args, "Rscript"), env.materialize().getDataCopy(), intern, timeoutSecs);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object rscript(RAbstractStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs,
+        protected Object rscript(RStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             return rscript(args, RDataFactory.createEmptyStringVector(), intern, timeoutSecs, ctxRef);
         }
     }
 
-    private static String[] prependCommand(RAbstractStringVector argsVec, String command) {
+    private static String[] prependCommand(RStringVector argsVec, String command) {
         String[] argsVecArgs = argsVec.materialize().getDataCopy();
         String[] result = new String[argsVecArgs.length + 1];
         result[0] = command;

@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class IsFiniteFunctions {
@@ -87,7 +87,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
-        public RLogicalVector doString(RAbstractStringVector x,
+        public RLogicalVector doString(RStringVector x,
                         @CachedLibrary("x.getData()") VectorDataLibrary dataLib) {
             return doFunConstant(dataLib, x.getData(), x, RRuntime.LOGICAL_FALSE);
         }

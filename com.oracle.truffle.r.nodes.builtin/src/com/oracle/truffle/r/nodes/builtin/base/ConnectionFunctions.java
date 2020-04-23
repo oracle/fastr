@@ -112,12 +112,11 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -402,7 +401,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RIntVector textConnection(String description, RAbstractStringVector text, String open, REnvironment env, @SuppressWarnings("unused") int encoding) {
+        protected RIntVector textConnection(String description, RStringVector text, String open, REnvironment env, @SuppressWarnings("unused") int encoding) {
             try {
                 return new TextRConnection(description, text, env, open).asVector();
             } catch (IOException ex) {
@@ -412,7 +411,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         protected RIntVector textConnection(String description, @SuppressWarnings("unused") RNull text, String open, REnvironment env, int encoding) {
-            return textConnection(description, (RAbstractStringVector) null, open, env, encoding);
+            return textConnection(description, (RStringVector) null, open, env, encoding);
         }
     }
 
@@ -426,7 +425,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractStringVector textConnection(int con) {
+        protected RStringVector textConnection(int con) {
             RConnection connection = RConnection.fromIndex(con);
             if (connection instanceof TextRConnection) {
                 return ((TextRConnection) connection).getValue();
@@ -678,7 +677,7 @@ public abstract class ConnectionFunctions {
 
         static {
             Casts casts = new Casts(WriteLines.class);
-            casts.arg("text").asStringVector().mustBe(instanceOf(RAbstractStringVector.class));
+            casts.arg("text").asStringVector().mustBe(instanceOf(RStringVector.class));
             CastsHelper.connection(casts);
             casts.arg("sep").asStringVector().findFirst();
             CastsHelper.useBytes(casts);
@@ -686,7 +685,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RNull writeLines(RAbstractStringVector text, int con, String sep, boolean useBytes) {
+        protected RNull writeLines(RStringVector text, int con, String sep, boolean useBytes) {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("wt")) {
                 openConn.writeLines(text, sep, useBytes);
             } catch (IOException x) {
@@ -721,7 +720,7 @@ public abstract class ConnectionFunctions {
 
         static {
             Casts casts = new Casts(PushBack.class);
-            casts.arg("data").asStringVector().mustBe(instanceOf(RAbstractStringVector.class));
+            casts.arg("data").asStringVector().mustBe(instanceOf(RStringVector.class));
             CastsHelper.connection(casts);
             casts.arg("newLine").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
             casts.arg("type").asIntegerVector().findFirst();
@@ -729,7 +728,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object pushBack(RAbstractStringVector data, int connection, boolean newLine, @SuppressWarnings("unused") int type) {
+        protected Object pushBack(RStringVector data, int connection, boolean newLine, @SuppressWarnings("unused") int type) {
             RConnection.fromIndex(connection).pushBack(data, newLine);
             return RNull.instance;
         }
@@ -816,12 +815,12 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-        protected RNull writeChar(RAbstractStringVector object, int con, RIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
+        protected RNull writeChar(RStringVector object, int con, RIntVector nchars, RStringVector sep, boolean useBytes) {
             return writeCharGeneric(object, con, nchars, sep, useBytes);
         }
 
         @TruffleBoundary
-        private RNull writeCharGeneric(RAbstractStringVector object, int con, RIntVector nchars, RAbstractStringVector sep, boolean useBytes) {
+        private RNull writeCharGeneric(RStringVector object, int con, RIntVector nchars, RStringVector sep, boolean useBytes) {
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("wb")) {
                 final int length = object.getLength();
                 final int ncharsLen = nchars.getLength();
@@ -841,7 +840,7 @@ public abstract class ConnectionFunctions {
             return RNull.instance;
         }
 
-        private static String getSepFor(RAbstractStringVector sep, int i) {
+        private static String getSepFor(RStringVector sep, int i) {
             if (sep != null) {
                 return sep.getDataAt(i % sep.getLength());
             }
@@ -849,7 +848,7 @@ public abstract class ConnectionFunctions {
         }
 
         @Specialization
-        protected RNull writeChar(RAbstractStringVector object, int con, RIntVector nchars, @SuppressWarnings("unused") RNull sep, boolean useBytes) {
+        protected RNull writeChar(RStringVector object, int con, RIntVector nchars, @SuppressWarnings("unused") RNull sep, boolean useBytes) {
             return writeCharGeneric(object, con, nchars, null, useBytes);
         }
     }

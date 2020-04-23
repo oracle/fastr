@@ -36,13 +36,12 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
@@ -116,8 +115,8 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 } else {
                     pbuf = "Complex," + cv.getLength();
                 }
-            } else if (tmp instanceof RAbstractStringVector) {
-                RAbstractStringVector sv = (RAbstractStringVector) tmp;
+            } else if (tmp instanceof RStringVector) {
+                RStringVector sv = (RStringVector) tmp;
                 if (sv.getLength() == 1) {
                     String ctmp;
                     VectorAccess access = sv.slowPathAccess();
@@ -165,7 +164,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
 
         int ns = s.getLength();
 
-        RAbstractStringVector names;
+        RStringVector names;
         names = Utils.castTo(RRuntime.asAbstractVector(s.getNames()));
 
         if (ns > 0) {
@@ -229,7 +228,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
             /* Formal classes are represented as empty lists */
             String className = null;
             if (printCtx.printerNode().isObject(s) && printCtx.printerNode().isMethodDispatchOn()) {
-                RAbstractStringVector klass = Utils.castTo(RRuntime.asAbstractVector(s.getAttr(RRuntime.CLASS_ATTR_KEY)));
+                RStringVector klass = Utils.castTo(RRuntime.asAbstractVector(s.getAttr(RRuntime.CLASS_ATTR_KEY)));
                 if (klass != null && klass.getLength() == 1) {
                     String ss = klass.getDataAt(0);
                     String str = snprintf(200, ".__C__%s", ss);

@@ -48,7 +48,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 //Transcribed from GnuR, library/utils/src/io.c
@@ -112,7 +111,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
                 StringBuilder tmp = new StringBuilder();
                 for (int i = 0; i < nr; i++) {
                     if (!(rnames instanceof RNull)) {
-                        tmp.append(encodeElement2((RAbstractStringVector) rnames, i, quoteRn, qmethod, cdec));
+                        tmp.append(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec));
                         tmp.append(csep);
                     }
                     for (int j = 0; j < nc; j++) {
@@ -165,7 +164,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
             // if (i % 1000 == 999)
             // R_CheckUserInterrupt();
             if (!(rnames instanceof RNull)) {
-                tmp.append(encodeElement2((RAbstractStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep);
+                tmp.append(encodeElement2((RStringVector) rnames, i, quoteRn, qmethod, cdec)).append(csep);
             }
             for (int j = 0; j < nc; j++) {
                 Object xjObj = x.getDataAtAsObject(j);
@@ -217,8 +216,8 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         if (indx < 0 || indx >= x.getLength()) {
             throw new IllegalArgumentException("index out of range");
         }
-        if (x instanceof RAbstractStringVector) {
-            RAbstractStringVector sx = (RAbstractStringVector) x;
+        if (x instanceof RStringVector) {
+            RStringVector sx = (RStringVector) x;
             String p0 = /* translateChar */sx.getDataAt(indx);
             return encodeStringElement(p0, quote, qmethod);
         }
@@ -255,8 +254,8 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
             return RRuntime.isNA(((RDoubleVector) x).getDataAt(indx));
         } else if (x instanceof RIntVector) {
             return RRuntime.isNA(((RIntVector) x).getDataAt(indx));
-        } else if (x instanceof RAbstractStringVector) {
-            return RRuntime.isNA(((RAbstractStringVector) x).getDataAt(indx));
+        } else if (x instanceof RStringVector) {
+            return RRuntime.isNA(((RStringVector) x).getDataAt(indx));
         } else if (x instanceof RComplexVector) {
             RComplexVector cvec = (RComplexVector) x;
             RComplex c = cvec.getDataAt(indx);

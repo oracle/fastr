@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "iconv", kind = INTERNAL, parameterNames = {"x", "from", "to", "sub", "mark", "toRaw"}, behavior = PURE)
@@ -84,7 +84,7 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
 
     @Specialization
     @TruffleBoundary
-    protected Object doIConv(RAbstractStringVector x, String from, String to, String sub, @SuppressWarnings("unused") boolean mark, boolean toRaw,
+    protected Object doIConv(RStringVector x, String from, String to, String sub, @SuppressWarnings("unused") boolean mark, boolean toRaw,
                     @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
 
         Charset fromCharset = getCharset(from, from, to);

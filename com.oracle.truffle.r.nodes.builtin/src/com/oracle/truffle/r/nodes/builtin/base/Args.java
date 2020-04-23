@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -65,7 +65,7 @@ public abstract class Args extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected Object args(VirtualFrame frame, RAbstractStringVector funName) {
+    protected Object args(VirtualFrame frame, RStringVector funName) {
         if (funName.getLength() == 0) {
             return RNull.instance;
         }
@@ -94,7 +94,7 @@ public abstract class Args extends RBuiltinNode.Arg1 {
         return RDataFactory.createFunction(newDesc, RFunction.NO_NAME, Truffle.getRuntime().createCallTarget(newNode), null, REnvironment.globalEnv().getFrame());
     }
 
-    @Specialization(guards = {"!isRFunction(fun)", "!isRAbstractStringVector(fun)"})
+    @Specialization(guards = {"!isRFunction(fun)", "!isRStringVector(fun)"})
     protected Object args(@SuppressWarnings("unused") Object fun) {
         return RNull.instance;
     }

@@ -35,7 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
@@ -55,13 +55,13 @@ public abstract class CharTr extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = "vectorReuse.supports(values)", limit = "getVectorAccessCacheSize()")
-    RAbstractStringVector doIt(String oldStr, String newStr, RAbstractStringVector values,
+    RStringVector doIt(String oldStr, String newStr, RStringVector values,
                     @Cached("createTemporary(values)") VectorReuse vectorReuse,
                     @Cached("create()") RemoveRegAttributesNode removeRegAttributesNode) {
         if (newStr.length() < oldStr.length()) {
             throw error(X_LONGER_THAN_Y, "old", "new");
         }
-        RAbstractStringVector result = vectorReuse.getResult(values);
+        RStringVector result = vectorReuse.getResult(values);
         VectorAccess resultAccess = vectorReuse.access(result);
         removeRegAttributesNode.execute(result);
         try (SequentialIterator readIter = resultAccess.access(result); SequentialIterator writeIter = resultAccess.access(result)) {
@@ -88,7 +88,7 @@ public abstract class CharTr extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(replaces = "doIt")
-    RAbstractStringVector doItGeneric(String oldStr, String newStr, RAbstractStringVector values,
+    RStringVector doItGeneric(String oldStr, String newStr, RStringVector values,
                     @Cached("createTemporaryGeneric()") VectorReuse vectorReuse,
                     @Cached("create()") RemoveRegAttributesNode removeRegAttributesNode) {
         return doIt(oldStr, newStr, values, vectorReuse, removeRegAttributesNode);

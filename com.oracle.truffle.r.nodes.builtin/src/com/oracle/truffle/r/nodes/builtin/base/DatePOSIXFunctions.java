@@ -80,10 +80,9 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 import java.time.Month;
@@ -108,7 +107,7 @@ public class DatePOSIXFunctions {
         public final int[] yday;
         public final int[] isdst;
         private boolean complete = true;
-        private final RAbstractStringVector zone;
+        private final RStringVector zone;
 
         private final TimeZone realZone;
 
@@ -388,7 +387,7 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector format(RAbstractListVector x, RAbstractStringVector format, boolean usetz) {
+        protected RStringVector format(RAbstractListVector x, RStringVector format, boolean usetz) {
             RDoubleVector secVector = (RDoubleVector) RRuntime.asAbstractVector(x.getDataAt(0));
             RIntVector minVector = (RIntVector) RRuntime.asAbstractVector(x.getDataAt(1));
             RIntVector hourVector = (RIntVector) RRuntime.asAbstractVector(x.getDataAt(2));
@@ -446,7 +445,7 @@ public class DatePOSIXFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RList strptime(RAbstractStringVector x, RAbstractStringVector format, RAbstractStringVector tz) {
+        protected RList strptime(RStringVector x, RStringVector format, RStringVector tz) {
             String zoneString = RRuntime.asString(tz);
             int length = x.getLength();
             TimeZone timeZone = TimeZone.getDefault();
@@ -499,7 +498,7 @@ public class DatePOSIXFunctions {
         }
     }
 
-    private static DateTimeFormatterBuilder[] createFormatters(RAbstractStringVector formats, boolean forInput) {
+    private static DateTimeFormatterBuilder[] createFormatters(RStringVector formats, boolean forInput) {
         DateTimeFormatterBuilder[] result = new DateTimeFormatterBuilder[formats.getLength()];
         for (int i = 0; i < result.length; i++) {
             result[i] = createFormatter(formats.getDataAt(i), forInput);

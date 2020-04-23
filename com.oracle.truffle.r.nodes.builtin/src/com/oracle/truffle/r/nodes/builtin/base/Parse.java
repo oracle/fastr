@@ -63,7 +63,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
@@ -130,7 +130,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
 
     @TruffleBoundary
     @Specialization
-    protected RExpression parse(int conn, int n, RAbstractStringVector text, String prompt, Object srcFile, String encoding,
+    protected RExpression parse(int conn, int n, RStringVector text, String prompt, Object srcFile, String encoding,
                     @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         RConnection connection = RConnection.fromIndex(conn);
         return doParse(connection, n, coalesce(text), prompt, srcFile, encoding, ctxRef.get());
@@ -163,7 +163,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         }
     }
 
-    private static String coalesce(RAbstractStringVector lines) {
+    private static String coalesce(RStringVector lines) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < lines.getLength(); i++) {
             sb.append(lines.getDataAt(i));

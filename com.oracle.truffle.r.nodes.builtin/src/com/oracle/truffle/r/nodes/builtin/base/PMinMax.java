@@ -55,9 +55,8 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -416,7 +415,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
         protected byte doStringVectorMultiElem(Object[] argValues, boolean naRm, int offset, int ind, int maxLength, byte warning, Object d) {
             String[] data = (String[]) d;
             byte warningAdded = warning;
-            RAbstractStringVector vec = (RAbstractStringVector) argValues[offset];
+            RStringVector vec = (RStringVector) argValues[offset];
             if (vec.getLength() > 1 && vec.getLength() < maxLength && warningAdded == RRuntime.LOGICAL_FALSE) {
                 warning(RError.Message.ARG_RECYCYLED);
                 warningAdded = RRuntime.LOGICAL_TRUE;
@@ -443,7 +442,7 @@ public abstract class PMinMax extends RBuiltinNode.Arg2 {
             // when we reach here, it means that we have already seen one non-NA element
             assert !RRuntime.isNA(result);
             for (int i = offset + 1; i < argValues.length; i++) {
-                vec = (RAbstractStringVector) argValues[i];
+                vec = (RStringVector) argValues[i];
                 if (vec.getLength() > 1 && vec.getLength() < maxLength && warningAdded == RRuntime.LOGICAL_FALSE) {
                     warning(RError.Message.ARG_RECYCYLED);
                     warningAdded = RRuntime.LOGICAL_TRUE;

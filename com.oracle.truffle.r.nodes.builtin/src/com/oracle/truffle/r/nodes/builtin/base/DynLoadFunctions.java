@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -94,7 +94,7 @@ public class DynLoadFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RNull doDynunload(RAbstractStringVector lib) {
+        protected RNull doDynunload(RStringVector lib) {
             try {
                 dllUnloadNode.execute(lib.getDataAt(0));
             } catch (DLLException ex) {
@@ -176,7 +176,7 @@ public class DynLoadFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object getSymbolInfo(String symbol, RAbstractStringVector packageName, boolean withReg) {
+        protected Object getSymbolInfo(String symbol, RStringVector packageName, boolean withReg) {
             DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
             DLL.SymbolHandle f = findSymbolNode.execute(symbol, packageName.getDataAt(0), rns);
             SymbolInfo symbolInfo = null;
@@ -188,7 +188,7 @@ public class DynLoadFunctions {
 
         @Specialization(guards = "isDLLInfo(externalPtr)")
         @TruffleBoundary
-        protected Object getSymbolInfo(RAbstractStringVector symbolVec, RExternalPtr externalPtr, boolean withReg, //
+        protected Object getSymbolInfo(RStringVector symbolVec, RExternalPtr externalPtr, boolean withReg, //
                         @Cached("create()") DLL.RdlsymNode dlsymNode) {
             DLL.DLLInfo dllInfo = (DLLInfo) externalPtr.getExternalObject();
             if (dllInfo == null) {

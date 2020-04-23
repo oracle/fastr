@@ -60,7 +60,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -98,7 +98,7 @@ public final class GridTextNode extends RBaseNode {
     }
 
     @TruffleBoundary
-    public Object gridText(RAbstractStringVector textVec, RAbstractVector x, RAbstractVector y, RDoubleVector hjustVec, RDoubleVector vjustVec, RDoubleVector rotationVec,
+    public Object gridText(RStringVector textVec, RAbstractVector x, RAbstractVector y, RDoubleVector hjustVec, RDoubleVector vjustVec, RDoubleVector rotationVec,
                     boolean checkOverlapIn, double theta) {
         if (textVec.getLength() == 0) {
             return RNull.instance;

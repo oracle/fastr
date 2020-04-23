@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -189,7 +189,7 @@ public interface RRuntimeASTAccess {
 
     String encodeComplex(RComplex x, int digits);
 
-    RAbstractStringVector getClassHierarchy(RAttributable value);
+    RStringVector getClassHierarchy(RAttributable value);
 
     RContext getCurrentContext();
 

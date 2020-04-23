@@ -1235,7 +1235,7 @@ public final class NativeDataAccess {
         if (mirror.dataAddress == null) {
             noStringNative.invalidate();
             // Note: shall the character vector become writeable and not only read-only, we should
-            // crate assumption like for other vector types
+            // create assumption like for other vector types
             mirror.allocateNative(charSXPdata);
             mirror.length = length;
         }

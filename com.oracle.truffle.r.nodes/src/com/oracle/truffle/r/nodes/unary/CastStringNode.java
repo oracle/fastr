@@ -40,12 +40,11 @@ import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
@@ -84,7 +83,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization
-    protected RAbstractStringVector doStringVector(RAbstractStringVector vector) {
+    protected RStringVector doStringVector(RStringVector vector) {
         return vector;
     }
 
@@ -146,16 +145,16 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization(guards = "isForeignObject(obj)")
-    protected RAbstractStringVector doForeignObject(TruffleObject obj,
+    protected RStringVector doForeignObject(TruffleObject obj,
                     @Cached("create()") ConvertForeignObjectNode convertForeign) {
         Object o = convertForeign.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
-            if (o instanceof RAbstractStringVector) {
-                return (RAbstractStringVector) o;
+            if (o instanceof RStringVector) {
+                return (RStringVector) o;
             }
             o = castStringRecursive(o);
-            if (o instanceof RAbstractStringVector) {
-                return (RAbstractStringVector) o;
+            if (o instanceof RStringVector) {
+                return (RStringVector) o;
             }
         }
         throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
@@ -167,19 +166,19 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization(guards = "operand.isForeignWrapper()")
-    protected RAbstractStringVector doForeignWrapper(RLogicalVector operand) {
+    protected RStringVector doForeignWrapper(RLogicalVector operand) {
         return RClosures.createToStringVector(operand, true);
     }
 
     @Specialization(guards = "operand.isForeignWrapper()")
-    protected RAbstractStringVector doForeignWrapper(RIntVector operand) {
+    protected RStringVector doForeignWrapper(RIntVector operand) {
         // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
         // specialization
         return RClosures.createToStringVector(operand, true);
     }
 
     @Specialization(guards = "operand.isForeignWrapper()")
-    protected RAbstractStringVector doForeignWrapper(RDoubleVector operand) {
+    protected RStringVector doForeignWrapper(RDoubleVector operand) {
         // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
         // specialization
         return RClosures.createToStringVector(operand, true);
@@ -198,7 +197,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     protected boolean handleAsAtomic(RAbstractAtomicVector x) {
-        return !isForeignWrapper(x) && !(isIntSequence(x) || x instanceof RAbstractStringVector);
+        return !isForeignWrapper(x) && !(isIntSequence(x) || x instanceof RStringVector);
     }
 
     protected boolean handleAsNonAtomic(RAbstractContainer x) {

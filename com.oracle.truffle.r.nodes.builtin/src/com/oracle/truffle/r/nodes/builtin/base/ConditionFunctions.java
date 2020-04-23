@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
@@ -76,7 +76,7 @@ public class ConditionFunctions {
         }
 
         @Specialization
-        protected Object addCondHands(VirtualFrame frame, RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling,
+        protected Object addCondHands(VirtualFrame frame, RStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling,
                         @Cached("createHandlerFrameSlot(frame)") FrameSlot handlerFrameSlot) {
             if (classes.getLength() != handlers.getLength()) {
                 CompilerDirectives.transferToInterpreter();
@@ -95,7 +95,7 @@ public class ConditionFunctions {
         }
 
         @TruffleBoundary
-        private static Object createHandlers(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
+        private static Object createHandlers(RStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
             return RErrorHandling.createHandlers(classes, handlers, parentEnv, target, calling);
         }
     }
@@ -190,10 +190,10 @@ public class ConditionFunctions {
         @Specialization
         protected RNull signalCondition(RList condition, Object msg, Object call) {
             String msgStr = "";
-            if (msg instanceof RAbstractStringVector) {
-                RAbstractStringVector msgVec = (RAbstractStringVector) msg;
+            if (msg instanceof RStringVector) {
+                RStringVector msgVec = (RStringVector) msg;
                 if (msgVec.getLength() > 0) {
-                    msgStr = ((RAbstractStringVector) msg).getDataAt(0);
+                    msgStr = ((RStringVector) msg).getDataAt(0);
                 }
             }
             RErrorHandling.signalCondition(condition, msgStr, call);

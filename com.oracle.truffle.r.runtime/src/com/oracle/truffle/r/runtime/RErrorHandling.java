@@ -46,9 +46,8 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
@@ -253,7 +252,7 @@ public class RErrorHandling {
         errorHandlingState.restartStack = savedRestartStack;
     }
 
-    public static Object createHandlers(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
+    public static Object createHandlers(RStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
         CompilerAsserts.neverPartOfCompilation();
         Object oldStack = getHandlerStack();
         Object newStack = oldStack;
@@ -318,8 +317,8 @@ public class RErrorHandling {
             return dataAt;
         } else if (dataAt instanceof String) {
             return dataAt;
-        } else if (dataAt instanceof RAbstractStringVector && ((RAbstractStringVector) dataAt).getLength() >= 1) {
-            return ((RAbstractStringVector) dataAt).getDataAt(0);
+        } else if (dataAt instanceof RStringVector && ((RStringVector) dataAt).getLength() >= 1) {
+            return ((RStringVector) dataAt).getDataAt(0);
         } else {
             throw RInternalError.shouldNotReachHere(Objects.toString(dataAt));
         }
@@ -459,7 +458,7 @@ public class RErrorHandling {
 
     private static RPairList findConditionHandler(RList cond) {
         // GnuR checks whether this is a string vector - in FastR it's statically typed to be
-        RAbstractStringVector classes = RContext.getRRuntimeASTAccess().getClassHierarchy(cond);
+        RStringVector classes = RContext.getRRuntimeASTAccess().getClassHierarchy(cond);
         Object list = getHandlerStack();
         while (list != RNull.instance) {
             RPairList pList = (RPairList) list;

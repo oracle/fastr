@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 
 // TODO support strictly
@@ -97,7 +97,7 @@ public abstract class IsUnsorted extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected byte isUnsorted(RAbstractStringVector x, boolean strictly) {
+    protected byte isUnsorted(RStringVector x, boolean strictly) {
         String last = x.getDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
             String current = x.getDataAt(k);

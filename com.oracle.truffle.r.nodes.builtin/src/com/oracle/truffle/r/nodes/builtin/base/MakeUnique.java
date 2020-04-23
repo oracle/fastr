@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
@@ -55,13 +54,13 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RAbstractStringVector makeUniqueSingle(String names, @SuppressWarnings("unused") String sep) {
+    protected RStringVector makeUniqueSingle(String names, @SuppressWarnings("unused") String sep) {
         // a single string cannot have duplicates
         return RDataFactory.createStringVectorFromScalar(names);
     }
 
     @Specialization(guards = {"!hasCustomSpecialization(names)", "reuseNonSharedNode.supports(names)"}, limit = "getVectorAccessCacheSize()")
-    protected RAbstractStringVector makeUniqueVec(RStringVector names, String sep,
+    protected RStringVector makeUniqueVec(RStringVector names, String sep,
                     @Cached("createNonShared(names)") VectorReuse reuseNonSharedNode,
                     @Cached("createBinaryProfile()") ConditionProfile trivialSizeProfile) {
         if (trivialSizeProfile.profile(names.getLength() == 0 || names.getLength() == 1)) {
@@ -72,14 +71,14 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "makeUniqueVec", guards = "!hasCustomSpecialization(names)")
-    protected RAbstractStringVector makeUniqueGeneric(RStringVector names, String sep,
+    protected RStringVector makeUniqueGeneric(RStringVector names, String sep,
                     @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode,
                     @Cached("createBinaryProfile()") ConditionProfile trivialSizeProfile) {
         return makeUniqueVec(names, sep, reuseNonSharedNode, trivialSizeProfile);
     }
 
     @Specialization(guards = "names.isSequence()")
-    protected RAbstractStringVector makeUniqueSequence(RStringVector names, @SuppressWarnings("unused") String sep) {
+    protected RStringVector makeUniqueSequence(RStringVector names, @SuppressWarnings("unused") String sep) {
         // a string sequence cannot have duplicates if stride is not zero
         if (names.getSequence().getStride() != 0) {
             return names;

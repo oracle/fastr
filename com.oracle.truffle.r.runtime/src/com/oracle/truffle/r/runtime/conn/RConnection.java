@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import java.util.EnumSet;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
  * Denotes an R {@code connection} instance used in the {@code base} I/O library.
@@ -160,7 +160,7 @@ public interface RConnection extends AutoCloseable {
      * Write the {@code lines} to the connection, with {@code sep} appended after each "line". N.B.
      * The output will only appear as a sequence of lines if {@code sep == "\n"}.
      */
-    void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException;
+    void writeLines(RStringVector lines, String sep, boolean useBytes) throws IOException;
 
     void flush() throws IOException;
 
@@ -235,5 +235,5 @@ public interface RConnection extends AutoCloseable {
      */
     void truncate() throws IOException;
 
-    void pushBack(RAbstractStringVector lines, boolean addNewLine);
+    void pushBack(RStringVector lines, boolean addNewLine);
 }

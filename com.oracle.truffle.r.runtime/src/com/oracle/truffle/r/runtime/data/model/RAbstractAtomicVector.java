@@ -27,6 +27,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 
 /**
@@ -37,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
  * <li>{@link RLogicalVector}</li>
  * <li>{@link RDoubleVector}</li>
  * <li>{@link RComplexVector}</li>
- * <li>{@link RAbstractStringVector}</li>
+ * <li>{@link RStringVector}</li>
  * <li>{@link RRawVector}</li>
  * </ul>
  */

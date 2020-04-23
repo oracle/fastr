@@ -32,10 +32,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -189,8 +188,8 @@ final class GridUtils {
     static String asString(Object val, int cyclicIndex) {
         if (val instanceof String) {
             return (String) val;
-        } else if (val instanceof RAbstractStringVector) {
-            RAbstractStringVector vec = (RAbstractStringVector) val;
+        } else if (val instanceof RStringVector) {
+            RStringVector vec = (RStringVector) val;
             if (vec.getLength() > 0) {
                 return vec.getDataAt(cyclicIndex % vec.getLength());
             }

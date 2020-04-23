@@ -34,10 +34,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class RGB extends RExternalBuiltinNode.Arg6 {
@@ -58,7 +57,7 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
     @Specialization(guards = "isIntRange(mcv)")
     @TruffleBoundary
-    Object doInteger(Object r, Object g, Object b, Object a, @SuppressWarnings("unused") double mcv, RAbstractStringVector names,
+    Object doInteger(Object r, Object g, Object b, Object a, @SuppressWarnings("unused") double mcv, RStringVector names,
                     @Cached("create()") CastIntegerNode castR,
                     @Cached("create()") CastIntegerNode castG,
                     @Cached("create()") CastIntegerNode castB,
@@ -69,7 +68,7 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
     @Specialization(guards = "!isIntRange(mcv)")
     @TruffleBoundary
-    Object doDouble(Object r, Object g, Object b, Object a, double mcv, RAbstractStringVector names,
+    Object doDouble(Object r, Object g, Object b, Object a, double mcv, RStringVector names,
                     @Cached("create()") CastDoubleNode castR,
                     @Cached("create()") CastDoubleNode castG,
                     @Cached("create()") CastDoubleNode castB,
@@ -163,11 +162,11 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
     abstract static class IntegerRGB extends RGBBase {
 
-        public abstract RStringVector execute(Object r, Object g, Object b, Object a, RAbstractStringVector names);
+        public abstract RStringVector execute(Object r, Object g, Object b, Object a, RStringVector names);
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doAlpha(RIntVector r, RIntVector g, RIntVector b, RIntVector a, RAbstractStringVector names) {
+        protected RStringVector doAlpha(RIntVector r, RIntVector g, RIntVector b, RIntVector a, RStringVector names) {
             int lengthR = r.getLength();
             int lengthG = g.getLength();
             int lengthB = b.getLength();
@@ -192,7 +191,7 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doNonAlpha(RIntVector r, RIntVector g, RIntVector b, @SuppressWarnings("unused") RNull a, RAbstractStringVector names) {
+        protected RStringVector doNonAlpha(RIntVector r, RIntVector g, RIntVector b, @SuppressWarnings("unused") RNull a, RStringVector names) {
             int lengthR = r.getLength();
             int lengthG = g.getLength();
             int lengthB = b.getLength();
@@ -216,11 +215,11 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
     abstract static class DoubleRGB extends RGBBase {
 
-        public abstract RStringVector execute(Object r, Object g, Object b, Object a, double mcv, RAbstractStringVector names);
+        public abstract RStringVector execute(Object r, Object g, Object b, Object a, double mcv, RStringVector names);
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doAlpha(RDoubleVector r, RDoubleVector g, RDoubleVector b, RDoubleVector a, double mcv, RAbstractStringVector names) {
+        protected RStringVector doAlpha(RDoubleVector r, RDoubleVector g, RDoubleVector b, RDoubleVector a, double mcv, RStringVector names) {
             int lengthR = r.getLength();
             int lengthG = g.getLength();
             int lengthB = b.getLength();
@@ -245,7 +244,7 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector doNonAlpha(RDoubleVector r, RDoubleVector g, RDoubleVector b, @SuppressWarnings("unused") RNull a, double mcv, RAbstractStringVector names) {
+        protected RStringVector doNonAlpha(RDoubleVector r, RDoubleVector g, RDoubleVector b, @SuppressWarnings("unused") RNull a, double mcv, RStringVector names) {
             int lengthR = r.getLength();
             int lengthG = g.getLength();
             int lengthB = b.getLength();

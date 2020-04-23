@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
  * Subscript code for vectors minus list is the same as subset code, this class allows sharing it.
@@ -61,7 +61,7 @@ public abstract class AccessSpecial extends IndexingSpecialCommon implements Sub
     }
 
     @Specialization(guards = {"simpleVector(vector)", "isValidIndexCached(dataLib, vector, index)"}, limit = "getGenericVectorAccessCacheSize()")
-    protected String accessString(RAbstractStringVector vector, int index,
+    protected String accessString(RStringVector vector, int index,
                     @CachedLibrary("vector.getData()") VectorDataLibrary dataLib) {
         return dataLib.getStringAt(vector.getData(), index - 1);
     }

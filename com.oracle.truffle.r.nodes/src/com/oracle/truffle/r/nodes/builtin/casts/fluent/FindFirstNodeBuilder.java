@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -72,11 +72,11 @@ public final class FindFirstNodeBuilder {
         return create(Integer.class, defaultValue);
     }
 
-    public PipelineStep<RAbstractStringVector, String> stringElement() {
+    public PipelineStep<RStringVector, String> stringElement() {
         return create(String.class, null);
     }
 
-    public PipelineStep<RAbstractStringVector, String> stringElement(String defaultValue) {
+    public PipelineStep<RStringVector, String> stringElement(String defaultValue) {
         return create(String.class, defaultValue);
     }
 

@@ -70,9 +70,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.UtsName;
 
@@ -102,7 +101,7 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object sysGetEnv(RAbstractStringVector x, String unset) {
+        protected Object sysGetEnv(RStringVector x, String unset) {
             Map<String, String> envMap = RContext.getInstance().stateREnvVars.getMap();
             int len = x.getLength();
             if (zeroLengthProfile.profile(len == 0)) {
@@ -143,14 +142,14 @@ public class SysFunctions {
     private static final String NS_LOAD = "_R_NS_LOAD_";
     private static final String LOADNAMESPACE = "loadNamespace";
 
-    protected static void checkNSLoad(RContext context, VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values, boolean setting) {
+    protected static void checkNSLoad(RContext context, VirtualFrame frame, RStringVector names, RStringVector values, boolean setting) {
         if (names.getLength() == 1 && NS_LOAD.equals(names.getDataAt(0))) {
             doCheckNSLoad(context, frame.materialize(), values, setting);
         }
     }
 
     @TruffleBoundary
-    private static void doCheckNSLoad(RContext context, MaterializedFrame frame, RAbstractStringVector values, boolean setting) {
+    private static void doCheckNSLoad(RContext context, MaterializedFrame frame, RStringVector values, boolean setting) {
         RCaller caller = RArguments.getCall(frame);
         Frame callerFrame = Utils.getCallerFrame(caller, FrameAccess.READ_ONLY);
         RFunction func = RArguments.getFunction(callerFrame);
@@ -174,7 +173,7 @@ public class SysFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doSysSetEnv(VirtualFrame frame, RAbstractStringVector names, RAbstractStringVector values,
+        protected RLogicalVector doSysSetEnv(VirtualFrame frame, RStringVector names, RStringVector values,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             if (names.getLength() != values.getLength()) {
                 throw error(RError.Message.ARGUMENT_WRONG_LENGTH);
@@ -184,7 +183,7 @@ public class SysFunctions {
         }
 
         @TruffleBoundary
-        private static RLogicalVector doSysSetEnv(RAbstractStringVector names, RAbstractStringVector values) {
+        private static RLogicalVector doSysSetEnv(RStringVector names, RStringVector values) {
             byte[] data = new byte[names.getLength()];
             REnvVars stateREnvVars = RContext.getInstance().stateREnvVars;
             for (int i = 0; i < data.length; i++) {
@@ -204,14 +203,14 @@ public class SysFunctions {
         }
 
         @Specialization
-        protected RLogicalVector doSysUnSetEnv(VirtualFrame frame, RAbstractStringVector names,
+        protected RLogicalVector doSysUnSetEnv(VirtualFrame frame, RStringVector names,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             checkNSLoad(ctxRef.get(), frame, names, null, false);
             return doSysUnSetEnv(names);
         }
 
         @TruffleBoundary
-        protected static RLogicalVector doSysUnSetEnv(RAbstractStringVector names) {
+        protected static RLogicalVector doSysUnSetEnv(RStringVector names) {
             byte[] data = new byte[names.getLength()];
             REnvVars stateREnvVars = RContext.getInstance().stateREnvVars;
             for (int i = 0; i < data.length; i++) {
@@ -265,7 +264,7 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object sysReadlink(RAbstractStringVector vector) {
+        protected Object sysReadlink(RStringVector vector) {
             String[] paths = new String[vector.getLength()];
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             for (int i = 0; i < paths.length; i++) {
@@ -309,7 +308,7 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RIntVector octmode, @SuppressWarnings("unused") boolean useUmask,
+        protected RLogicalVector sysChmod(RStringVector pathVec, RIntVector octmode, @SuppressWarnings("unused") boolean useUmask,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             byte[] data = new byte[pathVec.getLength()];
             for (int i = 0; i < data.length; i++) {
@@ -400,7 +399,7 @@ public class SysFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object sysGlob(RAbstractStringVector pathVec, @SuppressWarnings("unused") boolean dirMask) {
+        protected Object sysGlob(RStringVector pathVec, @SuppressWarnings("unused") boolean dirMask) {
             ArrayList<String> matches = new ArrayList<>();
             // Sys.glob closure already called path.expand
             for (int i = 0; i < pathVec.getLength(); i++) {

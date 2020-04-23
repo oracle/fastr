@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class Col2RGB extends RExternalBuiltinNode.Arg2 {
@@ -89,8 +88,8 @@ public abstract class Col2RGB extends RExternalBuiltinNode.Arg2 {
                 }
                 pos = addColor(alpha, result, pos, color);
             }
-        } else if (col instanceof RAbstractStringVector) {
-            RAbstractStringVector vector = (RAbstractStringVector) col;
+        } else if (col instanceof RStringVector) {
+            RStringVector vector = (RStringVector) col;
 
             for (int i = 0; i < length; i++) {
                 String value = vector.getDataAt(i);

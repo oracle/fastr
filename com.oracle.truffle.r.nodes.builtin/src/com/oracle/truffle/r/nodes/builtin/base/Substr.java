@@ -37,9 +37,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "substr", kind = INTERNAL, parameterNames = {"x", "start", "stop"}, behavior = PURE)
@@ -54,20 +53,20 @@ public abstract class Substr extends RBuiltinNode.Arg3 {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg(arg)")
-    protected RStringVector substrEmptyArg(RAbstractStringVector arg, RIntVector start, RIntVector stop) {
+    protected RStringVector substrEmptyArg(RStringVector arg, RIntVector start, RIntVector stop) {
         return RDataFactory.createEmptyStringVector();
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!emptyArg(arg)", "wrongParams(start, stop)"})
-    protected RNull substrWrongParams(RAbstractStringVector arg, RIntVector start, RIntVector stop,
+    protected RNull substrWrongParams(RStringVector arg, RIntVector start, RIntVector stop,
                     @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         RInternalError.shouldNotReachHere();
         return RNull.instance; // dummy
     }
 
     @Specialization(guards = {"!emptyArg(arg)", "!wrongParams(start, stop)"})
-    protected RStringVector substr(RAbstractStringVector arg, RIntVector start, RIntVector stop,
+    protected RStringVector substr(RStringVector arg, RIntVector start, RIntVector stop,
                     @Cached("create()") UnaryCopyAttributesNode copyAttributesNode) {
         String[] res = new String[arg.getLength()];
         na.enable(arg);
@@ -139,7 +138,7 @@ public abstract class Substr extends RBuiltinNode.Arg3 {
     // return x.substring(actualStart - 1, actualStop);
     // }
 
-    protected boolean emptyArg(RAbstractStringVector arg) {
+    protected boolean emptyArg(RStringVector arg) {
         return arg.getLength() == 0;
     }
 

@@ -31,11 +31,12 @@ import java.util.function.Function;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.GetGenericInternalNodeGen;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
@@ -51,6 +52,7 @@ import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.helpers.GetFromEnvironment;
 import com.oracle.truffle.r.runtime.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo.MethodCode;
 import com.oracle.truffle.r.runtime.RError;
@@ -69,9 +71,9 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -135,7 +137,7 @@ public class MethodsListDispatch {
         static {
             Casts casts = new Casts(R_methodsPackageMetaName.class);
             Function<Object, String> clsHierFn = ClassHierarchyScalarNode::get;
-            Function<Object, Integer> vecLenFn = arg -> ((RAbstractStringVector) arg).getLength();
+            Function<Object, Integer> vecLenFn = arg -> ((RStringVector) arg).getLength();
 
             checkSingleString(casts, 0, "prefix", "The internal prefix (e.g., \"C\") for a meta-data object", true, clsHierFn, vecLenFn);
             checkSingleString(casts, 1, "name", "The name of the object (e.g,. a class or generic function) to find in the meta-data", false, clsHierFn, vecLenFn);
@@ -166,7 +168,7 @@ public class MethodsListDispatch {
         }
 
         @Specialization
-        protected Object callGetClassFromCache(RAbstractStringVector klass, REnvironment table,
+        protected Object callGetClassFromCache(RStringVector klass, REnvironment table,
                         @Cached("create()") GetFromEnvironment get,
                         @Cached("createPckgAttrAccess()") GetFixedAttributeNode klassPckgAttrAccess,
                         @Cached("createPckgAttrAccess()") GetFixedAttributeNode valPckgAttrAccess) {
@@ -338,6 +340,7 @@ public class MethodsListDispatch {
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     public abstract static class R_identC extends RExternalBuiltinNode.Arg2 {
 
         static {
@@ -349,18 +352,13 @@ public class MethodsListDispatch {
             return RRuntime.asLogical(e1.equals(e2));
         }
 
-        @Specialization
-        protected byte identC(RStringVector e1, RStringVector e2) {
-            return RRuntime.asLogical(e1.getLength() == 1 && e2.getLength() == 1 && e1.getDataAt(0).equals(e2.getDataAt(0)));
-        }
-
-        @Specialization
-        protected byte identC(RAbstractStringVector e1In, RAbstractStringVector e2In,
-                        @Cached("createClassProfile()") ValueProfile e1Profile,
-                        @Cached("createClassProfile()") ValueProfile e2Profile) {
-            RAbstractStringVector e1 = e1Profile.profile(e1In);
-            RAbstractStringVector e2 = e2Profile.profile(e2In);
-            return RRuntime.asLogical(e1.getLength() == 1 && e2.getLength() == 1 && e1.getDataAt(0).equals(e2.getDataAt(0)));
+        @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+        protected byte identC(RStringVector e1, RStringVector e2,
+                        @CachedLibrary("e1.getData()") VectorDataLibrary e1Lib,
+                        @CachedLibrary("e2.getData()") VectorDataLibrary e2Lib) {
+            Object e1Data = e1.getData();
+            Object e2Data = e2.getData();
+            return RRuntime.asLogical(e1Lib.getLength(e1Data) == 1 && e2Lib.getLength(e2Data) == 1 && e1Lib.getStringAt(e1Data, 0).equals(e2Lib.getStringAt(e2Data, 0)));
         }
 
         @SuppressWarnings("unused")
@@ -377,7 +375,7 @@ public class MethodsListDispatch {
         static {
             Casts casts = new Casts(R_getGeneric.class);
             Function<Object, String> clsHierFn = ClassHierarchyScalarNode::get;
-            Function<Object, Integer> vecLenFn = arg -> ((RAbstractStringVector) arg).getLength();
+            Function<Object, Integer> vecLenFn = arg -> ((RStringVector) arg).getLength();
 
             checkSingleString(casts, 0, "f", "The argument \"f\" to getGeneric", true, clsHierFn, vecLenFn, true);
 
@@ -455,8 +453,8 @@ public class MethodsListDispatch {
         }
 
         private static String checkSingleString(Object o, boolean nonEmpty, String what, RBaseNode node, ClassHierarchyScalarNode classHierarchyNode) {
-            if (o instanceof RAbstractStringVector) {
-                RAbstractStringVector vec = (RAbstractStringVector) o;
+            if (o instanceof RStringVector) {
+                RStringVector vec = (RStringVector) o;
                 if (vec.getLength() != 1) {
                     throw RError.error(node, RError.Message.SINGLE_STRING_TOO_LONG, what, vec.getLength());
                 }

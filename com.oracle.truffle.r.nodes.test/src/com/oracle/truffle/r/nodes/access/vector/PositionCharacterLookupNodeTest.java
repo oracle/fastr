@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,10 +27,9 @@ import com.oracle.truffle.r.nodes.test.TestUtilities;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +47,7 @@ public class PositionCharacterLookupNodeTest extends TestBase {
                             new PositionCharacterLookupNode(ElementAccessMode.SUBSET, numPositions, positionIndex, false, true),
                             (node, args) -> {
                                 RAbstractContainer target = (RAbstractContainer) args[0];
-                                RAbstractStringVector position = (RAbstractStringVector) args[1];
+                                RStringVector position = (RStringVector) args[1];
                                 int notFoundStartIndex = target.getLength();
                                 return node.execute(target, position, notFoundStartIndex);
                             }));
@@ -58,8 +57,8 @@ public class PositionCharacterLookupNodeTest extends TestBase {
     }
 
     private void initMatrix() {
-        RAbstractStringVector firstDimName = RDataFactory.createStringVector(new String[]{"a", "b"}, true);
-        RAbstractStringVector secondDimName = RDataFactory.createStringVector(new String[]{"A", "B", "C"}, true);
+        RStringVector firstDimName = RDataFactory.createStringVector(new String[]{"a", "b"}, true);
+        RStringVector secondDimName = RDataFactory.createStringVector(new String[]{"A", "B", "C"}, true);
         RList dimNames = RDataFactory.createList(new Object[]{firstDimName, secondDimName});
 
         // matrix:
@@ -108,8 +107,8 @@ public class PositionCharacterLookupNodeTest extends TestBase {
         NodeHandle<PositionCharacterLookupNode> handleDimX = createNodeHandle(2, 0);
         NodeHandle<PositionCharacterLookupNode> handleDimY = createNodeHandle(2, 1);
 
-        RAbstractStringVector dimXIndex = RDataFactory.createStringVectorFromScalar("a");
-        RAbstractStringVector dimYIndex = RDataFactory.createStringVectorFromScalar("B");
+        RStringVector dimXIndex = RDataFactory.createStringVectorFromScalar("a");
+        RStringVector dimYIndex = RDataFactory.createStringVectorFromScalar("B");
 
         // Check X dimension character lookup.
         RIntVector dimXPositionVector = (RIntVector) handleDimX.call(matrix, dimXIndex);

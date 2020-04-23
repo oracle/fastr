@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -390,7 +390,7 @@ abstract class DelegateRConnection extends RBaseObject implements RConnection, B
     }
 
     @TruffleBoundary
-    public static boolean writeLinesHelper(WritableByteChannel out, RAbstractStringVector lines, String sep, Charset encoding) throws IOException {
+    public static boolean writeLinesHelper(WritableByteChannel out, RStringVector lines, String sep, Charset encoding) throws IOException {
         if (sep != null && sep.contains("\n")) {
             // fast path: we know that the line is complete
             final ByteBuffer nlBuf = ByteBuffer.wrap(sep.getBytes(encoding));
@@ -415,7 +415,7 @@ abstract class DelegateRConnection extends RBaseObject implements RConnection, B
     }
 
     @Override
-    public void pushBack(RAbstractStringVector lines, boolean addNewLine) {
+    public void pushBack(RStringVector lines, boolean addNewLine) {
         throw RInternalError.shouldNotReachHere();
     }
 
@@ -446,7 +446,7 @@ abstract class DelegateRConnection extends RBaseObject implements RConnection, B
     }
 
     @Override
-    public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+    public void writeLines(RStringVector lines, String sep, boolean useBytes) throws IOException {
         boolean incomplete = DelegateRConnection.writeLinesHelper(this, lines, sep, base.getEncoding());
         base.setIncomplete(incomplete);
     }

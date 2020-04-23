@@ -75,7 +75,6 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -126,7 +125,7 @@ public class HiddenInternalFunctions {
          */
         @Specialization(guards = "expr.isLanguage()")
         @TruffleBoundary
-        protected RNull doMakeLazy(RAbstractStringVector names, RList values, RPairList expr, REnvironment eenv, REnvironment aenv) {
+        protected RNull doMakeLazy(RStringVector names, RList values, RPairList expr, REnvironment eenv, REnvironment aenv) {
             initEval();
             RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
             for (int i = 0; i < names.getLength(); i++) {
@@ -182,7 +181,7 @@ public class HiddenInternalFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RNull importIntoEnv(REnvironment impEnv, RAbstractStringVector impNames, REnvironment expEnv, RAbstractStringVector expNames) {
+        protected RNull importIntoEnv(REnvironment impEnv, RStringVector impNames, REnvironment expEnv, RStringVector expNames) {
             int length = impNames.getLength();
             if (length != expNames.getLength()) {
                 throw error(Message.IMP_EXP_NAMES_MATCH);
@@ -397,7 +396,7 @@ public class HiddenInternalFunctions {
         }
 
         @Specialization
-        protected RList getVarsFromFrame(VirtualFrame frame, RAbstractStringVector varsVec, REnvironment env, byte forceArg) {
+        protected RList getVarsFromFrame(VirtualFrame frame, RStringVector varsVec, REnvironment env, byte forceArg) {
             boolean force = RRuntime.fromLogical(forceArg);
             Object[] data = new Object[varsVec.getLength()];
             for (int i = 0; i < data.length; i++) {
@@ -415,7 +414,7 @@ public class HiddenInternalFunctions {
                 }
                 data[i] = value;
             }
-            return RDataFactory.createList(data, (RStringVector) varsVec);
+            return RDataFactory.createList(data, varsVec);
         }
 
         @SuppressWarnings("unused")
@@ -437,13 +436,13 @@ public class HiddenInternalFunctions {
         }
 
         @Specialization
-        protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RAbstractStringVector file, int asciiL, int compression, RFunction hook,
+        protected RIntVector lazyLoadDBinsertValue(VirtualFrame frame, Object value, RStringVector file, int asciiL, int compression, RFunction hook,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             return lazyLoadDBinsertValueInternal(ctxRef.get(), frame.materialize(), value, file, asciiL, compression, hook);
         }
 
         @TruffleBoundary
-        private RIntVector lazyLoadDBinsertValueInternal(RContext context, MaterializedFrame frame, Object value, RAbstractStringVector file, int type, int compression, RFunction hook) {
+        private RIntVector lazyLoadDBinsertValueInternal(RContext context, MaterializedFrame frame, Object value, RStringVector file, int type, int compression, RFunction hook) {
             if (!(compression == 1 || compression == 3)) {
                 throw error(Message.GENERIC, "unsupported compression");
             }
@@ -543,7 +542,7 @@ public class HiddenInternalFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RNull doLazyLoadDBFlush(RAbstractStringVector dbPath) {
+        protected RNull doLazyLoadDBFlush(RStringVector dbPath) {
             RContext.getInstance().stateLazyDBCache.remove(dbPath.getDataAt(0));
             return RNull.instance;
         }
