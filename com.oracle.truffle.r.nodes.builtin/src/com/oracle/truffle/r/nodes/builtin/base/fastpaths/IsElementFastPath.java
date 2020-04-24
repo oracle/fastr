@@ -24,59 +24,60 @@ package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+@ImportStatic(DSLConfig.class)
 public abstract class IsElementFastPath extends RFastPathNode {
 
-    @Specialization(guards = {"elIn.getLength() == 1", "elIn.getClass() == elClass", "setIn.getClass() == setClass"})
-    protected Byte iselementOneCachedString(RStringVector elIn, RStringVector setIn,
-                    @Cached("elIn.getClass()") Class<? extends RStringVector> elClass,
-                    @Cached("setIn.getClass()") Class<? extends RStringVector> setClass,
+    @Specialization(guards = {"elLib.getLength(el.getData()) == 1"}, limit = "getTypedVectorDataLibraryCacheSize()")
+    protected Byte iselementOneCachedString(RStringVector el, RStringVector set,
+                    @CachedLibrary("el.getData()") VectorDataLibrary elLib,
+                    @CachedLibrary("set.getData()") VectorDataLibrary setLib,
                     @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {
-        RStringVector el = elClass.cast(elIn);
-        RStringVector set = setClass.cast(setIn);
-        String element = el.getDataAt(0);
-        int length = set.getLength();
-        for (int i = 0; i < length; i++) {
-            if (element.equals(set.getDataAt(i))) {
+        Object elData = el.getData();
+        Object setData = set.getData();
+        String element = elLib.getStringAt(elData, 0);
+        VectorDataLibrary.SeqIterator it = setLib.iterator(setData);
+        while (setLib.nextLoopCondition(setData, it)) {
+            if (element.equals(setLib.getNextString(setData, it))) {
                 trueProfile.enter();
                 return RRuntime.LOGICAL_TRUE;
             }
         }
         falseProfile.enter();
         return RRuntime.LOGICAL_FALSE;
-    }
-
-    @Specialization(guards = "elIn.getLength() == 1", replaces = "iselementOneCachedString")
-    protected Byte iselementOne(RStringVector elIn, RStringVector setIn,
-                    @Cached("create()") BranchProfile trueProfile,
-                    @Cached("create()") BranchProfile falseProfile) {
-        return iselementOneCachedString(elIn, setIn, RStringVector.class, RStringVector.class, trueProfile, falseProfile);
     }
 
     @Specialization
-    protected Byte iselementOne(double el, double set) {
+    protected Byte isElementOne(double el, double set) {
         return RRuntime.asLogical(el == set);
     }
 
-    @Specialization(guards = "el.getLength() == 1")
+    @Specialization(guards = {"elLib.getLength(el.getData()) == 1"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected Byte iselementOne(RDoubleVector el, RDoubleVector set,
+                    @CachedLibrary("el.getData()") VectorDataLibrary elLib,
+                    @CachedLibrary("set.getData()") VectorDataLibrary setLib,
                     @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {
-        double element = el.getDataAt(0);
-        int length = set.getLength();
-        for (int i = 0; i < length; i++) {
-            if (element == set.getDataAt(i)) {
+        Object elData = el.getData();
+        Object setData = set.getData();
+        double element = elLib.getDoubleAt(elData, 0);
+        VectorDataLibrary.SeqIterator it = setLib.iterator(setData);
+        while (setLib.nextLoopCondition(setData, it)) {
+            if (element == setLib.getNextDouble(setData, it)) {
                 trueProfile.enter();
                 return RRuntime.LOGICAL_TRUE;
             }
@@ -85,30 +86,33 @@ public abstract class IsElementFastPath extends RFastPathNode {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = {"set.isSequence()", "el.getLength() == 1", "set.getSequence().getStride() >= 0"})
+    @Specialization(guards = {"set.isSequence()", "elLib.getLength(el.getData()) == 1", "set.getSequence().getStride() >= 0"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected Byte isElementOneSequence(RDoubleVector el, RIntVector set,
+                    @CachedLibrary("el.getData()") VectorDataLibrary elLib,
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
-        double element = el.getDataAt(0);
+        double element = elLib.getDoubleAt(el.getData(), 0);
         RIntSeqVectorData seq = set.getSequence();
         return RRuntime.asLogical(profile.profile(element >= seq.getStart() && element <= seq.getEnd()));
     }
 
-    @Specialization(replaces = "isElementOneSequence", guards = {"!set.isSequence()", "el.getLength() == 1"})
+    @Specialization(replaces = "isElementOneSequence", guards = {"!set.isSequence()", "elLib.getLength(el.getData()) == 1"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected Byte isElementOne(RDoubleVector el, RIntVector set,
-                    @Cached("create()") NACheck na,
+                    @CachedLibrary("el.getData()") VectorDataLibrary elLib,
+                    @CachedLibrary("set.getData()") VectorDataLibrary setLib,
                     @Cached("create()") BranchProfile trueProfile,
                     @Cached("create()") BranchProfile falseProfile) {
-        double element = el.getDataAt(0);
-        int length = set.getLength();
-        na.enable(set);
-        for (int i = 0; i < length; i++) {
-            int data = set.getDataAt(i);
-            if (na.check(data)) {
+        Object elData = el.getData();
+        Object setData = set.getData();
+        double element = elLib.getDoubleAt(elData, 0);
+
+        VectorDataLibrary.SeqIterator it = setLib.iterator(setData);
+        while (setLib.nextLoopCondition(setData, it)) {
+            if (setLib.isNextNA(setData, it)) {
                 if (RRuntime.isNA(element)) {
                     trueProfile.enter();
                     return RRuntime.LOGICAL_TRUE;
                 }
-            } else if (element == data) {
+            } else if (element == setLib.getNextInt(setData, it)) {
                 trueProfile.enter();
                 return RRuntime.LOGICAL_TRUE;
             }

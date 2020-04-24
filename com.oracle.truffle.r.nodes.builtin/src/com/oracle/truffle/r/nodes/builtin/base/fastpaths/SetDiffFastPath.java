@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,27 +22,32 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.fastpaths;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSeqVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
+@ImportStatic(DSLConfig.class)
 public abstract class SetDiffFastPath extends RFastPathNode {
 
-    @Specialization(guards = {"isSequenceStride1(x)", "y.getClass() == yClass"}, limit = "getCacheSize(3)")
+    @Specialization(guards = {"isSequenceStride1(x)"}, limit = "getTypedVectorDataLibraryCacheSize()")
     protected static Object cached(RIntVector x, RIntVector y,
-                    @Cached("y.getClass()") Class<? extends RIntVector> yClass) {
-        RIntVector profiledY = yClass.cast(y);
-        int xLength = x.getLength();
-        int xStart = ((RIntSeqVectorData) x.getData()).getStart();
-        int yLength = profiledY.getLength();
+                    @CachedLibrary("y.getData()") VectorDataLibrary yLib) {
+        Object yData = y.getData();
+        RIntSeqVectorData seq = x.getSequence();
+        int xLength = seq.getLength();
+        int xStart = seq.getStart();
         boolean[] excluded = new boolean[xLength];
 
-        for (int i = 0; i < yLength; i++) {
-            int element = profiledY.getDataAt(i);
+        VectorDataLibrary.SeqIterator it = yLib.iterator(yData);
+        while (yLib.nextLoopCondition(yData, it)) {
+            int element = yLib.getNextInt(yData, it);
             int index = element - xStart;
             if (index >= 0 && index < xLength) {
                 excluded[index] = true;
@@ -62,11 +67,6 @@ public abstract class SetDiffFastPath extends RFastPathNode {
             }
         }
         return RDataFactory.createIntVector(result, true);
-    }
-
-    @Specialization(guards = {"isSequenceStride1(x)"}, replaces = "cached")
-    protected static Object generic(RIntVector x, RIntVector y) {
-        return cached(x, y, y.getClass());
     }
 
     protected static boolean isSequenceStride1(RIntVector vec) {
