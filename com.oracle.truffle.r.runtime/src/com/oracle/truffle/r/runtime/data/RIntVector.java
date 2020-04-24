@@ -152,12 +152,6 @@ public final class RIntVector extends RAbstractNumericVector {
     // ---------------------
 
     @Override
-    protected boolean isScalarNA() {
-        assert getLength() == 1;
-        return RRuntime.isNA(getDataAt(0));
-    }
-
-    @Override
     public RType getRType() {
         return RType.Integer;
     }

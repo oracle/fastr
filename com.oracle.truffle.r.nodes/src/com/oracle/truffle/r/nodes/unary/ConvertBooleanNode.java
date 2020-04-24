@@ -41,8 +41,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -116,10 +114,10 @@ public abstract class ConvertBooleanNode extends RNode {
         return logicalValue;
     }
 
-    @Specialization(guards = "value.getLength() == 1", limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = "library.getLength(value.getData()) == 1", limit = "getTypedVectorDataLibraryCacheSize()")
     protected byte doRLogical(RLogicalVector value,
                     @CachedLibrary("value.getData()") VectorDataLibrary library) {
-        // fast path for very common case, handled also in doAtomicVector
+        // fast path for very common case, handled also in doVector
         byte res = library.getLogicalAt(value.getData(), 0);
         if (naProfile.isNA(res)) {
             throw error(RError.Message.NA_UNEXP);
@@ -143,33 +141,27 @@ public abstract class ConvertBooleanNode extends RNode {
         }
     }
 
-    @Specialization(guards = "access.supports(value)", limit = "getCacheSize(ATOMIC_VECTOR_LIMIT)")
+    @Specialization(replaces = "doRLogical", limit = "getGenericDataLibraryCacheSize()")
     protected byte doVector(RAbstractVector value,
-                    @Cached("value.access()") VectorAccess access) {
-        SequentialIterator it = access.access(value);
-        checkLength(access.getLength(it));
-        access.next(it);
-        switch (access.getType()) {
+                    @CachedLibrary("value.getData()") VectorDataLibrary dataLib) {
+        Object data = value.getData();
+        checkLength(dataLib.getLength(data));
+        switch (dataLib.getType(data)) {
             case Integer:
-                return doInt(access.getInt(it));
+                return doInt(dataLib.getIntAt(data, 0));
             case Double:
-                return doDouble(access.getDouble(it));
+                return doDouble(dataLib.getDoubleAt(data, 0));
             case Raw:
-                return RRuntime.raw2logical(access.getRaw(it));
+                return RRuntime.raw2logical(dataLib.getRawAt(data, 0));
             case Logical:
-                return doLogical(access.getLogical(it));
+                return doLogical(dataLib.getLogicalAt(data, 0));
             case Character:
-                return doString(access.getString(it));
+                return doString(dataLib.getStringAt(data, 0));
             case Complex:
-                return doComplex(access.getComplex(it));
+                return doComplex(dataLib.getComplexAt(data, 0));
             default:
                 throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
         }
-    }
-
-    @Specialization(replaces = "doVector")
-    protected byte doVectorGeneric(RAbstractVector value) {
-        return doVector(value, value.slowPathAccess());
     }
 
     @Specialization(guards = "isForeignObject(obj)")

@@ -45,8 +45,8 @@ public abstract class CopyResizedToPreallocated extends RBaseNode {
                     @CachedLibrary("resultData") VectorDataLibrary resultDataLib) {
         try (SeqWriteIterator rIt = resultDataLib.writeIterator(resultData)) {
             SeqIterator xIt = dataLib.iterator(data);
-            while (resultDataLib.next(resultData, rIt)) {
-                dataLib.next(data, xIt, true);
+            while (resultDataLib.nextLoopCondition(resultData, rIt)) {
+                dataLib.nextWithWrap(data, xIt);
                 resultDataLib.transferNext(resultData, rIt, dataLib, xIt, data);
             }
             boolean neverSeenNA = dataLib.isComplete(data) || dataLib.getNACheck(data).neverSeenNA();
@@ -61,11 +61,11 @@ public abstract class CopyResizedToPreallocated extends RBaseNode {
         try (SeqWriteIterator rIt = resultDataLib.writeIterator(resultData)) {
             boolean writtenNA = false;
             SeqIterator xIt = dataLib.iterator(data);
-            while (dataLib.next(data, xIt)) {
+            while (dataLib.nextLoopCondition(data, xIt)) {
                 resultDataLib.next(resultData, rIt);
                 resultDataLib.transferNext(resultData, rIt, dataLib, xIt, data);
             }
-            while (resultDataLib.next(resultData, rIt)) {
+            while (resultDataLib.nextLoopCondition(resultData, rIt)) {
                 resultDataLib.setNextNA(resultData, rIt);
                 writtenNA = true;
             }

@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
@@ -87,23 +88,26 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
     }
 
     @ExportMessage
-    public boolean isMemberReadable(String member) {
+    public boolean isMemberReadable(String member,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         int idx = getElementIndexByName(member);
-        return isArrayElementReadable(idx);
+        return isArrayElementReadable(idx, dataLib);
     }
 
     @ExportMessage
-    public boolean isMemberInvocable(String member) {
+    public boolean isMemberInvocable(String member,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         int idx = getElementIndexByName(member);
-        return isArrayElementReadable(idx) && getDataAt(idx) instanceof RFunction;
+        return isArrayElementReadable(idx, dataLib) && getDataAt(idx) instanceof RFunction;
     }
 
     @ExportMessage
     public Object readMember(String member,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
                     @Cached.Exclusive @Cached() R2Foreign r2Foreign,
                     @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier) throws UnknownIdentifierException {
         int idx = getElementIndexByName(member);
-        if (unknownIdentifier.profile(!isArrayElementReadable(idx))) {
+        if (unknownIdentifier.profile(!isArrayElementReadable(idx, dataLib))) {
             throw UnknownIdentifierException.create(member);
         }
         return r2Foreign.convert(getDataAt(idx));
@@ -111,10 +115,11 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
 
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
                     @Cached.Shared("unknownIdentifier") @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
                     @Cached() RFunction.ExplicitCall c) throws UnknownIdentifierException, UnsupportedMessageException {
         int idx = getElementIndexByName(member);
-        if (unknownIdentifier.profile(!isArrayElementReadable(idx))) {
+        if (unknownIdentifier.profile(!isArrayElementReadable(idx, dataLib))) {
             throw UnknownIdentifierException.create(member);
         }
         Object f = getDataAt(idx);
@@ -250,10 +255,17 @@ public abstract class RAbstractListBaseVector extends RAbstractVector {
     }
 
     @ExportMessage
-    @SuppressWarnings("static")
-    public boolean next(SeqIterator it, boolean withWrap,
+    @SuppressWarnings("static-method")
+    public boolean nextImpl(SeqIterator it, boolean loopCondition,
                     @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
-        return it.next(loopProfile, withWrap);
+        return it.next(loopCondition, loopProfile);
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public void nextWithWrap(SeqIterator it,
+                    @Cached("createBinaryProfile()") ConditionProfile wrapProfile) {
+        it.nextWithWrap(wrapProfile);
     }
 
     @ExportMessage

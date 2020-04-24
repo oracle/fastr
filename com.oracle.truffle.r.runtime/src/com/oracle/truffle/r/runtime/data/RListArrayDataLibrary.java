@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
@@ -96,9 +97,15 @@ public class RListArrayDataLibrary {
     }
 
     @ExportMessage
-    public static boolean next(@SuppressWarnings("unused") Object[] receiver, SeqIterator it, boolean withWrap,
+    public static boolean nextImpl(@SuppressWarnings("unused") Object[] receiver, SeqIterator it, boolean loopCondition,
                     @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
-        return it.next(loopProfile, withWrap);
+        return it.next(loopCondition, loopProfile);
+    }
+
+    @ExportMessage
+    public static void nextWithWrap(@SuppressWarnings("unused") Object[] receiver, SeqIterator it,
+                    @Cached("createBinaryProfile()") ConditionProfile wrapProfile) {
+        it.nextWithWrap(wrapProfile);
     }
 
     @ExportMessage

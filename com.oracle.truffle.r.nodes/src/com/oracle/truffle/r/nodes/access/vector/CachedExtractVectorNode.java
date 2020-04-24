@@ -119,8 +119,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         Object[] convertedPositions = filterPositions(positions);
         this.extractNames = new CachedExtractVectorNode[convertedPositions.length];
         this.extractNamesAlternative = new CachedExtractVectorNode[convertedPositions.length];
-        this.exact = logicalAsBoolean(exact, DEFAULT_EXACT);
-        this.dropDimensions = logicalAsBoolean(dropDimensions, DEFAULT_DROP_DIMENSION);
+        this.exact = logicalAsBoolean(VectorDataLibrary.getFactory().getUncached(), exact, DEFAULT_EXACT);
+        this.dropDimensions = logicalAsBoolean(VectorDataLibrary.getFactory().getUncached(), dropDimensions, DEFAULT_DROP_DIMENSION);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, this.exact, false, recursive);
         this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, false, false);
         this.droppedDimensionProfile = this.dropDimensions ? ConditionProfile.createBinaryProfile() : null;
@@ -130,8 +130,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     public boolean isSupported(Object target, Object[] positions, Object exactValue, Object dropDimensionsValue) {
         if (targetClass == target.getClass() && getDataClass(target) == targetDataClass && exactValue.getClass() == this.exactClass && dropDimensionsValue.getClass() == dropDimensionsClass //
-                        && logicalAsBoolean(dropDimensionsClass.cast(dropDimensionsValue), DEFAULT_DROP_DIMENSION) == this.dropDimensions //
-                        && logicalAsBoolean(exactClass.cast(exactValue), DEFAULT_EXACT) == this.exact) {
+                        && logicalAsBoolean(getAsLogicalVectorDataLib(), dropDimensionsClass.cast(dropDimensionsValue), DEFAULT_DROP_DIMENSION) == this.dropDimensions //
+                        && logicalAsBoolean(getAsLogicalVectorDataLib(), exactClass.cast(exactValue), DEFAULT_EXACT) == this.exact) {
             return positionsCheckNode.isSupported(positions);
         }
         return false;
@@ -216,7 +216,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             writeVectorNode.execute(extractedVector, positions, vector, dimensions);
             RBaseNode.reportWork(this, 1);
             assert extractedVectorLength == 1;
-            return extractedVector.getDataAtAsObject(0);
+            final Object extractedVecData = extractedVector.getData();
+            return getExtractedVectorDataLib(extractedVecData).getDataAtAsObject(extractedVecData, 0);
         }
     }
 

@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
@@ -63,22 +64,25 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    public final boolean isNull(@Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
-        if (!isScalar.profile(isScalar())) {
+    public final boolean isNull(
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
+        if (!isScalar.profile(isScalar(dataLib))) {
             return false;
         }
-        return RRuntime.isNA(getDataAt(0));
+        return RRuntime.isNA(dataLib.getComplexAt(getData(), 0));
     }
 
     @ExportMessage
-    boolean hasMembers() {
-        return isScalar() && !RRuntime.isNA(getDataAt(0));
+    boolean hasMembers(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        return isScalar(dataLib) && !RRuntime.isNA(dataLib.getComplexAt(getData(), 0));
     }
 
     @ExportMessage
     Object getMembers(@SuppressWarnings("unused") boolean includeInternal,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
                     @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers) throws UnsupportedMessageException {
-        if (noMembers.profile(!hasMembers())) {
+        if (noMembers.profile(!hasMembers(dataLib))) {
             throw UnsupportedMessageException.create();
         }
         return RDataFactory.createStringVector(new String[]{MEMBER_RE, MEMBER_IM}, RDataFactory.COMPLETE_VECTOR);
@@ -86,8 +90,9 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
 
     @ExportMessage
     boolean isMemberReadable(String member,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
                     @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers) {
-        if (noMembers.profile(!hasMembers())) {
+        if (noMembers.profile(!hasMembers(dataLib))) {
             return false;
         }
         return MEMBER_RE.equals(member) || MEMBER_IM.equals(member);
@@ -95,23 +100,25 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
 
     @ExportMessage
     Object readMember(String member,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
                     @Cached.Shared("noMembers") @Cached("createBinaryProfile()") ConditionProfile noMembers,
                     @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
                     @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNullIdentifier,
                     @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isNA) throws UnknownIdentifierException, UnsupportedMessageException {
-        if (noMembers.profile(!hasMembers())) {
+        if (noMembers.profile(!hasMembers(dataLib))) {
             throw UnsupportedMessageException.create();
         }
-        if (unknownIdentifier.profile(!isMemberReadable(member, noMembers))) {
+        if (unknownIdentifier.profile(!isMemberReadable(member, dataLib, noMembers))) {
             throw UnknownIdentifierException.create(member);
         }
-        if (isNullIdentifier.profile(isNull(isNA))) {
-            return new RInteropComplexNA(getDataAt(0));
+        RComplex singleValue = dataLib.getComplexAt(getData(), 0);
+        if (isNullIdentifier.profile(isNull(dataLib, isNA))) {
+            return new RInteropComplexNA(singleValue);
         }
         if (MEMBER_RE.equals(member)) {
-            return getDataAt(0).getRealPart();
+            return singleValue.getRealPart();
         } else {
-            return getDataAt(0).getImaginaryPart();
+            return singleValue.getImaginaryPart();
         }
     }
 
@@ -286,10 +293,17 @@ public abstract class RAbstractComplexVector extends RAbstractAtomicVector {
     }
 
     @ExportMessage
-    @SuppressWarnings("static")
-    public boolean next(SeqIterator it, boolean withWrap,
+    @SuppressWarnings("static-method")
+    public boolean nextImpl(SeqIterator it, boolean loopCondition,
                     @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
-        return it.next(loopProfile, withWrap);
+        return it.next(loopCondition, loopProfile);
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public void nextWithWrap(SeqIterator it,
+                    @Cached("createBinaryProfile()") ConditionProfile wrapProfile) {
+        it.nextWithWrap(wrapProfile);
     }
 
     @ExportMessage

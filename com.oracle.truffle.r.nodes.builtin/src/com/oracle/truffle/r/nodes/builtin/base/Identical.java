@@ -36,8 +36,11 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.IterableAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.IterableAttributeNodeGen;
@@ -314,19 +317,28 @@ public final class Identical extends RBuiltinNode.Arg8 {
             return identicalRecursiveAttrNode.execute(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref, depth + 1);
         }
 
-        @Specialization(guards = "!vectorsLists(x, y)")
+        @Specialization(guards = "!vectorsLists(x, y)", limit = "getGenericDataLibraryCacheSize()")
         protected static byte doInternalIdenticalGeneric(RAbstractVector x, RAbstractVector y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment,
                         boolean ignoreSrcref, int depth,
+                        @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
+                        @CachedLibrary("y.getData()") VectorDataLibrary yDataLib,
+                        @Cached("createClassProfile()") ValueProfile xClassProfile,
+                        @Cached("createClassProfile()") ValueProfile yClassProfile,
                         @Cached("createBinaryProfile()") ConditionProfile vecLengthProfile,
                         @Cached("createBinaryProfile()") ConditionProfile differentTypesProfile,
                         @Cached("createBinaryProfile()") ConditionProfile isDoubleProfile,
                         @Cached(value = "createOrGet(depth)", uncached = "getUncached()") IdenticalRecursiveAttrNode identicalRecursiveAttrNode) {
-            if (vecLengthProfile.profile(x.getLength() != y.getLength()) || differentTypesProfile.profile(x.getRType() != y.getRType())) {
+            RAbstractVector xProfiled = xClassProfile.profile(x);
+            RAbstractVector yProfiled = yClassProfile.profile(y);
+            Object xData = xProfiled.getData();
+            Object yData = yProfiled.getData();
+            int xLen = xDataLib.getLength(xData);
+            if (vecLengthProfile.profile(xLen != yDataLib.getLength(yData)) || differentTypesProfile.profile(xProfiled.getRType() != yProfiled.getRType())) {
                 return RRuntime.LOGICAL_FALSE;
             } else {
-                for (int i = 0; i < x.getLength(); i++) {
-                    Object xValue = x.getDataAtAsObject(i);
-                    Object yValue = y.getDataAtAsObject(i);
+                for (int i = 0; i < xLen; i++) {
+                    Object xValue = xDataLib.getDataAtAsObject(xData, i);
+                    Object yValue = yDataLib.getDataAtAsObject(yData, i);
                     if (isDoubleProfile.profile(xValue instanceof Double)) {
                         if (identical((double) xValue, (double) yValue, numEq, singleNA) == RRuntime.LOGICAL_FALSE) {
                             return RRuntime.LOGICAL_FALSE;
@@ -336,28 +348,40 @@ public final class Identical extends RBuiltinNode.Arg8 {
                     }
                 }
             }
-            return identicalRecursiveAttrNode.execute(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref, depth + 1);
+            return identicalRecursiveAttrNode.execute(xProfiled, yProfiled, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref, depth + 1);
         }
 
         static IdenticalInternal createOrGet(int depth) {
             return isCached(depth) ? IdenticalInternal.create() : IdenticalInternalNodeGen.getUncached();
         }
 
-        @Specialization
+        @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
         protected byte doInternalIdenticalGeneric(RAbstractListBaseVector x, RAbstractListBaseVector y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode,
                         boolean ignoreEnvironment, boolean ignoreSrcref, int depth,
+                        @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
+                        @CachedLibrary("y.getData()") VectorDataLibrary yDataLib,
+                        @Cached("createClassProfile()") ValueProfile xClassProfile,
+                        @Cached("createClassProfile()") ValueProfile yClassProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile vecLengthProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile differentTypesProfile,
                         @Cached(value = "createOrGet(depth)", uncached = "getUncached()") IdenticalInternal identicalRecursiveNode,
                         @Cached(value = "createOrGet(depth)", uncached = "getUncached()") IdenticalRecursiveAttrNode identicalRecursiveAttrNode) {
-            if (x.getLength() != y.getLength()) {
+            RAbstractVector xProfiled = xClassProfile.profile(x);
+            RAbstractVector yProfiled = yClassProfile.profile(y);
+            Object xData = xProfiled.getData();
+            Object yData = yProfiled.getData();
+            int xLen = xDataLib.getLength(xData);
+            if (vecLengthProfile.profile(xLen != yDataLib.getLength(yData)) || differentTypesProfile.profile(xProfiled.getRType() != yProfiled.getRType())) {
                 return RRuntime.LOGICAL_FALSE;
             }
-            for (int i = 0; i < x.getLength(); i++) {
-                byte res = identicalRecursiveNode.executeByte(x.getDataAt(i), y.getDataAt(i), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref, depth + 1);
+            for (int i = 0; i < xLen; i++) {
+                byte res = identicalRecursiveNode.executeByte(xDataLib.getElementAt(xData, i), yDataLib.getElementAt(yData, i), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment,
+                                ignoreSrcref, depth + 1);
                 if (res == RRuntime.LOGICAL_FALSE) {
                     return RRuntime.LOGICAL_FALSE;
                 }
             }
-            return identicalRecursiveAttrNode.execute(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref, depth + 1);
+            return identicalRecursiveAttrNode.execute(xProfiled, yProfiled, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref, depth + 1);
         }
 
         @Specialization
