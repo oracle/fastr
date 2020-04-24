@@ -144,14 +144,14 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         return match.execute(x, table, nomatchObj);
     }
 
-    @Specialization(guards = {"!isRAbstractIntVector(table) || !isFactor(table)"})
+    @Specialization(guards = {"!isRIntVector(table) || !isFactor(table)"})
     protected Object matchList(RAbstractListVector x, RAbstractVector table, int nomatchObj, @SuppressWarnings("unused") Object incomparables,
                     @Cached("create()") CastStringNode cast,
                     @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
         return match.execute((RAbstractVector) cast.doCast(x), table, nomatchObj);
     }
 
-    @Specialization(guards = {"!isRAbstractListVector(x)", "!isRAbstractIntVector(x) || !isFactor(x)", "!isRAbstractIntVector(table) || !isFactor(table)"})
+    @Specialization(guards = {"!isRAbstractListVector(x)", "!isRIntVector(x) || !isFactor(x)", "!isRIntVector(table) || !isFactor(table)"})
     protected Object match(RAbstractVector x, RAbstractVector table, int noMatch, @SuppressWarnings("unused") Object incomparables,
                     @Cached("createProfiledMatchInternal()") ProfiledMatchInternalNode match) {
         return match.execute(x, table, noMatch);

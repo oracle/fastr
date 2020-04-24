@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "path.expand", kind = INTERNAL, parameterNames = "path", behavior = IO)
 public abstract class PathExpand extends RBuiltinNode.Arg1 {
@@ -44,7 +44,7 @@ public abstract class PathExpand extends RBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    protected Object doPathExpand(RAbstractStringVector vec) {
+    protected Object doPathExpand(RStringVector vec) {
         String[] results = new String[vec.getLength()];
         for (int i = 0; i < results.length; i++) {
             String path = Utils.tildeExpand(vec.getDataAt(i));

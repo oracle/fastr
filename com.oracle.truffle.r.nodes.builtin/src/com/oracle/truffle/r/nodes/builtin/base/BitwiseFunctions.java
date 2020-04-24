@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2015, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public class BitwiseFunctions {
@@ -218,7 +218,7 @@ public class BitwiseFunctions {
 
         @Specialization
         @SuppressWarnings("unused")
-        protected Object bitwShiftRChar(RIntVector a, RAbstractStringVector n) {
+        protected Object bitwShiftRChar(RIntVector a, RStringVector n) {
             return makeNA(a.getLength());
         }
     }

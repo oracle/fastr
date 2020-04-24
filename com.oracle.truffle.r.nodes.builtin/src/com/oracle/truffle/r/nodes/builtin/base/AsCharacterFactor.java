@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "asCharacterFactor", kind = INTERNAL, parameterNames = "x", behavior = PURE)
@@ -65,10 +64,10 @@ public abstract class AsCharacterFactor extends RBuiltinNode.Arg1 {
         String[] data = new String[n];
         Object levsAttr = getLevelsAttrNode.execute(xVec);
         Object levs;
-        if (levsAttr == null || !((levs = castToVectorNode.doCast(levsAttr)) instanceof RAbstractStringVector)) {
+        if (levsAttr == null || !((levs = castToVectorNode.doCast(levsAttr)) instanceof RStringVector)) {
             throw error(RError.Message.MALFORMED_FACTOR);
         }
-        RAbstractStringVector levsString = (RAbstractStringVector) levs;
+        RStringVector levsString = (RStringVector) levs;
         int nl = levsString.getLength();
         naCheck.enable(xVec);
         naCheck.enable(levsString);

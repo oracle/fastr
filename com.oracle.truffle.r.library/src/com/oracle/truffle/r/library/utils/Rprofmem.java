@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObjectSize;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
 import java.nio.file.StandardOpenOption;
@@ -63,7 +63,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
-    public Object doRprofmem(RAbstractStringVector filenameVec, byte appendL, RDoubleVector thresholdVec,
+    public Object doRprofmem(RStringVector filenameVec, byte appendL, RDoubleVector thresholdVec,
                     @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
         String filename = filenameVec.getDataAt(0);
         if (filename.length() == 0) {

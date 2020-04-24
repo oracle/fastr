@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection.ReadLineWarning;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public abstract class ReadTableHead extends RExternalBuiltinNode.Arg7 {
 
@@ -51,7 +51,7 @@ public abstract class ReadTableHead extends RExternalBuiltinNode.Arg7 {
 
     @Specialization
     @TruffleBoundary
-    public RAbstractStringVector read(int con, int nlines, String commentChar, boolean blankLinesSkip,
+    public RStringVector read(int con, int nlines, String commentChar, boolean blankLinesSkip,
                     String quote, String sep, boolean skipNull) {
         // TODO This is quite incomplete and just uses readLines, which works for some inputs
         try (RConnection openConn = RConnection.fromIndex(con).forceOpen("r")) {

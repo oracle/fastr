@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -268,7 +267,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getNamesNode = insert(GetNamesAttributeNode.create());
         }
-        RAbstractStringVector names = (RAbstractStringVector) getNamesNode.execute(source);
+        RStringVector names = (RStringVector) getNamesNode.execute(source);
         if (names != null) {
             RList newDimNames = RDataFactory.createList(new Object[]{RNull.instance, names});
             putDimNames.setAttr(dest, newDimNames);

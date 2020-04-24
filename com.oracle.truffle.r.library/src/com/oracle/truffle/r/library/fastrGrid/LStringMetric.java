@@ -32,7 +32,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
  * Returns a list with string's width, ascent and descent all in inches.
@@ -49,7 +49,7 @@ public abstract class LStringMetric extends RExternalBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    public Object execute(RAbstractStringVector text) {
+    public Object execute(RStringVector text) {
         int len = text.getLength();
 
         // Needs to be determined if ascent/descent are actually used by anyone without knowing the

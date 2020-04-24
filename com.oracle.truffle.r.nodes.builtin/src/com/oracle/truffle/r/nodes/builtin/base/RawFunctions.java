@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -59,7 +59,7 @@ public class RawFunctions {
         }
 
         @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
-        protected RRawVector charToRaw(RAbstractStringVector x,
+        protected RRawVector charToRaw(RStringVector x,
                         @Cached("x.access()") VectorAccess xAccess) {
             try (RandomIterator iter = xAccess.randomAccess(x)) {
                 if (xAccess.getLength(iter) != 1) {
@@ -72,7 +72,7 @@ public class RawFunctions {
 
         @Specialization(replaces = "charToRaw")
         @TruffleBoundary
-        protected RRawVector charToRawGeneric(RAbstractStringVector x) {
+        protected RRawVector charToRawGeneric(RStringVector x) {
             return charToRaw(x, x.slowPathAccess());
         }
     }

@@ -66,7 +66,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -196,7 +196,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isType(@SuppressWarnings("unused") RAbstractStringVector value) {
+        protected byte isType(@SuppressWarnings("unused") RStringVector value) {
             return RRuntime.LOGICAL_TRUE;
         }
 

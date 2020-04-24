@@ -104,7 +104,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.NewEnv;
@@ -452,12 +452,12 @@ public class CastBuilderTest {
         assertCastPreserves("abc", RDataFactory.createStringVector(new String[]{"abc", "def"}, true));
 
         Object asv = cast(RNull.instance);
-        assertEquals(true, asv instanceof RAbstractStringVector);
-        assertEquals(0, ((RAbstractStringVector) asv).getLength());
+        assertEquals(true, asv instanceof RStringVector);
+        assertEquals(0, ((RStringVector) asv).getLength());
 
         asv = cast(RDataFactory.createStringVector(0));
-        assertEquals(true, asv instanceof RAbstractStringVector);
-        assertEquals(0, ((RAbstractStringVector) asv).getLength());
+        assertEquals(true, asv instanceof RStringVector);
+        assertEquals(0, ((RStringVector) asv).getLength());
 
         assertCastFail(123, String.format(RError.Message.INVALID_ARGUMENT.message, "labels"));
     }
@@ -610,7 +610,7 @@ public class CastBuilderTest {
 
         RDoubleVector vec = RDataFactory.createDoubleVector(new double[]{0, 1, 2, 3}, true);
         Object res = cast(vec);
-        assertTrue(res instanceof RAbstractStringVector);
+        assertTrue(res instanceof RStringVector);
 
         assertCastPreserves(RDataFactory.createSharedIntVectorFromScalar(42));
     }
@@ -629,11 +629,11 @@ public class CastBuilderTest {
         arg.mapIf(nullValue().or(missingValue()), emptyStringVector()).mustBe(stringValue());
         arg.mapNull(emptyStringVector()).mustBe(stringValue());
         Object res = cast(RNull.instance);
-        assertTrue(res instanceof RAbstractStringVector);
-        assertEquals(0, ((RAbstractStringVector) res).getLength());
+        assertTrue(res instanceof RStringVector);
+        assertEquals(0, ((RStringVector) res).getLength());
         res = cast(RMissing.instance);
-        assertTrue(res instanceof RAbstractStringVector);
-        assertEquals(0, ((RAbstractStringVector) res).getLength());
+        assertTrue(res instanceof RStringVector);
+        assertEquals(0, ((RStringVector) res).getLength());
         res = cast("abc");
         assertEquals("abc", res);
     }

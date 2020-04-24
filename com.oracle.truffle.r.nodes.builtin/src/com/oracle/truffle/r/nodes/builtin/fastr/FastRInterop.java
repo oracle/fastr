@@ -100,11 +100,10 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -535,7 +534,7 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public TruffleObject addEntries(RAbstractStringVector value, boolean silent,
+        public TruffleObject addEntries(RStringVector value, boolean silent,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             RContext context = ctxRef.get();
             for (int i = 0; i < value.getLength(); i++) {
@@ -834,14 +833,14 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractStringVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
+        public Object toArray(RStringVector vec, @SuppressWarnings("unused") RMissing className, boolean flat,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             return toArray(ctxRef.get(), vec, flat, String.class, (array, i) -> Array.set(array, i, vec.getDataAt(i)));
         }
 
         @Specialization
         @TruffleBoundary
-        public Object toArray(RAbstractStringVector vec, String className, boolean flat,
+        public Object toArray(RStringVector vec, String className, boolean flat,
                         @CachedContext(TruffleRLanguage.class) TruffleLanguage.ContextReference<RContext> ctxRef) {
             RContext context = ctxRef.get();
             return toArray(context, vec, flat, getClazz(context, className), (array, i) -> Array.set(array, i, vec.getDataAt(i)));
@@ -1006,7 +1005,7 @@ public class FastRInterop {
             return vec instanceof RLogicalVector ||
                             vec instanceof RIntVector ||
                             vec instanceof RDoubleVector ||
-                            vec instanceof RAbstractStringVector ||
+                            vec instanceof RStringVector ||
                             vec instanceof RRawVector;
         }
     }

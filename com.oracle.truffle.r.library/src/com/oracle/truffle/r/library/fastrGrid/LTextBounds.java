@@ -33,7 +33,7 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @NodeInfo(cost = NodeCost.NONE)
@@ -49,7 +49,7 @@ public abstract class LTextBounds extends RExternalBuiltinNode.Arg7 {
     }
 
     @Specialization
-    public Object textBounds(RAbstractStringVector text, RAbstractVector x, RAbstractVector y, RDoubleVector hjust, RDoubleVector vjust, RDoubleVector rotation, double theta,
+    public Object textBounds(RStringVector text, RAbstractVector x, RAbstractVector y, RDoubleVector hjust, RDoubleVector vjust, RDoubleVector rotation, double theta,
                     @Cached("createCalculateBounds()") GridTextNode gridText) {
         return gridText.gridText(text, x, y, hjust, vjust, rotation, false, theta);
     }

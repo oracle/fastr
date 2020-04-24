@@ -60,9 +60,8 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -89,7 +88,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
     @SuppressWarnings("unused")
     private static class LocalData {
         final HashMap<String, String> stringTable = new HashMap<>();
-        RAbstractStringVector naStrings = null;
+        RStringVector naStrings = null;
         boolean quiet = false;
         char sepchar = 0; // 0 means any whitespace
         char decchar = '.';
@@ -165,7 +164,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
     @Specialization
     @TruffleBoundary
     protected Object doScan(int file, RAbstractVector what, int nmax, String sep, String dec, String quotes, int nskip,
-                    int nlines, RAbstractStringVector naStringsVec, boolean flush, boolean fill, RLogicalVector stripVec,
+                    int nlines, RStringVector naStringsVec, boolean flush, boolean fill, RLogicalVector stripVec,
                     boolean quiet, boolean blSkip, boolean multiLine, int commentChar, boolean escapes,
                     String encoding, boolean skipNull) {
 

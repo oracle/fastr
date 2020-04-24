@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -168,8 +167,8 @@ public class RObjectSize {
         } else if (RRuntime.isSequence(obj)) {
             // count: start, stride, length
             return OBJECT_HEADER_SIZE + 2 * getElementSize((RAbstractVector) obj) + INT_SIZE + attributesSize;
-        } else if (obj instanceof RAbstractStringVector) {
-            RAbstractStringVector strVec = (RAbstractStringVector) obj;
+        } else if (obj instanceof RStringVector) {
+            RStringVector strVec = (RStringVector) obj;
             long result = OBJECT_HEADER_SIZE;
             for (int i = 0; i < strVec.getLength(); i++) {
                 String data = strVec.getDataAt(i);

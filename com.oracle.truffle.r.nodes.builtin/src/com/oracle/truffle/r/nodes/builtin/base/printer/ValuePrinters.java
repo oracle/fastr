@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.TruffleObjectConverter;
 
@@ -88,7 +88,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
             if (printer == null) {
                 if (x instanceof RIntVector && hasClass(x)) {
                     printer = FactorPrinter.INSTANCE;
-                } else if (x instanceof RAbstractStringVector) {
+                } else if (x instanceof RStringVector) {
                     printer = StringVectorPrinter.INSTANCE;
                 } else if (x instanceof RDoubleVector) {
                     printer = DoubleVectorPrinter.INSTANCE;

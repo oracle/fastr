@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -189,10 +189,10 @@ public abstract class Inspect extends RBuiltinNode.Arg2 {
                     }
                 }
             }
-        } else if (obj instanceof RAbstractStringVector) {
+        } else if (obj instanceof RStringVector) {
             sb.append('\n');
             if (deep != 0) {
-                RAbstractStringVector v = (RAbstractStringVector) obj;
+                RStringVector v = (RStringVector) obj;
                 int len = v.getLength();
                 if (len > 0) {
                     int i;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /* TODO Not sure we have enough state at present to implement this properly.
  * GNU R bases its check on state encoded with the object and performs the check
@@ -47,7 +47,7 @@ public abstract class ValidEnc extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RLogicalVector validEnc(RAbstractStringVector xVec) {
+    protected RLogicalVector validEnc(RStringVector xVec) {
         byte[] data = new byte[xVec.getLength()];
 
         for (int i = 0; i < xVec.getLength(); i++) {

@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
@@ -106,7 +106,7 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 {
     public static String getSymbolNameSlowPath(RList symbol) {
         CompilerAsserts.neverPartOfCompilation();
         if (symbol.getNames() != null) {
-            RAbstractStringVector names = symbol.getNames();
+            RStringVector names = symbol.getNames();
             for (int i = 0; i < names.getLength(); i++) {
                 if (names.getDataAt(i).equals("name")) {
                     String name = RRuntime.asString(symbol.getDataAt(i));

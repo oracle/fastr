@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
 
@@ -65,7 +65,7 @@ public abstract class Dump extends RBuiltinNode.Arg5 {
     }
 
     @Specialization
-    protected Object dump(VirtualFrame frame, RAbstractStringVector x, int file, REnvironment envir, int opts, boolean evaluate) {
+    protected Object dump(VirtualFrame frame, RStringVector x, int file, REnvironment envir, int opts, boolean evaluate) {
         if (helper == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             helper = insert(new Helper());
@@ -85,7 +85,7 @@ public abstract class Dump extends RBuiltinNode.Arg5 {
     }
 
     @TruffleBoundary
-    private static String deparse(RAbstractStringVector x, Object[] objects, int opts) {
+    private static String deparse(RStringVector x, Object[] objects, int opts) {
         assert x.getLength() == objects.length;
         StringBuilder code = new StringBuilder();
         for (int i = 0; i < objects.length; i++) {

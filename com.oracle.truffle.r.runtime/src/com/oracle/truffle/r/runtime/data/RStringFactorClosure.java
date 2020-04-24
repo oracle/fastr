@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -48,10 +47,10 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 class RStringFactorClosure implements RClosure {
     protected final RAbstractVector vector;
     protected final Object vectorData;
-    protected final RAbstractStringVector levels;
+    protected final RStringVector levels;
     protected final Object levelsData;
 
-    RStringFactorClosure(RAbstractVector vector, RAbstractStringVector levels) {
+    RStringFactorClosure(RAbstractVector vector, RStringVector levels) {
         this.vector = vector;
         this.levels = levels;
         this.vectorData = vector.getData();

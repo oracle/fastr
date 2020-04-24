@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "encodeString", kind = INTERNAL, parameterNames = {"x", "width", "quote", "justify", "na.encode"}, behavior = READS_STATE)
@@ -189,7 +188,7 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
     }
 
     @Specialization
-    protected RStringVector encodeStringLeftJustifyEncodeNA(RAbstractStringVector x, int width, final String quoteEl, int justify, boolean encodeNA,
+    protected RStringVector encodeStringLeftJustifyEncodeNA(RStringVector x, int width, final String quoteEl, int justify, boolean encodeNA,
                     @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
                     @Cached("createBinaryProfile()") ConditionProfile widthNAProfile,
                     @Cached("createBinaryProfile()") ConditionProfile encodeNAProfile) {

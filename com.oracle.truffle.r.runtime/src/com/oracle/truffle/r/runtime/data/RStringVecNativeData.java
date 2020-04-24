@@ -90,11 +90,9 @@ public class RStringVecNativeData implements TruffleObject {
     }
 
     @ExportMessage
-    public RStringVecNativeData copy(@SuppressWarnings("unused") boolean deep) {
-        if (deep) {
-            throw RInternalError.unimplemented("list data deep copy");
-        }
-        return new RStringVecNativeData(vec, data);
+    public RStringArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
+        String[] dataCopy = NativeDataAccess.copyStringNativeData(vec.getNativeMirror());
+        return new RStringArrayVectorData(dataCopy, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage

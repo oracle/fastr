@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import com.oracle.truffle.r.nodes.test.TestBase;
 import com.oracle.truffle.r.nodes.test.TestUtilities.NodeHandle;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RunWith(Theories.class)
 public class StringSearchNodeTest extends TestBase {
@@ -54,8 +54,8 @@ public class StringSearchNodeTest extends TestBase {
         execInContext(() -> {
             create();
 
-            RAbstractStringVector a;
-            RAbstractStringVector b;
+            RStringVector a;
+            RStringVector b;
 
             a = createVector(aString);
             b = createVector(bString);
@@ -76,7 +76,7 @@ public class StringSearchNodeTest extends TestBase {
         });
     }
 
-    private static RAbstractStringVector createVector(String... elements) {
+    private static RStringVector createVector(String... elements) {
         boolean complete = true;
         for (int i = 0; i < elements.length; i++) {
             if (elements[i] == RRuntime.STRING_NA) {
@@ -87,7 +87,7 @@ public class StringSearchNodeTest extends TestBase {
         return RDataFactory.createStringVector(elements, complete);
     }
 
-    private static void assertResult(RAbstractStringVector a, RAbstractStringVector b, RIntVector result) {
+    private static void assertResult(RStringVector a, RStringVector b, RIntVector result) {
         assertThat(result.getLength(), is(b.getLength()));
         for (int i = 0; i < b.getLength(); i++) {
             int resultIndex = result.getDataAt(i);
@@ -120,12 +120,12 @@ public class StringSearchNodeTest extends TestBase {
     private void create() {
         handle = createHandle(SearchFirstStringNode.createNode(true, false),
                         (node, args) -> {
-                            RAbstractStringVector target = (RAbstractStringVector) args[0];
-                            return node.apply(target, (RAbstractStringVector) args[1], target.getLength(), null);
+                            RStringVector target = (RStringVector) args[0];
+                            return node.apply(target, (RStringVector) args[1], target.getLength(), null);
                         });
     }
 
-    private RIntVector executeSearch(RAbstractStringVector a, RAbstractStringVector b) {
+    private RIntVector executeSearch(RStringVector a, RStringVector b) {
         return (RIntVector) handle.call(a, b);
     }
 }

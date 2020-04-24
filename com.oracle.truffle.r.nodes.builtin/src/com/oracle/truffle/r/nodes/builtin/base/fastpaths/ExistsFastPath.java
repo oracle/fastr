@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import com.oracle.truffle.r.nodes.builtin.base.ExistsNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
@@ -42,13 +42,13 @@ public abstract class ExistsFastPath extends RFastPathNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object fallback(RAbstractStringVector x, RMissing where, REnvironment envir, RMissing frame, RMissing mode, byte inherits) {
+    protected Object fallback(RStringVector x, RMissing where, REnvironment envir, RMissing frame, RMissing mode, byte inherits) {
         return exists.execute(x.getDataAt(0), envir, RType.Any.getName(), RRuntime.fromLogical(inherits));
     }
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object fallback(RAbstractStringVector x, RMissing where, REnvironment envir, RMissing frame, RMissing mode, RMissing inherits) {
+    protected Object fallback(RStringVector x, RMissing where, REnvironment envir, RMissing frame, RMissing mode, RMissing inherits) {
         return exists.execute(x.getDataAt(0), envir, RType.Any.getName(), true);
     }
 

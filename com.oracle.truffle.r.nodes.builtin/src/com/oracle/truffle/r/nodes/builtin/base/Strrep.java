@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,9 +33,8 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @RBuiltin(name = "strrep", kind = INTERNAL, parameterNames = {"x", "times"}, behavior = PURE)
@@ -49,7 +48,7 @@ public abstract class Strrep extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object strrep(RAbstractStringVector xVec, RIntVector timesVec) {
+    protected Object strrep(RStringVector xVec, RIntVector timesVec) {
         int xLen = xVec.getLength();
         int timesLen = timesVec.getLength();
         if (xLen == 0 || timesLen == 0) {
@@ -99,13 +98,13 @@ public abstract class Strrep extends RBuiltinNode.Arg2 {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected Object strrep(RAbstractStringVector xVec, RNull timesVec) {
+    protected Object strrep(RStringVector xVec, RNull timesVec) {
         return RDataFactory.createEmptyStringVector(); // GnuR - infinite loop; return value adheres
                                                        // to non-internal strrep() result
     }
 
     @TruffleBoundary
-    private static void copyNames(RAbstractStringVector xVec, RStringVector result) {
+    private static void copyNames(RStringVector xVec, RStringVector result) {
         result.copyNamesFrom(xVec);
     }
 }

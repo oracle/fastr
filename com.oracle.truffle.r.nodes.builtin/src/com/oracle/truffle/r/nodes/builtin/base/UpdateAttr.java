@@ -56,10 +56,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
@@ -193,8 +192,8 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
     protected static RStringVector convertClassAttrFromObject(Object value) {
         if (value instanceof RStringVector) {
             return (RStringVector) value;
-        } else if (value instanceof RAbstractStringVector) {
-            return ((RAbstractStringVector) value).materialize();
+        } else if (value instanceof RStringVector) {
+            return ((RStringVector) value).materialize();
         } else if (value instanceof String) {
             return RDataFactory.createStringVector((String) value);
         } else {

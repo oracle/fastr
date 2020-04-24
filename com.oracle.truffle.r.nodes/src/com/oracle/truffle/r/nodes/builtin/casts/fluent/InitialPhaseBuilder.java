@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -201,12 +201,12 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
         return asLogicalVector(false, false, false);
     }
 
-    public CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
+    public CoercedPhaseBuilder<RStringVector, String> asStringVector(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         pipelineBuilder().appendAsVector(RType.Character, preserveNames, preserveDimensions, preserveAttributes);
         return new CoercedPhaseBuilder<>(pipelineBuilder(), String.class);
     }
 
-    public CoercedPhaseBuilder<RAbstractStringVector, String> asStringVector() {
+    public CoercedPhaseBuilder<RStringVector, String> asStringVector() {
         return asStringVector(false, false, false);
     }
 

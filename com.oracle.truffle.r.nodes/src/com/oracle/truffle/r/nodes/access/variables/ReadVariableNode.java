@@ -70,7 +70,7 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -1015,7 +1015,7 @@ abstract class CheckTypeNode extends RBaseNode {
     }
 
     @Specialization
-    boolean checkType(@SuppressWarnings("unused") RAbstractStringVector o) {
+    boolean checkType(@SuppressWarnings("unused") RStringVector o) {
         return type == RType.Character;
     }
 

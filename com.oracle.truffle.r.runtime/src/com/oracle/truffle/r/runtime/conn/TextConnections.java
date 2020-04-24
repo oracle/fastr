@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
@@ -94,10 +93,10 @@ public class TextConnections {
 
     public static class TextRConnection extends BaseRConnection {
         protected String description;
-        private final RAbstractStringVector object;
+        private final RStringVector object;
         protected REnvironment env;
 
-        public TextRConnection(String description, RAbstractStringVector object, REnvironment env, String modeString) throws IOException {
+        public TextRConnection(String description, RStringVector object, REnvironment env, String modeString) throws IOException {
             super(ConnectionClass.Text, modeString, AbstractOpenMode.Read);
             this.description = description;
             this.object = object;
@@ -158,20 +157,20 @@ public class TextConnections {
             }
         }
 
-        public RAbstractStringVector getValue() {
+        public RStringVector getValue() {
             return ((GetConnectionValue) theConnection).getValue();
         }
     }
 
     private interface GetConnectionValue {
-        RAbstractStringVector getValue();
+        RStringVector getValue();
     }
 
     private static class TextReadRConnection extends DelegateReadRConnection implements GetConnectionValue {
         private final String[] lines;
         private int index;
 
-        TextReadRConnection(TextRConnection base, RAbstractStringVector object) {
+        TextReadRConnection(TextRConnection base, RStringVector object) {
             super(base, 0);
             assert object != null;
             StringBuilder sb = new StringBuilder();
@@ -215,7 +214,7 @@ public class TextConnections {
         }
 
         @Override
-        public RAbstractStringVector getValue() {
+        public RStringVector getValue() {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.NOT_AN_OUTPUT_TEXT_CONNECTION);
         }
     }
@@ -224,7 +223,7 @@ public class TextConnections {
         private String incompleteLine;
         private RStringVector textVec;
         private String idName;
-        private RAbstractStringVector object;
+        private RStringVector object;
 
         /** Indicates if the connection is anonymous, i.e., not input object has been provided. */
         private final boolean anonymous;
@@ -246,7 +245,7 @@ public class TextConnections {
             }
         }
 
-        protected TextWriteRConnection(BaseRConnection base, RAbstractStringVector object) {
+        protected TextWriteRConnection(BaseRConnection base, RStringVector object) {
             super(base);
             this.object = object;
             this.anonymous = object == null;
@@ -331,7 +330,7 @@ public class TextConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+        public void writeLines(RStringVector lines, String sep, boolean useBytes) throws IOException {
             StringBuilder sb = new StringBuilder();
             if (incompleteLine != null) {
                 sb.append(incompleteLine);
@@ -365,7 +364,7 @@ public class TextConnections {
         }
 
         @Override
-        public RAbstractStringVector getValue() {
+        public RStringVector getValue() {
             return object;
         }
 
@@ -427,7 +426,7 @@ public class TextConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+        public void writeLines(RStringVector lines, String sep, boolean useBytes) throws IOException {
             for (int i = 0; i < lines.getLength(); i++) {
                 String line = lines.getDataAt(i);
                 sb.append(line);

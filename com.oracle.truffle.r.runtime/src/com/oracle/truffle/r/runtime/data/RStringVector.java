@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -33,21 +35,24 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import java.util.Arrays;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public final class RStringVector extends RAbstractStringVector implements RMaterializedVector, Shareable {
+@ExportLibrary(InteropLibrary.class)
+public final class RStringVector extends RAbstractAtomicVector implements RMaterializedVector, Shareable {
 
     private int length;
 
@@ -96,7 +101,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         return result;
     }
 
-    public static RStringVector createFactorClosure(RIntVector factor, RAbstractStringVector levels, boolean keepAttrs) {
+    public static RStringVector createFactorClosure(RIntVector factor, RStringVector levels, boolean keepAttrs) {
         RStringVector result = new RStringVector(new RStringFactorClosure(factor, levels), factor.getLength());
         if (keepAttrs) {
             result.initAttributes(factor.getAttributes());
@@ -107,11 +112,17 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     }
 
     private void setData(Object data, int newLen) {
+        assert !(data instanceof RStringVecNativeData) || isNativized();
         // Temporary solution to keep getLength() fast
         // The assumption is that length of vectors can only change in infrequently used setLength
         // operation where we update the field accordingly
         length = newLen;
         super.setData(data);
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.Character;
     }
 
     @Override
@@ -162,6 +173,36 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     }
 
     @Override
+    protected RStringVector internalCopyResized(int size, boolean fillNA, int[] dimensions) {
+        boolean isComplete = isResizedComplete(size, fillNA);
+        return createStringVector(copyResizedData(size, fillNA ? RRuntime.STRING_NA : null), isComplete, dimensions);
+    }
+
+    protected Object[] copyResizedData(int size, String fill) {
+        Object[] localData = getReadonlyData();
+        Object[] newData = Arrays.copyOf(localData, size);
+        if (size > localData.length) {
+            if (fill != null) {
+                Object fillObj = newData instanceof String[] ? fill : CharSXPWrapper.create(fill);
+                for (int i = localData.length; i < size; i++) {
+                    newData[i] = fillObj;
+                }
+            } else {
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
+                    newData[i] = localData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    protected RStringVector internalCopy() {
+        return RDataFactory.createStringVector(getDataCopy(), isComplete());
+    }
+
+    @Override
     public Object[] getInternalManagedData() {
         if (data instanceof RStringVecNativeData) {
             return null;
@@ -175,13 +216,11 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         return data;
     }
 
-    @Override
-    public void setDataAt(Object store, int index, String value) {
+    public void setDataAt(@SuppressWarnings("unused") Object store, int index, String value) {
         getUncachedDataLib().setStringAt(data, index, value);
     }
 
-    @Override
-    public String getDataAt(Object store, int index) {
+    public String getDataAt(@SuppressWarnings("unused") Object store, int index) {
         return getUncachedDataLib().getStringAt(data, index);
     }
 
@@ -237,7 +276,6 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         return getUncachedDataLib().getReadonlyStringData(data);
     }
 
-    @Override
     public String getDataAt(int i) {
         return getUncachedDataLib().getStringAt(data, i);
     }
@@ -263,9 +301,15 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     }
 
     @Override
+    @Ignore // AbstractContainerLibrary
+    public RStringVector createEmptySameType(int newLength, boolean newIsComplete) {
+        return new RStringVector(new String[newLength], newIsComplete);
+    }
+
+    @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         Object[] localData = getReadonlyData();
-        RAbstractStringVector other = (RAbstractStringVector) fromVector;
+        RStringVector other = (RStringVector) fromVector;
         setDataAt(localData, toIndex, other.getDataAt(fromIndex));
     }
 
@@ -384,8 +428,7 @@ public final class RStringVector extends RAbstractStringVector implements RMater
         }
     }
 
-    @Override
-    protected RStringVector createStringVector(Object[] vecData, boolean isComplete, int[] dims) {
+    protected static RStringVector createStringVector(Object[] vecData, boolean isComplete, int[] dims) {
         if (vecData instanceof String[]) {
             return RDataFactory.createStringVector((String[]) vecData, isComplete, dims);
         } else {
@@ -447,5 +490,34 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     protected void verifyData() {
         super.verifyData();
         assert getUncachedDataLib().getLength(data) == length : formatVerifyErrorMsg(getUncachedDataLib().getLength(data), length);
+    }
+
+    @ExportMessage
+    public boolean isNull(
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isScalar) {
+        if (!isScalar.profile(isScalar(dataLib))) {
+            return false;
+        }
+        return RRuntime.isNA(dataLib.getStringAt(getData(), 0));
+    }
+
+    @ExportMessage
+    public boolean isString(
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (!isScalar(dataLib)) {
+            return false;
+        }
+        return !RRuntime.isNA(dataLib.getStringAt(getData(), 0));
+    }
+
+    @ExportMessage
+    public String asString(
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib,
+                    @Cached.Exclusive @Cached("createBinaryProfile()") ConditionProfile isString) throws UnsupportedMessageException {
+        if (!isString.profile(isString(dataLib))) {
+            throw UnsupportedMessageException.create();
+        }
+        return dataLib.getStringAt(getData(), 0);
     }
 }

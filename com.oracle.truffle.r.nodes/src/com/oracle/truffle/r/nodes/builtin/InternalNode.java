@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,6 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -127,8 +126,8 @@ public abstract class InternalNode extends OperatorNode {
                 Object constant = ((RSyntaxConstant) lhs).getValue();
                 if (constant instanceof String) {
                     name = (String) constant;
-                } else if (constant instanceof RAbstractStringVector) {
-                    RAbstractStringVector stringVector = (RAbstractStringVector) constant;
+                } else if (constant instanceof RStringVector) {
+                    RStringVector stringVector = (RStringVector) constant;
                     if (stringVector.getLength() == 1) {
                         name = stringVector.getDataAt(0);
                     }

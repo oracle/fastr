@@ -60,7 +60,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -210,7 +210,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"oneVec(args)", "isFirstStringPrecedence(args)"})
     Object orderString(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
-        RAbstractStringVector v = (RAbstractStringVector) castVector(args.getArgument(0));
+        RStringVector v = (RStringVector) castVector(args.getArgument(0));
         return executeOrderVector1(v, naLast, decreasing);
     }
 
@@ -399,7 +399,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected Object orderVector1(int[] indx, RAbstractStringVector dv, byte naLast, boolean decreasing, boolean sortNA) {
+        protected Object orderVector1(int[] indx, RStringVector dv, byte naLast, boolean decreasing, boolean sortNA) {
             if (indx.length < 2) {
                 return indx;
             }
@@ -538,7 +538,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @TruffleBoundary
-        private void sort(int[] indx, RAbstractStringVector dv, int lo, int hi, boolean dec) {
+        private void sort(int[] indx, RStringVector dv, int lo, int hi, boolean dec) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
@@ -729,7 +729,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected boolean doString(RAbstractStringVector v, int idx) {
+        protected boolean doString(RStringVector v, int idx) {
             return RRuntime.isNA(v.getDataAt(idx));
         }
 
@@ -819,7 +819,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected int scmp(RAbstractStringVector v, int i, int j, boolean naLast) {
+        protected int scmp(RStringVector v, int i, int j, boolean naLast) {
             String x = v.getDataAt(i);
             String y = v.getDataAt(j);
             boolean nax = RRuntime.isNA(x);

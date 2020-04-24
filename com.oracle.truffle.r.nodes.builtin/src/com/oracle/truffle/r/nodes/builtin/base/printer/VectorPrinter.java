@@ -30,7 +30,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -73,7 +73,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         protected final PrintContext printCtx;
         protected final PrettyPrintWriter out;
         protected final JobMode jobMode;
-        protected final RAbstractStringVector names;
+        protected final RStringVector names;
         protected final String title;
         protected final MatrixDimNames matrixDimNames;
         protected final RIntVector dims;
@@ -92,7 +92,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 if (dims.getLength() == 1) {
                     RList t = Utils.<RList> castTo(getDimNames(vector));
                     if (t != null && t.getDataAt(0) != null) {
-                        RAbstractStringVector nn = Utils.castTo(RRuntime.asAbstractVector(t.getNames()));
+                        RStringVector nn = Utils.castTo(RRuntime.asAbstractVector(t.getNames()));
 
                         if (nn != null) {
                             title = nn.getDataAt(0);
@@ -270,8 +270,8 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         private void printMatrix(int offset, boolean printij) throws IOException {
             PrintParameters pp = printCtx.parameters();
 
-            RAbstractStringVector rl = matrixDimNames.rl;
-            RAbstractStringVector cl = matrixDimNames.cl;
+            RStringVector rl = matrixDimNames.rl;
+            RStringVector cl = matrixDimNames.cl;
             String rn = matrixDimNames.rn;
             String cn = matrixDimNames.cn;
             int r = dims.getDataAt(0);
@@ -303,7 +303,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         }
 
         private void printMatrix(int offset, int rpr, int r, int c,
-                        RAbstractStringVector rl, RAbstractStringVector cl, String rn, String cn,
+                        RStringVector rl, RStringVector cl, String rn, String cn,
                         boolean printij) throws IOException {
             // _PRINT_INIT_rl_rn
 
@@ -406,7 +406,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             }
         }
 
-        protected void printMatrixColumnLabels(RAbstractStringVector cl, int jmin, int jmax, FormatMetrics[] w) {
+        protected void printMatrixColumnLabels(RStringVector cl, int jmin, int jmax, FormatMetrics[] w) {
             // define STD_ColumnLabels
             for (int j = jmin; j < jmax; j++) {
                 matrixColumnLabel(cl, j, w[j].maxWidth);
@@ -428,7 +428,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             }
         }
 
-        private void matrixColumnLabel(RAbstractStringVector cl, int j, int w) {
+        private void matrixColumnLabel(RStringVector cl, int j, int w) {
             PrintParameters pp = printCtx.parameters();
 
             if (cl != null && cl.getDataAt(j) != null) {
@@ -448,7 +448,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             }
         }
 
-        protected void rightMatrixColumnLabel(RAbstractStringVector cl, int j, int w) {
+        protected void rightMatrixColumnLabel(RStringVector cl, int j, int w) {
             PrintParameters pp = printCtx.parameters();
 
             if (cl != null && cl.getDataAt(j) != null) {
@@ -473,7 +473,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             }
         }
 
-        protected void leftMatrixColumnLabel(RAbstractStringVector cl, int j, int w) {
+        protected void leftMatrixColumnLabel(RStringVector cl, int j, int w) {
             PrintParameters pp = printCtx.parameters();
 
             if (cl != null && cl.getDataAt(j) != null) {
@@ -495,7 +495,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             }
         }
 
-        protected void matrixRowLabel(RAbstractStringVector rl, int i, int rlabw, int lbloff) {
+        protected void matrixRowLabel(RStringVector rl, int i, int rlabw, int lbloff) {
             PrintParameters pp = printCtx.parameters();
 
             if (rl != null && rl.getDataAt(i) != null) {
@@ -533,8 +533,8 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             boolean maxreached;
             boolean hasdnn = mdn.axisNames != null;
 
-            RAbstractStringVector dn;
-            RAbstractStringVector dnn = mdn.axisNames;
+            RStringVector dn;
+            RStringVector dnn = mdn.axisNames;
 
             /*
              * nb := #{entries} in a slice such as x[1,1,..] or equivalently, the number of matrix
@@ -593,7 +593,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 }
 
                 // int offset, int rpr, int r, int c,
-                // RAbstractStringVector rl, RAbstractStringVector cl, String rn, String cn,
+                // RStringVector rl, RStringVector cl, String rn, String cn,
                 // boolean printij
                 printMatrix(i * b, usenr, nr, nc, mdn.rl, mdn.cl, mdn.rn, mdn.cn, doij);
                 out.println();
@@ -686,12 +686,12 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
 
     private static final class MatrixDimNames {
         final RList dimnames;
-        final RAbstractStringVector rl;
-        final RAbstractStringVector cl;
+        final RStringVector rl;
+        final RStringVector cl;
         final String rn;
         final String cn;
         final boolean hasDimNames;
-        final RAbstractStringVector axisNames;
+        final RStringVector axisNames;
 
         MatrixDimNames(RAbstractVector x) {
             dimnames = Utils.<RList> castTo(getDimNames(x));
@@ -706,7 +706,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             } else {
                 rl = getDimNamesAt(0);
                 cl = getDimNamesAt(1);
-                axisNames = Utils.<RAbstractStringVector> castTo(dimnames.getNames());
+                axisNames = Utils.<RStringVector> castTo(dimnames.getNames());
                 if (axisNames == null) {
                     rn = null;
                     cn = null;
@@ -718,7 +718,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             }
         }
 
-        RAbstractStringVector getDimNamesAt(int dimLevel) {
+        RStringVector getDimNamesAt(int dimLevel) {
             return dimLevel < dimnames.getLength() ? Utils.castTo(RRuntime.asAbstractVector(dimnames.getDataAt(dimLevel))) : null;
         }
     }

@@ -75,10 +75,9 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNodeWithWarnings;
@@ -316,7 +315,7 @@ public abstract class Bind extends RBaseNodeWithWarnings {
             // dimnames are simply ignored for arrays with 3 and more dimensions
         }
         if (firstDimNames != RNull.instance) {
-            RAbstractStringVector names = (RAbstractStringVector) firstDimNames;
+            RStringVector names = (RStringVector) firstDimNames;
             if (names != null && names.getLength() == dimLength) {
                 firstDimResultNames = names;
             }
@@ -340,7 +339,7 @@ public abstract class Bind extends RBaseNodeWithWarnings {
                     if (resDimNames instanceof String) {
                         dimNamesArray[ind++] = (String) resDimNames;
                     } else {
-                        RAbstractStringVector names = (RAbstractStringVector) resDimNames;
+                        RStringVector names = (RStringVector) resDimNames;
                         assert names.getLength() == resDim;
                         for (int i = 0; i < names.getLength(); i++) {
                             dimNamesArray[ind++] = names.getDataAt(i);

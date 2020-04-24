@@ -30,10 +30,9 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 final class PositionCharacterLookupNode extends RBaseNode {
@@ -54,7 +53,7 @@ final class PositionCharacterLookupNode extends RBaseNode {
         this.mode = mode;
     }
 
-    public RIntVector execute(RAbstractContainer target, RAbstractStringVector position, int notFoundStartIndex) {
+    public RIntVector execute(RAbstractContainer target, RStringVector position, int notFoundStartIndex) {
         // lookup names for single dimension case
         RIntVector result;
         if (numPositions <= 1) {
@@ -69,7 +68,7 @@ final class PositionCharacterLookupNode extends RBaseNode {
             if (dimNames != null) {
                 Object dataAt = dimNames.getDataAt(positionIndex);
                 if (dataAt != RNull.instance) {
-                    RAbstractStringVector dimName = (RAbstractStringVector) dataAt;
+                    RStringVector dimName = (RStringVector) dataAt;
                     result = searchNode.apply(dimName, position, notFoundStartIndex, null);
                 } else {
                     emptyProfile.enter();

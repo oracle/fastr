@@ -418,7 +418,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
                             throw invokingNode.error(RError.Message.DIMNAMES_DONT_MATCH_EXTENT, i + 1);
                         }
                     } else {
-                        RAbstractStringVector dimVector = (RAbstractStringVector) dimObject;
+                        RStringVector dimVector = (RStringVector) dimObject;
                         if (dimVector == null) {
                             newDimNames.updateDataAt(i, RNull.instance, null);
                         } else if (dimVector.getLength() != dimensions[i]) {

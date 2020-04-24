@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
@@ -138,23 +138,23 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     @Specialization(guards = "isConstant(expr)")
-    protected Object derive(Object expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+    protected Object derive(Object expr, RStringVector names, Object functionArg, String tag, boolean hessian) {
         return deriveInternal(RSyntaxConstant.createDummyConstant(RSyntaxNode.INTERNAL, expr), names, functionArg, tag, hessian);
     }
 
     @Specialization
-    protected Object derive(RSymbol expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+    protected Object derive(RSymbol expr, RStringVector names, Object functionArg, String tag, boolean hessian) {
         return deriveInternal(RSyntaxLookup.createDummyLookup(RSyntaxNode.INTERNAL, expr.getName(), false), names, functionArg, tag, hessian);
     }
 
     @Specialization
-    protected Object derive(RExpression expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian,
+    protected Object derive(RExpression expr, RStringVector names, Object functionArg, String tag, boolean hessian,
                     @Cached("create()") Deriv derivNode) {
         return derivNode.execute(expr.getDataAt(0), names, functionArg, tag, hessian);
     }
 
     @Specialization(guards = "expr.isLanguage()")
-    protected Object derive(RPairList expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+    protected Object derive(RPairList expr, RStringVector names, Object functionArg, String tag, boolean hessian) {
         return deriveInternal(getSyntaxElement(expr), names, functionArg, tag, hessian);
     }
 
@@ -164,7 +164,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     @TruffleBoundary
-    private Object deriveInternal(RSyntaxElement elem, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+    private Object deriveInternal(RSyntaxElement elem, RStringVector names, Object functionArg, String tag, boolean hessian) {
         return findDerive(elem, names, functionArg, tag, hessian).getResult(getRLanguage(), functionArg);
     }
 
@@ -197,7 +197,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     @TruffleBoundary
-    private DerivResult findDerive(RSyntaxElement elem, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+    private DerivResult findDerive(RSyntaxElement elem, RStringVector names, Object functionArg, String tag, boolean hessian) {
         LinkedList<RSyntaxNode> exprlist = new LinkedList<>();
         int fIndex = findSubexpression(elem, exprlist, tag);
 
@@ -328,8 +328,8 @@ public abstract class Deriv extends RExternalBuiltinNode {
         }
         RSyntaxNode blockCall = RContext.getASTBuilder().call(RSyntaxNode.LAZY_DEPARSE, createLookup("{"), blockStatements);
 
-        if (functionArg instanceof RAbstractStringVector) {
-            RAbstractStringVector funArgNames = (RAbstractStringVector) functionArg;
+        if (functionArg instanceof RStringVector) {
+            RStringVector funArgNames = (RStringVector) functionArg;
             List<Argument<RSyntaxNode>> targetArgs = new ArrayList<>();
             for (int i = 0; i < funArgNames.getLength(); i++) {
                 targetArgs.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, funArgNames.getDataAt(i), ConstantNode.create(RMissing.instance)));
@@ -639,7 +639,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
         return RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("<-"), tmp1, tmp3);
     }
 
-    private static RSyntaxNode createGrad(RAbstractStringVector names) {
+    private static RSyntaxNode createGrad(RStringVector names) {
         int n = names.getLength();
         List<Argument<RSyntaxNode>> cArgs = new ArrayList<>();
         for (int i = 0; i < n; i++) {
@@ -656,7 +656,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
         return RContext.getASTBuilder().call(RSyntaxNode.SOURCE_UNAVAILABLE, createLookup("<-"), createLookup(".grad"), p);
     }
 
-    private static RSyntaxNode createHess(RAbstractStringVector names) {
+    private static RSyntaxNode createHess(RStringVector names) {
         int n = names.getLength();
         List<Argument<RSyntaxNode>> cArgs = new ArrayList<>();
         for (int i = 0; i < n; i++) {

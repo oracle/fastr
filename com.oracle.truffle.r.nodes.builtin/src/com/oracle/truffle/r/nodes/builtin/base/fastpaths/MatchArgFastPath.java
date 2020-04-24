@@ -70,10 +70,9 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -119,7 +118,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
             return isEmptyProfile.profile(choices.getLength() == 0) ? RRuntime.STRING_NA : choices.getDataAtAsObject(0);
         }
 
-        private void checkEmpty(RAbstractStringVector choices, int count) {
+        private void checkEmpty(RStringVector choices, int count) {
             if (count == 0) {
                 CompilerDirectives.transferToInterpreter();
                 StringBuilder choicesString = new StringBuilder();
@@ -141,7 +140,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
         }
 
         @Specialization(guards = {"!severalOK", "!hasS3Class(classHierarchy, choices)"})
-        protected Object matchArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
+        protected Object matchArg(VirtualFrame frame, RStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
                         @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @SuppressWarnings("unused") @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
             if (identical.executeByte(arg, choices, true, true, true, true, true, true) == RRuntime.LOGICAL_TRUE) {
@@ -152,7 +151,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
                 throw RError.error(this, Message.MUST_BE_SCALAR, "arg");
             }
 
-            RAbstractStringVector choicesStringVector = toStringVector(frame, choices);
+            RStringVector choicesStringVector = toStringVector(frame, choices);
 
             RIntVector matched = pmatch.execute(arg, choicesStringVector, -1, true);
             int count = count(matched);
@@ -173,7 +172,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
         }
 
         @Specialization(guards = {"severalOK", "!hasS3Class(classHierarchy, choices)"})
-        protected Object matchArgSeveral(VirtualFrame frame, RAbstractStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
+        protected Object matchArgSeveral(VirtualFrame frame, RStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
                         @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @SuppressWarnings("unused") @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
             if (arg.getLength() == 0) {
@@ -181,7 +180,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
                 throw RError.error(this, Message.MUST_BE_GE_ONE, "arg");
             }
 
-            RAbstractStringVector choicesStringVector = toStringVector(frame, choices);
+            RStringVector choicesStringVector = toStringVector(frame, choices);
 
             RIntVector matched = pmatch.execute(arg, choicesStringVector, -1, true);
             int count = count(matched);
@@ -222,17 +221,17 @@ public abstract class MatchArgFastPath extends RFastPathNode {
 
         @SuppressWarnings("unused")
         @Specialization(guards = "hasS3Class(classHierarchy, choices)")
-        protected Object matchArgS3(RAbstractStringVector arg, RAbstractVector choices, boolean severalOK,
+        protected Object matchArgS3(RStringVector arg, RAbstractVector choices, boolean severalOK,
                         @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
             return null;
         }
 
-        private RAbstractStringVector toStringVector(VirtualFrame frame, RAbstractVector choices) {
+        private RStringVector toStringVector(VirtualFrame frame, RAbstractVector choices) {
             if (asCharacterNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 asCharacterNode = insert(AsCharacterNodeGen.create());
             }
-            return (RAbstractStringVector) asCharacterNode.call(frame, choices, RArgsValuesAndNames.EMPTY);
+            return (RStringVector) asCharacterNode.call(frame, choices, RArgsValuesAndNames.EMPTY);
         }
 
         protected ClassHierarchyNode createClassHierarchyNode() {

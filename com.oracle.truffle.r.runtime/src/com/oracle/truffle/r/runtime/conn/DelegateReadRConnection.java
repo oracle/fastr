@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public abstract class DelegateReadRConnection extends DelegateRConnection {
 
@@ -42,7 +42,7 @@ public abstract class DelegateReadRConnection extends DelegateRConnection {
     }
 
     @Override
-    public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+    public void writeLines(RStringVector lines, String sep, boolean useBytes) throws IOException {
         throw new IOException(RError.Message.CANNOT_WRITE_CONNECTION.message);
     }
 

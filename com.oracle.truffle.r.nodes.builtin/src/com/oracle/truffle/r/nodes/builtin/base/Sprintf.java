@@ -45,10 +45,9 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "sprintf", kind = INTERNAL, parameterNames = {"fmt", "..."}, behavior = PURE)
@@ -65,12 +64,12 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
     @Child private Sprintf sprintfRecursive;
 
     @Specialization
-    protected RStringVector sprintf(RAbstractStringVector fmt, RList values) {
+    protected RStringVector sprintf(RStringVector fmt, RList values) {
         return sprintf(fmt, new RArgsValuesAndNames(values.getReadonlyData(), ArgumentsSignature.empty(values.getLength())));
     }
 
     @Specialization
-    protected RStringVector sprintf(@SuppressWarnings("unused") RAbstractStringVector fmt, @SuppressWarnings("unused") RNull x) {
+    protected RStringVector sprintf(@SuppressWarnings("unused") RStringVector fmt, @SuppressWarnings("unused") RNull x) {
         return RDataFactory.createEmptyStringVector();
     }
 
@@ -81,7 +80,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
-    protected String sprintf(RAbstractStringVector fmt, RMissing x) {
+    protected String sprintf(RStringVector fmt, RMissing x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
@@ -93,13 +92,13 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
-    protected String sprintf(RAbstractStringVector fmt, int x) {
+    protected String sprintf(RStringVector fmt, int x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
-    protected String sprintf(RAbstractStringVector fmt, byte x) {
+    protected String sprintf(RStringVector fmt, byte x) {
         return format(fmt.getDataAt(0), x);
     }
 
@@ -115,7 +114,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
-    protected RStringVector sprintf(RAbstractStringVector fmt, RIntVector x) {
+    protected RStringVector sprintf(RStringVector fmt, RIntVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
@@ -134,7 +133,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
-    protected String sprintf(RAbstractStringVector fmt, double x) {
+    protected String sprintf(RStringVector fmt, double x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
@@ -150,7 +149,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
-    protected RStringVector sprintf(RAbstractStringVector fmt, RDoubleVector x) {
+    protected RStringVector sprintf(RStringVector fmt, RDoubleVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
@@ -162,13 +161,13 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
-    protected String sprintf(RAbstractStringVector fmt, String x) {
+    protected String sprintf(RStringVector fmt, String x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
     @Specialization
     @TruffleBoundary
-    protected RStringVector sprintf(String fmt, RAbstractStringVector x) {
+    protected RStringVector sprintf(String fmt, RStringVector x) {
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; k++) {
             r[k] = format(fmt, x.getDataAt(k));
@@ -178,7 +177,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
-    protected RStringVector sprintf(RAbstractStringVector fmt, RLogicalVector x) {
+    protected RStringVector sprintf(RStringVector fmt, RLogicalVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
@@ -194,7 +193,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = "fmtLengthOne(fmt)")
     @TruffleBoundary
-    protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractStringVector x) {
+    protected RStringVector sprintf(RStringVector fmt, RStringVector x) {
         return sprintf(fmt.getDataAt(0), x);
     }
 
@@ -270,7 +269,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = {"!oneElement(args)", "!hasNull(args)"})
     @TruffleBoundary
-    protected RStringVector sprintf(RAbstractStringVector fmt, RArgsValuesAndNames args) {
+    protected RStringVector sprintf(RStringVector fmt, RArgsValuesAndNames args) {
         if (fmt.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
@@ -285,12 +284,12 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"oneElement(args)", "fmtLengthOne(fmt)"})
-    protected Object sprintfOneElement(RAbstractStringVector fmt, RArgsValuesAndNames args) {
+    protected Object sprintfOneElement(RStringVector fmt, RArgsValuesAndNames args) {
         return sprintfOneElement(fmt.getDataAt(0), args);
     }
 
     @Specialization(guards = {"oneElement(args)", "!fmtLengthOne(fmt)"})
-    protected Object sprintf2(RAbstractStringVector fmt, RArgsValuesAndNames args) {
+    protected Object sprintf2(RStringVector fmt, RArgsValuesAndNames args) {
         if (fmt.getLength() == 0) {
             return RDataFactory.createEmptyStringVector();
         } else {
@@ -732,7 +731,7 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         return false;
     }
 
-    protected boolean fmtLengthOne(RAbstractStringVector fmt) {
+    protected boolean fmtLengthOne(RStringVector fmt) {
         return fmt.getLength() == 1;
     }
 

@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
@@ -54,7 +54,7 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "vectorReuse.supports(container)", limit = "getVectorAccessCacheSize()")
-    protected Object updateComment(RAbstractVector container, RAbstractStringVector value,
+    protected Object updateComment(RAbstractVector container, RStringVector value,
                     @Cached("create()") SetCommentAttributeNode setCommentAttrNode,
                     @Cached("createNonShared(container)") VectorReuse vectorReuse,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
@@ -65,7 +65,7 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "updateComment")
-    protected Object updateCommentGeneric(RAbstractVector container, RAbstractStringVector value,
+    protected Object updateCommentGeneric(RAbstractVector container, RStringVector value,
                     @Cached("create()") SetCommentAttributeNode setCommentAttrNode,
                     @Cached("createNonSharedGeneric()") VectorReuse vectorReuse,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
@@ -73,7 +73,7 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "!isRAbstractVector(container)")
-    protected Object updateCommentNonVector(RAttributable container, RAbstractStringVector value,
+    protected Object updateCommentNonVector(RAttributable container, RStringVector value,
                     @Cached("createClassProfile()") ValueProfile classProfile,
                     @Cached("create()") SetCommentAttributeNode setCommentAttrNode) {
         Object result = classProfile.profile(container);
@@ -115,7 +115,7 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
     @Fallback
     protected Object updateCommentFallback(Object vector, Object value) {
         // cast pipeline should ensure this:
-        assert value == RNull.instance || value instanceof RAbstractStringVector;
+        assert value == RNull.instance || value instanceof RStringVector;
         return vector;
     }
 }

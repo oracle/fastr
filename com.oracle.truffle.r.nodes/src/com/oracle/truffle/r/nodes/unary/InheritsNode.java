@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -38,9 +38,8 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -54,7 +53,7 @@ public abstract class InheritsNode extends RBaseNode {
 
     @Child private ClassHierarchyNode classHierarchy;
 
-    public abstract Object execute(Object x, RAbstractStringVector what, boolean which);
+    public abstract Object execute(Object x, RStringVector what, boolean which);
 
     protected static boolean isNotImplicitClass(String className) {
         return !ImplicitClassHierarchyNode.isImplicitClass(className);
@@ -67,7 +66,7 @@ public abstract class InheritsNode extends RBaseNode {
         }
     }
 
-    protected static String getSingleOrNull(RAbstractStringVector vec) {
+    protected static String getSingleOrNull(RStringVector vec) {
         return vec.getLength() == 1 ? vec.getDataAt(0) : null;
     }
 
@@ -82,7 +81,7 @@ public abstract class InheritsNode extends RBaseNode {
                     "vectorEquals(whatAccess, what, cachedWhat)",
                     "isNotImplicitClass(cachedWhat)"}, limit = "getVectorAccessCacheSize()")
     @SuppressWarnings("unused") // all arguments are used only in the guard
-    protected byte noObjectFastPath(Object x, RAbstractStringVector what, boolean which,
+    protected byte noObjectFastPath(Object x, RStringVector what, boolean which,
                     @Cached IsNotObject isNotObject,
                     @Cached("what.access()") VectorAccess whatAccess,
                     @Cached("getSingleOrNull(what)") String cachedWhat) {
@@ -90,7 +89,7 @@ public abstract class InheritsNode extends RBaseNode {
     }
 
     @Specialization(guards = {"!which", "whatAccess.supports(what)"}, limit = "getVectorAccessCacheSize()")
-    protected byte doesInherit(Object x, RAbstractStringVector what, @SuppressWarnings("unused") boolean which,
+    protected byte doesInherit(Object x, RStringVector what, @SuppressWarnings("unused") boolean which,
                     @Cached BranchProfile nonEmptyClassHierarchy,
                     @Cached("createEqualityProfile()") ValueProfile whatValueProfile,
                     @Cached("createBinaryProfile()") ConditionProfile whatIsSingleElement,
@@ -118,13 +117,13 @@ public abstract class InheritsNode extends RBaseNode {
     }
 
     @Specialization(replaces = {"doesInherit", "noObjectFastPath"}, guards = "!which")
-    protected byte doesInheritGeneric(Object x, RAbstractStringVector what, @SuppressWarnings("unused") boolean which,
+    protected byte doesInheritGeneric(Object x, RStringVector what, @SuppressWarnings("unused") boolean which,
                     @Cached ContainsCheck containsCheck) {
         return doesInherit(x, what, which, BranchProfile.getUncached(), ValueProfile.getUncached(), ConditionProfile.getUncached(), containsCheck, what.slowPathAccess());
     }
 
     @Specialization(guards = "which")
-    protected RIntVector doesInheritWhich(Object x, RAbstractStringVector what, @SuppressWarnings("unused") boolean which) {
+    protected RIntVector doesInheritWhich(Object x, RStringVector what, @SuppressWarnings("unused") boolean which) {
         RStringVector hierarchy = getClassHierarchy().execute(x);
         int[] data = new int[what.getLength()];
         for (int i = 0; i < what.getLength(); i++) {

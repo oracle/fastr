@@ -54,10 +54,9 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -257,7 +256,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return numberOfPositions == 1 && positionsCheckNode.isMissing();
     }
 
-    private Object extract(int dimensionIndex, RAbstractStringVector vector, Object pos, PositionProfile profile) {
+    private Object extract(int dimensionIndex, RStringVector vector, Object pos, PositionProfile profile) {
         if (extractDimNames == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             extractDimNames = insert(ExtractDimNamesNodeGen.create(numberOfPositions));
@@ -322,8 +321,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             boxNewDimName = insert(BoxPrimitiveNode.create());
                         }
-                        RAbstractStringVector originalDimName = (RAbstractStringVector) boxOldDimNames.execute(dataAt);
-                        RAbstractStringVector newDimName = (RAbstractStringVector) boxNewDimName.execute(extract(i, originalDimName, positions[i], positionProfile[i]));
+                        RStringVector originalDimName = (RStringVector) boxOldDimNames.execute(dataAt);
+                        RStringVector newDimName = (RStringVector) boxNewDimName.execute(extract(i, originalDimName, positions[i], positionProfile[i]));
                         result = newDimName.materialize();
                     }
                     newDimNames[dimIndex] = result;
@@ -358,7 +357,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                                 RDataFactory.createList(newDimNames, newDimNamesNames == null ? null : RDataFactory.createStringVector(newDimNamesNames, originalDimNames.isComplete())));
             }
         } else if (newDimNames != null && originalDimNamesPRofile.profile(originalDimNames.getLength() > 0)) {
-            RAbstractStringVector foundNames = translateDimNamesToNames(positionProfile, originalDimNames, extractedTargetLength, positions);
+            RStringVector foundNames = translateDimNamesToNames(positionProfile, originalDimNames, extractedTargetLength, positions);
             if (foundNamesProfile.profile(foundNames != null)) {
                 foundNames = foundDimNamesProfile.profile(foundNames);
                 if (foundNames.getLength() > 0) {
@@ -390,8 +389,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     @CompilationFinal private ConditionProfile newNamesProfile;
 
     @ExplodeLoop
-    private RAbstractStringVector translateDimNamesToNames(PositionProfile[] positionProfile, RList originalDimNames, int newVectorLength, Object[] positions) {
-        RAbstractStringVector foundNames = null;
+    private RStringVector translateDimNamesToNames(PositionProfile[] positionProfile, RList originalDimNames, int newVectorLength, Object[] positions) {
+        RStringVector foundNames = null;
         for (int currentPositionIndex = numberOfPositions - 1; currentPositionIndex >= 0; currentPositionIndex--) {
             PositionProfile profile = positionProfile[currentPositionIndex];
             if (profile.selectedPositionsCount != newVectorLength) {
@@ -411,7 +410,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             if (srcNamesProfile.profile(srcNames != RNull.instance)) {
                 Object position = positions[currentPositionIndex];
 
-                Object newNames = extractNames((RAbstractStringVector) RRuntime.asAbstractVector(srcNames), new Object[]{position}, new PositionProfile[]{profile}, currentPositionIndex,
+                Object newNames = extractNames((RStringVector) RRuntime.asAbstractVector(srcNames), new Object[]{position}, new PositionProfile[]{profile}, currentPositionIndex,
                                 RDataFactory.createLogicalVectorFromScalar(true), RDataFactory.createLogicalVectorFromScalar(dropDimensions));
                 if (newNames != RNull.instance) {
                     if (newNamesProfile == null) {
@@ -421,7 +420,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     if (newNamesProfile.profile(newNames instanceof String)) {
                         newNames = RDataFactory.createStringVector((String) newNames);
                     }
-                    RAbstractStringVector castFoundNames = (RAbstractStringVector) newNames;
+                    RStringVector castFoundNames = (RStringVector) newNames;
                     if (castFoundNames.getLength() == newVectorLength) {
                         if (foundNames != null) {
                             /*
@@ -433,7 +432,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                             foundNames = null;
                             break;
                         }
-                        foundNames = (RAbstractStringVector) newNames;
+                        foundNames = (RStringVector) newNames;
                     }
                 }
             }
@@ -441,7 +440,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         return foundNames;
     }
 
-    private Object extractNames(RAbstractStringVector originalNames, Object[] positions, PositionProfile[] profiles, int positionIdx, Object originalExact, Object originalDropDimensions) {
+    private Object extractNames(RStringVector originalNames, Object[] positions, PositionProfile[] profiles, int positionIdx, Object originalExact, Object originalDropDimensions) {
         if (extractNames[positionIdx] == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             extractNames[positionIdx] = insert(DispatchedCachedExtractVectorNodeGen.create(mode, recursive));
@@ -464,7 +463,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         public abstract void execute(RAbstractVector container, Object newNames);
 
         @Specialization
-        protected void setNames(RAbstractVector container, RAbstractStringVector newNames) {
+        protected void setNames(RAbstractVector container, RStringVector newNames) {
             RStringVector newNames1 = newNames.materialize();
             assert newNames1.getLength() <= container.getLength();
             assert container.getAttr(RRuntime.DIM_ATTR_KEY) == null;
@@ -502,19 +501,19 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             limit = DSLConfig.getCacheSize(dimensions * 2);
         }
 
-        protected abstract Object execute(int dimensionIndex, RAbstractStringVector vector, Object position, PositionProfile profile);
+        protected abstract Object execute(int dimensionIndex, RStringVector vector, Object position, PositionProfile profile);
 
-        protected boolean isSupported(CachedExtractVectorNode cachedExtractNode, RAbstractStringVector vector, Object position) {
+        protected boolean isSupported(CachedExtractVectorNode cachedExtractNode, RStringVector vector, Object position) {
             return cachedExtractNode.isSupported(vector, new Object[]{position}, RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_TRUE);
         }
 
-        protected CachedExtractVectorNode createCached(RAbstractStringVector vector, Object position) {
+        protected CachedExtractVectorNode createCached(RStringVector vector, Object position) {
             RLogicalVector t = RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_TRUE);
             return new CachedExtractVectorNode(ElementAccessMode.SUBSET, vector, new Object[]{position}, t, t, true);
         }
 
         @Specialization(limit = "limit", guards = {"dimensionIndex == cachedIndex", "isSupported(cachedExtractNode, vector, position)"})
-        public Object extractDimNamesCached(int dimensionIndex, RAbstractStringVector vector, Object position, PositionProfile profile,
+        public Object extractDimNamesCached(int dimensionIndex, RStringVector vector, Object position, PositionProfile profile,
                         @Cached("createCached(vector, position)") CachedExtractVectorNode cachedExtractNode,
                         @SuppressWarnings("unused") @Cached("dimensionIndex") int cachedIndex) {
             PositionProfile[] profiles = new PositionProfile[]{profile};
@@ -523,7 +522,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         @Specialization(replaces = "extractDimNamesCached")
-        public Object extract(int dimensionIndex, RAbstractStringVector vector, Object position, @SuppressWarnings("unused") PositionProfile profile) {
+        public Object extract(int dimensionIndex, RStringVector vector, Object position, @SuppressWarnings("unused") PositionProfile profile) {
             if (fallbackExtractNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 fallbackExtractNode = insert(ExtractVectorNode.createRecursive(ElementAccessMode.SUBSET));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 public class EncodingFunctions {
 
@@ -46,7 +45,7 @@ public class EncodingFunctions {
         }
 
         @Specialization
-        protected RStringVector encoding(@SuppressWarnings("unused") RAbstractStringVector x) {
+        protected RStringVector encoding(@SuppressWarnings("unused") RStringVector x) {
             // TODO implement properly
             return RDataFactory.createStringVectorFromScalar("unknown");
         }
@@ -64,7 +63,7 @@ public class EncodingFunctions {
         }
 
         @Specialization
-        protected Object setEncoding(RAbstractStringVector x, @SuppressWarnings("unused") RAbstractStringVector value) {
+        protected Object setEncoding(RStringVector x, @SuppressWarnings("unused") RStringVector value) {
             // TODO implement properly
             return x;
         }

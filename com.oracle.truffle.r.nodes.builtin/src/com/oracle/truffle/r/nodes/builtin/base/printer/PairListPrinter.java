@@ -27,14 +27,13 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 //Transcribed from GnuR, src/main/print.c
 
@@ -69,7 +68,7 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
                     pbuf = "Numeric," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RComplexVector) {
                     pbuf = "Complex," + ((RAbstractContainer) tmp).getLength();
-                } else if (tmp instanceof RAbstractStringVector) {
+                } else if (tmp instanceof RStringVector) {
                     pbuf = "Character," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RRawVector) {
                     pbuf = "Raw," + ((RAbstractContainer) tmp).getLength();

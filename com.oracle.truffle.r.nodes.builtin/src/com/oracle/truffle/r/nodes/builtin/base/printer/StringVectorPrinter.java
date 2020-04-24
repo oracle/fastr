@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,13 +25,13 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/format.c
 
-final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
+final class StringVectorPrinter extends VectorPrinter<RStringVector> {
 
     static final StringVectorPrinter INSTANCE = new StringVectorPrinter();
 
@@ -40,13 +40,13 @@ final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
     }
 
     @Override
-    protected VectorPrinter<RAbstractStringVector>.VectorPrintJob createJob(RAbstractStringVector vector, int indx, PrintContext printCtx) {
+    protected VectorPrinter<RStringVector>.VectorPrintJob createJob(RStringVector vector, int indx, PrintContext printCtx) {
         return new StringVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class StringVectorPrintJob extends VectorPrintJob {
 
-        protected StringVectorPrintJob(RAbstractStringVector vector, int indx, PrintContext printCtx) {
+        protected StringVectorPrintJob(RStringVector vector, int indx, PrintContext printCtx) {
             super(vector, indx, printCtx);
         }
 
@@ -77,7 +77,7 @@ final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
         }
 
         @Override
-        protected void printMatrixColumnLabels(RAbstractStringVector cl, int jmin, int jmax, FormatMetrics[] w) {
+        protected void printMatrixColumnLabels(RStringVector cl, int jmin, int jmax, FormatMetrics[] w) {
             if (printCtx.parameters().getRight()) {
                 for (int j = jmin; j < jmax; j++) {
                     rightMatrixColumnLabel(cl, j, w[j].maxWidth);

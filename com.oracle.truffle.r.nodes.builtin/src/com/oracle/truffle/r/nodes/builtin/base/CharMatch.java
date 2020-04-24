@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -31,7 +31,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "charmatch", kind = INTERNAL, parameterNames = {"x", "table", "noMatch"}, behavior = PURE)
 public abstract class CharMatch extends RBuiltinNode.Arg3 {
@@ -44,7 +44,7 @@ public abstract class CharMatch extends RBuiltinNode.Arg3 {
     }
 
     @Specialization
-    protected RIntVector doCharMatch(RAbstractStringVector x, RAbstractStringVector table, int noMatchValue) {
+    protected RIntVector doCharMatch(RStringVector x, RStringVector table, int noMatchValue) {
         int[] ans = new int[x.getLength()];
         for (int i = 0; i < x.getLength(); i++) {
             int matchIndex = RRuntime.INT_NA;

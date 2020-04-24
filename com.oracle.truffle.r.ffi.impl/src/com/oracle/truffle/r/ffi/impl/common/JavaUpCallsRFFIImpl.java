@@ -87,12 +87,11 @@ import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -1071,7 +1070,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object R_ParseVector(Object text, int n, Object srcFile) {
         // TODO general case + all statuses
-        assert n == 1 || (n < 0 && (text instanceof String || (text instanceof RAbstractStringVector && ((RAbstractStringVector) text).getLength() == 1))) : "unsupported: R_ParseVector with n != 0.";
+        assert n == 1 || (n < 0 && (text instanceof String || (text instanceof RStringVector && ((RStringVector) text).getLength() == 1))) : "unsupported: R_ParseVector with n != 0.";
         assert srcFile == RNull.instance : "unsupported: R_ParseVector with non-null srcFile argument.";
         String textString = RRuntime.asString(text);
         assert textString != null;

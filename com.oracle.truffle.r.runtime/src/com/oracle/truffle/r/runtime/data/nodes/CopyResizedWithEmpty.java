@@ -27,10 +27,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -39,14 +38,14 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @GenerateUncached
 public abstract class CopyResizedWithEmpty extends RBaseNode {
 
-    public static RStringVector executeSlowPath(RAbstractStringVector container, int newSize) {
+    public static RStringVector executeSlowPath(RStringVector container, int newSize) {
         return CopyResizedWithEmptyNodeGen.getUncached().execute(container, newSize);
     }
 
-    public abstract RStringVector execute(RAbstractStringVector container, int newSize);
+    public abstract RStringVector execute(RStringVector container, int newSize);
 
     @Specialization(limit = "getGenericVectorAccessCacheSize()")
-    RStringVector doIt(RAbstractStringVector x, int newSize,
+    RStringVector doIt(RStringVector x, int newSize,
                     @CachedLibrary("x.getData()") VectorDataLibrary xDataLib) {
         Object xData = x.getData();
         String[] result = new String[newSize];

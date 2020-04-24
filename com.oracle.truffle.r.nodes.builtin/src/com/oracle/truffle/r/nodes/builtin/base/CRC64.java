@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "crc64", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
 public abstract class CRC64 extends RBuiltinNode.Arg1 {
@@ -43,7 +43,7 @@ public abstract class CRC64 extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RAbstractStringVector crc64(RAbstractStringVector x) {
+    protected RStringVector crc64(RStringVector x) {
         return RDataFactory.createStringVector(Crc64.crc(x));
     }
 }

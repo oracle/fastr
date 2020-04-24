@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -276,7 +276,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         }
 
         @Specialization
-        protected double doString(RAbstractStringVector vector,
+        protected double doString(RStringVector vector,
                         @Cached("vector.access()") VectorAccess uAccess) {
             checkLength(vector.getLength());
             try (SequentialIterator sIter = uAccess.access(vector, this)) {

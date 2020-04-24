@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public class StdConnections {
 
@@ -287,7 +287,7 @@ public class StdConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+        public void writeLines(RStringVector lines, String sep, boolean useBytes) throws IOException {
             /*
              * It is more efficient to test for diversion, as this is the most common entry point.
              */
@@ -381,7 +381,7 @@ public class StdConnections {
         }
 
         @Override
-        public void writeLines(RAbstractStringVector lines, String sep, boolean useBytes) throws IOException {
+        public void writeLines(RStringVector lines, String sep, boolean useBytes) throws IOException {
             /*
              * It is more efficient to test for diversion, as this is the most common entry point.
              */

@@ -48,14 +48,13 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryLogic;
@@ -139,7 +138,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
 
     protected boolean isSupportedVector(Object value) {
         return value instanceof RIntVector || value instanceof RDoubleVector || value instanceof RComplexVector || value instanceof RLogicalVector ||
-                        (!isLogicOp(factory) && (value instanceof RAbstractStringVector || value instanceof RRawVector));
+                        (!isLogicOp(factory) && (value instanceof RStringVector || value instanceof RRawVector));
     }
 
     protected static boolean isSymbolOrLang(Object obj) {

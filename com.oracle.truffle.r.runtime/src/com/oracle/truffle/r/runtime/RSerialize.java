@@ -80,7 +80,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -89,7 +88,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -528,7 +527,7 @@ public class RSerialize {
             }
         }
 
-        protected RAbstractStringVector readStringVec() throws IOException {
+        protected RStringVector readStringVec() throws IOException {
             if (stream.readInt() != 0) {
                 throw RError.error(RError.NO_CALLER, Message.GENERIC, "names in persistent strings are not supported yet");
             }
@@ -667,7 +666,7 @@ public class RSerialize {
                 }
 
                 case PACKAGESXP: {
-                    RAbstractStringVector sVec = readStringVec();
+                    RStringVector sVec = readStringVec();
                     assert sVec.getLength() == 1 : "unsupported yet";
                     String s = sVec.getDataAt(0);
                     /*
@@ -1769,7 +1768,7 @@ public class RSerialize {
                         stream.writeInt(flags);
                         switch (type) {
                             case STRSXP: {
-                                outStringVec((RAbstractStringVector) obj, true);
+                                outStringVec((RStringVector) obj, true);
                                 break;
                             }
 
@@ -1987,7 +1986,7 @@ public class RSerialize {
             return result;
         }
 
-        private void outStringVec(RAbstractStringVector vec, boolean strsxp) throws IOException {
+        private void outStringVec(RStringVector vec, boolean strsxp) throws IOException {
             if (!strsxp) {
                 stream.writeInt(0);
             }
@@ -2888,7 +2887,7 @@ public class RSerialize {
             if (value instanceof RAbstractVector) {
                 RAbstractVector vector = (RAbstractVector) value;
                 if (vector.getLength() == 1 && (vector.getAttributes() == null || vector.getAttributes().getShape().getPropertyCount() == 0)) {
-                    if (vector instanceof RDoubleVector || vector instanceof RIntVector || vector instanceof RAbstractStringVector ||
+                    if (vector instanceof RDoubleVector || vector instanceof RIntVector || vector instanceof RStringVector ||
                                     vector instanceof RLogicalVector || vector instanceof RRawVector || vector instanceof RComplexVector) {
                         return vector.getDataAtAsObject(0);
                     }
@@ -3070,8 +3069,8 @@ public class RSerialize {
         if (namespaceEnv != null) {
             assert namespaceEnv instanceof REnvironment;
             Object pathObj = ((REnvironment) namespaceEnv).get("path");
-            if (pathObj instanceof RAbstractStringVector) {
-                String path = ((RAbstractStringVector) pathObj).getDataAt(0);
+            if (pathObj instanceof RStringVector) {
+                String path = ((RStringVector) pathObj).getDataAt(0);
                 RContext context = RContext.getInstance();
                 TruffleFile libLoc = context.getSafeTruffleFile(path).getParent();
                 assert libLoc != null;

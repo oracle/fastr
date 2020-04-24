@@ -62,9 +62,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class S3DispatchFunctions {
@@ -125,11 +124,11 @@ public abstract class S3DispatchFunctions {
             // Here we do not know which of the two argument's were used for the dispatch, but we
             // can find out by inspecting the ".Method" variable.
             Object origDotMethod = readDotMethod(frame);
-            if (!(origDotMethod instanceof RAbstractStringVector)) {
+            if (!(origDotMethod instanceof RStringVector)) {
                 assert false : "Unexpected value of .Method in Ops generic after NextMethod or UseMethod: " + origDotMethod;
                 return dotMethod;
             }
-            RAbstractStringVector origVec = profileDotMethod(origDotMethod);
+            RStringVector origVec = profileDotMethod(origDotMethod);
             if (origVec.getLength() != 2) {
                 assert false : "Unexpected length of .Method: " + origVec.getLength();
                 return dotMethod;
@@ -148,12 +147,12 @@ public abstract class S3DispatchFunctions {
             return rvnMethod.execute(frame);
         }
 
-        private RAbstractStringVector profileDotMethod(Object origDotMethod) {
+        private RStringVector profileDotMethod(Object origDotMethod) {
             if (dotMethodClassProfile == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 dotMethodClassProfile = ValueProfile.createClassProfile();
             }
-            return dotMethodClassProfile.profile((RAbstractStringVector) origDotMethod);
+            return dotMethodClassProfile.profile((RStringVector) origDotMethod);
         }
     }
 
@@ -294,9 +293,9 @@ public abstract class S3DispatchFunctions {
         }
 
         protected static boolean isNotString(Object obj) {
-            // Note: if RAbstractStringVector becomes expected, then it must have length == 1, GnuR
+            // Note: if RStringVector becomes expected, then it must have length == 1, GnuR
             // ignores character vectors longer than 1 as the "generic" argument of NextMethod
-            assert !(obj instanceof RAbstractStringVector) || ((RAbstractStringVector) obj).getLength() != 1 : "unexpected RAbstractStringVector with length != 1";
+            assert !(obj instanceof RStringVector) || ((RStringVector) obj).getLength() != 1 : "unexpected RStringVector with length != 1";
             return !(obj instanceof String);
         }
 

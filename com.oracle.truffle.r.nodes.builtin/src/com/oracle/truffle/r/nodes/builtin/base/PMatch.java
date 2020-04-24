@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 @RBuiltin(name = "pmatch", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "duplicates.ok"}, behavior = PURE)
 @SuppressWarnings("unused")
@@ -45,7 +45,7 @@ public abstract class PMatch extends RBuiltinNode.Arg4 {
 
     private final ConditionProfile nomatchNA = ConditionProfile.createBinaryProfile();
 
-    public abstract RIntVector execute(RAbstractStringVector x, RAbstractStringVector table, int nomatch, boolean duplicatesOk);
+    public abstract RIntVector execute(RStringVector x, RStringVector table, int nomatch, boolean duplicatesOk);
 
     static {
         Casts casts = new Casts(PMatch.class);
@@ -56,12 +56,12 @@ public abstract class PMatch extends RBuiltinNode.Arg4 {
     }
 
     @Specialization
-    protected RIntVector doPMatch(RNull x, RAbstractStringVector table, int nomatch, boolean duplicatesOk) {
+    protected RIntVector doPMatch(RNull x, RStringVector table, int nomatch, boolean duplicatesOk) {
         return RDataFactory.createEmptyIntVector();
     }
 
     @Specialization
-    protected RIntVector doPMatch(RAbstractStringVector x, RNull table, int nomatch, boolean duplicatesOk) {
+    protected RIntVector doPMatch(RStringVector x, RNull table, int nomatch, boolean duplicatesOk) {
         return RDataFactory.createEmptyIntVector();
     }
 
@@ -71,7 +71,7 @@ public abstract class PMatch extends RBuiltinNode.Arg4 {
     }
 
     @Specialization
-    protected RIntVector doPMatch(RAbstractStringVector x, RAbstractStringVector table, int nomatch, boolean duplicatesOk) {
+    protected RIntVector doPMatch(RStringVector x, RStringVector table, int nomatch, boolean duplicatesOk) {
         int xl = x.getLength();
         int tl = table.getLength();
         int[] matches = new int[xl];

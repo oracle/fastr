@@ -71,9 +71,8 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class SampleCollectorTest {
@@ -276,7 +275,7 @@ public class SampleCollectorTest {
     @Test
     public void testAndAsNegationOfOrFilter() {
         // !(!A || !B) = A && B
-        arg.mustBe(instanceOf(RAbstractStringVector.class).not().or(instanceOf(RIntVector.class).not()).not());
+        arg.mustBe(instanceOf(RStringVector.class).not().or(instanceOf(RIntVector.class).not()).not());
         assertSamples(vector(RType.Character, ""), vector(RType.Character, nonEmptyString()), vector(RType.Character, RRuntime.STRING_NA), vector(RType.Integer, 0),
                         vector(RType.Integer, RRuntime.INT_NA), RNull.instance, RMissing.instance);
     }
@@ -312,7 +311,7 @@ public class SampleCollectorTest {
     @Test
     public void testOrAsNegationOfAndFilter() {
         // !(!A && !B) = A || B
-        arg.mustBe(instanceOf(RAbstractStringVector.class).not().and(instanceOf(RIntVector.class).not()).not());
+        arg.mustBe(instanceOf(RStringVector.class).not().and(instanceOf(RIntVector.class).not()).not());
         assertSamples(vector(RType.Character, ""), vector(RType.Character, nonEmptyString()), vector(RType.Character, RRuntime.STRING_NA), vector(RType.Integer, 0),
                         vector(RType.Integer, RRuntime.INT_NA), RNull.instance, RMissing.instance);
     }
@@ -332,14 +331,14 @@ public class SampleCollectorTest {
 
     @Test
     public void testNotFilter3() {
-        // !(x instanceof RStringVector) && (x instanceof RAbstractStringVector)
-        arg.mustBe(instanceOf(RStringVector.class).not()).mustBe(instanceOf(RAbstractStringVector.class));
+        // !(x instanceof RStringVector) && (x instanceof RStringVector)
+        arg.mustBe(instanceOf(RStringVector.class).not()).mustBe(instanceOf(RStringVector.class));
         assertSamples(vector(RType.Character, ""), vector(RType.Character, nonEmptyString()), vector(RType.Character, RRuntime.STRING_NA), RNull.instance, RMissing.instance);
     }
 
     @Test
     public void testNotFilter4() {
-        arg.mustBe(instanceOf(RAbstractStringVector.class)).mustBe(elementAt(3, "xyz").not());
+        arg.mustBe(instanceOf(RStringVector.class)).mustBe(elementAt(3, "xyz").not());
         assertSamples(vectorOfSize(RType.Character, 4), vector(RType.Character, "xyz"), RNull.instance, RMissing.instance);
     }
 

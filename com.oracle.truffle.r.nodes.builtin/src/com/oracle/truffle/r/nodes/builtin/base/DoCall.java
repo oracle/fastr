@@ -81,7 +81,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
@@ -107,7 +107,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
     // they should be interpreted as read of given symbol from the given environment.
 
     @Specialization
-    protected Object doCall(VirtualFrame frame, RAbstractStringVector what, RList argsAsList, boolean quote, REnvironment env,
+    protected Object doCall(VirtualFrame frame, RStringVector what, RList argsAsList, boolean quote, REnvironment env,
                     @Cached("create()") DoCallInternal internal,
                     @Cached("createGet()") Get getNode) {
         if (what.getLength() != 1) {

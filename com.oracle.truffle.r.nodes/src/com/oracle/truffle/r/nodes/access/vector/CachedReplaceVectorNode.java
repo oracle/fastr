@@ -61,10 +61,9 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -108,7 +107,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         super(mode, vector, positions, recursive);
         assert vectorType.isVector();
 
-        if (numberOfPositions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {
+        if (numberOfPositions == 1 && positions[0] instanceof String || positions[0] instanceof RStringVector) {
             this.updatePositionNames = updatePositionNames;
         } else {
             this.updatePositionNames = false;
@@ -423,7 +422,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
     private final ConditionProfile updateNamesProfile = ConditionProfile.createBinaryProfile();
 
-    private void updatePositionNames(RAbstractVector resultVector, RAbstractStringVector positionNames, Object[] positions) {
+    private void updatePositionNames(RAbstractVector resultVector, RStringVector positionNames, Object[] positions) {
         if (getResultNamesNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             getResultNamesNode = insert(GetNamesAttributeNode.create());
@@ -439,7 +438,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             copyPositionNames = insert(ReplaceVectorNode.create(ElementAccessMode.SUBSET, true));
         }
-        RAbstractStringVector newNames = (RAbstractStringVector) copyPositionNames.apply(names, positions, positionNames);
+        RStringVector newNames = (RStringVector) copyPositionNames.apply(names, positions, positionNames);
         if (updateNamesProfile.profile(newNames != originalNames)) {
             if (setNamesNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

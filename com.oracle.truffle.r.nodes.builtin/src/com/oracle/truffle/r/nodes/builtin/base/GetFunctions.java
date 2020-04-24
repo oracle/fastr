@@ -67,7 +67,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -275,7 +275,7 @@ public class GetFunctions {
             final String[] names;
             boolean complete = RDataFactory.COMPLETE_VECTOR;
 
-            State(RAbstractStringVector xv, RAbstractStringVector mode, RList ifNotFound) {
+            State(RStringVector xv, RStringVector mode, RList ifNotFound) {
                 this.svLength = xv.getLength();
                 this.modeLength = mode.getLength();
                 this.ifNotFoundLength = ifNotFound.getLength();
@@ -300,7 +300,7 @@ public class GetFunctions {
             }
         }
 
-        private State checkArgs(RAbstractStringVector xv, RAbstractStringVector mode, RList ifNotFound) {
+        private State checkArgs(RStringVector xv, RStringVector mode, RList ifNotFound) {
             State state = new State(xv, mode, ifNotFound);
             if (!(state.modeLength == 1 || state.modeLength == state.svLength)) {
                 wrongLengthErrorProfile.enter();
@@ -314,7 +314,7 @@ public class GetFunctions {
         }
 
         @Specialization
-        protected RList mget(VirtualFrame frame, RAbstractStringVector xv, REnvironment envir, RAbstractStringVector mode, RList ifNotFound, boolean inherits,
+        protected RList mget(VirtualFrame frame, RStringVector xv, REnvironment envir, RStringVector mode, RList ifNotFound, boolean inherits,
                         @Cached("createBinaryProfile()") ConditionProfile argsAndValuesProfile,
                         @Cached("createBinaryProfile()") ConditionProfile missingProfile,
                         @Cached("createBinaryProfile()") ConditionProfile inheritsProfile) {
@@ -356,7 +356,7 @@ public class GetFunctions {
         }
 
         @Specialization
-        protected RList mget(VirtualFrame frame, RAbstractStringVector xv, RS4Object s4Envir, RAbstractStringVector mode, RList ifNotFound, boolean inherits,
+        protected RList mget(VirtualFrame frame, RStringVector xv, RS4Object s4Envir, RStringVector mode, RList ifNotFound, boolean inherits,
                         @Cached("createBinaryProfile()") ConditionProfile argsAndValuesProfile,
                         @Cached("createBinaryProfile()") ConditionProfile missingProfile,
                         @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,
@@ -365,7 +365,7 @@ public class GetFunctions {
         }
 
         @Specialization
-        protected RList mget(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, RAbstractStringVector mode, Object ifNotFound, boolean inherits,
+        protected RList mget(VirtualFrame frame, RStringVector xv, REnvironment env, RStringVector mode, Object ifNotFound, boolean inherits,
                         @Cached("createBinaryProfile()") ConditionProfile argsAndValuesProfile,
                         @Cached("createBinaryProfile()") ConditionProfile missingProfile,
                         @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,

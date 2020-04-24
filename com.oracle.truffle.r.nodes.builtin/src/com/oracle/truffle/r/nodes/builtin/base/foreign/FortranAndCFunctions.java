@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
@@ -88,7 +88,7 @@ public class FortranAndCFunctions {
         }
 
         @Specialization
-        protected RList doFortranName(VirtualFrame frame, RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
+        protected RList doFortranName(VirtualFrame frame, RStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
                         @Cached CallRegisteredROverride callRegisteredROverride,
                         @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {
@@ -148,7 +148,7 @@ public class FortranAndCFunctions {
         }
 
         @Specialization
-        protected RList cName(VirtualFrame frame, RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
+        protected RList cName(VirtualFrame frame, RStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
                         @Cached CallRegisteredROverride callRegisteredROverride,
                         @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef) {

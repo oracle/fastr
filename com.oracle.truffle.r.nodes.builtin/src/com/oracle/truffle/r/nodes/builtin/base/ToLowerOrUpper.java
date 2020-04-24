@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -74,7 +73,7 @@ public abstract class ToLowerOrUpper {
             return elementFunction(value, 0, function);
         }
 
-        public RStringVector apply(RAbstractStringVector vector, BiFunction<String, Integer, String> function) {
+        public RStringVector apply(RStringVector vector, BiFunction<String, Integer, String> function) {
             na.enable(vector);
             int length = lengthProfile.profile(vector.getLength());
             String[] stringVector = new String[length];
@@ -110,7 +109,7 @@ public abstract class ToLowerOrUpper {
         }
 
         @Specialization
-        protected RStringVector toLower(RAbstractStringVector vector) {
+        protected RStringVector toLower(RStringVector vector) {
             return mapNode.apply(vector, ToLower::processElement);
         }
     }
@@ -136,7 +135,7 @@ public abstract class ToLowerOrUpper {
         }
 
         @Specialization
-        protected RStringVector toLower(RAbstractStringVector vector) {
+        protected RStringVector toLower(RStringVector vector) {
             return mapNode.apply(vector, ToUpper::processElement);
         }
     }

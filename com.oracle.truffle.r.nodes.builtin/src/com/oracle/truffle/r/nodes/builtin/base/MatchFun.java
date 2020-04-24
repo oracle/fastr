@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -110,7 +110,7 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
             return descend ? ReadVariableNode.createFunctionLookup(name) : ReadVariableNode.create(name);
         }
 
-        protected static String firstString(RAbstractStringVector vec) {
+        protected static String firstString(RStringVector vec) {
             return vec.getDataAt(0);
         }
 
@@ -125,7 +125,7 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "getCacheSize(LIMIT)", guards = {"funValue.getLength() == 1", "funValue.getDataAt(0) == cachedName", "getCallerFrameDescriptor(frame) == cachedCallerFrameDescriptor"})
-        protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RAbstractStringVector funValue, boolean descend,
+        protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RStringVector funValue, boolean descend,
                         @Cached("firstString(funValue)") String cachedName,
                         @Cached("getCallerFrameDescriptor(frame)") FrameDescriptor cachedCallerFrameDescriptor,
                         @Cached("createLookup(cachedName, descend)") ReadVariableNode lookup) {
@@ -133,7 +133,7 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
         }
 
         @Specialization(replaces = "matchfunCached", guards = {"funValue.getLength() == 1"})
-        protected RFunction matchfunGeneric(VirtualFrame frame, @SuppressWarnings("unused") RPromise funPromise, RAbstractStringVector funValue, boolean descend) {
+        protected RFunction matchfunGeneric(VirtualFrame frame, @SuppressWarnings("unused") RPromise funPromise, RStringVector funValue, boolean descend) {
             return checkResult(slowPathLookup(funValue.getDataAt(0), getCallerFrame.execute(frame), descend));
         }
 

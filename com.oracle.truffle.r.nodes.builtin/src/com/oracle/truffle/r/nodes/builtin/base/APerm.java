@@ -54,9 +54,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
@@ -253,7 +252,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(guards = "reuseNonSharedNode.supports(vector)", limit = "getGenericVectorAccessCacheSize()")
-    protected RAbstractVector aPerm(RAbstractVector vector, RAbstractStringVector permVector, byte resize,
+    protected RAbstractVector aPerm(RAbstractVector vector, RStringVector permVector, byte resize,
                     @CachedLibrary("vector") AbstractContainerLibrary vectorLib,
                     @CachedLibrary("vector.getData()") VectorDataLibrary vectorDataLib,
                     @CachedLibrary(limit = "getCacheSize(1)") VectorDataLibrary resultDataLib,
@@ -291,7 +290,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(replaces = "aPerm", limit = "getGenericVectorAccessCacheSize()")
-    protected RAbstractVector aPermGeneric(RAbstractVector vector, RAbstractStringVector permVector, byte resize,
+    protected RAbstractVector aPermGeneric(RAbstractVector vector, RStringVector permVector, byte resize,
                     @CachedLibrary("vector") AbstractContainerLibrary vectorLib,
                     @CachedLibrary("vector.getData()") VectorDataLibrary vectorDataLib,
                     @CachedLibrary(limit = "getCacheSize(1)") VectorDataLibrary resultDataLib,

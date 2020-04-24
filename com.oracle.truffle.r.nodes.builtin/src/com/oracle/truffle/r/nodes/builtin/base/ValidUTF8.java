@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
  * The {@code validUTF8 .Internal}.
@@ -48,7 +48,7 @@ public abstract class ValidUTF8 extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RLogicalVector validUTF8(RAbstractStringVector x) {
+    protected RLogicalVector validUTF8(RStringVector x) {
         /**
          * NB: Once we have a string it is too late to determine whether the string is UTF-8 valid.
          * The check must be done on the raw data before it is used to create the string.

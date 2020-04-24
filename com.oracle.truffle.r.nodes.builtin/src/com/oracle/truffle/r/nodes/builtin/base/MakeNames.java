@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
@@ -102,21 +102,21 @@ public abstract class MakeNames extends RBuiltinNode.Arg2 {
     }
 
     private static class NewNames {
-        final RAbstractStringVector vector;
+        final RStringVector vector;
         final VectorAccess access;
         final VectorAccess.RandomIterator iter;
 
-        NewNames(RAbstractStringVector vector, VectorAccess access, VectorAccess.RandomIterator iter) {
+        NewNames(RStringVector vector, VectorAccess access, VectorAccess.RandomIterator iter) {
             this.vector = vector;
             this.access = access;
             this.iter = iter;
         }
     }
 
-    private static NewNames updateNewNames(RAbstractStringVector names, VectorReuse reuse, int index, String newName, NewNames newNames) {
+    private static NewNames updateNewNames(RStringVector names, VectorReuse reuse, int index, String newName, NewNames newNames) {
         NewNames nn = newNames;
         if (nn == null) {
-            RAbstractStringVector res = reuse.getResult(names);
+            RStringVector res = reuse.getResult(names);
             VectorAccess access = res.slowPathAccess();
             VectorAccess.RandomIterator iter = access.randomAccess(res);
             nn = new NewNames(res, access, iter);
@@ -159,7 +159,7 @@ public abstract class MakeNames extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"namesAccess.supports(names)", "reuse.supports(names)"})
-    protected RAbstractStringVector makeNames(RAbstractStringVector names, byte allowUnderScoreArg,
+    protected RStringVector makeNames(RStringVector names, byte allowUnderScoreArg,
                     @Cached("names.access()") VectorAccess namesAccess,
                     @Cached("createNonShared(names)") VectorReuse reuse) {
         try (VectorAccess.SequentialIterator namesIter = namesAccess.access(names)) {
@@ -193,7 +193,7 @@ public abstract class MakeNames extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "makeNames")
-    protected RAbstractStringVector makeNamesGeneric(RAbstractStringVector names, byte allowUnderScoreArg,
+    protected RStringVector makeNamesGeneric(RStringVector names, byte allowUnderScoreArg,
                     @Cached("createNonSharedGeneric()") VectorReuse reuse) {
         return makeNames(names, allowUnderScoreArg, names.slowPathAccess(), reuse);
     }

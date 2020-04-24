@@ -28,7 +28,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -45,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import static org.junit.Assert.fail;
 
@@ -330,8 +329,8 @@ public class VectorInteropTest extends AbstractInteropTest {
             return RRuntime.isNA(((RIntVector) vec).getDataAt(0));
         } else if (vec instanceof RLogicalVector) {
             return RRuntime.isNA(((RLogicalVector) vec).getDataAt(0));
-        } else if (vec instanceof RAbstractStringVector) {
-            return RRuntime.isNA(((RAbstractStringVector) vec).getDataAt(0));
+        } else if (vec instanceof RStringVector) {
+            return RRuntime.isNA(((RStringVector) vec).getDataAt(0));
         } else if (vec instanceof RComplexVector || vec instanceof RRawVector) {
             return false;
         }
@@ -354,8 +353,8 @@ public class VectorInteropTest extends AbstractInteropTest {
         if (vec instanceof RLogicalVector) {
             return RRuntime.isNA(((RLogicalVector) vec).getDataAt(0));
         }
-        if (vec instanceof RAbstractStringVector) {
-            return RRuntime.isNA(((RAbstractStringVector) vec).getDataAt(0));
+        if (vec instanceof RStringVector) {
+            return RRuntime.isNA(((RStringVector) vec).getDataAt(0));
         }
         if (vec instanceof RIntVector) {
             return RRuntime.isNA(((RIntVector) vec).getDataAt(0));

@@ -89,7 +89,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.LoopTag;
@@ -530,7 +529,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public RAbstractStringVector getClassHierarchy(RAttributable value) {
+    public RStringVector getClassHierarchy(RAttributable value) {
         return ClassHierarchyNode.getClassHierarchy(value);
     }
 

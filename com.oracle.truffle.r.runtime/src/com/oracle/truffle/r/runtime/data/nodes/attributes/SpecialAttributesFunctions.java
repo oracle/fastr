@@ -56,10 +56,9 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.MaterializeNode;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
@@ -1309,8 +1308,8 @@ public final class SpecialAttributesFunctions {
                         castVector = insert(CastToVectorNode.create());
                     }
                     comment = castVector.doCast(value);
-                } else if (value instanceof RAbstractStringVector) {
-                    RAbstractStringVector str = (RAbstractStringVector) value;
+                } else if (value instanceof RStringVector) {
+                    RStringVector str = (RStringVector) value;
                     naCheck.enable(str);
                     for (int j = str.getLength() - 1; j >= 0; j--) {
                         if (!naCheck.check(str.getDataAt(j))) {
@@ -1358,8 +1357,8 @@ public final class SpecialAttributesFunctions {
             return RRuntime.COMMENT_ATTR_KEY;
         }
 
-        public RAbstractStringVector getComment(RAttributable x) {
-            return (RAbstractStringVector) execute(x);
+        public RStringVector getComment(RAttributable x) {
+            return (RStringVector) execute(x);
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")

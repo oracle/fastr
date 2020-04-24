@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class NamespaceFunctions {
@@ -59,7 +59,7 @@ public class NamespaceFunctions {
         }
 
         @Specialization
-        protected Object doGetRegisteredNamespace(RAbstractStringVector name) {
+        protected Object doGetRegisteredNamespace(RStringVector name) {
             Object result = REnvironment.getRegisteredNamespace(name.getDataAt(0));
             if (result == null) {
                 return RNull.instance;
@@ -88,7 +88,7 @@ public class NamespaceFunctions {
         }
 
         @Specialization
-        protected byte doIsRegisteredNamespace(RAbstractStringVector name) {
+        protected byte doIsRegisteredNamespace(RStringVector name) {
             Object result = REnvironment.getRegisteredNamespace(name.getDataAt(0));
             if (result == null) {
                 return RRuntime.LOGICAL_FALSE;
@@ -145,7 +145,7 @@ public class NamespaceFunctions {
         }
 
         @Specialization
-        protected RNull registerNamespace(RAbstractStringVector name, REnvironment env) {
+        protected RNull registerNamespace(RStringVector name, REnvironment env) {
             if (REnvironment.registerNamespace(name.getDataAt(0), env) == null) {
                 throw error(RError.Message.NS_ALREADY_REG);
             }
@@ -171,7 +171,7 @@ public class NamespaceFunctions {
         }
 
         @Specialization
-        protected RNull unregisterNamespace(RAbstractStringVector name) {
+        protected RNull unregisterNamespace(RStringVector name) {
             doUnregisterNamespace(name.getDataAt(0));
             return RNull.instance;
         }

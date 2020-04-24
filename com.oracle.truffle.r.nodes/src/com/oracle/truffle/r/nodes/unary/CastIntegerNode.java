@@ -39,14 +39,13 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -251,11 +250,11 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     protected boolean useClosure(RAbstractAtomicVector x) {
-        return useClosure() && !isForeignWrapper(x) && !(x instanceof RIntVector) && !(x instanceof RAbstractStringVector || x instanceof RComplexVector);
+        return useClosure() && !isForeignWrapper(x) && !(x instanceof RIntVector) && !(x instanceof RStringVector || x instanceof RComplexVector);
     }
 
     protected boolean noClosure(RAbstractAtomicVector x) {
-        return !isForeignWrapper(x) && !isForeignVector(x) && !(x instanceof RIntVector) && (!useClosure() || x instanceof RAbstractStringVector || x instanceof RComplexVector);
+        return !isForeignWrapper(x) && !isForeignVector(x) && !(x instanceof RIntVector) && (!useClosure() || x instanceof RStringVector || x instanceof RComplexVector);
     }
 
     protected boolean isDoubleSequence(RAbstractAtomicVector x) {

@@ -55,7 +55,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -209,7 +209,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
         public abstract Object execute(Object names);
 
         @Specialization
-        protected Object doStrings(RAbstractStringVector names,
+        protected Object doStrings(RStringVector names,
                         @Exclusive @Cached("createClassProfile()") ValueProfile namesProfile) {
             // always copy string vectors, see the comment on this class
             return namesProfile.profile(names).copyDropAttributes();
@@ -247,7 +247,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
         }
 
         protected static boolean isStringVector(Object names) {
-            return names instanceof RAbstractStringVector;
+            return names instanceof RStringVector;
         }
     }
 }

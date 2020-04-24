@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class MatchNodes {
@@ -68,7 +68,7 @@ public final class MatchNodes {
     public abstract static class NonNullStringMatchNode extends FFIUpCallNode.Arg2 {
 
         @Specialization(guards = {"s.getLength() == 1", "t.getLength() == 1"})
-        Object matchSingle(RAbstractStringVector s, RAbstractStringVector t) {
+        Object matchSingle(RStringVector s, RStringVector t) {
             if (s.getDataAt(0) == RRuntime.STRING_NA || t.getDataAt(0) == RRuntime.STRING_NA) {
                 return RRuntime.LOGICAL_FALSE;
             }

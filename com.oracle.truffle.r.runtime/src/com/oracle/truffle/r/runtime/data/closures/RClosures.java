@@ -27,11 +27,10 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class RClosures {
@@ -48,15 +47,15 @@ public class RClosures {
         return RComplexVector.createClosure(vector, keepAttributes);
     }
 
-    public static RAbstractStringVector createToStringVector(RAbstractVector vector, boolean keepAttributes) {
+    public static RStringVector createToStringVector(RAbstractVector vector, boolean keepAttributes) {
         return RStringVector.createClosure(vector, keepAttributes);
     }
 
     // Factor to vector
 
     public static RAbstractVector createFactorToVector(RIntVector factor, boolean keepAttrs, RAbstractVector levels) {
-        if (levels instanceof RAbstractStringVector) {
-            return RStringVector.createFactorClosure(factor, (RAbstractStringVector) levels, keepAttrs);
+        if (levels instanceof RStringVector) {
+            return RStringVector.createFactorClosure(factor, (RStringVector) levels, keepAttrs);
         } else {
             throw RError.error(RError.SHOW_CALLER, Message.MALFORMED_FACTOR);
         }
