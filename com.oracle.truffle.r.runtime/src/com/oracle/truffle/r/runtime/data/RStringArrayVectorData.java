@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
@@ -65,7 +65,7 @@ class RStringArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @Override
-    public void setOwner(RAbstractVector newOwner) {
+    public void setOwner(RAbstractContainer newOwner) {
         owner = (RStringVector) newOwner;
         owner.setComplete(complete);
     }

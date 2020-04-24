@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -83,8 +84,9 @@ public class RLogicalNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
-    public RLogicalArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
-        return copy(deep).copyResized(newSize, deep, fillNA);
+    public RLogicalArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA,
+                    @Cached BranchProfile ownerIsNull) {
+        return copy(deep).copyResized(newSize, deep, fillNA, ownerIsNull);
     }
 
     @ExportMessage

@@ -121,7 +121,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
                 resultAccess.setLogical(resultIter, vectorAccess.na.check(value) ? RRuntime.LOGICAL_NA : not(value));
             }
         }
-        result.setComplete(vectorAccess.na.neverSeenNA());
+        result.setComplete(result.isComplete() && vectorAccess.na.neverSeenNA());
         return result;
     }
 
@@ -176,7 +176,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
                     }
                     break;
             }
-            result.setComplete(vectorAccess.na.neverSeenNA());
+            result.setComplete(result.isComplete() && vectorAccess.na.neverSeenNA());
             return result;
         }
     }

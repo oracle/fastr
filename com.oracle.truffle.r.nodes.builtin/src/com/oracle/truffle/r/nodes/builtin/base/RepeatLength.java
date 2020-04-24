@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -32,15 +32,16 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -49,9 +50,10 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 @RBuiltin(name = "rep_len", kind = INTERNAL, parameterNames = {"x", "length.out"}, behavior = PURE)
 public abstract class RepeatLength extends RBuiltinNode.Arg2 {
@@ -120,33 +122,26 @@ public abstract class RepeatLength extends RBuiltinNode.Arg2 {
         return RDataFactory.createLogicalVector(array, value != RRuntime.LOGICAL_NA);
     }
 
-    @Specialization(guards = "xAccess.supports(x)", limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(limit = "getGenericDataLibraryCacheSize()")
     protected RAbstractVector repLenCached(RAbstractVector x, int length,
-                    @Cached("x.access()") VectorAccess xAccess,
-                    @Cached("createNew(xAccess.getType())") VectorAccess resultAccess,
-                    @Cached("createBinaryProfile()") ConditionProfile emptyProfile,
-                    @Cached("create()") VectorFactory factory) {
-        try (SequentialIterator xIter = xAccess.access(x)) {
-            if (emptyProfile.profile(xAccess.getLength(xIter) == 0)) {
-                return factory.createVector(xAccess.getType(), length, true);
-            }
-            RAbstractVector result = factory.createVector(xAccess.getType(), length, false);
-            try (SequentialIterator resultIter = resultAccess.access(result)) {
-                while (resultAccess.next(resultIter)) {
-                    xAccess.nextWithWrap(xIter);
-                    resultAccess.setFromSameType(resultIter, xAccess, xIter);
-                }
-            }
-            result.setComplete(x.isComplete());
-            return result;
+                    @CachedLibrary("x") AbstractContainerLibrary xContainerLib,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary resultDataLib,
+                    @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
+        Object xData = x.getData();
+        if (emptyProfile.profile(xDataLib.getLength(xData) == 0)) {
+            return xContainerLib.createEmptySameType(x, length, true);
         }
+        SeqIterator xIt = xDataLib.iterator(xData);
+        RAbstractVector result = xContainerLib.createEmptySameType(x, length, false);
+        Object resultData = result.getData();
+        try (SeqWriteIterator resultIt = resultDataLib.writeIterator(resultData)) {
+            while (resultDataLib.next(resultData, resultIt)) {
+                xDataLib.nextWithWrap(xData, xIt);
+                resultDataLib.transferNext(resultData, resultIt, xDataLib, xIt, xData);
+            }
+            resultDataLib.commitWriteIterator(resultData, resultIt, xDataLib.getNACheck(xData).neverSeenNA());
+        }
+        return result;
     }
-
-    @Specialization(replaces = "repLenCached")
-    protected RAbstractVector repLenGeneric(RAbstractVector x, int length,
-                    @Cached("createBinaryProfile()") ConditionProfile emptyProfile,
-                    @Cached("create()") VectorFactory factory) {
-        return repLenCached(x, length, x.slowPathAccess(), VectorAccess.createSlowPathNew(x.getRType()), emptyProfile, factory);
-    }
-
 }

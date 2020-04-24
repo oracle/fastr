@@ -51,11 +51,13 @@ import com.oracle.truffle.r.runtime.data.RFFIAccess;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSeq;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.UpdateShareableChildValue;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataWithOwner;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.nodes.CopyResizedWithEmpty;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
@@ -88,6 +90,19 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
 
     protected RAbstractVector(boolean complete) {
         this.complete = complete && ENABLE_COMPLETE;
+    }
+
+    public final void setData(Object data) {
+        this.data = data;
+        if (data instanceof VectorDataWithOwner) {
+            // "setOwner" may be a message in the VectorDataLibrary to make this fast
+            ((VectorDataWithOwner) data).setOwner(this);
+        }
+        // temporary solution to keep isShareable() fast
+        shareable = VectorDataLibrary.getFactory().getUncached().isWriteable(data);
+        // temporary solution to keep isComplete() fast
+        complete = VectorDataLibrary.getFactory().getUncached().isComplete(data);
+        verifyData();
     }
 
     public boolean isSequence() {
@@ -215,6 +230,10 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return isTemporary() ? getReadonlyData() : getDataCopy();
     }
 
+    @InternalDeprecation("Some data strategies do not maintain completeness flag, " +
+                    "it should be the sole responsibility of the VectorDataLibrary implementation to keep the flag up-to-date." +
+                    "There should be no need to set completeness manually if one uses the write operations of VectorDataLibrary." +
+                    "See how the Diag builtin was rewritten to avoid calling setComplete.")
     public void setComplete(boolean complete) {
         this.complete = complete && ENABLE_COMPLETE;
         assert RAbstractVector.verifyVector(this);
@@ -948,12 +967,30 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         }
     }
 
+    protected static VectorDataLibrary getUncachedDataLib() {
+        return VectorDataLibrary.getFactory().getUncached();
+    }
+
+    protected void verifyData() {
+        assert getUncachedDataLib().getType(data) == getRType() : formatVerifyErrorMsg(getUncachedDataLib().getType(data), getRType());
+        boolean ignoreComplete = this instanceof RRawVector || this instanceof RList;
+        assert ignoreComplete || getUncachedDataLib().isComplete(data) == isComplete() : formatVerifyErrorMsg(getUncachedDataLib().isComplete(data), isComplete());
+        assert getUncachedDataLib().getLength(data) == getLength() : formatVerifyErrorMsg(getUncachedDataLib().getLength(data), getLength());
+    }
+
+    protected String formatVerifyErrorMsg(Object dataVal, Object vecVal) {
+        return String.format("data: %s, this: %s, data result: %s, vector result: %s",
+                        data.getClass().getSimpleName(), this.getClass().getSimpleName(),
+                        dataVal, vecVal);
+    }
+
     /**
      * Verifies the integrity of the vector, mainly whether a vector that claims to be
      * {@link #isComplete()} contains NA values.
      */
     public static boolean verifyVector(RAbstractVector vector) {
         CompilerAsserts.neverPartOfCompilation();
+        vector.verifyData();
         VectorAccess access = vector.slowPathAccess();
         assert access.getType().isVector();
         if (!access.getType().isAtomic()) {

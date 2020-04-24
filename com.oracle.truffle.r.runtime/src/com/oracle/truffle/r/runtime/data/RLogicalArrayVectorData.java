@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIter
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 import java.util.Arrays;
@@ -56,15 +56,17 @@ class RLogicalArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @Override
-    public void setOwner(RAbstractVector newOwner) {
+    public void setOwner(RAbstractContainer newOwner) {
         owner = (RLogicalVector) newOwner;
         owner.setComplete(complete);
     }
 
     @SuppressWarnings("static-method")
     @ExportMessage
-    public NACheck getNACheck(@Shared("naCheck") @Cached() NACheck na) {
-        na.enable(!isComplete());
+    public NACheck getNACheck(
+                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull,
+                    @Shared("naCheck") @Cached() NACheck na) {
+        na.enable(!isComplete(ownerIsNull));
         return na;
     }
 
@@ -90,21 +92,27 @@ class RLogicalArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RLogicalArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
-        return new RLogicalArrayVectorData(Arrays.copyOf(data, data.length), isComplete());
+    public RLogicalArrayVectorData copy(@SuppressWarnings("unused") boolean deep,
+                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
+        return new RLogicalArrayVectorData(Arrays.copyOf(data, data.length), isComplete(ownerIsNull));
     }
 
     @ExportMessage
-    public RLogicalArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA) {
+    public RLogicalArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
+                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
         byte[] newData = Arrays.copyOf(data, newSize);
         if (fillNA) {
             Arrays.fill(newData, data.length, newData.length, RRuntime.LOGICAL_NA);
         }
-        return new RLogicalArrayVectorData(newData, isComplete());
+        return new RLogicalArrayVectorData(newData, isComplete(ownerIsNull));
     }
 
     @ExportMessage
-    public boolean isComplete() {
+    public boolean isComplete(@Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
+        if (owner != null) {
+            return owner.isComplete() && ENABLE_COMPLETE;
+        }
+        ownerIsNull.enter();
         return complete && ENABLE_COMPLETE;
     }
 
@@ -123,9 +131,10 @@ class RLogicalArrayVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public SeqIterator iterator(
                     @Shared("naCheck") @Cached() NACheck naCheck,
+                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull,
                     @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(data, data.length);
-        naCheck.enable(!isComplete());
+        naCheck.enable(!isComplete(ownerIsNull));
         it.initLoopConditionProfile(loopProfile);
         return it;
     }
@@ -145,15 +154,19 @@ class RLogicalArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RandomAccessIterator randomAccessIterator(@Shared("naCheck") @Cached() NACheck naCheck) {
-        naCheck.enable(!isComplete());
+    public RandomAccessIterator randomAccessIterator(
+                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
+        naCheck.enable(!isComplete(ownerIsNull));
         return new RandomAccessIterator(data);
     }
 
     @ExportMessage
-    public byte getLogicalAt(int index, @Shared("naCheck") @Cached() NACheck naCheck) {
+    public byte getLogicalAt(int index,
+                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull,
+                    @Shared("naCheck") @Cached() NACheck naCheck) {
         byte value = data[index];
-        naCheck.enable(!isComplete());
+        naCheck.enable(!isComplete(ownerIsNull));
         naCheck.check(value);
         return value;
     }

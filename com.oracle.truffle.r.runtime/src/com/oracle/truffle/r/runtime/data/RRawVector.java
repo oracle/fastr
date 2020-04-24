@@ -71,13 +71,11 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
     }
 
     private void setData(Object data, int newLen) {
-        this.data = data;
-        // Temporary solution to keep getLength(), isComplete(), and isShareable be fast-path
-        // operations (they only read a field, no polymorphism).
+        // Temporary solution to keep getLength() fast
         // The assumption is that length of vectors can only change in infrequently used setLength
         // operation where we update the field accordingly
         length = newLen;
-        shareable = data instanceof RRawArrayVectorData || data instanceof RRawNativeVectorData;
+        super.setData(data);
     }
 
     static RRawVector fromNative(long address, int length) {
@@ -286,7 +284,7 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
 
     public long allocateNativeContents() {
         try {
-            data = VectorDataLibrary.getFactory().getUncached().materialize(data);
+            setData(VectorDataLibrary.getFactory().getUncached().materialize(data));
             long result = NativeDataAccess.allocateNativeContents(this, getArrayForNativeDataAccess(), getLength());
             setData(new RRawNativeVectorData(this), getLength());
             return result;
