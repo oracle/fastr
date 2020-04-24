@@ -53,7 +53,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -172,7 +172,7 @@ public abstract class PrecedenceNode extends RBaseNode {
             return STRING_PRECEDENCE;
         } else if (vector instanceof RLogicalVector) {
             return LOGICAL_PRECEDENCE;
-        } else if (vector instanceof RAbstractComplexVector) {
+        } else if (vector instanceof RComplexVector) {
             return COMPLEX_PRECEDENCE;
         } else {
             CompilerDirectives.transferToInterpreter();

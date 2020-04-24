@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -148,7 +148,7 @@ public class IsFiniteFunctions {
             return result;
         }
 
-        protected RLogicalVector doFunComplex(VectorDataLibrary xDataLib, Object xData, RAbstractComplexVector x) {
+        protected RLogicalVector doFunComplex(VectorDataLibrary xDataLib, Object xData, RComplexVector x) {
             byte[] b = new byte[xDataLib.getLength(xData)];
             for (int i = 0; i < b.length; i++) {
                 b[i] = RRuntime.asLogical(predicates.test(xDataLib.getComplexAt(xData, i)));
@@ -225,7 +225,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
-        protected RLogicalVector doIsFinite(RAbstractComplexVector vec,
+        protected RLogicalVector doIsFinite(RComplexVector vec,
                         @CachedLibrary("vec.getData()") VectorDataLibrary dataLib) {
             return doFunComplex(dataLib, vec.getData(), vec);
         }
@@ -275,7 +275,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
-        protected RLogicalVector doIsInfinite(RAbstractComplexVector vec,
+        protected RLogicalVector doIsInfinite(RComplexVector vec,
                         @CachedLibrary("vec.getData()") VectorDataLibrary dataLib) {
             return doFunComplex(dataLib, vec.getData(), vec);
         }
@@ -325,7 +325,7 @@ public class IsFiniteFunctions {
         }
 
         @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
-        protected RLogicalVector doIsNan(RAbstractComplexVector vec,
+        protected RLogicalVector doIsNan(RComplexVector vec,
                         @CachedLibrary("vec.getData()") VectorDataLibrary dataLib) {
             return doFunComplex(dataLib, vec.getData(), vec);
         }

@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @TypeSystemReference(RTypes.class)
@@ -85,7 +85,7 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
         }
 
         if (RRuntime.isNA(result.getContents())) {
-            if (obj instanceof RAbstractComplexVector || obj instanceof RDoubleVector) {
+            if (obj instanceof RComplexVector || obj instanceof RDoubleVector) {
                 return CharSXPWrapper_NAString;
             } else {
                 return CharSXPWrapper_NA;

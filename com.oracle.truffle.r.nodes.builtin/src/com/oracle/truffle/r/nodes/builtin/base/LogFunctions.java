@@ -47,11 +47,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -160,7 +159,7 @@ public class LogFunctions {
             return logb(x, base, divNode, naBase);
         }
 
-        @Specialization(guards = "!isRAbstractComplexVector(vector)")
+        @Specialization(guards = "!isRComplexVector(vector)")
         protected RDoubleVector log(RAbstractVector vector, double base,
                         @Cached("createClassProfile()") ValueProfile vectorProfile,
                         @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
@@ -173,7 +172,7 @@ public class LogFunctions {
         }
 
         @Specialization
-        protected RComplexVector log(RAbstractComplexVector vector, double base,
+        protected RComplexVector log(RComplexVector vector, double base,
                         @Cached("createClassProfile()") ValueProfile vectorProfile,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
                         @Cached("create()") InitDimsNamesDimNamesNode initDimsNamesDimNames,
@@ -184,7 +183,7 @@ public class LogFunctions {
         }
 
         @Specialization
-        protected RAbstractComplexVector log(RAbstractVector vector, RComplex base,
+        protected RComplexVector log(RAbstractVector vector, RComplex base,
                         @Cached("createClassProfile()") ValueProfile vectorProfile,
                         @Cached("createBinaryProfile()") ConditionProfile isNAProfile,
                         @Cached("create()") CopyOfRegAttributesNode copyAttrsNode,
@@ -192,7 +191,7 @@ public class LogFunctions {
                         @Cached("createDivNode()") BinaryMapArithmeticFunctionNode divNode,
                         @Cached("create()") NACheck xNACheck,
                         @Cached("create()") NACheck baseNACheck) {
-            RAbstractComplexVector complexVector = (RAbstractComplexVector) vectorProfile.profile(vector).castSafe(RType.Complex, isNAProfile);
+            RComplexVector complexVector = (RComplexVector) vectorProfile.profile(vector).castSafe(RType.Complex, isNAProfile);
             return logInternal(complexVector, base, divNode, initDimsNamesDimNames, copyAttrsNode, xNACheck, baseNACheck);
         }
 
@@ -282,7 +281,7 @@ public class LogFunctions {
             }
         }
 
-        private RComplexVector logInternal(RAbstractComplexVector vector, RComplex base, BinaryMapArithmeticFunctionNode divNode,
+        private RComplexVector logInternal(RComplexVector vector, RComplex base, BinaryMapArithmeticFunctionNode divNode,
                         InitDimsNamesDimNamesNode initDimsNamesDimNames, CopyOfRegAttributesNode copyAttrsNode, NACheck xNACheck, NACheck baseNACheck) {
             baseNACheck.enable(base);
             double[] complexVector = new double[vector.getLength() * 2];

@@ -57,7 +57,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -104,7 +104,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
      * NaN in double or complex vectors that the order builtin regard as NA.
      */
     private static boolean mayContainNAorNaN(RAbstractVector v) {
-        return !v.isComplete() || v instanceof RDoubleVector || v instanceof RAbstractComplexVector;
+        return !v.isComplete() || v instanceof RDoubleVector || v instanceof RComplexVector;
     }
 
     private int[] createIndexes(RAbstractVector v, int len, byte naLast) {
@@ -216,7 +216,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     @Specialization(guards = {"oneVec(args)", "isFirstComplexPrecedence(args)"})
     Object orderComplex(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
-        RAbstractComplexVector v = (RAbstractComplexVector) castVector(args.getArgument(0));
+        RComplexVector v = (RComplexVector) castVector(args.getArgument(0));
         return executeOrderVector1(v, naLast, decreasing);
     }
 
@@ -437,7 +437,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected Object orderVector1(int[] indx, RAbstractComplexVector dv, byte naLast, boolean decreasing, boolean sortNA) {
+        protected Object orderVector1(int[] indx, RComplexVector dv, byte naLast, boolean decreasing, boolean sortNA) {
             if (indx.length < 2) {
                 return indx;
             }
@@ -623,7 +623,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
             return a.getRealPart() == b.getRealPart() && a.getImaginaryPart() == b.getImaginaryPart();
         }
 
-        private void sort(int[] indx, RAbstractComplexVector dv, int lo, int hi, boolean dec) {
+        private void sort(int[] indx, RComplexVector dv, int lo, int hi, boolean dec) {
             int t = 0;
             for (; SINCS[t] > hi - lo + 1; t++) {
             }
@@ -734,7 +734,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected boolean doComplex(RAbstractComplexVector v, int idx) {
+        protected boolean doComplex(RComplexVector v, int idx) {
             return RRuntime.isNA(v.getDataAt(idx));
         }
     }
@@ -843,7 +843,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         }
 
         @Specialization
-        protected int ccmp(RAbstractComplexVector v, int i, int j, boolean naLast) {
+        protected int ccmp(RComplexVector v, int i, int j, boolean naLast) {
             RComplex x = v.getDataAt(i);
             RComplex y = v.getDataAt(j);
             // compare real parts

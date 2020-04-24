@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -251,8 +251,8 @@ public abstract class RBaseNode extends Node {
         return value instanceof RIntVector;
     }
 
-    protected static boolean isRAbstractComplexVector(Object value) {
-        return value instanceof RAbstractComplexVector;
+    protected static boolean isRComplexVector(Object value) {
+        return value instanceof RComplexVector;
     }
 
     protected static boolean isRAbstractLogicalVector(Object value) {

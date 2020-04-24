@@ -62,7 +62,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -194,7 +194,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         } else if (funValueVec instanceof RAbstractStringVector) {
             String[] data = applyResultZeroLength ? new String[0] : convertStringVector(applyResult, funValueVecLen);
             result = RDataFactory.createStringVector(data, naCheck.neverSeenNA());
-        } else if (funValueVec instanceof RAbstractComplexVector) {
+        } else if (funValueVec instanceof RComplexVector) {
             double[] data = applyResultZeroLength ? new double[1] : convertComplexVector(applyResult, funValueVecLen);
             result = RDataFactory.createComplexVector(data, naCheck.neverSeenNA());
         } else {
@@ -317,7 +317,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
         double[] newArray = new double[values.length * len * 2];
         int ind = 0;
         for (int i = 0; i < values.length; i++) {
-            RAbstractComplexVector v = (RAbstractComplexVector) castComplex(values[i]);
+            RComplexVector v = (RComplexVector) castComplex(values[i]);
             checkValueLength(v, i, len);
             for (int j = 0; j < v.getLength(); j++) {
                 RComplex val = v.getDataAt(j);

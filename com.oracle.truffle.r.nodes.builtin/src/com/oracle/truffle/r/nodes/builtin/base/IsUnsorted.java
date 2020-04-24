@@ -37,9 +37,9 @@ import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.BinaryCompare;
 
@@ -139,7 +139,7 @@ public abstract class IsUnsorted extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected byte isUnsorted(RAbstractComplexVector x, boolean strictly,
+    protected byte isUnsorted(RComplexVector x, boolean strictly,
                     @Cached("createCmpNode()") CmpNode cmpNode) {
         int last = 0;
         for (int k = 1; k < x.getLength(); k++) {

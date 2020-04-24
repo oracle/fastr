@@ -75,7 +75,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -83,7 +82,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.data.nodes.VectorDataReuse;
@@ -412,8 +411,8 @@ public class LaFunctions {
                         @Cached("create()") GetDimAttributeNode getQDimAttribute,
                         @Cached("create()") GetDimAttributeNode getBDimAttribute,
                         @Cached("create()") VectorFactory resultVectorFactory) {
-            RAbstractComplexVector qr = (RAbstractComplexVector) extractQrElement.execute(q, 0);
-            RAbstractComplexVector tau = (RAbstractComplexVector) extractTauElement.execute(q, 2);
+            RComplexVector qr = (RComplexVector) extractQrElement.execute(q, 0);
+            RComplexVector tau = (RComplexVector) extractTauElement.execute(q, 2);
             int k = tau.getLength();
             int[] qDims = getQDimAttribute.getDimensions(qr);
             int[] bDims = getBDimAttribute.getDimensions(b);

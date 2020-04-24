@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -35,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
  * <li>{@link RIntVector}</li>
  * <li>{@link RLogicalVector}</li>
  * <li>{@link RDoubleVector}</li>
- * <li>{@link RAbstractComplexVector}</li>
+ * <li>{@link RComplexVector}</li>
  * <li>{@link RAbstractStringVector}</li>
  * <li>{@link RRawVector}</li>
  * </ul>

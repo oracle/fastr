@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
@@ -46,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -175,7 +174,7 @@ public abstract class CastComplexNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RAbstractComplexVector doComplexVector(RAbstractComplexVector vector) {
+    protected RComplexVector doComplexVector(RComplexVector vector) {
         return vector;
     }
 
@@ -238,30 +237,30 @@ public abstract class CastComplexNode extends CastBaseNode {
     }
 
     protected boolean isAbstractAtomicVector(RAbstractAtomicVector value) {
-        return !(value instanceof RForeignVectorWrapper) && !(value instanceof RAbstractComplexVector);
+        return !(value instanceof RForeignVectorWrapper) && !(value instanceof RComplexVector);
     }
 
     @Specialization(guards = "operand.isForeignWrapper()")
-    protected RAbstractComplexVector doForeignWrapper(RLogicalVector operand) {
+    protected RComplexVector doForeignWrapper(RLogicalVector operand) {
         return RClosures.createToComplexVector(operand, true);
     }
 
     @Specialization(guards = "operand.isForeignWrapper()")
-    protected RAbstractComplexVector doForeignWrapper(RIntVector operand) {
+    protected RComplexVector doForeignWrapper(RIntVector operand) {
         // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
         // specialization
         return RClosures.createToComplexVector(operand, true);
     }
 
     @Specialization(guards = "operand.isForeignWrapper()")
-    protected RAbstractComplexVector doForeignWrapper(RDoubleVector operand) {
+    protected RComplexVector doForeignWrapper(RDoubleVector operand) {
         // Note: is it suboptimal, but OK if the foreign wrapper gets handled in other
         // specialization
         return RClosures.createToComplexVector(operand, true);
     }
 
     @Specialization(guards = "operand.isForeignWrapper()")
-    protected RAbstractComplexVector doForeignWrapper(RStringVector operand) {
+    protected RComplexVector doForeignWrapper(RStringVector operand) {
         return RClosures.createToComplexVector(operand, true);
     }
 

@@ -37,11 +37,10 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
@@ -97,7 +96,7 @@ public abstract class CumProd extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
-    protected RComplexVector cumprodComplex(RAbstractComplexVector x,
+    protected RComplexVector cumprodComplex(RComplexVector x,
                     @Cached("x.access()") VectorAccess xAccess) {
         try (SequentialIterator iter = xAccess.access(x)) {
             double[] array = new double[xAccess.getLength(iter) * 2];
@@ -119,7 +118,7 @@ public abstract class CumProd extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(replaces = "cumprodComplex")
-    protected RComplexVector cumprodComplexGeneric(RAbstractComplexVector x) {
+    protected RComplexVector cumprodComplexGeneric(RComplexVector x) {
         return cumprodComplex(x, x.slowPathAccess());
     }
 }

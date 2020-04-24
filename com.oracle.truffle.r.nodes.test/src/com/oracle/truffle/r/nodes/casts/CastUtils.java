@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
@@ -485,7 +485,7 @@ public class CastUtils {
         if (RAbstractStringVector.class.isAssignableFrom(vectorType) || String.class.isAssignableFrom(vectorType)) {
             return String.class;
         }
-        if (RAbstractComplexVector.class.isAssignableFrom(vectorType) || RComplex.class.isAssignableFrom(vectorType)) {
+        if (RComplexVector.class.isAssignableFrom(vectorType) || RComplex.class.isAssignableFrom(vectorType)) {
             return RComplex.class;
         }
         if (RRawVector.class.isAssignableFrom(vectorType)) {
@@ -535,7 +535,7 @@ public class CastUtils {
         if (RAbstractStringVector.class.isAssignableFrom(vectorType) || String.class.isAssignableFrom(vectorType)) {
             return RDataFactory.createStringVector(size);
         }
-        if (RAbstractComplexVector.class.isAssignableFrom(vectorType) || RComplex.class.isAssignableFrom(vectorType)) {
+        if (RComplexVector.class.isAssignableFrom(vectorType) || RComplex.class.isAssignableFrom(vectorType)) {
             return RDataFactory.createComplexVector(size);
         }
         if (RAbstractVector.class.isAssignableFrom(vectorType) || vectorType == Object.class) {
@@ -574,7 +574,7 @@ public class CastUtils {
             case Character:
                 return new Class<?>[]{String.class, RAbstractStringVector.class};
             case Complex:
-                return new Class<?>[]{RAbstractComplexVector.class};
+                return new Class<?>[]{RComplexVector.class};
             case Raw:
                 return new Class<?>[]{RRawVector.class};
             case Any:
@@ -724,8 +724,8 @@ public class CastUtils {
                 if (vectorOrScalar instanceof RDoubleVector) {
                     return Optional.of((T) ((RDoubleVector) vectorOrScalar).getDataAtAsObject(0));
                 }
-                if (vectorOrScalar instanceof RAbstractComplexVector) {
-                    return Optional.of((T) ((RAbstractComplexVector) vectorOrScalar).getDataAtAsObject(0));
+                if (vectorOrScalar instanceof RComplexVector) {
+                    return Optional.of((T) ((RComplexVector) vectorOrScalar).getDataAtAsObject(0));
                 }
                 if (vectorOrScalar instanceof RLogicalVector) {
                     return Optional.of((T) ((RLogicalVector) vectorOrScalar).getDataAtAsObject(0));
@@ -748,7 +748,7 @@ public class CastUtils {
             if (vector instanceof RDoubleVector) {
                 return Optional.of(Double.class);
             }
-            if (vector instanceof RAbstractComplexVector) {
+            if (vector instanceof RComplexVector) {
                 return Optional.of(RComplex.class);
             }
             if (vector instanceof RLogicalVector) {
@@ -841,7 +841,7 @@ public class CastUtils {
             samples.add(RComplex.valueOf(-Math.PI, -Math.PI));
         }
 
-        if (cls == Object.class || RAbstractComplexVector.class.isAssignableFrom(cls)) {
+        if (cls == Object.class || RComplexVector.class.isAssignableFrom(cls)) {
             samples.add(RRuntime.COMPLEX_NA);
             samples.add(RComplex.valueOf(0, 0));
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(0, 0)));

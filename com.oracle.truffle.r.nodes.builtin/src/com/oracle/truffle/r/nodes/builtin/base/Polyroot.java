@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 2000-2016, The R Core Team
  * Copyright (c) 2005, The R Foundation
- * Copyright (c) 2019, Oracle and/or its affiliates
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI.CPolyrootNode;
@@ -47,7 +47,7 @@ public abstract class Polyroot extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(guards = "vAccess.supports(v)", limit = "getVectorAccessCacheSize()")
-    protected RAbstractComplexVector polyroot(RAbstractComplexVector v,
+    protected RComplexVector polyroot(RComplexVector v,
                     @Cached("v.access()") VectorAccess vAccess,
                     @Cached("create()") CPolyrootNode cpolyrootNode) {
         int degree = 0;
@@ -59,7 +59,7 @@ public abstract class Polyroot extends RBuiltinNode.Arg1 {
             }
         }
         n = degree + 1;
-        RAbstractComplexVector result;
+        RComplexVector result;
         if (degree >= 1) {
             double[] rr = new double[n];
             double[] ri = new double[n];
@@ -92,7 +92,7 @@ public abstract class Polyroot extends RBuiltinNode.Arg1 {
     }
 
     @Specialization(replaces = "polyroot")
-    protected RAbstractComplexVector polyrootGeneric(RAbstractComplexVector v,
+    protected RComplexVector polyrootGeneric(RComplexVector v,
                     @Cached("create()") CPolyrootNode cpolyrootNode) {
         return polyroot(v, v.slowPathAccess(), cpolyrootNode);
     }

@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunct
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.MatMult.MatMultAsDouble;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.nodes.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -56,7 +57,6 @@ import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
 
     @Child private Transpose transpose;
-    @Child protected MatMult matMult = MatMultNodeGen.create(/* promoteDimNames: */ false);
     @Child private GetDimNamesAttributeNode getXDimNames = GetDimNamesAttributeNode.create();
     @Child private GetDimNamesAttributeNode getYDimNames = GetDimNamesAttributeNode.create();
     @Child private SetDimNamesAttributeNode setDimNames = SetDimNamesAttributeNode.create();
@@ -87,7 +87,8 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
                     @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
                     @CachedLibrary("y.getData()") VectorDataLibrary yDataLib,
                     @Cached("create()") GetDimAttributeNode getXDimsNode,
-                    @Cached("create()") GetDimAttributeNode getYDimsNode) {
+                    @Cached("create()") GetDimAttributeNode getYDimsNode,
+                    @Cached("create(false)") MatMultAsDouble matMult) {
         int[] xDims = getXDimsNode.getDimensions(x);
         int[] yDims = getYDimsNode.getDimensions(y);
         int xRows = transposeX ? xDims[1] : xDims[0];
@@ -101,7 +102,8 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object crossprod(RAbstractVector x, RAbstractVector y) {
+    protected Object crossprod(RAbstractVector x, RAbstractVector y,
+                    @Cached("create(false)") MatMult matMult) {
         return copyDimNames(x, y, (RAbstractVector) matMult.executeObject(transposeX(x), transposeY(y)));
     }
 
@@ -110,7 +112,8 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
                     @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
                     @Cached("create()") GetReadonlyData.Double getReadonlyData,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
-                    @Cached("create()") GetDimAttributeNode getResultDimsNode) {
+                    @Cached("create()") GetDimAttributeNode getResultDimsNode,
+                    @Cached("create(false)") MatMultAsDouble matMult) {
         int[] xDims = getDimsNode.getDimensions(x);
         int xRows = transposeX ? xDims[1] : xDims[0];
         int xCols = transposeX ? xDims[0] : xDims[1];
@@ -128,7 +131,8 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
     @Specialization
     protected Object crossprod(RAbstractVector x, @SuppressWarnings("unused") RNull y,
                     @Cached("create()") ShareObjectNode shareObjectNode,
-                    @Cached("create()") UnShareObjectNode unShareObjectNode) {
+                    @Cached("create()") UnShareObjectNode unShareObjectNode,
+                    @Cached("create(false)") MatMult matMult) {
         // We need to bump up ref count of "x" so that the transpose does not reuse a temporary
         // vector
         shareObjectNode.execute(x);

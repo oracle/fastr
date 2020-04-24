@@ -30,15 +30,14 @@ import com.oracle.truffle.r.nodes.builtin.base.Round.RoundArithmetic;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.ScientificDouble;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/printutils.c
 
-public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVector> {
+public final class ComplexVectorPrinter extends VectorPrinter<RComplexVector> {
 
     static final ComplexVectorPrinter INSTANCE = new ComplexVectorPrinter();
 
@@ -47,13 +46,13 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
     }
 
     @Override
-    protected VectorPrinter<RAbstractComplexVector>.VectorPrintJob createJob(RAbstractComplexVector vector, int indx, PrintContext printCtx) {
+    protected VectorPrinter<RComplexVector>.VectorPrintJob createJob(RComplexVector vector, int indx, PrintContext printCtx) {
         return new ComplexVectorPrintJob(vector, indx, printCtx);
     }
 
     private final class ComplexVectorPrintJob extends VectorPrintJob {
 
-        protected ComplexVectorPrintJob(RAbstractComplexVector vector, int indx, PrintContext printCtx) {
+        protected ComplexVectorPrintJob(RComplexVector vector, int indx, PrintContext printCtx) {
             super(vector, indx, printCtx);
         }
 
@@ -466,7 +465,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         }
     }
 
-    public static String[] format(RAbstractComplexVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {
+    public static String[] format(RComplexVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {
         VectorAccess access = value.slowPathAccess();
         try (RandomIterator iter = access.randomAccess(value)) {
             int length = access.getLength(iter);

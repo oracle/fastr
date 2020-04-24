@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 
 @RBuiltin(name = "as.complex", kind = PRIMITIVE, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsComplex extends RBuiltinNode.Arg2 {
@@ -48,11 +48,11 @@ public abstract class AsComplex extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RAbstractComplexVector asComplex(RAbstractComplexVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot) {
+    protected RComplexVector asComplex(RComplexVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            return (RAbstractComplexVector) v.copyDropAttributes();
+            return (RComplexVector) v.copyDropAttributes();
         }
     }
 }

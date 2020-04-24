@@ -45,11 +45,10 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -134,7 +133,7 @@ public abstract class Signif extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"xAccess.supports(x)", "digitsAccess.supports(digits)"}, limit = "getVectorAccessCacheSize()")
-    protected RAbstractComplexVector signifComplex(RAbstractComplexVector x, RIntVector digits,
+    protected RComplexVector signifComplex(RComplexVector x, RIntVector digits,
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("digits.access()") VectorAccess digitsAccess,
                     @Cached("create()") BranchProfile emptyProfile,
@@ -194,7 +193,7 @@ public abstract class Signif extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(replaces = "signifComplex")
-    protected RAbstractComplexVector signifComplexGeneric(RAbstractComplexVector x, RIntVector digits) {
+    protected RComplexVector signifComplexGeneric(RComplexVector x, RIntVector digits) {
         return signifComplex(x, digits, x.slowPathAccess(), digits.slowPathAccess(),
                         BranchProfile.create(), BranchProfile.create(), ConditionProfile.createBinaryProfile(), ConditionProfile.createBinaryProfile());
     }

@@ -38,12 +38,11 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -104,7 +103,7 @@ public class VectorInteropTest extends AbstractInteropTest {
         assertEquals(4.0, getInterop().readMember(getInterop().readArrayElement(complexVector, 1), "im"));
     }
 
-    private static void testReadComplexScalar(RAbstractComplexVector complexScalar) throws UnsupportedMessageException, UnknownIdentifierException, InvalidArrayIndexException {
+    private static void testReadComplexScalar(RComplexVector complexScalar) throws UnsupportedMessageException, UnknownIdentifierException, InvalidArrayIndexException {
         assertTrue(getInterop().hasArrayElements(complexScalar));
         testReadComplexScalarMembers(complexScalar);
 
@@ -167,7 +166,7 @@ public class VectorInteropTest extends AbstractInteropTest {
     @Test
     public void testKeyInfo() throws Exception {
         for (TruffleObject o : createTruffleObjects()) {
-            if (o instanceof RAbstractComplexVector && ((RAbstractComplexVector) o).getLength() == 1 && !isNull(o)) {
+            if (o instanceof RComplexVector && ((RComplexVector) o).getLength() == 1 && !isNull(o)) {
                 assertTrue(getInterop().hasMembers(o));
             } else {
                 assertInteropException(() -> getInterop().getMembers(o), UnsupportedMessageException.class);
@@ -333,7 +332,7 @@ public class VectorInteropTest extends AbstractInteropTest {
             return RRuntime.isNA(((RLogicalVector) vec).getDataAt(0));
         } else if (vec instanceof RAbstractStringVector) {
             return RRuntime.isNA(((RAbstractStringVector) vec).getDataAt(0));
-        } else if (vec instanceof RAbstractComplexVector || vec instanceof RRawVector) {
+        } else if (vec instanceof RComplexVector || vec instanceof RRawVector) {
             return false;
         }
         assertTrue("unexpected type of RAbstractVector " + vec != null ? vec.getClass().getSimpleName() : "null", false);
@@ -364,8 +363,8 @@ public class VectorInteropTest extends AbstractInteropTest {
         if (vec instanceof RDoubleVector) {
             return RRuntime.isNA(((RDoubleVector) vec).getDataAt(0));
         }
-        if (vec instanceof RAbstractComplexVector) {
-            return RRuntime.isNA(((RAbstractComplexVector) vec).getDataAt(0));
+        if (vec instanceof RComplexVector) {
+            return RRuntime.isNA(((RComplexVector) vec).getDataAt(0));
         }
         if (vec instanceof RRawVector) {
             return false;
@@ -376,7 +375,7 @@ public class VectorInteropTest extends AbstractInteropTest {
 
     @Override
     protected String[] getKeys(TruffleObject obj) {
-        if ((obj instanceof RAbstractComplexVector) && ((RAbstractComplexVector) obj).getLength() == 1 && !isNull(obj)) {
+        if ((obj instanceof RComplexVector) && ((RComplexVector) obj).getLength() == 1 && !isNull(obj)) {
             return new String[]{"re", "im"};
         }
         return super.getKeys(obj);

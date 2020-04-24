@@ -42,7 +42,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -55,7 +54,7 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
@@ -903,8 +902,8 @@ public class RRuntime {
             return double2logical(((RDoubleVector) obj).getDataAt(0));
         } else if (obj instanceof RLogicalVector) {
             return ((RLogicalVector) obj).getDataAt(0);
-        } else if (obj instanceof RAbstractComplexVector) {
-            return complex2logical(((RAbstractComplexVector) obj).getDataAt(0));
+        } else if (obj instanceof RComplexVector) {
+            return complex2logical(((RComplexVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractStringVector) {
             return string2logical(((RAbstractStringVector) obj).getDataAt(0));
         } else {
@@ -934,8 +933,8 @@ public class RRuntime {
             return double2int(((RDoubleVector) obj).getDataAt(0));
         } else if (obj instanceof RLogicalVector) {
             return logical2int(((RLogicalVector) obj).getDataAt(0));
-        } else if (obj instanceof RAbstractComplexVector) {
-            return complex2int(((RAbstractComplexVector) obj).getDataAt(0));
+        } else if (obj instanceof RComplexVector) {
+            return complex2int(((RComplexVector) obj).getDataAt(0));
         } else if (obj instanceof RAbstractStringVector) {
             return string2int(((RAbstractStringVector) obj).getDataAt(0));
         } else {
@@ -960,7 +959,7 @@ public class RRuntime {
                 return obj instanceof Integer || obj instanceof Double ||
                                 obj instanceof RIntVector || obj instanceof RDoubleVector;
             case Complex:
-                return obj instanceof RAbstractComplexVector;
+                return obj instanceof RComplexVector;
             case Character:
                 return obj instanceof String || obj instanceof RAbstractStringVector;
             case List:

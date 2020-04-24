@@ -65,7 +65,6 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -73,7 +72,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -376,7 +375,7 @@ public final class CastBuilder {
             return new CoercionStep<>(RType.Character, true, preserveNames, preserveDimensions, preserveAttributes);
         }
 
-        public static <T> PipelineStep<T, RAbstractComplexVector> asComplexVector() {
+        public static <T> PipelineStep<T, RComplexVector> asComplexVector() {
             return new CoercionStep<>(RType.Complex, true);
         }
 
@@ -480,7 +479,7 @@ public final class CastBuilder {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Double));
         }
 
-        public static <T extends RAbstractComplexVector> CompareFilter<T> elementAt(int index, RComplex value) {
+        public static CompareFilter<RComplexVector> elementAt(int index, RComplex value) {
             return new CompareFilter<>(CompareFilter.EQ, new CompareFilter.ElementAt(index, value, RType.Complex));
         }
 
@@ -689,7 +688,7 @@ public final class CastBuilder {
             return (Filter) complexVector().or(instanceOf(RComplex.class));
         }
 
-        public static <R extends RAbstractComplexVector> Filter<Object, R> complexVector() {
+        public static Filter<Object, RComplexVector> complexVector() {
             return new RTypeFilter<>(RType.Complex);
         }
 

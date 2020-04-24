@@ -52,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -183,7 +183,7 @@ public class SortFunctions {
         }
 
         @Specialization
-        protected RLogicalVector sort(@SuppressWarnings("unused") RAbstractComplexVector vec, @SuppressWarnings("unused") boolean decreasing) {
+        protected RLogicalVector sort(@SuppressWarnings("unused") RComplexVector vec, @SuppressWarnings("unused") boolean decreasing) {
             // TODO: implement complex sort
             throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, 1);
         }
@@ -248,7 +248,7 @@ public class SortFunctions {
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RLogicalVector sort(RAbstractComplexVector vec, Object partial) {
+        protected RLogicalVector sort(RComplexVector vec, Object partial) {
             throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, 1); // [TODO] implement
         }
 

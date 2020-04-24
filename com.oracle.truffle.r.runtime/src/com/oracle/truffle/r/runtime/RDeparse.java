@@ -57,7 +57,7 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
@@ -470,7 +470,7 @@ public class RDeparse {
 
         private static boolean isComplex(RSyntaxConstant sc) {
             Object value = sc.getValue();
-            return value instanceof RAbstractComplexVector || value instanceof RComplex;
+            return value instanceof RComplexVector || value instanceof RComplex;
         }
 
         private final class Visitor extends RSyntaxVisitor<Void> {

@@ -25,9 +25,8 @@ package com.oracle.truffle.r.test.engine.interop;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
@@ -50,11 +49,11 @@ public class RComplexInteropTest extends AbstractInteropTest {
 
         RFunction fun = (RFunction) create("function() 1+42i");
         Object obj = getInterop().execute(fun);
-        assertTrue(obj instanceof RAbstractComplexVector);
+        assertTrue(obj instanceof RComplexVector);
         assertFalse(obj instanceof RComplex);
 
         obj = getInterop().readArrayElement(obj, 0);
-        assertFalse(obj instanceof RAbstractComplexVector);
+        assertFalse(obj instanceof RComplexVector);
         assertTrue(obj instanceof RComplex);
     }
 
