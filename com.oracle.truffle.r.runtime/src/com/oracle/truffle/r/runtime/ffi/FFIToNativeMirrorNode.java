@@ -60,7 +60,7 @@ public abstract class FFIToNativeMirrorNode extends Node {
     }
 
     @Specialization
-    protected static Object wrap(VectorRFFIWrapper value) {
+    protected static Object wrap(RObjectDataPtr value) {
         return value;
     }
 

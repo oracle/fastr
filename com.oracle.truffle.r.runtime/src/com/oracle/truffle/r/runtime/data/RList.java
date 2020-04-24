@@ -25,12 +25,14 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
@@ -49,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVect
  * initialized with {@code false} and never expected to change.
  */
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(AbstractContainerLibrary.class)
 public final class RList extends RAbstractListVector implements RMaterializedVector, Shareable {
     private int length;
 
@@ -269,6 +272,20 @@ public final class RList extends RAbstractListVector implements RMaterializedVec
     @ExportMessage(name = "materialize", library = AbstractContainerLibrary.class)
     RList containerLibMaterialize(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         return dataLib.isWriteable(data) ? this : new RList(dataLib.materialize(data), dataLib.getLength(data));
+    }
+
+    @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
+    public void containerLibToNative(
+                    @Cached("createBinaryProfile()") ConditionProfile isAllocatedProfile) {
+        if (isAllocatedProfile.profile(!NativeDataAccess.isAllocated(this))) {
+            // this assumes only two impls. list data: array and native memory
+            assert data instanceof Object[];
+            Object[] arr = (Object[]) data;
+            NativeDataAccess.allocateNativeContents(this, arr, arr.length);
+            setData(new RListNativeData(this, arr), arr.length);
+            assert NativeDataAccess.isAllocated(this);
+        }
+        NativeDataAccess.getNativeDataAddress(this);
     }
 
     @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)

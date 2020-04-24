@@ -163,7 +163,7 @@ public final class NativeDataAccess {
      * {@link RBaseObject}.
      * <p>
      * For now, native mirror also holds reference to native memory allocated for "nativized"
-     * vectors. See {@link com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper} for more details.
+     * vectors. See {@link com.oracle.truffle.r.runtime.ffi.RObjectDataPtr} for more details.
      */
     @ExportLibrary(InteropLibrary.class)
     public static final class NativeMirror implements TruffleObject {

@@ -50,6 +50,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(AbstractContainerLibrary.class)
 public final class RLogicalVector extends RAbstractAtomicVector implements RMaterializedVector, Shareable {
 
     private int length;
@@ -286,6 +287,18 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
         // To retain the semantics of the original materialize, for sequences and such we return new
         // vector
         return new RLogicalVector(dataLib.getLogicalDataCopy(data), isComplete());
+    }
+
+    @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
+    public void containerLibToNative(
+                    @Cached("createBinaryProfile()") ConditionProfile alreadyNativeProfile,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (alreadyNativeProfile.profile(data instanceof RLogicalNativeVectorData)) {
+            return;
+        }
+        byte[] arr = dataLib.getReadonlyLogicalData(this.data);
+        NativeDataAccess.allocateNativeContents(this, arr, getLength());
+        setData(new RLogicalNativeVectorData(this), getLength());
     }
 
     @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)

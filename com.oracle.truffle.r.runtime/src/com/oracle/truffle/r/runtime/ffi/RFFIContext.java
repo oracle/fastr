@@ -298,7 +298,7 @@ public abstract class RFFIContext extends RFFI {
 
     public Object getSulongArrayType(@SuppressWarnings("unused") Object arrayElement) {
         // TODO: this is here because TruffleLLVM_Context is not visible from "runtime" project
-        // where we implement VectorRFFIWrapper which needs this
+        // where we implement RObjectDataPtr which needs this
         throw RInternalError.shouldNotReachHere("getSulongArrayType");
     }
 

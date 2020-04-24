@@ -116,10 +116,10 @@ public abstract class FFIMaterializeNode extends Node {
         return seq.cachedMaterialize();
     }
 
-    // VectorRFFIWrapper: held by a field in NativeMirror of the corresponding vector
+    // RObjectDataPtr: held by a field in NativeMirror of the corresponding vector
 
     @Specialization
-    protected static Object wrap(VectorRFFIWrapper value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(RObjectDataPtr value, @SuppressWarnings("unused") boolean protect) {
         return value;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,10 +63,10 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * arguments (or their copies if they were non-temporary).
  *
  * This class works as follows: it materializes all the arguments and retrieves the corresponding
- * {@link VectorRFFIWrapper} instances that represent the "data" array of those vectors. Any other
+ * {@link RObjectDataPtr} instances that represent the "data" array of those vectors. Any other
  * {@link com.oracle.truffle.r.runtime.data.RBaseObject} instances are transferred to
  * {@code NativeMirror} so that they can be sent as {@code SEXP} to the native code. After the
- * native call finishes, we read back the vector instances from the {@link VectorRFFIWrapper}s.
+ * native call finishes, we read back the vector instances from the {@link RObjectDataPtr}s.
  */
 @ReportPolymorphism
 public abstract class InvokeCNode extends RBaseNode {

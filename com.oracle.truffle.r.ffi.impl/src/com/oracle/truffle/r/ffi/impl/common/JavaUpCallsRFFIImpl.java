@@ -37,7 +37,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -105,7 +104,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
-import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
+import com.oracle.truffle.r.runtime.ffi.RObjectDataPtr;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
@@ -1487,9 +1486,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return RConnection.fromIndex(fd);
     }
 
-    private static VectorRFFIWrapper wrapString(String s) {
+    private static RObjectDataPtr wrapString(String s) {
         CharSXPWrapper v = CharSXPWrapper.create(s);
-        return VectorRFFIWrapper.get(v);
+        return RObjectDataPtr.get(v);
     }
 
     @Override
@@ -2389,7 +2388,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object FASTR_DATAPTR(Object x) {
         if ((x instanceof RStringVector) || (x instanceof RList)) {
-            return VectorRFFIWrapper.get((TruffleObject) x);
+            return RObjectDataPtr.get((RAbstractVector) wrapStrings(x));
         }
         CompilerDirectives.transferToInterpreter();
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "DATAPTR not implemented for type " + Utils.getTypeName(x));
@@ -2398,34 +2397,34 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object INTEGER(Object x) {
         // Note: there is no validation in GNU-R and so packages call this with all types of vectors
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RAbstractAtomicVector.class));
+        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), RAbstractAtomicVector.class));
     }
 
     @Override
     public Object LOGICAL(Object x) {
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RLogicalVector.class));
+        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), RLogicalVector.class));
     }
 
     @Override
     @TruffleBoundary
     public Object REAL(Object x) {
         // Note: there is no validation in GNU-R and so packages call this with all types of vectors
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RAbstractAtomicVector.class));
+        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), RAbstractAtomicVector.class));
     }
 
     @Override
     public Object RAW(Object x) {
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RRawVector.class));
+        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), RRawVector.class));
     }
 
     @Override
     public Object COMPLEX(Object x) {
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RComplexVector.class));
+        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), RComplexVector.class));
     }
 
     @Override
     public Object R_CHAR(Object x) {
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, CharSXPWrapper.class));
+        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), CharSXPWrapper.class));
     }
 
     @Override
@@ -2448,11 +2447,18 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         throw implementedAsNode();
     }
 
-    private static TruffleObject guaranteeVectorOrNull(Object obj, Class<? extends TruffleObject> clazz) {
+    private static RBaseObject guaranteeVectorOrNull(Object obj, Class<? extends RBaseObject> clazz) {
         if (obj == RNull.instance) {
             return RNull.instance;
         }
         return guaranteeInstanceOf(obj, clazz);
+    }
+
+    private static Object wrapStrings(Object obj) {
+        if (obj instanceof RStringVector) {
+            ((RStringVector) obj).wrapStrings();
+        }
+        return obj;
     }
 
     private static JavaGDContext getJavaGDContext(RContext ctx) {

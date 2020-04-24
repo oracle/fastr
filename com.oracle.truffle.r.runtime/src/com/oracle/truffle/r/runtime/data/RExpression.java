@@ -25,10 +25,21 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -40,6 +51,9 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 
+@ExportLibrary(VectorDataLibrary.class)
+@ExportLibrary(AbstractContainerLibrary.class)
+@ExportLibrary(InteropLibrary.class)
 public final class RExpression extends RAbstractListBaseVector implements RMaterializedVector, Shareable {
 
     private Object[] data;
@@ -52,6 +66,8 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
     }
 
     @Override
+    @ExportMessage(library = VectorDataLibrary.class)
+    @ExportMessage(library = AbstractContainerLibrary.class)
     public int getLength() {
         return data.length;
     }
@@ -86,6 +102,7 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
     }
 
     @Override
+    @Ignore // VectorDataLibrary
     public Object getDataAtAsObject(Object store, int index) {
         assert store == data;
         return ((Object[]) store)[index];
@@ -148,6 +165,7 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
      * documentation of {@code ExtractListElement}.
      */
     @Override
+    @Ignore // VectorDataLibrary
     public Object getDataAtAsObject(int index) {
         return this.getDataAt(index);
     }
@@ -159,6 +177,7 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
     }
 
     @Override
+    @Ignore // VectorDataLibrary
     public void setElement(int i, Object value) {
         setDataAt(i, value);
     }
@@ -169,6 +188,7 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
     }
 
     @Override
+    @ExportMessage(library = VectorDataLibrary.class)
     public RExpression materialize() {
         return this;
     }
@@ -253,5 +273,117 @@ public final class RExpression extends RAbstractListBaseVector implements RMater
     @Override
     public VectorAccess slowPathAccess() {
         return SLOW_PATH_ACCESS;
+    }
+
+    // -------------------------------
+    // VectorDataLibrary
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public NACheck getNACheck() {
+        // we do not maintain any completeness info about lists
+        // to avoid any errors we return NACheck that is enabled:
+        // checks for NAs and also reports neverSeenNA() == false
+        return NACheck.getEnabled();
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public RType getType() {
+        return RType.Expression;
+    }
+
+    @ExportMessage(name = "isComplete", library = VectorDataLibrary.class)
+    @SuppressWarnings("static-method")
+    public boolean datLibIsComplete() {
+        return false;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public boolean isWriteable() {
+        return true;
+    }
+
+    @ExportMessage(name = "copy", library = VectorDataLibrary.class)
+    public Object dataLibCopy(@SuppressWarnings("unused") boolean deep) {
+        return copy();
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        SeqIterator it = new SeqIterator(getInternalStore(), getLength());
+        it.initLoopConditionProfile(loopProfile);
+        return it;
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public boolean nextImpl(SeqIterator it, boolean loopCondition,
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        return it.next(loopCondition, loopProfile);
+    }
+
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    public void nextWithWrap(SeqIterator it,
+                    @Cached("createBinaryProfile()") ConditionProfile wrapProfile) {
+        it.nextWithWrap(wrapProfile);
+    }
+
+    @ExportMessage
+    public RandomAccessIterator randomAccessIterator() {
+        return new RandomAccessIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public SeqWriteIterator writeIterator() {
+        return new SeqWriteIterator(getInternalStore(), getLength());
+    }
+
+    @ExportMessage
+    public RandomAccessWriteIterator randomAccessWriteIterator() {
+        return new RandomAccessWriteIterator(getInternalStore());
+    }
+
+    @ExportMessage
+    public Object[] getReadonlyListData() {
+        return getReadonlyData();
+    }
+
+    @ExportMessage
+    public Object[] getListDataCopy() {
+        return getDataCopy();
+    }
+
+    @ExportMessage
+    public Object getElementAt(int index) {
+        return getDataAt(index);
+    }
+
+    @ExportMessage
+    public Object getNextElement(SeqIterator it) {
+        return getDataAtAsObject(it.getStore(), it.getIndex());
+    }
+
+    @ExportMessage
+    public Object getElement(RandomAccessIterator it, int index) {
+        return getDataAtAsObject(it.getStore(), index);
+    }
+
+    @ExportMessage
+    public void setElementAt(int index, Object value) {
+        setDataAt(getInternalStore(), index, value);
+    }
+
+    @ExportMessage
+    public void setNextElement(SeqWriteIterator it, Object value) {
+        setDataAt(it.getStore(), it.getIndex(), value);
+    }
+
+    @ExportMessage
+    public void setElement(RandomAccessWriteIterator it, int index, Object value) {
+        setDataAt(it.getStore(), index, value);
     }
 }

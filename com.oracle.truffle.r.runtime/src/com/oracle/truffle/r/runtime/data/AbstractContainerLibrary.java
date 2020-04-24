@@ -72,6 +72,12 @@ public abstract class AbstractContainerLibrary extends Library {
     public abstract RAbstractContainer materialize(Object container);
 
     /**
+     * Transfers this vector to be backed by native off heap memory. The data object should then be
+     * able to respond to {@link VectorDataLibrary#asPointer(Object)}.
+     */
+    public abstract void toNative(Object container);
+
+    /**
      * @see #materialize(Object)
      */
     public abstract boolean isMaterialized(Object container);

@@ -54,7 +54,7 @@ public abstract class FFIUnwrapString extends RBaseNode {
         return value;
     }
 
-    // Note: this specialization should cover also VectorRFFIWrapper of CharSXP and NativeCharArray
+    // Note: this specialization should cover also RObjectDataPtr of CharSXP and NativeCharArray
     @Specialization(guards = {"!isString(value)", "interopLib.isString(value)"}, limit = "getInteropLibraryCacheSize()")
     String doInteropString(Object value,
                     @CachedLibrary("value") InteropLibrary interopLib) {

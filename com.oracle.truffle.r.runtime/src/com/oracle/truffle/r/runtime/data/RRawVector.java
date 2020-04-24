@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -45,6 +46,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(AbstractContainerLibrary.class)
 public final class RRawVector extends RAbstractNumericVector implements RMaterializedVector, Shareable {
 
     private int length;
@@ -237,6 +239,18 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
         // To retain the semantics of the original materialize, for sequences and such we return new
         // vector
         return new RRawVector(dataLib.getRawDataCopy(data));
+    }
+
+    @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
+    public void containerLibToNative(
+                    @Cached("createBinaryProfile()") ConditionProfile alreadyNativeProfile,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (alreadyNativeProfile.profile(data instanceof RRawNativeVectorData)) {
+            return;
+        }
+        byte[] arr = dataLib.getReadonlyRawData(this.data);
+        NativeDataAccess.allocateNativeContents(this, arr, getLength());
+        setData(new RRawNativeVectorData(this), getLength());
     }
 
     @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)

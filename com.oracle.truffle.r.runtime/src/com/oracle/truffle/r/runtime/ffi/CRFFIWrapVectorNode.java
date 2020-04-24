@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -62,13 +61,13 @@ public abstract class CRFFIWrapVectorNode extends Node {
     }
 
     @Specialization(guards = {"isTemporary(vector)", "!isStringVector(vector)"})
-    protected Object temporaryToNative(TruffleObject vector) {
-        return VectorRFFIWrapper.get(vector);
+    protected Object temporaryToNative(RAbstractVector vector) {
+        return RObjectDataPtr.get(vector);
     }
 
     @Specialization(guards = {"!isTemporary(vector)", "!isStringVector(vector)"})
     protected Object nonTemporaryToNative(RAbstractVector vector) {
-        return VectorRFFIWrapper.get(vector.copy());
+        return RObjectDataPtr.get(vector.copy());
     }
 
     @Specialization

@@ -76,6 +76,11 @@ public class RIntNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
+    public long asPointer() {
+        return NativeDataAccess.getNativeDataAddress(vec);
+    }
+
+    @ExportMessage
     public RIntArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
         int[] data = NativeDataAccess.copyIntNativeData(vec.getNativeMirror());
         return new RIntArrayVectorData(data, RDataFactory.INCOMPLETE_VECTOR);

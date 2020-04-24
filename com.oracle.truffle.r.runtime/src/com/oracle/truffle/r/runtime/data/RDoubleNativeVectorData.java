@@ -76,6 +76,11 @@ public class RDoubleNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
+    public long asPointer() {
+        return NativeDataAccess.getNativeDataAddress(vec);
+    }
+
+    @ExportMessage
     public RDoubleArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
         double[] data = NativeDataAccess.copyDoubleNativeData(vec.getNativeMirror());
         return new RDoubleArrayVectorData(data, RDataFactory.INCOMPLETE_VECTOR);

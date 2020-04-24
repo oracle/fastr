@@ -38,7 +38,7 @@ public abstract class CRFFIUnwrapVectorNode extends Node {
     }
 
     @Specialization
-    protected Object unwrapOthers(VectorRFFIWrapper wrapper) {
+    protected Object unwrapOthers(RObjectDataPtr wrapper) {
         return wrapper.getVector();
     }
 

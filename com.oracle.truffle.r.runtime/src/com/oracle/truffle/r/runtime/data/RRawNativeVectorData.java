@@ -76,6 +76,11 @@ public class RRawNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
+    public long asPointer() {
+        return NativeDataAccess.getNativeDataAddress(vec);
+    }
+
+    @ExportMessage
     public boolean isComplete() {
         return true;
     }

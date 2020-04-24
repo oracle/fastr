@@ -1345,6 +1345,12 @@ public final class RPairList extends RAbstractContainer implements Iterable<RPai
         return this;
     }
 
+    @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
+    @SuppressWarnings("static-method")
+    public void containerLibToNative() {
+        throw RInternalError.shouldNotReachHere("Not supported by parilists");
+    }
+
     @ExportMessage
     public SeqIterator iterator(@Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         SeqIterator it = new SeqIterator(getInternalStore(), getLength());
