@@ -1186,6 +1186,43 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     /**
+     * Transfers and element from source to destination. The element will be coerced to the type of
+     * the destination data object.
+     */
+    public void transferNextToRandom(Object dest, RandomAccessWriteIterator destIt, int destIdx, VectorDataLibrary sourceLib, SeqIterator sourceIt, Object source) {
+        RType destType = getType(dest);
+        switch (destType) {
+            case Integer:
+                setInt(dest, destIt, destIdx, sourceLib.getNextInt(source, sourceIt));
+                break;
+            case Double:
+                setDouble(dest, destIt, destIdx, sourceLib.getNextDouble(source, sourceIt));
+                break;
+            case Logical:
+                setLogical(dest, destIt, destIdx, sourceLib.getNextLogical(source, sourceIt));
+                break;
+            case Raw:
+                setRaw(dest, destIt, destIdx, sourceLib.getNextRaw(source, sourceIt));
+                break;
+            case Complex:
+                setComplex(dest, destIt, destIdx, sourceLib.getNextComplex(source, sourceIt));
+                break;
+            case Character:
+                setString(dest, destIt, destIdx, sourceLib.getNextString(source, sourceIt));
+                break;
+            case List:
+            case PairList:
+            case Language:
+            case Expression:
+                setElement(dest, destIt, destIdx, sourceLib.getNextElement(source, sourceIt));
+                break;
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.unimplemented(destType.toString());
+        }
+    }
+
+    /**
      * Variant of
      * {@link #transferNext(Object, SeqWriteIterator, VectorDataLibrary, SeqIterator, Object)} that
      * supports random access.

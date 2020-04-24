@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,17 +31,19 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 
 @RBuiltin(name = "diag", kind = INTERNAL, parameterNames = {"x", "nrow", "ncol"}, behavior = PURE)
 public abstract class Diag extends RBuiltinNode.Arg3 {
@@ -81,31 +83,27 @@ public abstract class Diag extends RBuiltinNode.Arg3 {
         return RDataFactory.createDoubleVector(data, !RRuntime.isNA(x), new int[]{nrow, ncol});
     }
 
-    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
+    @Specialization(limit = "getGenericDataLibraryCacheSize()")
     protected RAbstractVector diagCached(RAbstractVector x, int nrow, int ncol,
-                    @Cached("x.access()") VectorAccess xAccess,
-                    @Cached("createNew(xAccess.getType())") VectorAccess resultAccess,
-                    @Cached("create()") VectorFactory factory) {
+                    @Cached SetDimAttributeNode setDimAttributeNode,
+                    @CachedLibrary("x") AbstractContainerLibrary xContainerLib,
+                    @CachedLibrary("x.getData()") VectorDataLibrary xDataLib,
+                    @CachedLibrary(limit = "getGenericDataLibraryCacheSize()") VectorDataLibrary resultDataLib) {
         int mn = checkX(x, nrow, ncol);
-
-        try (SequentialIterator xIter = xAccess.access(x)) {
-            RAbstractVector result = factory.createUninitializedVector(xAccess.getType(), nrow * ncol, new int[]{nrow, ncol}, null, null);
-            try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
-                int resultIndex = 0;
-                for (int j = 0; j < mn; j++) {
-                    xAccess.nextWithWrap(xIter);
-                    resultAccess.setFromSameType(resultIter, resultIndex, xAccess, xIter);
-                    resultIndex += nrow + 1;
-                }
+        Object xData = x.getData();
+        SeqIterator xIt = xDataLib.iterator(xData);
+        RAbstractVector result = xContainerLib.createEmptySameType(x, nrow * ncol, false);
+        Object resultData = result.getData();
+        try (RandomAccessWriteIterator resultIt = resultDataLib.randomAccessWriteIterator(resultData)) {
+            int resultIndex = 0;
+            for (int j = 0; j < mn; j++) {
+                xDataLib.nextWithWrap(xData, xIt);
+                resultDataLib.transferNextToRandom(resultData, resultIt, resultIndex, xDataLib, xIt, xData);
+                resultIndex += nrow + 1;
             }
-            result.setComplete(x.isComplete());
-            return result;
+            resultDataLib.commitRandomAccessWriteIterator(resultData, resultIt, xDataLib.getNACheck(xData).neverSeenNA());
         }
-    }
-
-    @Specialization(replaces = "diagCached")
-    protected RAbstractVector diagGeneric(RAbstractVector x, int nrow, int ncol,
-                    @Cached("create()") VectorFactory factory) {
-        return diagCached(x, nrow, ncol, x.slowPathAccess(), VectorAccess.createSlowPathNew(x.getRType()), factory);
+        setDimAttributeNode.setDimensions(result, new int[]{nrow, ncol});
+        return result;
     }
 }

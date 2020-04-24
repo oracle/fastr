@@ -57,6 +57,9 @@ public abstract class AbstractContainerLibrary extends Library {
     /**
      * Creates an empty vector of the same type and of the given length. Defined only for
      * {@link com.oracle.truffle.r.runtime.data.model.RAbstractVector} subtypes.
+     *
+     * The completeness flag is guaranteed to be set to {@code false} if the {@code fillWithNA} is
+     * {@code true} and the new length is not zero.
      */
     public RAbstractVector createEmptySameType(Object container, @SuppressWarnings("unused") int newLength, @SuppressWarnings("unused") boolean fillWithNA) {
         throw RInternalError.unimplemented("TODO:" + container.getClass().getSimpleName());

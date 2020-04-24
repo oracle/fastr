@@ -147,9 +147,11 @@ final class UnaryMapVectorNode extends UnaryMapNode {
         }
         if (target == null) {
             VectorAccess operandAccess = isGeneric ? operand.slowPathAccess() : fastOperandAccess;
+            boolean targetIsComplete = true;
             try (SequentialIterator operandIter = operandAccess.access(operand)) {
                 if (mayShareOperand && operand.getRType() == resultType && shareOperand.profile(((RSharingAttributeStorage) operand).isTemporary())) {
                     target = operand;
+                    targetIsComplete = target.isComplete();
                     vectorNode.execute(function, operandLength, operandAccess, operandIter, operandAccess, operandIter);
                 } else {
                     if (resultAccess == null) {
@@ -165,7 +167,7 @@ final class UnaryMapVectorNode extends UnaryMapNode {
                 }
             }
             RBaseNode.reportWork(this, operandLength);
-            target.setComplete(function.isComplete());
+            target.setComplete(targetIsComplete && function.isComplete());
         }
         if (mayContainMetadata) {
             target = handleMetadata(target, operand);
