@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -20,15 +20,18 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-
-gen_data <- function() {
-    res <- list(rep(0, 100))
-    for(i in seq_along(res)) {
-        res[[i]] <- i %% 5
+# Returns the index of the value in the sorted vector.
+binSearch <- function(vec, value) {
+  low <- 1L
+  high <- length(vec)+1L
+  while(low < high) {
+    idx <- as.integer((low + high) / 2L)
+    if(vec[[idx]] == value) {
+      return (idx)
+    } else if(vec[[idx]] < value) {
+      low <- idx
+    } else { 
+      high <- idx
     }
-    res
+  }
 }
-
-library(jsonlite)
-jsonStr <- toJSON(gen_data())
-cat(jsonStr)

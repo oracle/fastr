@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,19 +21,12 @@
 # questions.
 #
 
-print("Hello, World! (from file)")
-print("Creating a Java object in FastR")
+bar <- function(x) print(x)
 
-clazz <- java.type("java.util.Date")
-obj <- new(clazz, as.integer(Sys.time())*1000)
-print(obj$toString())
-
-# add classpath entry to be able to use our class
-java.addToClasspath("build/classes")
-clazz <- java.type("com.oracle.truffle.r.JavaMessage")
-obj <- new(clazz, "Hi there")
-print(obj$getMessage())
-
-eval.polyglot('js', code='var s = "Hello from Javascript"; print(s)')
-eval.polyglot('js', path="JS/main.js")
+fun <- function(x) {
+	print("Hello")
+	for(i in seq(3)) print(i)
+	bar("World")
+	print(x)
+}
 

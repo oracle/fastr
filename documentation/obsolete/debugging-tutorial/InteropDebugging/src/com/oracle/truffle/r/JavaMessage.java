@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,26 +27,21 @@
  */
 package com.oracle.truffle.r;
 
-import  org.graalvm.polyglot.Context;
-import  org.graalvm.polyglot.Source;
-import java.io.File;
-import java.io.IOException;
+public class JavaMessage {
 
-public class Main {
+    private String message;
 
-    /**
-     * @param args the command line arguments
-     * @throws java.io.IOException
-     */
-    public static void main(String[] args) throws IOException {
-        Context context = Context.create();
-        context.eval("R", "print('Hello, World! (from string)')");
-        context.eval(fromFile("R/main.r"));
+    public JavaMessage(String message) {
+        this.message = message;
     }
 
-    
-    private static Source fromFile(String path) throws IOException {
-        return Source.newBuilder("R", new File(path)).build();
+    public String getMessage() {
+        return message;
     }
-    
+
+    @Override
+    public String toString() {
+        return message;
+    }
+
 }
