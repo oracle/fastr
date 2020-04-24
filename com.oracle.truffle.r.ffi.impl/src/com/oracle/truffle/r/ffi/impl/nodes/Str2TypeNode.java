@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import java.util.HashMap;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -75,8 +74,7 @@ public abstract class Str2TypeNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization
-    Object handleString(Object n, @Cached("create()") NativeStringCastNode sc) {
-        String name = sc.executeObject(n);
+    Object handleString(String name) {
         if (name == null) {
             return -1;
         }

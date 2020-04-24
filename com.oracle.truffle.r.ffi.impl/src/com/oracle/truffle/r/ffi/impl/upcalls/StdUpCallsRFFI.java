@@ -208,10 +208,10 @@ public interface StdUpCallsRFFI {
     void Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
     @RFFIUpCallNode(GetClassDefNode.class)
-    Object R_getClassDef(@RFFIResultOwner @RFFICpointer(isString = true) Object clazz);
+    Object R_getClassDef(@RFFIResultOwner String clazz);
 
     @RFFIUpCallNode(DoMakeClassNode.class)
-    Object R_do_MAKE_CLASS(@RFFICpointer(isString = true) Object clazz);
+    Object R_do_MAKE_CLASS(String clazz);
 
     @RFFIUpCallNode(value = MiscNodes.RDoNewObjectNode.class, needsCallTarget = true)
     Object R_do_new_object(Object classDef);
@@ -530,7 +530,7 @@ public interface StdUpCallsRFFI {
     Object R_CHAR(Object x);
 
     @RFFIUpCallNode(NewCustomConnectionNode.class)
-    Object R_new_custom_connection(@RFFICpointer(isString = true) Object description, @RFFICpointer(isString = true) Object mode, @RFFICpointer(isString = true) Object className, Object readAddr);
+    Object R_new_custom_connection(String description, String mode, String className, Object readAddr);
 
     int R_ReadConnection(int fd, long bufAddress, int size);
 
@@ -545,7 +545,7 @@ public interface StdUpCallsRFFI {
     Object R_do_slot_assign(Object o, Object name, Object value);
 
     @RFFIUpCallNode(Str2TypeNode.class)
-    int Rf_str2type(@RFFICpointer(isString = true) Object name);
+    int Rf_str2type(String name);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Unif.DUnif.class)
     double Rf_dunif(double a, double b, double c, int d);
