@@ -1149,7 +1149,7 @@ public abstract class VectorDataLibrary extends Library {
     // may be overridden if the need is.
 
     /**
-     * Transfers and element from source to destination. The element will be coerced to the type of
+     * Transfers an element from source to destination. The element will be coerced to the type of
      * the destination data object.
      */
     public void transferNext(Object dest, SeqWriteIterator destIt, VectorDataLibrary sourceLib, SeqIterator sourceIt, Object source) {
@@ -1186,7 +1186,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     /**
-     * Transfers and element from source to destination. The element will be coerced to the type of
+     * Transfers an element from source to destination. The element will be coerced to the type of
      * the destination data object.
      */
     public void transferNextToRandom(Object dest, RandomAccessWriteIterator destIt, int destIdx, VectorDataLibrary sourceLib, SeqIterator sourceIt, Object source) {
