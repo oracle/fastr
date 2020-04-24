@@ -446,6 +446,6 @@ public final class RStringVector extends RAbstractStringVector implements RMater
     @Override
     protected void verifyData() {
         super.verifyData();
-        assert getUncachedDataLib().getLength(data) == length;
+        assert getUncachedDataLib().getLength(data) == length : formatVerifyErrorMsg(getUncachedDataLib().getLength(data), length);
     }
 }

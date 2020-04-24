@@ -102,6 +102,7 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         shareable = VectorDataLibrary.getFactory().getUncached().isWriteable(data);
         // temporary solution to keep isComplete() fast
         complete = VectorDataLibrary.getFactory().getUncached().isComplete(data);
+        verifyData();
     }
 
     public boolean isSequence() {
@@ -229,6 +230,10 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
         return isTemporary() ? getReadonlyData() : getDataCopy();
     }
 
+    @InternalDeprecation("Some data strategies do not maintain completeness flag, " +
+                    "it should be the sole responsibility of the VectorDataLibrary implementation to keep the flag up-to-date." +
+                    "There should be no need to set completeness manually if one uses the write operations of VectorDataLibrary." +
+                    "See how the Diag builtin was rewritten to avoid calling setComplete.")
     public void setComplete(boolean complete) {
         this.complete = complete && ENABLE_COMPLETE;
         assert RAbstractVector.verifyVector(this);
@@ -967,9 +972,16 @@ public abstract class RAbstractVector extends RAbstractContainer implements RFFI
     }
 
     protected void verifyData() {
-        assert getUncachedDataLib().getType(data) == getRType();
-        assert this instanceof RRawVector || this instanceof RList || getUncachedDataLib().isComplete(data) == isComplete();
-        assert getUncachedDataLib().getLength(data) == getLength();
+        assert getUncachedDataLib().getType(data) == getRType() : formatVerifyErrorMsg(getUncachedDataLib().getType(data), getRType());
+        boolean ignoreComplete = this instanceof RRawVector || this instanceof RList;
+        assert ignoreComplete || getUncachedDataLib().isComplete(data) == isComplete() : formatVerifyErrorMsg(getUncachedDataLib().isComplete(data), isComplete());
+        assert getUncachedDataLib().getLength(data) == getLength() : formatVerifyErrorMsg(getUncachedDataLib().getLength(data), getLength());
+    }
+
+    protected String formatVerifyErrorMsg(Object dataVal, Object vecVal) {
+        return String.format("data: %s, this: %s, data result: %s, vector result: %s",
+                        data.getClass().getSimpleName(), this.getClass().getSimpleName(),
+                        dataVal, vecVal);
     }
 
     /**
