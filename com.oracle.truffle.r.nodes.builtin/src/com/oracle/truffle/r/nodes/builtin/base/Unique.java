@@ -36,6 +36,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.Collections.NonRecursiveHashSet;
@@ -54,6 +55,8 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 
 @RBuiltin(name = "unique", kind = INTERNAL, parameterNames = {"x", "incomparables", "fromLast", "nmax"}, behavior = PURE)
 // TODO A more efficient implementation is in order; GNU R uses hash tables so perhaps we should
@@ -87,39 +90,37 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "vecIn.getClass() == vecClass")
-    protected RStringVector doUniqueCachedString(RStringVector vecIn, byte incomparables, byte fromLast, int nmax,
-                    @Cached("vecIn.getClass()") Class<? extends RStringVector> vecClass) {
-        RStringVector vec = vecClass.cast(vecIn);
-        reportWork(vec.getLength());
-        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashSet<String> set = new NonRecursiveHashSet<>(vec.getLength());
-            String[] data = new String[vec.getLength()];
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RStringVector doUniqueCachedString(RStringVector vec, byte incomparables, byte fromLast, int nmax,
+                    @CachedLibrary("vec.getData()") VectorDataLibrary vecLib) {
+        Object vecData = vec.getData();
+        int vecLength = vecLib.getLength(vecData);
+        reportWork(vecLength);
+        if (bigProfile.profile(vecLength * (long) vecLength > BIG_THRESHOLD)) {
+            NonRecursiveHashSet<String> set = new NonRecursiveHashSet<>(vecLength);
+            String[] data = new String[vecLength];
             int ind = 0;
-            for (int i = 0; i < vec.getLength(); i++) {
-                String val = vec.getDataAt(i);
+            SeqIterator it = vecLib.iterator(vecData);
+            while (vecLib.nextLoopCondition(vecData, it)) {
+                String val = vecLib.getNextString(vecData, it);
                 if (!set.add(val)) {
                     data[ind++] = val;
                 }
             }
-            return RDataFactory.createStringVector(Arrays.copyOf(data, ind), vec.isComplete());
+            return RDataFactory.createStringVector(Arrays.copyOf(data, ind), vecLib.isComplete(vecData));
         } else {
-            ArrayList<String> dataList = new ArrayList<>(vec.getLength());
-            for (int i = 0; i < vec.getLength(); i++) {
-                String s = vec.getDataAt(i);
+            ArrayList<String> dataList = new ArrayList<>(vecLength);
+            SeqIterator it = vecLib.iterator(vecData);
+            while (vecLib.nextLoopCondition(vecData, it)) {
+                String s = vecLib.getNextString(vecData, it);
                 if (!dataList.contains(s)) {
                     dataList.add(s);
                 }
             }
             String[] data = new String[dataList.size()];
             dataList.toArray(data);
-            return RDataFactory.createStringVector(data, vec.isComplete());
+            return RDataFactory.createStringVector(data, vecLib.isComplete(vecData));
         }
-    }
-
-    @Specialization(replaces = "doUniqueCachedString")
-    protected RStringVector doUnique(RStringVector vec, byte incomparables, byte fromLast, int nmax) {
-        return doUniqueCachedString(vec, incomparables, fromLast, nmax, RStringVector.class);
     }
 
     // these are intended to stay private as they will go away once we figure out which external
@@ -253,17 +254,19 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = "vecIn.getClass() == vecClass")
-    protected RIntVector doUniqueCached(RIntVector vecIn, byte incomparables, byte fromLast, int nmax,
-                    @Cached("vecIn.getClass()") Class<? extends RIntVector> vecClass) {
-        RIntVector vec = vecClass.cast(vecIn);
-        reportWork(vec.getLength());
-        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected RIntVector doUniqueCached(RIntVector vec, byte incomparables, byte fromLast, int nmax,
+                    @CachedLibrary("vec.getData()") VectorDataLibrary vecLib) {
+        Object vecData = vec.getData();
+        int vecLength = vecLib.getLength(vecData);
+        reportWork(vecLength);
+        if (bigProfile.profile(vecLength * (long) vecLength > BIG_THRESHOLD)) {
             NonRecursiveHashSetInt set = new NonRecursiveHashSetInt();
             int[] data = new int[16];
             int ind = 0;
-            for (int i = 0; i < vec.getLength(); i++) {
-                int val = vec.getDataAt(i);
+            SeqIterator it = vecLib.iterator(vecData);
+            while (vecLib.nextLoopCondition(vecData, it)) {
+                int val = vecLib.getNextInt(vecData, it);
                 if (!set.add(val)) {
                     if (ind == data.length) {
                         data = Arrays.copyOf(data, data.length << 1);
@@ -271,22 +274,18 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
                     data[ind++] = val;
                 }
             }
-            return RDataFactory.createIntVector(Arrays.copyOf(data, ind), vec.isComplete());
+            return RDataFactory.createIntVector(Arrays.copyOf(data, ind), vecLib.isComplete(vecData));
         } else {
-            IntArray dataList = new IntArray(vec.getLength());
-            for (int i = 0; i < vec.getLength(); i++) {
-                int val = vec.getDataAt(i);
+            IntArray dataList = new IntArray(vecLength);
+            SeqIterator it = vecLib.iterator(vecData);
+            while (vecLib.nextLoopCondition(vecData, it)) {
+                int val = vecLib.getNextInt(vecData, it);
                 if (!dataList.contains(val)) {
                     dataList.add(val);
                 }
             }
-            return RDataFactory.createIntVector(dataList.toArray(), vec.isComplete());
+            return RDataFactory.createIntVector(dataList.toArray(), vecLib.isComplete(vecData));
         }
-    }
-
-    @Specialization(replaces = "doUniqueCached")
-    protected RIntVector doUnique(RIntVector vec, byte incomparables, byte fromLast, int nmax) {
-        return doUniqueCached(vec, incomparables, fromLast, nmax, RIntVector.class);
     }
 
     @SuppressWarnings("unused")

@@ -92,11 +92,6 @@ public class RRawNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
-    public RRawArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
-        return copy(deep).copyResized(newSize, deep, fillNA);
-    }
-
-    @ExportMessage
     public byte[] getRawDataCopy() {
         return NativeDataAccess.copyByteNativeData(vec.getNativeMirror());
     }

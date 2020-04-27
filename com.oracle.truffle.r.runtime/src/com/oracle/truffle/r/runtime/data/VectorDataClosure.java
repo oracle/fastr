@@ -125,11 +125,6 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
     }
 
     @ExportMessage
-    public RIntArrayVectorData copyResized(@SuppressWarnings("unused") int newSize, @SuppressWarnings("unused") boolean deep, @SuppressWarnings("unused") boolean fillNA) {
-        throw RInternalError.unimplemented("TODO");
-    }
-
-    @ExportMessage
     public SeqIterator iterator(@CachedLibrary("this.data") VectorDataLibrary dataLib) {
         return dataLib.iterator(data);
     }

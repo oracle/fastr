@@ -29,7 +29,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
@@ -93,12 +92,6 @@ public class RStringVecNativeData implements TruffleObject {
     public RStringArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
         String[] dataCopy = NativeDataAccess.copyStringNativeData(vec.getNativeMirror());
         return new RStringArrayVectorData(dataCopy, RDataFactory.INCOMPLETE_VECTOR);
-    }
-
-    @ExportMessage
-    @SuppressWarnings("unused")
-    public Object copyResized(int newSize, boolean deep, boolean fillNA) {
-        throw RInternalError.unimplemented("this method should be removed");
     }
 
     @ExportMessage

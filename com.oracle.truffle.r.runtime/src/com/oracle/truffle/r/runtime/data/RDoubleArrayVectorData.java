@@ -96,15 +96,6 @@ class RDoubleArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RDoubleArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        double[] newData = Arrays.copyOf(data, newSize);
-        if (fillNA) {
-            Arrays.fill(newData, data.length, newData.length, RRuntime.DOUBLE_NA);
-        }
-        return new RDoubleArrayVectorData(newData, isComplete(ownerIsNull));
-    }
-
-    @ExportMessage
     public boolean isComplete(@Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
         if (owner != null) {
             return owner.isComplete() && ENABLE_COMPLETE;

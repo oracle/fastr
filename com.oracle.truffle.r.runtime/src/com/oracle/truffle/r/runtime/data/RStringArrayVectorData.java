@@ -30,7 +30,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.Iterator;
@@ -102,11 +101,6 @@ class RStringArrayVectorData implements TruffleObject, VectorDataWithOwner {
     public RStringArrayVectorData copy(@SuppressWarnings("unused") boolean deep,
                     @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
         return new RStringArrayVectorData(Arrays.copyOf(data, data.length), isComplete(ownerIsNull));
-    }
-
-    @ExportMessage
-    public RStringArrayVectorData copyResized(@SuppressWarnings("unused") int newSize, @SuppressWarnings("unused") boolean deep, @SuppressWarnings("unused") boolean fillNA) {
-        throw RInternalError.shouldNotReachHere("this method will be removed");
     }
 
     @ExportMessage

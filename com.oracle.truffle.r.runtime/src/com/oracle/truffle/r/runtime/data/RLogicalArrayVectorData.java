@@ -98,16 +98,6 @@ class RLogicalArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RLogicalArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
-                    @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        byte[] newData = Arrays.copyOf(data, newSize);
-        if (fillNA) {
-            Arrays.fill(newData, data.length, newData.length, RRuntime.LOGICAL_NA);
-        }
-        return new RLogicalArrayVectorData(newData, isComplete(ownerIsNull));
-    }
-
-    @ExportMessage
     public boolean isComplete(@Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
         if (owner != null) {
             return owner.isComplete() && ENABLE_COMPLETE;

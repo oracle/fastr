@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,12 +28,17 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
@@ -41,7 +46,8 @@ public abstract class IntersectFastPath extends RFastPathNode {
 
     private static final int[] EMPTY_INT_ARRAY = new int[0];
 
-    protected static final class IntersectSortedNode extends Node {
+    @ImportStatic(DSLConfig.class)
+    protected abstract static class IntersectSortedNode extends Node {
 
         private final boolean isSorted;
 
@@ -65,14 +71,26 @@ public abstract class IntersectFastPath extends RFastPathNode {
             return NodeCost.NONE;
         }
 
-        private int[] execute(RIntVector x, int xLength, int yLength, RIntVector y) {
+        abstract int[] execute(RIntVector x, RIntVector y);
+
+        @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+        protected int[] exec(RIntVector x, RIntVector y,
+                        @CachedLibrary("x.getData()") VectorDataLibrary xLib,
+                        @CachedLibrary("y.getData()") VectorDataLibrary yLib) {
+            Object xData = x.getData();
+            Object yData = y.getData();
+            int xLength = xLib.getLength(xData);
+            int yLength = yLib.getLength(yData);
+            RandomAccessIterator xrit = xLib.randomAccessIterator(xData);
+            RandomAccessIterator yrit = yLib.randomAccessIterator(yData);
+
             int[] result = EMPTY_INT_ARRAY;
             int maxResultLength = Math.min(xLength, yLength);
             int count = 0;
             int xPos = 0;
             int yPos = 0;
-            int xValue = x.getDataAt(xPos);
-            int yValue = y.getDataAt(yPos);
+            int xValue = xLib.getInt(xData, xrit, xPos);
+            int yValue = yLib.getInt(yData, yrit, yPos);
             while (true) {
                 if (valueEqualsProfile.profile(xValue == yValue)) {
                     if (resizeProfile.profile(count >= result.length)) {
@@ -84,7 +102,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
                         if (exit1Profile.profile(xPos >= xLength - 1)) {
                             break;
                         }
-                        int nextValue = x.getDataAt(xPos + 1);
+                        int nextValue = xLib.getInt(xData, xrit, xPos + 1);
                         if (exit2Profile.profile(xValue != nextValue)) {
                             break;
                         }
@@ -94,34 +112,34 @@ public abstract class IntersectFastPath extends RFastPathNode {
                     if (exit3Profile.profile(++xPos >= xLength) || exit4Profile.profile(++yPos >= yLength)) {
                         break;
                     }
-                    xValue = getNextValue(x, xPos, xValue);
-                    yValue = getNextValue(y, yPos, yValue);
+                    xValue = getNextValue(xLib, xData, xrit, xPos, xValue);
+                    yValue = getNextValue(yLib, yData, yrit, yPos, yValue);
                 } else if (valueSmallerProfile.profile(xValue < yValue)) {
                     if (exit5Profile.profile(++xPos >= xLength)) {
                         break;
                     }
-                    xValue = getNextValue(x, xPos, xValue);
+                    xValue = getNextValue(xLib, xData, xrit, xPos, xValue);
                 } else {
                     if (exit6Profile.profile(++yPos >= yLength)) {
                         break;
                     }
-                    yValue = getNextValue(y, yPos, yValue);
+                    yValue = getNextValue(yLib, yData, yrit, yPos, yValue);
                 }
             }
             if (!isSorted) {
                 // check remaining array entries
                 while (++xPos < xLength) {
-                    xValue = getNextValue(x, xPos, xValue);
+                    xValue = getNextValue(xLib, xData, xrit, xPos, xValue);
                 }
                 while (++yPos < yLength) {
-                    yValue = getNextValue(y, yPos, yValue);
+                    yValue = getNextValue(yLib, yData, yrit, yPos, yValue);
                 }
             }
             return resultLengthMatchProfile.profile(count == result.length) ? result : Arrays.copyOf(result, count);
         }
 
-        private int getNextValue(RIntVector vector, int pos, int oldValue) {
-            int newValue = vector.getDataAt(pos);
+        private int getNextValue(VectorDataLibrary lib, Object data, RandomAccessIterator rit, int pos, int oldValue) {
+            int newValue = lib.getInt(data, rit, pos);
             if (!isSorted && newValue < oldValue) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw new IllegalArgumentException();
@@ -130,84 +148,60 @@ public abstract class IntersectFastPath extends RFastPathNode {
         }
     }
 
-    protected static int length(RIntVector v, Class<? extends RIntVector> clazz) {
-        return clazz.cast(v).getLength();
-    }
-
-    protected static IntersectSortedNode createMaybeSorted() {
-        return new IntersectSortedNode(false);
-    }
-
-    @Specialization(limit = "1", guards = {"x.getClass() == cached.xClass", "y.getClass() == cached.yClass", "length(x, cached.xClass) > 0",
-                    "length(y, cached.yClass) > 0", "getLimit1Guard()"}, rewriteOn = IllegalArgumentException.class)
+    @Specialization(limit = "1", guards = {"xLib.getLength(x.getData()) > 0", "yLib.getLength(y.getData()) > 0", "getLimit1Guard()"}, rewriteOn = IllegalArgumentException.class)
     protected RIntVector intersectMaybeSorted(RIntVector x, RIntVector y,
-                    @Cached("new(x.getClass(), y.getClass())") IntersectMaybeSortedNode cached) {
-        // apply the type profiles:
-        RIntVector profiledX = cached.xClass.cast(x);
-        RIntVector profiledY = cached.yClass.cast(y);
+                    @CachedLibrary(value = "x.getData()") VectorDataLibrary xLib,
+                    @CachedLibrary(value = "y.getData()") VectorDataLibrary yLib,
+                    @Cached("create(false)") IntersectSortedNode sortSortedNode) {
+        RBaseNode.reportWork(this, xLib.getLength(x.getData()) + yLib.getLength(y.getData()));
 
-        int xLength = profiledX.getLength();
-        int yLength = profiledY.getLength();
-        RBaseNode.reportWork(this, xLength + yLength);
-
-        int[] result = cached.intersect.execute(profiledX, xLength, yLength, profiledY);
-        return RDataFactory.createIntVector(result, profiledX.isComplete() | profiledY.isComplete());
+        int[] result = sortSortedNode.execute(x, y);
+        return RDataFactory.createIntVector(result, xLib.isComplete(x.getData()) | yLib.isComplete(y.getData()));
     }
 
-    public static class IntersectMaybeSortedNode extends Node {
-        public final Class<? extends RIntVector> xClass;
-        public final Class<? extends RIntVector> yClass;
-        @Child IntersectSortedNode intersect;
-
-        public IntersectMaybeSortedNode(Class<? extends RIntVector> xClass, Class<? extends RIntVector> yClass) {
-            this.xClass = xClass;
-            this.yClass = yClass;
-            this.intersect = createMaybeSorted();
-        }
-    }
-
-    protected static IntersectSortedNode createSorted() {
-        return new IntersectSortedNode(true);
-    }
-
-    @Specialization(limit = "1", guards = {"x.getClass() == cached.xClass", "y.getClass() == cached.yClass", "length(x, cached.xClass) > 0", "length(y, cached.yClass) > 0", "getLimit1Guard()"})
+    @Specialization(limit = "1", guards = {"xLib.getLength(x.getData()) > 0", "yLib.getLength(y.getData()) > 0", "getLimit1Guard()"})
     protected RIntVector intersect(RIntVector x, RIntVector y,
-                    @Cached("new(x.getClass(), y.getClass())") IntersectNode cached) {
-        // apply the type profiles:
-        RIntVector profiledX = cached.xClass.cast(x);
-        RIntVector profiledY = cached.yClass.cast(y);
+                    @CachedLibrary(value = "x.getData()") VectorDataLibrary xLib,
+                    @CachedLibrary(value = "y.getData()") VectorDataLibrary yLib,
+                    @Cached("createBinaryProfile()") ConditionProfile isXSortedProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile isYSortedProfile,
+                    @Cached("create(false)") IntersectSortedNode intersectSortedNode) {
+        Object xData = x.getData();
+        Object yData = y.getData();
+        int xLength = xLib.getLength(xData);
+        int yLength = yLib.getLength(yData);
+        RandomAccessIterator xrit = xLib.randomAccessIterator(xData);
+        RandomAccessIterator yrit = yLib.randomAccessIterator(yData);
 
-        int xLength = profiledX.getLength();
-        int yLength = profiledY.getLength();
         RBaseNode.reportWork(this, xLength + yLength);
 
         int[] result;
-        if (cached.isXSortedProfile.profile(isSorted(profiledX))) {
+        if (isXSortedProfile.profile(isSorted(xLib, xData))) {
             RIntVector tempY;
-            if (cached.isYSortedProfile.profile(isSorted(profiledY))) {
-                tempY = profiledY;
+            if (isYSortedProfile.profile(isSorted(yLib, yData))) {
+                tempY = y;
             } else {
                 int[] temp = new int[yLength];
                 for (int i = 0; i < yLength; i++) {
-                    temp[i] = profiledY.getDataAt(i);
+                    temp[i] = yLib.getInt(yData, yrit, i);
                 }
                 sort(temp);
-                tempY = RDataFactory.createIntVector(temp, profiledY.isComplete());
+                tempY = RDataFactory.createIntVector(temp, yLib.isComplete(yData));
             }
-            result = cached.intersect.execute(profiledX, xLength, yLength, tempY);
+            result = intersectSortedNode.execute(x, tempY);
         } else {
             result = EMPTY_INT_ARRAY;
             int maxResultLength = Math.min(xLength, yLength);
             int[] temp = new int[yLength];
             boolean[] used = new boolean[yLength];
             for (int i = 0; i < yLength; i++) {
-                temp[i] = profiledY.getDataAt(i);
+                temp[i] = yLib.getInt(yData, yrit, i);
             }
             sort(temp);
 
             int count = 0;
             for (int i = 0; i < xLength; i++) {
-                int value = profiledX.getDataAt(i);
+                int value = xLib.getInt(xData, xrit, i);
                 int pos = Arrays.binarySearch(temp, value);
                 if (pos >= 0 && !used[pos]) {
                     used[pos] = true;
@@ -217,35 +211,22 @@ public abstract class IntersectFastPath extends RFastPathNode {
                     result[count++] = value;
                 }
             }
-            result = cached.resultLengthMatchProfile.profile(count == result.length) ? result : Arrays.copyOf(result, count);
+            result = intersectSortedNode.resultLengthMatchProfile.profile(count == result.length) ? result : Arrays.copyOf(result, count);
         }
-        return RDataFactory.createIntVector(result, profiledX.isComplete() | profiledY.isComplete());
+        return RDataFactory.createIntVector(result, xLib.isComplete(xData) | yLib.isComplete(yData));
     }
 
-    public static class IntersectNode extends Node {
-        public final Class<? extends RIntVector> xClass;
-        public final Class<? extends RIntVector> yClass;
-        final ConditionProfile isXSortedProfile = ConditionProfile.createBinaryProfile();
-        final ConditionProfile isYSortedProfile = ConditionProfile.createBinaryProfile();
-        final ConditionProfile resultLengthMatchProfile = ConditionProfile.createBinaryProfile();
-        @Child IntersectSortedNode intersect;
-
-        public IntersectNode(Class<? extends RIntVector> xClass, Class<? extends RIntVector> yClass) {
-            this.xClass = xClass;
-            this.yClass = yClass;
-            this.intersect = createMaybeSorted();
-        }
-    }
-
-    private static boolean isSorted(RIntVector vector) {
-        int length = vector.getLength();
-        int lastValue = vector.getDataAt(0);
-        for (int i = 1; i < length; i++) {
-            int value = vector.getDataAt(i);
-            if (value < lastValue) {
-                return false;
+    private static boolean isSorted(VectorDataLibrary lib, Object data) {
+        VectorDataLibrary.SeqIterator it = lib.iterator(data);
+        if (lib.nextLoopCondition(data, it)) {
+            int lastValue = lib.getNextInt(data, it);
+            while (lib.nextLoopCondition(data, it)) {
+                int value = lib.getNextInt(data, it);
+                if (value < lastValue) {
+                    return false;
+                }
+                lastValue = value;
             }
-            lastValue = value;
         }
         return true;
     }

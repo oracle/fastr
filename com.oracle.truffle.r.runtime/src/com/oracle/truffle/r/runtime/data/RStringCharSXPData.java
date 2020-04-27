@@ -92,12 +92,6 @@ public class RStringCharSXPData {
     }
 
     @ExportMessage
-    @SuppressWarnings("unused")
-    public Object copyResized(int newSize, boolean deep, boolean fillNA) {
-        throw RInternalError.unimplemented("this method should be removed");
-    }
-
-    @ExportMessage
     public String[] getStringDataCopy() {
         String[] result = new String[data.length];
         for (int i = 0; i < data.length; i++) {

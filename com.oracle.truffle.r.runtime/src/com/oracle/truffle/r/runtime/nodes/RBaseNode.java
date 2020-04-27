@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -241,6 +242,10 @@ public abstract class RBaseNode extends Node {
 
     protected static boolean isRAbstractVector(Object value) {
         return value instanceof RAbstractVector;
+    }
+
+    protected static boolean isRAbstractAtomicVector(Object value) {
+        return value instanceof RAbstractAtomicVector;
     }
 
     protected static boolean isRDoubleVector(Object value) {

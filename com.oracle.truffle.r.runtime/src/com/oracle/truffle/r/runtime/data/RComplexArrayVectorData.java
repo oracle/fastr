@@ -97,16 +97,6 @@ class RComplexArrayVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RComplexArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA, @Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
-        int csize = newSize << 1;
-        double[] newData = Arrays.copyOf(data, csize);
-        if (fillNA) {
-            Arrays.fill(newData, data.length, newData.length, RRuntime.DOUBLE_NA);
-        }
-        return new RComplexArrayVectorData(newData, isComplete(ownerIsNull));
-    }
-
-    @ExportMessage
     public boolean isComplete(@Shared("nullOwner") @Cached BranchProfile ownerIsNull) {
         if (owner != null) {
             return owner.isComplete() && ENABLE_COMPLETE;

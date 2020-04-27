@@ -29,7 +29,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
@@ -95,12 +94,6 @@ class RStringFactorClosure implements RClosure {
     @ExportMessage
     public RStringFactorClosure copy(@SuppressWarnings("unused") boolean deep) {
         return new RStringFactorClosure(vector, levels);
-    }
-
-    @ExportMessage
-    @SuppressWarnings("unused")
-    public RStringArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere("this method will be removed");
     }
 
     @ExportMessage

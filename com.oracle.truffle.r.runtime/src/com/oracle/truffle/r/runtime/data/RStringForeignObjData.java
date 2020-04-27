@@ -41,8 +41,6 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-import java.util.Arrays;
-
 @ExportLibrary(VectorDataLibrary.class)
 class RStringForeignObjData implements TruffleObject {
     protected final Object foreign;
@@ -91,19 +89,6 @@ class RStringForeignObjData implements TruffleObject {
                     @CachedLibrary("this.foreign") InteropLibrary interop,
                     @Shared("isNullCheck") @Cached("createBinaryProfile()") ConditionProfile isNullProfile) {
         return new RStringArrayVectorData(getStringDataCopy(valueInterop, interop, isNullProfile), RDataFactory.INCOMPLETE_VECTOR);
-    }
-
-    @ExportMessage
-    public RStringArrayVectorData copyResized(int newSize, @SuppressWarnings("unused") boolean deep, boolean fillNA,
-                    @CachedLibrary(limit = "5") InteropLibrary valueInterop,
-                    @Shared("isNullCheck") @Cached("createBinaryProfile()") ConditionProfile isNullProfile,
-                    @CachedLibrary("this.foreign") InteropLibrary interop) {
-        int length = getLength(interop);
-        String[] newData = getDataAsArray(newSize, length, interop, valueInterop, isNullProfile);
-        if (fillNA) {
-            Arrays.fill(newData, length, newData.length, RRuntime.INT_NA);
-        }
-        return new RStringArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage

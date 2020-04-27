@@ -22,14 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -69,17 +69,10 @@ public abstract class MaterializeNode extends Node {
         return vec;
     }
 
-    // specialization that caches on the class of the vector
-
-    @Specialization(limit = "getCacheSize(LIMIT)", guards = {"vec.getClass() == cachedClass"})
-    protected RAttributable doAbstractVectorCached(RAbstractVector vec,
-                    @SuppressWarnings("unused") @Cached("vec.getClass()") Class<? extends RAbstractVector> cachedClass) {
-        return cachedClass.cast(vec).materialize();
-    }
-
-    @Specialization(replaces = "doAbstractVectorCached")
-    protected RAttributable doAbstractVector(RAbstractVector vec) {
-        return vec.materialize();
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    protected Object doAbstractVectorCached(RAbstractVector vec,
+                    @CachedLibrary("vec") AbstractContainerLibrary vecLib) {
+        return vecLib.materialize(vec);
     }
 
     @Fallback
