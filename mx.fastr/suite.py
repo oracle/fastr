@@ -54,14 +54,14 @@ suite = {
 
     "F2C" : {
         "path" : "libdownloads/f2c/src.tgz",
-        "urls" : ["https://netlib.sandia.gov/f2c/src.tgz"],
-        "sha1" : "8a26107bf9f82a2dcfa597f15549a412be75e0ee",
+        "urls" : ["https://www.netlib.org/f2c/src.tgz"],
+        "sha1" : "7cf7eaa87d4800f7abd54ef882211c82426de764",
         "resource" : "true"
     },
 
     "LIBF2C" : {
         "path" : "libdownloads/f2c/libf2c.zip",
-        "urls" : ["https://netlib.sandia.gov/f2c/libf2c.zip"],
+        "urls" : ["https://www.netlib.org/f2c/libf2c.zip"],
         "sha1" : "e39a00f425f8fc41dde434686080a94e94884f30",
         "resource" : "true"
     },
