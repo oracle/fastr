@@ -8,6 +8,11 @@
 #include <set>
 
 
+/**
+ * Arguments passed from R side. Every member indicates whether certain altrep method should
+ * be registered or not.
+ * TODO: "gen_" prefix is misleading, it should rather be "register_" prefix.
+ */
 struct Args {
     Rboolean gen_Duplicate;
     Rboolean gen_Coerce;
@@ -32,8 +37,21 @@ enum class Method {
     Is_sorted
 };
 
+/**
+ * Base class for all altrep classes that wrap some vector data. This class has some altrep
+ * methods that are common for both altintegers and altreals.
+ */
 class VecWrapper {
 public:
+
+    /**
+     * Creates and altrep instance of a wrapper that wraps given data. Dispatches either to
+     * SimpleIntVecWrapper::createDescriptor, or SimpleRealVecWrapper::createDescriptor.
+     * 
+     * @param data Data that should be wrapped. Currently only integer and real vectors are supported.
+     * @param ... other parameters indicates whether certain altrep method should be registered.
+     *            @see Args.
+     */
     static SEXP createInstance(SEXP data, SEXP gen_Duplicate, SEXP gen_Coerce, SEXP gen_Elt, SEXP gen_Sum,
         SEXP gen_Min, SEXP gen_Max, SEXP gen_Get_region, SEXP gen_Is_sorted);
     static SEXP createInstanceFromArgs(SEXP data, const Args &args);
@@ -48,6 +66,9 @@ private:
     static Rboolean Inspect(SEXP x, int pre, int deep, int pvec, void (*inspect_subtree)(SEXP, int, int, int));
 };
 
+/**
+ * Wrapper for integer vectors.
+ */
 class SimpleIntVecWrapper : public VecWrapper {
 public:
     static R_altrep_class_t createDescriptor(const Args &args);
@@ -60,6 +81,9 @@ protected:
     static int Is_sorted(SEXP instnace);
 };
 
+/**
+ * Wrapper for real vectors.
+ */
 class SimpleRealVecWrapper : public VecWrapper {
 public:
     static R_altrep_class_t createDescriptor(const Args &args);
@@ -73,11 +97,27 @@ protected:
 };
 
 
+/**
+ * Base class for altrep classes that should log their altrep method calls, ie. they have
+ * "wasMethodCalled", "logMethodCall", and "clearCalledMethods" methods.
+ */
 class LoggingVecWrapper {
 public:
+    /**
+     * Behaves similarly to VecWrapper::createInstance.
+     */
     static SEXP createInstance(SEXP data, SEXP gen_Duplicate, SEXP gen_Coerce, SEXP gen_Elt, SEXP gen_Sum,
         SEXP gen_Min, SEXP gen_Max, SEXP gen_Get_region, SEXP gen_Is_sorted);
+    /**
+     * Query whether some (altrep) method was called
+     * 
+     * @param method_type_str Altrep method in string ie. Duplicate, Dataptr, etc.
+     */
     static SEXP wasMethodCalled(SEXP instance, SEXP method_type_str);
+    /**
+     * Clears all the records about previously called altrep methods. After this method is called,
+     * wasMethodCalled(...) will answer FALSE to everything.
+     */
     static SEXP clearCalledMethods();
 protected:
     static void logMethodCall(Method method_type, SEXP instance);

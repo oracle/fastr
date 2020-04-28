@@ -6,10 +6,10 @@ SEXP FirstCharChangerClass::createInstance(SEXP char_vec, SEXP replace_char)
     if (TYPEOF(char_vec) != STRSXP || TYPEOF(replace_char) != STRSXP ||
         LENGTH(replace_char) > 1)
     {
-        error("Wrong parameters");
+        Rf_error("Wrong parameters");
     }
 
-    auto descr = R_make_altstring_class("FirstCharChanger", "altreprffitests", nullptr);
+    R_altrep_class_t descr = R_make_altstring_class("FirstCharChanger", "altreprffitests", nullptr);
     R_set_altrep_Length_method(descr, &Length);
     R_set_altvec_Dataptr_method(descr, &Dataptr);
     R_set_altstring_Elt_method(descr, &Elt);
@@ -33,14 +33,14 @@ SEXP FirstCharChangerClass::Elt(SEXP instance, R_xlen_t idx)
     SEXP char_vec = R_altrep_data1(instance);
     SEXP replace_char = R_altrep_data2(instance);
     if (TYPEOF(replace_char) != CHARSXP) {
-        error("Internal error in Elt");
+        Rf_error("Internal error in Elt");
     }
 
-    const char *old_string = translateChar(STRING_ELT(char_vec, idx));
+    const char *old_string = Rf_translateChar(STRING_ELT(char_vec, idx));
     char *new_string = static_cast<char *>( std::malloc( std::strlen(old_string)));
     std::strcpy(new_string, old_string);
-    new_string[0] = translateChar(replace_char)[0];
-    SEXP new_elem = mkChar(new_string);
+    new_string[0] = Rf_translateChar(replace_char)[0];
+    SEXP new_elem = Rf_mkChar(new_string);
     // TODO: Valid here?
     std::free(new_string);
     return new_elem;
@@ -48,5 +48,5 @@ SEXP FirstCharChangerClass::Elt(SEXP instance, R_xlen_t idx)
 
 void FirstCharChangerClass::Set_elt(SEXP instance, R_xlen_t idx, SEXP elem)
 {
-    error("Should not reach here");
+    Rf_error("Should not reach here");
 }

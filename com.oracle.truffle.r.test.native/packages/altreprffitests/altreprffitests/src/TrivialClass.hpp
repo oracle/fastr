@@ -7,6 +7,10 @@
 #include <vector>
 
 
+/**
+ * Simplest possible altrep class that does not have any data. To Dataptr it returns an address
+ * to statically-allocated buffer.
+ */
 class TrivialClass {
 public:
     static SEXP createInstance();
