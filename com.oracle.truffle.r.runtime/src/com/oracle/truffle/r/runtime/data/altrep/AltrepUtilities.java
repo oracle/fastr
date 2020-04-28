@@ -54,7 +54,7 @@ public class AltrepUtilities {
     }
 
     public static RPairList getPairListDataFromVec(RAltStringVector altStringVec) {
-        throw RInternalError.unimplemented("AltrepUtilities.getPairListDataFromVec(RStringVector)");
+        return altStringVec.getAltrepDataAsPairList();
     }
 
     public static boolean hasCoerceMethodRegistered(Object object) {

@@ -5,6 +5,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess;
@@ -76,6 +77,10 @@ public class RAltStringVector extends RAbstractStringVector implements RAbstract
 
     public RAltRepData getAltrepData() {
         return data;
+    }
+
+    public RPairList getAltrepDataAsPairList() {
+        return data.getDataPairList();
     }
 
     public void setData2(Object data2) {
