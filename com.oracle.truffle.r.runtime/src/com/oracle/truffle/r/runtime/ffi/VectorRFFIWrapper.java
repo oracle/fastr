@@ -64,11 +64,9 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
-import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(NativeTypeLibrary.class)
@@ -312,16 +310,6 @@ public final class VectorRFFIWrapper implements TruffleObject {
             return ctx.getSulongArrayType(42L);
         }
 
-        @Specialization
-        protected static Object doAltrepInt(@SuppressWarnings("unused") RAltIntVectorData vec, RFFIContext ctx) {
-            return ctx.getSulongArrayType(42);
-        }
-
-        @Specialization
-        protected static Object doAltrepString(RAltStringVector vec, RFFIContext ctx) {
-            return ctx.getSulongArrayType(42L);
-        }
-
         @Fallback
         protected static Object others(@SuppressWarnings("unused") Object vec, @SuppressWarnings("unused") RFFIContext ctx) {
             CompilerDirectives.transferToInterpreter();
@@ -517,6 +505,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
             return vector;
         }
 
+        // TODO: Make this altrep-aware
         @Specialization
         protected static Object doStringVector(RStringVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
             Object usedValue = value;
@@ -530,6 +519,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
             return vector;
         }
 
+        // TODO: Make this altrep-aware
         @Specialization
         protected static Object doStringVector(RStringVector vector, int index, CharSXPWrapper value, @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value.getContents())) {
@@ -570,7 +560,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
             return vector;
         }
 
-        // TODO: Add other specializations
+        // TODO: Remove this - this looks like it should not work
         @Specialization(limit = "1")
         protected static Object doAltIntegerVector(RAltIntVectorData vector, int index, int value,
                                                    @CachedLibrary("vector.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInterop,
@@ -579,31 +569,6 @@ public final class VectorRFFIWrapper implements TruffleObject {
             // TODO: Add dataptrAddrComputed binary profile.
             long addr = vector.getDescriptor().invokeDataptrMethodCached(vector, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
             NativeMemory.putInt(addr, index, value);
-            return vector;
-        }
-
-        @Specialization(limit = "1")
-        protected static Object doAltStringVector(RAltStringVector vector, int index, long addr,
-                                                  @CachedLibrary("vector.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInterop,
-                                                  @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                                                  @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            Object value = NativeDataAccess.lookup(addr);
-            assert value instanceof CharSXPWrapper;
-            long dataptrAddr = vector.getDescriptor().invokeDataptrMethodCached(vector, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-            byte[] valueBytes = ((CharSXPWrapper) value).getContents().getBytes();
-            NativeMemory.copyMemory(valueBytes, dataptrAddr, ElementType.BYTE, valueBytes.length);
-            return vector;
-        }
-
-        @Specialization(limit = "1")
-        protected static Object doAltStringVector(RAltStringVector vector, int index, CharSXPWrapper value,
-                                                  @CachedLibrary("vector.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInterop,
-                                                  @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                                                  @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            vector.getDescriptor().invokeSetEltMethodCached(vector, index, value, dataptrMethodInterop, hasMirrorProfile);
-            long dataptrAddr = vector.getDescriptor().invokeDataptrMethodCached(vector, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-            byte[] valueBytes = value.getContents().getBytes();
-            NativeMemory.copyMemory(valueBytes, dataptrAddr, ElementType.BYTE, valueBytes.length);
             return vector;
         }
 

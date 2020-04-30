@@ -5,8 +5,8 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 
 @GenerateUncached
 // TODO: Optimize
@@ -21,9 +21,9 @@ public abstract class SetAltrepData2Node extends FFIUpCallNode.Arg2 {
         return null;
     }
 
-    @Specialization
-    public Object doAltString(RAltStringVector altStringVec, Object data2) {
-        altStringVec.setData2(data2);
+    @Specialization(guards = "isAltrep(altStringVec)")
+    public Object doAltString(RStringVector altStringVec, Object data2) {
+        AltrepUtilities.getAltrepData(altStringVec).setData2(data2);
         return null;
     }
 

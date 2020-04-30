@@ -8,8 +8,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 
 @GenerateUncached
 public abstract class SetAltrepData1Node extends FFIUpCallNode.Arg2 {
@@ -24,9 +24,9 @@ public abstract class SetAltrepData1Node extends FFIUpCallNode.Arg2 {
         return null;
     }
 
-    @Specialization(limit = "3")
-    public Object doAltString(RAltStringVector altStringVec, Object data1,
-                           @CachedLibrary("getPairListDataFromVec(altStringVec)") RPairListLibrary pairListLibrary) {
+    @Specialization(limit = "3", guards = "isAltrep(altStringVec)")
+    public Object doAltString(RStringVector altStringVec, Object data1,
+                              @CachedLibrary("getPairListDataFromVec(altStringVec)") RPairListLibrary pairListLibrary) {
         pairListLibrary.setCar(getPairListDataFromVec(altStringVec), data1);
         return null;
     }
@@ -44,7 +44,7 @@ public abstract class SetAltrepData1Node extends FFIUpCallNode.Arg2 {
         return AltrepUtilities.getPairListDataFromVec(altIntVec);
     }
 
-    protected static RPairList getPairListDataFromVec(RAltStringVector altStringVec) {
+    protected static RPairList getPairListDataFromVec(RStringVector altStringVec) {
         return AltrepUtilities.getPairListDataFromVec(altStringVec);
     }
 }

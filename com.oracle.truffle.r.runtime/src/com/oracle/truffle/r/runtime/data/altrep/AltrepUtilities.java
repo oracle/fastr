@@ -8,9 +8,11 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
+import com.oracle.truffle.r.runtime.data.RAltStringVectorData;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 public class AltrepUtilities {
@@ -23,9 +25,19 @@ public class AltrepUtilities {
         return (RAltIntVectorData) altIntVector.getData();
     }
 
+    private static RAltStringVectorData getAltStringVectorData(RStringVector altStringVector) {
+        assert altStringVector.isAltRep();
+        return (RAltStringVectorData) altStringVector.getData();
+    }
+
     public static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVector) {
         assert altIntVector.isAltRep();
         return getAltIntVectorData(altIntVector).getDescriptor();
+    }
+
+    public static AltStringClassDescriptor getAltStringDescriptor(RStringVector altStringVector) {
+        assert altStringVector.isAltRep();
+        return getAltStringVectorData(altStringVector).getDescriptor();
     }
 
     public static RAltRepData getAltrepData(RIntVector altIntVector) {
@@ -34,13 +46,19 @@ public class AltrepUtilities {
         return altIntVectorData.getAltrepData();
     }
 
+    public static RAltRepData getAltrepData(RStringVector altStringVector) {
+        assert altStringVector.isAltRep();
+        RAltStringVectorData data = getAltStringVectorData(altStringVector);
+        return data.getAltrepData();
+    }
+
     public static AltRepClassDescriptor getDescriptorFromAltrepObj(RBaseObject altrepObject) {
         assert altrepObject.isAltRep();
 
         if (altrepObject instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) altrepObject);
-        } else if (altrepObject instanceof RAltStringVector) {
-            return ((RAltStringVector) altrepObject).getDescriptor();
+        } else if (altrepObject instanceof RStringVector) {
+            return getAltStringDescriptor((RStringVector) altrepObject);
         } else {
             throw RInternalError.unimplemented();
         }
@@ -53,8 +71,11 @@ public class AltrepUtilities {
         return data.getAltrepData().getDataPairList();
     }
 
-    public static RPairList getPairListDataFromVec(RAltStringVector altStringVec) {
-        return altStringVec.getAltrepDataAsPairList();
+    public static RPairList getPairListDataFromVec(RStringVector altStringVec) {
+        assert altStringVec.isAltRep();
+        assert altStringVec.getData() instanceof RAltStringVectorData;
+        RAltStringVectorData data = (RAltStringVectorData) altStringVec.getData();
+        return data.getAltrepData().getDataPairList();
     }
 
     public static boolean hasCoerceMethodRegistered(Object object) {
@@ -247,6 +268,10 @@ public class AltrepUtilities {
             return AltrepUtilities.getAltIntDescriptor(altIntVec);
         }
 
+        protected static AltStringClassDescriptor getAltStringDescriptor(RStringVector altStringVec) {
+            return AltrepUtilities.getAltStringDescriptor(altStringVec);
+        }
+
         @Specialization(guards = "hasEltMethodRegistered(altIntVec)", limit = "1")
         Object doAltIntElt(RIntVector altIntVec, int index,
                            @CachedLibrary("getAltIntDescriptor(altIntVec).getEltMethod()") InteropLibrary eltMethodInterop,
@@ -264,10 +289,10 @@ public class AltrepUtilities {
         }
 
         @Specialization(limit = "3")
-        Object doAltString(RAltStringVector altStringVector, int index,
-                           @CachedLibrary("altStringVector.getDescriptor().getEltMethod()") InteropLibrary eltMethodInterop,
+        Object doAltString(RStringVector altStringVector, int index,
+                           @CachedLibrary("getAltStringDescriptor(altStringVector).getEltMethod()") InteropLibrary eltMethodInterop,
                            @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            return altStringVector.getDescriptor().invokeEltMethodCached(altStringVector, index, eltMethodInterop, hasMirrorProfile);
+            return getAltStringDescriptor(altStringVector).invokeEltMethodCached(altStringVector, index, eltMethodInterop, hasMirrorProfile);
         }
     }
 }

@@ -22,12 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -50,11 +44,18 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 public final class RDataFactory {
     private abstract static class StaticVectorFactory extends BaseVectorFactory {
@@ -988,6 +989,10 @@ public final class RDataFactory {
 
     public static RIntVector createAltIntVector(AltIntegerClassDescriptor descriptor, RAltRepData altRepData) {
         return traceDataCreated(RIntVector.createAltInt(descriptor, altRepData));
+    }
+
+    public static RStringVector createAltStringVector(AltStringClassDescriptor descriptor, RAltRepData altRepData) {
+        return traceDataCreated(RStringVector.createAltString(descriptor, altRepData));
     }
 
     private static final double FLT_EPSILON = 1.19209290e-7;

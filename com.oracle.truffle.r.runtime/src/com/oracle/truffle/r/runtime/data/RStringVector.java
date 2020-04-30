@@ -37,6 +37,8 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
@@ -47,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
 import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
@@ -108,6 +111,10 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
             RClosures.initRegAttributes(result, factor);
         }
         return result;
+    }
+
+    public static RStringVector createAltString(AltStringClassDescriptor descriptor, RAltRepData altRepData) {
+        throw RInternalError.unimplemented("RStringVector.createAltString");
     }
 
     private void setData(Object data, int newLen) {

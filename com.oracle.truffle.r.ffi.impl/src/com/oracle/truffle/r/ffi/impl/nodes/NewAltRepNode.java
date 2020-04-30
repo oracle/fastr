@@ -10,7 +10,6 @@ import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
-import com.oracle.truffle.r.runtime.data.altrep.RAltStringVector;
 
 @GenerateUncached
 public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
@@ -34,7 +33,7 @@ public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
 
     @Specialization
     public Object newStringAltRep(AltStringClassDescriptor classDescriptor, Object data1, Object data2) {
-        return new RAltStringVector(classDescriptor, new RAltRepData(data1, data2), true);
+        return RDataFactory.createAltStringVector(classDescriptor, new RAltRepData(data1, data2));
     }
 
     @Fallback
