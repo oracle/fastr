@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -44,8 +43,7 @@ public abstract class DoMakeClassNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    Object handleString(Object cls, @Cached("create()") NativeStringCastNode nscn) {
-        String clazz = nscn.executeObject(cls);
+    Object handleString(String clazz) {
         String name = "getClass";
         RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
         return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), true, null, clazz);

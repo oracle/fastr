@@ -233,13 +233,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public Object R_getClassDef(Object clazz) {
+    public Object R_getClassDef(String clazz) {
         throw implementedAsNode();
     }
 
     @Override
     @TruffleBoundary
-    public Object R_do_MAKE_CLASS(Object clazz) {
+    public Object R_do_MAKE_CLASS(String clazz) {
         throw implementedAsNode();
     }
 
@@ -1446,7 +1446,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public Object R_new_custom_connection(Object description, Object mode, Object className, Object connAddrObj) {
+    public Object R_new_custom_connection(String description, String mode, String className, Object connAddrObj) {
         throw implementedAsNode();
     }
 
@@ -1612,7 +1612,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public int Rf_str2type(Object name) {
+    public int Rf_str2type(String name) {
         throw implementedAsNode();
     }
 

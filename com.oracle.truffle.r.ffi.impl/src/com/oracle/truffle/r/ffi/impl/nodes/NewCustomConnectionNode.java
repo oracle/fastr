@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.InvalidConnection;
@@ -45,9 +44,9 @@ public abstract class NewCustomConnectionNode extends FFIUpCallNode.Arg4 {
 
     @Specialization
     @TruffleBoundary
-    Object handleStrings(Object description, Object mode, Object className, RExternalPtr connAddr, @Cached("create()") NativeStringCastNode nscn) {
+    Object handleStrings(String description, String mode, String className, RExternalPtr connAddr) {
         try {
-            return new NativeRConnection(nscn.executeObject(description), nscn.executeObject(mode), nscn.executeObject(className), connAddr).asVector();
+            return new NativeRConnection(description, mode, className, connAddr).asVector();
         } catch (IOException e) {
             return InvalidConnection.instance.asVector();
         }
