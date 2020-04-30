@@ -24,20 +24,23 @@ package com.oracle.truffle.r.runtime.context;
 
 import java.util.HashMap;
 
-import org.graalvm.options.OptionDescriptors;
-
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Scope;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -45,15 +48,15 @@ import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.conn.RFileTypeDetector;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
-import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags;
 import com.oracle.truffle.r.runtime.instrument.RSyntaxTags.FunctionBodyBlockTag;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import org.graalvm.options.OptionDescriptors;
 
 @TruffleLanguage.Registration(name = "R", id = "R", version = "3.6.1", mimeType = {RRuntime.R_APP_MIME,
                 RRuntime.R_TEXT_MIME}, interactive = true, fileTypeDetectors = RFileTypeDetector.class, dependentLanguages = "llvm")
@@ -113,11 +116,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     private static boolean systemInitialized;
 
     @Override
-    protected boolean isObjectOfLanguage(Object object) {
-        return object instanceof RTruffleObject;
-    }
-
-    @Override
     protected void initializeContext(RContext context) throws Exception {
         activeContexts++;
         if (!systemInitialized) {
@@ -148,8 +146,23 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
     }
 
     @Override
-    protected String toString(RContext context, Object value) {
-        return access.toString(context, value);
+    @TruffleBoundary
+    protected Object getLanguageView(RContext context, Object value) {
+        assert !(value instanceof RTruffleObject);
+        Object rValue = Foreign2R.getUncached().convert(value);
+        Object vector = RRuntime.asAbstractVector(rValue);
+        if (rValue != vector) {
+            return vector;
+        }
+        if (rValue instanceof TruffleObject) {
+            return null;
+        }
+        RootCallTarget convertCallTarget = context.getOrCreateCachedCallTarget(ConvertForeignRootNode.class, () -> Truffle.getRuntime().createCallTarget(new ConvertForeignRootNode()));
+        return convertCallTarget.call(rValue);
+    }
+
+    public static String toDisplayString(RContext context, Object value, boolean sideEffects) {
+        return access.toDisplayString(context, value, sideEffects);
     }
 
     @Override
@@ -159,39 +172,6 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         // Instead we are responsible for proper printing of the resulting value based on
         // Source.isInteractive() flag (evaluated in REngine.PolyglotEngineRootNode).
         return false;
-    }
-
-    @Override
-    protected Object findMetaObject(RContext context, Object value) {
-        Object unwrappedValue = value;
-        if (unwrappedValue instanceof RPromise) {
-            RPromise promise = (RPromise) unwrappedValue;
-            if (promise.isEvaluated()) {
-                unwrappedValue = promise.getValue();
-            }
-        }
-        // Wrap scalars Integer, Double, etc.
-        unwrappedValue = RRuntime.asAbstractVector(unwrappedValue);
-        if (unwrappedValue instanceof RBaseObject) {
-            return ((RBaseObject) unwrappedValue).getRType().getName();
-        } else {
-            return "Object";
-        }
-    }
-
-    @Override
-    protected SourceSection findSourceLocation(RContext context, Object value) {
-        if (value instanceof RPromise) {
-            RPromise promise = (RPromise) value;
-            RBaseNode expr = promise.getClosure().getExpr();
-            return expr.getEncapsulatingSourceSection();
-        }
-
-        if (value instanceof RFunction) {
-            RFunction f = (RFunction) value;
-            return f.getTarget().getRootNode().getSourceSection();
-        }
-        return null;
     }
 
     @Override
@@ -249,4 +229,16 @@ public final class TruffleRLanguage extends TruffleLanguage<RContext> {
         return RScope.createTopScopes(langContext);
     }
 
+    private static final class ConvertForeignRootNode extends RootNode {
+        @Child private ConvertForeignObjectNode convertForeignNode = ConvertForeignObjectNode.create();
+
+        protected ConvertForeignRootNode() {
+            super(null);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return convertForeignNode.convert((TruffleObject) frame.getArguments()[0]);
+        }
+    }
 }

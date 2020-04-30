@@ -24,6 +24,7 @@ package com.oracle.truffle.r.test.tck;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -35,7 +36,7 @@ import org.junit.Test;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.tck.ParseWithArgsTesterInstrument.ParseWithArgsTestData;
-import com.oracle.truffle.r.test.tck.ToStringTesterInstrument.TestData;
+import com.oracle.truffle.r.test.tck.ToStringTesterInstrument.ToStringTestData;
 
 public class TruffleRLanguageTest extends TestBase {
 
@@ -53,14 +54,30 @@ public class TruffleRLanguageTest extends TestBase {
 
     @Test
     public void testToString() {
-        TestData testData = context.getEngine().getInstruments().get(ToStringTesterInstrument.ID).lookup(TestData.class);
-        context.eval("R", "1+1");   // to trigger the instrument
-        assertEquals("42", testData.intAsString);
-        assertEquals("42", testData.byteAsString);
-        assertEquals("42.5", testData.doubleAsString);
-        assertEquals("Hello", testData.stringAsString);
-        assertEquals("TRUE", testData.trueAsString);
-        assertEquals("FALSE", testData.falseAsString);
+        // Test set-up:
+        context.eval("R", "print.myclass <- function(...) cat('custom printer')");
+        context.eval("R", "lazyInvoked <- F; delayedAssign('lazy', { lazyInvoked <<- T; 'lazyVal' })");
+        assertFalse(context.eval("R", "lazyInvoked").asBoolean());
+
+        ToStringTestData testData = context.getEngine().getInstruments().get(ToStringTesterInstrument.ID).lookup(ToStringTestData.class);
+        context.eval("R", "1+1"); // to trigger the instrument
+        assertEquals("[1] 42", testData.intAsString);
+        assertEquals("[1] 42", testData.byteAsString);
+        assertEquals("[1] 42.5", testData.doubleAsString);
+        assertEquals("[1] \"Hello\"", testData.stringAsString);
+        assertEquals("[1] TRUE", testData.trueAsString);
+        assertEquals("[1] FALSE", testData.falseAsString);
+        assertEquals("custom printer", testData.objAsString);
+
+        // toDisplayString without side effects does not evaluate the promise
+        assertEquals("<unevaluated expression: {\n" +
+                        "    lazyInvoked <<- T\n" +
+                        "    \"lazyVal\"\n" +
+                        "}>", testData.lazyWithoutSideEffects);
+
+        // toDisplayString with side effects evaluates the promise and gives toDisplayString of the
+        // value
+        assertEquals("[1] \"lazyVal\"", testData.lazyWithSideEffects);
     }
 
     @Test

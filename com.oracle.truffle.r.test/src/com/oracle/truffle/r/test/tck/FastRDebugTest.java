@@ -486,7 +486,7 @@ public class FastRDebugTest {
         stepInto(1);
         assertLocation(6, "if (n <= 1) {");
         assertMetaObjectsOrStringValues(source, true, "n", "promise");
-        assertMetaObjectsOrStringValues(source, false, "n", "2");
+        assertMetaObjectsOrStringValues(source, false, "n", "[1] 2");
 
         continueExecution();
         performWork();
@@ -520,8 +520,8 @@ public class FastRDebugTest {
             debuggerSession.install(Breakpoint.newBuilder(DebuggerTester.getSourceImpl(source)).lineIs(6).build());
         });
 
-        assertArguments(6, "x <- n + m", "n", "<unevaluated>", "m", 20);
-        assertScope(6, "x <- n + m", false, true, "n", "<unevaluated>", "m", 20);
+        assertArguments(6, "x <- n + m", "n", 11, "m", 20);
+        assertScope(6, "x <- n + m", false, true, "n", 11, "m", 20);
         stepOver(4);
         assertArguments(10, "x", "n", 9, "m", 10);
         assertScope(10, "x", false, true, "n", 9, "m", 10, "x", 121);
@@ -772,7 +772,7 @@ public class FastRDebugTest {
                     assertEquals(expectedArgs[i2], actualValues.get(i).getName());
                     Object expectedVal = expectedArgs[i2 + 1];
                     expectedVal = expectedToString(expectedVal);
-                    assertEquals(expectedVal, actualValues.get(i).as(String.class));
+                    assertEquals(expectedVal, actualValues.get(i).toDisplayString(true));
                 }
 
                 if (!run.isEmpty()) {
@@ -838,7 +838,7 @@ public class FastRDebugTest {
                 } while (includeAncestors && value == null && scope != null && !REnvironment.baseEnv().getName().equals(scope.getName()));
             }
             assertNotNull("identifier \"" + expectedIdentifier + "\" not found", value);
-            String valueStr = value.as(String.class);
+            String valueStr = value.toDisplayString(true);
             assertEquals(line + ": " + code + "; identifier: '" + expectedIdentifier + "'", expectedValueStr, valueStr);
         }
 
@@ -872,7 +872,7 @@ public class FastRDebugTest {
      *
      * @param expectedSource expected source in which the values should be examined.
      * @param metaObjects <code>true</code> for checking metaObject or <code>false</code> for
-     *            checking <code>value.as(String.class)</code>.
+     *            checking <code>value.toDisplayString(true)</code>.
      * @param nameAndValuePairs name followed by value (arbitrary number of times).
      */
     private void assertMetaObjectsOrStringValues(final Source expectedSource, boolean metaObjects, final String... nameAndValuePairs) {
@@ -889,11 +889,11 @@ public class FastRDebugTest {
                             if (metaObjects) {
                                 DebugValue moDV = value.getMetaObject();
                                 if (moDV != null || expectedValue != null) {
-                                    String mo = moDV.as(String.class);
+                                    String mo = moDV.toDisplayString(true);
                                     Assert.assertEquals("MetaObjects of '" + name + "' differ:", expectedValue, mo);
                                 }
-                            } else { // Check as(String.class) value
-                                String valAsString = value.as(String.class);
+                            } else { // Check toDisplayString(true) value
+                                String valAsString = value.toDisplayString(true);
                                 Assert.assertEquals("Unexpected " + name + "toString():", expectedValue, valAsString);
                             }
                             found = true;

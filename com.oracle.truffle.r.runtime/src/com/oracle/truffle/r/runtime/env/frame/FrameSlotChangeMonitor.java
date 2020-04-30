@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.env.frame;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.SearchPathForcePromises;
+
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,25 +39,33 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.CachedContext;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.Message;
+import com.oracle.truffle.api.library.ReflectionLibrary;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import static com.oracle.truffle.r.runtime.context.FastROptions.SearchPathForcePromises;
-
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RUnboundValue;
 
 /**
  * This class maintains information about the current hierarchy of environments in the system. This
@@ -482,7 +492,8 @@ public final class FrameSlotChangeMonitor {
         // System.out.println(String.format(format, args));
     }
 
-    public static final class MultiSlotData {
+    @ExportLibrary(ReflectionLibrary.class)
+    public static final class MultiSlotData implements TruffleObject {
 
         private final Object[] data;
 
@@ -510,6 +521,19 @@ public final class FrameSlotChangeMonitor {
             for (int i = 0; i < data.length; i++) {
                 data[i] = val.deepCopy();
             }
+        }
+
+        @ExportMessage
+        Object send(Message message, Object[] args,
+                        @CachedContext(TruffleRLanguage.class) RContext ctx,
+                        @Cached BranchProfile notFoundProfile,
+                        @CachedLibrary(limit = "5") ReflectionLibrary reflection) throws Exception {
+            Object value = data[ctx.getMultiSlotInd()];
+            if (value == null) {
+                notFoundProfile.enter();
+                return reflection.send(RUnboundValue.instance, message, args);
+            }
+            return reflection.send(value, message, args);
         }
     }
 

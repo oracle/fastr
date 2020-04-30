@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
  * FastR.
  */
 @ExportLibrary(InteropLibrary.class)
-public class RInteropNA implements RTruffleObject {
+public class RInteropNA extends RTruffleBaseObject {
     public static final RInteropNA INT = new RInteropNA(RRuntime.INT_NA);
     public static final RInteropNA DOUBLE = new RInteropNA(RRuntime.DOUBLE_NA);
     public static final RInteropNA STRING = new RInteropNA(RRuntime.STRING_NA);
@@ -59,29 +59,16 @@ public class RInteropNA implements RTruffleObject {
         return nativeValue;
     }
 
-    @SuppressWarnings("static-method")
     @ExportMessage
+    @SuppressWarnings("static-method")
     boolean isNull() {
         return true;
     }
 
-    public static final class RInteropComplexNA extends RInteropNA {
-        public RInteropComplexNA(RComplex value) {
-            super(value);
-            assert RRuntime.isNA(value);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (!(obj instanceof RInteropComplexNA)) {
-                return false;
-            }
-            return getValue().equals(((RInteropComplexNA) obj).getValue());
-        }
-
-        @Override
-        public int hashCode() {
-            return getValue().hashCode();
-        }
+    @ExportMessage
+    @SuppressWarnings("static-method")
+    @Override
+    public Object toDisplayString(@SuppressWarnings("unused") boolean allowSideEffects) {
+        return "NA";
     }
 }

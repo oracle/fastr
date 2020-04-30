@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,24 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeMirror;
 
 /**
  * R values that are publicly flowing through the interpreter. Be aware that also the primitive
- * values {@link Integer}, {@link Double}, {@link Byte} and {@link String} flow but are not
- * implementing this interface.
+ * values {@link Integer}, {@link Double}, {@link Byte}, {@link String}, {@link RRaw} and
+ * {@link RComplex} flow but are not implementing this interface.
  */
-public abstract class RBaseObject implements RTruffleObject {
+@ExportLibrary(InteropLibrary.class)
+public abstract class RBaseObject extends RTruffleBaseObject {
 
     // mask values are the same as in GNU R
     // as is the layout of data (but it's never exposed so it does not matter for correctness)
@@ -101,5 +109,33 @@ public abstract class RBaseObject implements RTruffleObject {
 
     public final void unsetS4() {
         setTypedValueInfo(getTypedValueInfo() & ~S4_MASK_SHIFTED);
+    }
+
+    /**
+     * Slow-path implementation of {@link #getMetaObject()} that does not use interop library. We
+     * need a dedicated method for this, so that we can use it in {@code isMetaInstance} message in
+     * {@link RType} without triggering an infinite recursion in the interop library assertions.
+     */
+    public RType getMetaType() {
+        return getRType();
+    }
+
+    @ExportMessage
+    @Override
+    public boolean hasMetaObject() {
+        return true;
+    }
+
+    @ExportMessage
+    @Override
+    public Object getMetaObject() {
+        return getMetaType();
+    }
+
+    @ExportMessage
+    @TruffleBoundary
+    public Object toDisplayString(boolean allowSideEffects,
+                    @CachedContext(TruffleRLanguage.class) RContext ctx) {
+        return TruffleRLanguage.toDisplayString(ctx, this, allowSideEffects);
     }
 }

@@ -544,6 +544,11 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
+    public Object evalPromise(RPromise promise) {
+        return PromiseHelperNode.evaluateSlowPath(promise);
+    }
+
+    @Override
     public Object eval(RExpression expr, MaterializedFrame frame) {
         CompilerAsserts.neverPartOfCompilation();
         Object result = null;

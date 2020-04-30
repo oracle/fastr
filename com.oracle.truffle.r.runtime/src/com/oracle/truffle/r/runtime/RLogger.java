@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,6 +81,11 @@ public class RLogger {
      * Log every system function call.
      */
     public static final String LOGGER_SYSTEM_FUNCTION = "com.oracle.truffle.r.systemFunction";
+
+    /**
+     * Log eager promises deopts and successful evaluations.
+     */
+    public static final String LOGGER_EAGER_PROMISES = "com.oracle.truffle.r.eagerPromises";
 
     /**
      * Log performance warnings.
