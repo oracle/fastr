@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
@@ -92,7 +92,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @Override
-    public void setOwner(RAbstractVector newOwner) {
+    public void setOwner(RAbstractContainer newOwner) {
         owner = (RIntVector) newOwner;
     }
 
@@ -157,11 +157,6 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return duplicateNode.execute(getOwner(), deep);
     }
 
-    @ExportMessage
-    public RIntArrayVectorData copyResized(int newSize, boolean deep, boolean fillNA) {
-        throw RInternalError.unimplemented("RAltIntVectorData.copyResized");
-    }
-
     /**
      * TODO: This method gets called from Rf_duplicate which means that it eventually should make downcall into
      *   Duplicate. The behavior may change, so the implementation is not optimized.
@@ -213,9 +208,15 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public boolean next(SeqIterator it, boolean withWrap,
+    public boolean nextImpl(SeqIterator it, boolean loopCondition,
                         @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
-        return it.next(loopProfile, withWrap);
+        return it.next(loopCondition, loopProfile);
+    }
+
+    @ExportMessage
+    public void nextWithWrap(SeqIterator it,
+                             @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+        it.nextWithWrap(loopProfile);
     }
 
     @ExportMessage(limit = "1")
