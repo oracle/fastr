@@ -546,7 +546,7 @@ def _get_test_outputs(rvm, pkg_name, test_info):
 
 
 def _args_to_forward_to_gnur(args):
-    forwarded_args = ['--repos', '--run-mode', '--cache-pkgs', '--test-mode', "--ignore-suggests"]
+    forwarded_args = ['--repos', '--run-mode', '--cache-pkgs', '--test-mode', "--ignore-suggests", "--verbose", "--very-verbose"]
     result = []
     i = 0
     while i < len(args):

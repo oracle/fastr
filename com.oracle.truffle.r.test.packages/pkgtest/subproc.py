@@ -61,6 +61,7 @@ def _addSubprocess(p, args):
 def _removeSubprocess(entry):
     if entry and entry in _currentSubprocesses:
         try:
+            logging.debug('[{}: removing subprocess {}: {}]'.format(os.getpid(), entry[0], entry[1]))
             _currentSubprocesses.remove(entry)
         except:
             pass
@@ -188,15 +189,20 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
             # Don't make the reader thread a daemon otherwise output can be droppped
             t.start()
             joiners.append(t)
+        iternum = 0
         while any([t.is_alive() for t in joiners]):
             # Need to use timeout otherwise all signals (including CTRL-C) are blocked
             # see: http://bugs.python.org/issue1167930
+            if iternum % 20 == 0:
+                logging.debug('[{}: joining the err/out reading threads of {}]'.format(os.getpid(), p.pid))
+            iternum += 1
             for t in joiners:
                 t.join(10)
         if timeout is None or timeout == 0:
             while True:
                 try:
                     retcode = waitOn(p)
+                    logging.debug("[{}: finished waiting on: {}, with retcode: {}]".format(os.getpid(), p.pid, retcode))
                     break
                 except KeyboardInterrupt:
                     if get_os() == 'windows':
@@ -204,6 +210,7 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
                     else:
                         # Propagate SIGINT to subprocess. If the subprocess does not
                         # handle the signal, it will terminate and this loop exits.
+                        logging.debug("[{}: finished waiting on: {}, killed with SIGINIT]".format(os.getpid(), p.pid))
                         _kill_process(p.pid, signal.SIGINT)
         else:
             if get_os() == 'windows':
@@ -222,4 +229,5 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
         logging.debug(subprocess.CalledProcessError(retcode, ' '.join(args)))
         abort(retcode, '[exit code: ' + str(retcode) + ']')
 
+    logging.debug("Finished running subprocess: " + str(args) + " with exit code: " + str(retcode))
     return retcode
