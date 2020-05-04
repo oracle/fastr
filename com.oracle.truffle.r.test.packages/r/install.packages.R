@@ -574,6 +574,10 @@ get.pkgs <- function() {
 
 	if (length(toinstall.pkgs) == 0 && !use.installed.pkgs) {
 		cat("Fatal error: requested package(s) found in repo(s).\n")
+		cat("toinstall.pkgs: \n")
+		print(toinstall.pkgs)
+		cat("matched.avail.pkgs: \n")
+		print(matched.avail.pkgs)
 		log.repos.info()
 		quit(save="no", status=100)
 	}
@@ -1151,7 +1155,7 @@ log.timestamp <- function() {
 }
 
 check.libs <- function() {
-    lib.install <<- Sys.getenv("R_LIBS_USER", unset=NA)
+	lib.install <<- Sys.getenv("R_LIBS_USER", unset=NA)
 	if (is.na(lib.install)) {
 		abort("R_LIBS_USER must be set")
 	}
