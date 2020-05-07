@@ -43,6 +43,7 @@ import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import static com.oracle.truffle.r.test.library.fastr.Utils.errorIn;
@@ -743,16 +744,21 @@ public class TestJavaInterop extends TestBase {
 
         testConvertObjectArray("as.vector");
 
-        assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$longArrayMinMax)",
-                        "cat('[1] -9.223372e+18  2.000000e+00  9.223372e+18\nWarning messages:\n" +
-                                        "1: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
-                                        "  Possible precission loss by coercion of long -9223372036854775808 to double -9223372036854776000.000000\n" +
-                                        "2: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
-                                        "  Possible precission loss by coercion of long 9223372036854775807 to double 9223372036854776000.000000\n" +
-                                        "3: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
-                                        "  Possible precission loss by coercion of long -9223372036854775808 to double -9223372036854776000.000000\n" +
-                                        "4: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
-                                        "  Possible precission loss by coercion of long 9223372036854775807 to double 9223372036854776000.000000\n')");
+        String cmd = CREATE_TEST_ARRAYS + " as.vector(ta$longArrayMinMax)";
+        String expected = "cat('[1] -9.223372e+18  2.000000e+00  9.223372e+18\nWarning messages:\n" +
+                        "1: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
+                        "  Possible precission loss by coercion of long -9223372036854775808 to double -9223372036854776000.000000\n" +
+                        "2: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
+                        "  Possible precission loss by coercion of long 9223372036854775807 to double 9223372036854776000.000000\n" +
+                        "3: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
+                        "  Possible precission loss by coercion of long -9223372036854775808 to double -9223372036854776000.000000\n" +
+                        "4: In print.default(c(-9223372036854776832, 2, 9223372036854776832)) :\n" +
+                        "  Possible precission loss by coercion of long 9223372036854775807 to double 9223372036854776000.000000\n')";
+        if (VectorDataLibrary.ENABLE_VERY_SLOW_ASSERTS) {
+            assertEvalFastR(Output.IgnoreWarningMessage, cmd, expected);
+        } else {
+            assertEvalFastR(cmd, expected);
+        }
 
         assertEvalFastR(Ignored.ImplementationError, "as.vector(new(java.type('java.lang.Integer[]'), 1))", "integer()");
 
