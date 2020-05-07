@@ -23,6 +23,7 @@
 
 import logging
 from threading import Thread
+from threading import Lock
 import time, signal, errno, sys, os, subprocess
 
 from .util import abort
@@ -152,11 +153,19 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
         assert isinstance(arg, (str, bytes)), 'argument is not a string: ' + str(arg)
 
     if env is None:
+        logging.debug("pkgtest_run: reusing parent environment")
         env = os.environ.copy()
-
-    msg = 'Environment variables:\n'
-    msg += '\n'.join(['    ' + key + '=' + env[key] for key in list(env.keys())])
-    logging.debug(msg)
+    else:
+        msg = "Environment:\n"
+        in_os = set(os.environ) - set(env)
+        if (len(in_os) > 0):
+            msg = '  environment variables in OS environ but not in env:\n'
+            msg += '\n'.join(['      ' + key + '=' + os.environ[key] for key in list(in_os)])
+        in_env = set(env) - set(os.environ)
+        if (len(in_env) > 0):
+            msg += '  environment variables in env but not in OS environ:\n'
+            msg += '\n'.join(['      ' + key + '=' + env[key] for key in list(in_env)])
+        logging.debug(msg)
 
     sub = None
 
@@ -169,9 +178,14 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
         else:
             preexec_fn, creationflags = (None, 0)
 
+        output_lock = Lock()
         def redirect(stream, f):
             for line in iter(stream.readline, ''):
-                f(line)
+                output_lock.acquire()
+                try:
+                    f(line)
+                finally:
+                    output_lock.release()
             stream.close()
         stdout = out if not callable(out) else subprocess.PIPE
         stderr = err if not callable(err) else subprocess.PIPE
@@ -215,17 +229,21 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
         else:
             if get_os() == 'windows':
                 abort('Use of timeout not (yet) supported on Windows')
+            logging.debug('[{}: waiting with a timeout for {}]'.format(os.getpid(), p.pid))
             retcode = _waitWithTimeout(p, args, timeout, nonZeroIsFatal)
+            logging.debug('[{}: finished waiting with a timeout for {}, retcode: {}]'.format(os.getpid(), p.pid, retcode))
     except OSError as e:
         if not nonZeroIsFatal:
             raise e
         abort('Error executing \'' + ' '.join(args) + '\': ' + str(e))
     except KeyboardInterrupt:
+        logging.debug("[{}: registered keyboard interrrupt, aborting...]".format(os.getpid()))
         abort(1, killsig=signal.SIGINT)
     finally:
         _removeSubprocess(sub)
 
     if retcode and nonZeroIsFatal:
+        logging.debug("[{}: subprocess finished with non-zero status {}]".format(os.getpid(), retcode))
         logging.debug(subprocess.CalledProcessError(retcode, ' '.join(args)))
         abort(retcode, '[exit code: ' + str(retcode) + ']')
 

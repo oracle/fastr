@@ -298,8 +298,9 @@ def pkgtest(args):
     # Currently installpkgs does not set a return code (in install.packages.R)
     out = OutputCapture()
     rc = _fastr_installpkgs(fastr_args, nonZeroIsFatal=False, env=env, out=out, err=out)
-    if rc == 100:
-        # fatal error connecting to package repo
+    if rc != 0:
+        # fatal error in FastR
+        logging.info("FastR finished with non-zero exit code: " + rc)
         abort(status=rc)
 
     rc = 0
@@ -394,8 +395,9 @@ class OutputCapture:
                 self.mode = None
                 return
             status = re.match(self.status_pattern, data)
-            pkg_name = status.group(1)
-            self.install_status[pkg_name] = status.group(2) == "OK"
+            if status:
+                pkg_name = status.group(1)
+                self.install_status[pkg_name] = status.group(2) == "OK"
         elif self.mode == "test":
             test_match = re.match(self.test_pattern, data)
             if test_match:
@@ -565,7 +567,12 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     N.B. That means that regardless of how the packages were specified to pkgtest
     we always use a --pkg-filelist' arg to GNU R
     '''
+    if (len(pkgs) == 0):
+        logging.info('No packages to install/test on GNU-R (install/test failed for all packages on FastR?)')
+        return
+
     gnur_packages = join(get_fastr_repo_dir(), 'gnur.packages')
+    logging.debug("Going to test packages (on GNU-R): " + str(pkgs))
     with open(gnur_packages, 'w') as f:
         for pkg in pkgs:
             f.write(pkg)
