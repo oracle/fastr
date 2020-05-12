@@ -1145,7 +1145,8 @@ cat.args <- function() {
 quiet <- F
 verbose <- F
 very.verbose <- F
-log.file <- 'install.packages.R.log'
+log.file <- file.path(getwd(), 'install.packages.R.log')
+cat("The output is also logged into:", log.file)
 
 loggable <- function(level) {
 	result <- T
