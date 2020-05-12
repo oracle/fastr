@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -123,11 +123,11 @@ public class RInteropScalarInteropTest extends AbstractInteropTest {
         if (getInterop().fitsInShort(obj)) {
             return getInterop().asShort(obj);
         }
-        if (getInterop().fitsInFloat(obj)) {
-            return getInterop().asFloat(obj);
-        }
         if (getInterop().fitsInLong(obj)) {
             return getInterop().asLong(obj);
+        }
+        if (getInterop().fitsInFloat(obj)) {
+            return getInterop().asFloat(obj);
         }
         fail();
         return null;
