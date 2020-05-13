@@ -159,7 +159,7 @@ ignore.suggests <- NULL
 get.ignore.suggests <- function() {
     if (is.null(ignore.suggests)) {
         if (!file.exists(ignore.suggests.file)) {
-            abort(paste0("Cannot load file suggested packages to ignore from '", ignore.suggests.file, "'."))
+            log.and.abort("Cannot load file suggested packages to ignore from '", ignore.suggests.file, "'.", status = 200)
         }
         ignore.all.but <- function(...) structure(as.vector(list(...)), class='negation')
         # eval in the current env such that 'ignore.all.but' is available
@@ -185,9 +185,7 @@ choice.depends <- function(pkg, choice=c("direct","suggests")) {
 	for (dep in depends) {
 		deps <- pkg[dep]
 		if (!is.na(deps)) {
-			if (very.verbose) {
-				cat(dep, " deps for: ", pkgName, " ", deps, "\n")
-			}
+			log.message(dep, " deps for: ", pkgName, " ", deps, "\n", level = 2)
 			deplist <- strip.version(trim(unlist(strsplit(deps, fixed=T, ","))))
 			# strip out R and the default packages
 			deplist <- deplist[!(deplist %in% default.packages)]
@@ -255,28 +253,22 @@ install.order <- function(pkgs, pkg, choice, depth=0L) {
 create.blacklist.with <- function(blacklist, iter) {
 	this.blacklist <- vector()
 
-	if (very.verbose) {
-		cat("Iteration: ", iter, "\n\n")
-	}
+	log.message("Iteration: ", iter, "\n\n", level = 2)
 	for (i in (1:length(avail.pkgs.rownames))) {
 		pkg <- avail.pkgs[i, ]
 		pkgName <- pkg["Package"]
 		if (!(pkgName %in% blacklist)) {
-			if (very.verbose) {
-				cat("Processing: ", pkgName, "\n")
-			}
+			log.message("Processing: ", pkgName, "\n", level = 2)
 			all.deps = direct.depends(pkg)
-			if (very.verbose) {
-				cat("all.deps for: ", pkgName," ", all.deps, "\n")
-			}
+			log.message("all.deps for: ", pkgName," ", all.deps, "\n", level = 2)
 
 			match.result <- match(blacklist, all.deps, nomatch=0)
 			in.result <- match.result > 0
 			if (any(in.result)) {
-				if (verbose) {
+				log.output(function() {
 					names(all.deps) <- NULL
 					cat("adding: ", pkg["Package"], "to blacklist (", all.deps[match.result], ")\n")
-				}
+				}, level=1)
 				this.blacklist <- append(this.blacklist, pkg["Package"])
 			}
 		}
@@ -303,11 +295,6 @@ create.blacklist <- function() {
 	create.blacklist.iter(rownames(initial.blacklist))
 }
 
-abort <- function(msg) {
-	print(msg)
-	quit("no", status=100)
-}
-
 get.default.cran.mirror <- function() {
     default.cran.mirror.path <- file.path(R.home(), "etc", "DEFAULT_CRAN_MIRROR")
     tryCatch({
@@ -316,9 +303,9 @@ get.default.cran.mirror <- function() {
         close(con)
         cran.mirror
     }, error = function(err) {
-        cat("ERROR while getting ", default.cran.mirror.path, ", are you using a proper R home directory?", sep="")
-        print(err)
-        quit("no", status=1)
+        log.output(function() print(err))
+        log.and.abort("ERROR while getting ", default.cran.mirror.path,
+            ", are you using a proper R home directory?", status=11)
     })
 }
 
@@ -345,6 +332,7 @@ set.repos <- function() {
 				# not set on command line
 				cran.mirror <<- Sys.getenv("CRAN_MIRROR", unset = "http://cloud.r-project.org/")
 			} else {
+				log.message("Setting CRAN=", uri, level=1)
 				cran.mirror <<- uri
 			}
 			repos[["CRAN"]] <- cran.mirror
@@ -352,11 +340,12 @@ set.repos <- function() {
 			# set the FastR internal repo
 			if (is.na(uri)) {
 				path <- normalizePath("com.oracle.truffle.r.test.native/packages/repo")
-				log.message("Setting FastR internal repo FASTR=", path)
+				log.message("Setting FastR internal repo FASTR=", path, level=1)
 				repos[["FASTR"]] <- paste0("file://", path)
 			} else {
 				# explicitly set on command line
 				repos[["FASTR"]] <- uri
+				log.message("Setting FastR internal repo FASTR=", uri, level=1)
 			}
 		} else if (name == "SNAPSHOT") {
 			repos[["CRAN"]] <- get.default.cran.mirror()
@@ -370,10 +359,10 @@ set.repos <- function() {
         log.message("'--repos FASTR' specified but no CRAN mirror set; setting 'CRAN=", get.default.cran.mirror(), "'\n", level=1)
         repos[["CRAN"]] <- get.default.cran.mirror()
     }
-	if (verbose) {
+	log.output(function() {
 		cat("Setting option repos to:\n")
 		print(repos); cat('----\n')
-	}
+	}, level = 1)
 	options(repos = repos)
 }
 
@@ -384,7 +373,7 @@ set.package.blacklist <- function() {
 	}
 	if (!create.blacklist.file && !ignore.blacklist) {
 		if (!file.exists(blacklist.file)) {
-			cat(paste("blacklist file", blacklist.file, "does not exist, creating\n"))
+			log.message.always("blacklist file", blacklist.file, "does not exist, creating\n")
 			create.blacklist.file <<- T
 		}
 	}
@@ -409,6 +398,7 @@ get.installed.pkgs <- function(ok=T) {
 	# find failed installs
 	for (pkgname in pkgdirs) {
 		if (grepl("00LOCK-", pkgname)) {
+			log.message("Installation failed for ", pkgname, level=1)
 			pkg.failed <- gsub("00LOCK-", "", pkgname)
 			pkgs.failed <- append(pkgs.failed, pkg.failed)
 		}
@@ -444,9 +434,11 @@ installed.ok <- function(pkgname, initial_error_log_size) {
 	# 3. The FastR error log must be the same size
 	pkgdir <- get.pkgdir(pkgname)
 	if (!file.exists(pkgdir)) {
+		log.message("Package not installed (dir does not exist): ", pkgdir, level = 1)
 		return(FALSE)
 	}
 	if (file.exists(get.pkgdir(paste0("00LOCK-", pkgname)))) {
+		log.message("Package not installed (00LOCK-* file found): ", pkgname, level = 1)
 		return(FALSE)
 	}
 
@@ -456,6 +448,7 @@ installed.ok <- function(pkgname, initial_error_log_size) {
 		# install code and leaves no LOCK file nor does it remove
 		# the faulty package, so it looks like it succeeded.
 		# We delete the package dir here to reflect the failure.
+		log.message("Package not installed (error during test load step): ", pkgname, level = 1)
 		unlink(pkgdir, recursive=T)
 		return(FALSE)
 	}
@@ -488,11 +481,11 @@ check.installed.pkgs <- function() {
 # returns a vector of package names to install/test
 get.pkgs <- function() {
 	my.warning <- function(war) {
-		if (!quiet) {
+		log.output(function() {
 			cat("Fatal error druing retrieval of available packages:", war$message, ". Value of option repos:\n", sep='')
 			print(options('repos'))
-		}
-		quit(save="no", status=100)
+		})
+		log.and.abort("Fatal error druing retrieval of available packages. More details in log above.", status=22)
 	}
 	tryCatch({
 			avail.pkgs <<- available.packages(type="source", filters = list(add=TRUE, function(x) x))
@@ -514,11 +507,8 @@ get.pkgs <- function() {
 	# Owing to a FastR bug, we may not invoke the handler above, but
 	# if length(avail.pkgs) == 0, that also means it failed
 	if (length(avail.pkgs) == 0) {
-		if (!quiet) {
-			cat("Fatal error: no packages found in repo(s).\n")
-			log.repos.info()
-		}
-		quit(save="no", status=100)
+		log.output(log.repos.info)
+		log.and.abort("Fatal error: no packages found in repo(s).\n", status=33)
 	}
 
 	avail.pkgs.rownames <<- rownames(avail.pkgs)
@@ -563,24 +553,28 @@ get.pkgs <- function() {
 	}
 
 	match.fun <- set.match.fun()
-	if (verbose) {
+	log.output(function() {
 		cat("Filtering the packages to install: invert.pkgset=", invert.pkgset, ", pkg.pattern=", pkg.pattern, ".\n")
 		cat("pkg.filelist:\n"); print(pkg.filelist)
 		cat("blacklist:\n"); print(blacklist)
-	}
+	}, level = 1)
 
 	matched.avail.pkgs <- apply(avail.pkgs, 1, match.fun)
 	toinstall.pkgs <<- avail.pkgs[matched.avail.pkgs, , drop=F]
 
 	if (length(toinstall.pkgs) == 0 && !use.installed.pkgs) {
-		cat("Fatal error: requested package(s) found in repo(s).\n")
-		cat("toinstall.pkgs: \n")
-		print(toinstall.pkgs)
-		cat("matched.avail.pkgs: \n")
-		print(matched.avail.pkgs)
-		log.repos.info()
-		quit(save="no", status=100)
+		log.output(function() {
+			cat("Fatal error: requested package(s) found in repo(s).\n")
+			cat("toinstall.pkgs: \n")
+			print(toinstall.pkgs)
+			cat("matched.avail.pkgs: \n")
+			print(matched.avail.pkgs)
+			log.repos.info()
+		})
+		log.and.abort("Fatal error: requested package(s) found in repo(s). See the log above.", status=55)
 	}
+
+	log.output(log.repos.info, level=2)
 
 	if (!is.na(random.count)) {
 		# install random.count packages taken at random from toinstall.pkgs
@@ -610,6 +604,7 @@ get.pkgs <- function() {
 		}
 	}
 
+	log.message("Selected packages for installation/testing: ", paste0(test.pkgnames, collapse=","), level=1)
 	test.pkgnames
 }
 
@@ -619,19 +614,21 @@ get.pkgs <- function() {
 # of one of the initial list. N.B. In this case pkgnames is the
 # transitively computed list so this never recurses more than one level
 install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
-	if (verbose && !dry.run) {
-		cat("packages to install (+dependents):\n")
-		for (pkgname in pkgnames) {
-			cat(pkgname, "\n")
-		}
+	if (!dry.run) {
+		log.output(function() {
+			cat("packages to install (+dependents):\n")
+			for (pkgname in pkgnames) {
+				cat(pkgname, "\n")
+			}
+		})
 	}
 	install.count <- 1
 	install.total <- length(pkgnames)
 	result <- TRUE
 	for (pkgname in pkgnames) {
 		if (log) {
-		    cat("BEGIN processing:", pkgname, "\n")
-            log.timestamp()
+			log.message.always("BEGIN processing:", pkgname, "\n")
+			log.timestamp()
 		}
 		dependent.install.ok <- T
 		if (install.dependents.first && !dependents.install) {
@@ -645,12 +642,12 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 				# 3. a mixture of TRUE and NA: ok, but some more to install (the NAs)
 				if (any(!dep.status, na.rm=T)) {
 					# case 2
-					cat("not installing dependents of:", pkgname, ", one or more previously failed", "\n")
+					log.message.always("not installing dependents of:", pkgname, ", one or more previously failed", "\n")
 					dependent.install.ok <- F
 				} else {
 					if (anyNA(dep.status)) {
 						# case 3
-						cat("installing dependents of:", pkgname, "\n")
+						log.message.always("installing dependents of:", pkgname, "\n")
 						dependent.install.ok <- install.pkgs(dependents, dependents.install=T)
 					} else {
 						# case 1
@@ -663,7 +660,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 			cat("would install:", pkgname, "\n")
 		} else {
 			if (!dependent.install.ok) {
-				cat("not installing:", pkgname, "dependent install failure","\n")
+				log.message.always("not installing:", pkgname, "dependent install failure","\n")
 			} else {
 				should.install <- T
 				if (pkgname %in% names(install.status)) {
@@ -680,22 +677,22 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 					}
 				}
 				if (should.install) {
-					cat("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
-                    log.timestamp()
+					log.message.always("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
+					log.timestamp()
 					this.result <- install.pkg(pkgname)
 					result <- result && this.result
 					if (dependents.install && !this.result) {
-						cat("aborting dependents install\n")
+						log.message.always("aborting dependents install, this.result=", this.result)
 						return(FALSE)
 					}
 				} else {
 					msg <- if (install.status[pkgname]) "already installed" else "failed earlier"
-					cat("not installing:", pkgname, "(", install.count, "of", install.total, ")", msg, "\n")
+					log.message.always("not installing:", pkgname, "(", install.count, "of", install.total, ")", msg)
 				}
 			}
 		}
 		if (log) {
-		    cat("END processing:", pkgname, "\n")
+			log.message.always("END processing:", pkgname, "\n")
 		}
 
 		install.count = install.count + 1
@@ -713,7 +710,7 @@ install.suggests <- function(pkgnames) {
 				ignore <- c(ignore, suggests[grepl(ignore.pattern[[i]], suggests)])
 			}
 			suggests <- if (class(ignore.pattern) == 'negation') ignore else setdiff(suggests, ignore)
-			cat("NOTE: ignoring suggested:", paste(ignore, collapse=','), '\n')
+			log.message("NOTE: ignoring suggested:", paste(ignore, collapse=','))
 		}
 		if (length(suggests) > 0) {
 			if (is.fastr() && !ignore.blacklist) {
@@ -721,7 +718,7 @@ install.suggests <- function(pkgnames) {
 				blacklist <- get.blacklist()
 				nsuggests <- suggests[!suggests %in% blacklist]
 				if (length(nsuggests) != length(suggests)) {
-					cat("not installing Suggests of:", pkgname, ", one or more is blacklisted: ", paste(suggests[suggests %in% blacklist], sep=", "), "\n")
+					log.message("not installing Suggests of:", pkgname, ", one or more is blacklisted: ", paste0(suggests[suggests %in% blacklist], collapse=","))
 					return()
 				}
 			}
@@ -732,11 +729,11 @@ install.suggests <- function(pkgnames) {
 			# 3. a mixture of TRUE and NA: ok, but some more to install (the NAs)
 			if (any(!dep.status, na.rm=T)) {
 				# case 2
-				cat("not installing Suggests of:", pkgname, ", one or more previously failed", "\n")
+				log.message("not installing Suggests of:", pkgname, ", one or more previously failed")
 			} else {
 				if (anyNA(dep.status)) {
 					# case 3
-					cat("installing Suggests of:", pkgname,":",paste(suggests[is.na(dep.status)], sep=", "), "\n")
+					log.message("installing Suggests of:", pkgname,":",paste(suggests[is.na(dep.status)], sep=", "))
 					dependent.install.ok <- install.pkgs(suggests[is.na(dep.status)], dependents.install=F, log=F)
 				} else {
 					# case 1
@@ -774,17 +771,20 @@ is.important.package <- function(pkg.name, pkg.version) {
 
 show.install.status <- function(test.pkgnames) {
 	if (print.install.status) {
-		cat("BEGIN install status\n")
+		log.message.always("BEGIN install status\n")
+		cat("DEBUG: package names: "); print(test.pkgnames)
 		for (pkgname.i in test.pkgnames) {
 			cat(paste0(pkgname.i, ":"), ifelse(install.status[pkgname.i], "OK", "FAILED"), "\n")
 		}
-		cat("END install status\n")
+		log.message.always("END install status\n")
 	}
 }
 
 # performs the installation, or logs what it would install if dry.run = T
 do.it <- function() {
+	log.message("Getting the list of packages to install", level = 2)
 	test.pkgnames <- get.pkgs()
+	log.message("List of packages to install:", paste0(test.pkgnames, collapse=","), level = 2)
 
 	if (list.versions) {
 		for (pkgname in test.pkgnames) {
@@ -799,10 +799,10 @@ do.it <- function() {
 	}
 
 	if (install) {
-		cat("BEGIN package installation\n")
+		log.message.always("BEGIN package installation\n")
 		log.timestamp()
 		install.pkgs(test.pkgnames)
-		cat("END package installation\n")
+		log.message.always("END package installation\n")
 		show.install.status(test.pkgnames)
 	}
 
@@ -822,13 +822,13 @@ do.it <- function() {
 		}
 
 		# need to install the Suggests packages as they may be used
-		cat('BEGIN suggests install\n')
-        log.timestamp()
+		log.message.always('BEGIN suggests install\n')
+		log.timestamp()
 		install.suggests(test.pkgnames)
-		cat('END suggests install\n')
+		log.message.always('END suggests install\n')
 
-		cat("BEGIN package tests\n")
-        log.timestamp()
+		log.message.always("BEGIN package tests\n")
+		log.timestamp()
 		test.count = 1
 		test.total = length(test.pkgnames)
 		for (pkgname in test.pkgnames) {
@@ -836,16 +836,16 @@ do.it <- function() {
 				if (dry.run) {
 					cat("would test:", pkgname, "\n")
 				} else {
-					cat("BEGIN testing:", pkgname, "(", test.count, "of", test.total, ")", "\n")
+					log.message.always("BEGIN testing:", pkgname, "(", test.count, "of", test.total, ")")
 					test.package(pkgname)
-					cat("END testing:", pkgname, "\n")
+					log.message.always("END testing:", pkgname)
 				}
 			} else {
-				cat("install failed, not testing:", pkgname, "\n")
+				log.message.always("install failed, not testing:", pkgname)
 			}
 			test.count = test.count + 1
 		}
-		cat("END package tests\n")
+		log.message.always("END package tests\n")
 	}
 }
 
@@ -881,7 +881,7 @@ install.pkg <- function(pkgname) {
         # be paranoid and also check file system and log
 	    success <- installed.ok(pkgname, error_log_size)
     }
-    log.message(paste0("installation succeeded for ", pkgname, ": ", success), level=1)
+    log.message("installation succeeded for ", pkgname, ": ", success, level=1)
     names(success) <- pkgname
 	install.status <<- append(install.status, success)
 	return(success)
@@ -889,7 +889,7 @@ install.pkg <- function(pkgname) {
 
 get.test.executable <- function() {
     if (is.na(test.executable)) {
-        stop("You want to run tests but did not provide the path to the Rscript binary")
+        log.and.abort("You want to run tests but did not provide the path to the Rscript binary", status=5)
     }
     test.executable
 }
@@ -897,11 +897,11 @@ get.test.executable <- function() {
 check.create.dir <- function(name) {
 	if (!file.exists(name)) {
 		if (!dir.create(name)) {
-			stop(paste("cannot create: ", name))
+			log.and.abort("cannot create: ", name, status=6)
 		}
 	} else {
 		if(!file_test("-d", name)) {
-			stop(paste(name, "exists and is not a directory"))
+			log.and.abort(name, "exists and is not a directory", status=7)
 		}
 	}
 }
@@ -909,7 +909,7 @@ check.create.dir <- function(name) {
 getPkgEnv <- function(pkgname) {
 	envOneLine <- Sys.getenv(paste0("PKG_TEST_ENV_", pkgname))
 	envVars <- strsplit(envOneLine, ",")[[1]]
-	cat("Package-specific environment: ", envVars, "\n")
+	log.message("Package-specific environment: ", envVars)
 	return (envVars)
 }
 
@@ -928,14 +928,14 @@ test.package <- function(pkgname) {
 		    tools::testInstalledPackage(pkgname, outDir=file.path(testdir.path, pkgname), lib.loc=lib.install)
         }, error = function(e) 1L)
 	} else if (test.mode == "context") {
-		stop("context run-mode not implemented\n")
+		log.and.abort("context run-mode not implemented\n", status=91)
 	}
     # be paranoid
     if (!test.ok(error_log_size)) {
         res <- 1L
     }
 	end.time <- proc.time()[[3]]
-	cat("TEST_TIME:", pkgname, end.time - start.time, "\n")
+	log.message("TEST_TIME:", pkgname, end.time - start.time)
     return (res)
 }
 
@@ -1099,7 +1099,7 @@ parse.args <- function() {
 		args <<- args[-1L]
 	}
 	if (!is.na(pkg.pattern) && !is.na(pkg.filelistfile)) {
-		stop("--pkg.pattern and --pkg.filelist are mutually exclusive")
+		log.and.abort("--pkg.pattern and --pkg.filelist are mutually exclusive", status=92)
 	}
 	if (is.na(pkg.pattern) && is.na(pkg.filelistfile)) {
 	    pkg.pattern <<- "^.*"
@@ -1115,7 +1115,7 @@ parse.args <- function() {
 }
 
 cat.args <- function() {
-	if (verbose) {
+	log.output(function() {
 		cat("tempdir:", tempdir(), "\n")
 		cat("cran.mirror:", cran.mirror, "\n")
 		cat("initial.blacklist.file:", initial.blacklist.file, "\n")
@@ -1139,28 +1139,67 @@ cat.args <- function() {
 		cat("testdir.path:", testdir, "\n")
 		cat("ignore.suggests.file:", ignore.suggests.file, "\n")
 		cat("pkg.cache: enabled=", pkg.cache$enabled, "; vm=", pkg.cache$vm, "; dir=", pkg.cache$dir, "; mode=", pkg.cache$mode, "; ignore=", pkg.cache$ignore, "\n")
-	}
+	}, level=1)
+}
+
+quiet <- F
+verbose <- F
+very.verbose <- F
+log.file <- file.path(getwd(), 'install.packages.R.log')
+cat("The output is also logged into:", log.file)
+
+loggable <- function(level) {
+	result <- T
+	tryCatch(
+    	result <- level == -1 || (!quiet && (very.verbose || level == 0 || (verbose && level <= 1))),
+		error = function(e) {
+			cat("ERROR!!\n")
+			print(e)
+		})
+	result
+}
+
+log.and.abort <- function(..., status=100) {
+    cat(paste0(..., "\n"), file = log.file, append = T)
+    cat(paste0(..., "\n"))
+	log.output(function() traceback(-2))
+    quit("no", status=status)
+}
+
+log.output <- function(fun, level=0) {
+    if(loggable(level)) {
+        fun();
+        sink(log.file, append = T)
+        fun();
+        sink()
+    }
+}
+
+log.message.always <- function(...) {
+    log.message(..., level=-1)
 }
 
 log.message <- function(..., level=0) {
-    if(level == 0 || verbose) {
+    if(loggable(level)) {
         cat(paste0(..., "\n"))
+        cat(paste0(..., "\n"), file = log.file, append = T)
     }
 }
 
 log.timestamp <- function() {
     if(!quiet) {
         cat("timestamp:", as.character(Sys.time()), "\n")
+        cat("timestamp:", as.character(Sys.time()), "\n", file = log.file, append = T)
     }
 }
 
 check.libs <- function() {
 	lib.install <<- Sys.getenv("R_LIBS_USER", unset=NA)
 	if (is.na(lib.install)) {
-		abort("R_LIBS_USER must be set")
+		log.and.abort("R_LIBS_USER must be set", status = 101)
 	}
 	if (!file.exists(lib.install) || is.na(file.info(lib.install)$isdir)) {
-		abort(paste(lib.install, "does not exist or is not a directory"))
+		log.and.abort(lib.install, "does not exist or is not a directory", status = 102)
 	}
 }
 
@@ -1169,7 +1208,7 @@ check.pkgfilelist <- function() {
 		if (file.exists(pkg.filelistfile)) {
 			pkg.filelist <<- readLines(pkg.filelistfile)
 		} else {
-			abort(paste(pkg.filelistfile, "not found"))
+			log.and.abort(pkg.filelistfile, "not found", status = 103)
 		}
 	}
 }
@@ -1179,7 +1218,7 @@ get.initial.package.blacklist <- function() {
 		initial.blacklist <<- read.dcf(initial.blacklist.file)
 		rownames(initial.blacklist) <- initial.blacklist[, "Package"]
 	} else {
-		abort(paste(initial.blacklist.file, "not found"))
+		log.and.abort(initial.blacklist.file, "not found", status = 104)
 	}
 }
 
@@ -1291,11 +1330,19 @@ run <- function() {
             set.repos()
             do.find.top.pkgs(find.top.pkgs)
         } else {
+            log.message("Running: run.setup()", level=2)
             run.setup()
+            log.message("Running: do.it()", level=2)
             do.it()
+            log.message("Done running: do.it()", level=2)
         }
-    }, errors = function(e) traceback()
-    )
+    }, errors = function(e) {
+        log.output(function() {
+            cat("Unexpected error: ")
+            print(e)
+            traceback()
+        })
+    })
 }
 
 # load package cache code
@@ -1322,7 +1369,6 @@ if (!is.null(curScriptDir)) {
 
 this.package <- dirname(curScriptDir)
 
-quiet <- F
 repo.list <- c("CRAN")
 pkg.cache <- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L, sync=FALSE, mode="local", ignore="default"))
 cran.mirror <- NA
@@ -1336,8 +1382,6 @@ pkg.filelist <- character()
 pkg.filelistfile <- NA
 print.install.status <- F
 use.installed.pkgs <- F
-verbose <- F
-very.verbose <- F
 install <- T
 install.dependents.first <- F
 install.status <- logical()
@@ -1362,6 +1406,16 @@ important.pkg.table.file <- NA
 important.pkg.table <- NULL
 ignore.suggests.file <- file.path(curScriptDir, "..", "ignore.suggests")
 
+cat("Running install.packages.R, interactive=", interactive(), file=log.file, append=T)
+options(error = function(...) {
+	log.message.always("Unexpected error occured")
+	log.output(function() {
+		print(list(...))
+		traceback(2)
+	})
+	quit('no', status=47)
+})
 if (!interactive()) {
     run()
 }
+cat("Finshed install.packages.R", file=log.file, append=T)
