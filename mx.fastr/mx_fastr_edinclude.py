@@ -64,6 +64,11 @@ Rboolean IS_ASCII(SEXP x);
 Rboolean IS_UTF8(SEXP x);
 Rboolean ENC_KNOWN(SEXP x);
 
+#ifdef USE_RINTERNALS
+// Some packages rely on this macro not being defined as an indication of old R versions
+#define XLENGTH XLENGTH
+#endif
+
 #endif
 '''
 use_internals_begin = '''#if defined (USE_RINTERNALS_DEFS) && (defined (USE_RINTERNALS) || defined (FASTR))

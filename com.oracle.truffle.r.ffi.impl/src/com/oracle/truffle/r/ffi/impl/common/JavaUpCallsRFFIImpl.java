@@ -2697,7 +2697,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_match(Object itables, Object ix, int nmatch) {
+    public Object match5(Object itables, Object ix, int nmatch, Object incomparables, Object env) {
         throw implementedAsNode();
     }
 

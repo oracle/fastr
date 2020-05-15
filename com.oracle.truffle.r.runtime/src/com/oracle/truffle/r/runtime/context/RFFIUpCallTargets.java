@@ -71,10 +71,6 @@ public final class RFFIUpCallTargets {
 
     public RootCallTarget AsCharacterFactor;
 
-    public RootCallTarget MatchNode;
-
-    public RootCallTarget NonNullStringMatchNode;
-
     public RootCallTarget RHasSlotNode;
 
     public RootCallTarget OctSizeNode;
@@ -83,4 +79,5 @@ public final class RFFIUpCallTargets {
 
     public RootCallTarget AsS4;
 
+    public RootCallTarget Match5UpCallNode;
 }

@@ -13,6 +13,14 @@ New features:
 
 # 20.2.0
 
+Added missing R builtins and C APIs:
+
+* non-API C function match5, which is used by some packages
+* non-API C function `match5`, which is used by some packages (#149)
+* define dummy `XLENGTH` macro if `USE_RINTERNALS` is defined
+  * non-existence of this macro is used by some packages to detect old R versions
+* `IS_LONG_VEC` C API function
+
 Bug fixes:
 
 * FastR cleans-up the temporary directory created for internal implementation of the R input handlers
