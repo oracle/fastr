@@ -29,6 +29,7 @@ Bug fixes:
 Added missing R builtins and C APIs
 
 * Dummy implementations of `X_IS_SORTED` and `X_NO_NA` for `X = STRING,INTEGER,REAL` #156
+* when loading native symbol dynamically, FastR also checks the name with trailing underscode to be compatible with GNU-R
 
 # 20.1.0
 

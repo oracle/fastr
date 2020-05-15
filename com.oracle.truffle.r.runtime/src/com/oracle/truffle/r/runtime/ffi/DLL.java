@@ -879,6 +879,14 @@ public class DLL {
             if (rns != null && rns.nst == NativeSymbolType.Fortran) {
                 mName = name.toLowerCase() + "_";
             }
+            SymbolHandle result = dynamicLookup(dllInfo, mName);
+            if (result == SYMBOL_NOT_FOUND && rns != null && rns.nst == NativeSymbolType.Any) {
+                result = dynamicLookup(dllInfo, name + "_");
+            }
+            return result;
+        }
+
+        private SymbolHandle dynamicLookup(DLLInfo dllInfo, String mName) {
             try {
                 if (dllInfo.unsuccessfulLookups.contains(mName)) {
                     return SYMBOL_NOT_FOUND;
