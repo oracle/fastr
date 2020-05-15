@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.nmath;
 
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nmath.distr.SExp;
 import com.oracle.truffle.r.runtime.nmath.distr.SNorm;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -77,8 +78,12 @@ public class RandomFunctions {
             this.normKind = normKind;
         }
 
+        public static RandomNumberProvider fromCurrentRNG(RContext ctx) {
+            return new RandomNumberProvider(RRNG.currentGenerator(ctx), RRNG.currentNormKind(ctx));
+        }
+
         public static RandomNumberProvider fromCurrentRNG() {
-            return new RandomNumberProvider(RRNG.currentGenerator(), RRNG.currentNormKind());
+            return fromCurrentRNG(RContext.getInstance());
         }
 
         public boolean isSame(RandomNumberProvider other) {

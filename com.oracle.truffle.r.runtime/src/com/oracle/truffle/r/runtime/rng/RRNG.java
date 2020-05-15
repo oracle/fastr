@@ -253,6 +253,10 @@ public class RRNG {
         return RContext.getInstance().stateRNG;
     }
 
+    private static ContextStateImpl getContextState(RContext ctx) {
+        return ctx.stateRNG;
+    }
+
     public static int currentKindAsInt() {
         return getContextState().currentGenerator.getKind().ordinal();
     }
@@ -273,8 +277,16 @@ public class RRNG {
         return getContextState().currentGenerator;
     }
 
+    public static RandomNumberGenerator currentGenerator(RContext ctx) {
+        return getContextState(ctx).currentGenerator;
+    }
+
     public static NormKind currentNormKind() {
         return getContextState().currentNormKind;
+    }
+
+    public static NormKind currentNormKind(RContext ctx) {
+        return getContextState(ctx).currentNormKind;
     }
 
     public static SampleKind currentSampleKind() {
