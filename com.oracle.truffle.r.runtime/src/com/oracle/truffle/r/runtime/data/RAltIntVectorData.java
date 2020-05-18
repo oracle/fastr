@@ -25,11 +25,14 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
@@ -115,6 +118,30 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return na;
     }
 
+    @ExportMessage
+    public boolean noNA(@Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
+                        @Cached AltrepRFFI.AltIntNoNANode noNANode,
+                        @Cached AltrepRFFI.AltIntGetRegionNode getRegionNode,
+                        @Cached AltrepLengthNode lengthNode) {
+        if (hasNoNAMethodProfile.profile(descriptor.isNoNAMethodRegistered())) {
+            return noNANode.execute(owner);
+        } else {
+            // Get whole region
+            int length = getLength(lengthNode);
+            int[] buffer = new int[length];
+            int copied = getRegionNode.execute(owner, 0, getLength(lengthNode), buffer);
+            if (copied != length) {
+                throw RInternalError.shouldNotReachHere();
+            }
+            for (int item : buffer) {
+                if (RRuntime.isNA(item)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
     @SuppressWarnings("static-method")
     @ExportMessage
     public final RType getType() {
@@ -144,7 +171,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public boolean isComplete() {
-        return true;
+        return false;
     }
 
     /**
@@ -155,6 +182,36 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     public Object copy(boolean deep,
                        @Cached AltrepDuplicateNode duplicateNode) {
         return duplicateNode.execute(getOwner(), deep);
+    }
+
+    @ExportMessage
+    public static class GetIntRegion {
+        @Specialization(guards = "hasGetRegionMethod(altIntVecData)")
+        public static int doWithNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, int[] buffer,
+                                        @Cached AltrepRFFI.AltIntGetRegionNode getRegionNode) {
+            int copied = getRegionNode.execute(altIntVecData.getOwner(), startIdx, size, buffer);
+            return copied;
+        }
+
+        @Specialization(guards = "!hasGetRegionMethod(altIntVecData)")
+        public static int doWithoutNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, int[] buffer,
+                                                  @Cached AltrepGetIntAtNode getIntAtNode) {
+            RandomAccessIterator it = altIntVecData.randomAccessIterator();
+            int bufferIdx = 0;
+            for (int index = startIdx; index < startIdx + size; index++) {
+                try {
+                    int value = altIntVecData.getIntAt(index, getIntAtNode);
+                    buffer[bufferIdx++] = value;
+                } catch (Exception e) {
+                    // Intentionally do nothing
+                }
+            }
+            return bufferIdx;
+        }
+
+        protected static boolean hasGetRegionMethod(RAltIntVectorData vecData) {
+            return vecData.getDescriptor().isGetRegionMethodRegistered();
+        }
     }
 
     /**

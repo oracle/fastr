@@ -2728,7 +2728,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int INTEGER_IS_SORTED(Object x) {
-        return 0;
+        throw implementedAsNode();
     }
 
     @Override
@@ -2753,7 +2753,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int INTEGER_NO_NA(Object x) {
-        return 0;
+        throw implementedAsNode();
     }
 
     @Override

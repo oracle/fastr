@@ -173,6 +173,18 @@ public class AltrepUtilities {
         }
     }
 
+    public static boolean hasNoNAMethodRegistered(Object object) {
+        if (!isAltrep(object)) {
+            return false;
+        }
+
+        if (object instanceof RIntVector) {
+            return getAltIntDescriptor((RIntVector) object).isNoNAMethodRegistered();
+        } else {
+            throw RInternalError.shouldNotReachHere("Unexpected altrep type");
+        }
+    }
+
     public abstract static class AltrepDuplicateMethodInvoker extends Node {
         public abstract Object execute(Object altrepVector, boolean deep);
 

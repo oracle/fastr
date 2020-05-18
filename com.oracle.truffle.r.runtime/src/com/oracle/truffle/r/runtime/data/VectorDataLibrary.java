@@ -447,6 +447,26 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     /**
+     * This method is Java-equivalent of INTEGER_GET_REGION C function.
+     * @return count of elements that were actually copied.
+     */
+    public int getIntRegion(Object receiver, int startIndex, int size, int[] buffer) {
+        assert buffer.length == size;
+        RandomAccessIterator it = randomAccessIterator(receiver);
+        int bufferIdx = 0;
+        for (int idx = startIndex; idx < startIndex + size; idx++) {
+            try {
+                int value = getInt(receiver, it, idx);
+                buffer[bufferIdx++] = value;
+            // TODO: Different exception type?
+            } catch (Exception e) {
+                // Intentionally do nothing - maybe log that something went wrong
+            }
+        }
+        return bufferIdx;
+    }
+
+    /**
      * Returns the value at given position. See the documentation of {@link #iterator(Object)} for
      * details.
      */
@@ -1443,6 +1463,25 @@ public abstract class VectorDataLibrary extends Library {
         }
     }
 
+    /**
+     * Returns <code>true</code> if there is no NA in the data. Note that the behavior is slightly different from
+     * {@link #isComplete(Object)}.
+     * @see #isComplete(Object)
+     */
+    public boolean noNA(Object data) {
+        if (isComplete(data)) {
+            return true;
+        }
+
+        SeqIterator iter = iterator(data);
+        while (next(data, iter)) {
+            if (isNextNA(data, iter)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public boolean isNextNA(Object data, SeqIterator it) {
         RType type = getType(data);
         switch (type) {
@@ -1735,6 +1774,12 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
+        public boolean noNA(Object data) {
+            verifyIfSlowAssertsEnabled(data);
+            return delegate.noNA(data);
+        }
+
+        @Override
         public boolean isComplete(Object data) {
             verifyIfSlowAssertsEnabled(data);
             return delegate.isComplete(data);
@@ -1774,6 +1819,17 @@ public abstract class VectorDataLibrary extends Library {
         public int[] getIntDataCopy(Object receiver) {
             verifyIfSlowAssertsEnabled(receiver);
             return delegate.getIntDataCopy(receiver);
+        }
+
+        @Override
+        public int getIntRegion(Object receiver, int startIndex, int size, int[] buffer) {
+            int dataLength = delegate.getLength(receiver);
+            assert buffer != null;
+            assert buffer.length == size;
+            assert buffer.length < dataLength;
+            assert 0 <= startIndex && startIndex < dataLength;
+            verifyIfSlowAssertsEnabled(receiver);
+            return delegate.getIntRegion(receiver, startIndex, size, buffer);
         }
 
         @Override

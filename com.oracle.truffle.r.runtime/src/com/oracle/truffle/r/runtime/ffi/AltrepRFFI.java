@@ -111,4 +111,61 @@ public final class AltrepRFFI {
             return AltrepSortedness.fromInt(retValue);
         }
     }
+
+    public static class AltIntNoNANode extends NativeCallNode {
+        private AltIntNoNANode(DownCallNode downCallNode) {
+            super(downCallNode);
+        }
+
+        public static AltIntNoNANode create() {
+            return new AltIntNoNANode(createDownCallNode());
+        }
+
+        public static AltIntNoNANode getUncached() {
+            return new AltIntNoNANode(getUncachedDownCallNode()) {
+                @Override
+                public boolean isAdoptable() {
+                    return false;
+                }
+            };
+        }
+
+        public boolean execute(RIntVector altIntVector) {
+            assert AltrepUtilities.isAltrep(altIntVector);
+            // TODO: Accept more return values - maybe use InteropLibrary?
+            int retValue = (int) call(NativeFunction.AltInteger_No_NA, new Object[]{altIntVector});
+            return retValue != 0;
+        }
+    }
+
+    public static class AltIntGetRegionNode extends NativeCallNode {
+        private AltIntGetRegionNode(DownCallNode downCallNode) {
+            super(downCallNode);
+        }
+
+        public static AltIntGetRegionNode create() {
+            return new AltIntGetRegionNode(createDownCallNode());
+        }
+
+        public static AltIntGetRegionNode getUncached() {
+            return new AltIntGetRegionNode(getUncachedDownCallNode()) {
+                @Override
+                public boolean isAdoptable() {
+                    return false;
+                }
+            };
+        }
+
+        public int execute(RIntVector altIntVector, int fromIdx, int size, int[] buffer) {
+            assert AltrepUtilities.isAltrep(altIntVector);
+            InteropLibrary interopLib = InteropLibrary.getUncached();
+            Object ret = call(NativeFunction.AltInteger_Get_region, altIntVector, fromIdx, size, buffer);
+            assert interopLib.isNumber(ret);
+            try {
+                return interopLib.asInt(ret);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        }
+    }
 }
