@@ -78,7 +78,7 @@ done
       echo "To learn more visit https://www.graalvm.org/docs/reference-manual/languages/r"
       exit 1
     else
-      echo "The basic configuration of FastR was successfull."
+      echo "The basic configuration of FastR was successful."
       echo ""
       echo "Note: if you intend to install R packages you may need additional dependencies."
       echo "The following packages should cover depenedencies of the most commonly used R packages:"
@@ -86,7 +86,7 @@ done
       echo "    On Oracle Linux: yum groupinstall 'Development Tools' && yum install gcc-gfortran"
     fi
   elif [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "The basic configuration of FastR was successfull."
+    echo "The basic configuration of FastR was successful."
     echo ""
     echo "Note: if you intend to install R packages you may need additional dependencies."
     echo "The most common dependency is GFortran, which must be of version 8.3.0 or later."
