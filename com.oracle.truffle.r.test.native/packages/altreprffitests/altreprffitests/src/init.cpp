@@ -9,12 +9,16 @@
 static SEXP is_altrep(SEXP x);
 static SEXP altrep_get_data1(SEXP x);
 static SEXP altrep_get_data2(SEXP x);
+static SEXP integer_no_na(SEXP x);
+static SEXP real_no_na(SEXP x);
 extern "C" SEXP my_test(SEXP vec);
 
 static const R_CallMethodDef CallEntries[] = {
         {"is_altrep", (DL_FUNC) &is_altrep, 1},
         {"altrep_get_data1", (DL_FUNC) &altrep_get_data1, 1},
         {"altrep_get_data2", (DL_FUNC) &altrep_get_data2, 1},
+        {"integer_no_na", (DL_FUNC) &integer_no_na, 1},
+        {"real_no_na", (DL_FUNC) &real_no_na, 1},
         {"trivial_class_create_instance", (DL_FUNC) &TrivialClass::createInstance, 0},
         {"simple_vec_wrapper_create_instance", (DL_FUNC) &VecWrapper::createInstance, 9},
         {"logging_vec_wrapper_create_instance", (DL_FUNC) &LoggingVecWrapper::createInstance, 9},
@@ -44,6 +48,18 @@ static SEXP altrep_get_data1(SEXP x)
 static SEXP altrep_get_data2(SEXP x)
 {
     return R_altrep_data2(x);
+}
+
+static SEXP integer_no_na(SEXP x)
+{
+    int no_na = INTEGER_NO_NA(x);
+    return ScalarLogical(no_na);
+}
+
+static SEXP real_no_na(SEXP x)
+{
+    int no_na = REAL_NO_NA(x);
+    return ScalarLogical(no_na);
 }
 
 /*static int my_elt_method(SEXP instance, R_xlen_t idx)

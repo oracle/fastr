@@ -262,6 +262,35 @@ test_first_char_changer_class <- function() {
     stopifnot( instance[[2]] == "Xarle")
 }
 
+#' This test does not work in GNU-R, because *_NO_NA functions return 0 as default.
+#' TODO: How should we handle this?
+test_no_na <- function() {
+    # Simple integer vectors.
+    v1 <- c(1L, 2L, 5L)
+    stopifnot( no_na(v1) == TRUE)
+
+    v2 <- c(1L, 2L, NA)
+    stopifnot( no_na(v2) == FALSE)
+
+    # Simple real vectors.
+    v3 <- c(1, 2, 3)
+    stopifnot( no_na(v3) == TRUE)
+
+    v4 <- as.double(1:10)
+    stopifnot( no_na(v4) == TRUE)
+
+    # Compact sequence is an altrep instance.
+    v5 <- 1:10
+    stopifnot( no_na(v5) == TRUE)
+
+    # Modify an element of an altrep instance.
+    v6 <- 1:15
+    v6[[2]] <- NA
+    stopifnot( no_na(v6) == FALSE)
+    v6[[2]] <- 42
+    stopifnot( no_na(v6) == TRUE)
+}
+
 TESTS <- list(
     list("test_trivial", test_trivial),
     list("test_simple", test_simple),
@@ -270,7 +299,8 @@ TESTS <- list(
     list("test_calls_to_altrep_methods", test_calls_to_altrep_methods),
     list("test_framework_behavior", test_framework_behavior),
     list("test_generator_class", test_generator_class),
-    list("test_first_char_changer_class", test_first_char_changer_class)
+    list("test_first_char_changer_class", test_first_char_changer_class),
+    list("test_no_na", test_no_na)
 )
 
 run_tests(TESTS)

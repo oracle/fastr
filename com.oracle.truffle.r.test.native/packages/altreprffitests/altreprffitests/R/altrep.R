@@ -14,6 +14,17 @@ altrep.get_data2 <- function(x) {
     .Call("altrep_get_data2", x)
 }
 
+# Wrapper for INTEGER_NO_NA, REAL_NO_NA, etc..
+no_na <- function(x) {
+    if (typeof(x) == "integer") {
+        .Call("integer_no_na", x)
+    } else if (typeof(x) == "double") {
+        .Call("real_no_na", x)
+    } else {
+        stop("Type of ", x, " does not have C function equivalent yet")
+    }
+}
+
 trivial_class.create_instance <- function() {
     .Call("trivial_class_create_instance")
 }
