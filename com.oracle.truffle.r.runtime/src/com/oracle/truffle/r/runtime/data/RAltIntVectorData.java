@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIter
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
@@ -172,6 +173,37 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public boolean isComplete() {
         return false;
+    }
+
+    @ExportMessage
+    public static class IsSorted {
+        @Specialization(guards = "hasIsSortedMethod(altIntVectorData)")
+        public static boolean doWithNativeFunction(RAltIntVectorData altIntVectorData, boolean decreasing, boolean naLast,
+                                            @Cached AltrepRFFI.AltIntIsSortedNode isSortedNode) {
+            AltrepSortedness sortedness = isSortedNode.execute(altIntVectorData.getOwner());
+            if (decreasing) {
+                if (naLast && sortedness == AltrepSortedness.SORTED_DECR) {
+                    return true;
+                } else {
+                    return !naLast && sortedness == AltrepSortedness.SORTED_DECR_NA_1ST;
+                }
+            } else {
+                if (naLast && sortedness == AltrepSortedness.SORTED_INCR) {
+                    return true;
+                } else {
+                    return !naLast && sortedness == AltrepSortedness.SORTED_INCR_NA_1ST;
+                }
+            }
+        }
+
+        @Specialization(guards = "!hasIsSortedMethod(altIntVectorData)")
+        public static boolean doWithoutNativeFunction(RAltIntVectorData altIntVectorData, boolean decreasing, boolean naLast) {
+            return false;
+        }
+
+        protected static boolean hasIsSortedMethod(RAltIntVectorData altIntVectorData) {
+            return altIntVectorData.getDescriptor().isIsSortedMethodRegistered();
+        }
     }
 
     /**
