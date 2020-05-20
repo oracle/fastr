@@ -24,6 +24,8 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.GenerateLibrary;
 import com.oracle.truffle.api.library.GenerateLibrary.DefaultExport;
@@ -450,17 +452,16 @@ public abstract class VectorDataLibrary extends Library {
      * This method is Java-equivalent of INTEGER_GET_REGION C function.
      * @return count of elements that were actually copied.
      */
-    public int getIntRegion(Object receiver, int startIndex, int size, int[] buffer) {
-        assert buffer.length == size;
+    public int getIntRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
         RandomAccessIterator it = randomAccessIterator(receiver);
         int bufferIdx = 0;
         for (int idx = startIndex; idx < startIndex + size; idx++) {
             try {
                 int value = getInt(receiver, it, idx);
-                buffer[bufferIdx++] = value;
-            // TODO: Different exception type?
-            } catch (Exception e) {
-                // Intentionally do nothing - maybe log that something went wrong
+                bufferInterop.writeArrayElement(buffer, bufferIdx, value);
+                bufferIdx++;
+            } catch (InteropException e) {
+                throw RInternalError.shouldNotReachHere(e);
             }
         }
         return bufferIdx;
@@ -1822,14 +1823,19 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
-        public int getIntRegion(Object receiver, int startIndex, int size, int[] buffer) {
-            int dataLength = delegate.getLength(receiver);
+        public int getIntRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
             assert buffer != null;
-            assert buffer.length == size;
-            assert buffer.length < dataLength;
-            assert 0 <= startIndex && startIndex < dataLength;
+            assert bufferInterop.hasArrayElements(buffer);
+            assert 0 <= startIndex && startIndex < delegate.getLength(receiver);
+            long bufSize = 0;
+            try {
+                bufSize = bufferInterop.getArraySize(buffer);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            assert bufSize >= size;
             verifyIfSlowAssertsEnabled(receiver);
-            return delegate.getIntRegion(receiver, startIndex, size, buffer);
+            return delegate.getIntRegion(receiver, startIndex, size, buffer, bufferInterop);
         }
 
         @Override

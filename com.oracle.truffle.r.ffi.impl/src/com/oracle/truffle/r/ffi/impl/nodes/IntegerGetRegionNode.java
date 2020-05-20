@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,22 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.r.ffi.impl.llvm.AltrepLLVMDownCallNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
-import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.ffi.util.NativeArrayWrapper;
 
+@ImportStatic(DSLConfig.class)
 @GenerateUncached
 public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
 
@@ -45,54 +45,46 @@ public abstract class IntegerGetRegionNode extends FFIUpCallNode.Arg4 {
         return IntegerGetRegionNodeGen.create();
     }
 
-    @Specialization(guards = {"isAltrep(altIntVec)", "hasGetRegionMethodRegistered(altIntVec)"}, limit = "3")
-    public long getRegionForAltIntegerVec(RIntVector altIntVec, long fromIdx, long size, Object buffer,
-                                          @Cached(value = "create()", allowUncached = true) AltrepLLVMDownCallNode downCallNode) {
-        Object count = downCallNode.call(NativeFunction.AltInteger_Get_region, altIntVec, fromIdx, size, buffer);
-        // TODO: Better return
-        assert count instanceof Integer || count instanceof Long;
-        if (count instanceof Integer) {
-            return ((Integer) count).longValue();
-        } else {
-            return (long) count;
-        }
+    @Specialization(guards = "bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
+    public long doBufferArray(RIntVector vec, long fromIdx, long size, Object buffer,
+                              @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
+                              @CachedLibrary("buffer") InteropLibrary bufferInterop) {
+        validateArguments(fromIdx, size);
+
+        return dataLibrary.getIntRegion(vec.getData(), (int) fromIdx, (int) size, buffer, bufferInterop);
     }
 
-    @Specialization(limit = "3")
-    public long getRegionForOtherVectors(RIntVector intVector, long fromIdx, long size, Object buffer,
-                                         @CachedLibrary("buffer") InteropLibrary bufferInterop,
-                                         @Cached(value = "intVector.access()", allowUncached = true) VectorAccess access) {
-        assert bufferInterop.isPointer(buffer);
-        if (fromIdx > Integer.MAX_VALUE || size > Integer.MAX_VALUE) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.error(RError.SHOW_CALLER, RError.Message.LONG_VECTORS_NOT_SUPPORTED);
-        }
+    @Specialization(guards = "!bufferInterop.hasArrayElements(buffer)")
+    public long doGenericBuffer(RIntVector vec, long fromIdx, long size, Object buffer,
+                                @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
+                                @CachedLibrary("buffer") InteropLibrary bufferInterop,
+                                @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {
 
-        int fromIdxInt = (int) fromIdx;
+        validateArguments(fromIdx, size);
+        bufferInterop.toNative(buffer);
+        long bufferAddr = 0;
+        try {
+            bufferAddr = bufferInterop.asPointer(buffer);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
         int sizeInt = (int) size;
-        long copied = 0;
-        try (RandomIterator it = access.randomAccess(intVector)) {
-            for (int idx = fromIdxInt; idx < fromIdxInt + sizeInt; idx++) {
-                int value = access.getInt(it, idx);
-                bufferInterop.writeArrayElement(buffer, idx, value);
-                copied++;
-            }
-        } catch (Exception e) {
-            throw RInternalError.shouldNotReachHere(e, "Some exception in IntegerGetRegionNode");
-        }
-        return copied;
+        Object bufferWrapper = NativeArrayWrapper.createIntWrapper(bufferAddr, sizeInt);
+        return dataLibrary.getIntRegion(vec.getData(), (int) fromIdx, sizeInt, bufferWrapper, bufferWrapperInterop);
     }
+
+    private void validateArguments(long fromIdx, long size) {
+        if (fromIdx > (long) Integer.MAX_VALUE || size > (long) Integer.MAX_VALUE) {
+            throw RError.error(RError.NO_CALLER, Message.LONG_VECTORS_NOT_SUPPORTED);
+        }
+    }
+
 
     @Fallback
-    public long getRegionFallback(Object x, Object fromIdx, Object size, Object buffer) {
+    public long getRegionFallback(Object x,
+                                  @SuppressWarnings("unused") Object fromIdx,
+                                  @SuppressWarnings("unused") Object size,
+                                  @SuppressWarnings("unused") Object buffer) {
         throw RInternalError.shouldNotReachHere("Type error: Unexpected type:" + x.getClass());
-    }
-
-    protected static boolean isAltrep(Object object) {
-        return AltrepUtilities.isAltrep(object);
-    }
-
-    protected static boolean hasGetRegionMethodRegistered(RIntVector altIntVec) {
-        return AltrepUtilities.hasGetRegionMethodRegistered(altIntVec);
     }
 }

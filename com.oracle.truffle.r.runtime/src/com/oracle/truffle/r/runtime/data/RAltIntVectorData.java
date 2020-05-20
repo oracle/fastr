@@ -26,6 +26,8 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -219,23 +221,24 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public static class GetIntRegion {
         @Specialization(guards = "hasGetRegionMethod(altIntVecData)")
-        public static int doWithNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, int[] buffer,
+        public static int doWithNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, Object buffer,
+                                        @SuppressWarnings("unused") InteropLibrary bufferInterop,
                                         @Cached AltrepRFFI.AltIntGetRegionNode getRegionNode) {
-            int copied = getRegionNode.execute(altIntVecData.getOwner(), startIdx, size, buffer);
-            return copied;
+            return getRegionNode.execute(altIntVecData.getOwner(), startIdx, size, buffer);
         }
 
         @Specialization(guards = "!hasGetRegionMethod(altIntVecData)")
-        public static int doWithoutNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, int[] buffer,
+        public static int doWithoutNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, Object buffer,
+                                                  InteropLibrary bufferInterop,
                                                   @Cached AltrepGetIntAtNode getIntAtNode) {
-            RandomAccessIterator it = altIntVecData.randomAccessIterator();
             int bufferIdx = 0;
             for (int index = startIdx; index < startIdx + size; index++) {
                 try {
                     int value = altIntVecData.getIntAt(index, getIntAtNode);
-                    buffer[bufferIdx++] = value;
-                } catch (Exception e) {
-                    // Intentionally do nothing
+                    bufferInterop.writeArrayElement(buffer, bufferIdx, value);
+                    bufferIdx++;
+                } catch (InteropException e) {
+                    throw RInternalError.shouldNotReachHere(e);
                 }
             }
             return bufferIdx;

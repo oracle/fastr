@@ -156,7 +156,7 @@ public final class AltrepRFFI {
             };
         }
 
-        public int execute(RIntVector altIntVector, int fromIdx, int size, int[] buffer) {
+        public int execute(RIntVector altIntVector, int fromIdx, int size, Object buffer) {
             assert AltrepUtilities.isAltrep(altIntVector);
             InteropLibrary interopLib = InteropLibrary.getUncached();
             Object ret = call(NativeFunction.AltInteger_Get_region, altIntVector, fromIdx, size, buffer);
