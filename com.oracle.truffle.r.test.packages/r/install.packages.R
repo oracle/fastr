@@ -1146,7 +1146,7 @@ quiet <- F
 verbose <- F
 very.verbose <- F
 log.file <- file.path(getwd(), 'install.packages.R.log')
-cat("The output is also logged into:", log.file)
+cat("The output is also logged into:", log.file, "\n")
 
 loggable <- function(level) {
 	result <- T

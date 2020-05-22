@@ -550,6 +550,10 @@ public class TestBase {
         evalAndCompare(input, timeout, trait1);
     }
 
+    protected void assertEval(long timeout, TestTrait trait1, TestTrait trait2, String... input) {
+        evalAndCompare(input, timeout, trait1, trait2);
+    }
+
     protected void assertEval(TestTrait trait1, TestTrait trait2, String... input) {
         evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1, trait2);
     }
