@@ -97,7 +97,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         this.timeoutSecs = timeoutSecs;
     }
 
-    private RMain() {
+    public RMain() {
         this.launcherMode = true;
         this.inStream = System.in;
         this.outStream = System.out;
