@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,10 @@ import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestInteractiveDebug extends TestBase {
+    // See GR-23700, the time it takes to instrument all nodes has significantly increased, which
+    // means that we may reach the default timeout frequently
+    private static final long TIMEOUT = 30000;
+
     private static Path debugFile;
 
     @BeforeClass
@@ -46,87 +50,88 @@ public class TestInteractiveDebug extends TestBase {
 
     @Test
     public void testSimple() {
-        assertEval("f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
-        assertEval("f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn\nundebug(f)\nf(3)\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
+        assertEval(TIMEOUT, "f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
+        assertEval(TIMEOUT, "f <- function(x) {\n  t <- x + 1\n  print(t)\n  t}\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn\nundebug(f)\nf(3)\ndebug(f)\nf(5)\nx\nn\nn\nt\nn\nn");
     }
 
     @Test
     public void testInvalidName() {
-        assertEval("f <- function(x) {\n  `123t` <- x + 1\n  print(`123t`)\n  `123t`}\ndebug(f)\nf(5)\nx\nn\nn\n`123t`\nn\nn");
+        assertEval(TIMEOUT, "f <- function(x) {\n  `123t` <- x + 1\n  print(`123t`)\n  `123t`}\ndebug(f)\nf(5)\nx\nn\nn\n`123t`\nn\nn");
     }
 
     @Test
     public void testNoBracket() {
-        assertEval(Ignored.OutputFormatting, "f <- function(x) print(x)\ndebug(f)\nf(5)\nx\nn\n");
+        assertEval(TIMEOUT, Ignored.OutputFormatting, "f <- function(x) print(x)\ndebug(f)\nf(5)\nx\nn\n");
     }
 
     @Test
     public void testLoop() {
-        assertEval("fun <- function(x) { for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\n");
-        assertEval("fun <- function(x) { for(i in seq(x)) { cat(i) }; cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\n");
-        assertEval("fun <- function(x) { for(i in seq(x)) { cat(i) }; cat(5) }; debug(fun); fun(3)\n\n\n\nf\n\n");
-        assertEval("fun <- function(x) { for(j in seq(2)) for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\n\n\n\n\n\n");
-        assertEval("fun <- function(x) { for(j in seq(2)) for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\nf\nf\n\n");
+        assertEval(TIMEOUT, "fun <- function(x) { for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\n");
+        assertEval(TIMEOUT, "fun <- function(x) { for(i in seq(x)) { cat(i) }; cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\n");
+        assertEval(TIMEOUT, "fun <- function(x) { for(i in seq(x)) { cat(i) }; cat(5) }; debug(fun); fun(3)\n\n\n\nf\n\n");
+        assertEval(TIMEOUT, "fun <- function(x) { for(j in seq(2)) for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\n\n\n\n\n\n\n\n\n");
+        assertEval(TIMEOUT, "fun <- function(x) { for(j in seq(2)) for(i in seq(x)) cat(i); cat(5) }; debug(fun); fun(3)\n\n\n\nf\nf\n\n");
     }
 
     @Test
     public void testStepInto() {
-        assertEval(Ignored.OutputFormatting, "bar <- function(x) { cat(x); cat('\\n') }; foo <- function(x) { cat('foo entry\\n'); bar(x); cat('foo exit\\n') }; debug(foo); foo(3)\n\n\ns\nn\n\n\n\n");
-        assertEval("bar <- function(x) { cat(x); cat('\\n') }; foo <- function(x) { cat('foo entry\\n'); bar(x); cat('foo exit\\n') }; debug(foo); foo(3)\n\n\ns\nn\nQ\n");
-        assertEval(Ignored.OutputFormatting,
+        assertEval(TIMEOUT, Ignored.OutputFormatting,
+                        "bar <- function(x) { cat(x); cat('\\n') }; foo <- function(x) { cat('foo entry\\n'); bar(x); cat('foo exit\\n') }; debug(foo); foo(3)\n\n\ns\nn\n\n\n\n");
+        assertEval(TIMEOUT, "bar <- function(x) { cat(x); cat('\\n') }; foo <- function(x) { cat('foo entry\\n'); bar(x); cat('foo exit\\n') }; debug(foo); foo(3)\n\n\ns\nn\nQ\n");
+        assertEval(TIMEOUT, Ignored.OutputFormatting,
                         "bar <- function(x) { for(i in seq(x)) print(x) }; foo <- function(x) { cat('foo entry\\n'); bar(x); cat('foo exit\\n') }; debug(foo); foo(5)\n\n\ns\nn\n\n\nf\n\n");
     }
 
     @Test
     public void testPromise() {
-        assertEval("fun <- function(x) { cat({ cat(x); cat('\n') }) }; debug(fun); fun(3)\n\n\n\n\n");
+        assertEval(TIMEOUT, "fun <- function(x) { cat({ cat(x); cat('\n') }) }; debug(fun); fun(3)\n\n\n\n\n");
     }
 
     @Test
     public void testNestedDebugging() {
-        assertEval(Output.IgnoreDebugPath,
+        assertEval(TIMEOUT, Output.IgnoreDebugPath,
                         "foo <- function(rCode) { eval(parse(text=rCode)); print('foo done') }; debug(foo); foo(\"bar <- function() { print('bar') }; debug(bar); bar()\")\n\n\n\n\n\n");
-        assertEval(Output.IgnoreDebugPath,
+        assertEval(TIMEOUT, Output.IgnoreDebugPath,
                         "foo <- function(rCode) { eval(parse(text=rCode)); print('foo done') }; debug(foo); foo(\"bar <- function() { print('bar') }; debug(bar); bar()\")\n\n\nQ\n");
     }
 
     @Test
     public void testConditionalBreakpoint() {
-        assertEval("fun <- function(x) { cat('x='); cat(x); cat('\\n') }; trace(fun, quote(if (x > 10) browser())); fun(10)\n; fun(11)\n\n\n\n\n\n");
+        assertEval(TIMEOUT, "fun <- function(x) { cat('x='); cat(x); cat('\\n') }; trace(fun, quote(if (x > 10) browser())); fun(10)\n; fun(11)\n\n\n\n\n\n");
     }
 
     @Test
     public void testContinue() {
-        assertEval(Ignored.OutputFormatting,
+        assertEval(TIMEOUT, Ignored.OutputFormatting,
                         "fun0 <- function() { print('fun0') }; fun1 <- function() { print('enter fun1'); fun0(); print('exit fun1') }; fun2 <- function() { print('enter fun2'); fun1(); print('exit fun2') }; debug(fun2); fun2()\n\n\ns\nn\n\ns\nc\nc\nc\n");
     }
 
     @Test
     public void testDebugOnce() {
-        assertEval(Ignored.OutputFormatting, "fun0 <- function() { print('fun0') }; fun1 <- function() { print('en'); fun0(); fun0(); print('ex') }; debugonce(fun0); fun1()\nc\n");
-        assertEval(Ignored.OutputFormatting, "fun0 <- function() { print('fun0') }; debugonce(fun0); fun0()\nc\n");
+        assertEval(TIMEOUT, Ignored.OutputFormatting, "fun0 <- function() { print('fun0') }; fun1 <- function() { print('en'); fun0(); fun0(); print('ex') }; debugonce(fun0); fun1()\nc\n");
+        assertEval(TIMEOUT, Ignored.OutputFormatting, "fun0 <- function() { print('fun0') }; debugonce(fun0); fun0()\nc\n");
     }
 
     @Test
     public void testBrowser() {
-        assertEval("foo <- function() { stop('error msg') }; tryCatch(foo(), error=browser)\nprint(msg)\nc\n");
-        assertEval("do.call('browser', list())\nc\n");
-        assertEval("browser()\nwhere\nc\n");
-        assertEval("options(error=browser); prod('a')\nwhere\nc\n");
-        assertEval(
+        assertEval(TIMEOUT, "foo <- function() { stop('error msg') }; tryCatch(foo(), error=browser)\nprint(msg)\nc\n");
+        assertEval(TIMEOUT, "do.call('browser', list())\nc\n");
+        assertEval(TIMEOUT, "browser()\nwhere\nc\n");
+        assertEval(TIMEOUT, "options(error=browser); prod('a')\nwhere\nc\n");
+        assertEval(TIMEOUT,
                         "{ bar <- function(vbar) do.call(browser, list(), envir = parent.frame(2));" +
                                         "baz <- function(vbaz) bar(vbaz);" +
                                         "start <- function(vstart) baz(vstart);" +
                                         "start(42); }\nls()\nc");
-        assertEval("{ foo <- function(x) browser(\"hello\", condition=4+x, expr=x>3); foo(1); }");
-        assertEval("{ foo <- function(x) browser(\"hello\", condition=4+x, expr=x>3); foo(5); }\nbrowserText()\nbrowserCondition()\nc");
+        assertEval(TIMEOUT, "{ foo <- function(x) browser(\"hello\", condition=4+x, expr=x>3); foo(1); }");
+        assertEval(TIMEOUT, "{ foo <- function(x) browser(\"hello\", condition=4+x, expr=x>3); foo(5); }\nbrowserText()\nbrowserCondition()\nc");
     }
 
     @Test
     public void testSetBreakpoint() {
-        assertEval(Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n", debugFile, debugFile));
-        assertEval(String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); setBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\n", debugFile, debugFile, debugFile));
-        assertEval(Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format(
+        assertEval(TIMEOUT, Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n", debugFile, debugFile));
+        assertEval(TIMEOUT, String.format("source('%s'); setBreakpoint('%s', 4, verbose=F); setBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\n", debugFile, debugFile, debugFile));
+        assertEval(TIMEOUT, Output.IgnoreDebugCallString, Output.IgnoreDebugPath, String.format(
                         "source('%s'); setBreakpoint('%s', 4, verbose=F); fun(10)\n\n\n\n\n\n\n\n\nsetBreakpoint('%s', 4, verbose=F, clear=T); fun(10)\nsetBreakpoint('%s', 4, verbose=F); invisible(fun(10))\n\n\n\n\n\n\n\n\n",
                         debugFile, debugFile, debugFile, debugFile));
     }
