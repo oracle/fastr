@@ -22,7 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.function.call;
 
+import java.lang.ref.WeakReference;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
@@ -33,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 
 public final class SlowPathExplicitCall extends TruffleBoundaryNode implements ExplicitFunctionCall {
     @Child private RExplicitCallNode slowPathCallNode;
+    private WeakReference<FrameDescriptor> lastFrameDesc;
 
     public static SlowPathExplicitCall create() {
         return new SlowPathExplicitCall();
@@ -40,7 +44,10 @@ public final class SlowPathExplicitCall extends TruffleBoundaryNode implements E
 
     @TruffleBoundary
     public Object execute(MaterializedFrame evalFrame, Object callerFrame, RCaller caller, RFunction func, RArgsValuesAndNames args) {
-        slowPathCallNode = insert(RExplicitCallNode.create());
+        if (lastFrameDesc == null || lastFrameDesc.get() != evalFrame.getFrameDescriptor()) {
+            lastFrameDesc = new WeakReference<>(evalFrame.getFrameDescriptor());
+            slowPathCallNode = insert(RExplicitCallNode.create());
+        }
         return slowPathCallNode.execute(evalFrame, func, args, caller, callerFrame);
     }
 
