@@ -300,7 +300,7 @@ def pkgtest(args):
     rc = _fastr_installpkgs(fastr_args, nonZeroIsFatal=False, env=env, out=out, err=out)
     if rc != 0:
         # fatal error in FastR
-        logging.info("FastR finished with non-zero exit code: " + rc)
+        logging.info("FastR finished with non-zero exit code: " + str(rc))
         abort(status=rc)
 
     rc = 0
