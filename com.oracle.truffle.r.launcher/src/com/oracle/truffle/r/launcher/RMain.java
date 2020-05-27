@@ -213,7 +213,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         File srcFile = null;
         if (fileOption != null) {
             if (client == Client.RSCRIPT) {
-                return executeFile(context, fileOption);
+                return executeFile(options.getBoolean(RCmdOption.VERBOSE), context, fileOption);
             }
             srcFile = new File(fileOption);
         }
@@ -257,7 +257,10 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         }
     }
 
-    private static int executeFile(Context context, String fileOption) {
+    private static int executeFile(boolean verbose, Context context, String fileOption) {
+        if (verbose) {
+            System.out.println("Running file: " + fileOption);
+        }
         Source src;
         try {
             src = Source.newBuilder("R", new File(fileOption)).interactive(false).build();
