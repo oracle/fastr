@@ -105,6 +105,7 @@
 #    routinely including them this can cause the entire installation to fail.
 # 2. Testing vignettes requires the "knitr" and possibly the "rmarkdown" packages, which also have
 #    a long list of dependents, some of which do not install on FastR.
+cat("Running install.packages.R:\n")
 
 args <- commandArgs(TRUE)
 

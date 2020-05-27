@@ -180,7 +180,8 @@ def _run_install_packages_script(rscript_path, args, kwargs):
     err = kwargs.get('err', None)
 
     _ensure_R_on_PATH(env, os.path.dirname(rscript_path))
-    cmd_line = [rscript_path, _installpkgs_script()] + args
+    verbose_flag = ['--verbose'] if get_opts().verbose >= 1 else []
+    cmd_line = [rscript_path] + verbose_flag + [_installpkgs_script()] + args
     logging.debug("Running {!s} with cmd line: {!s}".format(rscript_path, cmd_line))
     return pkgtest_run(cmd_line, nonZeroIsFatal=kwargs.get("nonZeroIsFatal", True), out=out, err=err, env=env)
 
@@ -300,7 +301,7 @@ def pkgtest(args):
     rc = _fastr_installpkgs(fastr_args, nonZeroIsFatal=False, env=env, out=out, err=out)
     if rc != 0:
         # fatal error in FastR
-        logging.info("FastR finished with non-zero exit code: " + rc)
+        logging.info("FastR finished with non-zero exit code: " + str(rc))
         abort(status=rc)
 
     rc = 0
