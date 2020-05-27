@@ -2,6 +2,7 @@ package com.oracle.truffle.r.runtime.ffi.util;
 
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
@@ -45,6 +46,11 @@ public abstract class NativeArrayWrapper implements TruffleObject {
     @ExportMessage
     public Object readArrayElement(long index) {
         return readElement(arrayPtr, index);
+    }
+
+    @ExportMessage
+    public void removeArrayElement(@SuppressWarnings("unused") long index) throws UnsupportedMessageException {
+        throw UnsupportedMessageException.create();
     }
 
     @ExportMessage

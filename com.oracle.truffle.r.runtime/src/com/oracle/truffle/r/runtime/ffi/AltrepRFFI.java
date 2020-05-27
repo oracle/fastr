@@ -1,75 +1,74 @@
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepDownCall;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
-import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
+import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
 
 public final class AltrepRFFI {
-    private final DownCallNodeFactory downCallNodeFactory;
+    private final AltrepDownCallNodeFactory downCallNodeFactory;
 
-    public AltrepRFFI(DownCallNodeFactory downCallNodeFactory) {
+    public AltrepRFFI(AltrepDownCallNodeFactory downCallNodeFactory) {
         this.downCallNodeFactory = downCallNodeFactory;
     }
 
-    private static DownCallNode createDownCallNode() {
+    public static AltrepDownCallNode createDownCallNode() {
         return RFFIFactory.getAltrepRFFI().downCallNodeFactory.createDownCallNode();
     }
 
-    private static DownCallNode getUncachedDownCallNode() {
-        return RFFIFactory.getAltrepRFFI().downCallNodeFactory.getUncachedDownCallNode();
+    public static AltrepDownCallNode createUncachedDownCallNode() {
+        return RFFIFactory.getAltrepRFFI().downCallNodeFactory.getUncached();
     }
 
-    public static class AltIntEltNode extends NativeCallNode {
-        private AltIntEltNode(DownCallNode downCallNode) {
-            super(downCallNode);
+    protected abstract static class AltBaseNode extends Node {
+        protected static AltrepDownCallNode createDownCallNode() {
+            return AltrepRFFI.createDownCallNode();
         }
 
-        public static AltIntEltNode create() {
-            return new AltIntEltNode(createDownCallNode());
-        }
-
-        public static AltIntEltNode getUncached() {
-            return new AltIntEltNode(getUncachedDownCallNode()) {
-                @Override
-                public boolean isAdoptable() {
-                    return false;
-                }
-            };
-        }
-
-        public int execute(RIntVector altIntVector, int index) {
-            assert AltrepUtilities.isAltrep(altIntVector);
-            return (int) call(NativeFunction.AltInteger_Elt, new Object[]{altIntVector, index});
+        protected static AltrepDownCallNode createUncachedDownCallNode() {
+            return AltrepRFFI.createUncachedDownCallNode();
         }
     }
 
-    public static class AltIntDataptrNode extends NativeCallNode {
-        private AltIntDataptrNode(DownCallNode downCallNode) {
-            super(downCallNode);
+    @GenerateUncached
+    public abstract static class AltIntEltNode extends AltBaseNode {
+        public abstract int execute(RIntVector altIntVector, int index);
+
+        @Specialization
+        public int doIt(RIntVector altIntVector, int index,
+                        @Cached(value="createDownCallNode()", uncached="createUncachedDownCallNode()") AltrepDownCallNode downCallNode) {
+            // TODO: Get this from altIntVector
+            AltrepDownCall altrepDowncall = null;
+
+
+            boolean unwrapFlag = false;
+            return (int) downCallNode.execute(altrepDowncall, unwrapFlag, new Object[]{altIntVector, index});
         }
 
-        public static AltIntDataptrNode create() {
-            return new AltIntDataptrNode(createDownCallNode());
-        }
+    }
 
-        public static AltIntDataptrNode getUncached() {
-            return new AltIntDataptrNode(getUncachedDownCallNode()) {
-                @Override
-                public boolean isAdoptable() {
-                    return false;
-                }
-            };
-        }
+    @GenerateUncached
+    public abstract static class AltIntDataptrNode extends AltBaseNode {
+        public abstract long execute(RIntVector altIntVector, boolean writeable);
 
-        public long execute(RIntVector altIntVector, boolean writeable) {
+        @Specialization
+        public long doIt(RIntVector altIntVector, boolean writeable,
+                         @Cached(value="createDownCallNode()", uncached="createUncachedDownCallNode()") AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             setDataptrCalled(altIntVector);
-            Object ret = call(NativeFunction.AltInteger_Dataptr, altIntVector, writeable);
+            // TODO: Get this from altIntVector
+            AltrepDownCall altrepDowncall = null;
+            boolean unwrapFlag = false;
+            Object ret = downCallNode.execute(altrepDowncall, unwrapFlag, new Object[]{altIntVector, writeable});
             InteropLibrary interop = InteropLibrary.getFactory().getUncached(ret);
             interop.toNative(ret);
             try {
@@ -86,80 +85,53 @@ public final class AltrepRFFI {
         }
     }
 
-    public static class AltIntIsSortedNode extends NativeCallNode {
-        private AltIntIsSortedNode(DownCallNode downCallNode) {
-            super(downCallNode);
-        }
+    @GenerateUncached
+    public abstract static class AltIntIsSortedNode extends AltBaseNode {
+        public abstract AltrepSortedness execute(RIntVector altIntVector);
 
-        public static AltIntIsSortedNode create() {
-            return new AltIntIsSortedNode(createDownCallNode());
-        }
-
-        public static AltIntIsSortedNode getUncached() {
-            return new AltIntIsSortedNode(getUncachedDownCallNode()) {
-                @Override
-                public boolean isAdoptable() {
-                    return false;
-                }
-            };
-        }
-
-        public AltrepSortedness execute(RIntVector altIntVector) {
+        @Specialization
+        public AltrepSortedness doIt(RIntVector altIntVector,
+                                     @Cached(value="createDownCallNode()", uncached="createUncachedDownCallNode()") AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             // TODO: Accept more return values - maybe use InteropLibrary?
-            int retValue = (int) call(NativeFunction.AltInteger_Is_sorted, new Object[]{altIntVector});
+            // TODO: Get this from altIntVector
+            AltrepDownCall altrepDowncall = null;
+            boolean unwrapFlag = false;
+            int retValue = (int) downCallNode.execute(altrepDowncall, unwrapFlag, new Object[]{altIntVector});
             return AltrepSortedness.fromInt(retValue);
         }
     }
 
-    public static class AltIntNoNANode extends NativeCallNode {
-        private AltIntNoNANode(DownCallNode downCallNode) {
-            super(downCallNode);
-        }
+    @GenerateUncached
+    public abstract static class AltIntNoNANode extends AltBaseNode {
+        public abstract boolean execute(RIntVector altIntVector);
 
-        public static AltIntNoNANode create() {
-            return new AltIntNoNANode(createDownCallNode());
-        }
-
-        public static AltIntNoNANode getUncached() {
-            return new AltIntNoNANode(getUncachedDownCallNode()) {
-                @Override
-                public boolean isAdoptable() {
-                    return false;
-                }
-            };
-        }
-
-        public boolean execute(RIntVector altIntVector) {
+        @Specialization
+        public boolean doIt(RIntVector altIntVector,
+                            @Cached(value="createDownCallNode()", uncached="createUncachedDownCallNode()") AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             // TODO: Accept more return values - maybe use InteropLibrary?
-            int retValue = (int) call(NativeFunction.AltInteger_No_NA, new Object[]{altIntVector});
+            // TODO: Get this from altIntVector
+            AltrepDownCall altrepDowncall = null;
+            boolean unwrapFlag = false;
+            int retValue = (int) downCallNode.execute(altrepDowncall, unwrapFlag, new Object[]{altIntVector});
             return retValue != 0;
         }
     }
 
-    public static class AltIntGetRegionNode extends NativeCallNode {
-        private AltIntGetRegionNode(DownCallNode downCallNode) {
-            super(downCallNode);
-        }
+    @GenerateUncached
+    public abstract static class AltIntGetRegionNode extends AltBaseNode {
+        public abstract int execute(RIntVector altIntVector, int fromIdx, int size, Object buffer);
 
-        public static AltIntGetRegionNode create() {
-            return new AltIntGetRegionNode(createDownCallNode());
-        }
-
-        public static AltIntGetRegionNode getUncached() {
-            return new AltIntGetRegionNode(getUncachedDownCallNode()) {
-                @Override
-                public boolean isAdoptable() {
-                    return false;
-                }
-            };
-        }
-
-        public int execute(RIntVector altIntVector, int fromIdx, int size, Object buffer) {
+        @Specialization
+        public int doIt(RIntVector altIntVector, int fromIdx, int size, Object buffer,
+                        @Cached(value="createDownCallNode()", uncached="createUncachedDownCallNode()") AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             InteropLibrary interopLib = InteropLibrary.getUncached();
-            Object ret = call(NativeFunction.AltInteger_Get_region, altIntVector, fromIdx, size, buffer);
+            AltrepDownCall altrepDowncall = null;
+            boolean unwrapFlag = false;
+            Object ret = downCallNode.execute(altrepDowncall, unwrapFlag,
+                    new Object[]{altIntVector, fromIdx, size, buffer});
             assert interopLib.isNumber(ret);
             try {
                 return interopLib.asInt(ret);

@@ -24,7 +24,7 @@ package com.oracle.truffle.r.ffi.impl.mixed;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.ffi.impl.altrep.TruffleAltrep_DownCallNodeFactory;
+import com.oracle.truffle.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Context;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DownCallNodeFactory;
@@ -56,7 +56,7 @@ public final class TruffleMixed_Context extends RFFIContext {
     TruffleMixed_Context(RFFIContextState rffiContextState) {
         super(rffiContextState, new TruffleMixed_C(),
                         createBaseDowncallNode(),
-                        new AltrepRFFI(TruffleAltrep_DownCallNodeFactory.INSTANCE),
+                        new AltrepRFFI(AltrepDownCallNodeFactoryImpl.INSTANCE),
                         new TruffleMixed_Call(),
                         new TruffleMixed_DLL(),
                         new TruffleLLVM_UserRng(),

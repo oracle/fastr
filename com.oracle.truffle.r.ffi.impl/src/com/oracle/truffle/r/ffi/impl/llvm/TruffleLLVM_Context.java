@@ -28,7 +28,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.ffi.impl.altrep.TruffleAltrep_DownCallNodeFactory;
+import com.oracle.truffle.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -64,7 +64,7 @@ public class TruffleLLVM_Context extends RFFIContext {
 
     public TruffleLLVM_Context(RFFIContextState rffiContextState) {
         super(rffiContextState, new TruffleLLVM_C(), new BaseRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE, TruffleLLVM_DownCallNodeFactory.INSTANCE),
-                        new AltrepRFFI(TruffleAltrep_DownCallNodeFactory.INSTANCE),
+                        new AltrepRFFI(AltrepDownCallNodeFactoryImpl.INSTANCE),
                         new TruffleLLVM_Call(), new TruffleLLVM_DLL(),
                         new TruffleLLVM_UserRng(),
                         new ZipRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
