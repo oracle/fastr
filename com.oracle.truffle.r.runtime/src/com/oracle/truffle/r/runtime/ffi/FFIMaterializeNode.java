@@ -51,15 +51,13 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 @GenerateUncached
 public abstract class FFIMaterializeNode extends Node {
 
+    protected abstract Object execute(Object value, boolean protect);
+
     public Object materialize(Object value) {
         return execute(value);
     }
 
     protected abstract Object execute(Object value);
-
-    public static Object uncachedMaterialize(Object value) {
-        return FFIMaterializeNodeGen.getUncached().execute(value);
-    }
 
     // Scalar values:
 
@@ -96,6 +94,14 @@ public abstract class FFIMaterializeNode extends Node {
     @Specialization
     protected static Object wrap(RComplex value) {
         return RDataFactory.createComplexVectorFromScalar(value);
+    }
+
+    public Object materializeProtected(Object value) {
+        return execute(value, true);
+    }
+
+    public static Object uncachedMaterialize(Object value) {
+        return FFIMaterializeNodeImplNodeGen.getUncached().execute(value, false);
     }
 
     // RObjectDataPtr: held by a field in NativeMirror of the corresponding vector
@@ -139,7 +145,11 @@ public abstract class FFIMaterializeNode extends Node {
     }
 
     public static FFIMaterializeNode create() {
-        return FFIMaterializeNodeGen.create();
+        return FFIMaterializeNodeImplNodeGen.create();
+    }
+
+    public static FFIMaterializeNode createForAltrep() {
+        return FFIMaterializeNodeAltrepImplNodeGen.create();
     }
 
     public static FFIMaterializeNode[] create(int count) {
@@ -150,7 +160,19 @@ public abstract class FFIMaterializeNode extends Node {
         return result;
     }
 
+    public static FFIMaterializeNode[] createForAltrep(int count) {
+        FFIMaterializeNode[] result = new FFIMaterializeNode[count];
+        for (int i = 0; i < count; i++) {
+            result[i] = FFIMaterializeNode.createForAltrep();
+        }
+        return result;
+    }
+
     public static FFIMaterializeNode getUncached() {
-        return FFIMaterializeNodeGen.getUncached();
+        return FFIMaterializeNodeImplNodeGen.getUncached();
+    }
+
+    public static FFIMaterializeNode getUncachedForAltrep() {
+        return FFIMaterializeNodeAltrepImplNodeGen.getUncached();
     }
 }
