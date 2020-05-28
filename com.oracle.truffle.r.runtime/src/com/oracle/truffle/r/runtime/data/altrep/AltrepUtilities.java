@@ -78,6 +78,12 @@ public class AltrepUtilities {
         return data.getAltrepData().getDataPairList();
     }
 
+    public static AltrepDownCall getLengthMethodDownCall(RIntVector altIntVector) {
+        assert altIntVector.isAltRep();
+        AltIntegerClassDescriptor descriptor = getAltIntDescriptor(altIntVector);
+        return descriptor.getLengthDownCall();
+    }
+
     public static boolean hasCoerceMethodRegistered(Object object) {
         if (!isAltrep(object)) {
             return false;

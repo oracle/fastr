@@ -38,10 +38,8 @@ public final class AltrepRFFI {
         public int doIt(RIntVector altIntVector,
                         @Cached AltrepDownCallNode downCallNode,
                         @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
-            // TODO:
-            AltrepDownCall altrepDownCall = null;
-            boolean unwrapFlag = false;
-            Object retVal = downCallNode.execute(altrepDownCall, unwrapFlag, new Object[]{altIntVector});
+            AltrepDownCall altrepDownCall = AltrepUtilities.getLengthMethodDownCall(altIntVector);
+            Object retVal = downCallNode.execute(altrepDownCall, false, new Object[]{altIntVector});
             assert returnValueInterop.isNumber(retVal);
             try {
                 return returnValueInterop.asInt(retVal);
@@ -49,6 +47,7 @@ public final class AltrepRFFI {
                 throw RInternalError.shouldNotReachHere(e);
             }
         }
+
     }
 
     @GenerateUncached
@@ -58,12 +57,8 @@ public final class AltrepRFFI {
         @Specialization
         public int doIt(RIntVector altIntVector, int index,
                         @Cached AltrepDownCallNode downCallNode) {
-            // TODO: Get this from altIntVector
-            AltrepDownCall altrepDowncall = null;
-
-
-            boolean unwrapFlag = false;
-            return (int) downCallNode.execute(altrepDowncall, unwrapFlag, new Object[]{altIntVector, index});
+            AltrepDownCall altrepDowncall = AltrepUtilities.getLengthMethodDownCall(altIntVector);
+            return (int) downCallNode.execute(altrepDowncall, false, new Object[]{altIntVector, index});
         }
 
     }
@@ -77,10 +72,8 @@ public final class AltrepRFFI {
                          @Cached AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             setDataptrCalled(altIntVector);
-            // TODO: Get this from altIntVector
-            AltrepDownCall altrepDowncall = null;
-            boolean unwrapFlag = false;
-            Object ret = downCallNode.execute(altrepDowncall, unwrapFlag, new Object[]{altIntVector, writeable});
+            AltrepDownCall altrepDowncall = AltrepUtilities.getLengthMethodDownCall(altIntVector);
+            Object ret = downCallNode.execute(altrepDowncall, false, new Object[]{altIntVector, writeable});
             InteropLibrary interop = InteropLibrary.getFactory().getUncached(ret);
             interop.toNative(ret);
             try {
@@ -107,9 +100,8 @@ public final class AltrepRFFI {
             assert AltrepUtilities.isAltrep(altIntVector);
             // TODO: Accept more return values - maybe use InteropLibrary?
             // TODO: Get this from altIntVector
-            AltrepDownCall altrepDowncall = null;
-            boolean unwrapFlag = false;
-            int retValue = (int) downCallNode.execute(altrepDowncall, unwrapFlag, new Object[]{altIntVector});
+            AltrepDownCall altrepDowncall = AltrepUtilities.getLengthMethodDownCall(altIntVector);
+            int retValue = (int) downCallNode.execute(altrepDowncall, false, new Object[]{altIntVector});
             return AltrepSortedness.fromInt(retValue);
         }
     }
@@ -123,10 +115,8 @@ public final class AltrepRFFI {
                             @Cached AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             // TODO: Accept more return values - maybe use InteropLibrary?
-            // TODO: Get this from altIntVector
-            AltrepDownCall altrepDowncall = null;
-            boolean unwrapFlag = false;
-            int retValue = (int) downCallNode.execute(altrepDowncall, unwrapFlag, new Object[]{altIntVector});
+            AltrepDownCall altrepDowncall = AltrepUtilities.getLengthMethodDownCall(altIntVector);
+            int retValue = (int) downCallNode.execute(altrepDowncall, false, new Object[]{altIntVector});
             return retValue != 0;
         }
     }
@@ -137,16 +127,16 @@ public final class AltrepRFFI {
 
         @Specialization
         public int doIt(RIntVector altIntVector, int fromIdx, int size, Object buffer,
-                        @Cached AltrepDownCallNode downCallNode) {
+                        @Cached AltrepDownCallNode downCallNode,
+                        @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             assert AltrepUtilities.isAltrep(altIntVector);
-            InteropLibrary interopLib = InteropLibrary.getUncached();
-            AltrepDownCall altrepDowncall = null;
-            boolean unwrapFlag = false;
-            Object ret = downCallNode.execute(altrepDowncall, unwrapFlag,
+            assert InteropLibrary.getUncached().hasArrayElements(buffer);
+            AltrepDownCall altrepDowncall = AltrepUtilities.getLengthMethodDownCall(altIntVector);
+            Object ret = downCallNode.execute(altrepDowncall, false,
                     new Object[]{altIntVector, fromIdx, size, buffer});
-            assert interopLib.isNumber(ret);
+            assert retValueInterop.isNumber(ret);
             try {
-                return interopLib.asInt(ret);
+                return retValueInterop.asInt(ret);
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
