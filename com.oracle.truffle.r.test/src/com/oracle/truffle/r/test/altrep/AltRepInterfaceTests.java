@@ -41,7 +41,7 @@ public class AltRepInterfaceTests extends TestBase {
         // int *data = INTEGER(instance);
         VectorRFFIWrapper rffiWrapper = VectorRFFIWrapper.get(altIntVec);
         // int elem = data[0];
-        Object elem = InteropLibrary.getFactory().getUncached(rffiWrapper).readArrayElement(rffiWrapper, 0);;
+        Object elem = InteropLibrary.getFactory().getUncached(rffiWrapper).readArrayElement(rffiWrapper, 0);
 
         // altIntVec does not have to be materialized, because it has Elt method registered, therefore code
         // snippet "int elem = data[0]" downcalls into Elt method rather than into Dataptr method.

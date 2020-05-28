@@ -23,13 +23,20 @@
 package com.oracle.truffle.r.runtime.data.altrep;
 
 public class AltRealClassDescriptor extends AltVecClassDescriptor {
+    public static final String eltMethodSignature = "(pointer, sint32): double";
+    public static final String getRegionMethodSignature = "(pointer, sint32, sint32, [double]): sint32";
+    public static final String isSortedMethodSignature = "(pointer): sint32";
+    public static final String noNAMethodSignature = "(pointer): sint32";
+    public static final String sumMethodSignature = "(pointer, sint32): pointer";
+    public static final String minMethodSignature = "(pointer, sint32): pointer";
+    public static final String maxMethodSignature = "(pointer, sint32): pointer";
     private Object eltMethod;
     private Object getRegionMethod;
     private Object isSortedMethod;
     private Object noNAMethod;
     private Object sumMethod;
-    private Object maxMethod;
     private Object minMethod;
+    private Object maxMethod;
 
     public AltRealClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);

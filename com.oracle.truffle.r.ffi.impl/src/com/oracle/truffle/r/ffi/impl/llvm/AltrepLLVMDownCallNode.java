@@ -8,7 +8,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DownCallNodeFactory.LLVMDownCallNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -77,56 +76,47 @@ public abstract class AltrepLLVMDownCallNode extends LLVMDownCallNode {
         switch (f) {
             case AltInteger_Dataptr:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object dataptrMethod = ((AltIntegerClassDescriptor) descriptor).getDataptrMethod();
+                Object dataptrMethod = ((AltIntegerClassDescriptor) descriptor).getDataptrDownCall().method;
                 assert dataptrMethod instanceof TruffleObject;
                 return (TruffleObject) dataptrMethod;
             case AltInteger_Is_sorted:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object isSortedMethod = ((AltIntegerClassDescriptor) descriptor).getIsSortedMethod();
+                Object isSortedMethod = ((AltIntegerClassDescriptor) descriptor).getIsSortedDownCall().method;
                 assert isSortedMethod instanceof TruffleObject;
                 return (TruffleObject) isSortedMethod;
             case AltInteger_Elt:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object eltMethod = ((AltIntegerClassDescriptor) descriptor).getEltMethod();
+                Object eltMethod = ((AltIntegerClassDescriptor) descriptor).getEltDownCall().method;
                 assert eltMethod instanceof TruffleObject;
                 return (TruffleObject) eltMethod;
             case AltInteger_Max:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object maxMethod = ((AltIntegerClassDescriptor) descriptor).getMaxMethod();
+                Object maxMethod = ((AltIntegerClassDescriptor) descriptor).getMaxDownCall().method;
                 assert maxMethod instanceof TruffleObject;
                 return (TruffleObject) maxMethod;
             case AltInteger_Min:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object minMethod = ((AltIntegerClassDescriptor) descriptor).getMinMethod();
+                Object minMethod = ((AltIntegerClassDescriptor) descriptor).getMinDownCall().method;
                 assert minMethod instanceof TruffleObject;
                 return (TruffleObject) minMethod;
             case AltInteger_Sum:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object sumMethod = ((AltIntegerClassDescriptor) descriptor).getSumMethod();
+                Object sumMethod = ((AltIntegerClassDescriptor) descriptor).getSumDownCall().method;
                 assert sumMethod instanceof TruffleObject;
                 return (TruffleObject) sumMethod;
             case AltInteger_No_NA:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object noNaMethod = ((AltIntegerClassDescriptor) descriptor).getNoNAMethod();
+                Object noNaMethod = ((AltIntegerClassDescriptor) descriptor).getNoNADownCall().method;
                 assert noNaMethod instanceof TruffleObject;
                 return (TruffleObject) noNaMethod;
             case AltInteger_Get_region:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object getRegionMethod = ((AltIntegerClassDescriptor) descriptor).getGetRegionMethod();
+                Object getRegionMethod = ((AltIntegerClassDescriptor) descriptor).getGetRegionDownCall().method;
                 assert getRegionMethod instanceof TruffleObject;
                 return (TruffleObject) getRegionMethod;
             default:
                 throw RInternalError.unimplemented();
         }
-    }
-
-    @ExplodeLoop
-    protected static ConditionProfile[] createHasMirrorProfiles(int count) {
-        ConditionProfile[] res = new ConditionProfile[count];
-        for (int i = 0; i < count; i++) {
-            res[i] = ConditionProfile.createBinaryProfile();
-        }
-        return res;
     }
 
     private static NativeMirror wrapInNativeMirror(RBaseObject object) {

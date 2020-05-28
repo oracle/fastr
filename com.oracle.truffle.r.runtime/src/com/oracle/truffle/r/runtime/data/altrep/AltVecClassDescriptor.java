@@ -31,55 +31,48 @@ import com.oracle.truffle.r.runtime.RLogger;
 import java.util.logging.Level;
 
 public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
-    // void * dataptr_method(SEXP instance, Rboolean writeabble)
-    private static final String dataptrMethodSignature = "(pointer, sint32):pointer";
+    public static final String dataptrMethodSignature = "(pointer, sint32) : pointer";
+    public static final String dataptrOrNullMethodSignature = "(pointer) : pointer";
+    public static final String extractSubsetMethodSignature = "(pointer, pointer, pointer) : pointer";
     private static final int dataptrMethodArgCount = 2;
-    private Object dataptrMethod;
-    private Object dataptrOrNullMethod;
-    private Object extractSubsetMethod;
+    private AltrepDownCall dataptrDownCall;
+    private AltrepDownCall dataptrOrNullDownCall;
+    private AltrepDownCall extractSubsetDownCall;
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     AltVecClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);
     }
 
-    public void registerDataptrMethod(Object dataptrMethod) {
+    public void registerDataptrMethod(AltrepDownCall dataptrMethod) {
         logRegisterMethod("Dataptr");
-        this.dataptrMethod = dataptrMethod;
+        this.dataptrDownCall = dataptrMethod;
     }
 
-    public void registerDataptrOrNullMethod(Object dataptrOrNullMethod) {
+    public void registerDataptrOrNullMethod(AltrepDownCall dataptrOrNullMethod) {
         logRegisterMethod("Dataptr_or_null");
-        this.dataptrOrNullMethod = dataptrOrNullMethod;
+        this.dataptrOrNullDownCall = dataptrOrNullMethod;
     }
 
-    public void registerExtractSubsetMethod(Object extractSubsetMethod) {
+    public void registerExtractSubsetMethod(AltrepDownCall extractSubsetMethod) {
         logRegisterMethod("Extract_Subset");
-        this.extractSubsetMethod = extractSubsetMethod;
+        this.extractSubsetDownCall = extractSubsetMethod;
     }
 
-    public Object getDataptrMethod() {
-        return dataptrMethod;
-    }
-
-    public String getDataptrMethodSignature() {
-        return dataptrMethodSignature;
-    }
-
-    public int getDataptrMethodArgCount() {
-        return dataptrMethodArgCount;
+    public AltrepDownCall getDataptrDownCall() {
+        return dataptrDownCall;
     }
 
     public boolean isDataptrMethodRegistered() {
-        return dataptrMethod != null;
+        return dataptrDownCall != null;
     }
 
     public boolean isDataptrOrNullMethodRegistered() {
-        return dataptrOrNullMethod != null;
+        return dataptrOrNullDownCall != null;
     }
 
     public boolean isExtractSubsetMethodRegistered() {
-        return extractSubsetMethod != null;
+        return extractSubsetDownCall != null;
     }
 
     public long invokeDataptrMethodCached(Object instance, boolean writeabble, InteropLibrary dataptrMethodInterop,
@@ -88,8 +81,7 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
     }
 
     public long invokeDataptrMethodUncached(Object instance, boolean writeabble) {
-        InteropLibrary dataptrMethodInterop = InteropLibrary.getFactory().getUncached(dataptrMethod);
-        // TODO: getUncached with specified receiver?
+        InteropLibrary dataptrMethodInterop = InteropLibrary.getFactory().getUncached(dataptrDownCall.method);
         InteropLibrary dataptrInterop = InteropLibrary.getFactory().getUncached();
         ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
         return invokeDataptrMethod(instance, writeabble, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
@@ -100,7 +92,7 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("dataptr", instance, writeabble);
         }
-        Object dataptr = invokeNativeFunction(dataptrMethodInterop, dataptrMethod, dataptrMethodSignature, dataptrMethodArgCount, hasMirrorProfile, instance, writeabble); // TODO
+        Object dataptr = invokeNativeFunction(dataptrMethodInterop, dataptrDownCall.method, dataptrMethodSignature, dataptrMethodArgCount, hasMirrorProfile, instance, writeabble); // TODO
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(dataptr);
         }

@@ -346,7 +346,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         @Specialization(guards = "isAltrep(altIntVector)", limit = "1")
         protected static long get(RIntVector altIntVector,
                                   @CachedLibrary("altIntVector.getData()") VectorDataLibrary altIntDataLibrary,
-                                  @CachedLibrary("getDescriptorFromVec(altIntVector).getDataptrMethod()") InteropLibrary dataptrMethodInteropLibrary,
+                                  @CachedLibrary("getDescriptorFromVec(altIntVector).getDataptrDownCall().method") InteropLibrary dataptrMethodInteropLibrary,
                                   @CachedLibrary(limit = "1") InteropLibrary dataptrInteropLibrary,
                                   @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             // TODO: dataptrAddr should be cached
@@ -563,7 +563,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         // TODO: Remove this - this looks like it should not work
         @Specialization(limit = "1")
         protected static Object doAltIntegerVector(RAltIntVectorData vector, int index, int value,
-                                                   @CachedLibrary("vector.getDescriptor().getDataptrMethod()") InteropLibrary dataptrMethodInterop,
+                                                   @CachedLibrary("vector.getDescriptor().getDataptrDownCall().method") InteropLibrary dataptrMethodInterop,
                                                    @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
                                                    @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             // TODO: Add dataptrAddrComputed binary profile.

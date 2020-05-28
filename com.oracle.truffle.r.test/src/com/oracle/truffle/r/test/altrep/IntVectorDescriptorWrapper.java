@@ -37,9 +37,9 @@ public class IntVectorDescriptorWrapper {
     private AltIntegerClassDescriptor createDescriptor() {
         AltIntegerClassDescriptor descriptor = new AltIntegerClassDescriptor(IntVectorDescriptorWrapper.class.getSimpleName(),
                 "packageName", null);
-        descriptor.registerDataptrMethod(dataptrMethod);
-        descriptor.registerLengthMethod(lengthMethod);
-        descriptor.registerEltMethod(eltMethod);
+        //descriptor.registerDataptrMethod(dataptrMethod);
+        //descriptor.registerLengthMethod(lengthMethod);
+        //descriptor.registerEltMethod(eltMethod);
         return descriptor;
     }
 

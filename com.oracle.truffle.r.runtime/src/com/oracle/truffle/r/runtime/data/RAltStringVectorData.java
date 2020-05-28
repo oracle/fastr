@@ -15,8 +15,16 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltStringVectorData implements TruffleObject, VectorDataWithOwner {
-    public RAltStringVectorData(AltStringClassDescriptor descriptor, RAltRepData altRepData) {
 
+    public RAltStringVectorData(AltStringClassDescriptor descriptor, RAltRepData altRepData) {
+        assert hasDescriptorRegisteredNecessaryMethods(descriptor);
+    }
+
+    private boolean hasDescriptorRegisteredNecessaryMethods(AltStringClassDescriptor descriptor) {
+        return descriptor.isLengthMethodRegistered()
+                && descriptor.isDataptrMethodRegistered()
+                && descriptor.isEltMethodRegistered()
+                && descriptor.isSetEltMethodRegistered();
     }
 
     @Override

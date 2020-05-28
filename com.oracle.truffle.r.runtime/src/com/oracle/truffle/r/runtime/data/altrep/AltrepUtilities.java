@@ -13,6 +13,7 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 public class AltrepUtilities {
@@ -83,6 +84,35 @@ public class AltrepUtilities {
         AltIntegerClassDescriptor descriptor = getAltIntDescriptor(altIntVector);
         return descriptor.getLengthDownCall();
     }
+
+    public static AltrepDownCall getEltMethodDownCall(RIntVector altIntVector) {
+        return getAltIntDescriptor(altIntVector).getEltDownCall();
+    }
+
+    public static AltrepDownCall getDataptrMethodDownCall(RIntVector altIntVector) {
+        return getAltIntDescriptor(altIntVector).getDataptrDownCall();
+    }
+
+    public static AltrepDownCall getIsSortedMethodDownCall(RIntVector altIntVector) {
+        return getAltIntDescriptor(altIntVector).getIsSortedDownCall();
+    }
+
+    public static AltrepDownCall getNoNAMethodDownCall(RIntVector altIntVector) {
+        return getAltIntDescriptor(altIntVector).getNoNADownCall();
+    }
+
+    public static AltrepDownCall getGetRegionMethodDownCall(RIntVector altIntVector) {
+        return getAltIntDescriptor(altIntVector).getGetRegionDownCall();
+    }
+
+    public static AltrepDownCall getSumMethodDownCall(RIntVector altIntVector) {
+        return getAltIntDescriptor(altIntVector).getSumDownCall();
+    }
+
+    public static AltrepDownCall getEltMethodDownCall(RStringVector altStringVector) {
+        return getAltStringDescriptor(altStringVector).getEltDownCall();
+    }
+
 
     public static boolean hasCoerceMethodRegistered(Object object) {
         if (!isAltrep(object)) {
@@ -191,26 +221,6 @@ public class AltrepUtilities {
         }
     }
 
-    public abstract static class AltrepDuplicateMethodInvoker extends Node {
-        public abstract Object execute(Object altrepVector, boolean deep);
-
-        public static AltrepDuplicateMethodInvoker create() {
-            return AltrepUtilitiesFactory.AltrepDuplicateMethodInvokerNodeGen.create();
-        }
-
-        protected static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVec) {
-            return AltrepUtilities.getAltIntDescriptor(altIntVec);
-        }
-
-        @Specialization(limit = "3")
-        Object doAltInt(RIntVector altIntVec, boolean deep,
-                        @CachedLibrary("getAltIntDescriptor(altIntVec).getDuplicateMethod()") InteropLibrary duplicateMethodInterop,
-                        @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            assert getAltIntDescriptor(altIntVec).isDuplicateMethodRegistered();
-            return getAltIntDescriptor(altIntVec).invokeDuplicateMethodCached(altIntVec, deep, duplicateMethodInterop, hasMirrorProfile);
-        }
-    }
-
     public abstract static class AltrepSumMethodInvoker extends Node {
         public abstract Object execute(Object altrepVector, boolean naRm);
 
@@ -224,7 +234,7 @@ public class AltrepUtilities {
 
         @Specialization(limit = "3")
         Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @CachedLibrary("getAltIntDescriptor(altIntVec).getSumMethod()") InteropLibrary methodInterop,
+                        @CachedLibrary("getAltIntDescriptor(altIntVec).getSumDownCall().method") InteropLibrary methodInterop,
                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert getAltIntDescriptor(altIntVec).isSumMethodRegistered();
             return getAltIntDescriptor(altIntVec).invokeSumMethodCached(altIntVec, naRm, methodInterop, hasMirrorProfile);
@@ -244,7 +254,7 @@ public class AltrepUtilities {
 
         @Specialization(limit = "3")
         Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @CachedLibrary("getAltIntDescriptor(altIntVec).getMaxMethod()") InteropLibrary methodInterop,
+                        @CachedLibrary("getAltIntDescriptor(altIntVec).getMaxDownCall().method") InteropLibrary methodInterop,
                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert getAltIntDescriptor(altIntVec).isMaxMethodRegistered();
             return getAltIntDescriptor(altIntVec).invokeMaxMethodCached(altIntVec, naRm, methodInterop, hasMirrorProfile);
@@ -264,7 +274,7 @@ public class AltrepUtilities {
 
         @Specialization(limit = "3")
         Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @CachedLibrary("getAltIntDescriptor(altIntVec).getMinMethod()") InteropLibrary methodInterop,
+                        @CachedLibrary("getAltIntDescriptor(altIntVec).getMinDownCall().method") InteropLibrary methodInterop,
                         @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
             assert getAltIntDescriptor(altIntVec).isMinMethodRegistered();
             return getAltIntDescriptor(altIntVec).invokeMinMethodCached(altIntVec, naRm, methodInterop, hasMirrorProfile);
@@ -282,35 +292,23 @@ public class AltrepUtilities {
             return AltrepUtilities.hasEltMethodRegistered(object);
         }
 
-        protected static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVec) {
-            return AltrepUtilities.getAltIntDescriptor(altIntVec);
+        @Specialization(guards = "hasEltMethodRegistered(altIntVec)")
+        Object doAltIntWithEltMethod(RIntVector altIntVec, int index,
+                                     @Cached AltrepRFFI.AltIntEltNode eltNode) {
+            return eltNode.execute(altIntVec, index);
         }
 
-        protected static AltStringClassDescriptor getAltStringDescriptor(RStringVector altStringVec) {
-            return AltrepUtilities.getAltStringDescriptor(altStringVec);
-        }
-
-        @Specialization(guards = "hasEltMethodRegistered(altIntVec)", limit = "1")
-        Object doAltIntElt(RIntVector altIntVec, int index,
-                           @CachedLibrary("getAltIntDescriptor(altIntVec).getEltMethod()") InteropLibrary eltMethodInterop,
-                           @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            return getAltIntDescriptor(altIntVec).invokeEltMethodCached(altIntVec, index, eltMethodInterop, hasMirrorProfile);
-        }
-
-        @Specialization(replaces = "doAltIntElt", limit = "1")
-        Object doAltIntWithoutElt(RIntVector altIntVec, int index,
-                                  @CachedLibrary("getAltIntDescriptor(altIntVec).getDataptrMethod()") InteropLibrary dataptrMethodInterop,
-                                  @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                                  @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            long address = getAltIntDescriptor(altIntVec).invokeDataptrMethodCached(altIntVec, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
+        @Specialization(guards = "!hasEltMethodRegistered(altIntVec)")
+        Object doAltIntWithoutEltMethod(RIntVector altIntVec, int index,
+                                        @Cached AltrepRFFI.AltIntDataptrNode dataptrNode) {
+            long address = dataptrNode.execute(altIntVec, false);
             return NativeMemory.getInt(address, index);
         }
 
-        @Specialization(limit = "3")
+        @Specialization
         Object doAltString(RStringVector altStringVector, int index,
-                           @CachedLibrary("getAltStringDescriptor(altStringVector).getEltMethod()") InteropLibrary eltMethodInterop,
-                           @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            return getAltStringDescriptor(altStringVector).invokeEltMethodCached(altStringVector, index, eltMethodInterop, hasMirrorProfile);
+                           @Cached AltrepRFFI.AltStringEltNode eltNode) {
+            return eltNode.execute(altStringVector, index);
         }
     }
 }

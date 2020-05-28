@@ -40,23 +40,26 @@ import java.util.logging.Level;
 public abstract class AltRepClassDescriptor extends RBaseObject {
     private final int lengthMethodArgCount = 1;
     private final int duplicateMethodArgCount = 2;
-    public static final String duplicateMethodSignature = "(pointer, sint32): pointer";
     public static final String unserializeMethodSignature = "(pointer, pointer): pointer";
     public static final String unserializeEXMethodSignature = "(pointer, pointer, pointer, sint32, sint32): pointer";
     public static final String serializedStateMethodSignature = "(pointer): pointer";
+    public static final String duplicateMethodSignature = "(pointer, sint32): pointer";
+    public static final String duplicateEXMethodSignature = "(pointer, sint32): pointer";
+    public static final String coerceMethodSignature = "(pointer, sint32): pointer";
+    public static final String inspectMethodSignature = "(pointer, sint32, sint32, sint32, (pointer,sint32,sint32,sint32):void): sint32";
     public static final String lengthMethodSignature = "(pointer): sint32";
     // Instance data
     private final String className;
     private final String packageName;
     private final Object dllInfo;
     // Methods
-    private Object unserializeMethod;
-    private Object unserializeEXMethod;
-    private Object serializedStateMethod;
-    private Object duplicateMethod;
-    private Object duplicateEXMethod;
-    private Object coerceMethod;
-    private Object inspectMethod;
+    private AltrepDownCall unserializeDownCall;
+    private AltrepDownCall unserializeEXDownCall;
+    private AltrepDownCall serializedStateDownCall;
+    private AltrepDownCall duplicateDownCall;
+    private AltrepDownCall duplicateEXDownCall;
+    private AltrepDownCall coerceDownCall;
+    private AltrepDownCall inspectDownCall;
     private AltrepDownCall lengthDownCall;
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
@@ -72,8 +75,8 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         return RType.PairList;
     }
 
-    public Object getDuplicateMethod() {
-        return duplicateMethod;
+    public AltrepDownCall getDuplicateDownCall() {
+        return duplicateDownCall;
     }
 
     public AltrepDownCall getLengthDownCall() {
@@ -84,39 +87,39 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         logger.finer(() -> "Register " + methodName + " on " + toString());
     }
 
-    public void registerUnserializeMethod(Object method) {
+    public void registerUnserializeMethod(AltrepDownCall downCall) {
         logRegisterMethod("Unserialize");
-        this.unserializeMethod = method;
+        this.unserializeDownCall = downCall;
     }
 
-    public void registerUnserializeEXMethod(Object method) {
+    public void registerUnserializeEXMethod(AltrepDownCall downCall) {
         logRegisterMethod("Unserialize_EX");
-        this.unserializeEXMethod = method;
+        this.unserializeEXDownCall = downCall;
     }
 
-    public void registerSerializedStateMethod(Object method) {
+    public void registerSerializedStateMethod(AltrepDownCall downCall) {
         logRegisterMethod("Serialized_state");
-        this.serializedStateMethod = method;
+        this.serializedStateDownCall = downCall;
     }
 
-    public void registerDuplicateMethod(Object method) {
+    public void registerDuplicateMethod(AltrepDownCall downCall) {
         logRegisterMethod("Duplicate");
-        this.duplicateMethod = method;
+        this.duplicateDownCall = downCall;
     }
 
-    public void registerDuplicateEXMethod(Object method) {
+    public void registerDuplicateEXMethod(AltrepDownCall downCall) {
         logRegisterMethod("Duplicate_EX");
-        this.duplicateEXMethod = method;
+        this.duplicateEXDownCall = downCall;
     }
 
-    public void registerCoerceMethod(Object method) {
+    public void registerCoerceMethod(AltrepDownCall downCall) {
         logRegisterMethod("Coerce");
-        this.coerceMethod = method;
+        this.coerceDownCall = downCall;
     }
 
-    public void registerInspectMethod(Object method) {
+    public void registerInspectMethod(AltrepDownCall downCall) {
         logRegisterMethod("Inspect");
-        this.inspectMethod = method;
+        this.inspectDownCall = downCall;
     }
 
     public void registerLengthMethod(AltrepDownCall lengthDownCall) {
@@ -125,31 +128,31 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     }
 
     public boolean isUnserializeMethodRegistered() {
-        return unserializeMethod != null;
+        return unserializeDownCall != null;
     }
 
     public boolean isUnserializeEXMethodRegistered() {
-        return unserializeEXMethod != null;
+        return unserializeEXDownCall != null;
     }
 
     public boolean isSerializedStateMethodRegistered() {
-        return serializedStateMethod != null;
+        return serializedStateDownCall != null;
     }
 
     public boolean isDuplicateMethodRegistered() {
-        return duplicateMethod != null;
+        return duplicateDownCall != null;
     }
 
     public boolean isDuplicateEXMethodRegistered() {
-        return duplicateEXMethod != null;
+        return duplicateEXDownCall != null;
     }
 
     public boolean isCoerceMethodRegistered() {
-        return coerceMethod != null;
+        return coerceDownCall != null;
     }
 
     public boolean isInspectMethodRegistered() {
-        return inspectMethod != null;
+        return inspectDownCall != null;
     }
 
     public boolean isLengthMethodRegistered() {
@@ -227,7 +230,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     }
 
     private Object invokeDuplicateMethod(Object instance, boolean deep, InteropLibrary interop, ConditionProfile hasMirrorProfile) {
-        Object ret = invokeNativeFunction(interop, duplicateMethod, duplicateMethodSignature, duplicateMethodArgCount, hasMirrorProfile, instance, deep);
+        Object ret = invokeNativeFunction(interop, duplicateDownCall.method, duplicateMethodSignature, duplicateMethodArgCount, hasMirrorProfile, instance, deep);
         // TODO: Return type checks?
         return ret;
     }

@@ -36,125 +36,122 @@ import java.util.logging.Level;
 
 public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     // TODO: Fix signature (sint64?)
-    private static final String eltMethodSignature = "(pointer, sint32):sint32";
-    private static final String getRegionMethodSignature = "(pointer, sint32, sint32, [sint32]):sint32";
-    private static final String sumMethodSignature = "(pointer, sint32):pointer";
-    private static final String minMethodSignature = "(pointer, sint32):pointer";
-    private static final String maxMethodSignature = "(pointer, sint32):pointer";
-    private static final String isSortedMethodSignature = "(pointer):sint32";
+    public static final String eltMethodSignature = "(pointer, sint32):sint32";
+    public static final String getRegionMethodSignature = "(pointer, sint32, sint32, [sint32]):sint32";
+    public static final String isSortedMethodSignature = "(pointer):sint32";
+    public static final String noNAMethodSignature = "(pointer):sint32";
+    public static final String sumMethodSignature = "(pointer, sint32):pointer";
+    public static final String minMethodSignature = "(pointer, sint32):pointer";
+    public static final String maxMethodSignature = "(pointer, sint32):pointer";
     private static final int eltMethodArgCount = 2;
     private static final int getRegionMethodArgCount = 4;
     private static final int sumMethodArgCount = 2;
     private static final int minMethodArgCount = 2;
     private static final int maxMethodArgCount = 2;
     private static final int isSortedMethodArgCount = 1;
-    private Object eltMethod;
-    private Object getRegionMethod;
-    private Object isSortedMethod;
-    private Object noNAMethod;
-    private Object sumMethod;
-    private Object maxMethod;
-    private Object minMethod;
+    private AltrepDownCall eltDownCall;
+    private AltrepDownCall getRegionDownCall;
+    private AltrepDownCall isSortedDownCall;
+    private AltrepDownCall noNADownCall;
+    private AltrepDownCall sumDownCall;
+    private AltrepDownCall minDownCall;
+    private AltrepDownCall maxDownCall;
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     public AltIntegerClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);
     }
 
-    public Object getEltMethod() {
-        assert eltMethod != null;
-        return eltMethod;
+    public AltrepDownCall getEltDownCall() {
+        assert eltDownCall != null;
+        return eltDownCall;
     }
 
-    public Object getGetRegionMethod() {
-        return getRegionMethod;
+    public AltrepDownCall getGetRegionDownCall() {
+        return getRegionDownCall;
     }
 
-    public Object getIsSortedMethod() {
-        return isSortedMethod;
+    public AltrepDownCall getIsSortedDownCall() {
+        return isSortedDownCall;
     }
 
-    public Object getNoNAMethod() {
-        return noNAMethod;
+    public AltrepDownCall getNoNADownCall() {
+        return noNADownCall;
     }
 
-    public Object getSumMethod() {
-        return sumMethod;
+    public AltrepDownCall getSumDownCall() {
+        return sumDownCall;
     }
 
-    public Object getMaxMethod() {
-        return maxMethod;
+    public AltrepDownCall getMaxDownCall() {
+        return maxDownCall;
     }
 
-    public Object getMinMethod() {
-        return minMethod;
+    public AltrepDownCall getMinDownCall() {
+        return minDownCall;
     }
 
-    public String getEltMethodSignature() {
-        return eltMethodSignature;
-    }
-
-    public void registerEltMethod(Object eltMethod) {
+    public void registerEltMethod(AltrepDownCall eltMethod) {
         logRegisterMethod("Elt");
-        this.eltMethod = eltMethod;
+        this.eltDownCall = eltMethod;
     }
 
-    public void registerGetRegionMethod(Object getRegionMethod) {
+    public void registerGetRegionMethod(AltrepDownCall getRegionMethod) {
         logRegisterMethod("Get_region");
-        this.getRegionMethod = getRegionMethod;
+        this.getRegionDownCall = getRegionMethod;
     }
 
-    public void registerIsSortedMethod(Object isSortedMethod) {
+    public void registerIsSortedMethod(AltrepDownCall isSortedMethod) {
         logRegisterMethod("Is_sorted");
-        this.isSortedMethod = isSortedMethod;
+        this.isSortedDownCall = isSortedMethod;
     }
 
-    public void registerNoNAMethod(Object noNAMethod) {
+    public void registerNoNAMethod(AltrepDownCall noNAMethod) {
         logRegisterMethod("No_NA");
-        this.noNAMethod = noNAMethod;
+        this.noNADownCall = noNAMethod;
     }
 
-    public void registerSumMethod(Object sumMethod) {
+    public void registerSumMethod(AltrepDownCall sumMethod) {
         logRegisterMethod("Sum");
-        this.sumMethod = sumMethod;
+        this.sumDownCall = sumMethod;
     }
 
-    public void registerMaxMethod(Object maxMethod) {
+    public void registerMaxMethod(AltrepDownCall maxMethod) {
         logRegisterMethod("Max");
-        this.maxMethod = maxMethod;
+        this.maxDownCall = maxMethod;
     }
 
-    public void registerMinMethod(Object minMethod) {
+    public void registerMinMethod(AltrepDownCall minMethod) {
         logRegisterMethod("Min");
-        this.minMethod = minMethod;
+        this.minDownCall = minMethod;
     }
 
     public boolean isEltMethodRegistered() {
-        return eltMethod != null;
+        return eltDownCall != null;
     }
 
     public boolean isGetRegionMethodRegistered() {
-        return getRegionMethod != null;
+        return getRegionDownCall != null;
     }
 
     public boolean isNoNAMethodRegistered() {
-        return noNAMethod != null;
+        return noNADownCall != null;
     }
 
     public boolean isSumMethodRegistered() {
-        return sumMethod != null;
+        return sumDownCall != null;
     }
 
     public boolean isMaxMethodRegistered() {
-        return maxMethod != null;
+        return maxDownCall != null;
     }
 
     public boolean isMinMethodRegistered() {
-        return minMethod != null;
+        return minDownCall != null;
     }
 
     public boolean isIsSortedMethodRegistered() {
-        return isSortedMethod != null;
+        return isSortedDownCall != null;
     }
 
     @Override
@@ -163,7 +160,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     }
 
     public int invokeEltMethodUncached(Object instance, int index) {
-        InteropLibrary methodInterop = InteropLibrary.getFactory().getUncached(eltMethod);
+        InteropLibrary methodInterop = InteropLibrary.getFactory().getUncached(eltDownCall.method);
         ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
         return invokeEltMethod(instance, index, methodInterop, hasMirrorProfile);
     }
@@ -193,11 +190,11 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     }
 
     private int invokeEltMethod(Object instance, int index, InteropLibrary eltMethodInterop, ConditionProfile hasMirrorProfile) {
-        assert eltMethod != null;
+        assert eltDownCall.method != null;
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("elt", instance, index);
         }
-        Object element = invokeNativeFunction(eltMethodInterop, eltMethod, eltMethodSignature, eltMethodArgCount, hasMirrorProfile, instance, index);
+        Object element = invokeNativeFunction(eltMethodInterop, eltDownCall.method, eltMethodSignature, eltMethodArgCount, hasMirrorProfile, instance, index);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(element);
         }
@@ -206,14 +203,14 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     }
 
     private long invokeGetRegionMethod(Object instance, long fromIdx, long size, Object buffer, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        assert getRegionMethod != null;
+        assert getRegionDownCall.method != null;
         if (buffer instanceof int[]) {
             throw RInternalError.shouldNotReachHere("Calls from managed code are unimplemented");
         }
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("GetRegion", instance, fromIdx, size, buffer);
         }
-        Object copiedCount = invokeNativeFunction(methodInterop, getRegionMethod, getRegionMethodSignature, getRegionMethodArgCount, hasMirrorProfile, instance, fromIdx, size, buffer);
+        Object copiedCount = invokeNativeFunction(methodInterop, getRegionDownCall.method, getRegionMethodSignature, getRegionMethodArgCount, hasMirrorProfile, instance, fromIdx, size, buffer);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(copiedCount);
         }
@@ -225,7 +222,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Sum", instance, naRm);
         }
-        Object sumVectorMirror = invokeNativeFunction(methodInterop, sumMethod, sumMethodSignature, sumMethodArgCount, hasMirrorProfile, instance, naRm);
+        Object sumVectorMirror = invokeNativeFunction(methodInterop, sumDownCall.method, sumMethodSignature, sumMethodArgCount, hasMirrorProfile, instance, naRm);
         return convertNativeReturnValToIntOrDouble(sumVectorMirror);
     }
 
@@ -233,7 +230,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Min", instance, naRm);
         }
-        Object minVectorMirror = invokeNativeFunction(methodInterop, minMethod, minMethodSignature, minMethodArgCount, hasMirrorProfile, instance, naRm);
+        Object minVectorMirror = invokeNativeFunction(methodInterop, minDownCall.method, minMethodSignature, minMethodArgCount, hasMirrorProfile, instance, naRm);
         return convertNativeReturnValToIntOrDouble(minVectorMirror);
     }
 
@@ -241,7 +238,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Max", instance, naRm);
         }
-        Object maxVectorMirror = invokeNativeFunction(methodInterop, maxMethod, maxMethodSignature, maxMethodArgCount, hasMirrorProfile, instance, naRm);
+        Object maxVectorMirror = invokeNativeFunction(methodInterop, maxDownCall.method, maxMethodSignature, maxMethodArgCount, hasMirrorProfile, instance, naRm);
         return convertNativeReturnValToIntOrDouble(maxVectorMirror);
     }
 
@@ -249,7 +246,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Is_sorted", instance);
         }
-        Object sortedMode = invokeNativeFunction(methodInterop, isSortedMethod, isSortedMethodSignature, isSortedMethodArgCount, hasMirrorProfile, instance);
+        Object sortedMode = invokeNativeFunction(methodInterop, isSortedDownCall.method, isSortedMethodSignature, isSortedMethodArgCount, hasMirrorProfile, instance);
         assert sortedMode instanceof Integer;
         return (int) sortedMode;
     }

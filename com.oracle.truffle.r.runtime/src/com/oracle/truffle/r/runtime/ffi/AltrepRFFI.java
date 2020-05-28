@@ -10,6 +10,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepDownCall;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
@@ -140,6 +141,30 @@ public final class AltrepRFFI {
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class AltIntSumNode extends Node {
+        public abstract Object execute(RIntVector altIntVec, boolean naRm);
+
+        @Specialization
+        public Object doIt(RIntVector altIntVec, boolean naRm,
+                           @Cached AltrepDownCallNode downCallNode) {
+            AltrepDownCall altrepDownCall = AltrepUtilities.getSumMethodDownCall(altIntVec);
+            return downCallNode.execute(altrepDownCall, true, new Object[]{altIntVec, naRm});
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class AltStringEltNode extends Node {
+        public abstract Object execute(RStringVector altStringVec, int index);
+
+        @Specialization
+        public Object doIt(RStringVector altStringVec, int index,
+                           @Cached AltrepDownCallNode downCallNode) {
+            AltrepDownCall altrepDownCall = AltrepUtilities.getEltMethodDownCall(altStringVec);
+            return downCallNode.execute(altrepDownCall, true, new Object[]{altStringVec, index});
         }
     }
 }
