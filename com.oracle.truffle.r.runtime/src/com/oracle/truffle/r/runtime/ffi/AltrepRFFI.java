@@ -5,6 +5,7 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
@@ -29,23 +30,34 @@ public final class AltrepRFFI {
         return RFFIFactory.getAltrepRFFI().downCallNodeFactory.getUncached();
     }
 
-    protected abstract static class AltBaseNode extends Node {
-        protected static AltrepDownCallNode createDownCallNode() {
-            return AltrepRFFI.createDownCallNode();
-        }
+    @GenerateUncached
+    public abstract static class AltIntLengthNode extends Node {
+        public abstract int execute(RIntVector altIntVector);
 
-        protected static AltrepDownCallNode createUncachedDownCallNode() {
-            return AltrepRFFI.createUncachedDownCallNode();
+        @Specialization
+        public int doIt(RIntVector altIntVector,
+                        @Cached AltrepDownCallNode downCallNode,
+                        @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
+            // TODO:
+            AltrepDownCall altrepDownCall = null;
+            boolean unwrapFlag = false;
+            Object retVal = downCallNode.execute(altrepDownCall, unwrapFlag, new Object[]{altIntVector});
+            assert returnValueInterop.isNumber(retVal);
+            try {
+                return returnValueInterop.asInt(retVal);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
         }
     }
 
     @GenerateUncached
-    public abstract static class AltIntEltNode extends AltBaseNode {
+    public abstract static class AltIntEltNode extends Node {
         public abstract int execute(RIntVector altIntVector, int index);
 
         @Specialization
         public int doIt(RIntVector altIntVector, int index,
-                        @Cached(value="createDownCallNode()", uncached="createUncachedDownCallNode()") AltrepDownCallNode downCallNode) {
+                        @Cached AltrepDownCallNode downCallNode) {
             // TODO: Get this from altIntVector
             AltrepDownCall altrepDowncall = null;
 
@@ -57,12 +69,12 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntDataptrNode extends AltBaseNode {
+    public abstract static class AltIntDataptrNode extends Node {
         public abstract long execute(RIntVector altIntVector, boolean writeable);
 
         @Specialization
         public long doIt(RIntVector altIntVector, boolean writeable,
-                         @Cached(value="createDownCallNode()", uncached="createUncachedDownCallNode()") AltrepDownCallNode downCallNode) {
+                         @Cached AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             setDataptrCalled(altIntVector);
             // TODO: Get this from altIntVector
@@ -86,12 +98,12 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntIsSortedNode extends AltBaseNode {
+    public abstract static class AltIntIsSortedNode extends Node {
         public abstract AltrepSortedness execute(RIntVector altIntVector);
 
         @Specialization
         public AltrepSortedness doIt(RIntVector altIntVector,
-                                     @Cached(value="createDownCallNode()", uncached="createUncachedDownCallNode()") AltrepDownCallNode downCallNode) {
+                                     @Cached AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             // TODO: Accept more return values - maybe use InteropLibrary?
             // TODO: Get this from altIntVector
@@ -103,12 +115,12 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntNoNANode extends AltBaseNode {
+    public abstract static class AltIntNoNANode extends Node {
         public abstract boolean execute(RIntVector altIntVector);
 
         @Specialization
         public boolean doIt(RIntVector altIntVector,
-                            @Cached(value="createDownCallNode()", uncached="createUncachedDownCallNode()") AltrepDownCallNode downCallNode) {
+                            @Cached AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             // TODO: Accept more return values - maybe use InteropLibrary?
             // TODO: Get this from altIntVector
@@ -120,12 +132,12 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntGetRegionNode extends AltBaseNode {
+    public abstract static class AltIntGetRegionNode extends Node {
         public abstract int execute(RIntVector altIntVector, int fromIdx, int size, Object buffer);
 
         @Specialization
         public int doIt(RIntVector altIntVector, int fromIdx, int size, Object buffer,
-                        @Cached(value="createDownCallNode()", uncached="createUncachedDownCallNode()") AltrepDownCallNode downCallNode) {
+                        @Cached AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             InteropLibrary interopLib = InteropLibrary.getUncached();
             AltrepDownCall altrepDowncall = null;

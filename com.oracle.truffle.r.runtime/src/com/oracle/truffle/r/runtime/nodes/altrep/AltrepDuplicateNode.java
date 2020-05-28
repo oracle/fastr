@@ -31,7 +31,7 @@ public abstract class AltrepDuplicateNode extends RBaseNode {
                                               @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile,
                                               @Cached("createBinaryProfile()") ConditionProfile duplicateReturnsNullProfile,
                                               @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
-                                              @Cached AltrepLengthNode lengthNode) {
+                                              @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
         AltIntegerClassDescriptor descriptor = getAltIntDescriptor(altIntVec);
         Object duplicatedObject = descriptor.invokeDuplicateMethodCached(altIntVec, deep, duplicateMethodInterop, hasMirrorProfile);
         if (duplicateReturnsNullProfile.profile(duplicatedObject == null)) {
@@ -48,8 +48,8 @@ public abstract class AltrepDuplicateNode extends RBaseNode {
     @Specialization(guards = {"isAltrep(altIntVec)"}, replaces = {"doAltIntWithDuplicateMethod"}, limit = "3")
     public Object doStandardDuplicate(RIntVector altIntVec, @SuppressWarnings("unused") boolean deep,
                                       @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
-                                      @Cached AltrepLengthNode lengthNode) {
-        int length = (int) lengthNode.execute(altIntVec);
+                                      @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+        int length = lengthNode.execute(altIntVec);
         long dataptrAddr = dataptrNode.execute(altIntVec, false);
         int[] newData = new int[length];
         NativeMemory.copyMemory(dataptrAddr, newData, ElementType.INT, length);

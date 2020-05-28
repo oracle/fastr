@@ -46,9 +46,9 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     public static final String serializedStateMethodSignature = "(pointer): pointer";
     public static final String lengthMethodSignature = "(pointer): sint32";
     // Instance data
-    private String className;
-    private String packageName;
-    private Object dllInfo;
+    private final String className;
+    private final String packageName;
+    private final Object dllInfo;
     // Methods
     private Object unserializeMethod;
     private Object unserializeEXMethod;
