@@ -113,10 +113,10 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
     }
 
     protected static FFIMaterializeNode[] createMaterialized(int length) {
-        throw RInternalError.unimplemented("createMaterialized");
+        return FFIMaterializeNode.createForAltrep(length);
     }
 
     protected static FFIToNativeMirrorNode[] createToNatives(int length) {
-        throw RInternalError.unimplemented("createToNatives");
+        return FFIToNativeMirrorNode.create(length);
     }
 }

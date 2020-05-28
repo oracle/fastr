@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data.altrep;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -37,13 +38,18 @@ import java.util.Arrays;
 import java.util.logging.Level;
 
 public abstract class AltRepClassDescriptor extends RBaseObject {
-    private final String lengthMethodSignature = "(pointer):sint32";
     private final int lengthMethodArgCount = 1;
-    private final String duplicateMethodSignature = "(pointer, sint32): pointer";
     private final int duplicateMethodArgCount = 2;
+    public static final String duplicateMethodSignature = "(pointer, sint32): pointer";
+    public static final String unserializeMethodSignature = "(pointer, pointer): pointer";
+    public static final String unserializeEXMethodSignature = "(pointer, pointer, pointer, sint32, sint32): pointer";
+    public static final String serializedStateMethodSignature = "(pointer): pointer";
+    public static final String lengthMethodSignature = "(pointer): sint32";
+    // Instance data
     private String className;
     private String packageName;
     private Object dllInfo;
+    // Methods
     private Object unserializeMethod;
     private Object unserializeEXMethod;
     private Object serializedStateMethod;
@@ -51,7 +57,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     private Object duplicateEXMethod;
     private Object coerceMethod;
     private Object inspectMethod;
-    private Object lengthMethod;
+    private AltrepDownCall lengthDownCall;
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     AltRepClassDescriptor(String className, String packageName, Object dllInfo) {
@@ -70,8 +76,8 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         return duplicateMethod;
     }
 
-    public Object getLengthMethod() {
-        return lengthMethod;
+    public AltrepDownCall getLengthDownCall() {
+        return lengthDownCall;
     }
 
     protected void logRegisterMethod(String methodName) {
@@ -113,9 +119,9 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         this.inspectMethod = method;
     }
 
-    public void registerLengthMethod(Object lengthMethod) {
+    public void registerLengthMethod(AltrepDownCall lengthDownCall) {
         logRegisterMethod("Length");
-        this.lengthMethod = lengthMethod;
+        this.lengthDownCall = lengthDownCall;
     }
 
     public boolean isUnserializeMethodRegistered() {
@@ -147,7 +153,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     }
 
     public boolean isLengthMethodRegistered() {
-        return lengthMethod != null;
+        return lengthDownCall != null;
     }
 
     @CompilerDirectives.TruffleBoundary
@@ -172,7 +178,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
 
     public int invokeLengthMethodUncached(Object instance) {
         ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
-        InteropLibrary lengthMethodInterop = InteropLibrary.getFactory().getUncached(lengthMethod);
+        InteropLibrary lengthMethodInterop = InteropLibrary.getFactory().getUncached(lengthDownCall.method);
         return invokeLengthMethod(instance, lengthMethodInterop, hasMirrorProfile);
     }
 
@@ -198,7 +204,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
                 // LLVM case
                 return interop.execute(function, allArgs);
             }
-        } catch (Exception e) {
+        } catch (InteropException e) {
             throw RInternalError.shouldNotReachHere("Exception in invoke...Method");
         }
     }
@@ -230,7 +236,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("lengthMethod", instance);
         }
-        Object ret = invokeNativeFunction(lengthMethodInterop, lengthMethod, lengthMethodSignature, lengthMethodArgCount, hasMirrorProfile, instance);
+        Object ret = invokeNativeFunction(lengthMethodInterop, lengthDownCall.method, lengthMethodSignature, lengthMethodArgCount, hasMirrorProfile, instance);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(ret);
         }

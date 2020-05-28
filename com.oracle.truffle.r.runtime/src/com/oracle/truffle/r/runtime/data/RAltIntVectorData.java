@@ -29,6 +29,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -41,12 +43,14 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIter
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepDownCall;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
+import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDuplicateNode;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepGetIntAtNode;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepLengthNode;
@@ -125,14 +129,15 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     public boolean noNA(@Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
                         @Cached AltrepRFFI.AltIntNoNANode noNANode,
                         @Cached AltrepRFFI.AltIntGetRegionNode getRegionNode,
-                        @Cached AltrepLengthNode lengthNode) {
+                        @Cached(value = "createDownCallNode()", uncached = "createUncachedDownCallNode()") AltrepDownCallNode downCallNode,
+                        @CachedLibrary(limit = "1") InteropLibrary lengthReturnValueInterop) {
         if (hasNoNAMethodProfile.profile(descriptor.isNoNAMethodRegistered())) {
             return noNANode.execute(owner);
         } else {
             // Get whole region
-            int length = getLength(lengthNode);
+            int length = getLength(downCallNode, lengthReturnValueInterop);
             int[] buffer = new int[length];
-            int copied = getRegionNode.execute(owner, 0, getLength(lengthNode), buffer);
+            int copied = getRegionNode.execute(owner, 0, getLength(downCallNode, lengthReturnValueInterop), buffer);
             if (copied != length) {
                 throw RInternalError.shouldNotReachHere();
             }
@@ -152,8 +157,24 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage(limit = "1")
-    public int getLength(@Cached("create()") AltrepLengthNode lengthNode) {
-        return (int) lengthNode.execute(getOwner());
+    public int getLength(@Cached(value = "createDownCallNode()", uncached = "createUncachedDownCallNode()") AltrepDownCallNode downCallNode,
+                         @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
+        AltrepDownCall lengthDowncall = descriptor.getLengthDownCall();
+        Object retValue = downCallNode.execute(lengthDowncall, false, new Object[]{getOwner()});
+        assert returnValueInterop.isNumber(retValue);
+        try {
+            return returnValueInterop.asInt(retValue);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+    }
+
+    protected static AltrepDownCallNode createDownCallNode() {
+        return AltrepRFFI.createDownCallNode();
+    }
+
+    protected static AltrepDownCallNode createUncachedDownCallNode() {
+        return AltrepRFFI.createUncachedDownCallNode();
     }
 
     @ExportMessage(limit = "1")

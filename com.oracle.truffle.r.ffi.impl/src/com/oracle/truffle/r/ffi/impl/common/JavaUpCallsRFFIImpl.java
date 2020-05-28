@@ -27,6 +27,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -88,6 +90,7 @@ import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltVecClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepDownCall;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -104,6 +107,8 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.RObjectDataPtr;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
+import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
@@ -1415,6 +1420,23 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         throw implementedAsNode();
     }
 
+    private static AltrepDownCall createAltrepDownCall(Object method, String signature) {
+        InteropLibrary interop = InteropLibrary.getUncached();
+        if (!interop.isExecutable(method)) {
+            if (interop.isMemberInvocable(method, "bind")) {
+                try {
+                    method = interop.invokeMember(method, "bind", signature);
+                    return new AltrepDownCall(method, Type.NFI);
+                } catch (InteropException e) {
+                    throw RInternalError.shouldNotReachHere(e);
+                }
+            } else {
+                throw RInternalError.shouldNotReachHere("method is from NFI, it should have 'bind' invocable member");
+            }
+        }
+        return new AltrepDownCall(method, Type.LLVM);
+    }
+
     @Override
     public void R_set_altrep_Unserialize_method(Object classDescriptor, Object method) {
         AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
@@ -1424,7 +1446,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public void R_set_altrep_Length_method(Object classDescriptor, Object method) {
         AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
-        classDescr.registerLengthMethod(method);
+        AltrepDownCall altrepDownCall = createAltrepDownCall(method, AltRepClassDescriptor.lengthMethodSignature);
+        classDescr.registerLengthMethod(altrepDownCall);
     }
 
     @Override

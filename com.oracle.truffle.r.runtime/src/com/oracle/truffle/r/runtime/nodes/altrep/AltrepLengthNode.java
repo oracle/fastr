@@ -57,6 +57,6 @@ public abstract class AltrepLengthNode extends RBaseNode {
     }
 
     protected static Object getLengthMethodFromDescriptor(RIntVector altIntVec) {
-        return getAltIntDescriptor(altIntVec).getLengthMethod();
+        return getAltIntDescriptor(altIntVec).getLengthDownCall();
     }
 }
