@@ -24,8 +24,9 @@ import java.util.HashSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 
 /**
  * Code sharing vehicle for the slight differences in behavior between {@code duplicated} and
@@ -57,15 +58,13 @@ public class DuplicationHelper {
     public boolean doIt(int i) {
         DupEntry entry = new DupEntry(x.getDataAtAsObject(i));
         if (incompContents == null || !incompContents.contains(entry)) {
-            if (vectorContents.contains(entry)) {
+            if (!vectorContents.add(entry)) {
                 if (dupVec == null) {
                     index = i + 1;
                     return true;
                 } else {
                     dupVec[i] = RRuntime.LOGICAL_TRUE;
                 }
-            } else {
-                vectorContents.add(entry);
             }
         } else {
             if (dupVec != null) {
@@ -105,51 +104,93 @@ public class DuplicationHelper {
     private static final class DupEntry {
 
         private final Object element;
+        private final VectorDataLibrary dataLib;
+        private final int hashCode;
 
-        DupEntry(Object element) {
-            this.element = element;
+        DupEntry(Object elementIn) {
+            Object elem = normalizeSingletonContainer(elementIn);
+            // hashcode: first bit indicates whether it is abstract container or not
+            if (elem instanceof RAbstractContainer) {
+                RAbstractContainer container = (RAbstractContainer) elem;
+                dataLib = VectorDataLibrary.getFactory().getUncached(container.getData());
+                Object data = this.element = container.getData();
+                int type = container.getRType().ordinal();
+                int len = dataLib.getLength(data);
+                int valsHash = 0;
+                for (int i = 0; i < Math.min(len, 5); i++) {
+                    final Object obj0 = dataLib.getDataAtAsObject(data, i);
+                    valsHash ^= obj0.hashCode();
+                }
+                // 6 bits for the type only, 10 bits for the length only,
+                // the rest is xor of the remaining bits from length and
+                // the first few elements. We also lshift by 1 to make
+                // the first bit 0
+                hashCode = ((type | len << 6) ^ (valsHash << 16)) << 1;
+            } else {
+                this.element = elem;
+                dataLib = null;
+                hashCode = elem.hashCode() | 1;
+            }
         }
 
         @Override
         public int hashCode() {
-            if (element instanceof RAbstractContainer && !(element instanceof RComplex)) {
-                return ((RAbstractContainer) element).getRType().hashCode();
-            } else {
-                return element.hashCode();
-            }
+            return hashCode;
         }
 
         @Override
         public boolean equals(Object o) {
             Object other = o;
+            VectorDataLibrary otherLib = null;
             if (other instanceof DupEntry) {
+                otherLib = ((DupEntry) other).dataLib;
                 other = ((DupEntry) other).element;
             }
-            return equals(this.element, other);
+            return equals(this.dataLib, this.element, otherLib, other);
         }
 
-        static boolean equals(Object o1, Object o2) {
-            if (o1 instanceof RAbstractContainer && o2 instanceof RAbstractContainer) {
-                RAbstractContainer cont1 = (RAbstractContainer) o1;
-                RAbstractContainer cont2 = (RAbstractContainer) o2;
-
-                if (cont1.getLength() != cont2.getLength()) {
+        static boolean equals(VectorDataLibrary data1Lib, Object o1, VectorDataLibrary data2Lib, Object o2) {
+            if (data1Lib != null && data2Lib != null) {
+                int len = data1Lib.getLength(o1);
+                if (len != data2Lib.getLength(o2)) {
                     return false;
                 }
 
-                for (int i = 0; i < cont1.getLength(); i++) {
-                    Object el1 = cont1.getDataAtAsObject(i);
-                    Object el2 = cont2.getDataAtAsObject(i);
+                for (int i = 0; i < len; i++) {
+                    Object el1 = data1Lib.getDataAtAsObject(o1, i);
+                    Object el2 = data2Lib.getDataAtAsObject(o2, i);
                     if (!equals(el1, el2)) {
                         return false;
                     }
                 }
 
                 return true;
-
             } else {
-                return o1.equals(o2);
+                // if data lib field is set => length > 1 or it is a list
+                return data1Lib == null && data2Lib == null && o1.equals(o2);
             }
+        }
+
+        private static boolean equals(Object o1In, Object o2In) {
+            Object o1 = normalizeSingletonContainer(o1In);
+            Object o2 = normalizeSingletonContainer(o2In);
+            if ((o1 instanceof RAbstractContainer) != (o2 instanceof RAbstractContainer)) {
+                return false;
+            }
+            VectorDataLibrary dataLib = null;
+            if (o1 instanceof RAbstractContainer) {
+                assert o2 instanceof RAbstractContainer;
+                dataLib = VectorDataLibrary.getFactory().getUncached();
+            }
+
+            return equals(dataLib, o1, dataLib, o2);
+        }
+
+        private static Object normalizeSingletonContainer(Object element) {
+            if (element instanceof RAbstractContainer && ((RAbstractContainer) element).getLength() == 1 && !(element instanceof RAbstractListBaseVector)) {
+                return ((RAbstractContainer) element).getDataAtAsObject(0);
+            }
+            return element;
         }
     }
 }
