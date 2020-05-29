@@ -3,6 +3,7 @@
 Bug fixes:
 
 * FastR cleans-up the temporary directory created for internal implementation of the R input handlers
+* Improve performance of `unique` #154
 
 # 20.1.0
 
