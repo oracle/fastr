@@ -32,4 +32,9 @@ public abstract class FFIMaterializeNodeAltrepImpl extends FFIMaterializeNode {
     public Object wrapInt(int value, @SuppressWarnings("unused") boolean protect) {
         return value;
     }
+
+    @Specialization
+    public Object wrapBool(boolean value, @SuppressWarnings("unused") boolean protect) {
+        return value;
+    }
 }

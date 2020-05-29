@@ -75,6 +75,11 @@ public abstract class FFIToNativeMirrorNode extends Node {
         return value;
     }
 
+    @Specialization
+    protected static Object wrap(boolean value) {
+        return value;
+    }
+
     @Fallback
     protected static Object wrap(Object value) {
         CompilerDirectives.transferToInterpreter();
