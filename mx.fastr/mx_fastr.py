@@ -350,11 +350,15 @@ def _fastr_gate_runner(args, tasks):
         if t:
             mx.log("Libraries captured in FASTR_HOME/lib:")
             lib_dir = os.path.join(_fastr_suite.dir, 'lib')
+            ldd = ['otool', '-L'] if platform.system() == 'Darwin' else ['ldd']
             for f in os.listdir(lib_dir):
                 full_path = os.path.join(lib_dir, f)
                 mx.run(['file', full_path], nonZeroIsFatal=False)
+                mx.log('---\nobjdump:')
                 mx.run(['objdump', '-s', '--section', '.comment', full_path], nonZeroIsFatal=False)
-                mx.log('------')
+                mx.log('---\nlinking info:')
+                mx.run(ldd + [full_path], nonZeroIsFatal=False)
+                mx.log('---------')
 
     # ---------------------------------
     # Style checks:
