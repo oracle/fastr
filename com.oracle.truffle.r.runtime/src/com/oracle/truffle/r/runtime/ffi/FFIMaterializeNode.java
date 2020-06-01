@@ -51,8 +51,6 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 @GenerateUncached
 public abstract class FFIMaterializeNode extends Node {
 
-    protected abstract Object execute(Object value, boolean protect);
-
     public Object materialize(Object value) {
         return execute(value);
     }
@@ -66,14 +64,47 @@ public abstract class FFIMaterializeNode extends Node {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
+    protected abstract Object execute(Object value, boolean protect);
+
+    public static Object uncachedMaterialize(Object value) {
+        return FFIMaterializeNodeGen.getUncached().execute(value, false);
+    }
+
+    // Scalar values:
+
     @Specialization
-    protected static Object wrap(double value) {
+    protected static Object wrap(int value, @SuppressWarnings("unused") boolean protect) {
+        return RDataFactory.createIntVectorFromScalar(value);
+    }
+
+    @Specialization
+    protected static Object wrap(double value, @SuppressWarnings("unused") boolean protect) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 
     @Specialization
-    protected static Object wrap(double[] value) {
+    protected static Object wrap(double[] value, @SuppressWarnings("unused") boolean protect) {
         return new NativeDoubleArray(value);
+    }
+
+    @Specialization
+    protected static Object wrap(byte value, @SuppressWarnings("unused") boolean protect) {
+        return RDataFactory.createLogicalVectorFromScalar(value);
+    }
+
+    @Specialization
+    protected static Object wrap(String value, @SuppressWarnings("unused") boolean protect) {
+        return RDataFactory.createStringVectorFromScalar(value);
+    }
+
+    @Specialization
+    protected static Object wrap(RRaw value, @SuppressWarnings("unused") boolean protect) {
+        return RDataFactory.createRawVectorFromScalar(value);
+    }
+
+    @Specialization
+    protected static Object wrap(RComplex value, @SuppressWarnings("unused") boolean protect) {
+        return RDataFactory.createComplexVectorFromScalar(value);
     }
 
     @Specialization
@@ -145,11 +176,7 @@ public abstract class FFIMaterializeNode extends Node {
     }
 
     public static FFIMaterializeNode create() {
-        return FFIMaterializeNodeImplNodeGen.create();
-    }
-
-    public static FFIMaterializeNode createForAltrep() {
-        return FFIMaterializeNodeAltrepImplNodeGen.create();
+        return FFIMaterializeNodeGen.create();
     }
 
     public static FFIMaterializeNode[] create(int count) {
@@ -160,19 +187,7 @@ public abstract class FFIMaterializeNode extends Node {
         return result;
     }
 
-    public static FFIMaterializeNode[] createForAltrep(int count) {
-        FFIMaterializeNode[] result = new FFIMaterializeNode[count];
-        for (int i = 0; i < count; i++) {
-            result[i] = FFIMaterializeNode.createForAltrep();
-        }
-        return result;
-    }
-
     public static FFIMaterializeNode getUncached() {
-        return FFIMaterializeNodeImplNodeGen.getUncached();
-    }
-
-    public static FFIMaterializeNode getUncachedForAltrep() {
-        return FFIMaterializeNodeAltrepImplNodeGen.getUncached();
+        return FFIMaterializeNodeGen.getUncached();
     }
 }

@@ -113,7 +113,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
     }
 
     protected static FFIMaterializeNode[] createMaterialized(int length) {
-        return FFIMaterializeNode.createForAltrep(length);
+        return FFIMaterializeNode.create(length);
     }
 
     protected static FFIToNativeMirrorNode[] createToNatives(int length) {
