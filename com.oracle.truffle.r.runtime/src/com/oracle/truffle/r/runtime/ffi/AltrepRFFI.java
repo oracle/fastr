@@ -11,6 +11,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepMethodDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
@@ -40,7 +42,8 @@ public final class AltrepRFFI {
                         @Cached AltrepDownCallNode downCallNode,
                         @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
             AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getLengthMethodDescriptor(altIntVector);
-            Object retVal = downCallNode.execute(altrepMethodDescriptor, false, new Object[]{altIntVector});
+            Object retVal = downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.lengthMethodUnwrapResult,
+                    AltIntegerClassDescriptor.lengthMethodWrapArguments, new Object[]{altIntVector});
             assert returnValueInterop.isNumber(retVal);
             try {
                 return returnValueInterop.asInt(retVal);
@@ -60,7 +63,8 @@ public final class AltrepRFFI {
                         @Cached AltrepDownCallNode downCallNode,
                         @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getEltMethodDescriptor(altIntVector);
-            Object retValue = downCallNode.execute(methodDescr, false, new Object[]{altIntVector, index});
+            Object retValue = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.eltMethodUnwrapResult,
+                    AltIntegerClassDescriptor.eltMethodWrapArguments, new Object[]{altIntVector, index});
             assert retValueInterop.isNumber(retValue);
             try {
                 return retValueInterop.asInt(retValue);
@@ -81,7 +85,8 @@ public final class AltrepRFFI {
             assert AltrepUtilities.isAltrep(altIntVector);
             setDataptrCalled(altIntVector);
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getDataptrMethodDescriptor(altIntVector);
-            Object ret = downCallNode.execute(methodDescr, false, new Object[]{altIntVector, writeable});
+            Object ret = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.dataptrMethodUnwrapResult,
+                    AltIntegerClassDescriptor.dataptrMethodWrapArguments, new Object[]{altIntVector, writeable});
             InteropLibrary interop = InteropLibrary.getFactory().getUncached(ret);
             interop.toNative(ret);
             try {
@@ -108,7 +113,8 @@ public final class AltrepRFFI {
             assert AltrepUtilities.isAltrep(altIntVector);
             // TODO: Accept more return values - maybe use InteropLibrary?
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getIsSortedMethodDescriptor(altIntVector);
-            int retValue = (int) downCallNode.execute(methodDescr, false, new Object[]{altIntVector});
+            int retValue = (int) downCallNode.execute(methodDescr, AltIntegerClassDescriptor.isSortedMethodUnwrapResult,
+                    AltIntegerClassDescriptor.isSortedMethodWrapArguments, new Object[]{altIntVector});
             return AltrepSortedness.fromInt(retValue);
         }
     }
@@ -123,7 +129,8 @@ public final class AltrepRFFI {
             assert AltrepUtilities.isAltrep(altIntVector);
             // TODO: Accept more return values - maybe use InteropLibrary?
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getNoNAMethodDescriptor(altIntVector);
-            int retValue = (int) downCallNode.execute(methodDescr, false, new Object[]{altIntVector});
+            int retValue = (int) downCallNode.execute(methodDescr, AltIntegerClassDescriptor.noNAMethodUnwrapResult,
+                    AltIntegerClassDescriptor.noNAMethodWrapArguments, new Object[]{altIntVector});
             return retValue != 0;
         }
     }
@@ -139,8 +146,8 @@ public final class AltrepRFFI {
             assert AltrepUtilities.isAltrep(altIntVector);
             assert InteropLibrary.getUncached().hasArrayElements(buffer);
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getGetRegionMethodDescriptor(altIntVector);
-            Object ret = downCallNode.execute(methodDescr, false,
-                    new Object[]{altIntVector, fromIdx, size, buffer});
+            Object ret = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.getRegionMethodUnwrapResult,
+                    AltIntegerClassDescriptor.getRegionMethodWrapArguments, new Object[]{altIntVector, fromIdx, size, buffer});
             assert retValueInterop.isNumber(ret);
             try {
                 return retValueInterop.asInt(ret);
@@ -158,7 +165,8 @@ public final class AltrepRFFI {
         public Object doIt(RIntVector altIntVec, boolean naRm,
                            @Cached AltrepDownCallNode downCallNode) {
             AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getSumMethodDescriptor(altIntVec);
-            return downCallNode.execute(altrepMethodDescriptor, true, new Object[]{altIntVec, naRm});
+            return downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.sumMethodUnwrapResult,
+                    AltIntegerClassDescriptor.sumMethodWrapArguments, new Object[]{altIntVec, naRm});
         }
     }
 
@@ -170,7 +178,8 @@ public final class AltrepRFFI {
         public Object doIt(RStringVector altStringVec, int index,
                            @Cached AltrepDownCallNode downCallNode) {
             AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getEltMethodDescriptor(altStringVec);
-            return downCallNode.execute(altrepMethodDescriptor, true, new Object[]{altStringVec, index});
+            return downCallNode.execute(altrepMethodDescriptor, AltStringClassDescriptor.eltMethodUnwrapResult,
+                    AltStringClassDescriptor.eltMethodWrapArguments, new Object[]{altStringVec, index});
         }
     }
 }

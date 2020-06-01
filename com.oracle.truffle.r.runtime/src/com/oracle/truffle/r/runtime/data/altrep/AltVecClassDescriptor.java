@@ -32,8 +32,17 @@ import java.util.logging.Level;
 
 public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
     public static final String dataptrMethodSignature = "(pointer, sint32) : pointer";
+    public static final boolean[] dataptrMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean dataptrMethodUnwrapResult = false;
+
     public static final String dataptrOrNullMethodSignature = "(pointer) : pointer";
+    public static final boolean[] dataptrOrNullMethodWrapArguments = new boolean[]{true};
+    public static final boolean dataptrOrNullMethodUnwrapResult = false;
+
     public static final String extractSubsetMethodSignature = "(pointer, pointer, pointer) : pointer";
+    public static final boolean[] extractSubsetMethodWrapArguments = new boolean[]{true, true, true};
+    public static final boolean extractSubsetMethodUnwrapResult = true;
+
     private static final int dataptrMethodArgCount = 2;
     private AltrepMethodDescriptor dataptrMethodDescriptor;
     private AltrepMethodDescriptor dataptrOrMethodDescriptor;

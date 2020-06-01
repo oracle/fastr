@@ -40,14 +40,39 @@ import java.util.logging.Level;
 public abstract class AltRepClassDescriptor extends RBaseObject {
     private final int lengthMethodArgCount = 1;
     private final int duplicateMethodArgCount = 2;
+
     public static final String unserializeMethodSignature = "(pointer, pointer): pointer";
+    public static final boolean[] unserializeMethodWrapArguments = new boolean[]{true, true};
+    public static final boolean unserializeMethodUnwrapResult = true;
+
     public static final String unserializeEXMethodSignature = "(pointer, pointer, pointer, sint32, sint32): pointer";
+    public static final boolean[] unserializeEXMethodWrapArguments = new boolean[]{true, true, true, false, false};
+    public static final boolean unserializeEXMethodUnwrapResult = true;
+
     public static final String serializedStateMethodSignature = "(pointer): pointer";
+    public static final boolean[] serializedStateMethodWrapArguments = new boolean[]{true};
+    public static final boolean serializedStateMethodUnwrapResult = true;
+
     public static final String duplicateMethodSignature = "(pointer, sint32): pointer";
+    public static final boolean[] duplicateMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean duplicateMethodUnwrapResult = true;
+
     public static final String duplicateEXMethodSignature = "(pointer, sint32): pointer";
+    public static final boolean[] duplicateEXMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean duplicateEXMethodUnwrapResult = true;
+
     public static final String coerceMethodSignature = "(pointer, sint32): pointer";
+    public static final boolean[] coerceMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean coerceMethodUnwrapResult = true;
+
     public static final String inspectMethodSignature = "(pointer, sint32, sint32, sint32, (pointer,sint32,sint32,sint32):void): sint32";
+    public static final boolean[] inspectMethodWrapArguments = new boolean[]{true, false, false, false, false};
+    public static final boolean inspectMethodUnwrapResult = false;
+
     public static final String lengthMethodSignature = "(pointer): sint32";
+    public static final boolean[] lengthMethodWrapArguments = new boolean[]{true};
+    public static final boolean lengthMethodUnwrapResult = false;
+
     // Instance data
     private final String className;
     private final String packageName;

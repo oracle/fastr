@@ -37,12 +37,33 @@ import java.util.logging.Level;
 public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     // TODO: Fix signature (sint64?)
     public static final String eltMethodSignature = "(pointer, sint32):sint32";
+    public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean eltMethodUnwrapResult = false;
+
     public static final String getRegionMethodSignature = "(pointer, sint32, sint32, [sint32]):sint32";
+    public static final boolean[] getRegionMethodWrapArguments = new boolean[]{true, false, false, false};
+    public static final boolean getRegionMethodUnwrapResult = false;
+
     public static final String isSortedMethodSignature = "(pointer):sint32";
+    public static final boolean[] isSortedMethodWrapArguments = new boolean[]{true};
+    public static final boolean isSortedMethodUnwrapResult = false;
+
     public static final String noNAMethodSignature = "(pointer):sint32";
+    public static final boolean[] noNAMethodWrapArguments = new boolean[]{true};
+    public static final boolean noNAMethodUnwrapResult = false;
+
     public static final String sumMethodSignature = "(pointer, sint32):pointer";
+    public static final boolean[] sumMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean sumMethodUnwrapResult = true;
+
     public static final String minMethodSignature = "(pointer, sint32):pointer";
+    public static final boolean[] minMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean minMethodUnwrapResult = true;
+
     public static final String maxMethodSignature = "(pointer, sint32):pointer";
+    public static final boolean[] maxMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean maxMethodUnwrapResult = true;
+
     private static final int eltMethodArgCount = 2;
     private static final int getRegionMethodArgCount = 4;
     private static final int sumMethodArgCount = 2;

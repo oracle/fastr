@@ -9,10 +9,22 @@ public class AltStringClassDescriptor extends AltVecClassDescriptor {
     // TODO: Fix signature
     public static final int eltMethodArgCount = 2;
     public static final int setEltMethodArgCount = 3;
+
     public static final String eltMethodSignature = "(pointer, sint32) : string";
+    public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean eltMethodUnwrapResult = true;
+
     public static final String setEltMethodSignature = "(pointer, sint32, pointer) : void";
+    public static final boolean[] setEltMethodWrapArguments = new boolean[]{true, false, true};
+    public static final boolean setEltMethodUnwrapResult = false;
+
     public static final String isSortedMethodSignature = "(pointer) : sint32";
+    public static final boolean[] isSortedMethodWrapArguments = new boolean[]{true};
+    public static final boolean isSortedMethodUnwrapResult = false;
+
     public static final String noNAMethodSignature = "(pointer) : sint32";
+    public static final boolean[] noNAMethodWrapArguments = new boolean[]{true};
+    public static final boolean noNAMethodUnwrapResult = false;
 
     private AltrepMethodDescriptor eltMethodDescriptor;
     private AltrepMethodDescriptor setEltMethodDescriptor;
