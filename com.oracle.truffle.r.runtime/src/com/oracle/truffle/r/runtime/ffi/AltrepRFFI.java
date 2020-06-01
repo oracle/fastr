@@ -11,7 +11,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.altrep.AltrepDownCall;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepMethodDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
@@ -39,8 +39,8 @@ public final class AltrepRFFI {
         public int doIt(RIntVector altIntVector,
                         @Cached AltrepDownCallNode downCallNode,
                         @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
-            AltrepDownCall altrepDownCall = AltrepUtilities.getLengthMethodDownCall(altIntVector);
-            Object retVal = downCallNode.execute(altrepDownCall, false, new Object[]{altIntVector});
+            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getLengthMethodDescriptor(altIntVector);
+            Object retVal = downCallNode.execute(altrepMethodDescriptor, false, new Object[]{altIntVector});
             assert returnValueInterop.isNumber(retVal);
             try {
                 return returnValueInterop.asInt(retVal);
@@ -59,8 +59,8 @@ public final class AltrepRFFI {
         public int doIt(RIntVector altIntVector, int index,
                         @Cached AltrepDownCallNode downCallNode,
                         @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
-            AltrepDownCall altrepDowncall = AltrepUtilities.getEltMethodDownCall(altIntVector);
-            Object retValue = downCallNode.execute(altrepDowncall, false, new Object[]{altIntVector, index});
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getEltMethodDescriptor(altIntVector);
+            Object retValue = downCallNode.execute(methodDescr, false, new Object[]{altIntVector, index});
             assert retValueInterop.isNumber(retValue);
             try {
                 return retValueInterop.asInt(retValue);
@@ -80,8 +80,8 @@ public final class AltrepRFFI {
                          @Cached AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             setDataptrCalled(altIntVector);
-            AltrepDownCall altrepDowncall = AltrepUtilities.getDataptrMethodDownCall(altIntVector);
-            Object ret = downCallNode.execute(altrepDowncall, false, new Object[]{altIntVector, writeable});
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getDataptrMethodDescriptor(altIntVector);
+            Object ret = downCallNode.execute(methodDescr, false, new Object[]{altIntVector, writeable});
             InteropLibrary interop = InteropLibrary.getFactory().getUncached(ret);
             interop.toNative(ret);
             try {
@@ -107,8 +107,8 @@ public final class AltrepRFFI {
                                      @Cached AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             // TODO: Accept more return values - maybe use InteropLibrary?
-            AltrepDownCall altrepDowncall = AltrepUtilities.getIsSortedMethodDownCall(altIntVector);
-            int retValue = (int) downCallNode.execute(altrepDowncall, false, new Object[]{altIntVector});
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getIsSortedMethodDescriptor(altIntVector);
+            int retValue = (int) downCallNode.execute(methodDescr, false, new Object[]{altIntVector});
             return AltrepSortedness.fromInt(retValue);
         }
     }
@@ -122,8 +122,8 @@ public final class AltrepRFFI {
                             @Cached AltrepDownCallNode downCallNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             // TODO: Accept more return values - maybe use InteropLibrary?
-            AltrepDownCall altrepDowncall = AltrepUtilities.getNoNAMethodDownCall(altIntVector);
-            int retValue = (int) downCallNode.execute(altrepDowncall, false, new Object[]{altIntVector});
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getNoNAMethodDescriptor(altIntVector);
+            int retValue = (int) downCallNode.execute(methodDescr, false, new Object[]{altIntVector});
             return retValue != 0;
         }
     }
@@ -138,8 +138,8 @@ public final class AltrepRFFI {
                         @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             assert AltrepUtilities.isAltrep(altIntVector);
             assert InteropLibrary.getUncached().hasArrayElements(buffer);
-            AltrepDownCall altrepDowncall = AltrepUtilities.getGetRegionMethodDownCall(altIntVector);
-            Object ret = downCallNode.execute(altrepDowncall, false,
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getGetRegionMethodDescriptor(altIntVector);
+            Object ret = downCallNode.execute(methodDescr, false,
                     new Object[]{altIntVector, fromIdx, size, buffer});
             assert retValueInterop.isNumber(ret);
             try {
@@ -157,8 +157,8 @@ public final class AltrepRFFI {
         @Specialization
         public Object doIt(RIntVector altIntVec, boolean naRm,
                            @Cached AltrepDownCallNode downCallNode) {
-            AltrepDownCall altrepDownCall = AltrepUtilities.getSumMethodDownCall(altIntVec);
-            return downCallNode.execute(altrepDownCall, true, new Object[]{altIntVec, naRm});
+            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getSumMethodDescriptor(altIntVec);
+            return downCallNode.execute(altrepMethodDescriptor, true, new Object[]{altIntVec, naRm});
         }
     }
 
@@ -169,8 +169,8 @@ public final class AltrepRFFI {
         @Specialization
         public Object doIt(RStringVector altStringVec, int index,
                            @Cached AltrepDownCallNode downCallNode) {
-            AltrepDownCall altrepDownCall = AltrepUtilities.getEltMethodDownCall(altStringVec);
-            return downCallNode.execute(altrepDownCall, true, new Object[]{altStringVec, index});
+            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getEltMethodDescriptor(altStringVec);
+            return downCallNode.execute(altrepMethodDescriptor, true, new Object[]{altStringVec, index});
         }
     }
 }

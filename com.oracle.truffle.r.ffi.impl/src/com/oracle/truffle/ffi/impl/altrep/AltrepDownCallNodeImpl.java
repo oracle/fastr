@@ -16,7 +16,7 @@ import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Context;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
-import com.oracle.truffle.r.runtime.data.altrep.AltrepDownCall;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepMethodDescriptor;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
 @GenerateUncached
 public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
     @Override
-    public abstract Object execute(AltrepDownCall altrepDowncall, boolean unwrapFlag, Object[] args);
+    public abstract Object execute(AltrepMethodDescriptor altrepDowncall, boolean unwrapFlag, Object[] args);
 
     public static AltrepDownCallNodeImpl create() {
         return AltrepDownCallNodeImplNodeGen.create();
@@ -39,7 +39,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
     }
 
     @Specialization(guards = "cachedLength == args.length", limit = "3")
-    public Object doIt(AltrepDownCall altrepDowncallIn, boolean unwrapFlag, Object[] args,
+    public Object doIt(AltrepMethodDescriptor altrepDowncallIn, boolean unwrapFlag, Object[] args,
                        @Cached("args.length") int cachedLength,
                        @CachedLibrary("altrepDowncallIn.method") InteropLibrary methodInterop,
                        @Cached(value = "createUnwrapNode(unwrapFlag)", uncached = "createUncachedUnwrapNode()") FFIUnwrapNode unwrapNode,
@@ -50,7 +50,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
                        @Cached BranchProfile unwrapResultProfile,
                        @Cached("createIdentityProfile()") ValueProfile identityProfile) {
         CompilerAsserts.partialEvaluationConstant(unwrapFlag);
-        AltrepDownCall altrepDowncall = identityProfile.profile(altrepDowncallIn);
+        AltrepMethodDescriptor altrepDowncall = identityProfile.profile(altrepDowncallIn);
 
         assert methodInterop.isExecutable(altrepDowncall.method);
         RContext ctx = ctxRef.get();
@@ -84,16 +84,16 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
 
     @Specialization(guards = "cachedLength == args.length", replaces = "doIt")
     public Object doItWithDispatchedMethodInterop(
-                        AltrepDownCall altrepDowncall, boolean unwrapFlag, Object[] args,
-                        @Cached("args.length") int cachedLength,
-                        @CachedLibrary(limit = "3") InteropLibrary methodInterop,
-                        @Cached(value = "createUnwrapNode(unwrapFlag)", uncached = "createUncachedUnwrapNode()") FFIUnwrapNode unwrapNode,
-                        @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
-                        @Cached(value = "createMaterialized(args.length)", allowUncached = true) FFIMaterializeNode[] materializeNodes,
-                        @Cached(value = "createToNatives(args.length)", allowUncached = true) FFIToNativeMirrorNode[] toNativeNodes,
-                        @Cached("createBinaryProfile()") ConditionProfile isLLVMProfile,
-                        @Cached BranchProfile unwrapResultProfile,
-                        @Cached("createIdentityProfile()") ValueProfile identityProfile) {
+            AltrepMethodDescriptor altrepDowncall, boolean unwrapFlag, Object[] args,
+            @Cached("args.length") int cachedLength,
+            @CachedLibrary(limit = "3") InteropLibrary methodInterop,
+            @Cached(value = "createUnwrapNode(unwrapFlag)", uncached = "createUncachedUnwrapNode()") FFIUnwrapNode unwrapNode,
+            @CachedContext(TruffleRLanguage.class) ContextReference<RContext> ctxRef,
+            @Cached(value = "createMaterialized(args.length)", allowUncached = true) FFIMaterializeNode[] materializeNodes,
+            @Cached(value = "createToNatives(args.length)", allowUncached = true) FFIToNativeMirrorNode[] toNativeNodes,
+            @Cached("createBinaryProfile()") ConditionProfile isLLVMProfile,
+            @Cached BranchProfile unwrapResultProfile,
+            @Cached("createIdentityProfile()") ValueProfile identityProfile) {
         return doIt(altrepDowncall, unwrapFlag, args, cachedLength, methodInterop, unwrapNode, ctxRef, materializeNodes,
                 toNativeNodes, isLLVMProfile, unwrapResultProfile, identityProfile);
     }

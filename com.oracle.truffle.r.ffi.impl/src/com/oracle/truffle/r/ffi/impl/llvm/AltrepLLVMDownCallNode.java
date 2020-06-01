@@ -76,42 +76,42 @@ public abstract class AltrepLLVMDownCallNode extends LLVMDownCallNode {
         switch (f) {
             case AltInteger_Dataptr:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object dataptrMethod = ((AltIntegerClassDescriptor) descriptor).getDataptrDownCall().method;
+                Object dataptrMethod = ((AltIntegerClassDescriptor) descriptor).getDataptrMethodDescriptor().method;
                 assert dataptrMethod instanceof TruffleObject;
                 return (TruffleObject) dataptrMethod;
             case AltInteger_Is_sorted:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object isSortedMethod = ((AltIntegerClassDescriptor) descriptor).getIsSortedDownCall().method;
+                Object isSortedMethod = ((AltIntegerClassDescriptor) descriptor).getIsSortedMethodDescriptor().method;
                 assert isSortedMethod instanceof TruffleObject;
                 return (TruffleObject) isSortedMethod;
             case AltInteger_Elt:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object eltMethod = ((AltIntegerClassDescriptor) descriptor).getEltDownCall().method;
+                Object eltMethod = ((AltIntegerClassDescriptor) descriptor).getEltMethodDescriptor().method;
                 assert eltMethod instanceof TruffleObject;
                 return (TruffleObject) eltMethod;
             case AltInteger_Max:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object maxMethod = ((AltIntegerClassDescriptor) descriptor).getMaxDownCall().method;
+                Object maxMethod = ((AltIntegerClassDescriptor) descriptor).getMaxMethodDescriptor().method;
                 assert maxMethod instanceof TruffleObject;
                 return (TruffleObject) maxMethod;
             case AltInteger_Min:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object minMethod = ((AltIntegerClassDescriptor) descriptor).getMinDownCall().method;
+                Object minMethod = ((AltIntegerClassDescriptor) descriptor).getMinMethodDescriptor().method;
                 assert minMethod instanceof TruffleObject;
                 return (TruffleObject) minMethod;
             case AltInteger_Sum:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object sumMethod = ((AltIntegerClassDescriptor) descriptor).getSumDownCall().method;
+                Object sumMethod = ((AltIntegerClassDescriptor) descriptor).getSumMethodDescriptor().method;
                 assert sumMethod instanceof TruffleObject;
                 return (TruffleObject) sumMethod;
             case AltInteger_No_NA:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object noNaMethod = ((AltIntegerClassDescriptor) descriptor).getNoNADownCall().method;
+                Object noNaMethod = ((AltIntegerClassDescriptor) descriptor).getNoNAMethodDescriptor().method;
                 assert noNaMethod instanceof TruffleObject;
                 return (TruffleObject) noNaMethod;
             case AltInteger_Get_region:
                 assert descriptor instanceof AltIntegerClassDescriptor;
-                Object getRegionMethod = ((AltIntegerClassDescriptor) descriptor).getGetRegionDownCall().method;
+                Object getRegionMethod = ((AltIntegerClassDescriptor) descriptor).getGetRegionMethodDescriptor().method;
                 assert getRegionMethod instanceof TruffleObject;
                 return (TruffleObject) getRegionMethod;
             default:

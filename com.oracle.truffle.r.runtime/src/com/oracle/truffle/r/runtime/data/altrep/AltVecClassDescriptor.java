@@ -35,44 +35,44 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
     public static final String dataptrOrNullMethodSignature = "(pointer) : pointer";
     public static final String extractSubsetMethodSignature = "(pointer, pointer, pointer) : pointer";
     private static final int dataptrMethodArgCount = 2;
-    private AltrepDownCall dataptrDownCall;
-    private AltrepDownCall dataptrOrNullDownCall;
-    private AltrepDownCall extractSubsetDownCall;
+    private AltrepMethodDescriptor dataptrMethodDescriptor;
+    private AltrepMethodDescriptor dataptrOrMethodDescriptor;
+    private AltrepMethodDescriptor extractSubsetMethodDescriptor;
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     AltVecClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);
     }
 
-    public void registerDataptrMethod(AltrepDownCall dataptrMethod) {
+    public void registerDataptrMethod(AltrepMethodDescriptor dataptrMethod) {
         logRegisterMethod("Dataptr");
-        this.dataptrDownCall = dataptrMethod;
+        this.dataptrMethodDescriptor = dataptrMethod;
     }
 
-    public void registerDataptrOrNullMethod(AltrepDownCall dataptrOrNullMethod) {
+    public void registerDataptrOrNullMethod(AltrepMethodDescriptor dataptrOrNullMethod) {
         logRegisterMethod("Dataptr_or_null");
-        this.dataptrOrNullDownCall = dataptrOrNullMethod;
+        this.dataptrOrMethodDescriptor = dataptrOrNullMethod;
     }
 
-    public void registerExtractSubsetMethod(AltrepDownCall extractSubsetMethod) {
+    public void registerExtractSubsetMethod(AltrepMethodDescriptor extractSubsetMethod) {
         logRegisterMethod("Extract_Subset");
-        this.extractSubsetDownCall = extractSubsetMethod;
+        this.extractSubsetMethodDescriptor = extractSubsetMethod;
     }
 
-    public AltrepDownCall getDataptrDownCall() {
-        return dataptrDownCall;
+    public AltrepMethodDescriptor getDataptrMethodDescriptor() {
+        return dataptrMethodDescriptor;
     }
 
     public boolean isDataptrMethodRegistered() {
-        return dataptrDownCall != null;
+        return dataptrMethodDescriptor != null;
     }
 
     public boolean isDataptrOrNullMethodRegistered() {
-        return dataptrOrNullDownCall != null;
+        return dataptrOrMethodDescriptor != null;
     }
 
     public boolean isExtractSubsetMethodRegistered() {
-        return extractSubsetDownCall != null;
+        return extractSubsetMethodDescriptor != null;
     }
 
     public long invokeDataptrMethodCached(Object instance, boolean writeabble, InteropLibrary dataptrMethodInterop,
@@ -81,7 +81,7 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
     }
 
     public long invokeDataptrMethodUncached(Object instance, boolean writeabble) {
-        InteropLibrary dataptrMethodInterop = InteropLibrary.getFactory().getUncached(dataptrDownCall.method);
+        InteropLibrary dataptrMethodInterop = InteropLibrary.getFactory().getUncached(dataptrMethodDescriptor.method);
         InteropLibrary dataptrInterop = InteropLibrary.getFactory().getUncached();
         ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
         return invokeDataptrMethod(instance, writeabble, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
@@ -92,7 +92,7 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("dataptr", instance, writeabble);
         }
-        Object dataptr = invokeNativeFunction(dataptrMethodInterop, dataptrDownCall.method, dataptrMethodSignature, dataptrMethodArgCount, hasMirrorProfile, instance, writeabble); // TODO
+        Object dataptr = invokeNativeFunction(dataptrMethodInterop, dataptrMethodDescriptor.method, dataptrMethodSignature, dataptrMethodArgCount, hasMirrorProfile, instance, writeabble); // TODO
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(dataptr);
         }

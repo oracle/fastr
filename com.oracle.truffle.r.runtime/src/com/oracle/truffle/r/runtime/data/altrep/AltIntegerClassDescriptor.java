@@ -49,109 +49,109 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     private static final int minMethodArgCount = 2;
     private static final int maxMethodArgCount = 2;
     private static final int isSortedMethodArgCount = 1;
-    private AltrepDownCall eltDownCall;
-    private AltrepDownCall getRegionDownCall;
-    private AltrepDownCall isSortedDownCall;
-    private AltrepDownCall noNADownCall;
-    private AltrepDownCall sumDownCall;
-    private AltrepDownCall minDownCall;
-    private AltrepDownCall maxDownCall;
+    private AltrepMethodDescriptor eltMethodDescriptor;
+    private AltrepMethodDescriptor getRegionMethodDescriptor;
+    private AltrepMethodDescriptor isSortedMethodDescriptor;
+    private AltrepMethodDescriptor noNAMethodDescriptor;
+    private AltrepMethodDescriptor sumMethodDescriptor;
+    private AltrepMethodDescriptor minMethodDescriptor;
+    private AltrepMethodDescriptor maxMethodDescriptor;
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     public AltIntegerClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);
     }
 
-    public AltrepDownCall getEltDownCall() {
-        assert eltDownCall != null;
-        return eltDownCall;
+    public AltrepMethodDescriptor getEltMethodDescriptor() {
+        assert eltMethodDescriptor != null;
+        return eltMethodDescriptor;
     }
 
-    public AltrepDownCall getGetRegionDownCall() {
-        return getRegionDownCall;
+    public AltrepMethodDescriptor getGetRegionMethodDescriptor() {
+        return getRegionMethodDescriptor;
     }
 
-    public AltrepDownCall getIsSortedDownCall() {
-        return isSortedDownCall;
+    public AltrepMethodDescriptor getIsSortedMethodDescriptor() {
+        return isSortedMethodDescriptor;
     }
 
-    public AltrepDownCall getNoNADownCall() {
-        return noNADownCall;
+    public AltrepMethodDescriptor getNoNAMethodDescriptor() {
+        return noNAMethodDescriptor;
     }
 
-    public AltrepDownCall getSumDownCall() {
-        return sumDownCall;
+    public AltrepMethodDescriptor getSumMethodDescriptor() {
+        return sumMethodDescriptor;
     }
 
-    public AltrepDownCall getMaxDownCall() {
-        return maxDownCall;
+    public AltrepMethodDescriptor getMaxMethodDescriptor() {
+        return maxMethodDescriptor;
     }
 
-    public AltrepDownCall getMinDownCall() {
-        return minDownCall;
+    public AltrepMethodDescriptor getMinMethodDescriptor() {
+        return minMethodDescriptor;
     }
 
-    public void registerEltMethod(AltrepDownCall eltMethod) {
+    public void registerEltMethod(AltrepMethodDescriptor eltMethod) {
         logRegisterMethod("Elt");
-        this.eltDownCall = eltMethod;
+        this.eltMethodDescriptor = eltMethod;
     }
 
-    public void registerGetRegionMethod(AltrepDownCall getRegionMethod) {
+    public void registerGetRegionMethod(AltrepMethodDescriptor getRegionMethod) {
         logRegisterMethod("Get_region");
-        this.getRegionDownCall = getRegionMethod;
+        this.getRegionMethodDescriptor = getRegionMethod;
     }
 
-    public void registerIsSortedMethod(AltrepDownCall isSortedMethod) {
+    public void registerIsSortedMethod(AltrepMethodDescriptor isSortedMethod) {
         logRegisterMethod("Is_sorted");
-        this.isSortedDownCall = isSortedMethod;
+        this.isSortedMethodDescriptor = isSortedMethod;
     }
 
-    public void registerNoNAMethod(AltrepDownCall noNAMethod) {
+    public void registerNoNAMethod(AltrepMethodDescriptor noNAMethod) {
         logRegisterMethod("No_NA");
-        this.noNADownCall = noNAMethod;
+        this.noNAMethodDescriptor = noNAMethod;
     }
 
-    public void registerSumMethod(AltrepDownCall sumMethod) {
+    public void registerSumMethod(AltrepMethodDescriptor sumMethod) {
         logRegisterMethod("Sum");
-        this.sumDownCall = sumMethod;
+        this.sumMethodDescriptor = sumMethod;
     }
 
-    public void registerMaxMethod(AltrepDownCall maxMethod) {
+    public void registerMaxMethod(AltrepMethodDescriptor maxMethod) {
         logRegisterMethod("Max");
-        this.maxDownCall = maxMethod;
+        this.maxMethodDescriptor = maxMethod;
     }
 
-    public void registerMinMethod(AltrepDownCall minMethod) {
+    public void registerMinMethod(AltrepMethodDescriptor minMethod) {
         logRegisterMethod("Min");
-        this.minDownCall = minMethod;
+        this.minMethodDescriptor = minMethod;
     }
 
     public boolean isEltMethodRegistered() {
-        return eltDownCall != null;
+        return eltMethodDescriptor != null;
     }
 
     public boolean isGetRegionMethodRegistered() {
-        return getRegionDownCall != null;
+        return getRegionMethodDescriptor != null;
     }
 
     public boolean isNoNAMethodRegistered() {
-        return noNADownCall != null;
+        return noNAMethodDescriptor != null;
     }
 
     public boolean isSumMethodRegistered() {
-        return sumDownCall != null;
+        return sumMethodDescriptor != null;
     }
 
     public boolean isMaxMethodRegistered() {
-        return maxDownCall != null;
+        return maxMethodDescriptor != null;
     }
 
     public boolean isMinMethodRegistered() {
-        return minDownCall != null;
+        return minMethodDescriptor != null;
     }
 
     public boolean isIsSortedMethodRegistered() {
-        return isSortedDownCall != null;
+        return isSortedMethodDescriptor != null;
     }
 
     @Override
@@ -160,7 +160,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     }
 
     public int invokeEltMethodUncached(Object instance, int index) {
-        InteropLibrary methodInterop = InteropLibrary.getFactory().getUncached(eltDownCall.method);
+        InteropLibrary methodInterop = InteropLibrary.getFactory().getUncached(eltMethodDescriptor.method);
         ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
         return invokeEltMethod(instance, index, methodInterop, hasMirrorProfile);
     }
@@ -190,11 +190,11 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     }
 
     private int invokeEltMethod(Object instance, int index, InteropLibrary eltMethodInterop, ConditionProfile hasMirrorProfile) {
-        assert eltDownCall.method != null;
+        assert eltMethodDescriptor.method != null;
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("elt", instance, index);
         }
-        Object element = invokeNativeFunction(eltMethodInterop, eltDownCall.method, eltMethodSignature, eltMethodArgCount, hasMirrorProfile, instance, index);
+        Object element = invokeNativeFunction(eltMethodInterop, eltMethodDescriptor.method, eltMethodSignature, eltMethodArgCount, hasMirrorProfile, instance, index);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(element);
         }
@@ -203,14 +203,14 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     }
 
     private long invokeGetRegionMethod(Object instance, long fromIdx, long size, Object buffer, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        assert getRegionDownCall.method != null;
+        assert getRegionMethodDescriptor.method != null;
         if (buffer instanceof int[]) {
             throw RInternalError.shouldNotReachHere("Calls from managed code are unimplemented");
         }
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("GetRegion", instance, fromIdx, size, buffer);
         }
-        Object copiedCount = invokeNativeFunction(methodInterop, getRegionDownCall.method, getRegionMethodSignature, getRegionMethodArgCount, hasMirrorProfile, instance, fromIdx, size, buffer);
+        Object copiedCount = invokeNativeFunction(methodInterop, getRegionMethodDescriptor.method, getRegionMethodSignature, getRegionMethodArgCount, hasMirrorProfile, instance, fromIdx, size, buffer);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(copiedCount);
         }
@@ -222,7 +222,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Sum", instance, naRm);
         }
-        Object sumVectorMirror = invokeNativeFunction(methodInterop, sumDownCall.method, sumMethodSignature, sumMethodArgCount, hasMirrorProfile, instance, naRm);
+        Object sumVectorMirror = invokeNativeFunction(methodInterop, sumMethodDescriptor.method, sumMethodSignature, sumMethodArgCount, hasMirrorProfile, instance, naRm);
         return convertNativeReturnValToIntOrDouble(sumVectorMirror);
     }
 
@@ -230,7 +230,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Min", instance, naRm);
         }
-        Object minVectorMirror = invokeNativeFunction(methodInterop, minDownCall.method, minMethodSignature, minMethodArgCount, hasMirrorProfile, instance, naRm);
+        Object minVectorMirror = invokeNativeFunction(methodInterop, minMethodDescriptor.method, minMethodSignature, minMethodArgCount, hasMirrorProfile, instance, naRm);
         return convertNativeReturnValToIntOrDouble(minVectorMirror);
     }
 
@@ -238,7 +238,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Max", instance, naRm);
         }
-        Object maxVectorMirror = invokeNativeFunction(methodInterop, maxDownCall.method, maxMethodSignature, maxMethodArgCount, hasMirrorProfile, instance, naRm);
+        Object maxVectorMirror = invokeNativeFunction(methodInterop, maxMethodDescriptor.method, maxMethodSignature, maxMethodArgCount, hasMirrorProfile, instance, naRm);
         return convertNativeReturnValToIntOrDouble(maxVectorMirror);
     }
 
@@ -246,7 +246,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("Is_sorted", instance);
         }
-        Object sortedMode = invokeNativeFunction(methodInterop, isSortedDownCall.method, isSortedMethodSignature, isSortedMethodArgCount, hasMirrorProfile, instance);
+        Object sortedMode = invokeNativeFunction(methodInterop, isSortedMethodDescriptor.method, isSortedMethodSignature, isSortedMethodArgCount, hasMirrorProfile, instance);
         assert sortedMode instanceof Integer;
         return (int) sortedMode;
     }

@@ -14,65 +14,65 @@ public class AltStringClassDescriptor extends AltVecClassDescriptor {
     public static final String isSortedMethodSignature = "(pointer) : sint32";
     public static final String noNAMethodSignature = "(pointer) : sint32";
 
-    private AltrepDownCall eltDownCall;
-    private AltrepDownCall setEltDownCall;
-    private AltrepDownCall isSortedDownCall;
-    private AltrepDownCall noNADownCall;
+    private AltrepMethodDescriptor eltMethodDescriptor;
+    private AltrepMethodDescriptor setEltMethodDescriptor;
+    private AltrepMethodDescriptor isSortedMethodDescriptor;
+    private AltrepMethodDescriptor noNAMethodDescriptor;
 
     public AltStringClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);
     }
 
-    public void registerEltMethod(AltrepDownCall eltMethod) {
-        this.eltDownCall = eltMethod;
+    public void registerEltMethod(AltrepMethodDescriptor eltMethod) {
+        this.eltMethodDescriptor = eltMethod;
     }
 
-    public void registerSetEltMethod(AltrepDownCall setEltMethod) {
-        this.setEltDownCall = setEltMethod;
+    public void registerSetEltMethod(AltrepMethodDescriptor setEltMethod) {
+        this.setEltMethodDescriptor = setEltMethod;
     }
 
-    public void registerIsSortedMethod(AltrepDownCall isSortedMethod) {
-        this.isSortedDownCall = isSortedMethod;
+    public void registerIsSortedMethod(AltrepMethodDescriptor isSortedMethod) {
+        this.isSortedMethodDescriptor = isSortedMethod;
     }
 
-    public void registerNoNAMethod(AltrepDownCall noNAMethod) {
-        this.noNADownCall = noNAMethod;
+    public void registerNoNAMethod(AltrepMethodDescriptor noNAMethod) {
+        this.noNAMethodDescriptor = noNAMethod;
     }
 
     public boolean isEltMethodRegistered() {
-        return eltDownCall != null;
+        return eltMethodDescriptor != null;
     }
 
     public boolean isSetEltMethodRegistered() {
-        return setEltDownCall != null;
+        return setEltMethodDescriptor != null;
     }
 
     public boolean isNoNAMethodRegistered() {
-        return noNADownCall != null;
+        return noNAMethodDescriptor != null;
     }
 
     public boolean isIsSortedMethodRegistered() {
-        return isSortedDownCall != null;
+        return isSortedMethodDescriptor != null;
     }
 
-    public AltrepDownCall getEltDownCall() {
-        return eltDownCall;
+    public AltrepMethodDescriptor getEltMethodDescriptor() {
+        return eltMethodDescriptor;
     }
 
-    public AltrepDownCall getSetEltDownCall() {
-        return setEltDownCall;
+    public AltrepMethodDescriptor getSetEltMethodDescriptor() {
+        return setEltMethodDescriptor;
     }
 
-    public AltrepDownCall getIsSortedDownCall() {
-        return isSortedDownCall;
+    public AltrepMethodDescriptor getIsSortedMethodDescriptor() {
+        return isSortedMethodDescriptor;
     }
 
-    public AltrepDownCall getNoNADownCall() {
-        return noNADownCall;
+    public AltrepMethodDescriptor getNoNAMethodDescriptor() {
+        return noNAMethodDescriptor;
     }
 
     public Object invokeEltMethodUncached(Object instance, int index) {
-        InteropLibrary methodInterop = InteropLibrary.getFactory().getUncached(eltDownCall.method);
+        InteropLibrary methodInterop = InteropLibrary.getFactory().getUncached(eltMethodDescriptor.method);
         ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
         return invokeEltMethod(instance, index, methodInterop, hasMirrorProfile);
     }
@@ -86,13 +86,13 @@ public class AltStringClassDescriptor extends AltVecClassDescriptor {
     }
 
     public void invokeSetEltMethodUncached(Object instance, int index, Object element) {
-        InteropLibrary methodInterop = InteropLibrary.getFactory().getUncached(setEltDownCall.method);
+        InteropLibrary methodInterop = InteropLibrary.getFactory().getUncached(setEltMethodDescriptor.method);
         ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
         invokeSetEltMethod(instance, index, element, methodInterop, hasMirrorProfile);
     }
 
     private Object invokeEltMethod(Object instance, int index, InteropLibrary eltMethodInterop, ConditionProfile hasMirrorProfile) {
-        Object elem = invokeNativeFunction(eltMethodInterop, eltDownCall.method, eltMethodSignature, eltMethodArgCount, hasMirrorProfile, instance, index);
+        Object elem = invokeNativeFunction(eltMethodInterop, eltMethodDescriptor.method, eltMethodSignature, eltMethodArgCount, hasMirrorProfile, instance, index);
 
         // TODO: This is an ugly hack for nested upcalls.
         // In case that invokeNativeFunction calls into another upcall so that elem is not wrapped in NativeMirror twice.
@@ -104,6 +104,6 @@ public class AltStringClassDescriptor extends AltVecClassDescriptor {
     }
 
     private void invokeSetEltMethod(Object instance, int index, Object element, InteropLibrary setEltMethodInterop, ConditionProfile hasMirrorProfile) {
-        invokeNativeFunction(setEltMethodInterop, setEltDownCall.method, setEltMethodSignature, setEltMethodArgCount, hasMirrorProfile, instance, index, element);
+        invokeNativeFunction(setEltMethodInterop, setEltMethodDescriptor.method, setEltMethodSignature, setEltMethodArgCount, hasMirrorProfile, instance, index, element);
     }
 }

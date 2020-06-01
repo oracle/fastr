@@ -53,14 +53,14 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     private final String packageName;
     private final Object dllInfo;
     // Methods
-    private AltrepDownCall unserializeDownCall;
-    private AltrepDownCall unserializeEXDownCall;
-    private AltrepDownCall serializedStateDownCall;
-    private AltrepDownCall duplicateDownCall;
-    private AltrepDownCall duplicateEXDownCall;
-    private AltrepDownCall coerceDownCall;
-    private AltrepDownCall inspectDownCall;
-    private AltrepDownCall lengthDownCall;
+    private AltrepMethodDescriptor unserializeMethodDescriptor;
+    private AltrepMethodDescriptor unserializeEXMethodDescriptor;
+    private AltrepMethodDescriptor serializedStateMethodDescriptor;
+    private AltrepMethodDescriptor duplicateMethodDescriptor;
+    private AltrepMethodDescriptor duplicateEXMethodDescriptor;
+    private AltrepMethodDescriptor coerceMethodDescriptor;
+    private AltrepMethodDescriptor inspectMethodDescriptor;
+    private AltrepMethodDescriptor lengthMethodDescriptor;
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     AltRepClassDescriptor(String className, String packageName, Object dllInfo) {
@@ -75,88 +75,88 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         return RType.PairList;
     }
 
-    public AltrepDownCall getDuplicateDownCall() {
-        return duplicateDownCall;
+    public AltrepMethodDescriptor getDuplicateMethodDescriptor() {
+        return duplicateMethodDescriptor;
     }
 
-    public AltrepDownCall getLengthDownCall() {
-        return lengthDownCall;
+    public AltrepMethodDescriptor getLengthMethodDescriptor() {
+        return lengthMethodDescriptor;
     }
 
     protected void logRegisterMethod(String methodName) {
         logger.finer(() -> "Register " + methodName + " on " + toString());
     }
 
-    public void registerUnserializeMethod(AltrepDownCall downCall) {
+    public void registerUnserializeMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Unserialize");
-        this.unserializeDownCall = downCall;
+        this.unserializeMethodDescriptor = methodDescr;
     }
 
-    public void registerUnserializeEXMethod(AltrepDownCall downCall) {
+    public void registerUnserializeEXMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Unserialize_EX");
-        this.unserializeEXDownCall = downCall;
+        this.unserializeEXMethodDescriptor = methodDescr;
     }
 
-    public void registerSerializedStateMethod(AltrepDownCall downCall) {
+    public void registerSerializedStateMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Serialized_state");
-        this.serializedStateDownCall = downCall;
+        this.serializedStateMethodDescriptor = methodDescr;
     }
 
-    public void registerDuplicateMethod(AltrepDownCall downCall) {
+    public void registerDuplicateMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Duplicate");
-        this.duplicateDownCall = downCall;
+        this.duplicateMethodDescriptor = methodDescr;
     }
 
-    public void registerDuplicateEXMethod(AltrepDownCall downCall) {
+    public void registerDuplicateEXMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Duplicate_EX");
-        this.duplicateEXDownCall = downCall;
+        this.duplicateEXMethodDescriptor = methodDescr;
     }
 
-    public void registerCoerceMethod(AltrepDownCall downCall) {
+    public void registerCoerceMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Coerce");
-        this.coerceDownCall = downCall;
+        this.coerceMethodDescriptor = methodDescr;
     }
 
-    public void registerInspectMethod(AltrepDownCall downCall) {
+    public void registerInspectMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Inspect");
-        this.inspectDownCall = downCall;
+        this.inspectMethodDescriptor = methodDescr;
     }
 
-    public void registerLengthMethod(AltrepDownCall lengthDownCall) {
+    public void registerLengthMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Length");
-        this.lengthDownCall = lengthDownCall;
+        this.lengthMethodDescriptor = methodDescr;
     }
 
     public boolean isUnserializeMethodRegistered() {
-        return unserializeDownCall != null;
+        return unserializeMethodDescriptor != null;
     }
 
     public boolean isUnserializeEXMethodRegistered() {
-        return unserializeEXDownCall != null;
+        return unserializeEXMethodDescriptor != null;
     }
 
     public boolean isSerializedStateMethodRegistered() {
-        return serializedStateDownCall != null;
+        return serializedStateMethodDescriptor != null;
     }
 
     public boolean isDuplicateMethodRegistered() {
-        return duplicateDownCall != null;
+        return duplicateMethodDescriptor != null;
     }
 
     public boolean isDuplicateEXMethodRegistered() {
-        return duplicateEXDownCall != null;
+        return duplicateEXMethodDescriptor != null;
     }
 
     public boolean isCoerceMethodRegistered() {
-        return coerceDownCall != null;
+        return coerceMethodDescriptor != null;
     }
 
     public boolean isInspectMethodRegistered() {
-        return inspectDownCall != null;
+        return inspectMethodDescriptor != null;
     }
 
     public boolean isLengthMethodRegistered() {
-        return lengthDownCall != null;
+        return lengthMethodDescriptor != null;
     }
 
     @CompilerDirectives.TruffleBoundary
@@ -181,7 +181,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
 
     public int invokeLengthMethodUncached(Object instance) {
         ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
-        InteropLibrary lengthMethodInterop = InteropLibrary.getFactory().getUncached(lengthDownCall.method);
+        InteropLibrary lengthMethodInterop = InteropLibrary.getFactory().getUncached(lengthMethodDescriptor.method);
         return invokeLengthMethod(instance, lengthMethodInterop, hasMirrorProfile);
     }
 
@@ -230,7 +230,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     }
 
     private Object invokeDuplicateMethod(Object instance, boolean deep, InteropLibrary interop, ConditionProfile hasMirrorProfile) {
-        Object ret = invokeNativeFunction(interop, duplicateDownCall.method, duplicateMethodSignature, duplicateMethodArgCount, hasMirrorProfile, instance, deep);
+        Object ret = invokeNativeFunction(interop, duplicateMethodDescriptor.method, duplicateMethodSignature, duplicateMethodArgCount, hasMirrorProfile, instance, deep);
         // TODO: Return type checks?
         return ret;
     }
@@ -239,7 +239,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         if (logger.isLoggable(Level.FINER)) {
             logBeforeInteropExecute("lengthMethod", instance);
         }
-        Object ret = invokeNativeFunction(lengthMethodInterop, lengthDownCall.method, lengthMethodSignature, lengthMethodArgCount, hasMirrorProfile, instance);
+        Object ret = invokeNativeFunction(lengthMethodInterop, lengthMethodDescriptor.method, lengthMethodSignature, lengthMethodArgCount, hasMirrorProfile, instance);
         if (logger.isLoggable(Level.FINER)) {
             logAfterInteropExecute(ret);
         }

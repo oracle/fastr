@@ -70,6 +70,6 @@ public abstract class AltrepDuplicateNode extends RBaseNode {
     }
 
     protected static Object getDuplicateMethod(RIntVector altIntVec) {
-        return getAltIntDescriptor(altIntVec).getDuplicateDownCall().method;
+        return getAltIntDescriptor(altIntVec).getDuplicateMethodDescriptor().method;
     }
 }
