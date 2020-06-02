@@ -34,7 +34,6 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
@@ -122,25 +121,11 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public boolean noNA(@Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
-                        @Cached AltrepRFFI.AltIntNoNANode noNANode,
-                        @Cached AltrepRFFI.AltIntGetRegionNode getRegionNode,
-                        @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+                        @Cached AltrepRFFI.AltIntNoNANode noNANode) {
         if (hasNoNAMethodProfile.profile(descriptor.isNoNAMethodRegistered())) {
             return noNANode.execute(owner);
         } else {
-            // Get whole region
-            int length = getLength(lengthNode);
-            int[] buffer = new int[length];
-            int copied = getRegionNode.execute(owner, 0, getLength(lengthNode), buffer);
-            if (copied != length) {
-                throw RInternalError.shouldNotReachHere();
-            }
-            for (int item : buffer) {
-                if (RRuntime.isNA(item)) {
-                    return false;
-                }
-            }
-            return true;
+            return false;
         }
     }
 
