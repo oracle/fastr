@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -34,6 +35,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
@@ -94,12 +96,13 @@ public final class RIntVector extends RAbstractNumericVector {
         return new RIntVector(new RIntSeqVectorData(start, stride, length), length);
     }
 
+    @TruffleBoundary
     public static RIntVector createAltInt(AltIntegerClassDescriptor descriptor, RAltRepData altrepData) {
         RAltIntVectorData altIntVectorData = new RAltIntVectorData(descriptor, altrepData);
         RIntVector vector = new RIntVector();
         vector.setAltRep();
         vector.data = altIntVectorData;
-        int length = descriptor.invokeLengthMethodUncached(vector);
+        int length = AltrepUtilities.getLengthUncached(vector);
         vector.setData(altIntVectorData, length);
         return vector;
     }

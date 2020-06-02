@@ -200,16 +200,6 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         }
     }
 
-    public int invokeLengthMethodCached(Object instance, InteropLibrary lengthMethodInterop, ConditionProfile hasMirrorProfile) {
-        return invokeLengthMethod(instance, lengthMethodInterop, hasMirrorProfile);
-    }
-
-    public int invokeLengthMethodUncached(Object instance) {
-        ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
-        InteropLibrary lengthMethodInterop = InteropLibrary.getFactory().getUncached(lengthMethodDescriptor.method);
-        return invokeLengthMethod(instance, lengthMethodInterop, hasMirrorProfile);
-    }
-
     public Object invokeDuplicateMethodCached(Object instance, boolean deep, InteropLibrary interop, ConditionProfile hasMirrorProfile) {
         return invokeDuplicateMethod(instance, deep, interop, hasMirrorProfile);
     }
@@ -258,22 +248,6 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         Object ret = invokeNativeFunction(interop, duplicateMethodDescriptor.method, duplicateMethodSignature, duplicateMethodArgCount, hasMirrorProfile, instance, deep);
         // TODO: Return type checks?
         return ret;
-    }
-
-    private int invokeLengthMethod(Object instance, InteropLibrary lengthMethodInterop, ConditionProfile hasMirrorProfile) {
-        if (logger.isLoggable(Level.FINER)) {
-            logBeforeInteropExecute("lengthMethod", instance);
-        }
-        Object ret = invokeNativeFunction(lengthMethodInterop, lengthMethodDescriptor.method, lengthMethodSignature, lengthMethodArgCount, hasMirrorProfile, instance);
-        if (logger.isLoggable(Level.FINER)) {
-            logAfterInteropExecute(ret);
-        }
-        assert ret instanceof Integer || ret instanceof Long;
-        if (ret instanceof Long) {
-            return ((Long) ret).intValue();
-        } else {
-            return (int) ret;
-        }
     }
 
     @Override

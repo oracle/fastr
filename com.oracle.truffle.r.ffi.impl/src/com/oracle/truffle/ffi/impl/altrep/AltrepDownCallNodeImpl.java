@@ -36,7 +36,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
     }
 
     public static AltrepDownCallNodeImpl getUncached() {
-        throw RInternalError.unimplemented("getUncached");
+        return AltrepDownCallNodeImplNodeGen.getUncached();
     }
 
     @Specialization(guards = "cachedLength == args.length", limit = "3")

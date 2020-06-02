@@ -3,6 +3,7 @@ package com.oracle.truffle.r.runtime.data.altrep;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -15,6 +16,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
+import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
 
 public class AltrepUtilities {
     public static boolean isAltrep(Object object) {
@@ -218,6 +220,19 @@ public class AltrepUtilities {
             return getAltIntDescriptor((RIntVector) object).isNoNAMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
+        }
+    }
+
+    public static int getLengthUncached(RIntVector altIntVec) {
+        AltrepMethodDescriptor lengthMethodDescriptor = AltrepUtilities.getLengthMethodDescriptor(altIntVec);
+        Object ret = AltrepDownCallNode.getUncached().execute(lengthMethodDescriptor, AltIntegerClassDescriptor.lengthMethodUnwrapResult,
+                AltIntegerClassDescriptor.lengthMethodWrapArguments, new Object[]{altIntVec});
+        InteropLibrary interop = InteropLibrary.getUncached();
+        assert interop.isNumber(ret);
+        try {
+            return interop.asInt(ret);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere(e);
         }
     }
 
