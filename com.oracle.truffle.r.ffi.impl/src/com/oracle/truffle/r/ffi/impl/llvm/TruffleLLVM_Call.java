@@ -45,20 +45,21 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
-import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
+import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.FFIWrap.FFIDownCallWrap;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
+
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 
 public final class TruffleLLVM_Call implements CallRFFI {
 
@@ -258,7 +259,7 @@ public final class TruffleLLVM_Call implements CallRFFI {
             Object[] wrappedArgs;
             if (ffiToNativeMirrorNodes != null) {
                 ffiWrap = new FFIDownCallWrap(args.length);
-                wrappedArgs = ffiWrap.wrap(args, ffiMaterializeNodes, ffiToNativeMirrorNodes);
+                wrappedArgs = ffiWrap.wrapAll(args, ffiMaterializeNodes, ffiToNativeMirrorNodes);
             } else {
                 ffiWrap = null;
                 wrappedArgs = args;

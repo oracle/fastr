@@ -40,8 +40,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
     }
 
     @Specialization(guards = "cachedLength == args.length", limit = "3")
-    public Object doIt(AltrepMethodDescriptor altrepDowncallIn, boolean unwrapResult,
-                       @SuppressWarnings("unused") boolean[] wrapArguments, Object[] args,
+    public Object doIt(AltrepMethodDescriptor altrepDowncallIn, boolean unwrapResult, boolean[] wrapArguments, Object[] args,
                        @Cached("args.length") int cachedLength,
                        @CachedLibrary("altrepDowncallIn.method") InteropLibrary methodInterop,
                        @Cached(value = "createUnwrapNode(unwrapResult)", uncached = "createUncachedUnwrapNode()") FFIUnwrapNode unwrapNode,
@@ -65,7 +64,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
 
         Object ret;
         try (FFIDownCallWrap ffiWrap = new FFIDownCallWrap(cachedLength)) {
-            Object[] wrappedArgs = ffiWrap.wrap(args, materializeNodes, toNativeNodes);
+            Object[] wrappedArgs = ffiWrap.wrapSome(args, materializeNodes, toNativeNodes, wrapArguments);
             ret = methodInterop.execute(altrepMethodDescriptor.method, wrappedArgs);
             if (unwrapResult) {
                 unwrapResultProfile.enter();
