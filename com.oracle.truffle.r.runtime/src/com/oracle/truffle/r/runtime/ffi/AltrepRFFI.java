@@ -33,6 +33,36 @@ public final class AltrepRFFI {
         return RFFIFactory.getAltrepRFFI().downCallNodeFactory.getUncached();
     }
 
+    private static boolean expectBoolean(InteropLibrary interop, Object value) {
+        RInternalError.guarantee(interop.isBoolean(value), "Value from downcall should be boolean");
+        try {
+            return interop.asBoolean(value);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+    }
+
+    private static int expectInteger(InteropLibrary interop, Object value) {
+        RInternalError.guarantee(interop.isNumber(value), "Value from downcall should be an integer");
+        try {
+            return interop.asInt(value);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+    }
+
+    private static long expectPointer(InteropLibrary interop, Object value) {
+        if (!interop.isPointer(value)) {
+            interop.toNative(value);
+        }
+        try {
+            return interop.asPointer(value);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+    }
+
+
     @GenerateUncached
     public abstract static class AltIntLengthNode extends Node {
         public abstract int execute(RIntVector altIntVector);
@@ -44,12 +74,7 @@ public final class AltrepRFFI {
             AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getLengthMethodDescriptor(altIntVector);
             Object retVal = downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.lengthMethodUnwrapResult,
                     AltIntegerClassDescriptor.lengthMethodWrapArguments, new Object[]{altIntVector});
-            assert returnValueInterop.isNumber(retVal);
-            try {
-                return returnValueInterop.asInt(retVal);
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return expectInteger(returnValueInterop, retVal);
         }
 
     }
@@ -65,14 +90,8 @@ public final class AltrepRFFI {
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getEltMethodDescriptor(altIntVector);
             Object retValue = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.eltMethodUnwrapResult,
                     AltIntegerClassDescriptor.eltMethodWrapArguments, new Object[]{altIntVector, index});
-            assert retValueInterop.isNumber(retValue);
-            try {
-                return retValueInterop.asInt(retValue);
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return expectInteger(retValueInterop, retValue);
         }
-
     }
 
     @GenerateUncached
@@ -81,19 +100,14 @@ public final class AltrepRFFI {
 
         @Specialization
         public long doIt(RIntVector altIntVector, boolean writeable,
-                         @Cached AltrepDownCallNode downCallNode) {
+                         @Cached AltrepDownCallNode downCallNode,
+                         @CachedLibrary(limit = "1") InteropLibrary interop) {
             assert AltrepUtilities.isAltrep(altIntVector);
             setDataptrCalled(altIntVector);
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getDataptrMethodDescriptor(altIntVector);
             Object ret = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.dataptrMethodUnwrapResult,
                     AltIntegerClassDescriptor.dataptrMethodWrapArguments, new Object[]{altIntVector, writeable});
-            InteropLibrary interop = InteropLibrary.getFactory().getUncached(ret);
-            interop.toNative(ret);
-            try {
-                return interop.asPointer(ret);
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere();
-            }
+            return expectPointer(interop, ret);
         }
 
         private static void setDataptrCalled(RIntVector altIntVec) {
@@ -109,13 +123,13 @@ public final class AltrepRFFI {
 
         @Specialization
         public AltrepSortedness doIt(RIntVector altIntVector,
-                                     @Cached AltrepDownCallNode downCallNode) {
+                                     @Cached AltrepDownCallNode downCallNode,
+                                     @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             assert AltrepUtilities.isAltrep(altIntVector);
-            // TODO: Accept more return values - maybe use InteropLibrary?
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getIsSortedMethodDescriptor(altIntVector);
-            int retValue = (int) downCallNode.execute(methodDescr, AltIntegerClassDescriptor.isSortedMethodUnwrapResult,
+            Object retValue = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.isSortedMethodUnwrapResult,
                     AltIntegerClassDescriptor.isSortedMethodWrapArguments, new Object[]{altIntVector});
-            return AltrepSortedness.fromInt(retValue);
+            return AltrepSortedness.fromInt(expectInteger(retValueInterop, retValue));
         }
     }
 
@@ -125,14 +139,15 @@ public final class AltrepRFFI {
 
         @Specialization
         public boolean doIt(RIntVector altIntVector,
-                            @Cached AltrepDownCallNode downCallNode) {
+                            @Cached AltrepDownCallNode downCallNode,
+                            @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             assert AltrepUtilities.isAltrep(altIntVector);
-            // TODO: Accept more return values - maybe use InteropLibrary?
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getNoNAMethodDescriptor(altIntVector);
-            int retValue = (int) downCallNode.execute(methodDescr, AltIntegerClassDescriptor.noNAMethodUnwrapResult,
+            Object retValue = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.noNAMethodUnwrapResult,
                     AltIntegerClassDescriptor.noNAMethodWrapArguments, new Object[]{altIntVector});
-            return retValue != 0;
+            return expectInteger(retValueInterop, retValue) == 1;
         }
+
     }
 
     @GenerateUncached
@@ -148,12 +163,7 @@ public final class AltrepRFFI {
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getGetRegionMethodDescriptor(altIntVector);
             Object ret = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.getRegionMethodUnwrapResult,
                     AltIntegerClassDescriptor.getRegionMethodWrapArguments, new Object[]{altIntVector, fromIdx, size, buffer});
-            assert retValueInterop.isNumber(ret);
-            try {
-                return retValueInterop.asInt(ret);
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return expectInteger(retValueInterop, ret);
         }
     }
 
