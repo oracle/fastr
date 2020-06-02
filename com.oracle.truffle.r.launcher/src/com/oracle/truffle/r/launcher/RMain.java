@@ -259,7 +259,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
     private static int executeFile(boolean verbose, Context context, String fileOption) {
         if (verbose) {
-            System.out.println("Running file: " + fileOption);
+            System.out.println("[launcher] Running file: " + fileOption);
         }
         Source src;
         try {
@@ -268,22 +268,32 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             System.err.printf("IO error while reading the source file '%s'.\nDetails: '%s'.", fileOption, ex.getLocalizedMessage());
             return 1;
         }
+        int result = 0;
         try {
             context.eval(src);
-            return 0;
         } catch (PolyglotException e) {
+            result = 1;
             if (e.isExit()) {
                 // usually from quit
-                return e.getExitStatus();
-            } else if (!e.isInternalError() && (e.isHostException() || e.isGuestException())) {
-                // Note: Internal exceptions are reported by the engine already
-                REPL.handleError(null, context, e);
+                result = e.getExitStatus();
+            } else {
+                if (verbose) {
+                    System.err.println("[launcher] Error: " + e.getClass().getSimpleName() + "; " + e.getMessage());
+                }
+                if (!e.isInternalError() && (e.isHostException() || e.isGuestException())) {
+                    // Note: Internal exceptions are reported by the engine already
+                    REPL.handleError(null, context, e);
+                }
             }
-            return 1;
         } catch (Throwable ex) {
             // Internal exceptions are reported by the engine already
-            return 1;
+            System.err.println("[launcher] Internal Error: " + ex.getClass().getSimpleName() + "; " + ex.getMessage());
+            result = 1;
         }
+        if (verbose) {
+            System.out.println("[launcher] Exiting with code: " + result);
+        }
+        return result;
     }
 
     // CheckStyle: stop system..print check
