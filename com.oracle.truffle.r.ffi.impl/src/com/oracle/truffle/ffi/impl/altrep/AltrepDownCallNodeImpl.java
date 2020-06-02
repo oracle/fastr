@@ -115,23 +115,11 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
 
     @ExplodeLoop
     protected static FFIMaterializeNode[] createMaterialized(boolean[] wrapArguments) {
-        FFIMaterializeNode[] materializeNodes = new FFIMaterializeNode[wrapArguments.length];
-        for (int i = 0; i < wrapArguments.length; i++) {
-            if (wrapArguments[i]) {
-                materializeNodes[i] = FFIMaterializeNode.create();
-            }
-        }
-        return materializeNodes;
+        return FFIMaterializeNode.create(wrapArguments.length);
     }
 
     @ExplodeLoop
     protected static FFIToNativeMirrorNode[] createToNatives(boolean[] wrapArguments) {
-        FFIToNativeMirrorNode[] toNativeMirrorNodes = new FFIToNativeMirrorNode[wrapArguments.length];
-        for (int i = 0; i < wrapArguments.length; i++) {
-            if (wrapArguments[i]) {
-                toNativeMirrorNodes[i] = FFIToNativeMirrorNode.create();
-            }
-        }
-        return toNativeMirrorNodes;
+        return FFIToNativeMirrorNode.create(wrapArguments.length);
     }
 }
