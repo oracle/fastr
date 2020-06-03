@@ -56,9 +56,7 @@ LLVM_LIBNAME := libR$(DYLIB_EXT)l
 C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
 LLVM_LIB := $(FASTR_LIB_DIR)/$(LLVM_LIBNAME)
 R_LIBNAME := libR$(DYLIB_EXT)
-R_LIBNAME_DUMMY := libR_dummy$(DYLIB_EXT)
 R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
-R_LIB_DUMMY := $(FASTR_LIB_DIR)/$(R_LIBNAME_DUMMY)
 
 ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
@@ -78,7 +76,6 @@ ifeq ($(FASTR_RFFI),managed)
 else
 ifeq ($(OS_NAME),Darwin)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(VERSION_FLAGS)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
 
 	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRblas.dylib
@@ -103,7 +100,6 @@ ifeq ($(OS_NAME),Darwin)
 else
 	# not Darwin:
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz $(F2C)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
     # We do not link with Rlapack and Rblas so that we can load those libraries manually later after loading libR
     # Otherwise Sulong would attempt to load Rlapack and Rblas and fail, because there is a dependency cycle:
     #     libR provides xerbla_, but Rlapack/Rblas depend on it, it seems that Sulong is not able to resolve this unlike the native loader
