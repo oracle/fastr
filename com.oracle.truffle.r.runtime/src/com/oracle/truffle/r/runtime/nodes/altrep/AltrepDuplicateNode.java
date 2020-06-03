@@ -16,11 +16,6 @@ import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-/**
- * Note that the behavior of GNU-R's Rf_duplicate in duplicate.c is a bit weird: When the altrep vector
- * does not have <code>Duplicate</code> method registered, then calling <code>Rf_duplicate</code> on such
- * altrep vector creates an atomic vector, not an altrep vector.
- */
 @GenerateUncached
 public abstract class AltrepDuplicateNode extends RBaseNode {
     public abstract Object execute(Object altVec, boolean deep);

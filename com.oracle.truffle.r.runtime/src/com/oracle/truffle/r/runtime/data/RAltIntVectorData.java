@@ -147,18 +147,19 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         long dataptrAddr = dataptrNode.execute(getOwner(), true);
         int[] newData = new int[length];
         NativeMemory.copyMemory(dataptrAddr, newData, ElementType.INT, length);
-        // TODO: complete=true?
-        return new RIntArrayVectorData(newData, true);
+        return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @ExportMessage
     public boolean isWriteable() {
+        // TODO: if (!dataptrCalled) return Dataptr_Or_Null != NULL
         return dataptrCalled;
     }
 
     @ExportMessage
-    public boolean isComplete() {
-        return false;
+    public boolean isComplete(@Cached AltrepRFFI.AltIntNoNANode noNANode,
+                              @Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile) {
+        return noNA(hasNoNAMethodProfile, noNANode);
     }
 
     @ExportMessage
@@ -326,11 +327,6 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public RandomAccessWriteIterator randomAccessWriteIterator() {
         return new RandomAccessWriteIterator(this);
-    }
-
-    @ExportMessage
-    public void commitWriteIterator(SeqWriteIterator iterator, @SuppressWarnings("unused") boolean neverSeenNA) {
-        iterator.commit();
     }
 
     @ExportMessage
