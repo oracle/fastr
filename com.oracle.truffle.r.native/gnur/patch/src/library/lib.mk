@@ -99,7 +99,7 @@ $(OBJ):
 	mkdir -p $(OBJ)
 
 ifeq ($(OS_NAME),Darwin)
-  RPATH_OPT =
+  RPATH_OPT = -Wl,-undefined,dynamic_lookup
 else
   RPATH = $$ORIGIN/../../../lib/
   RPATH_OPT = -Wl,-rpath='$(RPATH)'

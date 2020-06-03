@@ -65,11 +65,21 @@ public class TruffleNFI_DLL implements DLLRFFI {
         }
     }
 
-    public static LibHandle dlOpen(RContext ctx, String path, boolean local, boolean now) {
+    public static LibHandle dlOpen(RContext ctx, String pathIn, boolean local, boolean now) {
         String librffiPath = LibPaths.getBuiltinLibPath(ctx, "R");
         // Do not call before/afterDowncall when loading libR to prevent the pushing/popping of
         // the callback array, which requires that the libR have already been loaded
-        boolean notifyStateRFFI = !librffiPath.equals(path);
+        String path = pathIn;
+        boolean isLibR = librffiPath.equals(path);
+        if (isLibR) {
+            // In case of libR.so we are actually going to load libR.son, the libR.so is an empty
+            // dummy library,
+            // which is there so that packages can be linked against it, but we load the R API
+            // (implemented in libR.son)
+            // here explicitly before loading any package
+            path = LibPaths.normalizeLibRPath(path, "native");
+        }
+        boolean notifyStateRFFI = !isLibR;
         Object before = notifyStateRFFI ? ctx.getStateRFFI().beforeDowncall(null, Type.NFI) : 0;
         try {
             String libName = DLL.libName(ctx, path);

@@ -58,10 +58,10 @@ $(BIN):
 	mkdir -p $(BIN)
 
 $(BIN)/main: $(SRC)/main.c
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(BIN)/main -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(BIN)/main -L $(FASTR_LIB_DIR) -ldl -lRnative $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
 
 $(BIN)/embedded: $(SRC)/embedded.c
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(BIN)/embedded -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(BIN)/embedded -L $(FASTR_LIB_DIR) -ldl -lRnative $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
 	cp $(SRC)/*.R $(BIN)
 
 clean:

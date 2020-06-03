@@ -24,9 +24,14 @@
 # Builds libR
 #
 # We build all the source files with the given compiler (CC), which may be the Labs LLVM clang that produces embedded bitcode.
-# When building the final artifact, we either build only libR.so from the source files in common and NFI specific directories,
-# and if FASTR_RFFI is "LLVM", we build also libR.sol, which is a regular so file with embedded bitcode, but that one is built
-# from the source files in common and LLVM specific directories.
+#
+# In order to support running both backend (NFI and Sulong) in one process, we produce three artifacts here:
+#  * libR.so - dummy library, which standard name in standard location that most of the packages will link with
+#    - when the native loader/Sulong is loading a package (e.g., stats.so), it loads this dummy libR.so
+#  * libRnative.so - library with actual implementation of the R API for NFI
+#    - dlopen'ed by FastR into the global space (RTLD_GLOBAL)
+#  * libRllvm.so - library with actual implementation of the R API for Sulong
+#    - FastR explicitly loads this via Sulong
 #
 # This is the only situation, where we produce different artifacts for NFI/LLVM. When building pacakges,
 # we produce only one so file with embedded bitcode that is supposed to be used for both NFI and LLVM execution
@@ -52,11 +57,12 @@ endif
 .PHONY: all clean
 
 C_LIBNAME := libR$(DYLIB_EXT)
-LLVM_LIBNAME := libR$(DYLIB_EXT)l
-C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
+NFI_LIBNAME := libRnative$(DYLIB_EXT)
+LLVM_LIBNAME := libRllvm$(DYLIB_EXT)
+
+R_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
+NFI_LIB := $(FASTR_LIB_DIR)/$(NFI_LIBNAME)
 LLVM_LIB := $(FASTR_LIB_DIR)/$(LLVM_LIBNAME)
-R_LIBNAME := libR$(DYLIB_EXT)
-R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
 
 ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
@@ -75,34 +81,31 @@ ifeq ($(FASTR_RFFI),managed)
 	# nop
 else
 ifeq ($(OS_NAME),Darwin)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) -L$(FASTR_LIB_DIR) -lRblas -lRlapack $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(NFI_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
 
 	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRblas.dylib
 	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRlapack.dylib
-	
-	# The following commands will be changed to use @loader_path (or @rpath) instead of the absolute paths $(LLVM_LIBS_DIR) and $(FASTR_LIB_DIR)
-	# when Sulong supports @loader_path (resp. @rpath) substitution.
+
 	install_name_tool -change bin/libpolyglot-mock.dylib $(LLVM_LIBS_DIR)/libpolyglot-mock.dylib $(LLVM_LIB)
-	#install_name_tool -change @rpath/libRblas.dylib $(FASTR_LIB_DIR)/libRblas.dylib $(LLVM_LIB)
-	#install_name_tool -change @rpath/libRlapack.dylib $(FASTR_LIB_DIR)/libRlapack.dylib $(LLVM_LIB)
-	#install_name_tool -change @rpath/libpcre.dylib $(FASTR_LIB_DIR)/libpcre.dylib $(LLVM_LIB)
-	#install_name_tool -change @rpath/libz.dylib $(FASTR_LIB_DIR)/libz.dylib $(LLVM_LIB)
-	#install_name_tool -change @rpath/libf2c.so $(FASTR_LIB_DIR)/libf2c$(DYLIB_EXT) $(LLVM_LIB)
 	
-	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
-	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
-	install_name_tool -change libf2c.so @rpath/libf2c$(DYLIB_EXT) $(R_LIB)
+	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(NFI_LIB)
+	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(NFI_LIB)
+	install_name_tool -change libf2c.so @rpath/libf2c$(DYLIB_EXT) $(NFI_LIB)
+
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
-	install_name_tool -id @rpath/libR.dylibl $(LLVM_LIB)
-# check if we captured libpcre/libz, rpath those in libR
+	install_name_tool -id @rpath/$(NFI_LIBNAME) $(NFI_LIB)
+	install_name_tool -id @rpath/$(LLVM_LIBNAME) $(LLVM_LIB)
+    # check if we captured libpcre/libz, rpath those in libR
 	python $(FASTR_R_HOME)/mx.fastr/copylib.py updatelib $(FASTR_LIB_DIR) $(FASTR_R_HOME)
 else
 	# not Darwin:
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz $(F2C)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) -L$(FASTR_LIB_DIR) -lRblas -lRlapack
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(NFI_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz $(F2C)
     # We do not link with Rlapack and Rblas so that we can load those libraries manually later after loading libR
     # Otherwise Sulong would attempt to load Rlapack and Rblas and fail, because there is a dependency cycle:
-    #     libR provides xerbla_, but Rlapack/Rblas depend on it, it seems that Sulong is not able to resolve this unlike the native loader
+    # libR provides xerbla_, but Rlapack/Rblas depend on it, it seems that Sulong is not able to resolve this unlike the native loader
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lpcre -lz $(F2C)
 endif # Darwin
 endif # managed
@@ -131,13 +134,13 @@ common.done:
 
 clean:
 	$(MAKE) -C src/common clean
-	rm -rf src/truffle_*/*.o
-	rm -rf $(R_LIB)
-	rm -rf fficall.done
-	rm -rf common.done
-	rm -rf fficallllvm.done
+	rm -f src/truffle_*/*.o
+	rm -f $(R_LIB) $(NFI_LIB) $(LLVM_LIB)
+	rm -f fficall.done
+	rm -f common.done
+	rm -f fficallllvm.done
 	$(MAKE) -C src/JavaGD clean
-	rm -rf JavaGD.done
+	rm -f JavaGD.done
 ifneq ($(FASTR_RFFI),managed)
 	$(MAKE) -C src/truffle_nfi clean
 	$(MAKE) -C src/truffle_llvm clean

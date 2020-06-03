@@ -31,14 +31,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 public class LibPaths {
 
     /**
-     * Returns the absolute path to the directory containing the builtin libraries.
-     */
-    @TruffleBoundary
-    public static String getBuiltinLibPath(RContext context) {
-        return REnvVars.getRHomeTruffleFile(context).resolve("lib").toString();
-    }
-
-    /**
      * Returns the absolute path to the builtin library {@code libName} for use with
      * {@link System#load}.
      */
@@ -48,12 +40,7 @@ public class LibPaths {
         return REnvVars.getRHomeTruffleFile(context).resolve("lib").resolve("lib" + libName + "." + osInfo.libExt).toString();
     }
 
-    /**
-     * Returns the absolute path to the shared library associated with package {@code name}. (Does
-     * not check for existence).
-     */
-    @TruffleBoundary
-    public static String getPackageLibPath(RContext context, String name) {
-        return REnvVars.getRHomeTruffleFile(context).resolve("library").resolve(name).resolve("libs").resolve(name + ".so").toString();
+    public static String normalizeLibRPath(String path, String backend) {
+        return path.replace(".so", backend + ".so").replace(".dylib", backend + ".dylib");
     }
 }

@@ -47,8 +47,15 @@ INCLUDE_DIR := $(NATIVE_PROJECT)/include
 
 all: $(C_LIB)
 
+ifeq ($(OS_NAME),Darwin)
+  EXTRA_FLAGS = -Wl,-undefined,dynamic_lookup
+else
+  EXTRA_FLAGS =
+endif
+
+
 $(C_LIB): $(OBJ) $(C_OBJECTS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -L$(FASTR_LIB_DIR) -lR -o $(C_LIB) $(C_OBJECTS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(EXTRA_FLAGS) -L$(FASTR_LIB_DIR) -lR -o $(C_LIB) $(C_OBJECTS)
 
 $(OBJ):
 	mkdir -p $(OBJ)
