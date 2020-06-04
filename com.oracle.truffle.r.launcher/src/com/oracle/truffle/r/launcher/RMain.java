@@ -279,6 +279,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             } else {
                 if (verbose) {
                     System.err.println("[launcher] Error: " + e.getClass().getSimpleName() + "; " + e.getMessage());
+                    e.printStackTrace();
                 }
                 if (!e.isInternalError() && (e.isHostException() || e.isGuestException())) {
                     // Note: Internal exceptions are reported by the engine already
@@ -288,6 +289,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         } catch (Throwable ex) {
             // Internal exceptions are reported by the engine already
             System.err.println("[launcher] Internal Error: " + ex.getClass().getSimpleName() + "; " + ex.getMessage());
+            ex.printStackTrace();
             result = 1;
         }
         if (verbose) {
