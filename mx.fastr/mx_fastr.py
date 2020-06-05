@@ -904,6 +904,46 @@ def build_binary_pkgs(args_in, **kwargs):
 def checkout_downstream_revision(args):
     mx.mx_downstream.checkout_downstream(args)
 
+
+COPYRIGHT_HEADER_GPL3 = """\
+/*
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 3 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 3 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 3 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+// Checkstyle: stop
+//@formatter:off
+{0}
+"""
+
+def generate_parser(args=None, out=None):
+    import re
+    cast_pattern = re.compile(r"\(\(RuleContext\)_localctx,")
+    mx.suite("truffle").extensions.create_parser(
+        grammar_project="com.oracle.truffle.r.parser",
+        grammar_package="com.oracle.truffle.r.parser",
+        grammar_name="R",
+        copyright_template=COPYRIGHT_HEADER_GPL3,
+        postprocess=lambda content: cast_pattern.sub("(_localctx,", content),
+        args=args, out=out)
+
 mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents  # pylint: disable=C0103
 
 
@@ -944,7 +984,8 @@ _commands = {
     'rfficodegen' : [run_rfficodegen, '[]'],
     'gnur-packages-test': [gnur_packages_test, '[]'],
     'build-binary-pkgs': [build_binary_pkgs, '[]'],
-    'checkout-downstream-revision': [checkout_downstream_revision, '[]']
+    'checkout-downstream-revision': [checkout_downstream_revision, '[]'],
+    'generate-r-parser': [generate_parser],
     }
 
 mx.update_commands(_fastr_suite, _commands)

@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -25,6 +25,9 @@ grammar R;
  *
  * Please note that you cannot use attributes like $start and $stop (or $var.stop, etc.),
  * because this introduces static inner classes that cannot be generic for type T.
+ *
+ * ATTENTION: the parser needs to be manually regenerated and commited to the repository.
+ * Use: 'mx generate-r-parser'
  */
 
 options {
@@ -32,10 +35,6 @@ options {
 }
 
 @header {
-//Checkstyle: stop
-//@formatter:off
-package com.oracle.truffle.r.parser;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -693,6 +692,7 @@ simple_expr returns [RSyntaxNode v]
 
 number returns [RSyntaxNode v]
     : i=INTEGER { tok();
+        assert $i.text != null; // to make spotbugs happy
         double value = RRuntime.string2doubleNoCheck($i.text);
         if (value == (int) value) {
             if ($i.text.indexOf('.') != -1) {

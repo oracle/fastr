@@ -85,16 +85,6 @@ suite = {
   },
 
   "projects" : {
-    "com.oracle.truffle.r.parser.processor" : {
-      "sourceDirs" : ["src"],
-      "dependencies" : [
-          "truffle:ANTLR4_COMPLETE",
-      ],
-      "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "8+",
-      "workingSets" : "Truffle,FastR",
-    },
-
     "com.oracle.truffle.r.parser" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
@@ -103,7 +93,6 @@ suite = {
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "8+",
-      "annotationProcessors" : ["TRUFFLE_R_PARSER_PROCESSOR"],
       "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
@@ -390,15 +379,6 @@ suite = {
   },
 
   "distributions" : {
-    "TRUFFLE_R_PARSER_PROCESSOR" : {
-      "description" : "internal support for generating the R parser",
-      "dependencies" : ["com.oracle.truffle.r.parser.processor"],
-      "exclude" : [
-        "truffle:ANTLR4_COMPLETE",
-       ],
-       "maven" : "False",
-    },
-
     "R_FFI_PROCESSOR" : {
       "description" : "internal support for generating FFI classes",
       "dependencies" : ["com.oracle.truffle.r.ffi.processor"],
@@ -474,7 +454,6 @@ suite = {
       "distDependencies" : [
         "FASTR",
         "truffle:TRUFFLE_API",
-        "TRUFFLE_R_PARSER_PROCESSOR",
         "truffle:TRUFFLE_TCK",
       ],
 
