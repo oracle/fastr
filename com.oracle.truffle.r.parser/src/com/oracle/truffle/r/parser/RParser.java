@@ -1575,7 +1575,7 @@ public class RParser extends Parser {
 			n_();
 			setState(321);
 			_localctx.body = expr_or_assign();
-			 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), builder.lookup(src(_localctx.i), (_localctx.i!=null?_localctx.i.getText():null), false), _localctx.in.v, _localctx.body.v); 
+			 _localctx.v =  builder.call(src(_localctx.op, last()), operator(_localctx.op), builder.lookup(src(_localctx.i), _localctx.i.getText(), false), _localctx.in.v, _localctx.body.v); 
 			}
 		}
 		catch (RecognitionException re) {
@@ -1783,7 +1783,7 @@ public class RParser extends Parser {
 				setState(358);
 				_localctx.i = match(ID);
 				tok();
-				 _localctx.l.add(argument(src(_localctx.i), (_localctx.i!=null?_localctx.i.getText():null), null)); 
+				 _localctx.l.add(argument(src(_localctx.i), _localctx.i.getText(), null)); 
 				}
 				break;
 			case 2:
@@ -1801,7 +1801,7 @@ public class RParser extends Parser {
 				n_();
 				setState(367);
 				_localctx.e = expr();
-				 _localctx.l.add(argument(src(_localctx.i, last()), (_localctx.i!=null?_localctx.i.getText():null), _localctx.e.v)); 
+				 _localctx.l.add(argument(src(_localctx.i, last()), _localctx.i.getText(), _localctx.e.v)); 
 				}
 				break;
 			case 3:
@@ -1810,7 +1810,7 @@ public class RParser extends Parser {
 				setState(370);
 				_localctx.v = match(VARIADIC);
 				tok();
-				 _localctx.l.add(argument(src(_localctx.v), (_localctx.v!=null?_localctx.v.getText():null), null)); 
+				 _localctx.l.add(argument(src(_localctx.v), _localctx.v.getText(), null)); 
 				}
 				break;
 			case 4:
@@ -1828,7 +1828,7 @@ public class RParser extends Parser {
 				n_();
 				setState(379);
 				_localctx.e = expr();
-				 _localctx.l.add(argument(src(_localctx.v), (_localctx.v!=null?_localctx.v.getText():null),  null)); 
+				 _localctx.l.add(argument(src(_localctx.v), _localctx.v.getText(),  null)); 
 				}
 				break;
 			case 5:
@@ -1837,7 +1837,7 @@ public class RParser extends Parser {
 				setState(382);
 				_localctx.v = match(DD);
 				tok();
-				 _localctx.l.add(argument(src(_localctx.v), (_localctx.v!=null?_localctx.v.getText():null), null)); 
+				 _localctx.l.add(argument(src(_localctx.v), _localctx.v.getText(), null)); 
 				}
 				break;
 			case 6:
@@ -1855,7 +1855,7 @@ public class RParser extends Parser {
 				n_();
 				setState(391);
 				expr();
-				 _localctx.l.add(argument(src(_localctx.v), (_localctx.v!=null?_localctx.v.getText():null), null)); 
+				 _localctx.l.add(argument(src(_localctx.v), _localctx.v.getText(), null)); 
 				}
 				break;
 			}
@@ -3152,7 +3152,7 @@ public class RParser extends Parser {
 				{
 				setState(606);
 				_localctx.d = match(DD);
-				 tok(); _localctx.v =  builder.lookup(src(_localctx.d), (_localctx.d!=null?_localctx.d.getText():null), false); 
+				 tok(); _localctx.v =  builder.lookup(src(_localctx.d), _localctx.d.getText(), false); 
 				}
 				break;
 			case 4:
@@ -3274,7 +3274,7 @@ public class RParser extends Parser {
 
 					        SourceSection compSource = src(_localctx.compString);
 					        compToken = _localctx.compString;
-					        args.add(argument(compSource, (String) null, builder.constant(compSource, (_localctx.compString!=null?_localctx.compString.getText():null))));
+					        args.add(argument(compSource, (String) null, builder.constant(compSource, _localctx.compString.getText())));
 					        
 					}
 					break;
@@ -3357,20 +3357,19 @@ public class RParser extends Parser {
 				setState(660);
 				_localctx.i = match(INTEGER);
 				 tok();
-				        assert (_localctx.i!=null?_localctx.i.getText():null) != null; // to make spotbugs happy
-				        double value = RRuntime.string2doubleNoCheck((_localctx.i!=null?_localctx.i.getText():null));
+				        double value = RRuntime.string2doubleNoCheck(_localctx.i.getText());
 				        if (value == (int) value) {
-				            if ((_localctx.i!=null?_localctx.i.getText():null).indexOf('.') != -1) {
-				                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_UNNECESARY_DECIMAL, (_localctx.i!=null?_localctx.i.getText():null) + "L");
+				            if (_localctx.i.getText().indexOf('.') != -1) {
+				                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_UNNECESARY_DECIMAL, _localctx.i.getText() + "L");
 				            }
 				            _localctx.v =  builder.constant(src(_localctx.i), (int) value);
 				        } else {
-				            if ((_localctx.i!=null?_localctx.i.getText():null).indexOf('.') != -1) {
-				                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_DECIMAL, (_localctx.i!=null?_localctx.i.getText():null) + "L");
-				            } else if ((_localctx.i!=null?_localctx.i.getText():null).startsWith("0x")) {
-				                RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, (_localctx.i!=null?_localctx.i.getText():null));
+				            if (_localctx.i.getText().indexOf('.') != -1) {
+				                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_DECIMAL, _localctx.i.getText() + "L");
+				            } else if (_localctx.i.getText().startsWith("0x")) {
+				                RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, _localctx.i.getText());
 				            } else {
-				                RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, (_localctx.i!=null?_localctx.i.getText():null) + "L");
+				                RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, _localctx.i.getText() + "L");
 				            }
 				            _localctx.v =  builder.constant(src(_localctx.i), value);
 				        }
@@ -3382,7 +3381,7 @@ public class RParser extends Parser {
 				{
 				setState(662);
 				_localctx.d = match(DOUBLE);
-				 tok(); _localctx.v =  builder.constant(src(_localctx.d), RRuntime.string2doubleNoCheck((_localctx.d!=null?_localctx.d.getText():null))); 
+				 tok(); _localctx.v =  builder.constant(src(_localctx.d), RRuntime.string2doubleNoCheck(_localctx.d.getText())); 
 				}
 				break;
 			case COMPLEX:
@@ -3390,7 +3389,7 @@ public class RParser extends Parser {
 				{
 				setState(664);
 				_localctx.c = match(COMPLEX);
-				 tok(); _localctx.v =  builder.constant(src(_localctx.c), RComplex.valueOf(0, RRuntime.string2doubleNoCheck((_localctx.c!=null?_localctx.c.getText():null)))); 
+				 tok(); _localctx.v =  builder.constant(src(_localctx.c), RComplex.valueOf(0, RRuntime.string2doubleNoCheck(_localctx.c.getText()))); 
 				}
 				break;
 			default:
@@ -3426,7 +3425,7 @@ public class RParser extends Parser {
 			{
 			setState(668);
 			_localctx.s = match(STRING);
-			 tok(); _localctx.v =  builder.constant(src(_localctx.s), (_localctx.s!=null?_localctx.s.getText():null)); 
+			 tok(); _localctx.v =  builder.constant(src(_localctx.s), _localctx.s.getText()); 
 			}
 		}
 		catch (RecognitionException re) {
