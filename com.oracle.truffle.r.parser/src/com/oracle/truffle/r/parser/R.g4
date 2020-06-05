@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -25,6 +25,9 @@ grammar R;
  *
  * Please note that you cannot use attributes like $start and $stop (or $var.stop, etc.),
  * because this introduces static inner classes that cannot be generic for type T.
+ *
+ * ATTENTION: the parser needs to be manually regenerated and commited to the repository.
+ * Use: 'mx generate-r-parser'
  */
 
 options {
@@ -32,10 +35,6 @@ options {
 }
 
 @header {
-//Checkstyle: stop
-//@formatter:off
-package com.oracle.truffle.r.parser;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -527,7 +526,7 @@ while_expr returns [RSyntaxNode v]
     ;
 
 for_expr returns [RSyntaxNode v]
-    : op=FOR{tok();} n_ LPAR{tok();} n_ i=ID n_ IN{tok();} n_ in=expr_or_assign n_ RPAR{tok();} n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), builder.lookup(src($i), $i.text, false), $in.v, $body.v); }
+    : op=FOR{tok();} n_ LPAR{tok();} n_ i=ID n_ IN{tok();} n_ in=expr_or_assign n_ RPAR{tok();} n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), builder.lookup(src($i), $i.getText(), false), $in.v, $body.v); }
     ;
 
 repeat_expr returns [RSyntaxNode v]
@@ -540,16 +539,16 @@ function [RSyntaxNode assignedTo] returns [RSyntaxNode v]
     ;
 
 par_decl [List<Argument<RSyntaxNode>> l]
-    : i=ID{tok();}                                                      { $l.add(argument(src($i), $i.text, null)); }
-    | i=ID{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr   { $l.add(argument(src($i, last()), $i.text, $e.v)); }
-    | v=VARIADIC{tok();}                                                { $l.add(argument(src($v), $v.text, null)); }
+    : i=ID{tok();}                                                      { $l.add(argument(src($i), $i.getText(), null)); }
+    | i=ID{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr   { $l.add(argument(src($i, last()), $i.getText(), $e.v)); }
+    | v=VARIADIC{tok();}                                                { $l.add(argument(src($v), $v.getText(), null)); }
     // The 3 following cases (e.g. "...=42") are weirdness of the reference implementation,
     // the formal argument must be actually created, because they play their role in positional argument matching,
     // but the expression for the default value (if any) is never executed and the value of the paremter
     // cannot be accessed (at least it seems so).
-    | v=VARIADIC{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr { $l.add(argument(src($v), $v.text,  null)); }
-    | v=DD{tok();}                                                          { $l.add(argument(src($v), $v.text, null)); }
-    | v=DD{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ expr         { $l.add(argument(src($v), $v.text, null)); }
+    | v=VARIADIC{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr { $l.add(argument(src($v), $v.getText(),  null)); }
+    | v=DD{tok();}                                                          { $l.add(argument(src($v), $v.getText(), null)); }
+    | v=DD{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ expr         { $l.add(argument(src($v), $v.getText(), null)); }
     ;
 
 tilde_expr returns [RSyntaxNode v]
@@ -661,7 +660,7 @@ simple_expr returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); List<Argument<RSyntaxNode>> args = new ArrayList<>(); Token compToken = null; }
     : i=id                                      { $v = builder.lookup(src($i.v), $i.text, false); }
     | b=bool                                    { $v = builder.constant(src(start, last()), $b.v); }
-    | d=DD                                      { tok(); $v = builder.lookup(src($d), $d.text, false); }
+    | d=DD                                      { tok(); $v = builder.lookup(src($d), $d.getText(), false); }
     | t=NULL                                    { tok(); $v = builder.constant(src($t), RNull.instance); }
     | t=INF                                     { tok(); $v = builder.constant(src($t), Double.POSITIVE_INFINITY); }
     | t=NAN                                     { tok(); $v = builder.constant(src($t), Double.NaN); }
@@ -683,7 +682,7 @@ simple_expr returns [RSyntaxNode v]
       | compString=STRING{tok();}                       {
         SourceSection compSource = src($compString);
         compToken = $compString;
-        args.add(argument(compSource, (String) null, builder.constant(compSource, $compString.text)));
+        args.add(argument(compSource, (String) null, builder.constant(compSource, $compString.getText())));
         }
         )                                       { $v = builder.call(src($pkg.v, compToken), operator($op), args); }
     | op=LPAR{tok();} n_ ea=expr_or_assign n_ y=RPAR    { tok(); $v = builder.call(src($op, $y), operator($op), $ea.v); }
@@ -693,29 +692,29 @@ simple_expr returns [RSyntaxNode v]
 
 number returns [RSyntaxNode v]
     : i=INTEGER { tok();
-        double value = RRuntime.string2doubleNoCheck($i.text);
+        double value = RRuntime.string2doubleNoCheck($i.getText());
         if (value == (int) value) {
-            if ($i.text.indexOf('.') != -1) {
-                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_UNNECESARY_DECIMAL, $i.text + "L");
+            if ($i.getText().indexOf('.') != -1) {
+                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_UNNECESARY_DECIMAL, $i.getText() + "L");
             }
             $v = builder.constant(src($i), (int) value);
         } else {
-            if ($i.text.indexOf('.') != -1) {
-                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_DECIMAL, $i.text + "L");
-            } else if ($i.text.startsWith("0x")) {
-                RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, $i.text);
+            if ($i.getText().indexOf('.') != -1) {
+                RError.warning(RError.NO_CALLER, RError.Message.INTEGER_VALUE_DECIMAL, $i.getText() + "L");
+            } else if ($i.getText().startsWith("0x")) {
+                RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, $i.getText());
             } else {
-                RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, $i.text + "L");
+                RError.warning(RError.NO_CALLER, RError.Message.NON_INTEGER_VALUE, $i.getText() + "L");
             }
             $v = builder.constant(src($i), value);
         }
       }
-    | d=DOUBLE  { tok(); $v = builder.constant(src($d), RRuntime.string2doubleNoCheck($d.text)); }
-    | c=COMPLEX { tok(); $v = builder.constant(src($c), RComplex.valueOf(0, RRuntime.string2doubleNoCheck($c.text))); }
+    | d=DOUBLE  { tok(); $v = builder.constant(src($d), RRuntime.string2doubleNoCheck($d.getText())); }
+    | c=COMPLEX { tok(); $v = builder.constant(src($c), RComplex.valueOf(0, RRuntime.string2doubleNoCheck($c.getText()))); }
     ;
 
 conststring returns [RSyntaxNode v]
-    : s=STRING { tok(); $v = builder.constant(src($s), $s.text); }
+    : s=STRING { tok(); $v = builder.constant(src($s), $s.getText()); }
     ;
 
 id returns [Token v]
