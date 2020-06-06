@@ -26,8 +26,6 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.runtime.RInternalError;
 
-import java.util.Arrays;
-
 /**
  *
  * In general, two steps are necessary before an object is sent to native code or LLVM interpreter.
@@ -93,20 +91,17 @@ public class FFIWrap {
         }
 
         public Object[] wrapAll(Object[] args, FFIMaterializeNode[] ffiMateralizeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes) {
-            boolean[] whichArgToWrap = new boolean[args.length];
-            Arrays.fill(whichArgToWrap, true);
-            return wrapSome(args, ffiMateralizeNodes, ffiToNativeMirrorNodes, whichArgToWrap);
+            return wrapSome(args, ffiMateralizeNodes, ffiToNativeMirrorNodes, null);
         }
 
         @ExplodeLoop
         public Object[] wrapSome(Object[] args, FFIMaterializeNode[] ffiMaterializeNodes, FFIToNativeMirrorNode[] ffiToNativeMirrorNodes, boolean[] whichArgToWrap) {
             assert ffiMaterializeNodes.length == ffiToNativeMirrorNodes.length;
             assert ffiMaterializeNodes.length == materialized.length;
-            assert ffiMaterializeNodes.length == whichArgToWrap.length;
             CompilerAsserts.compilationConstant(ffiMaterializeNodes.length);
             Object[] wrappedArgs = new Object[args.length];
             for (int i = 0; i < ffiMaterializeNodes.length; i++) {
-                if (whichArgToWrap[i]) {
+                if (whichArgToWrap != null && whichArgToWrap[i]) {
                     materialized[i] = ffiMaterializeNodes[i].materialize(args[i]);
                     wrappedArgs[i] = ffiToNativeMirrorNodes[i].execute(materialized[i]);
                 } else {
