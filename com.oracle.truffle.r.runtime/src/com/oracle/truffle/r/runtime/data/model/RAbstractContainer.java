@@ -211,8 +211,8 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
         return materialize();
     }
 
-    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
-    public RAbstractContainer containerLibCopy() {
+    @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
+    public RAbstractContainer containerLibDuplicate(@SuppressWarnings("unused") boolean deep) {
         return copy();
     }
 

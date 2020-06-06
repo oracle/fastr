@@ -30,22 +30,22 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
-
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromLogicalAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromLogicalAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
-import com.oracle.truffle.r.runtime.data.closures.RClosure;
-import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
+
 import java.util.Arrays;
 
 @ExportLibrary(InteropLibrary.class)
@@ -300,9 +300,9 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
         setData(new RLogicalNativeVectorData(this), getLength());
     }
 
-    @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
-    RLogicalVector containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
-        RLogicalVector result = new RLogicalVector(dataLib.copy(data, false), dataLib.getLength(data));
+    @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)
+    RLogicalVector containerLibDuplicate(boolean deep, @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        RLogicalVector result = new RLogicalVector(dataLib.copy(data, deep), dataLib.getLength(data));
         MemoryCopyTracer.reportCopying(this, result);
         return result;
     }

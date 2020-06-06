@@ -96,5 +96,5 @@ public abstract class AbstractContainerLibrary extends Library {
      * Creates a copy of the container. Note that attributes are not copied, use dedicated node
      * {@link com.oracle.truffle.r.runtime.data.nodes.CopyWithAttributes} in such case.
      */
-    public abstract RAbstractContainer copy(Object container);
+    public abstract RAbstractContainer duplicate(Object container, boolean deep);
 }

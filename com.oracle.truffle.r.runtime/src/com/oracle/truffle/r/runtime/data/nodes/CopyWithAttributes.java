@@ -42,7 +42,7 @@ public final class CopyWithAttributes extends RBaseNode {
 
     @SuppressWarnings("static-method")
     public RAbstractContainer execute(AbstractContainerLibrary containerLibrary, RAbstractContainer container) {
-        RAbstractContainer result = containerLibrary.copy(container);
+        RAbstractContainer result = containerLibrary.duplicate(container, false);
         setAttributes(container, result);
         return result;
     }

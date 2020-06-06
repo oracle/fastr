@@ -55,8 +55,7 @@ public final class DuplicateNodes {
         @Specialization(guards = "!isSequence(container)", limit = "getGenericDataLibraryCacheSize()")
         public Object duplicateContainer(RAbstractContainer container, int deep,
                                          @CachedLibrary("container") AbstractContainerLibrary containerLibrary) {
-            // TODO: Propagate deep parameter to VectorDataLibrary.copy
-            return containerLibrary.copy(container);
+            return containerLibrary.duplicate(container, deep == 1);
         }
 
         @Specialization
