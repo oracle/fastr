@@ -101,7 +101,7 @@ public class FFIWrap {
             CompilerAsserts.compilationConstant(ffiMaterializeNodes.length);
             Object[] wrappedArgs = new Object[args.length];
             for (int i = 0; i < ffiMaterializeNodes.length; i++) {
-                if (whichArgToWrap != null && whichArgToWrap[i]) {
+                if (whichArgToWrap == null || whichArgToWrap[i]) {
                     materialized[i] = ffiMaterializeNodes[i].materialize(args[i]);
                     wrappedArgs[i] = ffiToNativeMirrorNodes[i].execute(materialized[i]);
                 } else {
