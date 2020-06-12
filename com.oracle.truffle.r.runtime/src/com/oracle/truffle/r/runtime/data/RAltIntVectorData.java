@@ -120,10 +120,10 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public boolean noNA(@Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
+    public boolean isComplete(@Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
                         @Cached AltrepRFFI.AltIntNoNANode noNANode) {
         if (hasNoNAMethodProfile.profile(descriptor.isNoNAMethodRegistered())) {
-            return noNANode.execute(owner);
+            return noNANode.execute(getOwner());
         } else {
             return false;
         }
@@ -154,12 +154,6 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     public boolean isWriteable() {
         // TODO: if (!dataptrCalled) return Dataptr_Or_Null != NULL
         return dataptrCalled;
-    }
-
-    @ExportMessage
-    public boolean isComplete(@Cached AltrepRFFI.AltIntNoNANode noNANode,
-                              @Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile) {
-        return noNA(hasNoNAMethodProfile, noNANode);
     }
 
     @ExportMessage

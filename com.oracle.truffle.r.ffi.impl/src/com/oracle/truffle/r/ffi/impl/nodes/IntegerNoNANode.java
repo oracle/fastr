@@ -17,7 +17,7 @@ public abstract class IntegerNoNANode extends FFIUpCallNode.Arg1 {
     @Specialization(limit = "getGenericDataLibraryCacheSize()")
     public Object doContainer(RAbstractContainer container,
                               @CachedLibrary("container.getData()") VectorDataLibrary dataLibrary) {
-        if (dataLibrary.noNA(container.getData())) {
+        if (dataLibrary.isComplete(container.getData())) {
             return RRuntime.LOGICAL_TRUE;
         } else {
             return RRuntime.LOGICAL_FALSE;
