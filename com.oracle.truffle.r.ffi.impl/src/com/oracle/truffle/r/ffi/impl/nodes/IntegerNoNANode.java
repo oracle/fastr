@@ -4,8 +4,8 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
-import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @GenerateUncached
@@ -24,11 +24,8 @@ public abstract class IntegerNoNANode extends FFIUpCallNode.Arg1 {
         }
     }
 
-    protected static boolean isAltrep(Object object) {
-        return AltrepUtilities.isAltrep(object);
-    }
-
-    protected static boolean hasNoNAMethod(Object object) {
-        return AltrepUtilities.hasNoNAMethodRegistered(object);
+    @Specialization(replaces = "doContainer")
+    public Object doOther(@SuppressWarnings("unused") RBaseObject rObject) {
+        return RRuntime.LOGICAL_FALSE;
     }
 }
