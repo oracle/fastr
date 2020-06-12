@@ -193,16 +193,6 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         }
     }
 
-    /**
-     * May return either RAltIntVectorData or RIntArrayVectorData, depending whether this vector data has
-     * Duplicate method registered.
-     */
-    @ExportMessage
-    public Object copy(boolean deep,
-                       @Cached AltrepDuplicateNode duplicateNode) {
-        return duplicateNode.execute(getOwner(), deep);
-    }
-
     @ExportMessage
     public static class GetIntRegion {
         @Specialization(guards = "hasGetRegionMethod(altIntVecData)")
@@ -232,6 +222,16 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         protected static boolean hasGetRegionMethod(RAltIntVectorData vecData) {
             return vecData.getDescriptor().isGetRegionMethodRegistered();
         }
+    }
+
+    /**
+     * May return either RAltIntVectorData or RIntArrayVectorData, depending whether this vector data has
+     * Duplicate method registered.
+     */
+    @ExportMessage
+    public Object copy(boolean deep,
+                       @Cached AltrepDuplicateNode duplicateNode) {
+        return duplicateNode.execute(getOwner(), deep);
     }
 
     /**

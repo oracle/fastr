@@ -111,6 +111,10 @@ public class AltrepUtilities {
         return getAltIntDescriptor(altIntVector).getSumMethodDescriptor();
     }
 
+    public static AltrepMethodDescriptor getDuplicateMethodDescriptor(RIntVector altIntVector) {
+        return getAltIntDescriptor(altIntVector).getDuplicateMethodDescriptor();
+    }
+
     public static AltrepMethodDescriptor getEltMethodDescriptor(RStringVector altStringVector) {
         return getAltStringDescriptor(altStringVector).getEltMethodDescriptor();
     }

@@ -200,10 +200,6 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         }
     }
 
-    public Object invokeDuplicateMethodCached(Object instance, boolean deep, InteropLibrary interop, ConditionProfile hasMirrorProfile) {
-        return invokeDuplicateMethod(instance, deep, interop, hasMirrorProfile);
-    }
-
     /***
      *
      * @param instance Altrep instance. This is the "self" parameter that is passed to every altrep method.
@@ -242,12 +238,6 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         newArgs[0] = firstArg;
         System.arraycopy(restOfArgs, 0, newArgs, 1, argLen - 1);
         return newArgs;
-    }
-
-    private Object invokeDuplicateMethod(Object instance, boolean deep, InteropLibrary interop, ConditionProfile hasMirrorProfile) {
-        Object ret = invokeNativeFunction(interop, duplicateMethodDescriptor.method, duplicateMethodSignature, duplicateMethodArgCount, hasMirrorProfile, instance, deep);
-        // TODO: Return type checks?
-        return ret;
     }
 
     @Override

@@ -168,6 +168,20 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
+    public abstract static class AltIntDuplicateNode extends Node {
+        public abstract Object execute(RIntVector altIntVector, boolean deep);
+
+        @Specialization
+        protected Object doIt(RIntVector altIntVector, boolean deep,
+                           @Cached AltrepDownCallNode downCallNode) {
+            assert AltrepUtilities.isAltrep(altIntVector);
+            AltrepMethodDescriptor methodDescriptor = AltrepUtilities.getDuplicateMethodDescriptor(altIntVector);
+            return downCallNode.execute(methodDescriptor, AltIntegerClassDescriptor.duplicateMethodUnwrapResult,
+                    AltIntegerClassDescriptor.duplicateMethodWrapArguments, new Object[]{altIntVector, deep});
+        }
+    }
+
+    @GenerateUncached
     public abstract static class AltIntSumNode extends Node {
         public abstract Object execute(RIntVector altIntVec, boolean naRm);
 
