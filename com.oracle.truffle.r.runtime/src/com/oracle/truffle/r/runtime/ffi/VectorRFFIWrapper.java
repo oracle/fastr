@@ -61,12 +61,10 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(NativeTypeLibrary.class)
@@ -343,15 +341,10 @@ public final class VectorRFFIWrapper implements TruffleObject {
             return vector.allocateNativeContents();
         }
 
-        @Specialization(guards = "isAltrep(altIntVector)", limit = "1")
+        @Specialization(guards = "isAltrep(altIntVector)")
         protected static long get(RIntVector altIntVector,
-                                  @CachedLibrary("altIntVector.getData()") VectorDataLibrary altIntDataLibrary,
-                                  @CachedLibrary("getDescriptorFromVec(altIntVector).getDataptrMethodDescriptor().method") InteropLibrary dataptrMethodInteropLibrary,
-                                  @CachedLibrary(limit = "1") InteropLibrary dataptrInteropLibrary,
-                                  @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            // TODO: dataptrAddr should be cached
-            return ((RAltIntVectorData) altIntVector.getData()).getDescriptor().invokeDataptrMethodCached(altIntVector, true,
-                    dataptrMethodInteropLibrary, dataptrInteropLibrary, hasMirrorProfile);
+                                  @Cached AltrepRFFI.AltIntDataptrNode dataptrNode) {
+            return dataptrNode.execute(altIntVector, true);
         }
 
         @Specialization
@@ -557,18 +550,6 @@ public final class VectorRFFIWrapper implements TruffleObject {
                 vector.setComplete(false);
             }
             vector.setDataAt(vector.getInternalStore(), index, value);
-            return vector;
-        }
-
-        // TODO: Remove this - this looks like it should not work
-        @Specialization(limit = "1")
-        protected static Object doAltIntegerVector(RAltIntVectorData vector, int index, int value,
-                                                   @CachedLibrary("vector.getDescriptor().getDataptrMethodDescriptor().method") InteropLibrary dataptrMethodInterop,
-                                                   @CachedLibrary(limit = "1") InteropLibrary dataptrInterop,
-                                                   @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            // TODO: Add dataptrAddrComputed binary profile.
-            long addr = vector.getDescriptor().invokeDataptrMethodCached(vector, true, dataptrMethodInterop, dataptrInterop, hasMirrorProfile);
-            NativeMemory.putInt(addr, index, value);
             return vector;
         }
 

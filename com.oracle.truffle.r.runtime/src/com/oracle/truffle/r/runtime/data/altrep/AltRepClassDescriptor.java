@@ -38,9 +38,6 @@ import java.util.Arrays;
 import java.util.logging.Level;
 
 public abstract class AltRepClassDescriptor extends RBaseObject {
-    private final int lengthMethodArgCount = 1;
-    private final int duplicateMethodArgCount = 2;
-
     public static final String unserializeMethodSignature = "(pointer, pointer): pointer";
     public static final boolean[] unserializeMethodWrapArguments = new boolean[]{true, true};
     public static final boolean unserializeMethodUnwrapResult = true;
