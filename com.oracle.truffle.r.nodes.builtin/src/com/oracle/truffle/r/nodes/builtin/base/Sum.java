@@ -22,11 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
-import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUMMARY;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -38,7 +33,6 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeGen;
-import static com.oracle.truffle.r.runtime.context.FastROptions.FullPrecisionSum;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -49,6 +43,12 @@ import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUMMARY;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.context.FastROptions.FullPrecisionSum;
 
 /**
  * Sum has combine semantics (TBD: exactly?) and uses a reduce operation on the resulting array.
@@ -142,8 +142,8 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
     @Specialization(replaces = "sumLengthOneRDoubleVector",
             guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "isSumMethodRegistered(args.getArgument(0))"})
     protected Object sumLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
-                                        @Cached("create()") AltrepUtilities.AltrepSumMethodInvoker altrepSumNode) {
-        return altrepSumNode.execute(args.getArgument(0), naRm);
+                                        @Cached AltrepUtilities.AltrepSumMethodInvokerNode altrepSumInvokerNode) {
+        return altrepSumInvokerNode.execute(args.getArgument(0), naRm);
     }
 
     @Specialization(replaces = {"sumLengthOneRDoubleVector", "sumLengthOneAltrep"}, guards = "args.getLength() == 1")

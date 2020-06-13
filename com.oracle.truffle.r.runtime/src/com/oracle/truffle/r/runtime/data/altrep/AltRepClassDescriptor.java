@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,20 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.data.altrep;
 
-import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
-
-import java.util.Arrays;
-import java.util.logging.Level;
 
 public abstract class AltRepClassDescriptor extends RBaseObject {
     public static final String unserializeMethodSignature = "(pointer, pointer): pointer";
@@ -179,62 +169,6 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
 
     public boolean isLengthMethodRegistered() {
         return lengthMethodDescriptor != null;
-    }
-
-    @CompilerDirectives.TruffleBoundary
-    protected void logBeforeInteropExecute(String methodName, Object instance, Object... methodArgs) {
-        // Note: Do not call instance.toString() ==> It may cause stack overflow.
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> this.getClass().getSimpleName() + ": Invoking " + methodName
-                    + " with args=" + Arrays.toString(methodArgs) + " (instance argument not included in this message).");
-        }
-    }
-
-    @CompilerDirectives.TruffleBoundary
-    protected void logAfterInteropExecute(Object returnedValue) {
-        if (logger.isLoggable(Level.FINER)) {
-            logger.finer(() -> this.getClass().getSimpleName() + ": Got " + returnedValue + " from interop.execute");
-        }
-    }
-
-    /***
-     *
-     * @param instance Altrep instance. This is the "self" parameter that is passed to every altrep method.
-     * @param args Rest of the arguments.
-     */
-    static Object invokeNativeFunction(InteropLibrary interop, Object function, String functionSignature, int argLen, ConditionProfile hasMirrorProfile, Object instance, Object... args) {
-        assert instance instanceof RBaseObject;
-        NativeDataAccess.NativeMirror mirror = wrapInNativeMirror((RBaseObject) instance, hasMirrorProfile);
-        Object[] allArgs = collectArguments(mirror, argLen, args);
-        try {
-            if (interop.isMemberInvocable(function, "bind")) {
-                // NFI case
-                Object bound = interop.invokeMember(function, "bind", functionSignature);
-                return interop.execute(bound, allArgs);
-            } else {
-                // LLVM case
-                return interop.execute(function, allArgs);
-            }
-        } catch (InteropException e) {
-            throw RInternalError.shouldNotReachHere("Exception in invoke...Method");
-        }
-    }
-
-    private static NativeDataAccess.NativeMirror wrapInNativeMirror(RBaseObject altrepInstance, ConditionProfile hasMirrorProfile) {
-        NativeDataAccess.NativeMirror mirror = altrepInstance.getNativeMirror();
-        if (hasMirrorProfile.profile(mirror == null)) {
-            return NativeDataAccess.createNativeMirror(altrepInstance);
-        } else {
-            return mirror;
-        }
-    }
-
-    private static Object[] collectArguments(Object firstArg, int argLen, Object... restOfArgs) {
-        CompilerAsserts.compilationConstant(argLen);
-        Object[] newArgs = new Object[argLen];
-        newArgs[0] = firstArg;
-        System.arraycopy(restOfArgs, 0, newArgs, 1, argLen - 1);
-        return newArgs;
     }
 
     @Override

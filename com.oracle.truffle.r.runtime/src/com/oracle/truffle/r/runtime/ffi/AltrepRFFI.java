@@ -195,6 +195,32 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
+    public abstract static class AltIntMaxNode extends Node {
+        public abstract Object execute(RIntVector altIntVec, boolean naRm);
+
+        @Specialization
+        protected Object doIt(RIntVector altIntVec, boolean naRm,
+                           @Cached AltrepDownCallNode downCallNode) {
+            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getMaxMethodDescriptor(altIntVec);
+            return downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.maxMethodUnwrapResult,
+                    AltIntegerClassDescriptor.maxMethodWrapArguments, new Object[]{altIntVec, naRm});
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class AltIntMinNode extends Node {
+        public abstract Object execute(RIntVector altIntVec, boolean naRm);
+
+        @Specialization
+        protected Object doIt(RIntVector altIntVec, boolean naRm,
+                              @Cached AltrepDownCallNode downCallNode) {
+            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getMinMethodDescriptor(altIntVec);
+            return downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.minMethodUnwrapResult,
+                    AltIntegerClassDescriptor.minMethodWrapArguments, new Object[]{altIntVec, naRm});
+        }
+    }
+
+    @GenerateUncached
     public abstract static class AltStringEltNode extends Node {
         public abstract Object execute(RStringVector altStringVec, int index);
 

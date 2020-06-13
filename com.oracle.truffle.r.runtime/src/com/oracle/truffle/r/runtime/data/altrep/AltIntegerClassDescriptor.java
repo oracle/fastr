@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,18 +21,6 @@
  * questions.
  */
 package com.oracle.truffle.r.runtime.data.altrep;
-
-import com.oracle.truffle.api.TruffleLogger;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.RLogger;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
-import com.oracle.truffle.r.runtime.data.RBaseObject;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-
-import java.util.logging.Level;
 
 public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     // TODO: Fix signature (sint64?)
@@ -64,12 +52,6 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     public static final boolean[] maxMethodWrapArguments = new boolean[]{true, false};
     public static final boolean maxMethodUnwrapResult = true;
 
-    private static final int eltMethodArgCount = 2;
-    private static final int getRegionMethodArgCount = 4;
-    private static final int sumMethodArgCount = 2;
-    private static final int minMethodArgCount = 2;
-    private static final int maxMethodArgCount = 2;
-    private static final int isSortedMethodArgCount = 1;
     private AltrepMethodDescriptor eltMethodDescriptor;
     private AltrepMethodDescriptor getRegionMethodDescriptor;
     private AltrepMethodDescriptor isSortedMethodDescriptor;
@@ -77,7 +59,6 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     private AltrepMethodDescriptor sumMethodDescriptor;
     private AltrepMethodDescriptor minMethodDescriptor;
     private AltrepMethodDescriptor maxMethodDescriptor;
-    private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
 
     public AltIntegerClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);
@@ -178,111 +159,6 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     @Override
     public String toString() {
         return "ALTINT class descriptor for " + super.toString();
-    }
-
-    public int invokeEltMethodUncached(Object instance, int index) {
-        InteropLibrary methodInterop = InteropLibrary.getFactory().getUncached(eltMethodDescriptor.method);
-        ConditionProfile hasMirrorProfile = ConditionProfile.getUncached();
-        return invokeEltMethod(instance, index, methodInterop, hasMirrorProfile);
-    }
-
-    public int invokeEltMethodCached(Object instance, int index, InteropLibrary eltMethodInterop, ConditionProfile hasMirrorProfile) {
-        return invokeEltMethod(instance, index, eltMethodInterop, hasMirrorProfile);
-    }
-
-    public long invokeGetRegionMethodCached(Object instance, long fromIdx, long size, Object buffer, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        return invokeGetRegionMethod(instance, fromIdx, size, buffer, methodInterop, hasMirrorProfile);
-    }
-
-    public Object invokeSumMethodCached(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        return invokeSumMethod(instance, naRm, methodInterop, hasMirrorProfile);
-    }
-
-    public Object invokeMinMethodCached(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        return invokeMinMethod(instance, naRm, methodInterop, hasMirrorProfile);
-    }
-
-    public Object invokeMaxMethodCached(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        return invokeMaxMethod(instance, naRm, methodInterop, hasMirrorProfile);
-    }
-
-    public int invokeIsSortedMethodCached(Object instance, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        return invokeIsSortedMethod(instance, methodInterop, hasMirrorProfile);
-    }
-
-    private int invokeEltMethod(Object instance, int index, InteropLibrary eltMethodInterop, ConditionProfile hasMirrorProfile) {
-        assert eltMethodDescriptor.method != null;
-        if (logger.isLoggable(Level.FINER)) {
-            logBeforeInteropExecute("elt", instance, index);
-        }
-        Object element = invokeNativeFunction(eltMethodInterop, eltMethodDescriptor.method, eltMethodSignature, eltMethodArgCount, hasMirrorProfile, instance, index);
-        if (logger.isLoggable(Level.FINER)) {
-            logAfterInteropExecute(element);
-        }
-        assert element instanceof Integer;
-        return (int) element;
-    }
-
-    private long invokeGetRegionMethod(Object instance, long fromIdx, long size, Object buffer, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        assert getRegionMethodDescriptor.method != null;
-        if (buffer instanceof int[]) {
-            throw RInternalError.shouldNotReachHere("Calls from managed code are unimplemented");
-        }
-        if (logger.isLoggable(Level.FINER)) {
-            logBeforeInteropExecute("GetRegion", instance, fromIdx, size, buffer);
-        }
-        Object copiedCount = invokeNativeFunction(methodInterop, getRegionMethodDescriptor.method, getRegionMethodSignature, getRegionMethodArgCount, hasMirrorProfile, instance, fromIdx, size, buffer);
-        if (logger.isLoggable(Level.FINER)) {
-            logAfterInteropExecute(copiedCount);
-        }
-        assert copiedCount instanceof Long;
-        return (long) copiedCount;
-    }
-
-    private Object invokeSumMethod(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        if (logger.isLoggable(Level.FINER)) {
-            logBeforeInteropExecute("Sum", instance, naRm);
-        }
-        Object sumVectorMirror = invokeNativeFunction(methodInterop, sumMethodDescriptor.method, sumMethodSignature, sumMethodArgCount, hasMirrorProfile, instance, naRm);
-        return convertNativeReturnValToIntOrDouble(sumVectorMirror);
-    }
-
-    private Object invokeMinMethod(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        if (logger.isLoggable(Level.FINER)) {
-            logBeforeInteropExecute("Min", instance, naRm);
-        }
-        Object minVectorMirror = invokeNativeFunction(methodInterop, minMethodDescriptor.method, minMethodSignature, minMethodArgCount, hasMirrorProfile, instance, naRm);
-        return convertNativeReturnValToIntOrDouble(minVectorMirror);
-    }
-
-    private Object invokeMaxMethod(Object instance, boolean naRm, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        if (logger.isLoggable(Level.FINER)) {
-            logBeforeInteropExecute("Max", instance, naRm);
-        }
-        Object maxVectorMirror = invokeNativeFunction(methodInterop, maxMethodDescriptor.method, maxMethodSignature, maxMethodArgCount, hasMirrorProfile, instance, naRm);
-        return convertNativeReturnValToIntOrDouble(maxVectorMirror);
-    }
-
-    private int invokeIsSortedMethod(Object instance, InteropLibrary methodInterop, ConditionProfile hasMirrorProfile) {
-        if (logger.isLoggable(Level.FINER)) {
-            logBeforeInteropExecute("Is_sorted", instance);
-        }
-        Object sortedMode = invokeNativeFunction(methodInterop, isSortedMethodDescriptor.method, isSortedMethodSignature, isSortedMethodArgCount, hasMirrorProfile, instance);
-        assert sortedMode instanceof Integer;
-        return (int) sortedMode;
-    }
-
-    private static Object convertNativeReturnValToIntOrDouble(Object returnValueFromNative) {
-        assert returnValueFromNative instanceof NativeDataAccess.NativeMirror;
-        RBaseObject returnValue = ((NativeDataAccess.NativeMirror) returnValueFromNative).getDelegate();
-        assert returnValue instanceof RIntVector || returnValue instanceof RDoubleVector;
-        if (returnValue instanceof RIntVector) {
-            return ((RIntVector) returnValue).getDataAt(0);
-        } else if (returnValue instanceof RDoubleVector) {
-            return ((RDoubleVector) returnValue).getDataAt(0);
-        } else {
-            throw RInternalError.shouldNotReachHere();
-        }
     }
 
 }

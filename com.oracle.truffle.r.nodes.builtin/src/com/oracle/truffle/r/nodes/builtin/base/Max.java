@@ -73,8 +73,8 @@ public abstract class Max extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "isMaxMethodRegistered(args.getArgument(0))"})
     protected Object maxLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
-                                        @Cached("create()") AltrepUtilities.AltrepMaxMethodInvoker altrepMaxNode) {
-        return altrepMaxNode.execute(args.getArgument(0), naRm);
+                                        @Cached AltrepUtilities.AltrepMaxMethodInvokerNode altrepMaxInvokerNode) {
+        return altrepMaxInvokerNode.execute(args.getArgument(0), naRm);
     }
 
     @Specialization(replaces = {"maxLengthOne", "maxLengthOneAltrep"})

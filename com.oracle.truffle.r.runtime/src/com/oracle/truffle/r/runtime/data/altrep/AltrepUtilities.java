@@ -1,12 +1,11 @@
 package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RAltStringVectorData;
@@ -109,6 +108,14 @@ public class AltrepUtilities {
 
     public static AltrepMethodDescriptor getSumMethodDescriptor(RIntVector altIntVector) {
         return getAltIntDescriptor(altIntVector).getSumMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getMaxMethodDescriptor(RIntVector altIntVector) {
+        return getAltIntDescriptor(altIntVector).getMaxMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getMinMethodDescriptor(RIntVector altIntVector) {
+        return getAltIntDescriptor(altIntVector).getMinMethodDescriptor();
     }
 
     public static AltrepMethodDescriptor getDuplicateMethodDescriptor(RIntVector altIntVector) {
@@ -240,63 +247,60 @@ public class AltrepUtilities {
         }
     }
 
-    public abstract static class AltrepSumMethodInvoker extends Node {
+    public abstract static class AltrepSumMethodInvokerNode extends Node {
         public abstract Object execute(Object altrepVector, boolean naRm);
 
-        public static AltrepSumMethodInvoker create() {
+        public static AltrepSumMethodInvokerNode create() {
             return AltrepUtilitiesFactory.AltrepSumMethodInvokerNodeGen.create();
         }
 
-        protected static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVec) {
-            return AltrepUtilities.getAltIntDescriptor(altIntVec);
+        @Specialization
+        Object doAltInt(RIntVector altIntVec, boolean naRm,
+                        @Cached AltrepRFFI.AltIntSumNode altIntSumNode) {
+            return altIntSumNode.execute(altIntVec, naRm);
         }
 
-        @Specialization(limit = "3")
-        Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @CachedLibrary("getAltIntDescriptor(altIntVec).getSumMethodDescriptor().method") InteropLibrary methodInterop,
-                        @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            assert getAltIntDescriptor(altIntVec).isSumMethodRegistered();
-            return getAltIntDescriptor(altIntVec).invokeSumMethodCached(altIntVec, naRm, methodInterop, hasMirrorProfile);
+        @Fallback
+        Object fallback(Object vector, @SuppressWarnings("unused") boolean naRm) {
+            throw RInternalError.shouldNotReachHere("AltrepSumMethodInvoker: Unknown type of vector: " + vector.toString());
         }
     }
 
-    public abstract static class AltrepMaxMethodInvoker extends Node {
+    public abstract static class AltrepMaxMethodInvokerNode extends Node {
         public abstract Object execute(Object altrepVector, boolean naRm);
 
-        public static AltrepMaxMethodInvoker create() {
+        public static AltrepMaxMethodInvokerNode create() {
             return AltrepUtilitiesFactory.AltrepMaxMethodInvokerNodeGen.create();
         }
 
-        protected static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVec) {
-            return AltrepUtilities.getAltIntDescriptor(altIntVec);
+        @Specialization
+        Object doAltInt(RIntVector altIntVec, boolean naRm,
+                        @Cached AltrepRFFI.AltIntMaxNode altIntMaxNode) {
+            return altIntMaxNode.execute(altIntVec, naRm);
         }
 
-        @Specialization(limit = "3")
-        Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @CachedLibrary("getAltIntDescriptor(altIntVec).getMaxMethodDescriptor().method") InteropLibrary methodInterop,
-                        @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            assert getAltIntDescriptor(altIntVec).isMaxMethodRegistered();
-            return getAltIntDescriptor(altIntVec).invokeMaxMethodCached(altIntVec, naRm, methodInterop, hasMirrorProfile);
+        @Fallback
+        Object fallback(Object vector, @SuppressWarnings("unused") boolean naRm) {
+            throw RInternalError.shouldNotReachHere("AltrepMaxMethodInvoker: Unknown type of vector: " + vector.toString());
         }
     }
 
-    public abstract static class AltrepMinMethodInvoker extends Node {
+    public abstract static class AltrepMinMethodInvokerNode extends Node {
         public abstract Object execute(Object altrepVector, boolean naRm);
 
-        public static AltrepMinMethodInvoker create() {
+        public static AltrepMinMethodInvokerNode create() {
             return AltrepUtilitiesFactory.AltrepMinMethodInvokerNodeGen.create();
         }
 
-        protected static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVec) {
-            return AltrepUtilities.getAltIntDescriptor(altIntVec);
+        @Specialization
+        Object doAltInt(RIntVector altIntVec, boolean naRm,
+                        @Cached AltrepRFFI.AltIntMinNode altIntMinNode) {
+            return altIntMinNode.execute(altIntVec, naRm);
         }
 
-        @Specialization(limit = "3")
-        Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @CachedLibrary("getAltIntDescriptor(altIntVec).getMinMethodDescriptor().method") InteropLibrary methodInterop,
-                        @Cached("createBinaryProfile()") ConditionProfile hasMirrorProfile) {
-            assert getAltIntDescriptor(altIntVec).isMinMethodRegistered();
-            return getAltIntDescriptor(altIntVec).invokeMinMethodCached(altIntVec, naRm, methodInterop, hasMirrorProfile);
+        @Fallback
+        Object fallback(Object vector, @SuppressWarnings("unused") boolean naRm) {
+            throw RInternalError.shouldNotReachHere("AltrepMinMethodInvokerNode: Unknown type of vector: " + vector.toString());
         }
     }
 
