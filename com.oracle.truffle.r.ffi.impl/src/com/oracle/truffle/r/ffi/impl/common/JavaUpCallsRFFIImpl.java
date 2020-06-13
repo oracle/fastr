@@ -122,7 +122,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.function.Function;
 
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.*;
+import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guarantee;
+import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
+import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.unimplemented;
 
 /**
  * This class provides a simple Java-based implementation of {@link UpCallsRFFI}, where all the
@@ -1422,8 +1424,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         if (!interop.isExecutable(method)) {
             if (interop.isMemberInvocable(method, "bind")) {
                 try {
-                    method = interop.invokeMember(method, "bind", signature);
-                    return new AltrepMethodDescriptor(method, Type.NFI);
+                    Object boundMethod = interop.invokeMember(method, "bind", signature);
+                    return new AltrepMethodDescriptor(boundMethod, Type.NFI);
                 } catch (InteropException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }

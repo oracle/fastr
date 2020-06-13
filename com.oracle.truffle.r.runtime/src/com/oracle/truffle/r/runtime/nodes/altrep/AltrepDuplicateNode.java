@@ -18,7 +18,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public abstract class AltrepDuplicateNode extends RBaseNode {
     public abstract Object execute(Object altVec, boolean deep);
 
-    @Specialization(guards = {"hasDuplicateMethod(altIntVec)"}, limit = "1")
+    @Specialization(guards = {"hasDuplicateMethod(altIntVec)"})
     protected Object doAltIntWithDuplicateMethod(RIntVector altIntVec, boolean deep,
                                               @Cached("createBinaryProfile()") ConditionProfile duplicateReturnsNullProfile,
                                               @Cached FFIUnwrapNode unwrapNode,
@@ -36,7 +36,7 @@ public abstract class AltrepDuplicateNode extends RBaseNode {
         }
     }
 
-    @Specialization(replaces = {"doAltIntWithDuplicateMethod"}, limit = "3")
+    @Specialization(replaces = {"doAltIntWithDuplicateMethod"})
     protected Object doStandardDuplicate(RIntVector altIntVec, @SuppressWarnings("unused") boolean deep,
                                       @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
                                       @Cached AltrepRFFI.AltIntLengthNode lengthNode) {

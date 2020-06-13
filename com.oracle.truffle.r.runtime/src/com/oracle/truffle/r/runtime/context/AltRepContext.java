@@ -25,17 +25,17 @@ public class AltRepContext implements RContext.ContextState {
     }
 
     public AltIntegerClassDescriptor registerNewAltIntClass(String className, String packageName, Object dllInfo) {
-        AltIntegerClassDescriptor descriptor = new AltIntegerClassDescriptor(className, packageName, dllInfo);
-        altIntDescriptors.put(descriptor.toString(), descriptor);
-        logger.fine(() -> "Registered ALTINT class: " + descriptor.toString());
-        return descriptor;
+        AltIntegerClassDescriptor altIntClassDescr = new AltIntegerClassDescriptor(className, packageName, dllInfo);
+        altIntDescriptors.put(altIntClassDescr.toString(), altIntClassDescr);
+        logger.fine(() -> "Registered ALTINT class: " + altIntClassDescr.toString());
+        return altIntClassDescr;
     }
 
     public AltRealClassDescriptor registerNewAltRealClass(String className, String packageName, Object dllInfo) {
-        AltRealClassDescriptor descriptor = new AltRealClassDescriptor(className, packageName, dllInfo);
-        altRealDescriptors.put(descriptor.toString(), descriptor);
-        logger.fine(() -> "Registered ALTREAL class: " + descriptor.toString());
-        return descriptor;
+        AltRealClassDescriptor altRealClassDescr = new AltRealClassDescriptor(className, packageName, dllInfo);
+        altRealDescriptors.put(altRealClassDescr.toString(), altRealClassDescr);
+        logger.fine(() -> "Registered ALTREAL class: " + altRealClassDescr.toString());
+        return altRealClassDescr;
     }
 
     public AltComplexClassDescriptor registerNewAltComplexClass(String className, String packageName, Object dllInfo) {
@@ -57,11 +57,10 @@ public class AltRepContext implements RContext.ContextState {
     /**
      * Saves the given descriptor for some duration
      * FIXME: This is an ugly hack and should be temporary solution.
-     * @param descriptor
      */
-    public void saveDescriptor(AltRepClassDescriptor descriptor) {
+    public void saveDescriptor(AltRepClassDescriptor altRepClassDescr) {
         assert this.descriptor == null : "Only one descriptor can be saved at a time";
-        this.descriptor = descriptor;
+        this.descriptor = altRepClassDescr;
     }
 
     public AltRepClassDescriptor loadDescriptor() {

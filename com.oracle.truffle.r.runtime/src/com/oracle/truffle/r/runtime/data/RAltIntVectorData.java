@@ -121,7 +121,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public boolean isComplete(@Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
-                        @Cached AltrepRFFI.AltIntNoNANode noNANode) {
+                              @Cached AltrepRFFI.AltIntNoNANode noNANode) {
         if (hasNoNAMethodProfile.profile(descriptor.isNoNAMethodRegistered())) {
             return noNANode.execute(getOwner());
         } else {
@@ -160,7 +160,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     public static class IsSorted {
         @Specialization(guards = "hasIsSortedMethod(altIntVectorData)")
         public static boolean doWithNativeFunction(RAltIntVectorData altIntVectorData, boolean decreasing, boolean naLast,
-                                            @Cached AltrepRFFI.AltIntIsSortedNode isSortedNode) {
+                                                   @Cached AltrepRFFI.AltIntIsSortedNode isSortedNode) {
             AltrepSortedness sortedness = isSortedNode.execute(altIntVectorData.getOwner());
             if (decreasing) {
                 if (naLast && sortedness == AltrepSortedness.SORTED_DECR) {

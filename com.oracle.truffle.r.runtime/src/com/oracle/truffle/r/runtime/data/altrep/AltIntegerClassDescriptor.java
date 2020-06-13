@@ -272,7 +272,7 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
         return (int) sortedMode;
     }
 
-    private Object convertNativeReturnValToIntOrDouble(Object returnValueFromNative) {
+    private static Object convertNativeReturnValToIntOrDouble(Object returnValueFromNative) {
         assert returnValueFromNative instanceof NativeDataAccess.NativeMirror;
         RBaseObject returnValue = ((NativeDataAccess.NativeMirror) returnValueFromNative).getDelegate();
         assert returnValue instanceof RIntVector || returnValue instanceof RDoubleVector;

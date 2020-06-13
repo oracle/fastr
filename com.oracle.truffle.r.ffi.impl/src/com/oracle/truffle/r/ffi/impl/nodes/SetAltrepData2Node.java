@@ -28,7 +28,7 @@ public abstract class SetAltrepData2Node extends FFIUpCallNode.Arg2 {
     }
 
     @Fallback
-    public Object fallback(Object vector, Object data1) {
+    public Object fallback(Object vector, @SuppressWarnings("unused") Object data1) {
         throw RInternalError.shouldNotReachHere("R_set_altrep_data1: Unknown type = " + vector.getClass().getSimpleName());
     }
 
