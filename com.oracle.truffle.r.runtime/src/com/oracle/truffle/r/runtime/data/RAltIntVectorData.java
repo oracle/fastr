@@ -123,10 +123,19 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     public boolean isComplete(@Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
                               @Cached AltrepRFFI.AltIntNoNANode noNANode) {
         if (hasNoNAMethodProfile.profile(descriptor.isNoNAMethodRegistered())) {
-            return noNANode.execute(getOwner());
+            return invokeNoNA(noNANode);
         } else {
             return false;
         }
+    }
+
+    private boolean invokeNoNA(AltrepRFFI.AltIntNoNANode noNANode) {
+        assert descriptor.isNoNAMethodRegistered();
+        boolean noNA = noNANode.execute(getOwner());
+        if (noNA && !owner.isComplete()) {
+            owner.setComplete(true);
+        }
+        return noNA;
     }
 
     @SuppressWarnings("static-method")
