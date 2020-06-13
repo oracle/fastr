@@ -66,9 +66,9 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
                 "Descriptor " + descriptor.toString() + " does not have registered all necessary methods";
     }
 
-    private boolean hasDescriptorRegisteredNecessaryMethods(AltIntegerClassDescriptor descriptor) {
-        return descriptor.isLengthMethodRegistered() && descriptor.isDataptrMethodRegistered();
-        /* TODO: && descriptor.isUnserializeMethodRegistered(); */
+    private static boolean hasDescriptorRegisteredNecessaryMethods(AltIntegerClassDescriptor altIntClassDescr) {
+        return altIntClassDescr.isLengthMethodRegistered() && altIntClassDescr.isDataptrMethodRegistered();
+        /* TODO: && altIntClassDescr.isUnserializeMethodRegistered(); */
     }
 
     public AltIntegerClassDescriptor getDescriptor() {
@@ -135,14 +135,14 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return RType.Integer;
     }
 
-    @ExportMessage(limit = "1")
-    public int getLength(@Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+    @ExportMessage
+    public int getLength(@Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
         return lengthNode.execute(getOwner());
     }
 
-    @ExportMessage(limit = "1")
-    public RIntArrayVectorData materialize(@Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
-                                           @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+    @ExportMessage
+    public RIntArrayVectorData materialize(@Shared("dataptrNode") @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
+                                           @Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
         int length = lengthNode.execute(getOwner());
         long dataptrAddr = dataptrNode.execute(getOwner(), true);
         int[] newData = new int[length];
@@ -178,7 +178,9 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         }
 
         @Specialization(guards = "!hasIsSortedMethod(altIntVectorData)")
-        public static boolean doWithoutNativeFunction(RAltIntVectorData altIntVectorData, boolean decreasing, boolean naLast) {
+        public static boolean doWithoutNativeFunction(@SuppressWarnings("unused") RAltIntVectorData altIntVectorData,
+                                                      @SuppressWarnings("unused") boolean decreasing,
+                                                      @SuppressWarnings("unused") boolean naLast) {
             return false;
         }
 
@@ -199,7 +201,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         @Specialization(guards = "!hasGetRegionMethod(altIntVecData)")
         public static int doWithoutNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, Object buffer,
                                                   InteropLibrary bufferInterop,
-                                                  @Cached AltrepGetIntAtNode getIntAtNode,
+                                                  @Shared("getIntAtNode") @Cached AltrepGetIntAtNode getIntAtNode,
                                                   @Shared("naCheck") @Cached NACheck naCheck) {
             int bufferIdx = 0;
             for (int index = startIdx; index < startIdx + size; index++) {
@@ -225,7 +227,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
      */
     @ExportMessage
     public Object copy(boolean deep,
-                       @Cached AltrepDuplicateNode duplicateNode) {
+                       @Shared("duplicateNode") @Cached AltrepDuplicateNode duplicateNode) {
         return duplicateNode.execute(getOwner(), deep);
     }
 
@@ -234,9 +236,9 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
      *   Duplicate. The behavior may change, so the implementation is not optimized.
      */
     @ExportMessage
-    public int[] getIntDataCopy(@Cached AltrepDuplicateNode duplicateNode,
-                                @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
-                                @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+    public int[] getIntDataCopy(@Shared("duplicateNode") @Cached AltrepDuplicateNode duplicateNode,
+                                @Shared("dataptrNode") @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
+                                @Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
         // TODO: deep?
         int length = lengthNode.execute(getOwner());
         Object duplicatedObject = duplicateNode.execute(getOwner(), false);
@@ -253,8 +255,8 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public int[] getReadonlyIntData(@Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
-                                    @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+    public int[] getReadonlyIntData(@Shared("dataptrNode") @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
+                                    @Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
         int length = lengthNode.execute(getOwner());
         return getDataCopy(dataptrNode, length);
     }
@@ -269,7 +271,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public SeqIterator iterator(
             @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-            @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+            @Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
         int length = lengthNode.execute(getOwner());
         SeqIterator it = new SeqIterator(this, length);
         it.initLoopConditionProfile(loopProfile);
@@ -293,27 +295,27 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         it.nextWithWrap(loopProfile);
     }
 
-    @ExportMessage(limit = "1")
+    @ExportMessage
     public int getIntAt(int index,
-                        @Cached AltrepGetIntAtNode getIntAtNode,
+                        @Shared("getIntAtNode") @Cached AltrepGetIntAtNode getIntAtNode,
                         @Shared("naCheck") @Cached NACheck naCheck) {
         int value = (int) getIntAtNode.execute(getOwner(), index);
         naCheck.check(value);
         return value;
     }
 
-    @ExportMessage(limit = "1")
+    @ExportMessage
     public int getNextInt(SeqIterator it,
-                          @Cached AltrepGetIntAtNode getIntAtNode,
+                          @Shared("getIntAtNode") @Cached AltrepGetIntAtNode getIntAtNode,
                           @Shared("naCheck") @Cached NACheck naCheck) {
         int value = (int) getIntAtNode.execute(getOwner(), it.getIndex());
         naCheck.check(value);
         return value;
     }
 
-    @ExportMessage(limit = "1")
+    @ExportMessage
     public int getInt(RandomAccessIterator it, int index,
-                      @Cached AltrepGetIntAtNode getIntAtNode,
+                      @Shared("getIntAtNode") @Cached AltrepGetIntAtNode getIntAtNode,
                       @Shared("naCheck") @Cached NACheck naCheck) {
         int value = (int) getIntAtNode.execute(getOwner(), index);
         naCheck.check(value);
@@ -323,7 +325,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     // Write access to elements:
 
     @ExportMessage
-    public SeqWriteIterator writeIterator(@Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+    public SeqWriteIterator writeIterator(@Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
         int length = lengthNode.execute(getOwner());
         return new SeqWriteIterator(this, length);
     }
@@ -333,7 +335,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return new RandomAccessWriteIterator(this);
     }
 
-    @ExportMessage(limit = "1")
+    @ExportMessage
     public void setIntAt(int index, int value,
                          @Shared("setElementAtNode") @Cached AltrepSetElementAtNode setElementAtNode,
                          @Shared("naCheck") @Cached NACheck naCheck) {
@@ -341,7 +343,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         setElementAtNode.execute(getOwner(), value, index);
     }
 
-    @ExportMessage(limit = "1")
+    @ExportMessage
     public void setNextInt(SeqWriteIterator it, int value,
                            @Shared("setElementAtNode") @Cached AltrepSetElementAtNode setElementAtNode,
                            @Shared("naCheck") @Cached NACheck naCheck) {
@@ -349,7 +351,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         setElementAtNode.execute(getOwner(), value, it.getIndex());
     }
 
-    @ExportMessage(limit = "1")
+    @ExportMessage
     public void setInt(RandomAccessWriteIterator it, int index, int value,
                        @Shared("setElementAtNode") @Cached AltrepSetElementAtNode setElementAtNode,
                        @Shared("naCheck") @Cached NACheck naCheck) {
