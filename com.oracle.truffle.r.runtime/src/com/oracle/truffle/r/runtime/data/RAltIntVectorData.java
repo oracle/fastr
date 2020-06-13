@@ -114,7 +114,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public NACheck getNACheck(@Cached() NACheck na) {
+    public NACheck getNACheck(@Shared("naCheck") @Cached NACheck na) {
         na.enable(false);
         return na;
     }
@@ -199,11 +199,12 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         @Specialization(guards = "!hasGetRegionMethod(altIntVecData)")
         public static int doWithoutNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, Object buffer,
                                                   InteropLibrary bufferInterop,
-                                                  @Cached AltrepGetIntAtNode getIntAtNode) {
+                                                  @Cached AltrepGetIntAtNode getIntAtNode,
+                                                  @Shared("naCheck") @Cached NACheck naCheck) {
             int bufferIdx = 0;
             for (int index = startIdx; index < startIdx + size; index++) {
                 try {
-                    int value = altIntVecData.getIntAt(index, getIntAtNode);
+                    int value = altIntVecData.getIntAt(index, getIntAtNode, naCheck);
                     bufferInterop.writeArrayElement(buffer, bufferIdx, value);
                     bufferIdx++;
                 } catch (InteropException e) {
@@ -294,20 +295,29 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage(limit = "1")
     public int getIntAt(int index,
-                        @Cached(value = "create()") AltrepGetIntAtNode getIntAtNode) {
-        return (int) getIntAtNode.execute(getOwner(), index);
+                        @Cached AltrepGetIntAtNode getIntAtNode,
+                        @Shared("naCheck") @Cached NACheck naCheck) {
+        int value = (int) getIntAtNode.execute(getOwner(), index);
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage(limit = "1")
     public int getNextInt(SeqIterator it,
-                          @Cached(value = "create()") AltrepGetIntAtNode getIntAtNode) {
-        return (int) getIntAtNode.execute(getOwner(), it.getIndex());
+                          @Cached AltrepGetIntAtNode getIntAtNode,
+                          @Shared("naCheck") @Cached NACheck naCheck) {
+        int value = (int) getIntAtNode.execute(getOwner(), it.getIndex());
+        naCheck.check(value);
+        return value;
     }
 
     @ExportMessage(limit = "1")
     public int getInt(RandomAccessIterator it, int index,
-                      @Cached(value = "create()") AltrepGetIntAtNode getIntAtNode) {
-        return (int) getIntAtNode.execute(getOwner(), index);
+                      @Cached AltrepGetIntAtNode getIntAtNode,
+                      @Shared("naCheck") @Cached NACheck naCheck) {
+        int value = (int) getIntAtNode.execute(getOwner(), index);
+        naCheck.check(value);
+        return value;
     }
 
     // Write access to elements:
@@ -323,27 +333,27 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return new RandomAccessWriteIterator(this);
     }
 
-    @ExportMessage
-    public void commitRandomAccessWriteIterator(RandomAccessWriteIterator iterator,
-                                                @SuppressWarnings("unused") boolean neverSeenNA) {
-        iterator.commit();
-    }
-
     @ExportMessage(limit = "1")
     public void setIntAt(int index, int value,
-                         @Cached("create()") @Shared("setElementAtNode") AltrepSetElementAtNode setElementAtNode) {
+                         @Shared("setElementAtNode") @Cached AltrepSetElementAtNode setElementAtNode,
+                         @Shared("naCheck") @Cached NACheck naCheck) {
+        naCheck.check(value);
         setElementAtNode.execute(getOwner(), value, index);
     }
 
     @ExportMessage(limit = "1")
     public void setNextInt(SeqWriteIterator it, int value,
-                           @Cached("create()") @Shared("setElementAtNode") AltrepSetElementAtNode setElementAtNode) {
+                           @Shared("setElementAtNode") @Cached AltrepSetElementAtNode setElementAtNode,
+                           @Shared("naCheck") @Cached NACheck naCheck) {
+        naCheck.check(value);
         setElementAtNode.execute(getOwner(), value, it.getIndex());
     }
 
     @ExportMessage(limit = "1")
     public void setInt(RandomAccessWriteIterator it, int index, int value,
-                       @Cached("create()") @Shared("setElementAtNode") AltrepSetElementAtNode setElementAtNode) {
+                       @Shared("setElementAtNode") @Cached AltrepSetElementAtNode setElementAtNode,
+                       @Shared("naCheck") @Cached NACheck naCheck) {
+        naCheck.check(value);
         setElementAtNode.execute(getOwner(), value, index);
     }
 
