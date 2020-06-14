@@ -73,7 +73,7 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     private RIntVector() {
-        super(false);
+        super(RDataFactory.INCOMPLETE_VECTOR);
     }
 
     private void setData(Object data, int newLen) {
