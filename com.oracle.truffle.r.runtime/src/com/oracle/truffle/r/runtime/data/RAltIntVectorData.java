@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
+import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -41,14 +42,14 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDuplicateNode;
-import com.oracle.truffle.r.runtime.nodes.altrep.AltrepGetIntAtNode;
-import com.oracle.truffle.r.runtime.nodes.altrep.AltrepSetElementAtNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
@@ -210,7 +211,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         @Specialization(guards = "!hasGetRegionMethod(altIntVecData)")
         public static int doWithoutNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, Object buffer,
                                                   InteropLibrary bufferInterop,
-                                                  @Shared("getIntAtNode") @Cached AltrepGetIntAtNode getIntAtNode,
+                                                  @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
                                                   @Shared("naCheck") @Cached NACheck naCheck) {
             int bufferIdx = 0;
             for (int index = startIdx; index < startIdx + size; index++) {
@@ -306,27 +307,27 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public int getIntAt(int index,
-                        @Shared("getIntAtNode") @Cached AltrepGetIntAtNode getIntAtNode,
+                        @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
                         @Shared("naCheck") @Cached NACheck naCheck) {
-        int value = (int) getIntAtNode.execute(getOwner(), index);
+        int value = getIntAtNode.execute(getOwner(), index);
         naCheck.check(value);
         return value;
     }
 
     @ExportMessage
     public int getNextInt(SeqIterator it,
-                          @Shared("getIntAtNode") @Cached AltrepGetIntAtNode getIntAtNode,
+                          @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
                           @Shared("naCheck") @Cached NACheck naCheck) {
-        int value = (int) getIntAtNode.execute(getOwner(), it.getIndex());
+        int value = getIntAtNode.execute(getOwner(), it.getIndex());
         naCheck.check(value);
         return value;
     }
 
     @ExportMessage
     public int getInt(RandomAccessIterator it, int index,
-                      @Shared("getIntAtNode") @Cached AltrepGetIntAtNode getIntAtNode,
+                      @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
                       @Shared("naCheck") @Cached NACheck naCheck) {
-        int value = (int) getIntAtNode.execute(getOwner(), index);
+        int value = getIntAtNode.execute(getOwner(), index);
         naCheck.check(value);
         return value;
     }
@@ -346,31 +347,61 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public void setIntAt(int index, int value,
-                         @Shared("setElementAtNode") @Cached AltrepSetElementAtNode setElementAtNode,
+                         @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                          @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
-        setElementAtNode.execute(getOwner(), value, index);
+        writeViaDataptrNode(dataptrNode, getOwner(), index, value);
     }
 
     @ExportMessage
     public void setNextInt(SeqWriteIterator it, int value,
-                           @Shared("setElementAtNode") @Cached AltrepSetElementAtNode setElementAtNode,
+                           @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                            @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
-        setElementAtNode.execute(getOwner(), value, it.getIndex());
+        writeViaDataptrNode(dataptrNode, getOwner(), it.getIndex(), value);
     }
 
     @ExportMessage
     public void setInt(RandomAccessWriteIterator it, int index, int value,
-                       @Shared("setElementAtNode") @Cached AltrepSetElementAtNode setElementAtNode,
+                       @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                        @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
-        setElementAtNode.execute(getOwner(), value, index);
+        writeViaDataptrNode(dataptrNode, getOwner(), index, value);
+    }
+
+    private static void writeViaDataptrNode(AltrepRFFI.DataptrNode altIntDataptrNode, RIntVector altIntVec,
+                                            int index, int value) {
+        long dataptrAddr = altIntDataptrNode.execute(altIntVec, true);
+        NativeMemory.putInt(dataptrAddr, index, value);
     }
 
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return "RAltIntVectorData: altrepData={" + altrepData.toString() + "}";
+    }
+
+    @GenerateUncached
+    public abstract static class GetIntAtNode extends RBaseNode {
+        public abstract int execute(Object altVec, int index);
+
+        @Specialization(guards = "hasEltMethodRegistered(altIntVector)")
+        protected int doAltIntWithElt(RIntVector altIntVector, int index,
+                                   @Cached("create()") AltrepRFFI.EltNode altIntEltNode) {
+            assert AltrepUtilities.isAltrep(altIntVector);
+            return altIntEltNode.execute(altIntVector, index);
+        }
+
+        @Specialization(guards = "!hasEltMethodRegistered(altIntVector)")
+        protected int doAltIntWithoutElt(RIntVector altIntVector, int index,
+                                      @Cached("create()") AltrepRFFI.DataptrNode altIntDataptrNode) {
+            assert AltrepUtilities.isAltrep(altIntVector);
+            long dataptrAddr = altIntDataptrNode.execute(altIntVector, false);
+            return NativeMemory.getInt(dataptrAddr, index);
+        }
+
+        protected static boolean hasEltMethodRegistered(RIntVector altIntVector) {
+            return AltrepUtilities.hasEltMethodRegistered(altIntVector);
+        }
     }
 }
