@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
@@ -113,8 +114,21 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
         return result;
     }
 
+    private RStringVector() {
+        super(RDataFactory.INCOMPLETE_VECTOR);
+    }
+
     public static RStringVector createAltString(AltStringClassDescriptor descriptor, RAltRepData altRepData) {
-        throw RInternalError.unimplemented("RStringVector.createAltString");
+        RAltStringVectorData altStringVecData = new RAltStringVectorData(descriptor, altRepData);
+        RStringVector altStringVector = new RStringVector();
+        altStringVector.setAltRep();
+        altStringVector.data = altStringVecData;
+        // This is a workaround, because we already have to invoke some altrep methods in getLengthMethodUncached
+        // and for that we need non-null owner.
+        altStringVecData.setOwner(altStringVector);
+        int length = AltrepUtilities.getLengthUncached(altStringVector);
+        altStringVector.setData(altStringVecData, length);
+        return altStringVector;
     }
 
     private void setData(Object data, int newLen) {

@@ -9,6 +9,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -47,6 +48,15 @@ public final class AltrepRFFI {
         RInternalError.guarantee(interop.isNumber(value), "Value from downcall should be an integer");
         try {
             return interop.asInt(value);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+    }
+
+    private static String expectString(InteropLibrary interop, Object value) {
+        RInternalError.guarantee(interop.isString(value), "Value from downcall should be a string");
+        try {
+            return interop.asString(value);
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
@@ -91,16 +101,46 @@ public final class AltrepRFFI {
 
     @GenerateUncached
     public abstract static class EltNode extends Node {
-        public abstract int execute(Object altrepVector, int index);
+        public abstract Object execute(Object altrepVector, int index);
 
         @Specialization
-        protected int doIt(RIntVector altIntVector, int index,
-                        @Cached AltrepDownCallNode downCallNode,
-                        @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+        protected int eltOfAltInt(RIntVector altIntVector, int index,
+                                  @Shared("downCallNode") @Cached AltrepDownCallNode downCallNode,
+                                  @Shared("retValInterop") @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getEltMethodDescriptor(altIntVector);
             Object retValue = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.eltMethodUnwrapResult,
                     AltIntegerClassDescriptor.eltMethodWrapArguments, new Object[]{altIntVector, index});
             return expectInteger(retValueInterop, retValue);
+        }
+
+        @Specialization
+        protected String eltOfAltString(RStringVector altStringVector, int index,
+                                        @Shared("downCallNode") @Cached AltrepDownCallNode downCallNode,
+                                        @Shared("retValInterop") @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getEltMethodDescriptor(altStringVector);
+            Object retValue = downCallNode.execute(methodDescr, AltStringClassDescriptor.eltMethodUnwrapResult,
+                    AltStringClassDescriptor.eltMethodWrapArguments, new Object[]{altStringVector, index});
+            return expectString(retValueInterop, retValue);
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class SetEltNode extends Node {
+        public abstract void execute(RStringVector altStringVector, int index, Object element);
+
+        @Specialization
+        protected void setEltWithCharSXPWrapper(RStringVector altStringVector, int index, CharSXPWrapper element,
+                                                @Shared("downCallNode") @Cached AltrepDownCallNode downCallNode) {
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getSetEltMethodDescriptor(altStringVector);
+            downCallNode.execute(methodDescr, AltStringClassDescriptor.setEltMethodUnwrapResult,
+                    AltStringClassDescriptor.setEltMethodWrapArguments, new Object[]{altStringVector, index, element});
+        }
+
+        @Specialization
+        protected void setEltWithString(RStringVector altStringVector, int index, String element,
+                                        @Shared("downCallNode") @Cached AltrepDownCallNode downCallNode) {
+            CharSXPWrapper charWrapper = CharSXPWrapper.create(element);
+            setEltWithCharSXPWrapper(altStringVector, index, charWrapper, downCallNode);
         }
     }
 

@@ -387,9 +387,9 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
         @Specialization(guards = "hasEltMethodRegistered(altIntVector)")
         protected int doAltIntWithElt(RIntVector altIntVector, int index,
-                                   @Cached("create()") AltrepRFFI.EltNode altIntEltNode) {
+                                   @Cached("create()") AltrepRFFI.EltNode eltNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
-            return altIntEltNode.execute(altIntVector, index);
+            return (int) eltNode.execute(altIntVector, index);
         }
 
         @Specialization(guards = "!hasEltMethodRegistered(altIntVector)")

@@ -1677,21 +1677,21 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public void R_set_altstring_Set_elt_method(Object classDescriptor, Object method) {
         AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
         AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltStringClassDescriptor.setEltMethodSignature);
-        classDescr.registerEltMethod(altrepMethodDescriptor);
+        classDescr.registerSetEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altstring_Is_sorted_method(Object classDescriptor, Object method) {
         AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
         AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltStringClassDescriptor.isSortedMethodSignature);
-        classDescr.registerEltMethod(altrepMethodDescriptor);
+        classDescr.registerIsSortedMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altstring_No_NA_method(Object classDescriptor, Object method) {
         AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
         AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltStringClassDescriptor.noNAMethodSignature);
-        classDescr.registerEltMethod(altrepMethodDescriptor);
+        classDescr.registerNoNAMethod(altrepMethodDescriptor);
     }
 
     @Override

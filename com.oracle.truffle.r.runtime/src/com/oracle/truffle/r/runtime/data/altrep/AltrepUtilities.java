@@ -14,6 +14,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
 
@@ -123,6 +124,10 @@ public class AltrepUtilities {
 
     public static AltrepMethodDescriptor getEltMethodDescriptor(RStringVector altStringVector) {
         return getAltStringDescriptor(altStringVector).getEltMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getSetEltMethodDescriptor(RStringVector altStringVector) {
+        return getAltStringDescriptor(altStringVector).getSetEltMethodDescriptor();
     }
 
     public static AltrepMethodDescriptor getLengthMethodDescriptor(RStringVector altStringVector) {
@@ -248,6 +253,12 @@ public class AltrepUtilities {
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
+    }
+
+    public static int getLengthUncached(RStringVector altStringVec) {
+        assert altStringVec.isAltRep();
+        AltrepRFFI.LengthNode lengthNode = AltrepRFFIFactory.LengthNodeGen.getUncached();
+        return lengthNode.execute(altStringVec);
     }
 
     public abstract static class AltrepSumMethodInvokerNode extends Node {

@@ -20,8 +20,8 @@ public abstract class NativeArrayWrapper implements TruffleObject {
         return new NativeIntArrayWrapper(arrayPtr, size);
     }
 
-    public abstract void writeElement(long arrayPtr, long index, Object value);
-    public abstract Object readElement(long arrayPtr, long index);
+    public abstract void writeElement(long arrayAddr, long index, Object value);
+    public abstract Object readElement(long arrayAddr, long index);
 
     @ExportMessage
     public boolean hasArrayElements() {
@@ -66,12 +66,12 @@ public abstract class NativeArrayWrapper implements TruffleObject {
     }
 
     @ExportMessage
-    public boolean isArrayElementInsertable(long index) {
+    public boolean isArrayElementInsertable(@SuppressWarnings("unused") long index) {
         return false;
     }
 
     @ExportMessage
-    public boolean isArrayElementRemovable(long index) {
+    public boolean isArrayElementRemovable(@SuppressWarnings("unused") long index) {
         return false;
     }
 
