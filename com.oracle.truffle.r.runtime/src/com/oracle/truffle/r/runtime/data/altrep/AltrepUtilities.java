@@ -81,9 +81,7 @@ public class AltrepUtilities {
     }
 
     public static AltrepMethodDescriptor getLengthMethodDescriptor(RIntVector altIntVector) {
-        assert altIntVector.isAltRep();
-        AltIntegerClassDescriptor descriptor = getAltIntDescriptor(altIntVector);
-        return descriptor.getLengthMethodDescriptor();
+        return getAltIntDescriptor(altIntVector).getLengthMethodDescriptor();
     }
 
     public static AltrepMethodDescriptor getEltMethodDescriptor(RIntVector altIntVector) {
@@ -122,8 +120,13 @@ public class AltrepUtilities {
         return getAltIntDescriptor(altIntVector).getDuplicateMethodDescriptor();
     }
 
+
     public static AltrepMethodDescriptor getEltMethodDescriptor(RStringVector altStringVector) {
         return getAltStringDescriptor(altStringVector).getEltMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getLengthMethodDescriptor(RStringVector altStringVector) {
+        return getAltStringDescriptor(altStringVector).getLengthMethodDescriptor();
     }
 
 
@@ -256,7 +259,7 @@ public class AltrepUtilities {
 
         @Specialization
         Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @Cached AltrepRFFI.AltIntSumNode altIntSumNode) {
+                        @Cached AltrepRFFI.SumNode altIntSumNode) {
             return altIntSumNode.execute(altIntVec, naRm);
         }
 
@@ -275,8 +278,8 @@ public class AltrepUtilities {
 
         @Specialization
         Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @Cached AltrepRFFI.AltIntMaxNode altIntMaxNode) {
-            return altIntMaxNode.execute(altIntVec, naRm);
+                        @Cached AltrepRFFI.MaxNode maxNode) {
+            return maxNode.execute(altIntVec, naRm);
         }
 
         @Fallback
@@ -294,8 +297,8 @@ public class AltrepUtilities {
 
         @Specialization
         Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @Cached AltrepRFFI.AltIntMinNode altIntMinNode) {
-            return altIntMinNode.execute(altIntVec, naRm);
+                        @Cached AltrepRFFI.MinNode minNode) {
+            return minNode.execute(altIntVec, naRm);
         }
 
         @Fallback
@@ -317,20 +320,20 @@ public class AltrepUtilities {
 
         @Specialization(guards = "hasEltMethodRegistered(altIntVec)")
         Object doAltIntWithEltMethod(RIntVector altIntVec, int index,
-                                     @Cached AltrepRFFI.AltIntEltNode eltNode) {
+                                     @Cached AltrepRFFI.EltNode eltNode) {
             return eltNode.execute(altIntVec, index);
         }
 
         @Specialization(guards = "!hasEltMethodRegistered(altIntVec)")
         Object doAltIntWithoutEltMethod(RIntVector altIntVec, int index,
-                                        @Cached AltrepRFFI.AltIntDataptrNode dataptrNode) {
+                                        @Cached AltrepRFFI.DataptrNode dataptrNode) {
             long address = dataptrNode.execute(altIntVec, false);
             return NativeMemory.getInt(address, index);
         }
 
         @Specialization
         Object doAltString(RStringVector altStringVector, int index,
-                           @Cached AltrepRFFI.AltStringEltNode eltNode) {
+                           @Cached AltrepRFFI.EltNode eltNode) {
             return eltNode.execute(altStringVector, index);
         }
     }

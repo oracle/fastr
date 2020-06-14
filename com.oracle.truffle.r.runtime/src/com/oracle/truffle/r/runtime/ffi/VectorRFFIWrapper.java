@@ -343,7 +343,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         @Specialization(guards = "isAltrep(altIntVector)")
         protected static long get(RIntVector altIntVector,
-                                  @Cached AltrepRFFI.AltIntDataptrNode dataptrNode) {
+                                  @Cached AltrepRFFI.DataptrNode dataptrNode) {
             return dataptrNode.execute(altIntVector, true);
         }
 

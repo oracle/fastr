@@ -17,13 +17,13 @@ public abstract class AltrepGetIntAtNode extends RBaseNode {
 
     @Specialization(guards = {"isAltrep(altIntVector)", "hasEltMethodRegistered(altIntVector)"})
     public int doAltIntWithElt(RIntVector altIntVector, int index,
-                               @Cached("create()") AltrepRFFI.AltIntEltNode altIntEltNode) {
+                               @Cached("create()") AltrepRFFI.EltNode altIntEltNode) {
         return altIntEltNode.execute(altIntVector, index);
     }
 
     @Specialization(guards = {"isAltrep(altIntVector)", "!hasEltMethodRegistered(altIntVector)"})
     public int doAltIntWithoutElt(RIntVector altIntVector, int index,
-                                  @Cached("create()") AltrepRFFI.AltIntDataptrNode altIntDataptrNode) {
+                                  @Cached("create()") AltrepRFFI.DataptrNode altIntDataptrNode) {
         long dataptrAddr = altIntDataptrNode.execute(altIntVector, false);
         return NativeMemory.getInt(dataptrAddr, index);
     }

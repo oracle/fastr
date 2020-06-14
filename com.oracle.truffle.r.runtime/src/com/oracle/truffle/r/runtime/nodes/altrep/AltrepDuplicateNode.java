@@ -22,9 +22,9 @@ public abstract class AltrepDuplicateNode extends RBaseNode {
     protected Object doAltIntWithDuplicateMethod(RIntVector altIntVec, boolean deep,
                                               @Cached("createBinaryProfile()") ConditionProfile duplicateReturnsNullProfile,
                                               @Cached FFIUnwrapNode unwrapNode,
-                                              @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
-                                              @Cached AltrepRFFI.AltIntLengthNode lengthNode,
-                                              @Cached AltrepRFFI.AltIntDuplicateNode duplicateNode) {
+                                              @Cached AltrepRFFI.DataptrNode dataptrNode,
+                                              @Cached AltrepRFFI.LengthNode lengthNode,
+                                              @Cached AltrepRFFI.DuplicateNode duplicateNode) {
         assert AltrepUtilities.isAltrep(altIntVec);
         Object duplicatedObject = duplicateNode.execute(altIntVec, deep);
         if (duplicateReturnsNullProfile.profile(duplicatedObject == null)) {
@@ -38,8 +38,8 @@ public abstract class AltrepDuplicateNode extends RBaseNode {
 
     @Specialization(replaces = {"doAltIntWithDuplicateMethod"})
     protected Object doStandardDuplicate(RIntVector altIntVec, @SuppressWarnings("unused") boolean deep,
-                                      @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
-                                      @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+                                      @Cached AltrepRFFI.DataptrNode dataptrNode,
+                                      @Cached AltrepRFFI.LengthNode lengthNode) {
         assert AltrepUtilities.isAltrep(altIntVec);
         int length = lengthNode.execute(altIntVec);
         long dataptrAddr = dataptrNode.execute(altIntVec, false);

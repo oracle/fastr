@@ -15,7 +15,7 @@ public abstract class AltrepSetElementAtNode extends RBaseNode {
 
     @Specialization(guards = {"isAltrep(altIntVec)"})
     public Object doAltInt(RIntVector altIntVec, int value, int index,
-                         @Cached("create()") AltrepRFFI.AltIntDataptrNode dataptrNode) {
+                         @Cached("create()") AltrepRFFI.DataptrNode dataptrNode) {
         writeViaDataptrNode(dataptrNode, altIntVec, index, value);
         return altIntVec;
     }
@@ -24,7 +24,7 @@ public abstract class AltrepSetElementAtNode extends RBaseNode {
         return AltrepUtilities.isAltrep(vector);
     }
 
-    private static void writeViaDataptrNode(AltrepRFFI.AltIntDataptrNode altIntDataptrNode, RIntVector altIntVec,
+    private static void writeViaDataptrNode(AltrepRFFI.DataptrNode altIntDataptrNode, RIntVector altIntVec,
                                             int index, int value) {
         long dataptrAddr = altIntDataptrNode.execute(altIntVec, true);
         NativeMemory.putInt(dataptrAddr, index, value);

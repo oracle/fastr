@@ -1,6 +1,7 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -64,27 +65,36 @@ public final class AltrepRFFI {
 
 
     @GenerateUncached
-    public abstract static class AltIntLengthNode extends Node {
-        public abstract int execute(RIntVector altIntVector);
+    public abstract static class LengthNode extends Node {
+        public abstract int execute(Object altrepVector);
 
         @Specialization
-        public int doIt(RIntVector altIntVector,
-                        @Cached AltrepDownCallNode downCallNode,
-                        @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
+        protected int lengthOfAltInt(RIntVector altIntVector,
+                                     @Shared("downCallNode") @Cached AltrepDownCallNode downCallNode,
+                                     @Shared("returnValInterop") @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
             AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getLengthMethodDescriptor(altIntVector);
             Object retVal = downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.lengthMethodUnwrapResult,
                     AltIntegerClassDescriptor.lengthMethodWrapArguments, new Object[]{altIntVector});
             return expectInteger(returnValueInterop, retVal);
         }
 
+        @Specialization
+        protected int lengthOfAltString(RStringVector altStringVector,
+                                        @Shared("downCallNode") @Cached AltrepDownCallNode downCallNode,
+                                        @Shared("returnValInterop") @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
+            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getLengthMethodDescriptor(altStringVector);
+            Object retVal = downCallNode.execute(altrepMethodDescriptor, AltStringClassDescriptor.lengthMethodUnwrapResult,
+                    AltStringClassDescriptor.lengthMethodWrapArguments, new Object[]{altStringVector});
+            return expectInteger(returnValueInterop, retVal);
+        }
     }
 
     @GenerateUncached
-    public abstract static class AltIntEltNode extends Node {
-        public abstract int execute(RIntVector altIntVector, int index);
+    public abstract static class EltNode extends Node {
+        public abstract int execute(Object altrepVector, int index);
 
         @Specialization
-        public int doIt(RIntVector altIntVector, int index,
+        protected int doIt(RIntVector altIntVector, int index,
                         @Cached AltrepDownCallNode downCallNode,
                         @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getEltMethodDescriptor(altIntVector);
@@ -95,11 +105,11 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntDataptrNode extends Node {
-        public abstract long execute(RIntVector altIntVector, boolean writeable);
+    public abstract static class DataptrNode extends Node {
+        public abstract long execute(Object altrepVector, boolean writeable);
 
         @Specialization
-        public long doIt(RIntVector altIntVector, boolean writeable,
+        protected long doIt(RIntVector altIntVector, boolean writeable,
                          @Cached AltrepDownCallNode downCallNode,
                          @CachedLibrary(limit = "1") InteropLibrary interop) {
             assert AltrepUtilities.isAltrep(altIntVector);
@@ -118,11 +128,11 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntIsSortedNode extends Node {
-        public abstract AltrepSortedness execute(RIntVector altIntVector);
+    public abstract static class IsSortedNode extends Node {
+        public abstract AltrepSortedness execute(Object altrepVector);
 
         @Specialization
-        public AltrepSortedness doIt(RIntVector altIntVector,
+        protected AltrepSortedness doIt(RIntVector altIntVector,
                                      @Cached AltrepDownCallNode downCallNode,
                                      @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             assert AltrepUtilities.isAltrep(altIntVector);
@@ -134,11 +144,11 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntNoNANode extends Node {
-        public abstract boolean execute(RIntVector altIntVector);
+    public abstract static class NoNANode extends Node {
+        public abstract boolean execute(Object altrepVector);
 
         @Specialization
-        public boolean doIt(RIntVector altIntVector,
+        protected boolean doIt(RIntVector altIntVector,
                             @Cached AltrepDownCallNode downCallNode,
                             @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             assert AltrepUtilities.isAltrep(altIntVector);
@@ -147,15 +157,14 @@ public final class AltrepRFFI {
                     AltIntegerClassDescriptor.noNAMethodWrapArguments, new Object[]{altIntVector});
             return expectInteger(retValueInterop, retValue) == 1;
         }
-
     }
 
     @GenerateUncached
-    public abstract static class AltIntGetRegionNode extends Node {
-        public abstract int execute(RIntVector altIntVector, int fromIdx, int size, Object buffer);
+    public abstract static class GetRegionNode extends Node {
+        public abstract int execute(Object altrepVector, int fromIdx, int size, Object buffer);
 
         @Specialization
-        public int doIt(RIntVector altIntVector, int fromIdx, int size, Object buffer,
+        protected int doIt(RIntVector altIntVector, int fromIdx, int size, Object buffer,
                         @Cached AltrepDownCallNode downCallNode,
                         @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             assert AltrepUtilities.isAltrep(altIntVector);
@@ -168,8 +177,8 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntDuplicateNode extends Node {
-        public abstract Object execute(RIntVector altIntVector, boolean deep);
+    public abstract static class DuplicateNode extends Node {
+        public abstract Object execute(Object altrepVector, boolean deep);
 
         @Specialization
         protected Object doIt(RIntVector altIntVector, boolean deep,
@@ -182,11 +191,11 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntSumNode extends Node {
-        public abstract Object execute(RIntVector altIntVec, boolean naRm);
+    public abstract static class SumNode extends Node {
+        public abstract Object execute(Object altrepVector, boolean naRm);
 
         @Specialization
-        public Object doIt(RIntVector altIntVec, boolean naRm,
+        protected Object doIt(RIntVector altIntVec, boolean naRm,
                            @Cached AltrepDownCallNode downCallNode) {
             AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getSumMethodDescriptor(altIntVec);
             return downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.sumMethodUnwrapResult,
@@ -195,8 +204,8 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntMaxNode extends Node {
-        public abstract Object execute(RIntVector altIntVec, boolean naRm);
+    public abstract static class MaxNode extends Node {
+        public abstract Object execute(Object altrepVector, boolean naRm);
 
         @Specialization
         protected Object doIt(RIntVector altIntVec, boolean naRm,
@@ -208,8 +217,8 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    public abstract static class AltIntMinNode extends Node {
-        public abstract Object execute(RIntVector altIntVec, boolean naRm);
+    public abstract static class MinNode extends Node {
+        public abstract Object execute(Object altrepVector, boolean naRm);
 
         @Specialization
         protected Object doIt(RIntVector altIntVec, boolean naRm,
@@ -217,19 +226,6 @@ public final class AltrepRFFI {
             AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getMinMethodDescriptor(altIntVec);
             return downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.minMethodUnwrapResult,
                     AltIntegerClassDescriptor.minMethodWrapArguments, new Object[]{altIntVec, naRm});
-        }
-    }
-
-    @GenerateUncached
-    public abstract static class AltStringEltNode extends Node {
-        public abstract Object execute(RStringVector altStringVec, int index);
-
-        @Specialization
-        public Object doIt(RStringVector altStringVec, int index,
-                           @Cached AltrepDownCallNode downCallNode) {
-            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getEltMethodDescriptor(altStringVec);
-            return downCallNode.execute(altrepMethodDescriptor, AltStringClassDescriptor.eltMethodUnwrapResult,
-                    AltStringClassDescriptor.eltMethodWrapArguments, new Object[]{altStringVec, index});
         }
     }
 }

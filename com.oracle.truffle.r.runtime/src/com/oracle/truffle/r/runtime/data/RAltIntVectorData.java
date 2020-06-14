@@ -53,8 +53,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
-    protected final RAltRepData altrepData;
-    protected final AltIntegerClassDescriptor descriptor;
+    private final RAltRepData altrepData;
+    private final AltIntegerClassDescriptor descriptor;
     private boolean dataptrCalled;
     private RIntVector owner;
 
@@ -121,7 +121,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public boolean isComplete(@Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
-                              @Cached AltrepRFFI.AltIntNoNANode noNANode) {
+                              @Cached AltrepRFFI.NoNANode noNANode) {
         if (hasNoNAMethodProfile.profile(descriptor.isNoNAMethodRegistered())) {
             return invokeNoNA(noNANode);
         } else {
@@ -129,7 +129,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         }
     }
 
-    private boolean invokeNoNA(AltrepRFFI.AltIntNoNANode noNANode) {
+    private boolean invokeNoNA(AltrepRFFI.NoNANode noNANode) {
         assert descriptor.isNoNAMethodRegistered();
         boolean noNA = noNANode.execute(getOwner());
         if (noNA && !owner.isComplete()) {
@@ -145,13 +145,13 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public int getLength(@Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+    public int getLength(@Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         return lengthNode.execute(getOwner());
     }
 
     @ExportMessage
-    public RIntArrayVectorData materialize(@Shared("dataptrNode") @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
-                                           @Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+    public RIntArrayVectorData materialize(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                                           @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         int length = lengthNode.execute(getOwner());
         long dataptrAddr = dataptrNode.execute(getOwner(), true);
         int[] newData = new int[length];
@@ -169,7 +169,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     public static class IsSorted {
         @Specialization(guards = "hasIsSortedMethod(altIntVectorData)")
         public static boolean doWithNativeFunction(RAltIntVectorData altIntVectorData, boolean decreasing, boolean naLast,
-                                                   @Cached AltrepRFFI.AltIntIsSortedNode isSortedNode) {
+                                                   @Cached AltrepRFFI.IsSortedNode isSortedNode) {
             AltrepSortedness sortedness = isSortedNode.execute(altIntVectorData.getOwner());
             if (decreasing) {
                 if (naLast && sortedness == AltrepSortedness.SORTED_DECR) {
@@ -203,7 +203,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         @Specialization(guards = "hasGetRegionMethod(altIntVecData)")
         public static int doWithNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, Object buffer,
                                         @SuppressWarnings("unused") InteropLibrary bufferInterop,
-                                        @Cached AltrepRFFI.AltIntGetRegionNode getRegionNode) {
+                                        @Cached AltrepRFFI.GetRegionNode getRegionNode) {
             return getRegionNode.execute(altIntVecData.getOwner(), startIdx, size, buffer);
         }
 
@@ -246,8 +246,8 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
      */
     @ExportMessage
     public int[] getIntDataCopy(@Shared("duplicateNode") @Cached AltrepDuplicateNode duplicateNode,
-                                @Shared("dataptrNode") @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
-                                @Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+                                @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                                @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         // TODO: deep?
         int length = lengthNode.execute(getOwner());
         Object duplicatedObject = duplicateNode.execute(getOwner(), false);
@@ -264,13 +264,13 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public int[] getReadonlyIntData(@Shared("dataptrNode") @Cached AltrepRFFI.AltIntDataptrNode dataptrNode,
-                                    @Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+    public int[] getReadonlyIntData(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         int length = lengthNode.execute(getOwner());
         return getDataCopy(dataptrNode, length);
     }
 
-    private int[] getDataCopy(AltrepRFFI.AltIntDataptrNode dataptrNode, int length) {
+    private int[] getDataCopy(AltrepRFFI.DataptrNode dataptrNode, int length) {
         long dataptrAddr = dataptrNode.execute(getOwner(), false);
         int[] dataCopy = new int[length];
         NativeMemory.copyMemory(dataptrAddr, dataCopy, ElementType.INT, length);
@@ -280,7 +280,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public SeqIterator iterator(
             @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-            @Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+            @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         int length = lengthNode.execute(getOwner());
         SeqIterator it = new SeqIterator(this, length);
         it.initLoopConditionProfile(loopProfile);
@@ -334,7 +334,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     // Write access to elements:
 
     @ExportMessage
-    public SeqWriteIterator writeIterator(@Shared("lengthNode") @Cached AltrepRFFI.AltIntLengthNode lengthNode) {
+    public SeqWriteIterator writeIterator(@Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         int length = lengthNode.execute(getOwner());
         return new SeqWriteIterator(this, length);
     }
