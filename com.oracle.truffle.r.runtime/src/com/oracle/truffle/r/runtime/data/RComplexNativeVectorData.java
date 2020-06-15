@@ -76,6 +76,11 @@ public class RComplexNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
+    public long asPointer() {
+        return NativeDataAccess.getNativeDataAddress(vec);
+    }
+
+    @ExportMessage
     public RComplexArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
         double[] data = NativeDataAccess.copyComplexNativeData(vec.getNativeMirror());
         return new RComplexArrayVectorData(data, RDataFactory.INCOMPLETE_VECTOR);

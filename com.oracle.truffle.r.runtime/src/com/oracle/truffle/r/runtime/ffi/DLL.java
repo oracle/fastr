@@ -301,7 +301,7 @@ public class DLL {
             } else {
                 throw InvalidArrayIndexException.create(idx);
             }
-            return VectorRFFIWrapper.get(res);
+            return RObjectDataPtr.get(res);
         }
 
         private static DLLInfo create(String name, String path, boolean dynamicLookup, LibHandle handle, boolean addToList) {

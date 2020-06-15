@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -47,6 +48,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(AbstractContainerLibrary.class)
 public final class RDoubleVector extends RAbstractNumericVector implements RMaterializedVector, Shareable {
 
     private int length;
@@ -275,6 +277,18 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
         // To retain the semantics of the original materialize, for sequences and such we return new
         // vector
         return new RDoubleVector(dataLib.getDoubleDataCopy(data), isComplete());
+    }
+
+    @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
+    public void containerLibToNative(
+                    @Cached("createBinaryProfile()") ConditionProfile alreadyNativeProfile,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (alreadyNativeProfile.profile(data instanceof RDoubleNativeVectorData)) {
+            return;
+        }
+        double[] arr = dataLib.getReadonlyDoubleData(this.data);
+        NativeDataAccess.allocateNativeContents(this, arr, getLength());
+        setData(new RDoubleNativeVectorData(this), getLength());
     }
 
     @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)

@@ -85,6 +85,11 @@ public class RListNativeData implements TruffleObject {
     }
 
     @ExportMessage
+    public long asPointer() {
+        return NativeDataAccess.getNativeDataAddress(vec);
+    }
+
+    @ExportMessage
     public Object[] copy(@SuppressWarnings("unused") boolean deep) {
         if (deep) {
             throw RInternalError.unimplemented("list data deep copy");

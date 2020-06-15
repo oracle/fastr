@@ -52,6 +52,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(AbstractContainerLibrary.class)
 public final class RStringVector extends RAbstractAtomicVector implements RMaterializedVector, Shareable {
 
     private int length;
@@ -334,6 +335,24 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
         return new RStringVector(dataLib.getStringDataCopy(data), isComplete());
     }
 
+    @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
+    public void containerLibToNative(
+                    @Cached("createBinaryProfile()") ConditionProfile alreadyNativeProfile) {
+        if (alreadyNativeProfile.profile(data instanceof RStringVecNativeData)) {
+            return;
+        }
+        wrapStrings();
+        CharSXPWrapper[] arr = ((RStringCharSXPData) this.data).getData();
+        int len = getLength();
+        try {
+            NativeDataAccess.allocateNativeContents(this, arr, len);
+        } finally {
+            setData(new RStringVecNativeData(this, arr), len);
+            assert NativeDataAccess.isAllocated(this);
+        }
+        verifyData();
+    }
+
     @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
     RStringVector containerLibCopy(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         RStringVector result = new RStringVector(dataLib.copy(data, false), dataLib.getLength(data));
@@ -437,7 +456,7 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
     }
 
     public boolean isWrapped() {
-        return data instanceof RStringCharSXPData;
+        return data instanceof RStringCharSXPData || data instanceof RStringVecNativeData;
     }
 
     private static final class FastPathAccess extends FastPathFromStringAccess {

@@ -65,12 +65,12 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
         return ctxRef.get().getRFFI().getSulongArrayType(42);
     }
 
-    static boolean isVectorRFFIWrapper(Object x) {
-        return x instanceof VectorRFFIWrapper;
+    static boolean isRObjectDataPtr(Object x) {
+        return x instanceof RObjectDataPtr;
     }
 
     @Specialization
-    protected byte[] doVectorRFFIWrapper(@SuppressWarnings("unused") Object length, VectorRFFIWrapper x, @Cached BranchProfile rawVectorProfile) {
+    protected byte[] doRObjectDataPtr(@SuppressWarnings("unused") Object length, RObjectDataPtr x, @Cached BranchProfile rawVectorProfile) {
         TruffleObject vector = x.getVector();
         if (vector instanceof RRawVector) {
             rawVectorProfile.enter();
@@ -81,7 +81,7 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
         }
     }
 
-    @Specialization(guards = {"!isVectorRFFIWrapper(x)", "interopLib.hasArrayElements(x)", "typeLib.getNativeType(x) == sulongByteArrayType"}, limit = "1")
+    @Specialization(guards = {"!isRObjectDataPtr(x)", "interopLib.hasArrayElements(x)", "typeLib.getNativeType(x) == sulongByteArrayType"}, limit = "1")
     protected byte[] doByteArrayInterop(@SuppressWarnings("unused") Object length, Object x,
                     @SuppressWarnings("unused") @CachedLibrary("x") NativeTypeLibrary typeLib,
                     @CachedLibrary("x") InteropLibrary interopLib,
@@ -99,7 +99,7 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
         }
     }
 
-    @Specialization(guards = {"!isVectorRFFIWrapper(x)", "interopLib.hasArrayElements(x)", "typeLib.getNativeType(x) == sulongIntArrayType"}, limit = "1")
+    @Specialization(guards = {"!isRObjectDataPtr(x)", "interopLib.hasArrayElements(x)", "typeLib.getNativeType(x) == sulongIntArrayType"}, limit = "1")
     protected byte[] doIntArrayInterop(@SuppressWarnings("unused") Object length, Object x,
                     @SuppressWarnings("unused") @CachedLibrary("x") NativeTypeLibrary typeLib,
                     @CachedLibrary("x") InteropLibrary interopLib,
@@ -117,7 +117,7 @@ public abstract class FFINativeByteArrayUnwrapNode extends RBaseNode {
         }
     }
 
-    @Specialization(guards = {"!isVectorRFFIWrapper(x)", "!interopLib.hasArrayElements(x)", "interopLib.isPointer(x)"}, limit = "2")
+    @Specialization(guards = {"!isRObjectDataPtr(x)", "!interopLib.hasArrayElements(x)", "interopLib.isPointer(x)"}, limit = "2")
     protected byte[] doPointer(int length, Object x, @CachedLibrary("x") InteropLibrary interopLib) {
         try {
             interopLib.toNative(x);

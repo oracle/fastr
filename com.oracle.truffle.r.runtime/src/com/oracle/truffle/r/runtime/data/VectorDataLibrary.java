@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.GenerateLibrary;
 import com.oracle.truffle.api.library.GenerateLibrary.DefaultExport;
 import com.oracle.truffle.api.library.Library;
@@ -142,6 +143,13 @@ public abstract class VectorDataLibrary extends Library {
      * {@code receiver} or a new fresh instance.
      */
     public abstract Object materialize(Object data);
+
+    /**
+     * Transforms the data to representation that is backed by native memory.
+     */
+    public long asPointer(@SuppressWarnings("unused") Object data) throws UnsupportedMessageException {
+        throw UnsupportedMessageException.create();
+    }
 
     public abstract Object copy(Object data, boolean deep);
 
@@ -942,6 +950,22 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
+    /**
+     * Provides view on the complex data as a flat array of doubles.
+     */
+    public double getComplexComponentAt(Object receiver, @SuppressWarnings("unused") int index) {
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere(getType(receiver).toString());
+    }
+
+    /**
+     * Provides view on the complex data as a flat array of doubles.
+     */
+    public double setComplexComponentAt(Object receiver, @SuppressWarnings("unused") int index, @SuppressWarnings("unused") double value) {
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere(getType(receiver).toString());
+    }
+
     public RComplex getComplexAt(Object receiver, @SuppressWarnings("unused") int index) {
         RType type = getType(receiver);
         switch (type) {
@@ -1694,6 +1718,11 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         // TODO: there methods simply delegate, but may be enhanced with assertions
+
+        @Override
+        public long asPointer(Object data) throws UnsupportedMessageException {
+            return delegate.asPointer(data);
+        }
 
         @Override
         public boolean nextImpl(Object receiver, SeqIterator it, boolean loopCondition) {

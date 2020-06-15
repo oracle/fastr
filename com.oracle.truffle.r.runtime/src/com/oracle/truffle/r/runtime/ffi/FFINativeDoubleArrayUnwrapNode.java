@@ -51,8 +51,8 @@ public abstract class FFINativeDoubleArrayUnwrapNode extends RBaseNode {
 
     public abstract double[] execute(Object length, Object x);
 
-    static boolean isVectorRFFIWrapper(Object x) {
-        return x instanceof VectorRFFIWrapper;
+    static boolean isRObjectDataPtr(Object x) {
+        return x instanceof RObjectDataPtr;
     }
 
     static Object getSulongDoubleArrayType(ContextReference<RContext> ctxRef) {
@@ -60,11 +60,11 @@ public abstract class FFINativeDoubleArrayUnwrapNode extends RBaseNode {
     }
 
     @Specialization
-    protected double[] doVectorRFFIWrapper(@SuppressWarnings("unused") Object length, VectorRFFIWrapper x) {
+    protected double[] doRObjectDataPtr(@SuppressWarnings("unused") Object length, RObjectDataPtr x) {
         return ((RDoubleVector) x.getVector()).getDataTemp();
     }
 
-    @Specialization(guards = {"!isVectorRFFIWrapper(x)", "interopLib.hasArrayElements(x)", "typeLib.getNativeType(x) == sulongDoubleArrayType"}, limit = "1")
+    @Specialization(guards = {"!isRObjectDataPtr(x)", "interopLib.hasArrayElements(x)", "typeLib.getNativeType(x) == sulongDoubleArrayType"}, limit = "1")
     protected double[] doInterop(@SuppressWarnings("unused") Object length, Object x,
                     @SuppressWarnings("unused") @CachedLibrary("x") NativeTypeLibrary typeLib,
                     @CachedLibrary("x") InteropLibrary interopLib,
@@ -82,7 +82,7 @@ public abstract class FFINativeDoubleArrayUnwrapNode extends RBaseNode {
         }
     }
 
-    @Specialization(guards = {"!isVectorRFFIWrapper(x)", "!interopLib.hasArrayElements(x)", "interopLib.isPointer(x)"}, limit = "2")
+    @Specialization(guards = {"!isRObjectDataPtr(x)", "!interopLib.hasArrayElements(x)", "interopLib.isPointer(x)"}, limit = "2")
     protected double[] doPointer(int length, Object x, @CachedLibrary("x") InteropLibrary interopLib) {
         try {
             interopLib.toNative(x);

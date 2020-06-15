@@ -51,6 +51,7 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(AbstractContainerLibrary.class)
 public final class RComplexVector extends RAbstractAtomicVector implements RMaterializedVector, Shareable {
 
     public static final String MEMBER_RE = "re";
@@ -316,6 +317,18 @@ public final class RComplexVector extends RAbstractAtomicVector implements RMate
         // To retain the semantics of the original materialize, for sequences and such we return new
         // vector
         return new RComplexVector(dataLib.getComplexDataCopy(data), isComplete());
+    }
+
+    @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
+    public void containerLibToNative(
+                    @Cached("createBinaryProfile()") ConditionProfile alreadyNativeProfile,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+        if (alreadyNativeProfile.profile(data instanceof RComplexNativeVectorData)) {
+            return;
+        }
+        double[] arr = dataLib.getReadonlyComplexData(this.data);
+        NativeDataAccess.allocateNativeContents(this, arr, getLength());
+        setData(new RComplexNativeVectorData(this), getLength());
     }
 
     @Override

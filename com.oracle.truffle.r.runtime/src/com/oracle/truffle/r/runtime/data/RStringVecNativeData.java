@@ -95,6 +95,11 @@ public class RStringVecNativeData implements TruffleObject {
     }
 
     @ExportMessage
+    public long asPointer() {
+        return NativeDataAccess.getNativeDataAddress(vec);
+    }
+
+    @ExportMessage
     public String[] getStringDataCopy() {
         return NativeDataAccess.copyStringNativeData(vec.getNativeMirror());
     }

@@ -31,6 +31,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
@@ -201,5 +202,10 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
     @ExportMessage(name = "copy", library = AbstractContainerLibrary.class)
     public RAbstractContainer containerLibCopy() {
         return copy();
+    }
+
+    @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
+    public void containerLibToNativeDummyImpl() {
+        throw RInternalError.shouldNotReachHere(this.getClass().getSimpleName());
     }
 }

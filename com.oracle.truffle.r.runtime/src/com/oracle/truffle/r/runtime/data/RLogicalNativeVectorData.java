@@ -77,6 +77,11 @@ public class RLogicalNativeVectorData implements TruffleObject {
     }
 
     @ExportMessage
+    public long asPointer() {
+        return NativeDataAccess.getNativeDataAddress(vec);
+    }
+
+    @ExportMessage
     public RLogicalArrayVectorData copy(@SuppressWarnings("unused") boolean deep) {
         byte[] data = getLogicalDataCopy();
         return new RLogicalArrayVectorData(data, RDataFactory.INCOMPLETE_VECTOR);
