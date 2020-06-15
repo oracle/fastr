@@ -2,7 +2,7 @@ package com.oracle.truffle.r.test.altrep;
 
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
+import com.oracle.truffle.r.runtime.ffi.RObjectDataPtr;
 import com.oracle.truffle.r.test.TestBase;
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,9 +39,9 @@ public class AltRepInterfaceTests extends TestBase {
                 //RDataFactory.createAltIntVector(simpleDescriptorWrapper.getDescriptor(), simpleDescriptorWrapper.getAltIntVectorData().getData());
 
         // int *data = INTEGER(instance);
-        VectorRFFIWrapper rffiWrapper = VectorRFFIWrapper.get(altIntVec);
+        RObjectDataPtr objDataPtr = RObjectDataPtr.get(altIntVec);
         // int elem = data[0];
-        Object elem = InteropLibrary.getFactory().getUncached(rffiWrapper).readArrayElement(rffiWrapper, 0);
+        Object elem = InteropLibrary.getFactory().getUncached(objDataPtr).readArrayElement(objDataPtr, 0);
 
         // altIntVec does not have to be materialized, because it has Elt method registered, therefore code
         // snippet "int elem = data[0]" downcalls into Elt method rather than into Dataptr method.
@@ -60,9 +60,9 @@ public class AltRepInterfaceTests extends TestBase {
         RIntVector altIntVec = simpleDescriptorWrapper.getAltIntVector();
 
         // int *data = INTEGER(instance);
-        VectorRFFIWrapper rffiWrapper = VectorRFFIWrapper.get(altIntVec);
+        RObjectDataPtr objDataptr = RObjectDataPtr.get(altIntVec);
         // data[0] = 42;
-        InteropLibrary.getFactory().getUncached(rffiWrapper).writeArrayElement(rffiWrapper, 0, 42);
+        InteropLibrary.getFactory().getUncached(objDataptr).writeArrayElement(objDataptr, 0, 42);
 
         // data[0] = 42 calls into Dataptr method, so the whole vector has to be materialized.
         Assert.assertTrue(altIntVec.isMaterialized());
