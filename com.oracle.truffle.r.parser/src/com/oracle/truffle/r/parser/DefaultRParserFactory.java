@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,6 @@ import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.antlr.v4.runtime.dfa.DFA;
 
-import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RParserFactory;
@@ -128,6 +127,14 @@ public class DefaultRParserFactory extends RParserFactory {
 
     private static class DefaultParser implements Parser {
 
+        private static final boolean ASSERTIONS_ENABLED;
+
+        static {
+            boolean assertionsEnabled = false;
+            assert (assertionsEnabled = true) == true;
+            ASSERTIONS_ENABLED = assertionsEnabled;
+        }
+
         @Override
         public List<RSyntaxNode> script(Source source, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
             RContext context = RContext.getInstance();
@@ -151,6 +158,9 @@ public class DefaultRParserFactory extends RParserFactory {
                 }
             } catch (RecognitionException e) {
                 throw handleRecognitionException(source, e);
+            } catch (StackOverflowError e) {
+                handleStackOverflow(source);
+                throw e;
             }
         }
 
@@ -177,32 +187,17 @@ public class DefaultRParserFactory extends RParserFactory {
                 }
             } catch (RecognitionException e) {
                 throw handleRecognitionException(source, e);
+            } catch (StackOverflowError e) {
+                handleStackOverflow(source);
+                throw e;
             }
         }
 
-        @Override
-        public RootCallTarget rootFunction(Source source, String name, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
-            RContext context = RContext.getInstance();
-            RLexer lexer = new RLexer(CharStreams.fromString(source.getCharacters().toString()));
-            RParser parser = new RParser(source, lexer, builder, language, context.sourceCache);
-            parser.removeErrorListeners();
-            parser.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
-            lexer.removeErrorListeners();
-            lexer.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
-            parser.setErrorHandler(ThrowImmediatelyErrorStrategy.INSTANCE);
-            parser.setBuildParseTree(false);
-            try {
-                try {
-                    return parser.root_function(name).v;
-                } catch (IllegalArgumentException e) {
-                    if (e.getCause() instanceof RecognitionException) {
-                        throw (RecognitionException) e.getCause();
-                    } else {
-                        throw e;
-                    }
-                }
-            } catch (RecognitionException e) {
-                throw handleRecognitionException(source, e);
+        private static void handleStackOverflow(Source source) {
+            if (ASSERTIONS_ENABLED) {
+                System.err.println("StackOverflowError during parsing of:\n");
+                System.err.print(source.getCharacters());
+                System.err.println("\n---------");
             }
         }
 
