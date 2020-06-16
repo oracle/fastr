@@ -82,8 +82,8 @@ ifeq ($(FASTR_RFFI),managed)
 else
 ifeq ($(OS_NAME),Darwin)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) -L$(FASTR_LIB_DIR) -lRblas -lRlapack $(VERSION_FLAGS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(NFI_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lRblas -lRlapack -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -Wl,-undefined,dynamic_lookup -o $(NFI_LIB) $(wildcard lib/nfi/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -ldl -lR -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -Wl,-undefined,dynamic_lookup -o $(LLVM_LIB) $(wildcard lib/llvm/*.o) $(wildcard lib/common/*.o) $(wildcard lib/JavaGD/*.o) -L$(FASTR_LIB_DIR) -L$(LLVM_LIBS_DIR) -lpolyglot-mock -ldl -lR -lpcre -lz $(F2C) -liconv $(VERSION_FLAGS)
 
 	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRblas.dylib
 	install_name_tool -add_rpath @loader_path/ $(FASTR_LIB_DIR)/libRlapack.dylib
