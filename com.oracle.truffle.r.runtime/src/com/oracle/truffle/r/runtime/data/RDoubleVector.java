@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(AbstractContainerLibrary.class)
@@ -369,15 +368,6 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
         } finally {
             setComplete(false);
         }
-    }
-
-    private AtomicReference<RDoubleVector> materialized = new AtomicReference<>();
-
-    public Object cachedMaterialize() {
-        if (materialized.get() == null) {
-            materialized.compareAndSet(null, materialize());
-        }
-        return materialized.get();
     }
 
     private static final class FastPathAccess extends FastPathFromDoubleAccess {

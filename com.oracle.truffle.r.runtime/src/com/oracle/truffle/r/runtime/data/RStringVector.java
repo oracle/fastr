@@ -49,8 +49,6 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import java.util.Arrays;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(AbstractContainerLibrary.class)
 public final class RStringVector extends RAbstractAtomicVector implements RMaterializedVector, Shareable {
@@ -358,15 +356,6 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
         RStringVector result = new RStringVector(dataLib.copy(data, false), dataLib.getLength(data));
         MemoryCopyTracer.reportCopying(this, result);
         return result;
-    }
-
-    private AtomicReference<RStringVector> materialized = new AtomicReference<>();
-
-    public Object cachedMaterialize() {
-        if (materialized.get() == null) {
-            materialized.compareAndSet(null, materialize());
-        }
-        return materialized.get();
     }
 
     @Override

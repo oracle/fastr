@@ -25,25 +25,24 @@ package com.oracle.truffle.r.runtime.ffi;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 
 /**
@@ -54,6 +53,7 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
  *
  * See documentation/dev/ffi.md for more details.
  */
+@ImportStatic(DSLConfig.class)
 @GenerateUncached
 public abstract class FFIMaterializeNode extends Node {
 
@@ -130,36 +130,11 @@ public abstract class FFIMaterializeNode extends Node {
         return value;
     }
 
-    @Specialization
-    protected static Object wrap(RIntVector value, @SuppressWarnings("unused") boolean protect) {
+    @Specialization(limit = "getGenericDataLibraryCacheSize()")
+    protected static Object wrap(RAbstractContainer value, @SuppressWarnings("unused") boolean protect,
+                    @CachedLibrary("value") AbstractContainerLibrary containerLibrary) {
         // TODO specialize only for sequences (and maybe some other)
-        return value.cachedMaterialize();
-    }
-
-    @Specialization
-    protected static Object wrap(RDoubleVector value, @SuppressWarnings("unused") boolean protect) {
-        // TODO specialize only for sequences (and maybe some other)
-        return value.cachedMaterialize();
-    }
-
-    @Specialization
-    protected static Object wrap(RRawVector value, @SuppressWarnings("unused") boolean protect) {
-        return value.cachedMaterialize();
-    }
-
-    @Specialization
-    protected static Object wrap(RLogicalVector value, @SuppressWarnings("unused") boolean protect) {
-        return value.cachedMaterialize();
-    }
-
-    @Specialization
-    protected static Object wrap(RComplexVector value, @SuppressWarnings("unused") boolean protect) {
-        return value.cachedMaterialize();
-    }
-
-    @Specialization
-    protected static Object wrap(RStringVector value, @SuppressWarnings("unused") boolean protect) {
-        return value.cachedMaterialize();
+        return containerLibrary.cachedMaterialize(value);
     }
 
     // Symbol holds the address as a field

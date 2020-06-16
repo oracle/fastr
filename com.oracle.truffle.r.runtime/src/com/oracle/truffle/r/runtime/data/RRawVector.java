@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(AbstractContainerLibrary.class)
@@ -305,15 +304,6 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
         } finally {
             setComplete(false);
         }
-    }
-
-    private AtomicReference<RRawVector> materialized = new AtomicReference<>();
-
-    public Object cachedMaterialize() {
-        if (materialized.get() == null) {
-            materialized.compareAndSet(null, materialize());
-        }
-        return materialized.get();
     }
 
     private static final class FastPathAccess extends FastPathFromRawAccess {
