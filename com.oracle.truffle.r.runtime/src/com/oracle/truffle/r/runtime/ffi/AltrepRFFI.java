@@ -3,6 +3,7 @@ package com.oracle.truffle.r.runtime.ffi;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -75,23 +76,33 @@ public final class AltrepRFFI {
 
 
     @GenerateUncached
+    @ImportStatic(AltrepUtilities.class)
     public abstract static class LengthNode extends Node {
         public abstract int execute(Object altrepVector);
 
-        @Specialization
+        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)")
         protected int lengthOfAltInt(RIntVector altIntVector,
-                                     @Shared("downCallNode") @Cached AltrepDownCallNode downCallNode,
-                                     @Shared("returnValInterop") @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
-            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getLengthMethodDescriptor(altIntVector);
-            Object retVal = downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.lengthMethodUnwrapResult,
+                                     @Cached AltrepDownCallNode downCallNode,
+                                     @CachedLibrary(limit = "1") InteropLibrary returnValueInterop,
+                                     @Cached("getAltIntDescriptor(altIntVector)") @SuppressWarnings("unused") AltIntegerClassDescriptor classDescriptor,
+                                     @Cached("classDescriptor.getLengthMethodDescriptor()") AltrepMethodDescriptor lengthMethod) {
+            Object retVal = downCallNode.execute(lengthMethod, AltIntegerClassDescriptor.lengthMethodUnwrapResult,
                     AltIntegerClassDescriptor.lengthMethodWrapArguments, new Object[]{altIntVector});
             return expectInteger(returnValueInterop, retVal);
         }
 
+        @Specialization(replaces = "lengthOfAltInt")
+        protected int lengthOfAltIntUncached(RIntVector altIntVector,
+                                             @Cached AltrepDownCallNode downCallNode,
+                                             @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
+            return lengthOfAltInt(altIntVector, downCallNode, returnValueInterop, AltrepUtilities.getAltIntDescriptor(altIntVector),
+                    AltrepUtilities.getLengthMethodDescriptor(altIntVector));
+        }
+
         @Specialization
         protected int lengthOfAltString(RStringVector altStringVector,
-                                        @Shared("downCallNode") @Cached AltrepDownCallNode downCallNode,
-                                        @Shared("returnValInterop") @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
+                                        @Cached AltrepDownCallNode downCallNode,
+                                        @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
             AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getLengthMethodDescriptor(altStringVector);
             Object retVal = downCallNode.execute(altrepMethodDescriptor, AltStringClassDescriptor.lengthMethodUnwrapResult,
                     AltStringClassDescriptor.lengthMethodWrapArguments, new Object[]{altStringVector});
