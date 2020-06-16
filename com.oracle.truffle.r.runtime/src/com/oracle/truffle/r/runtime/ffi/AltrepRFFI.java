@@ -246,11 +246,13 @@ public final class AltrepRFFI {
         public abstract Object execute(Object altrepVector, boolean naRm);
 
         @Specialization
-        protected Object doIt(RIntVector altIntVec, boolean naRm,
-                           @Cached AltrepDownCallNode downCallNode) {
+        protected int doIt(RIntVector altIntVec, boolean naRm,
+                           @Cached AltrepDownCallNode downCallNode,
+                           @CachedLibrary(limit = "1") InteropLibrary interopLib) {
             AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getSumMethodDescriptor(altIntVec);
-            return downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.sumMethodUnwrapResult,
+            Object ret = downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.sumMethodUnwrapResult,
                     AltIntegerClassDescriptor.sumMethodWrapArguments, new Object[]{altIntVec, naRm});
+            return expectInteger(interopLib, ret);
         }
     }
 

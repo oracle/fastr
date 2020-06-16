@@ -270,8 +270,8 @@ public class AltrepUtilities {
 
         @Specialization
         Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @Cached AltrepRFFI.SumNode altIntSumNode) {
-            return altIntSumNode.execute(altIntVec, naRm);
+                        @Cached AltrepRFFI.SumNode sumNode) {
+            return sumNode.execute(altIntVec, naRm);
         }
 
         @Fallback
