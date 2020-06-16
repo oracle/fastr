@@ -67,7 +67,7 @@ done
     res=0
     if ! ldconfig -p | grep --quiet "libgomp.so.1"; then
       echo "Error: could not find OpenMP runtime library: libgomp.so.1"
-      echo "Please install the OpenMP runtime library runtime libraries:"
+      echo "Please install the OpenMP runtime library:"
       echo "    On Debian based systems: apt-get install libgomp1"
       echo "    On Oracle Linux: yum install libgomp"
       echo "    Note: Oracle Linux 8 should contain libgomp by default"
@@ -86,7 +86,7 @@ done
       echo "    On Oracle Linux: yum groupinstall 'Development Tools' && yum install gcc-gfortran"
     fi
   elif [[ "$OSTYPE" == "darwin"* ]]; then
-    echo "The basic configuration of FastR was successfull."
+    echo "FastR should not have any requirements on MacOS."
     echo ""
     echo "Note: if you intend to install R packages you may need additional dependencies."
     echo "The most common dependency is GFortran, which must be of version 8.3.0 or later."
@@ -104,7 +104,8 @@ done
   R_LIBS_USER=`"$FASTR_HOME_DIR/bin/R" --slave -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))'`
   if [ ! -d "$R_LIBS_USER" ]; then
     echo
-    read -p "Default personal library directory ($R_LIBS_USER) does exist. Do you wish to create it? (Yy/Nn) " -n 1 -r
+    echo "Default personal library directory ($R_LIBS_USER) does not exist."
+    read -p "Do you wish to create it now? (Yy/Nn) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
       echo "Creating personal library directory: $R_LIBS_USER"
