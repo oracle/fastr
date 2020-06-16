@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -121,7 +122,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public boolean isComplete(@Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
+    public boolean isComplete(@Exclusive @Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
                               @Cached AltrepRFFI.NoNANode noNANode) {
         if (hasNoNAMethodProfile.profile(descriptor.isNoNAMethodRegistered())) {
             return invokeNoNA(noNANode);
@@ -151,13 +152,13 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RIntArrayVectorData materialize(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                                           @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
-        int length = lengthNode.execute(getOwner());
-        long dataptrAddr = dataptrNode.execute(getOwner(), true);
-        int[] newData = new int[length];
-        NativeMemory.copyMemory(dataptrAddr, newData, ElementType.INT, length);
-        return new RIntArrayVectorData(newData, RDataFactory.INCOMPLETE_VECTOR);
+    public RAltIntVectorData materialize(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                                         @Exclusive @Cached("createBinaryProfile()") ConditionProfile dataptrNotCalledProfile) {
+        // Dataptr altrep method call forces materialization
+        if (dataptrNotCalledProfile.profile(!dataptrCalled)) {
+            dataptrNode.execute(getOwner(), true);
+        }
+        return this;
     }
 
     @ExportMessage
