@@ -22,16 +22,21 @@
  */
 package com.oracle.truffle.r.runtime.data.altrep;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
     public static final String dataptrMethodSignature = "(pointer, sint32) : pointer";
+    @CompilationFinal(dimensions = 1)
     public static final boolean[] dataptrMethodWrapArguments = new boolean[]{true, false};
     public static final boolean dataptrMethodUnwrapResult = false;
 
     public static final String dataptrOrNullMethodSignature = "(pointer) : pointer";
+    @CompilationFinal(dimensions = 1)
     public static final boolean[] dataptrOrNullMethodWrapArguments = new boolean[]{true};
     public static final boolean dataptrOrNullMethodUnwrapResult = false;
 
     public static final String extractSubsetMethodSignature = "(pointer, pointer, pointer) : pointer";
+    @CompilationFinal(dimensions = 1)
     public static final boolean[] extractSubsetMethodWrapArguments = new boolean[]{true, true, true};
     public static final boolean extractSubsetMethodUnwrapResult = true;
 
