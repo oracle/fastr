@@ -38,6 +38,22 @@ rffi.populateIntVector <- function(n) {
 	.Call("populateIntVector", as.integer(n), PACKAGE = "testrffi")
 }
 
+rffi.populateCharacterVector <- function(n) {
+	.Call("populateCharacterVector", as.integer(n), PACKAGE = "testrffi")
+}
+
+rffi.populateDoubleVector <- function(n) {
+	.Call("populateDoubleVector", as.integer(n), PACKAGE = "testrffi")
+}
+
+rffi.populateComplexVector <- function(n) {
+	.Call("populateComplexVector", as.integer(n), PACKAGE = "testrffi")
+}
+
+rffi.populateRawVector <- function(n) {
+	.Call("populateRawVector", as.integer(n), PACKAGE = "testrffi")
+}
+
 rffi.populateLogicalVector <- function(n) {
 	.Call("populateLogicalVector", as.integer(n), PACKAGE = "testrffi")
 }
