@@ -31,6 +31,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_Context;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -44,6 +45,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
         @Child protected InteropLibrary readPointerInterop;
         @CompilationFinal protected TruffleObject userFunctionTarget;
         @CompilationFinal protected TruffleObject readPointerTarget;
+        @CompilationFinal protected AfterDownCallProfiles afterDownCallProfiles;
 
         protected RNGNode(NativeFunction userFunction, NativeFunction readFunction) {
             userFunctionTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(userFunction);
@@ -52,6 +54,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
                 readPointerTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(readFunction);
                 readPointerInterop = InteropLibrary.getFactory().create(readPointerTarget);
             }
+            afterDownCallProfiles = AfterDownCallProfiles.create();
         }
     }
 
@@ -70,7 +73,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM, afterDownCallProfiles);
             }
         }
     }
@@ -91,7 +94,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM, afterDownCallProfiles);
             }
         }
     }
@@ -112,7 +115,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM, afterDownCallProfiles);
             }
         }
     }
@@ -135,7 +138,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM, afterDownCallProfiles);
             }
         }
     }

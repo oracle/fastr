@@ -155,7 +155,7 @@ public abstract class RFFIContext extends RFFI {
      */
     public void afterUpcall(boolean canRunGc, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         if (canRunGc && rffiType == RFFIFactory.Type.NFI) {
-            cooperativeGc();
+            cooperativeGc(AfterDownCallProfiles.getUncached());
         }
     }
 
@@ -191,14 +191,15 @@ public abstract class RFFIContext extends RFFI {
 
     /**
      * @param before the value returned by the corresponding call to
-     *            {@link #beforeDowncall(MaterializedFrame, com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}
+     *            {@link #beforeDowncall(MaterializedFrame, RFFIFactory.Type)}
      *            .
+     * @param profiles
      */
-    public void afterDowncall(Object before, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+    public void afterDowncall(Object before, @SuppressWarnings("unused") RFFIFactory.Type rffiType, AfterDownCallProfiles profiles) {
         rffiContextState.currentDowncallFrame = (MaterializedFrame) before;
         rffiContextState.callDepth--;
         if (rffiContextState.callDepth == 0) {
-            cooperativeGc();
+            cooperativeGc(profiles);
         }
     }
 
@@ -207,8 +208,8 @@ public abstract class RFFIContext extends RFFI {
     }
 
     // this emulates GNUR's cooperative GC
-    private void cooperativeGc() {
-        rffiContextState.protectedNativeReferences.clear();
+    private void cooperativeGc(AfterDownCallProfiles profiles) {
+        rffiContextState.protectedNativeReferences.clear(profiles);
     }
 
     /**

@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import java.nio.charset.StandardCharsets;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -39,6 +37,7 @@ import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DownCallNodeFactoryFactory
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -47,6 +46,8 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeIntegerArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativePointer;
+
+import java.nio.charset.StandardCharsets;
 
 public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
 
@@ -111,7 +112,7 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
         protected void afterCall(Frame frame, Object before, NativeFunction fn, TruffleObject target, Object[] args) {
             assert !(target instanceof RFunction);
 
-            (RContext.getInstance().getRFFI(TruffleLLVM_Context.class)).afterDowncall(before, RFFIFactory.Type.LLVM);
+            (RContext.getInstance().getRFFI(TruffleLLVM_Context.class)).afterDowncall(before, RFFIFactory.Type.LLVM, AfterDownCallProfiles.getUncached());
 
             for (int i = 0; i < args.length; i++) {
                 Object obj = args[i];

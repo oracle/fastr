@@ -30,6 +30,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -43,6 +44,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         @Child protected InteropLibrary readPointerInterop;
         @CompilationFinal protected TruffleObject userFunctionTarget;
         @CompilationFinal protected TruffleObject readPointerTarget;
+        @CompilationFinal AfterDownCallProfiles afterDownCallProfiles;
 
         protected RNGNode(NativeFunction userFunction, NativeFunction readFunction) {
             userFunctionTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(userFunction);
@@ -51,6 +53,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
                 readPointerTarget = TruffleNFI_Context.getInstance().lookupNativeFunction(readFunction);
                 readPointerInterop = insert(InteropLibrary.getFactory().create(readPointerTarget));
             }
+            afterDownCallProfiles = AfterDownCallProfiles.create();
         }
     }
 
@@ -69,7 +72,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before, RFFIFactory.Type.NFI);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.NFI, afterDownCallProfiles);
             }
         }
     }
@@ -90,7 +93,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before, RFFIFactory.Type.NFI);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.NFI, afterDownCallProfiles);
             }
         }
     }
@@ -111,7 +114,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before, RFFIFactory.Type.NFI);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.NFI, afterDownCallProfiles);
             }
         }
     }
@@ -134,7 +137,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before, RFFIFactory.Type.NFI);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.NFI, afterDownCallProfiles);
             }
         }
     }

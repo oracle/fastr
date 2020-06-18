@@ -33,6 +33,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
@@ -89,7 +90,7 @@ public class TruffleNFI_DLL implements DLLRFFI {
             return new NFIHandle(libName, libHandle);
         } finally {
             if (notifyStateRFFI) {
-                ctx.getStateRFFI().afterDowncall(before, Type.NFI);
+                ctx.getStateRFFI().afterDowncall(before, Type.NFI, AfterDownCallProfiles.getUncached());
             }
         }
     }

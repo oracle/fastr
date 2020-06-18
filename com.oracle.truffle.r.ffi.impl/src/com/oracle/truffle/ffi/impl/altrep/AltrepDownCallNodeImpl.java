@@ -18,6 +18,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepMethodDescriptor;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.FFIMaterializeNode;
 import com.oracle.truffle.r.runtime.ffi.FFIToNativeMirrorNode;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
@@ -49,7 +50,8 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
                        @Cached("createToNatives(wrapArguments)") FFIToNativeMirrorNode[] toNativeNodes,
                        @Cached("createBinaryProfile()") ConditionProfile isLLVMProfile,
                        @Cached BranchProfile unwrapResultProfile,
-                       @Cached("createIdentityProfile()") ValueProfile identityProfile) {
+                       @Cached("createIdentityProfile()") ValueProfile identityProfile,
+                       @Cached AfterDownCallProfiles afterDownCallProfiles) {
         CompilerAsserts.partialEvaluationConstant(unwrapResult);
         AltrepMethodDescriptor altrepMethodDescriptor = identityProfile.profile(altrepDowncallIn);
 
@@ -75,9 +77,9 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
         }
 
         if (isLLVMProfile.profile(altrepMethodDescriptor.rffiType == Type.LLVM)) {
-            ctx.getRFFI(TruffleLLVM_Context.class).afterDowncall(null, altrepMethodDescriptor.rffiType);
+            ctx.getRFFI(TruffleLLVM_Context.class).afterDowncall(null, altrepMethodDescriptor.rffiType, afterDownCallProfiles);
         } else {
-            ctx.getRFFI(TruffleNFI_Context.class).afterDowncall(null, altrepMethodDescriptor.rffiType);
+            ctx.getRFFI(TruffleNFI_Context.class).afterDowncall(null, altrepMethodDescriptor.rffiType, afterDownCallProfiles);
         }
 
         return ret;
@@ -94,9 +96,11 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
             @Cached(value = "createToNatives(wrapArguments)", allowUncached = true) FFIToNativeMirrorNode[] toNativeNodes,
             @Cached("createBinaryProfile()") ConditionProfile isLLVMProfile,
             @Cached BranchProfile unwrapResultProfile,
-            @Cached("createIdentityProfile()") ValueProfile identityProfile) {
+            @Cached("createIdentityProfile()") ValueProfile identityProfile,
+            @Cached AfterDownCallProfiles afterDownCallProfiles) {
         return doIt(altrepDowncall, unwrapResult, wrapArguments, args, cachedLength, methodInterop, unwrapNode,
-                ctxRef, materializeNodes, toNativeNodes, isLLVMProfile, unwrapResultProfile, identityProfile);
+                ctxRef, materializeNodes, toNativeNodes, isLLVMProfile, unwrapResultProfile, identityProfile,
+                afterDownCallProfiles);
     }
 
     // TODO: Implement some uncached specialization?

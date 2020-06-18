@@ -43,6 +43,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.ffi.AfterDownCallProfiles;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -68,7 +69,9 @@ import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
-import static com.oracle.truffle.r.runtime.ffi.RFFILog.*;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 public class TruffleNFI_Context extends RFFIContext {
 
@@ -394,9 +397,9 @@ public class TruffleNFI_Context extends RFFIContext {
     }
 
     @Override
-    public void afterDowncall(Object beforeValue, RFFIFactory.Type rffiType) {
+    public void afterDowncall(Object beforeValue, Type rffiType, AfterDownCallProfiles profiles) {
         Object[] tokens = (Object[]) beforeValue;
-        super.afterDowncall(tokens[0], rffiType);
+        super.afterDowncall(tokens[0], rffiType, profiles);
         popCallbacks((long) tokens[1]);
         for (Long ptr : transientAllocations.pop()) {
             NativeMemory.free(ptr, "Rf_alloc");
