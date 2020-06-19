@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,12 +30,12 @@ import java.util.Arrays;
 public enum IgnoreOS implements TestTrait {
     Solaris("sunos"),
     Linux("linux"),
-    MacOS("darwin");
+    MacOS("darwin", "Mac OS X");
 
-    private String osName;
+    private String[] osNames;
 
-    IgnoreOS(String name) {
-        osName = name;
+    IgnoreOS(String... names) {
+        osNames = names;
     }
 
     public static boolean containsIgnoring(TestTrait[] traits) {
@@ -44,7 +44,15 @@ public enum IgnoreOS implements TestTrait {
 
     private boolean isIgnoring() {
         String current = System.getProperty("os.name");
-        return current != null && current.toLowerCase().contains(osName);
+        if (current == null) {
+            return false;
+        }
+        for (String osName : osNames) {
+            if (current.toLowerCase().contains(osName.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
