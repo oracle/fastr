@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.test.library.stats;
 
 import org.junit.Test;
 
+import com.oracle.truffle.r.test.IgnoreOS;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestStats extends TestBase {
@@ -176,7 +177,8 @@ public class TestStats extends TestBase {
     public void testNumericDeriv() {
         assertEval("{ env <- new.env(); env$a <- 1; env$q <- 2; env$x <- c(1,2,3,4); numericDeriv(quote(a * x^q), c('a', 'q'), env) }");
         assertEval("{ env <- new.env(); env$a <- 1; env$q <- seq(from=2.2, to=2.5, by=0.1); env$x <- c(1,2,3,4); r<-numericDeriv(quote(a * x^q), c('a', 'q'), env); rna<-r; attributes(rna)<-NULL; print(rna); print(round(attr(r, 'gradient'), 4)) }");
-        assertEval("{ regressionData <- data.frame(x = c(1, 2, 3, 4), y = c(1.5, 3.3, 99, 16)); startingParams <- list(a = 1, q = 2); nls(formula = 'y ~ a*x^q', data = regressionData, start = startingParams) }");
+        assertEval(IgnoreOS.MacOS,
+                        "{ regressionData <- data.frame(x = c(1, 2, 3, 4), y = c(1.5, 3.3, 99, 16)); startingParams <- list(a = 1, q = 2); nls(formula = 'y ~ a*x^q', data = regressionData, start = startingParams) }");
     }
 
 }
