@@ -151,7 +151,7 @@ public final class MiscRFFI {
         }
 
         public Object execute(VirtualFrame frame, Object dev) {
-            return call(frame, NativeFunction.javaGDresizeCall, opToNativeMirrorNode.execute(materializeNode.execute(dev, false)));
+            return call(frame, NativeFunction.javaGDresizeCall, opToNativeMirrorNode.execute(materializeNode.materialize(dev)));
         }
 
     }
