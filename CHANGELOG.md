@@ -5,6 +5,10 @@ Bug fixes:
 * FastR cleans-up the temporary directory created for internal implementation of the R input handlers
 * Improve performance of `unique` #154
 
+Added missing R builtins and C APIs
+
+* Dummy implementations of `X_IS_SORTED` and `X_NO_NA` for `X = STRING,INTEGER,REAL` #156
+
 # 20.1.0
 
 New features:
