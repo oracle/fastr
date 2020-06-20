@@ -122,7 +122,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public boolean isComplete(@Exclusive @Cached("createBinaryProfile()") ConditionProfile hasNoNAMethodProfile,
+    public boolean isComplete(@Exclusive @Cached ConditionProfile hasNoNAMethodProfile,
                               @Cached AltrepRFFI.NoNANode noNANode) {
         if (hasNoNAMethodProfile.profile(descriptor.isNoNAMethodRegistered())) {
             return invokeNoNA(noNANode);
@@ -153,7 +153,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public RAltIntVectorData materialize(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                                         @Exclusive @Cached("createBinaryProfile()") ConditionProfile dataptrNotCalledProfile) {
+                                         @Exclusive @Cached ConditionProfile dataptrNotCalledProfile) {
         // Dataptr altrep method call forces materialization
         if (dataptrNotCalledProfile.profile(!dataptrCalled)) {
             dataptrNode.execute(getOwner(), true);

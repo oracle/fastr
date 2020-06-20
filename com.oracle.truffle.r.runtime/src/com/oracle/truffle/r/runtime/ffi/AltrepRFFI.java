@@ -111,23 +111,33 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
+    @ImportStatic(AltrepUtilities.class)
     public abstract static class EltNode extends Node {
         public abstract Object execute(Object altrepVector, int index);
 
-        @Specialization
+        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)")
         protected int eltOfAltInt(RIntVector altIntVector, int index,
-                                  @Shared("downCallNode") @Cached AltrepDownCallNode downCallNode,
-                                  @Shared("retValInterop") @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
-            AltrepMethodDescriptor methodDescr = AltrepUtilities.getEltMethodDescriptor(altIntVector);
-            Object retValue = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.eltMethodUnwrapResult,
+                    @Cached AltrepDownCallNode downCallNode,
+                    @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
+                    @Cached("getAltIntDescriptor(altIntVector)") @SuppressWarnings("unused") AltIntegerClassDescriptor classDescriptor,
+                    @Cached("classDescriptor.getEltMethodDescriptor()") AltrepMethodDescriptor eltMethod) {
+            Object retValue = downCallNode.execute(eltMethod, AltIntegerClassDescriptor.eltMethodUnwrapResult,
                     AltIntegerClassDescriptor.eltMethodWrapArguments, new Object[]{altIntVector, index});
             return expectInteger(retValueInterop, retValue);
         }
 
+        @Specialization(replaces = "eltOfAltInt")
+        protected int eltOfAltIntUncached(RIntVector altIntVector, int index,
+                @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
+                @Cached AltrepDownCallNode downCallNode) {
+            return eltOfAltInt(altIntVector, index, downCallNode, retValueInterop,
+                   AltrepUtilities.getAltIntDescriptor(altIntVector), AltrepUtilities.getEltMethodDescriptor(altIntVector));
+        }
+
         @Specialization
         protected String eltOfAltString(RStringVector altStringVector, int index,
-                                        @Shared("downCallNode") @Cached AltrepDownCallNode downCallNode,
-                                        @Shared("retValInterop") @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+                                        @Cached AltrepDownCallNode downCallNode,
+                                        @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getEltMethodDescriptor(altStringVector);
             Object retValue = downCallNode.execute(methodDescr, AltStringClassDescriptor.eltMethodUnwrapResult,
                     AltStringClassDescriptor.eltMethodWrapArguments, new Object[]{altStringVector, index});
@@ -156,19 +166,30 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
+    @ImportStatic(AltrepUtilities.class)
     public abstract static class DataptrNode extends Node {
         public abstract long execute(Object altrepVector, boolean writeable);
 
-        @Specialization
-        protected long doIt(RIntVector altIntVector, boolean writeable,
-                         @Cached AltrepDownCallNode downCallNode,
-                         @CachedLibrary(limit = "1") InteropLibrary interop) {
+        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)")
+        protected long dataptrOfAltInt(RIntVector altIntVector, boolean writeable,
+                @Cached AltrepDownCallNode downCallNode,
+                @CachedLibrary(limit = "1") InteropLibrary interop,
+                @Cached("getAltIntDescriptor(altIntVector)") AltIntegerClassDescriptor classDescriptor,
+                @Cached("classDescriptor.getDataptrMethodDescriptor()") AltrepMethodDescriptor dataptrMethod) {
             assert AltrepUtilities.isAltrep(altIntVector);
             setDataptrCalled(altIntVector);
-            AltrepMethodDescriptor methodDescr = AltrepUtilities.getDataptrMethodDescriptor(altIntVector);
-            Object ret = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.dataptrMethodUnwrapResult,
+            Object ret = downCallNode.execute(dataptrMethod, AltIntegerClassDescriptor.dataptrMethodUnwrapResult,
                     AltIntegerClassDescriptor.dataptrMethodWrapArguments, new Object[]{altIntVector, writeable});
             return expectPointer(interop, ret);
+        }
+
+        @Specialization(replaces = "dataptrOfAltInt")
+        protected long dataptrOfAltIntUncached(RIntVector altIntVector, boolean writeable,
+                @Cached AltrepDownCallNode downCallNode,
+                @CachedLibrary(limit = "1") InteropLibrary retValInterop) {
+            AltIntegerClassDescriptor descriptor = AltrepUtilities.getAltIntDescriptor(altIntVector);
+            return dataptrOfAltInt(altIntVector, writeable, downCallNode, retValInterop,
+                    descriptor, descriptor.getDataptrMethodDescriptor());
         }
 
         private static void setDataptrCalled(RIntVector altIntVec) {
