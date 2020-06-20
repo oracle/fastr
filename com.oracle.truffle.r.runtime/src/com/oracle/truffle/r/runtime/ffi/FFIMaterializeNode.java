@@ -23,14 +23,12 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -40,6 +38,8 @@ import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 
 /**
@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
  *
  * See documentation/dev/ffi.md for more details.
  */
-@ImportStatic(DSLConfig.class)
+@ImportStatic({DSLConfig.class, AltrepUtilities.class})
 @GenerateUncached
 public abstract class FFIMaterializeNode extends Node {
 
@@ -144,17 +144,17 @@ public abstract class FFIMaterializeNode extends Node {
         return value;
     }
 
-    @Specialization(limit = "getGenericDataLibraryCacheSize()")
+    @Specialization(guards = "isAltrep(altVec)")
+    protected static Object wrapAltrep(RAbstractContainer altVec, @SuppressWarnings("unused") boolean protect) {
+        // Do not materialize altrep vectors.
+        return altVec;
+    }
+
+    @Specialization(guards = "!isAltrep(value)", limit = "getGenericDataLibraryCacheSize()")
     protected static Object wrap(RAbstractContainer value, @SuppressWarnings("unused") boolean protect,
-                                 @Cached("createBinaryProfile()") ConditionProfile isAltrepProfile,
                                  @CachedLibrary("value") AbstractContainerLibrary containerLibrary) {
         // TODO specialize only for sequences (and maybe some other)
-        if (isAltrepProfile.profile(value.isAltRep())) {
-            // Do not materialize altrep vectors.
-            return value;
-        } else {
-            return containerLibrary.cachedMaterialize(value);
-        }
+        return containerLibrary.cachedMaterialize(value);
     }
 
     // Symbol holds the address as a field
