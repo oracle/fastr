@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.binary.BinaryArithmeticSpecial;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanSpecial;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackage;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctions.SockSelect;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.SockSelectNodeGen;
@@ -880,15 +881,56 @@ public class BasePackage extends RBuiltinPackage {
     }
 
     private void addBinaryArithmetic(Class<?> builtinClass, BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
-        add(builtinClass, () -> BinaryArithmeticNodeGen.create(binaryFactory, unaryFactory), BinaryArithmeticSpecial.createSpecialFactory(binaryFactory, unaryFactory));
+        add(builtinClass, new BinaryArithmeticBuiltinFactory(binaryFactory, unaryFactory), BinaryArithmeticSpecial.createSpecialFactory(binaryFactory, unaryFactory));
     }
 
     private void addUnaryArithmetic(Class<?> builtinClass, UnaryArithmeticFactory unaryFactory) {
-        add(builtinClass, () -> new UnaryArithmeticBuiltinNode(unaryFactory), UnaryArithmeticSpecial.createSpecialFactory(unaryFactory));
+        add(builtinClass, new UnaryArithmeticBuiltinFactory(unaryFactory), UnaryArithmeticSpecial.createSpecialFactory(unaryFactory));
     }
 
     private void addBinaryCompare(Class<?> builtinClass, BooleanOperationFactory factory) {
-        add(builtinClass, () -> BinaryBooleanNodeGen.create(factory), BinaryBooleanSpecial.createSpecialFactory(factory));
+        add(builtinClass, new BinaryCompareBuiltinFactory(factory), BinaryBooleanSpecial.createSpecialFactory(factory));
+    }
+
+    private static final class BinaryArithmeticBuiltinFactory implements Supplier<RBuiltinNode> {
+        private final BinaryArithmeticFactory binaryFactory;
+        private final UnaryArithmeticFactory unaryFactory;
+
+        BinaryArithmeticBuiltinFactory(BinaryArithmeticFactory binaryFactory, UnaryArithmeticFactory unaryFactory) {
+            this.binaryFactory = binaryFactory;
+            this.unaryFactory = unaryFactory;
+        }
+
+        @Override
+        public RBuiltinNode get() {
+            return BinaryArithmeticNodeGen.create(binaryFactory, unaryFactory);
+        }
+    }
+
+    private static final class UnaryArithmeticBuiltinFactory implements Supplier<RBuiltinNode> {
+        private final UnaryArithmeticFactory unaryFactory;
+
+        UnaryArithmeticBuiltinFactory(UnaryArithmeticFactory unaryFactory) {
+            this.unaryFactory = unaryFactory;
+        }
+
+        @Override
+        public RBuiltinNode get() {
+            return new UnaryArithmeticBuiltinNode(unaryFactory);
+        }
+    }
+
+    private static final class BinaryCompareBuiltinFactory implements Supplier<RBuiltinNode> {
+        private final BooleanOperationFactory factory;
+
+        BinaryCompareBuiltinFactory(BooleanOperationFactory factory) {
+            this.factory = factory;
+        }
+
+        @Override
+        public RBuiltinNode get() {
+            return BinaryBooleanNodeGen.create(factory);
+        }
     }
 
     private static void addFastPath(MaterializedFrame baseFrame, String name, FastPathFactory factory) {

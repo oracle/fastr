@@ -29,6 +29,14 @@ extern SEXP addDouble(SEXP a, SEXP b);
 
 extern SEXP populateIntVector(SEXP n);
 
+extern SEXP populateRawVector(SEXP n);
+
+extern SEXP populateCharacterVector(SEXP n);
+
+extern SEXP populateComplexVector(SEXP n);
+
+extern SEXP populateDoubleVector(SEXP n);
+
 extern SEXP populateLogicalVector(SEXP n);
 
 extern SEXP createExternalPtr(SEXP addr, SEXP tag, SEXP prot);

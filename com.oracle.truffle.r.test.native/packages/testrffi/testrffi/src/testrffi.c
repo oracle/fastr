@@ -91,6 +91,56 @@ SEXP populateLogicalVector(SEXP n) {
     return v;
 }
 
+SEXP populateRawVector(SEXP n) {
+    SEXP v;
+    int intN = INTEGER_VALUE(n);
+    PROTECT(v = allocVector(RAWSXP, intN));
+    int i;
+    for (i = 0; i < intN; i++) {
+    	RAW(v)[i] = i;
+    }
+    UNPROTECT(1);
+    return v;
+}
+
+SEXP populateDoubleVector(SEXP n) {
+    SEXP v;
+    int intN = INTEGER_VALUE(n);
+    PROTECT(v = allocVector(REALSXP, intN));
+    int i;
+    for (i = 0; i < intN; i++) {
+    	REAL(v)[i] = i;
+    }
+    UNPROTECT(1);
+    return v;
+}
+
+SEXP populateComplexVector(SEXP n) {
+    SEXP v;
+    int intN = INTEGER_VALUE(n);
+    PROTECT(v = allocVector(CPLXSXP, intN));
+    int i;
+    for (i = 0; i < intN; i++) {
+        double d = i;
+    	COMPLEX(v)[i] = (Rcomplex) {d, d};
+    }
+    UNPROTECT(1);
+    return v;
+}
+
+SEXP populateCharacterVector(SEXP n) {
+    SEXP v, item;
+    int intN = INTEGER_VALUE(n);
+    PROTECT(v = allocVector(STRSXP, intN));
+    PROTECT(item = mkChar("A"));
+    int i;
+    for (i = 0; i < intN; i++) {
+    	SET_STRING_ELT(v, i, item);
+    }
+    UNPROTECT(2);
+    return v;
+}
+
 SEXP createExternalPtr(SEXP addr, SEXP tag, SEXP prot) {
 	return R_MakeExternalPtr((void *) (long) INTEGER_VALUE(addr), tag, prot);
 }
