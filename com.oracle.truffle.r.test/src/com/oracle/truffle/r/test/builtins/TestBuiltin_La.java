@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -22,6 +22,7 @@ package com.oracle.truffle.r.test.builtins;
 
 import org.junit.Test;
 
+import com.oracle.truffle.r.test.IgnoreOS;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
@@ -62,7 +63,8 @@ public class TestBuiltin_La extends TestBase {
 
     @Test
     public void testLa6() {
-        assertEval("jobu <-'S'\n" +
+        // see GR-24307
+        assertEval(IgnoreOS.MacOS, "jobu <-'S'\n" +
                         "x <- structure(c(FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE), .Dim = c(5L, 5L), .Dimnames = list(c('x1', 'x2', 'x3', 'x4', 'x5'), c('y1', 'y2', 'y3', 'y4', 'y5')))\n" +
                         "s <- c(3.37916576339493, 1.53572230863579, 1.41421356237309, 0.472012430194285, 3.04287016253022e-18)\n" +
                         "u <- structure(c(-0.38209344041777, -0.441911867608196, -0.441911867608196, -0.563415484445979, -0.38209344041777, -0.594200765232569, 0.307687929858406, 0.307687929858405, 0.32327569786942, -0.594200765232566, 0.499999999999999, -0.5, 0.500000000000001, 7.42461647718073e-16, -0.500000000000001, 0.0304967766615352, 0.45830343560406, 0.458303435604061, -0.760299819185526, 0.0304967766615352, -0.5, -0.5, 0.5, -1.11022302462516e-16, 0.5), .Dim = c(5L, 5L),.Dimnames =list(c('ux1', 'ux2', 'ux3', 'ux4', 'ux5'), c('uy1', 'uy2', 'uy3', 'uy4', 'uy5')))\n" +

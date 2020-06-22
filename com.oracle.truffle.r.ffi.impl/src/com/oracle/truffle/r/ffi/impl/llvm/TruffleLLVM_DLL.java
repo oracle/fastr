@@ -35,6 +35,7 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
@@ -71,7 +72,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         boolean isLibR = libName.equals("libR");
         if (isLibR) {
             // TODO: make it generic, if +"l" file exists, use that instead
-            file = context.getSafeTruffleFile(path + "l");
+            file = context.getSafeTruffleFile(LibPaths.normalizeLibRPath(path, "llvm"));
         }
         boolean isInitialization = isLibR;
         Object before = null;

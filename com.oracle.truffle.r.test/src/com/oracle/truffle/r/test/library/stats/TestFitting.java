@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.test.library.stats;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.oracle.truffle.r.test.IgnoreOS;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
@@ -56,9 +57,10 @@ public class TestFitting extends TestBase {
             printCode.append("print(res$").append(name).append(");");
         }
 
-        assertEval(Output.IgnoreWhitespace, template("y <- %0; x <- %1; res <- lm(y~x); " + printCode, VALUES, VALUES));
-        assertEval(Output.IgnoreWhitespace, template("y <- %0; x <- %1; z <- %2; res <- lm(y~x*z); " + printCode, VALUES, VALUES, new String[]{RANDOM_VECTOR}));
-        assertEval(Output.IgnoreWhitespace, template("y <- %0; x <- %1; z <- %2; res <- lm(y~(x:z)^3); " + printCode, VALUES, VALUES, new String[]{RANDOM_VECTOR}));
-        assertEval(Output.IgnoreWhitespace, String.format("y <- %s; x <- %s; res <- lm(y~x); " + printCode, RANDOM_VECTOR, RANDOM_FACTOR));
+        // see GR-24307
+        assertEval(Output.IgnoreWhitespace, IgnoreOS.MacOS, template("y <- %0; x <- %1; res <- lm(y~x); " + printCode, VALUES, VALUES));
+        assertEval(Output.IgnoreWhitespace, IgnoreOS.MacOS, template("y <- %0; x <- %1; z <- %2; res <- lm(y~x*z); " + printCode, VALUES, VALUES, new String[]{RANDOM_VECTOR}));
+        assertEval(Output.IgnoreWhitespace, IgnoreOS.MacOS, template("y <- %0; x <- %1; z <- %2; res <- lm(y~(x:z)^3); " + printCode, VALUES, VALUES, new String[]{RANDOM_VECTOR}));
+        assertEval(Output.IgnoreWhitespace, IgnoreOS.MacOS, String.format("y <- %s; x <- %s; res <- lm(y~x); " + printCode, RANDOM_VECTOR, RANDOM_FACTOR));
     }
 }

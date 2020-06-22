@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -58,10 +58,10 @@ $(BIN):
 	mkdir -p $(BIN)
 
 $(BIN)/main: $(SRC)/main.c
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(BIN)/main -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(BIN)/main -L $(FASTR_LIB_DIR) -ldl -lRnative $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
 
 $(BIN)/embedded: $(SRC)/embedded.c
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(BIN)/embedded -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(BIN)/embedded -L $(FASTR_LIB_DIR) -ldl -lRnative $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
 	cp $(SRC)/*.R $(BIN)
 
 clean:

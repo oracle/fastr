@@ -143,7 +143,7 @@ def copylib(args):
                             if os.path.islink(target):
                                 link_target = os.path.join(path, os.readlink(target))
                                 log('link target: ' + link_target)
-                                if link_target == '/usr/lib/libSystem.B.dylib' or link_target == '/usr/lib/libSystem.dylib':
+                                if link_target in ('/usr/lib/libSystem.B.dylib', '/usr/lib/libSystem.dylib'):
                                     # simply copy over the link to the system library
                                     os.symlink(link_target, os.path.join(target_dir, plain_libpath_base))
                                     return 0
@@ -167,7 +167,7 @@ def updatelib(args):
         abort("updatelib: wrong number of arguments, provide 2 arguments: library directory to be patched and FastR home path")
 
     # These are not captured
-    ignore_list = ['R', 'Rblas', 'Rlapack', 'jniboot']
+    ignore_list = ['R', 'Rnative', 'Rllvm', 'Rblas', 'Rlapack', 'jniboot']
 
     fastr_libdir = os.path.join(args[1], 'lib')
     if not (os.path.exists(fastr_libdir) and os.path.exists(fastr_libdir)):
@@ -183,7 +183,7 @@ def updatelib(args):
     def get_captured_libs():
         cap_libs = []
         for lib in os.listdir(fastr_libdir):
-            if not ('.dylib' in lib) or '.dylibl' in lib:
+            if not '.dylib' in lib:
                 # ignore non-libraries
                 continue
             if locally_built(lib) or os.path.islink(os.path.join(fastr_libdir, lib)):
@@ -195,7 +195,7 @@ def updatelib(args):
     cap_libs = get_captured_libs()
     libs = []
     for lib in os.listdir(libdir):
-        if (not ('.dylib' in lib or '.so' in lib)) or '.dylibl' in lib or '.sol' in lib:
+        if not ('.dylib' in lib or '.so' in lib):
             # ignore non-libraries
             continue
         if not os.path.islink(os.path.join(libdir, lib)):
