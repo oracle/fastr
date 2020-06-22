@@ -15,6 +15,7 @@ import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepMethodDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
@@ -76,11 +77,12 @@ public final class AltrepRFFI {
 
 
     @GenerateUncached
-    @ImportStatic(AltrepUtilities.class)
+    @ImportStatic({AltrepUtilities.class, AltRepClassDescriptor.class})
     public abstract static class LengthNode extends Node {
         public abstract int execute(Object altrepVector);
 
-        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)")
+        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)",
+                        assumptions = "getNoMethodRedefinedAssumption()")
         protected int lengthOfAltInt(RIntVector altIntVector,
                                      @Cached AltrepDownCallNode downCallNode,
                                      @CachedLibrary(limit = "1") InteropLibrary returnValueInterop,
@@ -111,11 +113,12 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    @ImportStatic(AltrepUtilities.class)
+    @ImportStatic({AltrepUtilities.class, AltRepClassDescriptor.class})
     public abstract static class EltNode extends Node {
         public abstract Object execute(Object altrepVector, int index);
 
-        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)")
+        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)",
+                        assumptions = "getNoMethodRedefinedAssumption()")
         protected int eltOfAltInt(RIntVector altIntVector, int index,
                     @Cached AltrepDownCallNode downCallNode,
                     @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
@@ -166,11 +169,12 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
-    @ImportStatic(AltrepUtilities.class)
+    @ImportStatic({AltrepUtilities.class, AltRepClassDescriptor.class})
     public abstract static class DataptrNode extends Node {
         public abstract long execute(Object altrepVector, boolean writeable);
 
-        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)")
+        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)",
+                        assumptions = "getNoMethodRedefinedAssumption()")
         protected long dataptrOfAltInt(RIntVector altIntVector, boolean writeable,
                 @Cached AltrepDownCallNode downCallNode,
                 @CachedLibrary(limit = "1") InteropLibrary interop,

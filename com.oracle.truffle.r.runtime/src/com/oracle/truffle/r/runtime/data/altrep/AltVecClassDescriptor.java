@@ -50,6 +50,9 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
 
     public void registerDataptrMethod(AltrepMethodDescriptor dataptrMethod) {
         logRegisterMethod("Dataptr");
+        if (this.dataptrMethodDescriptor != null) {
+            noMethodRedefinedAssumption.invalidate();
+        }
         this.dataptrMethodDescriptor = dataptrMethod;
     }
 

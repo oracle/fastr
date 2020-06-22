@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.data.altrep;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RType;
@@ -69,6 +71,8 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
     public static final boolean[] lengthMethodWrapArguments = new boolean[]{true};
     public static final boolean lengthMethodUnwrapResult = false;
 
+    protected static final Assumption noMethodRedefinedAssumption = Truffle.getRuntime().createAssumption("noAltrepMethodRedefined");
+
     // Instance data
     private final String className;
     private final String packageName;
@@ -104,12 +108,19 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         return lengthMethodDescriptor;
     }
 
+    public static Assumption getNoMethodRedefinedAssumption() {
+        return noMethodRedefinedAssumption;
+    }
+
     protected void logRegisterMethod(String methodName) {
         logger.finer(() -> "Register " + methodName + " on " + toString());
     }
 
     public void registerUnserializeMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Unserialize");
+        if (this.unserializeMethodDescriptor != null) {
+            noMethodRedefinedAssumption.invalidate();
+        }
         this.unserializeMethodDescriptor = methodDescr;
     }
 
@@ -145,6 +156,9 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
 
     public void registerLengthMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Length");
+        if (this.lengthMethodDescriptor != null) {
+            noMethodRedefinedAssumption.invalidate();
+        }
         this.lengthMethodDescriptor = methodDescr;
     }
 
