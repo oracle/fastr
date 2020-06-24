@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -42,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIter
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
@@ -59,6 +61,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     private final AltIntegerClassDescriptor descriptor;
     private boolean dataptrCalled;
     private RIntVector owner;
+    @CompilationFinal private int cachedLength;
 
     public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data) {
         this.altrepData = data;
@@ -145,6 +148,13 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return noNA;
     }
 
+    private int invokeLength(AltrepRFFI.LengthNode lengthNode) {
+        if (!AltRepClassDescriptor.getNoMethodRedefinedAssumption().isValid() || cachedLength == 0) {
+            cachedLength = lengthNode.execute(owner);
+        }
+        return cachedLength;
+    }
+
     @SuppressWarnings("static-method")
     @ExportMessage
     public final RType getType() {
@@ -153,7 +163,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public int getLength(@Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
-        return lengthNode.execute(getOwner());
+        return invokeLength(lengthNode);
     }
 
     @ExportMessage
@@ -273,7 +283,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public int[] getReadonlyIntData(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                                     @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
-        int length = lengthNode.execute(getOwner());
+        int length = invokeLength(lengthNode);
         return getDataCopy(dataptrNode, length);
     }
 
@@ -288,7 +298,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     public SeqIterator iterator(
             @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
             @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
-        int length = lengthNode.execute(getOwner());
+        int length = invokeLength(lengthNode);
         SeqIterator it = new SeqIterator(this, length);
         it.initLoopConditionProfile(loopProfile);
         return it;
@@ -342,7 +352,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public SeqWriteIterator writeIterator(@Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
-        int length = lengthNode.execute(getOwner());
+        int length = invokeLength(lengthNode);
         return new SeqWriteIterator(this, length);
     }
 
