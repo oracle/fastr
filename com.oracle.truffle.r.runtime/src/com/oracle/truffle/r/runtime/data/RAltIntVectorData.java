@@ -148,8 +148,8 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return noNA;
     }
 
-    private int invokeLength(AltrepRFFI.LengthNode lengthNode, ConditionProfile isLengthNotCachedProfile) {
-        if (isLengthNotCachedProfile.profile(!AltRepClassDescriptor.getNoMethodRedefinedAssumption().isValid() || cachedLength == 0)) {
+    private int invokeLength(AltrepRFFI.LengthNode lengthNode) {
+        if (!AltRepClassDescriptor.getNoMethodRedefinedAssumption().isValid() || cachedLength == 0) {
             cachedLength = lengthNode.execute(owner);
         }
         return cachedLength;
@@ -162,9 +162,8 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public int getLength(@Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode,
-            @Shared("isLengthNotCachedProfile") @Cached ConditionProfile isLengthNotCachedProfile) {
-        return invokeLength(lengthNode, isLengthNotCachedProfile);
+    public int getLength(@Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+        return invokeLength(lengthNode);
     }
 
     @ExportMessage
@@ -283,9 +282,8 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public int[] getReadonlyIntData(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode,
-            @Shared("isLengthNotCachedProfile") @Cached ConditionProfile isLengthNotCachedProfile) {
-        int length = invokeLength(lengthNode, isLengthNotCachedProfile);
+                                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+        int length = invokeLength(lengthNode);
         return getDataCopy(dataptrNode, length);
     }
 
@@ -299,9 +297,8 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     @ExportMessage
     public SeqIterator iterator(
             @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-            @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode,
-            @Shared("isLengthNotCachedProfile") @Cached ConditionProfile isLengthNotCachedProfile) {
-        int length = invokeLength(lengthNode, isLengthNotCachedProfile);
+            @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+        int length = invokeLength(lengthNode);
         SeqIterator it = new SeqIterator(this, length);
         it.initLoopConditionProfile(loopProfile);
         return it;
@@ -354,9 +351,8 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     // Write access to elements:
 
     @ExportMessage
-    public SeqWriteIterator writeIterator(@Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode,
-            @Shared("isLengthNotCachedProfile") @Cached ConditionProfile isLengthNotCachedProfile) {
-        int length = invokeLength(lengthNode, isLengthNotCachedProfile);
+    public SeqWriteIterator writeIterator(@Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+        int length = invokeLength(lengthNode);
         return new SeqWriteIterator(this, length);
     }
 
