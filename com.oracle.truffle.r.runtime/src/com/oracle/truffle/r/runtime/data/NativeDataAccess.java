@@ -22,24 +22,11 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
-
-import java.lang.management.ManagementFactory;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.CachedContext;
@@ -69,6 +56,18 @@ import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.NativeMemoryWrapper;
 import com.oracle.truffle.r.runtime.ffi.util.ResourcesCleaner.ReleasableWeakReference;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.lang.management.ManagementFactory;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
 
 /**
  * Provides API to work with objects returned by {@link RBaseObject#getNativeMirror()}. The native
@@ -332,6 +331,15 @@ public final class NativeDataAccess {
 
             // ensure that marker address is not used
             assert this.length == 0 || dataAddress.getAddress() != getEmptyDataAddress();
+        }
+
+        @TruffleBoundary
+        void initializeAltrep(RBaseObject altrepVec, long address, int length) {
+            assert altrepVec.isAltRep();
+            assert address != 0;
+            assert dataAddress == null;
+            this.length = length;
+            setExternalDataAddress(address);
         }
 
         @TruffleBoundary
@@ -1190,6 +1198,17 @@ public final class NativeDataAccess {
             mirror.allocateNative(data, length, data.length, ElementType.INT);
         }
         return mirror.dataAddress.getAddress();
+    }
+
+    static void initializeAltrep(RBaseObject altrepVec, int length, long address) {
+        NativeMirror mirror = altrepVec.getNativeMirror();
+        assert altrepVec.isAltRep();
+        assert address != 0;
+        assert length >= 0;
+        if (mirror.dataAddress == null) {
+            assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
+            mirror.initializeAltrep(altrepVec, address, length);
+        }
     }
 
     static long allocateNativeContents(RRawVector vector, byte[] data, int length) {

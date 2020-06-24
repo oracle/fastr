@@ -25,12 +25,16 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.ExportMessage.Ignore;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
@@ -302,15 +306,33 @@ public final class RIntVector extends RAbstractNumericVector {
     }
 
     @ExportMessage(name = "toNative", library = AbstractContainerLibrary.class)
-    public void containerLibToNative(
-                    @Cached("createBinaryProfile()") ConditionProfile alreadyNativeProfile,
+    @ImportStatic(AltrepUtilities.class)
+    protected static class ToNative {
+        @Specialization(guards = "!isAltrep(vector)")
+        protected static void nativizeVector(RIntVector vector,
+                    @Cached ConditionProfile alreadyNativeProfile,
                     @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
-        if (alreadyNativeProfile.profile(data instanceof RIntNativeVectorData)) {
-            return;
+            if (alreadyNativeProfile.profile(vector.data instanceof RIntNativeVectorData)) {
+                return;
+            }
+            int[] arr = dataLib.getReadonlyIntData(vector.data);
+            NativeDataAccess.allocateNativeContents(vector, arr, vector.getLength());
+            vector.setData(new RIntNativeVectorData(vector), vector.getLength());
         }
-        int[] arr = dataLib.getReadonlyIntData(this.data);
-        NativeDataAccess.allocateNativeContents(this, arr, getLength());
-        setData(new RIntNativeVectorData(this), getLength());
+
+        @Specialization(guards = "isAltrep(altIntVec)")
+        protected static void nativizeAltrep(RIntVector altIntVec,
+                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+            Object vectorData = altIntVec.getData();
+            int length = dataLib.getLength(vectorData);
+            long address;
+            try {
+                address = dataLib.asPointer(vectorData);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            NativeDataAccess.initializeAltrep(altIntVec, length, address);
+        }
     }
 
     @ExportMessage(name = "duplicate", library = AbstractContainerLibrary.class)

@@ -131,6 +131,11 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         }
     }
 
+    @ExportMessage
+    public long asPointer(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
+        return dataptrNode.execute(getOwner(), true);
+    }
+
     private boolean invokeNoNA(AltrepRFFI.NoNANode noNANode) {
         assert descriptor.isNoNAMethodRegistered();
         boolean noNA = noNANode.execute(getOwner());
