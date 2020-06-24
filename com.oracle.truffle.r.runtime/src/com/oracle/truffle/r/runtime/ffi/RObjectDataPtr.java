@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 import java.util.Objects;
@@ -78,6 +79,53 @@ public abstract class RObjectDataPtr implements TruffleObject {
      * The wrapped vector can be either {@link RAbstractVector} or {@link CharSXPWrapper}.
      */
     public abstract RBaseObject getVector();
+
+    @TruffleBoundary
+    public static RObjectDataPtr get(RBaseObject obj) {
+        // TODO: Potential improvement: replace this method with a node
+        assert obj instanceof CharSXPWrapper || obj instanceof RAbstractVector || obj == RNull.instance;
+        Object wrapper = NativeDataAccess.getNativeWrapper(obj);
+        if (wrapper != null) {
+            assert wrapper instanceof RObjectDataPtr;
+            return (RObjectDataPtr) wrapper;
+        }
+        RObjectDataPtr result;
+        if (obj == RNull.instance) {
+            result = new RNullDataPtr();
+        } else if (obj instanceof CharSXPWrapper) {
+            result = new CharSXPDataPtr((CharSXPWrapper) obj);
+        } else {
+            result = createForVector((RAbstractVector) obj);
+        }
+        NativeDataAccess.setNativeWrapper(obj, result);
+        return result;
+    }
+
+    private static RObjectDataPtr createForVector(RAbstractVector vec) {
+        if (vec.isAltRep()) {
+            // TODO: Implement cached version
+            AltrepRFFI.DataptrNode dataptrNode = AltrepRFFIFactory.DataptrNodeGen.getUncached();
+            long dataptrAddr = dataptrNode.execute(vec, true);
+            return new AltrepVectorDataPtr(vec, dataptrAddr);
+        }
+        else if (vec instanceof RIntVector) {
+            return new IntVectorDataPtr((RIntVector) vec);
+        } else if (vec instanceof RDoubleVector) {
+            return new DoubleVectorDataPtr((RDoubleVector) vec);
+        } else if (vec instanceof RLogicalVector) {
+            return new LogicalVectorDataPtr((RLogicalVector) vec);
+        } else if (vec instanceof RRawVector) {
+            return new RawVectorDataPtr((RRawVector) vec);
+        } else if (vec instanceof RComplexVector) {
+            return new ComplexVectorDataPtr((RComplexVector) vec);
+        } else if (vec instanceof RStringVector) {
+            return new StringVectorDataPtr((RStringVector) vec);
+        } else if (vec instanceof RList) {
+            return new ListDataPtr((RList) vec);
+        } else {
+            throw RInternalError.shouldNotReachHere(Objects.toString(vec));
+        }
+    }
 
     protected abstract Object getNativeTypeImpl(RFFIContext rffi);
 
@@ -169,6 +217,40 @@ public abstract class RObjectDataPtr implements TruffleObject {
         private static <T extends RObjectDataPtr> T setNativeWrapper(RBaseObject object, T nativeWrapper) {
             NativeDataAccess.setNativeWrapper(object, nativeWrapper);
             return nativeWrapper;
+    /**
+     * Whenever DATAPTR C function is called on an altrep instance, an instance of this class is
+     * returned. In Sulong, it should resemble native array.
+     */
+    @ExportLibrary(InteropLibrary.class)
+    protected static final class AltrepVectorDataPtr extends RObjectDataPtr {
+        private final RAbstractVector altrepVec;
+        private final long dataptrAddr;
+
+        AltrepVectorDataPtr(RAbstractVector altrepVec, long dataptrAddr) {
+            assert AltrepUtilities.isAltrep(altrepVec);
+            this.altrepVec = altrepVec;
+            this.dataptrAddr = dataptrAddr;
+        }
+
+        @ExportMessage
+        public boolean isPointer() {
+            return true;
+        }
+
+        @ExportMessage
+        public long asPointer() {
+            return dataptrAddr;
+        }
+
+        @Override
+        public RBaseObject getVector() {
+            return altrepVec;
+        }
+
+        @Override
+        protected Object getNativeTypeImpl(RFFIContext rffi) {
+            // TODO: Implement for more types, or remove this method completely.
+            return rffi.getSulongArrayType(42);
         }
     }
 
