@@ -29,7 +29,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
@@ -91,9 +90,6 @@ public class RListNativeData implements TruffleObject {
 
     @ExportMessage
     public Object[] copy(@SuppressWarnings("unused") boolean deep) {
-        if (deep) {
-            throw RInternalError.unimplemented("list data deep copy");
-        }
         return NativeDataAccess.copyListNativeData(vec.getNativeMirror());
     }
 

@@ -28,7 +28,6 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
@@ -65,9 +64,6 @@ public class RListArrayDataLibrary {
 
     @ExportMessage
     public static Object[] copy(Object[] receiver, @SuppressWarnings("unused") boolean deep) {
-        if (deep) {
-            throw RInternalError.unimplemented("list data deep copy");
-        }
         return getListDataCopy(receiver);
     }
 
