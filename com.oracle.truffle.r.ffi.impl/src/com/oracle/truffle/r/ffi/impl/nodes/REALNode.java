@@ -40,22 +40,22 @@ public abstract class REALNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     protected RObjectDataPtr doForNull(RNull rNull,
-                    @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+            @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         return getObjectDataPtrNode.execute(rNull);
     }
 
     @Specialization
     protected RObjectDataPtr doForStringVector(RStringVector stringVector,
-                    @Cached ConditionProfile isNativized,
-                    @Cached ConditionProfile needsWrapping,
-                    @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+            @Cached ConditionProfile isNativized,
+            @Cached ConditionProfile needsWrapping,
+            @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         stringVector.wrapStrings(isNativized, needsWrapping);
         return getObjectDataPtrNode.execute(stringVector);
     }
 
     @Specialization
     protected RObjectDataPtr doForAtomicVector(RAbstractAtomicVector atomicVector,
-                    @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+            @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         return getObjectDataPtrNode.execute(atomicVector);
     }
 }

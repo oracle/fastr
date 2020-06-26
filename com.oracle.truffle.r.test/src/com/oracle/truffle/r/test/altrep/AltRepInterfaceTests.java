@@ -39,7 +39,7 @@ public class AltRepInterfaceTests extends TestBase {
                 //RDataFactory.createAltIntVector(simpleDescriptorWrapper.getDescriptor(), simpleDescriptorWrapper.getAltIntVectorData().getData());
 
         // int *data = INTEGER(instance);
-        RObjectDataPtr objDataPtr = RObjectDataPtr.get(altIntVec);
+        RObjectDataPtr objDataPtr = RObjectDataPtr.getUncached(altIntVec);
         // int elem = data[0];
         Object elem = InteropLibrary.getFactory().getUncached(objDataPtr).readArrayElement(objDataPtr, 0);
 
@@ -60,7 +60,7 @@ public class AltRepInterfaceTests extends TestBase {
         RIntVector altIntVec = simpleDescriptorWrapper.getAltIntVector();
 
         // int *data = INTEGER(instance);
-        RObjectDataPtr objDataptr = RObjectDataPtr.get(altIntVec);
+        RObjectDataPtr objDataptr = RObjectDataPtr.getUncached(altIntVec);
         // data[0] = 42;
         InteropLibrary.getFactory().getUncached(objDataptr).writeArrayElement(objDataptr, 0, 42);
 

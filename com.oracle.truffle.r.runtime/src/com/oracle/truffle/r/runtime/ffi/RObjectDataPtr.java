@@ -80,53 +80,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
      */
     public abstract RBaseObject getVector();
 
-    @TruffleBoundary
-    public static RObjectDataPtr get(RBaseObject obj) {
-        // TODO: Potential improvement: replace this method with a node
-        assert obj instanceof CharSXPWrapper || obj instanceof RAbstractVector || obj == RNull.instance;
-        Object wrapper = NativeDataAccess.getNativeWrapper(obj);
-        if (wrapper != null) {
-            assert wrapper instanceof RObjectDataPtr;
-            return (RObjectDataPtr) wrapper;
-        }
-        RObjectDataPtr result;
-        if (obj == RNull.instance) {
-            result = new RNullDataPtr();
-        } else if (obj instanceof CharSXPWrapper) {
-            result = new CharSXPDataPtr((CharSXPWrapper) obj);
-        } else {
-            result = createForVector((RAbstractVector) obj);
-        }
-        NativeDataAccess.setNativeWrapper(obj, result);
-        return result;
-    }
-
-    private static RObjectDataPtr createForVector(RAbstractVector vec) {
-        if (vec.isAltRep()) {
-            // TODO: Implement cached version
-            AltrepRFFI.DataptrNode dataptrNode = AltrepRFFIFactory.DataptrNodeGen.getUncached();
-            long dataptrAddr = dataptrNode.execute(vec, true);
-            return new AltrepVectorDataPtr(vec, dataptrAddr);
-        }
-        else if (vec instanceof RIntVector) {
-            return new IntVectorDataPtr((RIntVector) vec);
-        } else if (vec instanceof RDoubleVector) {
-            return new DoubleVectorDataPtr((RDoubleVector) vec);
-        } else if (vec instanceof RLogicalVector) {
-            return new LogicalVectorDataPtr((RLogicalVector) vec);
-        } else if (vec instanceof RRawVector) {
-            return new RawVectorDataPtr((RRawVector) vec);
-        } else if (vec instanceof RComplexVector) {
-            return new ComplexVectorDataPtr((RComplexVector) vec);
-        } else if (vec instanceof RStringVector) {
-            return new StringVectorDataPtr((RStringVector) vec);
-        } else if (vec instanceof RList) {
-            return new ListDataPtr((RList) vec);
-        } else {
-            throw RInternalError.shouldNotReachHere(Objects.toString(vec));
-        }
-    }
-
     protected abstract Object getNativeTypeImpl(RFFIContext rffi);
 
     @ExportMessage(library = NativeTypeLibrary.class)
@@ -141,8 +94,8 @@ public abstract class RObjectDataPtr implements TruffleObject {
     }
 
     @GenerateUncached
-    @ImportStatic(NativeDataAccess.class)
-    public abstract static class GetObjectDataPtrNode extends Node {
+    @ImportStatic({NativeDataAccess.class, AltrepUtilities.class})
+    public static abstract class GetObjectDataPtrNode extends Node {
         public abstract RObjectDataPtr execute(RBaseObject object);
 
         public static GetObjectDataPtrNode create() {
@@ -172,7 +125,15 @@ public abstract class RObjectDataPtr implements TruffleObject {
             return charSXPDataPtr;
         }
 
-        @Specialization(guards = "getNativeWrapper(intVector) == null")
+        @Specialization(guards = {"isAltrep(altIntVector)", "getNativeWrapper(altIntVector) == null"})
+        protected AltrepVectorDataPtr getAltIntVectorDataPtr(RIntVector altIntVector,
+                @Cached AltrepRFFI.DataptrNode dataptrNode) {
+            long dataptrAddr = dataptrNode.execute(altIntVector, true);
+            AltrepVectorDataPtr altrepVectorDataPtr = new AltrepVectorDataPtr(altIntVector, dataptrAddr);
+            return setNativeWrapper(altIntVector, altrepVectorDataPtr);
+        }
+
+        @Specialization(guards = {"!isAltrep(intVector)", "getNativeWrapper(intVector) == null"})
         protected IntVectorDataPtr getIntVectorDataPtr(RIntVector intVector) {
             IntVectorDataPtr intVectorDataPtr = new IntVectorDataPtr(intVector);
             return setNativeWrapper(intVector, intVectorDataPtr);
@@ -217,6 +178,9 @@ public abstract class RObjectDataPtr implements TruffleObject {
         private static <T extends RObjectDataPtr> T setNativeWrapper(RBaseObject object, T nativeWrapper) {
             NativeDataAccess.setNativeWrapper(object, nativeWrapper);
             return nativeWrapper;
+        }
+    }
+
     /**
      * Whenever DATAPTR C function is called on an altrep instance, an instance of this class is
      * returned. In Sulong, it should resemble native array.

@@ -63,13 +63,13 @@ public abstract class CRFFIWrapVectorNode extends Node {
 
     @Specialization(guards = {"isTemporary(vector)", "!isStringVector(vector)"})
     protected Object temporaryToNative(RAbstractVector vector,
-                    @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+            @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         return getObjectDataPtrNode.execute(vector);
     }
 
     @Specialization(guards = {"!isTemporary(vector)", "!isStringVector(vector)"})
     protected Object nonTemporaryToNative(RAbstractVector vector,
-                    @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+            @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         return getObjectDataPtrNode.execute(vector.copy());
     }
 
