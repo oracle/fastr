@@ -1979,6 +1979,8 @@ const SEXP *(STRING_PTR_RO)(SEXP x) {
 // The ALTREP framework is not implemented on FastR yet
 // Dummy implementations:
 
+#define ALTREP_UNIMPLEMENTED { UNIMPLEMENTED; }
+
 int (ALTREP)(SEXP x);
 SEXP ALTREP_CLASS(SEXP x) ALTREP_UNIMPLEMENTED
 
@@ -1997,6 +1999,7 @@ R_xlen_t INTEGER_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, int *buf);
 int INTEGER_IS_SORTED(SEXP x);
 int INTEGER_NO_NA(SEXP x);
 SEXP INTEGER_MATCH(SEXP a, SEXP b, int c, SEXP d, SEXP e, Rboolean f) ALTREP_UNIMPLEMENTED
+SEXP INTEGER_IS_NA(SEXP x) ALTREP_UNIMPLEMENTED
 SEXP REAL_MATCH(SEXP a, SEXP b, int c, SEXP d, SEXP e, Rboolean f) ALTREP_UNIMPLEMENTED
 R_xlen_t REAL_GET_REGION(SEXP sx, R_xlen_t i, R_xlen_t n, double *buf);
 int REAL_IS_SORTED(SEXP x);
