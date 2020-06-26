@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector.RMaterializedVector;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicReference;
 
 @ExportLibrary(InteropLibrary.class)
 @ExportLibrary(AbstractContainerLibrary.class)
@@ -383,15 +382,6 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
         } finally {
             setComplete(false);
         }
-    }
-
-    private final AtomicReference<RLogicalVector> materialized = new AtomicReference<>();
-
-    public Object cachedMaterialize() {
-        if (materialized.get() == null) {
-            materialized.compareAndSet(null, materialize());
-        }
-        return materialized.get();
     }
 
     private static final class FastPathAccess extends FastPathFromLogicalAccess {

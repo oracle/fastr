@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
  *
@@ -105,7 +105,9 @@ public class FFIWrap {
 
         @Override
         public void close() {
-            CompilerDirectives.materialize(materialized);
+            if (materialized == null) {
+                throw RInternalError.shouldNotReachHere();
+            }
         }
     }
 

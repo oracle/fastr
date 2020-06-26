@@ -286,6 +286,40 @@ public abstract class RObjectDataPtr implements TruffleObject {
         protected Object getNativeTypeImpl(RFFIContext rffi) {
             return rffi.getSulongArrayType(42L);
         }
+
+        @ExportMessage
+        public Object readArrayElement(long index,
+                        @Cached FFIToNativeMirrorNode wrapperNode,
+                        @CachedLibrary(limit = "DATA_LIB_LIMIT") VectorDataLibrary dataLib) {
+            String result = dataLib.getStringAt(vectorData, (int) index);
+            Object wrappedInCharSXP = CharSXPWrapper.create(result);
+            return wrapperNode.execute(wrappedInCharSXP);
+        }
+
+        @ExportMessage
+        protected void writeArrayElement(long index, Object value,
+                        @Cached FFIUnwrapNode unwrapNode,
+                        @Cached FFIUnwrapString unwrapString,
+                        @Cached("createBinaryProfile()") ConditionProfile isWrappedProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile isStringWrappedProfile,
+                        @Cached BranchProfile notMaterializedBranchProfile,
+                        @CachedLibrary(limit = "DATA_LIB_LIMIT") VectorDataLibrary dataLib,
+                        @CachedLibrary(limit = "DATA_LIB_LIMIT") AbstractContainerLibrary containerLib) {
+            Object unwrappedValue = value;
+            if (isWrappedProfile.profile(value instanceof NativeDataAccess.NativeMirror)) {
+                unwrappedValue = unwrapNode.execute(value);
+            }
+            if (isStringWrappedProfile.profile(unwrappedValue instanceof CharSXPWrapper)) {
+                unwrappedValue = unwrapString.execute(unwrappedValue);
+            }
+            if (!dataLib.isWriteable(vectorData)) {
+                notMaterializedBranchProfile.enter();
+                containerLib.materializeData(vector);
+                vectorData = vector.getData();
+                assert dataLib.isWriteable(vectorData);
+            }
+            dataLib.setElementAt(vectorData, RRuntime.interopArrayIndexToInt(index, vector), unwrappedValue);
+        }
     }
 
     @ExportLibrary(InteropLibrary.class)

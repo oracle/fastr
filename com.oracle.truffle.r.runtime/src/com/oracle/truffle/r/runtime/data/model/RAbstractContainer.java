@@ -43,6 +43,8 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 @ExportLibrary(AbstractContainerLibrary.class)
 public abstract class RAbstractContainer extends RSharingAttributeStorage {
 
@@ -192,6 +194,16 @@ public abstract class RAbstractContainer extends RSharingAttributeStorage {
     @ExportMessage(name = "isComplete", library = AbstractContainerLibrary.class)
     public boolean containerLibIsComplete(@CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
         return dataLib.isComplete(data);
+    }
+
+    private final AtomicReference<RAbstractContainer> materialized = new AtomicReference<>();
+
+    @ExportMessage(name = "cachedMaterialize", library = AbstractContainerLibrary.class)
+    public RAbstractContainer containerLibCachedMaterialize(@CachedLibrary("this") AbstractContainerLibrary containerLibrary) {
+        if (materialized.get() == null) {
+            materialized.compareAndSet(null, containerLibrary.materialize(this));
+        }
+        return materialized.get();
     }
 
     @ExportMessage(name = "materialize", library = AbstractContainerLibrary.class)
