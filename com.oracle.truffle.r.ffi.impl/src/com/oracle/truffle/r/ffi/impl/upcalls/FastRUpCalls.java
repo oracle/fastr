@@ -22,7 +22,9 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
+import com.oracle.truffle.r.ffi.impl.nodes.FASTR_DATAPTRNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
+import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 
 /**
  * Up-calls specific to FastR used in FastR native code and not exported as part of any API.
@@ -49,5 +51,6 @@ public interface FastRUpCalls {
      * the underlying data such as {@link com.oracle.truffle.r.runtime.data.RStringVector}.
      */
     @RFFICpointer
+    @RFFIUpCallNode(FASTR_DATAPTRNode.class)
     Object FASTR_DATAPTR(Object x);
 }

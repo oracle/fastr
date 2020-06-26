@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -32,8 +33,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.ffi.interop.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.ffi.interop.StringArrayWrapper;
 
 public abstract class CRFFIWrapVectorNode extends Node {
 
@@ -61,13 +62,15 @@ public abstract class CRFFIWrapVectorNode extends Node {
     }
 
     @Specialization(guards = {"isTemporary(vector)", "!isStringVector(vector)"})
-    protected Object temporaryToNative(RAbstractVector vector) {
-        return RObjectDataPtr.get(vector);
+    protected Object temporaryToNative(RAbstractVector vector,
+                    @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+        return getObjectDataPtrNode.execute(vector);
     }
 
     @Specialization(guards = {"!isTemporary(vector)", "!isStringVector(vector)"})
-    protected Object nonTemporaryToNative(RAbstractVector vector) {
-        return RObjectDataPtr.get(vector.copy());
+    protected Object nonTemporaryToNative(RAbstractVector vector,
+                    @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+        return getObjectDataPtrNode.execute(vector.copy());
     }
 
     @Specialization

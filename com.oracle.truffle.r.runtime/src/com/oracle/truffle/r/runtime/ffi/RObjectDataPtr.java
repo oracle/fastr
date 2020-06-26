@@ -23,10 +23,12 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.CachedContext;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -34,6 +36,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.llvm.spi.NativeTypeLibrary;
@@ -63,6 +66,11 @@ import java.util.Objects;
 @ExportLibrary(NativeTypeLibrary.class)
 public abstract class RObjectDataPtr implements TruffleObject {
 
+    public static RObjectDataPtr getUncached(RBaseObject obj) {
+        GetObjectDataPtrNode getObjectDataPtrNode = GetObjectDataPtrNode.getUncached();
+        return getObjectDataPtrNode.execute(obj);
+    }
+
     private RObjectDataPtr() {
     }
 
@@ -70,47 +78,6 @@ public abstract class RObjectDataPtr implements TruffleObject {
      * The wrapped vector can be either {@link RAbstractVector} or {@link CharSXPWrapper}.
      */
     public abstract RBaseObject getVector();
-
-    @TruffleBoundary
-    public static RObjectDataPtr get(RBaseObject obj) {
-        // Potential improvement: replace this method with a node
-        assert obj instanceof CharSXPWrapper || obj instanceof RAbstractVector || obj == RNull.instance;
-        Object wrapper = NativeDataAccess.getNativeWrapper(obj);
-        if (wrapper != null) {
-            assert wrapper instanceof RObjectDataPtr;
-            return (RObjectDataPtr) wrapper;
-        }
-        RObjectDataPtr result;
-        if (obj == RNull.instance) {
-            result = new RNullDataPtr();
-        } else if (obj instanceof CharSXPWrapper) {
-            result = new CharSXPDataPtr((CharSXPWrapper) obj);
-        } else {
-            result = createForVector((RAbstractVector) obj);
-        }
-        NativeDataAccess.setNativeWrapper(obj, result);
-        return result;
-    }
-
-    private static RObjectDataPtr createForVector(RAbstractVector vec) {
-        if (vec instanceof RIntVector) {
-            return new IntVectorDataPtr((RIntVector) vec);
-        } else if (vec instanceof RDoubleVector) {
-            return new DoubleVectorDataPtr((RDoubleVector) vec);
-        } else if (vec instanceof RLogicalVector) {
-            return new LogicalVectorDataPtr((RLogicalVector) vec);
-        } else if (vec instanceof RRawVector) {
-            return new RawVectorDataPtr((RRawVector) vec);
-        } else if (vec instanceof RComplexVector) {
-            return new ComplexVectorDataPtr((RComplexVector) vec);
-        } else if (vec instanceof RStringVector) {
-            return new StringVectorDataPtr((RStringVector) vec);
-        } else if (vec instanceof RList) {
-            return new ListDataPtr((RList) vec);
-        } else {
-            throw RInternalError.shouldNotReachHere(Objects.toString(vec));
-        }
-    }
 
     protected abstract Object getNativeTypeImpl(RFFIContext rffi);
 
@@ -123,6 +90,86 @@ public abstract class RObjectDataPtr implements TruffleObject {
     @ExportMessage(library = NativeTypeLibrary.class)
     public Object getNativeType(@CachedContext(TruffleRLanguage.class) RContext ctx) {
         return getNativeTypeImpl(ctx.getRFFI());
+    }
+
+    @GenerateUncached
+    @ImportStatic(NativeDataAccess.class)
+    public abstract static class GetObjectDataPtrNode extends Node {
+        public abstract RObjectDataPtr execute(RBaseObject object);
+
+        public static GetObjectDataPtrNode create() {
+            return RObjectDataPtrFactory.GetObjectDataPtrNodeGen.create();
+        }
+
+        public static GetObjectDataPtrNode getUncached() {
+            return RObjectDataPtrFactory.GetObjectDataPtrNodeGen.getUncached();
+        }
+
+        @Specialization(guards = "getNativeWrapper(object) != null")
+        protected RObjectDataPtr getFromNativeWrapper(RBaseObject object) {
+            Object nativeWrapper = NativeDataAccess.getNativeWrapper(object);
+            assert nativeWrapper instanceof RObjectDataPtr;
+            return (RObjectDataPtr) nativeWrapper;
+        }
+
+        @Specialization(guards = "getNativeWrapper(rNull) == null")
+        protected RNullDataPtr getNullPtr(@SuppressWarnings("unused") RNull rNull) {
+            return new RNullDataPtr();
+        }
+
+        @Specialization(guards = "getNativeWrapper(charWrapper) == null")
+        protected CharSXPDataPtr getCharDataPtr(CharSXPWrapper charWrapper) {
+            CharSXPDataPtr charSXPDataPtr = new CharSXPDataPtr(charWrapper);
+            NativeDataAccess.setNativeWrapper(charWrapper, charSXPDataPtr);
+            return charSXPDataPtr;
+        }
+
+        @Specialization(guards = "getNativeWrapper(intVector) == null")
+        protected IntVectorDataPtr getIntVectorDataPtr(RIntVector intVector) {
+            IntVectorDataPtr intVectorDataPtr = new IntVectorDataPtr(intVector);
+            return setNativeWrapper(intVector, intVectorDataPtr);
+        }
+
+        @Specialization(guards = "getNativeWrapper(doubleVector) == null")
+        protected DoubleVectorDataPtr getDoubleVectorDataPtr(RDoubleVector doubleVector) {
+            DoubleVectorDataPtr doubleVectorDataPtr = new DoubleVectorDataPtr(doubleVector);
+            return setNativeWrapper(doubleVector, doubleVectorDataPtr);
+        }
+
+        @Specialization(guards = "getNativeWrapper(logicalVector) == null")
+        protected LogicalVectorDataPtr getLogicalVectorDataPtr(RLogicalVector logicalVector) {
+            LogicalVectorDataPtr logicalVectorDataPtr = new LogicalVectorDataPtr(logicalVector);
+            return setNativeWrapper(logicalVector, logicalVectorDataPtr);
+        }
+
+        @Specialization(guards = "getNativeWrapper(rawVector) == null")
+        protected RawVectorDataPtr getRawVectorDataPtr(RRawVector rawVector) {
+            RawVectorDataPtr rawVectorDataPtr = new RawVectorDataPtr(rawVector);
+            return setNativeWrapper(rawVector, rawVectorDataPtr);
+        }
+
+        @Specialization(guards = "getNativeWrapper(complexVector) == null")
+        protected ComplexVectorDataPtr getComplexVectorDataPtr(RComplexVector complexVector) {
+            ComplexVectorDataPtr complexVectorDataPtr = new ComplexVectorDataPtr(complexVector);
+            return setNativeWrapper(complexVector, complexVectorDataPtr);
+        }
+
+        @Specialization(guards = "getNativeWrapper(stringVector) == null")
+        protected StringVectorDataPtr getStringVectorDataPtr(RStringVector stringVector) {
+            StringVectorDataPtr stringVectorDataPtr = new StringVectorDataPtr(stringVector);
+            return setNativeWrapper(stringVector, stringVectorDataPtr);
+        }
+
+        @Specialization(guards = "getNativeWrapper(list) == null")
+        protected ListDataPtr getListDataPtr(RList list) {
+            ListDataPtr listDataPtr = new ListDataPtr(list);
+            return setNativeWrapper(list, listDataPtr);
+        }
+
+        private static <T extends RObjectDataPtr> T setNativeWrapper(RBaseObject object, T nativeWrapper) {
+            NativeDataAccess.setNativeWrapper(object, nativeWrapper);
+            return nativeWrapper;
+        }
     }
 
     @ExportLibrary(InteropLibrary.class)

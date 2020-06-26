@@ -292,7 +292,8 @@ public class DLL {
         @ExportMessage
         public Object readArrayElement(long idx,
                         @Cached("createBinaryProfile()") ConditionProfile prof1,
-                        @Cached("createBinaryProfile()") ConditionProfile prof2) throws InvalidArrayIndexException {
+                        @Cached("createBinaryProfile()") ConditionProfile prof2,
+                        @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) throws InvalidArrayIndexException {
             CharSXPWrapper res;
             if (prof1.profile(idx == 0)) {
                 res = pathSXP;
@@ -301,7 +302,7 @@ public class DLL {
             } else {
                 throw InvalidArrayIndexException.create(idx);
             }
-            return RObjectDataPtr.get(res);
+            return getObjectDataPtrNode.execute(res);
         }
 
         private static DLLInfo create(String name, String path, boolean dynamicLookup, LibHandle handle, boolean addToList) {
