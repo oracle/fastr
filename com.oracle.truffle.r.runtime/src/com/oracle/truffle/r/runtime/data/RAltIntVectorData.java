@@ -57,13 +57,11 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     private final RAltRepData altrepData;
     private final AltIntegerClassDescriptor descriptor;
-    private boolean dataptrCalled;
     private RIntVector owner;
 
     public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data) {
         this.altrepData = data;
         this.descriptor = descriptor;
-        this.dataptrCalled = false;
         assert hasDescriptorRegisteredNecessaryMethods(descriptor):
                 "Descriptor " + descriptor.toString() + " does not have registered all necessary methods";
     }
@@ -107,14 +105,6 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
         return owner;
     }
 
-    public void setDataptrCalled() {
-        dataptrCalled = true;
-    }
-
-    public boolean wasDataptrCalled() {
-        return dataptrCalled;
-    }
-
     @ExportMessage
     public NACheck getNACheck(@Shared("naCheck") @Cached NACheck na) {
         na.enable(false);
@@ -133,7 +123,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public long asPointer(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
-        return dataptrNode.execute(getOwner(), true);
+        return dataptrNode.execute(owner, true);
     }
 
     private boolean invokeNoNA(AltrepRFFI.NoNANode noNANode) {
@@ -157,19 +147,16 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public RAltIntVectorData materialize(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                                         @Exclusive @Cached ConditionProfile dataptrNotCalledProfile) {
+    public RAltIntVectorData materialize(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
         // Dataptr altrep method call forces materialization
-        if (dataptrNotCalledProfile.profile(!dataptrCalled)) {
-            dataptrNode.execute(getOwner(), true);
-        }
+        dataptrNode.execute(owner, true);
         return this;
     }
 
     @ExportMessage
-    public boolean isWriteable() {
+    public boolean isWriteable(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
         // TODO: if (!dataptrCalled) return Dataptr_Or_Null != NULL
-        return dataptrCalled;
+        return dataptrNode.wasDataptrCalled();
     }
 
     @ExportMessage
@@ -272,15 +259,15 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public int[] getReadonlyIntData(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+            @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         int length = lengthNode.execute(getOwner());
-        return getDataCopy(dataptrNode, length);
+        return getDataCopy(dataptrNode,length);
     }
 
     private int[] getDataCopy(AltrepRFFI.DataptrNode dataptrNode, int length) {
-        long dataptrAddr = dataptrNode.execute(getOwner(), false);
+        long addr = dataptrNode.execute(owner, false);
         int[] dataCopy = new int[length];
-        NativeMemory.copyMemory(dataptrAddr, dataCopy, ElementType.INT, length);
+        NativeMemory.copyMemory(addr, dataCopy, ElementType.INT, length);
         return dataCopy;
     }
 
@@ -356,7 +343,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
                          @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                          @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
-        writeViaDataptrNode(dataptrNode, getOwner(), index, value);
+        writeViaDataptrNode(dataptrNode, index, value);
     }
 
     @ExportMessage
@@ -364,7 +351,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
                            @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                            @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
-        writeViaDataptrNode(dataptrNode, getOwner(), it.getIndex(), value);
+        writeViaDataptrNode(dataptrNode, it.getIndex(), value);
     }
 
     @ExportMessage
@@ -372,19 +359,19 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
                        @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                        @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
-        writeViaDataptrNode(dataptrNode, getOwner(), index, value);
+        writeViaDataptrNode(dataptrNode, index, value);
     }
 
-    private static void writeViaDataptrNode(AltrepRFFI.DataptrNode altIntDataptrNode, RIntVector altIntVec,
-                                            int index, int value) {
-        long dataptrAddr = altIntDataptrNode.execute(altIntVec, true);
-        NativeMemory.putInt(dataptrAddr, index, value);
+    private void writeViaDataptrNode(AltrepRFFI.DataptrNode dataptrNode,
+            int index, int value) {
+        long addr = dataptrNode.execute(owner, true);
+        NativeMemory.putInt(addr, index, value);
     }
 
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return "RAltIntVectorData: altrepData={" + altrepData.toString() + "}";
+        return String.format("RAltIntVectorData{hash=%d, altrepData=%s}", this.hashCode(), altrepData.toString());
     }
 
     @GenerateUncached

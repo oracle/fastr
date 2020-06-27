@@ -1,5 +1,8 @@
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
@@ -9,9 +12,11 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
@@ -168,23 +173,62 @@ public final class AltrepRFFI {
         }
     }
 
-    @GenerateUncached
     @ImportStatic({AltrepUtilities.class, AltRepClassDescriptor.class})
     public abstract static class DataptrNode extends Node {
         public abstract long execute(Object altrepVector, boolean writeable);
+
+        @CompilationFinal private long dataptrAddr;
+        // An altrep vector for which dataptrAddr is cached.
+        @CompilationFinal private RBaseObject altrepVector;
+        private static final TruffleLogger altrepLogger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
+
+        public static DataptrNode create() {
+            return AltrepRFFIFactory.DataptrNodeGen.create();
+        }
+
+        public static DataptrNode getUncached() {
+            return new DataptrNode() {
+                @Override
+                public long execute(Object altrepVector, boolean writeable) {
+                    AltrepDownCallNode downCallNode = AltrepDownCallNode.getUncached();
+                    InteropLibrary retValueInterop = InteropLibrary.getUncached();
+                    if (altrepVector instanceof RIntVector) {
+                        AltIntegerClassDescriptor classDescriptor = AltrepUtilities.getAltIntDescriptor((RIntVector) altrepVector);
+                        AltrepMethodDescriptor dataptrMethodDescriptor = classDescriptor.getDataptrMethodDescriptor();
+                        Object ret = downCallNode.execute(dataptrMethodDescriptor, AltIntegerClassDescriptor.dataptrMethodUnwrapResult,
+                                AltIntegerClassDescriptor.dataptrMethodWrapArguments, new Object[]{altrepVector, writeable});
+                        return expectPointer(retValueInterop, ret);
+                    } else {
+                        throw RInternalError.unimplemented();
+                    }
+                }
+            };
+        }
+
+        public boolean wasDataptrCalled() {
+            return dataptrAddr != 0;
+        }
 
         @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)",
                         assumptions = "getNoMethodRedefinedAssumption()")
         protected long dataptrOfAltInt(RIntVector altIntVector, boolean writeable,
                 @Cached AltrepDownCallNode downCallNode,
                 @CachedLibrary(limit = "1") InteropLibrary interop,
-                @Cached("getAltIntDescriptor(altIntVector)") AltIntegerClassDescriptor classDescriptor,
-                @Cached("classDescriptor.getDataptrMethodDescriptor()") AltrepMethodDescriptor dataptrMethod) {
+                @Cached("getAltIntDescriptor(altIntVector)") @SuppressWarnings("unused") AltIntegerClassDescriptor classDescriptor,
+                @Cached("classDescriptor.getDataptrMethodDescriptor()") AltrepMethodDescriptor dataptrMethod,
+                @Cached ConditionProfile wasDataptrNotCalledProfile) {
             assert AltrepUtilities.isAltrep(altIntVector);
-            setDataptrCalled(altIntVector);
-            Object ret = downCallNode.execute(dataptrMethod, AltIntegerClassDescriptor.dataptrMethodUnwrapResult,
-                    AltIntegerClassDescriptor.dataptrMethodWrapArguments, new Object[]{altIntVector, writeable});
-            return expectPointer(interop, ret);
+            if (wasDataptrNotCalledProfile.profile(dataptrAddr == 0 || altrepVector != altIntVector)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                Object ret = downCallNode.execute(dataptrMethod, AltIntegerClassDescriptor.dataptrMethodUnwrapResult,
+                        AltIntegerClassDescriptor.dataptrMethodWrapArguments, new Object[]{altIntVector, writeable});
+                dataptrAddr = expectPointer(interop, ret);
+                altrepVector = altIntVector;
+                altrepLogger.fine(() -> "DataptrNode: caching dataptrAddr=" + dataptrAddr + " for " + altIntVector.getData());
+            }
+            altrepLogger.fine(() -> String.format("DataptrNode(cached): returning dataptrAddr=%d of %s",
+                    dataptrAddr, altIntVector.getData()));
+            return dataptrAddr;
         }
 
         @Specialization(replaces = "dataptrOfAltInt")
@@ -192,14 +236,13 @@ public final class AltrepRFFI {
                 @Cached AltrepDownCallNode downCallNode,
                 @CachedLibrary(limit = "1") InteropLibrary retValInterop) {
             AltIntegerClassDescriptor descriptor = AltrepUtilities.getAltIntDescriptor(altIntVector);
-            return dataptrOfAltInt(altIntVector, writeable, downCallNode, retValInterop,
-                    descriptor, descriptor.getDataptrMethodDescriptor());
-        }
-
-        private static void setDataptrCalled(RIntVector altIntVec) {
-            assert AltrepUtilities.isAltrep(altIntVec);
-            RAltIntVectorData altIntVectorData = (RAltIntVectorData) altIntVec.getData();
-            altIntVectorData.setDataptrCalled();
+            AltrepMethodDescriptor dataptrMethod = descriptor.getDataptrMethodDescriptor();
+            Object ret = downCallNode.execute(dataptrMethod, AltIntegerClassDescriptor.dataptrMethodUnwrapResult,
+                    AltIntegerClassDescriptor.dataptrMethodWrapArguments, new Object[]{altIntVector, writeable});
+            long dataptr = expectPointer(retValInterop, ret);
+            altrepLogger.fine(() -> String.format("DataptrNode(uncached): returning dataptrAddr=%d of %s",
+                    dataptr, altIntVector.getData()));
+            return dataptr;
         }
     }
 
