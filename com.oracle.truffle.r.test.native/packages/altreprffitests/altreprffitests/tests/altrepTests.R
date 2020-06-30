@@ -73,9 +73,9 @@ run_tests <- function(tests) {
 #' 
 check_equal <- function(instance, expected_data) {
     assert_equals <- function(val1, val2) {
-        width <- 80L
-        name <- substr(deparse(sys.call(), width)[[1L]], 1, width)
         if (!identical(val1, val2)) {
+            width <- 80L
+            name <- substr(deparse(sys.call(), width)[[1L]], 1, width)
             cat("Fail: ", name, "with val1=", val1, ", val2=", val2, "\n")
             CURR_NUMBER_OF_ERRORS <- CURR_NUMBER_OF_ERRORS + 1
             if (CURR_NUMBER_OF_ERRORS >= MAX_NUMBER_OF_ERRORS) {
