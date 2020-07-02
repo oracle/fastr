@@ -23,7 +23,7 @@ public class AltrepUtilities {
         return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
     }
 
-    private static RAltIntVectorData getAltIntVectorData(RIntVector altIntVector) {
+    public static RAltIntVectorData getAltIntVectorData(RIntVector altIntVector) {
         assert altIntVector.isAltRep();
         return (RAltIntVectorData) altIntVector.getData();
     }

@@ -58,6 +58,7 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     private final RAltRepData altrepData;
     private final AltIntegerClassDescriptor descriptor;
     private RIntVector owner;
+    private boolean dataptrCalled;
 
     public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data) {
         this.altrepData = data;
@@ -154,9 +155,13 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
     }
 
     @ExportMessage
-    public boolean isWriteable(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
+    public boolean isWriteable() {
         // TODO: if (!dataptrCalled) return Dataptr_Or_Null != NULL
-        return dataptrNode.wasDataptrCalled();
+        return dataptrCalled;
+    }
+
+    public void setDataptrCalled() {
+        dataptrCalled = true;
     }
 
     @ExportMessage
@@ -380,14 +385,14 @@ public class RAltIntVectorData implements TruffleObject, VectorDataWithOwner {
 
         @Specialization(guards = "hasEltMethodRegistered(altIntVector)")
         protected int doAltIntWithElt(RIntVector altIntVector, int index,
-                                   @Cached("create()") AltrepRFFI.EltNode eltNode) {
+                                   @Cached AltrepRFFI.EltNode eltNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             return (int) eltNode.execute(altIntVector, index);
         }
 
         @Specialization(guards = "!hasEltMethodRegistered(altIntVector)")
         protected int doAltIntWithoutElt(RIntVector altIntVector, int index,
-                                      @Cached("create()") AltrepRFFI.DataptrNode altIntDataptrNode) {
+                                      @Cached AltrepRFFI.DataptrNode altIntDataptrNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             long dataptrAddr = altIntDataptrNode.execute(altIntVector, false);
             return NativeMemory.getInt(dataptrAddr, index);
