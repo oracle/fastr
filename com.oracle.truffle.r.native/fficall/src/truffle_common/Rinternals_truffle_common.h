@@ -1194,6 +1194,13 @@ int *FASTR_DATAPTR(SEXP x) {
     return result;
 }
 
+const void *DATAPTR_OR_NULL(SEXP x) {
+    TRACE1(x);
+    const void *result = ((call_DATAPTR_OR_NULL) callbacks[DATAPTR_OR_NULL_x])(x);
+    checkExitCall();
+    return result;
+}
+
 int *FASTR_INTEGER(SEXP x) {
     TRACE(TARGp, x);
     int *result = ((call_INTEGER) callbacks[INTEGER_x])(x);
@@ -1203,7 +1210,9 @@ int *FASTR_INTEGER(SEXP x) {
 
 int INTEGER_ELT(SEXP x, R_xlen_t i) {
     TRACE0();
-    return FASTR_INTEGER(x)[i];
+    int result = ((call_INTEGER_ELT) callbacks[INTEGER_ELT_x])(x, i);
+    checkExitCall();
+    return result;
 }
 
 void SET_INTEGER_ELT(SEXP x, R_xlen_t i, int v) {

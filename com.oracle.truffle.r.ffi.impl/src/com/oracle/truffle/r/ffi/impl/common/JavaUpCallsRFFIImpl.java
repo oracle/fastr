@@ -2739,12 +2739,22 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public int INTEGER_ELT(Object x, long index) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object LOGICAL(Object x) {
         throw implementedAsNode();
     }
 
     @Override
     public Object REAL(Object x) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object DATAPTR_OR_NULL(Object x) {
         throw implementedAsNode();
     }
 

@@ -37,6 +37,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.COMPLEXNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.AsCharacterFactor;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
+import com.oracle.truffle.r.ffi.impl.nodes.DATAPTR_OR_NULLNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DispatchPrimFunNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DoMakeClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes;
@@ -47,6 +48,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.UnlockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.GetClassDefNode;
 import com.oracle.truffle.r.ffi.impl.nodes.INTEGERNode;
+import com.oracle.truffle.r.ffi.impl.nodes.INTEGER_ELTNode;
 import com.oracle.truffle.r.ffi.impl.nodes.IntegerGetRegionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.IntegerIsSortedNode;
 import com.oracle.truffle.r.ffi.impl.nodes.IntegerNoNANode;
@@ -310,6 +312,10 @@ public interface StdUpCallsRFFI {
     void SET_ATTRIB(Object target, Object attributes);
 
     @RFFICpointer
+    @RFFIUpCallNode(DATAPTR_OR_NULLNode.class)
+    Object DATAPTR_OR_NULL(Object x);
+
+    @RFFICpointer
     @RFFIUpCallNode(RAWNode.class)
     Object RAW(Object x);
 
@@ -320,6 +326,9 @@ public interface StdUpCallsRFFI {
     @RFFICpointer
     @RFFIUpCallNode(INTEGERNode.class)
     Object INTEGER(Object x);
+
+    @RFFIUpCallNode(INTEGER_ELTNode.class)
+    int INTEGER_ELT(Object x, long index);
 
     @RFFICpointer
     @RFFIUpCallNode(INTEGERNode.class)

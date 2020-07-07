@@ -124,10 +124,6 @@ void *DATAPTR(SEXP x) {
 	}
 }
 
-const void *DATAPTR_OR_NULL(SEXP x) {
-	return DATAPTR(x);
-}
-
 int *INTEGER0(SEXP x) {
     return (int *) DATAPTR(x);
 }
