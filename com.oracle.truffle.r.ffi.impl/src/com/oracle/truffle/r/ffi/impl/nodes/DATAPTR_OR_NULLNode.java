@@ -22,19 +22,59 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.data.altrep.AltVecClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 
 @GenerateUncached
+@ImportStatic(AltrepUtilities.class)
 public abstract class DATAPTR_OR_NULLNode extends FFIUpCallNode.Arg1 {
     public static DATAPTR_OR_NULLNode create() {
         return DATAPTR_OR_NULLNodeGen.create();
     }
 
-    @Specialization
-    protected Object doIt(RAbstractAtomicVector vector) {
-        throw RInternalError.unimplemented("DATAPTR_OR_NULL");
+    @Specialization(guards = "isAltrep(altVec)")
+    protected Object doForAltrep(RAbstractAtomicVector altVec,
+                                 @Cached ConditionProfile hasDataptrOrNullRegisteredProfile,
+                                 @Cached AltrepRFFI.DataptrOrNullNode dataptrOrNullNode) {
+        AltVecClassDescriptor classDescriptor = (AltVecClassDescriptor) AltrepUtilities.getDescriptorFromAltrepObj(altVec);
+        if (hasDataptrOrNullRegisteredProfile.profile(classDescriptor.isDataptrOrNullMethodRegistered())) {
+            return dataptrOrNullNode.execute(altVec);
+        } else {
+            return new NullPointer();
+        }
+    }
+
+    @Specialization(guards = "!isAltrep(vector)")
+    protected Object doForNormalVectors(@SuppressWarnings("unused") RAbstractAtomicVector vector) {
+        return new NullPointer();
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static class NullPointer implements TruffleObject {
+        @ExportMessage
+        public boolean isNull() {
+            return true;
+        }
+
+        @ExportMessage
+        public boolean isPointer() {
+            return true;
+        }
+
+        @ExportMessage
+        public long asPointer() {
+            return 0;
+        }
     }
 }

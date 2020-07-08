@@ -41,7 +41,7 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
     public static final boolean extractSubsetMethodUnwrapResult = true;
 
     private AltrepMethodDescriptor dataptrMethodDescriptor;
-    private AltrepMethodDescriptor dataptrOrMethodDescriptor;
+    private AltrepMethodDescriptor dataptrOrNullMethodDescriptor;
     private AltrepMethodDescriptor extractSubsetMethodDescriptor;
 
     AltVecClassDescriptor(String className, String packageName, Object dllInfo) {
@@ -58,7 +58,7 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
 
     public void registerDataptrOrNullMethod(AltrepMethodDescriptor dataptrOrNullMethod) {
         logRegisterMethod("Dataptr_or_null");
-        this.dataptrOrMethodDescriptor = dataptrOrNullMethod;
+        this.dataptrOrNullMethodDescriptor = dataptrOrNullMethod;
     }
 
     public void registerExtractSubsetMethod(AltrepMethodDescriptor extractSubsetMethod) {
@@ -70,12 +70,16 @@ public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
         return dataptrMethodDescriptor;
     }
 
+    public AltrepMethodDescriptor getDataptrOrNullMethodDescriptor() {
+        return dataptrOrNullMethodDescriptor;
+    }
+
     public boolean isDataptrMethodRegistered() {
         return dataptrMethodDescriptor != null;
     }
 
     public boolean isDataptrOrNullMethodRegistered() {
-        return dataptrOrMethodDescriptor != null;
+        return dataptrOrNullMethodDescriptor != null;
     }
 
     public boolean isExtractSubsetMethodRegistered() {

@@ -197,6 +197,7 @@ public abstract class RObjectDataPtr implements TruffleObject {
         }
 
         @ExportMessage
+        @SuppressWarnings("static-method")
         public boolean isPointer() {
             return true;
         }

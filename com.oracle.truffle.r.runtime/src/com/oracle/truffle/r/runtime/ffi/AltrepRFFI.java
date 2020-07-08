@@ -19,9 +19,11 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltVecClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepMethodDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
 
 public final class AltrepRFFI {
@@ -241,6 +243,24 @@ public final class AltrepRFFI {
             altrepLogger.fine(() -> String.format("DataptrNode(uncached): returning dataptrAddr=%d of %s",
                     dataptr, altIntVector.getData()));
             return dataptr;
+        }
+    }
+
+    @GenerateUncached
+    public abstract static class DataptrOrNullNode extends Node {
+        public abstract Object execute(RAbstractAtomicVector altrepVector);
+
+        @Specialization
+        protected Object doIt(RAbstractAtomicVector altVec,
+                              @CachedLibrary(limit = "1") InteropLibrary interopLib,
+                              @Cached AltrepDownCallNode downCallNode) {
+            AltRepClassDescriptor classDescriptor = AltrepUtilities.getDescriptorFromAltrepObj(altVec);
+            assert classDescriptor instanceof AltVecClassDescriptor;
+            AltrepMethodDescriptor dataptrOrNullMethod = ((AltVecClassDescriptor) classDescriptor).getDataptrOrNullMethodDescriptor();
+            Object ret = downCallNode.execute(dataptrOrNullMethod, AltVecClassDescriptor.dataptrOrNullMethodUnwrapResult,
+                    AltVecClassDescriptor.dataptrOrNullMethodWrapArguments, new Object[] {altVec});
+            assert interopLib.isPointer(ret);
+            return ret;
         }
     }
 
