@@ -35,29 +35,29 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.ExtractListElement;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.RemoveRegAttributesNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.runtime.data.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 // TODO: add (permuted) dimnames to the result
 @RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"}, behavior = PURE)
@@ -84,7 +84,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
     }
 
     @Specialization(limit = "getGenericVectorAccessCacheSize()")
-    protected RAbstractVector aPerm(RAbstractVector vector, @SuppressWarnings("unused") RNull permVector, byte resize,
+    protected RAbstractVector aPermNull(RAbstractVector vector, @SuppressWarnings("unused") RNull permVector, byte resize,
                     @CachedLibrary("vector") AbstractContainerLibrary vectorLib,
                     @CachedLibrary("vector.getData()") VectorDataLibrary vectorDataLib,
                     @CachedLibrary(limit = "getCacheSize(1)") VectorDataLibrary resultDataLib,
@@ -135,6 +135,15 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         }
 
         return result;
+    }
+
+    @TruffleBoundary
+    @Specialization(replaces = "aPermNull")
+    protected RAbstractVector aPermNullGeneric(RAbstractVector vector, @SuppressWarnings("unused") RNull permVector, byte resize,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") SetDimAttributeNode setDimNode) {
+        return aPermNull(vector, permVector, resize, AbstractContainerLibrary.getFactory().getUncached(), VectorDataLibrary.getFactory().getUncached(), VectorDataLibrary.getFactory().getUncached(),
+                        getDimsNode, setDimNode);
     }
 
     @Specialization(guards = {"isIdentityPermutation(vector, permVector, getDimsNode)", "reuseNonSharedNode.supports(vector)"}, limit = "getVectorAccessCacheSize()")
