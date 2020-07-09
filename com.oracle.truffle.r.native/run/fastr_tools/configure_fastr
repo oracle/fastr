@@ -64,6 +64,14 @@ done
       >&2 echo "Tool 'ldconfig' is not available. Maybe you need to run this as a root?"
       exit 2
     fi
+    ldconfig -p > /dev/null 2>&1
+    ldconfig_res=$?
+    if [[ $ldconfig_res -ne 0 ]]; then
+      echo "Cannot run ldconfig to check the availability of some libraries on your system."
+      echo "The only requirement of FastR on most Linux distributions is libgomp.so.1. You can ensure manually that this library is not missing on your system."
+      echo "Note: FastR may work."
+      exit 3
+    fi
     res=0
     if ! ldconfig -p | grep --quiet "libgomp.so.1"; then
       echo "Error: could not find OpenMP runtime library: libgomp.so.1"
@@ -76,7 +84,7 @@ done
     if [[ $res != 0 ]]; then
       echo "The basic configuration of FastR failed."
       echo "To learn more visit https://www.graalvm.org/docs/reference-manual/languages/r"
-      exit 1
+      exit 4
     else
       echo "The basic configuration of FastR was successfull."
       echo ""
