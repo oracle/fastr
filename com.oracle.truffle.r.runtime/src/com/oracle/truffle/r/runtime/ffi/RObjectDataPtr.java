@@ -415,7 +415,7 @@ public abstract class RObjectDataPtr implements TruffleObject {
                         @Exclusive @Cached("createBinaryProfile()") ConditionProfile wasMaterializedProfile,
                         @CachedLibrary(limit = "DATA_LIB_LIMIT") VectorDataLibrary dataLib) {
             Object result = super.readArrayElement(index, dataLib);
-            Object materialized = materializeNode.execute(result, false);
+            Object materialized = materializeNode.materialize(result);
             if (wasMaterializedProfile.profile(materialized != result)) {
                 dataLib.setElementAt(vectorData, RRuntime.interopArrayIndexToInt(index, vector), materialized);
             }

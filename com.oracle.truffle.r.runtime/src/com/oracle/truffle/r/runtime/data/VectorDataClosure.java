@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -111,8 +112,18 @@ public abstract class VectorDataClosure implements RClosure, TruffleObject {
         switch (getType()) {
             case Integer:
                 return new RIntArrayVectorData(getIntDataCopy(dataLib), dataLib.getNACheck(data).neverSeenNA());
+            case Double:
+                return new RDoubleArrayVectorData(getDoubleDataCopy(dataLib), dataLib.getNACheck(data).neverSeenNA());
+            case Raw:
+                return new RRawArrayVectorData(getRawDataCopy(dataLib));
+            case Logical:
+                return new RLogicalArrayVectorData(getLogicalDataCopy(dataLib), dataLib.getNACheck(data).neverSeenNA());
+            case Complex:
+                return new RComplexArrayVectorData(getComplexDataCopy(dataLib), dataLib.getNACheck(data).neverSeenNA());
+            case Character:
+                return new RStringArrayVectorData(getStringDataCopy(dataLib), dataLib.getNACheck(data).neverSeenNA());
             default:
-                throw RInternalError.unimplemented("TODO");
+                throw CompilerDirectives.shouldNotReachHere(getType().toString());
         }
     }
 

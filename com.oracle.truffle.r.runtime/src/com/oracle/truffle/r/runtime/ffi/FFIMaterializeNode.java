@@ -28,28 +28,22 @@ import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.AbstractContainerLibrary;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.RSequence;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 
 /**
  * Converts values that can live on the FastR side to values that can be sent to the native code,
  * i.e., anything that is not {@link RBaseObject} and doesn't have a native mirror needs to be
- * wrapped to such object. Moreover, we need to convert compact read-only vectors to materialized
- * ones, since user may expect to be able to take their data-pointer and write into them.
+ * wrapped to such object.
  *
  * See documentation/dev/ffi.md for more details.
  */
@@ -58,101 +52,81 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
 public abstract class FFIMaterializeNode extends Node {
 
     public Object materialize(Object value) {
-        return execute(value, false);
+        return execute(value);
     }
 
-    public Object materializeProtected(Object value) {
-        return execute(value, true);
-    }
-
-    protected abstract Object execute(Object value, boolean protect);
+    protected abstract Object execute(Object value);
 
     public static Object uncachedMaterialize(Object value) {
-        return FFIMaterializeNodeGen.getUncached().execute(value, false);
+        return FFIMaterializeNodeGen.getUncached().execute(value);
     }
 
     // Scalar values:
 
     @Specialization
-    protected static Object wrap(int value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
     }
 
     @Specialization
-    protected static Object wrap(double value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 
     @Specialization
-    protected static Object wrap(double[] value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(double[] value) {
         return new NativeDoubleArray(value);
     }
 
     @Specialization
-    protected static Object wrap(byte value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(byte value) {
         return RDataFactory.createLogicalVectorFromScalar(value);
     }
 
     @Specialization
-    protected static Object wrap(String value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(String value) {
         return RDataFactory.createStringVectorFromScalar(value);
     }
 
     @Specialization
-    protected static Object wrap(RRaw value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(RRaw value) {
         return RDataFactory.createRawVectorFromScalar(value);
     }
 
     @Specialization
-    protected static Object wrap(RComplex value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(RComplex value) {
         return RDataFactory.createComplexVectorFromScalar(value);
-    }
-
-    // Sequences: life-cycle of the materialized vector is cached and tied with the sequence via a
-    // field inside the sequence
-
-    @Specialization
-    protected static Object wrap(RSequence seq, @SuppressWarnings("unused") boolean protect) {
-        return seq.cachedMaterialize();
     }
 
     // RObjectDataPtr: held by a field in NativeMirror of the corresponding vector
 
     @Specialization
-    protected static Object wrap(RObjectDataPtr value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(RObjectDataPtr value) {
         return value;
     }
 
-    // No need to wrap other RObjects than sequences or scalars
-
-    @Specialization(guards = "!isRScalarVectorOrSequenceOrHasVectorData(value)")
-    protected static Object wrap(RBaseObject value, @SuppressWarnings("unused") boolean protect) {
+    // No need to wrap any RObjects
+    @Specialization
+    protected static Object wrap(RBaseObject value) {
         return value;
-    }
-
-    @Specialization(limit = "getGenericDataLibraryCacheSize()")
-    protected static Object wrap(RAbstractContainer value, @SuppressWarnings("unused") boolean protect,
-                    @CachedLibrary("value") AbstractContainerLibrary containerLibrary) {
-        // TODO specialize only for sequences (and maybe some other)
-        return containerLibrary.cachedMaterialize(value);
     }
 
     // Symbol holds the address as a field
 
     @Specialization
-    protected static Object wrap(DLL.SymbolHandle sym, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(DLL.SymbolHandle sym) {
         return sym.asAddress();
     }
 
     // Wrappers for foreign objects are held in a weak hash map
 
     @Specialization(guards = "isForeignObject(value)")
-    protected static Object wrapForeignObject(TruffleObject value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrapForeignObject(TruffleObject value) {
         return RContext.getInstance().getRFFI().getOrCreateForeignObjectWrapper(value);
     }
 
     @Fallback
-    protected static Object wrap(Object value, @SuppressWarnings("unused") boolean protect) {
+    protected static Object wrap(Object value) {
         CompilerDirectives.transferToInterpreter();
         String name = value == null ? "null" : value.getClass().getSimpleName();
         throw RInternalError.shouldNotReachHere("invalid wrapping: " + name);
@@ -162,10 +136,6 @@ public abstract class FFIMaterializeNode extends Node {
         // in case somebody calls wrap for an already wrapped RBaseObject
         assert value instanceof NativeDataAccess.NativeMirror : value.getClass().getSimpleName() + " has to be a NativeMirror";
         return RRuntime.isForeignObject(value);
-    }
-
-    protected static boolean isRScalarVectorOrSequenceOrHasVectorData(RBaseObject value) {
-        return value instanceof RScalarVector || value instanceof RSequence || RRuntime.hasVectorData(value);
     }
 
     public static FFIMaterializeNode create() {

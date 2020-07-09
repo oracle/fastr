@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2020, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -407,3 +407,7 @@ if (Sys.getenv("TESTRFFI_IGNORE_4GB_VECTOR_TEST") != "") {
 }
 
 is.null(rffi.testMissingArgWithATTRIB())
+
+# Compact representations and RFFI:
+# sequences get materialized on write, but should not get materialized on read
+rffi.shareIntElement(1:2,1:3,1:4,1:5)
