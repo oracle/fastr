@@ -89,7 +89,6 @@ import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RWeakRef;
-import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.ShareObjectNode;
@@ -1488,7 +1487,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     private static RObjectDataPtr wrapString(String s) {
         CharSXPWrapper v = CharSXPWrapper.create(s);
-        return RObjectDataPtr.get(v);
+        return RObjectDataPtr.getUncached(v);
     }
 
     @Override
@@ -2387,44 +2386,37 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object FASTR_DATAPTR(Object x) {
-        if ((x instanceof RStringVector) || (x instanceof RList)) {
-            return RObjectDataPtr.get((RAbstractVector) wrapStrings(x));
-        }
-        CompilerDirectives.transferToInterpreter();
-        throw RError.error(RError.NO_CALLER, Message.GENERIC, "DATAPTR not implemented for type " + Utils.getTypeName(x));
+        throw implementedAsNode();
     }
 
     @Override
     public Object INTEGER(Object x) {
-        // Note: there is no validation in GNU-R and so packages call this with all types of vectors
-        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), RAbstractAtomicVector.class));
+        throw implementedAsNode();
     }
 
     @Override
     public Object LOGICAL(Object x) {
-        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), RLogicalVector.class));
+        throw implementedAsNode();
     }
 
     @Override
-    @TruffleBoundary
     public Object REAL(Object x) {
-        // Note: there is no validation in GNU-R and so packages call this with all types of vectors
-        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), RAbstractAtomicVector.class));
+        throw implementedAsNode();
     }
 
     @Override
     public Object RAW(Object x) {
-        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), RRawVector.class));
+        throw implementedAsNode();
     }
 
     @Override
     public Object COMPLEX(Object x) {
-        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), RComplexVector.class));
+        throw implementedAsNode();
     }
 
     @Override
     public Object R_CHAR(Object x) {
-        return RObjectDataPtr.get(guaranteeVectorOrNull(wrapStrings(x), CharSXPWrapper.class));
+        throw implementedAsNode();
     }
 
     @Override
@@ -2445,20 +2437,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public void R_MakeActiveBinding(Object symArg, Object funArg, Object envArg) {
         throw implementedAsNode();
-    }
-
-    private static RBaseObject guaranteeVectorOrNull(Object obj, Class<? extends RBaseObject> clazz) {
-        if (obj == RNull.instance) {
-            return RNull.instance;
-        }
-        return guaranteeInstanceOf(obj, clazz);
-    }
-
-    private static Object wrapStrings(Object obj) {
-        if (obj instanceof RStringVector) {
-            ((RStringVector) obj).wrapStrings();
-        }
-        return obj;
     }
 
     private static JavaGDContext getJavaGDContext(RContext ctx) {

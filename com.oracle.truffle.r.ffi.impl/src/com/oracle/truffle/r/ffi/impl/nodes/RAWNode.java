@@ -20,37 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.upcalls;
+package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.r.ffi.impl.nodes.FASTR_DATAPTRNode;
-import com.oracle.truffle.r.ffi.processor.RFFICpointer;
-import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.ffi.RObjectDataPtr;
 
-/**
- * Up-calls specific to FastR used in FastR native code and not exported as part of any API.
- */
-public interface FastRUpCalls {
-    // Checkstyle: stop method name check
+@GenerateUncached
+public abstract class RAWNode extends FFIUpCallNode.Arg1 {
+    public static RAWNode create() {
+        return RAWNodeGen.create();
+    }
 
-    Object R_MethodsNamespace();
+    @Specialization
+    protected RObjectDataPtr doForNull(RNull rNull,
+                    @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+        return getObjectDataPtrNode.execute(rNull);
+    }
 
-    int FASTR_getConnectionChar(Object obj);
-
-    Object getSummaryDescription(Object x);
-
-    Object getConnectionClassString(Object x);
-
-    Object getOpenModeString(Object x);
-
-    boolean isSeekable(Object x);
-
-    void restoreHandlerStacks(Object savedHandlerStack);
-
-    /**
-     * Implements {@code DATAPTR} for types that do not have specialized API function for accessing
-     * the underlying data such as {@link com.oracle.truffle.r.runtime.data.RStringVector}.
-     */
-    @RFFICpointer
-    @RFFIUpCallNode(FASTR_DATAPTRNode.class)
-    Object FASTR_DATAPTR(Object x);
+    @Specialization
+    protected RObjectDataPtr doForRawVector(RRawVector rawVector,
+                    @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+        return getObjectDataPtrNode.execute(rawVector);
+    }
 }

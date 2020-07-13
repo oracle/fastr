@@ -33,6 +33,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.GetAttrib;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.RfSetAttribNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.SetAttribNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
+import com.oracle.truffle.r.ffi.impl.nodes.COMPLEXNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.AsCharacterFactor;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
@@ -45,7 +46,9 @@ import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfAnyDuplicated3;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.UnlockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.GetClassDefNode;
+import com.oracle.truffle.r.ffi.impl.nodes.INTEGERNode;
 import com.oracle.truffle.r.ffi.impl.nodes.IsObjectNode;
+import com.oracle.truffle.r.ffi.impl.nodes.LOGICALNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAD4RNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDDRNode;
@@ -70,10 +73,12 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SET_TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RAWNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RForceAndCallNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RNCharNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RSetExternalPtrNode;
+import com.oracle.truffle.r.ffi.impl.nodes.R_CHARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfAllocVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
@@ -299,18 +304,23 @@ public interface StdUpCallsRFFI {
     void SET_ATTRIB(Object target, Object attributes);
 
     @RFFICpointer
+    @RFFIUpCallNode(RAWNode.class)
     Object RAW(Object x);
 
     @RFFICpointer
+    @RFFIUpCallNode(LOGICALNode.class)
     Object LOGICAL(Object x);
 
     @RFFICpointer
+    @RFFIUpCallNode(INTEGERNode.class)
     Object INTEGER(Object x);
 
     @RFFICpointer
+    @RFFIUpCallNode(INTEGERNode.class)
     Object REAL(Object x);
 
     @RFFICpointer
+    @RFFIUpCallNode(COMPLEXNode.class)
     Object COMPLEX(Object x);
 
     Object STRING_ELT(@RFFIResultOwner Object x, long i);
@@ -527,6 +537,7 @@ public interface StdUpCallsRFFI {
     Object PRCODE(@RFFIResultOwner Object x);
 
     @RFFICpointer
+    @RFFIUpCallNode(R_CHARNode.class)
     Object R_CHAR(Object x);
 
     @RFFIUpCallNode(NewCustomConnectionNode.class)
