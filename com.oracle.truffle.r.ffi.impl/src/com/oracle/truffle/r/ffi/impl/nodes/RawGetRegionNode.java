@@ -28,24 +28,24 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.ffi.util.NativeArrayWrapper;
 
-@ImportStatic(DSLConfig.class)
 @GenerateUncached
-public abstract class IntegerGetRegionNode extends GetRegionNode {
-
-    public static IntegerGetRegionNode create() {
-        return IntegerGetRegionNodeGen.create();
+@ImportStatic(DSLConfig.class)
+public abstract class RawGetRegionNode extends GetRegionNode {
+    public static RawGetRegionNode create() {
+        return RawGetRegionNodeGen.create();
     }
 
     @Specialization(guards = "bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
-    public long doBufferArray(RIntVector vec, long fromIdx, long size, Object buffer,
-                              @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
+    public long doBufferArray(RDoubleVector doubleVec, long fromIdx, long size, Object buffer,
+                              @CachedLibrary("doubleVec.getData()") VectorDataLibrary dataLibrary,
                               @CachedLibrary("buffer") InteropLibrary bufferInterop) {
         validateArguments(fromIdx, size);
-        return dataLibrary.getIntRegion(vec.getData(), (int) fromIdx, (int) size, buffer, bufferInterop);
+        return dataLibrary.getRawRegion(doubleVec.getData(), (int) fromIdx, (int) size, buffer, bufferInterop);
     }
 
     @Specialization(guards = "!bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
@@ -55,8 +55,7 @@ public abstract class IntegerGetRegionNode extends GetRegionNode {
                                 @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {
         validateArguments(fromIdx, size);
         long bufferAddr = bufferToNative(buffer, bufferInterop);
-        int sizeInt = (int) size;
-        Object bufferWrapper = NativeArrayWrapper.createIntWrapper(bufferAddr, sizeInt);
-        return dataLibrary.getIntRegion(vec.getData(), (int) fromIdx, sizeInt, bufferWrapper, bufferWrapperInterop);
+        Object bufferWrapper = NativeArrayWrapper.createIntWrapper(bufferAddr, (int) size);
+        return dataLibrary.getRawRegion(vec.getData(), (int) fromIdx, (int) size, bufferWrapper, bufferWrapperInterop);
     }
 }

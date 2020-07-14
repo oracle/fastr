@@ -20,6 +20,10 @@ public abstract class NativeArrayWrapper implements TruffleObject {
         return new NativeIntArrayWrapper(arrayPtr, size);
     }
 
+    public static NativeArrayWrapper createDoubleWrapper(long arrayPtr, int size) {
+        return new NativeDoubleArrayWrapper(arrayPtr, size);
+    }
+
     public abstract void writeElement(long arrayAddr, long index, Object value);
     public abstract Object readElement(long arrayAddr, long index);
 
@@ -76,7 +80,7 @@ public abstract class NativeArrayWrapper implements TruffleObject {
     }
 
     private static final class NativeIntArrayWrapper extends NativeArrayWrapper {
-        public NativeIntArrayWrapper(long arrayPtr, int size) {
+        protected NativeIntArrayWrapper(long arrayPtr, int size) {
             super(arrayPtr, size);
         }
 
@@ -88,6 +92,22 @@ public abstract class NativeArrayWrapper implements TruffleObject {
         @Override
         public Object readElement(long arrayPtr, long index) {
             return NativeMemory.getInt(arrayPtr, index);
+        }
+    }
+
+    private static final class NativeDoubleArrayWrapper extends NativeArrayWrapper {
+        protected NativeDoubleArrayWrapper(long arrayPtr, int size) {
+            super(arrayPtr, size);
+        }
+
+        @Override
+        public void writeElement(long arrayAddr, long index, Object value) {
+            NativeMemory.putDouble(arrayAddr, index, (double) value);
+        }
+
+        @Override
+        public Object readElement(long arrayAddr, long index) {
+            return NativeMemory.getDouble(arrayAddr, index);
         }
     }
 }

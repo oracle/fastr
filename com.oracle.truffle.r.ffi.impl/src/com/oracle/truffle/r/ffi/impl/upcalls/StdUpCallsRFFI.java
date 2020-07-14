@@ -38,6 +38,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.COMPLEX_ELTNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.AsCharacterFactor;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ComplexGetRegionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DATAPTR_OR_NULLNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DispatchPrimFunNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DoMakeClassNode;
@@ -53,6 +54,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.INTEGER_ELTNode;
 import com.oracle.truffle.r.ffi.impl.nodes.IntegerGetRegionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.IntegerIsSortedNode;
 import com.oracle.truffle.r.ffi.impl.nodes.LOGICAL_ELTNode;
+import com.oracle.truffle.r.ffi.impl.nodes.LogicalGetRegionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NoNANode;
 import com.oracle.truffle.r.ffi.impl.nodes.IsObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.LOGICALNode;
@@ -89,6 +91,8 @@ import com.oracle.truffle.r.ffi.impl.nodes.RNCharNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RSetExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.R_CHARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
+import com.oracle.truffle.r.ffi.impl.nodes.RawGetRegionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RealGetRegionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfAllocVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RfFindFun;
@@ -358,12 +362,16 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(IntegerGetRegionNode.class)
     long INTEGER_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
 
+    @RFFIUpCallNode(RealGetRegionNode.class)
     long REAL_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
 
+    @RFFIUpCallNode(LogicalGetRegionNode.class)
     long LOGICAL_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
 
+    @RFFIUpCallNode(ComplexGetRegionNode.class)
     long COMPLEX_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
 
+    @RFFIUpCallNode(RawGetRegionNode.class)
     long RAW_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
 
     @RFFIUpCallNode(IntegerIsSortedNode.class)

@@ -706,6 +706,10 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
+    public int getLogicalRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop);
+    }
+
     public byte getLogicalAt(Object receiver, @SuppressWarnings("unused") int index) {
         RType type = getType(receiver);
         switch (type) {
@@ -796,6 +800,10 @@ public abstract class VectorDataLibrary extends Library {
 
     public byte[] getRawDataCopy(Object receiver) {
         throw notImplemented(receiver);
+    }
+
+    public int getRawRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop);
     }
 
     public byte getRawAt(Object receiver, @SuppressWarnings("unused") int index) {
@@ -987,6 +995,10 @@ public abstract class VectorDataLibrary extends Library {
 
     public double[] getComplexDataCopy(Object receiver) {
         throw notImplemented(receiver);
+    }
+
+    public int getComplexRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop);
     }
 
     /**
@@ -1936,6 +1948,12 @@ public abstract class VectorDataLibrary extends Library {
         }
 
         @Override
+        public int getLogicalRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            verifyBufferSize(receiver, startIndex, size, buffer, bufferInterop);
+            return delegate.getLogicalRegion(receiver, startIndex, size, buffer, bufferInterop);
+        }
+
+        @Override
         public byte getLogicalAt(Object receiver, int index) {
             return delegate.getLogicalAt(receiver, index);
         }
@@ -1968,6 +1986,12 @@ public abstract class VectorDataLibrary extends Library {
         @Override
         public byte[] getRawDataCopy(Object receiver) {
             return delegate.getRawDataCopy(receiver);
+        }
+
+        @Override
+        public int getRawRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            verifyBufferSize(receiver, startIndex, size, buffer, bufferInterop);
+            return delegate.getRawRegion(receiver, startIndex, size, buffer, bufferInterop);
         }
 
         @Override
@@ -2052,6 +2076,12 @@ public abstract class VectorDataLibrary extends Library {
         public double[] getComplexDataCopy(Object receiver) {
             verifyIfSlowAssertsEnabled(receiver);
             return delegate.getComplexDataCopy(receiver);
+        }
+
+        @Override
+        public int getComplexRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            verifyBufferSize(receiver, startIndex, size, buffer, bufferInterop);
+            return delegate.getComplexRegion(receiver, startIndex, size, buffer, bufferInterop);
         }
 
         @Override
