@@ -453,12 +453,26 @@ public abstract class VectorDataLibrary extends Library {
      * @return count of elements that were actually copied.
      */
     public int getIntRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop);
+    }
+
+    private int getRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
         RandomAccessIterator it = randomAccessIterator(receiver);
+        RType type = getType(receiver);
         int bufferIdx = 0;
         for (int idx = startIndex; idx < startIndex + size; idx++) {
             try {
-                int value = getInt(receiver, it, idx);
-                bufferInterop.writeArrayElement(buffer, bufferIdx, value);
+                switch (type) {
+                    case Integer:
+                        bufferInterop.writeArrayElement(buffer, bufferIdx, getInt(receiver, it, idx));
+                        break;
+                    case Double:
+                        bufferInterop.writeArrayElement(buffer, bufferIdx, getDouble(receiver, it, idx));
+                        break;
+                    default:
+                        CompilerDirectives.transferToInterpreter();
+                        throw RInternalError.shouldNotReachHere(type.toString());
+                }
                 bufferIdx++;
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
@@ -594,6 +608,10 @@ public abstract class VectorDataLibrary extends Library {
 
     public double[] getDoubleDataCopy(Object receiver) {
         throw notImplemented(receiver);
+    }
+
+    public int getDoubleRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop);
     }
 
     public double getDoubleAt(Object receiver, @SuppressWarnings("unused") int index) {
@@ -1738,6 +1756,20 @@ public abstract class VectorDataLibrary extends Library {
             return true;
         }
 
+        private void verifyBufferSize(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            assert buffer != null;
+            assert bufferInterop.hasArrayElements(buffer);
+            assert 0 <= startIndex && startIndex < delegate.getLength(receiver);
+            long bufSize = 0;
+            try {
+                bufSize = bufferInterop.getArraySize(buffer);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+            assert bufSize >= size;
+            verifyIfSlowAssertsEnabled(receiver);
+        }
+
         // TODO: there methods simply delegate, but may be enhanced with assertions
 
         @Override
@@ -1799,17 +1831,7 @@ public abstract class VectorDataLibrary extends Library {
 
         @Override
         public int getIntRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
-            assert buffer != null;
-            assert bufferInterop.hasArrayElements(buffer);
-            assert 0 <= startIndex && startIndex < delegate.getLength(receiver);
-            long bufSize = 0;
-            try {
-                bufSize = bufferInterop.getArraySize(buffer);
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
-            assert bufSize >= size;
-            verifyIfSlowAssertsEnabled(receiver);
+            verifyBufferSize(receiver, startIndex, size, buffer, bufferInterop);
             return delegate.getIntRegion(receiver, startIndex, size, buffer, bufferInterop);
         }
 
@@ -1868,6 +1890,12 @@ public abstract class VectorDataLibrary extends Library {
         public double[] getDoubleDataCopy(Object receiver) {
             verifyIfSlowAssertsEnabled(receiver);
             return delegate.getDoubleDataCopy(receiver);
+        }
+
+        @Override
+        public int getDoubleRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+            verifyBufferSize(receiver, startIndex, size, buffer, bufferInterop);
+            return delegate.getDoubleRegion(receiver, startIndex, size, buffer, bufferInterop);
         }
 
         @Override
