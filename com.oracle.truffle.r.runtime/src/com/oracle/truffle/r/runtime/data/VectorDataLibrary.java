@@ -453,25 +453,33 @@ public abstract class VectorDataLibrary extends Library {
      * @return count of elements that were actually copied.
      */
     public int getIntRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
-        return getRegion(receiver, startIndex, size, buffer, bufferInterop);
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Integer);
     }
 
-    private int getRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
+    private int getRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop, RType bufferType) {
         RandomAccessIterator it = randomAccessIterator(receiver);
-        RType type = getType(receiver);
         int bufferIdx = 0;
         for (int idx = startIndex; idx < startIndex + size; idx++) {
             try {
-                switch (type) {
+                switch (bufferType) {
                     case Integer:
                         bufferInterop.writeArrayElement(buffer, bufferIdx, getInt(receiver, it, idx));
                         break;
                     case Double:
                         bufferInterop.writeArrayElement(buffer, bufferIdx, getDouble(receiver, it, idx));
                         break;
+                    case Logical:
+                        bufferInterop.writeArrayElement(buffer, bufferIdx, getLogical(receiver, it, idx));
+                        break;
+                    case Raw:
+                        bufferInterop.writeArrayElement(buffer, bufferIdx, getRaw(receiver, it, idx));
+                        break;
+                    case Complex:
+                        bufferInterop.writeArrayElement(buffer, bufferIdx, getComplex(receiver, it, idx));
+                        break;
                     default:
                         CompilerDirectives.transferToInterpreter();
-                        throw RInternalError.shouldNotReachHere(type.toString());
+                        throw RInternalError.shouldNotReachHere(bufferType.toString());
                 }
                 bufferIdx++;
             } catch (InteropException e) {
@@ -611,7 +619,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     public int getDoubleRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
-        return getRegion(receiver, startIndex, size, buffer, bufferInterop);
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Double);
     }
 
     public double getDoubleAt(Object receiver, @SuppressWarnings("unused") int index) {
@@ -707,7 +715,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     public int getLogicalRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
-        return getRegion(receiver, startIndex, size, buffer, bufferInterop);
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Logical);
     }
 
     public byte getLogicalAt(Object receiver, @SuppressWarnings("unused") int index) {
@@ -803,7 +811,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     public int getRawRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
-        return getRegion(receiver, startIndex, size, buffer, bufferInterop);
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Raw);
     }
 
     public byte getRawAt(Object receiver, @SuppressWarnings("unused") int index) {
@@ -998,7 +1006,7 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     public int getComplexRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
-        return getRegion(receiver, startIndex, size, buffer, bufferInterop);
+        return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Complex);
     }
 
     /**
