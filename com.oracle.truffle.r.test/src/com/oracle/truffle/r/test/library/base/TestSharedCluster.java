@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -30,14 +29,15 @@ import com.oracle.truffle.r.test.TestBase;
 // Checkstyle: stop line length check
 public class TestSharedCluster extends TestBase {
 
-    @Before
-    public void beforeMethod() {
-        org.junit.Assume.assumeTrue(!"llvm".equals(System.getenv().get("FASTR_RFFI")));
-    }
-
     @Test
     public void testSharedCluster() {
-        assertEval(TestBase.template(
+        /*-
+         * There are issues with the current implementation (GR-10399)
+         *  - mutable data shared between package
+         *  - vectors transition from managed to native memory is not thread safe
+         *  - possibly some more operations on vectors that may be shared between contexts need to be fixed
+         */
+        assertEval(Ignored.Unstable, TestBase.template(
                         "library(parallel); fun <- function(data) { cl <- makeCluster(%0, ifelse(exists('engine', where=R.version),'SHARED','PSOCK')); parLapply(cl, data, function(x) x+1); stopCluster(cl) }; fun(1:100)",
                         "123456789".split("")));
     }
