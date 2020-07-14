@@ -2749,7 +2749,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public int LOGICAL_ELT(Object x, long index) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object REAL(Object x) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public int REAL_ELT(Object x, long index) {
         throw implementedAsNode();
     }
 
@@ -2764,7 +2774,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public int RAW_ELT(Object x, long index) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object COMPLEX(Object x) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object COMPLEX_ELT(Object x, long index) {
         throw implementedAsNode();
     }
 

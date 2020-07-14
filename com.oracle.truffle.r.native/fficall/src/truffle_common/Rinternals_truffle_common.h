@@ -1227,7 +1227,10 @@ double *FASTR_REAL(SEXP x){
 }
 
 double REAL_ELT(SEXP x, R_xlen_t i) {
-    return FASTR_REAL(x)[i];
+    TRACE0();
+    double result = ((call_REAL_ELT) callbacks[REAL_ELT_x])(x, i);
+    checkExitCall();
+    return result;
 }
 
 void SET_REAL_ELT(SEXP x, R_xlen_t i, double v) {
@@ -1241,6 +1244,13 @@ Rcomplex *COMPLEX(SEXP x) {
     return result;
 }
 
+Rcomplex COMPLEX_ELT(SEXP x, R_xlen_t i) {
+    TRACE0();
+    Rcomplex result = ((call_COMPLEX_ELT) callbacks[COMPLEX_ELT_x])(x, i);
+    checkExitCall();
+    return result;
+}
+
 int *LOGICAL(SEXP x){
     TRACE0();
     int *result = ((call_LOGICAL) callbacks[LOGICAL_x])(x);
@@ -1248,9 +1258,23 @@ int *LOGICAL(SEXP x){
     return result;
 }
 
+int LOGICAL_ELT(SEXP x, R_xlen_t i) {
+    TRACE0();
+    double result = ((call_LOGICAL_ELT) callbacks[LOGICAL_ELT_x])(x, i);
+    checkExitCall();
+    return result;
+}
+
 Rbyte *RAW(SEXP x) {
     TRACE0();
     Rbyte *result = ((call_RAW) callbacks[RAW_x])(x);
+    checkExitCall();
+    return result;
+}
+
+Rbyte RAW_ELT(SEXP x, R_xlen_t i) {
+    TRACE0();
+    double result = ((call_RAW_ELT) callbacks[RAW_ELT_x])(x, i);
     checkExitCall();
     return result;
 }

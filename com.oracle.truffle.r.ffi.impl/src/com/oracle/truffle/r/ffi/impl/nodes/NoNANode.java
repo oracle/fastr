@@ -9,9 +9,9 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 @GenerateUncached
-public abstract class IntegerNoNANode extends FFIUpCallNode.Arg1 {
-    public static IntegerNoNANode create() {
-        return IntegerNoNANodeGen.create();
+public abstract class NoNANode extends FFIUpCallNode.Arg1 {
+    public static NoNANode create() {
+        return NoNANodeGen.create();
     }
 
     @Specialization(limit = "getGenericDataLibraryCacheSize()")

@@ -34,6 +34,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.RfSetAttribNode
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.SetAttribNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
 import com.oracle.truffle.r.ffi.impl.nodes.COMPLEXNode;
+import com.oracle.truffle.r.ffi.impl.nodes.COMPLEX_ELTNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.AsCharacterFactor;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
@@ -51,7 +52,8 @@ import com.oracle.truffle.r.ffi.impl.nodes.INTEGERNode;
 import com.oracle.truffle.r.ffi.impl.nodes.INTEGER_ELTNode;
 import com.oracle.truffle.r.ffi.impl.nodes.IntegerGetRegionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.IntegerIsSortedNode;
-import com.oracle.truffle.r.ffi.impl.nodes.IntegerNoNANode;
+import com.oracle.truffle.r.ffi.impl.nodes.LOGICAL_ELTNode;
+import com.oracle.truffle.r.ffi.impl.nodes.NoNANode;
 import com.oracle.truffle.r.ffi.impl.nodes.IsObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.LOGICALNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAARNode;
@@ -79,6 +81,8 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RAWNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RAW_ELTNode;
+import com.oracle.truffle.r.ffi.impl.nodes.REAL_ELTNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RForceAndCallNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RNCharNode;
@@ -99,6 +103,7 @@ import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIResultOwner;
 import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.nmath.distr.Cauchy;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq;
 import com.oracle.truffle.r.runtime.nmath.distr.DBeta;
@@ -319,9 +324,15 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(RAWNode.class)
     Object RAW(Object x);
 
+    @RFFIUpCallNode(RAW_ELTNode.class)
+    int RAW_ELT(Object x, long index);
+
     @RFFICpointer
     @RFFIUpCallNode(LOGICALNode.class)
     Object LOGICAL(Object x);
+
+    @RFFIUpCallNode(LOGICAL_ELTNode.class)
+    int LOGICAL_ELT(Object x, long index);
 
     @RFFICpointer
     @RFFIUpCallNode(INTEGERNode.class)
@@ -334,9 +345,15 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(INTEGERNode.class)
     Object REAL(Object x);
 
+    @RFFIUpCallNode(REAL_ELTNode.class)
+    int REAL_ELT(Object x, long index);
+
     @RFFICpointer
     @RFFIUpCallNode(COMPLEXNode.class)
     Object COMPLEX(Object x);
+
+    @RFFIUpCallNode(COMPLEX_ELTNode.class)
+    Object COMPLEX_ELT(Object x, long index);
 
     @RFFIUpCallNode(IntegerGetRegionNode.class)
     long INTEGER_GET_REGION(Object x, long fromIdx, long size, @RFFICpointer Object buffer);
@@ -352,19 +369,22 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(IntegerIsSortedNode.class)
     int INTEGER_IS_SORTED(Object x);
 
-    @RFFIUpCallNode(IntegerNoNANode.class)
+    @RFFIUpCallNode(NoNANode.class)
     int INTEGER_NO_NA(Object x);
 
     int REAL_IS_SORTED(Object x);
 
+    @RFFIUpCallNode(NoNANode.class)
     int REAL_NO_NA(Object x);
 
     int LOGICAL_IS_SORTED(Object x);
 
+    @RFFIUpCallNode(NoNANode.class)
     int LOGICAL_NO_NA(Object x);
 
     int STRING_IS_SORTED(Object x);
 
+    @RFFIUpCallNode(NoNANode.class)
     int STRING_NO_NA(Object x);
 
     @RFFIUpCallNode(StringEltNode.class)
