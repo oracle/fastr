@@ -34,6 +34,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -99,6 +102,16 @@ public final class RDoubleVector extends RAbstractNumericVector implements RMate
             RClosures.initRegAttributes(result, delegate);
         }
         return result;
+    }
+
+    public static RDoubleVector createAltReal(AltRealClassDescriptor descriptor, RAltRepData altRepData) {
+        RAltRealVectorData altRealVectorData = new RAltRealVectorData(descriptor, altRepData);
+        RDoubleVector vector = new RDoubleVector();
+        vector.setAltRep();
+        vector.data = altRealVectorData;
+        int length = AltrepUtilities.getLengthUncached(vector);
+        vector.setData(altRealVectorData, length);
+        return vector;
     }
 
     static RDoubleVector fromNative(long address, int length) {

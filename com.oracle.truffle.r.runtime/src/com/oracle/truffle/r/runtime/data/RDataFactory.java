@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -990,6 +991,11 @@ public final class RDataFactory {
     public static RIntVector createAltIntVector(AltIntegerClassDescriptor descriptor, RAltRepData altRepData) {
         return traceDataCreated(RIntVector.createAltInt(descriptor, altRepData));
     }
+
+    public static RDoubleVector createAltRealVector(AltRealClassDescriptor classDescriptor, RAltRepData altRepData) {
+        return traceDataCreated(RDoubleVector.createAltReal(classDescriptor, altRepData));
+    }
+
 
     public static RStringVector createAltStringVector(AltStringClassDescriptor descriptor, RAltRepData altRepData) {
         return traceDataCreated(RStringVector.createAltString(descriptor, altRepData));
