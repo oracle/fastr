@@ -27,8 +27,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -77,20 +77,8 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
         @Specialization(guards = "!hasGetRegionMethod(altIntVecData)")
         public static int doWithoutNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, Object buffer,
                                                   InteropLibrary bufferInterop,
-                                                  @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
-                                                  @Shared("naCheck") @Cached NACheck naCheck) {
-            // TODO: Fallback to VectorDataLibrary.getIntRegion
-            int bufferIdx = 0;
-            for (int index = startIdx; index < startIdx + size; index++) {
-                try {
-                    int value = altIntVecData.getIntAt(index, getIntAtNode, naCheck);
-                    bufferInterop.writeArrayElement(buffer, bufferIdx, value);
-                    bufferIdx++;
-                } catch (InteropException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
-            }
-            return bufferIdx;
+                                                  @CachedLibrary("altIntVecData") VectorDataLibrary dataLibrary) {
+            return dataLibrary.getIntRegion(altIntVecData, startIdx, size, buffer, bufferInterop);
         }
 
         protected static boolean hasGetRegionMethod(RAltIntVectorData vecData) {
