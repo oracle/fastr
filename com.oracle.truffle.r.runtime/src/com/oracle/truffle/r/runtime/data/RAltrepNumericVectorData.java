@@ -23,135 +23,108 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.profiles.LoopConditionProfile;
-import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltVecClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
-import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDuplicateNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
- * Base class for all ALTREP numeric vectors - altinteger, altreal, altlogical, altcomplex and altraw.
+ * Base class for altintegers and altreals
  */
 @ExportLibrary(VectorDataLibrary.class)
-public class RAltrepNumericVectorData implements TruffleObject, VectorDataWithOwner {
-    protected RAbstractContainer owner;
-    protected final RAltRepData altrepData;
-    private boolean dataptrCalled;
+public class RAltrepNumericVectorData extends RAltrepVectorData {
+    protected final AltVecClassDescriptor descriptor;
 
-    protected RAltrepNumericVectorData(RAltRepData altrepData) {
-        this.altrepData = altrepData;
+    public RAltrepNumericVectorData(AltVecClassDescriptor descriptor, RAltRepData altrepData) {
+        super(altrepData);
+        assert descriptor instanceof AltIntegerClassDescriptor || descriptor instanceof AltRealClassDescriptor;
+        this.descriptor = descriptor;
+        assert hasDescriptorRegisteredNecessaryMethods(descriptor);
     }
 
-    public RAltRepData getAltrepData() {
-        return altrepData;
-    }
-
-    public Object getData1() {
-        return altrepData.getData1();
-    }
-
-    public Object getData2() {
-        return altrepData.getData2();
-    }
-
-    public void setData1(Object data1) {
-        altrepData.setData1(data1);
-    }
-
-    public void setData2(Object data2) {
-        altrepData.setData2(data2);
-    }
-
-    @Override
-    public void setOwner(RAbstractContainer owner) {
-        this.owner = owner;
+    private static boolean hasDescriptorRegisteredNecessaryMethods(AltVecClassDescriptor descriptor) {
+        return descriptor.isLengthMethodRegistered() && descriptor.isDataptrMethodRegistered();
+        /* TODO: && altIntClassDescr.isUnserializeMethodRegistered(); */
     }
 
     @ExportMessage
-    public RType getType() {
-        // TODO
-        return RType.Null;
+    public NACheck getNACheck(@Cached NACheck na) {
+        na.enable(false);
+        return na;
     }
 
     @ExportMessage
-    public NACheck getNACheck() {
-        return NACheck.getDisabled();
+    public static class IsComplete {
+        @Specialization(guards = "hasNoNAMethodRegistered(vectorData)")
+        public static boolean isCompleteNativeFunction(RAltrepNumericVectorData vectorData,
+                                                   @Cached AltrepRFFI.NoNANode noNANode) {
+            return vectorData.invokeNoNA(noNANode);
+        }
+
+        @Specialization(guards = "!hasNoNAMethodRegistered(vectorData)")
+        public static boolean isCompleteDefault(@SuppressWarnings("unused") RAltrepNumericVectorData vectorData) {
+            return false;
+        }
+
+        protected static boolean hasNoNAMethodRegistered(RAltrepNumericVectorData vectorData) {
+            if (vectorData.descriptor instanceof AltIntegerClassDescriptor) {
+                return ((AltIntegerClassDescriptor) vectorData.descriptor).isNoNAMethodRegistered();
+            } else {
+                return ((AltRealClassDescriptor) vectorData.descriptor).isNoNAMethodRegistered();
+            }
+        }
+    }
+
+    private boolean invokeNoNA(AltrepRFFI.NoNANode noNANode) {
+        boolean noNA = noNANode.execute(owner);
+        if (noNA && !owner.isComplete()) {
+            assert owner instanceof RIntVector;
+            ((RIntVector) owner).setComplete(true);
+        }
+        return noNA;
     }
 
     @ExportMessage
-    public long asPointer(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
-        return dataptrNode.execute(owner, true);
+    public static class IsSorted {
+        @Specialization(guards = "hasIsSortedMethod(vectorData)")
+        public static boolean doWithNativeFunction(RAltrepNumericVectorData vectorData, boolean decreasing, boolean naLast,
+                                                   @Cached AltrepRFFI.IsSortedNode isSortedNode) {
+            AltrepSortedness sortedness = isSortedNode.execute(vectorData.owner);
+            if (decreasing) {
+                if (naLast && sortedness == AltrepSortedness.SORTED_DECR) {
+                    return true;
+                } else {
+                    return !naLast && sortedness == AltrepSortedness.SORTED_DECR_NA_1ST;
+                }
+            } else {
+                if (naLast && sortedness == AltrepSortedness.SORTED_INCR) {
+                    return true;
+                } else {
+                    return !naLast && sortedness == AltrepSortedness.SORTED_INCR_NA_1ST;
+                }
+            }
+        }
+
+        @Specialization(guards = "!hasIsSortedMethod(vectorData)")
+        public static boolean doWithoutNativeFunction(@SuppressWarnings("unused") RAltrepNumericVectorData vectorData,
+                                                      @SuppressWarnings("unused") boolean decreasing,
+                                                      @SuppressWarnings("unused") boolean naLast) {
+            return false;
+        }
+
+        protected static boolean hasIsSortedMethod(RAltrepNumericVectorData vectorData) {
+            if (vectorData.descriptor instanceof AltIntegerClassDescriptor) {
+                return ((AltIntegerClassDescriptor) vectorData.descriptor).isIsSortedMethodRegistered();
+            } else {
+                return ((AltRealClassDescriptor) vectorData.descriptor).isIsSortedMethodRegistered();
+            }
+        }
     }
 
-    @ExportMessage
-    public int getLength(@Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
-        return lengthNode.execute(owner);
-    }
-
-    @ExportMessage
-    public RAltrepNumericVectorData materialize(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
-        // Dataptr altrep method call forces materialization
-        dataptrNode.execute(owner, true);
-        return this;
-    }
-
-    @ExportMessage
-    public boolean isWriteable() {
-        // TODO: if (!dataptrCalled) return Dataptr_Or_Null != NULL
-        return dataptrCalled;
-    }
-
-    public void setDataptrCalled() {
-        dataptrCalled = true;
-    }
-
-    @ExportMessage
-    public Object copy(boolean deep,
-                       @Cached AltrepDuplicateNode duplicateNode) {
-        return duplicateNode.execute(owner, deep);
-    }
-
-    @ExportMessage
-    public VectorDataLibrary.SeqIterator iterator(
-            @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-            @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
-        int length = lengthNode.execute(owner);
-        VectorDataLibrary.SeqIterator it = new VectorDataLibrary.SeqIterator(this, length);
-        it.initLoopConditionProfile(loopProfile);
-        return it;
-    }
-
-    @ExportMessage
-    public VectorDataLibrary.RandomAccessIterator randomAccessIterator() {
-        return new VectorDataLibrary.RandomAccessIterator(this);
-    }
-
-    @ExportMessage
-    public boolean nextImpl(VectorDataLibrary.SeqIterator it, boolean loopCondition,
-                            @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
-        return it.next(loopCondition, loopProfile);
-    }
-
-    @ExportMessage
-    public void nextWithWrap(VectorDataLibrary.SeqIterator it,
-                             @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
-        it.nextWithWrap(loopProfile);
-    }
-
-    @ExportMessage
-    public VectorDataLibrary.SeqWriteIterator writeIterator(@Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
-        int length = lengthNode.execute(owner);
-        return new VectorDataLibrary.SeqWriteIterator(this, length);
-    }
-
-    @ExportMessage
-    public VectorDataLibrary.RandomAccessWriteIterator randomAccessWriteIterator() {
-        return new VectorDataLibrary.RandomAccessWriteIterator(this);
-    }
 }

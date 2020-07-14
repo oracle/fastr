@@ -24,17 +24,13 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
@@ -42,10 +38,8 @@ import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIter
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
-import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory.ElementType;
@@ -55,48 +49,13 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltIntVectorData extends RAltrepNumericVectorData {
-    private final AltIntegerClassDescriptor descriptor;
 
     public RAltIntVectorData(AltIntegerClassDescriptor descriptor, RAltRepData data) {
-        super(data);
-        this.descriptor = descriptor;
-        assert hasDescriptorRegisteredNecessaryMethods(descriptor):
-                "Descriptor " + descriptor.toString() + " does not have registered all necessary methods";
-    }
-
-    private static boolean hasDescriptorRegisteredNecessaryMethods(AltIntegerClassDescriptor altIntClassDescr) {
-        return altIntClassDescr.isLengthMethodRegistered() && altIntClassDescr.isDataptrMethodRegistered();
-        /* TODO: && altIntClassDescr.isUnserializeMethodRegistered(); */
+        super(descriptor, data);
     }
 
     public AltIntegerClassDescriptor getDescriptor() {
-        return descriptor;
-    }
-
-    @ExportMessage
-    public NACheck getNACheck(@Shared("naCheck") @Cached NACheck na) {
-        na.enable(false);
-        return na;
-    }
-
-    @ExportMessage
-    public boolean isComplete(@Exclusive @Cached ConditionProfile hasNoNAMethodProfile,
-                              @Cached AltrepRFFI.NoNANode noNANode) {
-        if (hasNoNAMethodProfile.profile(descriptor.isNoNAMethodRegistered())) {
-            return invokeNoNA(noNANode);
-        } else {
-            return false;
-        }
-    }
-
-    private boolean invokeNoNA(AltrepRFFI.NoNANode noNANode) {
-        assert descriptor.isNoNAMethodRegistered();
-        boolean noNA = noNANode.execute(owner);
-        if (noNA && !owner.isComplete()) {
-            assert owner instanceof RIntVector;
-            ((RIntVector) owner).setComplete(true);
-        }
-        return noNA;
+        return (AltIntegerClassDescriptor) descriptor;
     }
 
     @SuppressWarnings("static-method")
@@ -104,39 +63,6 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
     @ExportMessage
     public final RType getType() {
         return RType.Integer;
-    }
-
-    @ExportMessage
-    public static class IsSorted {
-        @Specialization(guards = "hasIsSortedMethod(altIntVectorData)")
-        public static boolean doWithNativeFunction(RAltIntVectorData altIntVectorData, boolean decreasing, boolean naLast,
-                                                   @Cached AltrepRFFI.IsSortedNode isSortedNode) {
-            AltrepSortedness sortedness = isSortedNode.execute(altIntVectorData.owner);
-            if (decreasing) {
-                if (naLast && sortedness == AltrepSortedness.SORTED_DECR) {
-                    return true;
-                } else {
-                    return !naLast && sortedness == AltrepSortedness.SORTED_DECR_NA_1ST;
-                }
-            } else {
-                if (naLast && sortedness == AltrepSortedness.SORTED_INCR) {
-                    return true;
-                } else {
-                    return !naLast && sortedness == AltrepSortedness.SORTED_INCR_NA_1ST;
-                }
-            }
-        }
-
-        @Specialization(guards = "!hasIsSortedMethod(altIntVectorData)")
-        public static boolean doWithoutNativeFunction(@SuppressWarnings("unused") RAltIntVectorData altIntVectorData,
-                                                      @SuppressWarnings("unused") boolean decreasing,
-                                                      @SuppressWarnings("unused") boolean naLast) {
-            return false;
-        }
-
-        protected static boolean hasIsSortedMethod(RAltIntVectorData altIntVectorData) {
-            return altIntVectorData.getDescriptor().isIsSortedMethodRegistered();
-        }
     }
 
     @ExportMessage
@@ -179,7 +105,6 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
         // TODO: deep?
         int length = lengthNode.execute(owner);
         Object duplicatedObject = duplicateNode.execute(owner, false);
-        assert duplicatedObject instanceof RAltIntVectorData || duplicatedObject instanceof RIntArrayVectorData;
         if (duplicatedObject instanceof RAltIntVectorData) {
             return ((RAltIntVectorData) duplicatedObject).getDataCopy(dataptrNode, length);
         } else if (duplicatedObject instanceof RIntArrayVectorData) {
