@@ -85,34 +85,25 @@ public final class AltrepRFFI {
     public abstract static class LengthNode extends Node {
         public abstract int execute(Object altrepVector);
 
-        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)",
+        @Specialization(guards = "classDescriptor == getDescriptorFromAltrepObj(altrepVector)",
                         assumptions = "getNoMethodRedefinedAssumption()")
-        protected int lengthOfAltInt(RIntVector altIntVector,
+        protected int lengthOfAltrep(RAbstractAtomicVector altrepVector,
                                      @Cached AltrepDownCallNode downCallNode,
                                      @CachedLibrary(limit = "1") InteropLibrary returnValueInterop,
-                                     @Cached("getAltIntDescriptor(altIntVector)") @SuppressWarnings("unused") AltIntegerClassDescriptor classDescriptor,
+                                     @Cached("getDescriptorFromAltrepObj(altrepVector)") @SuppressWarnings("unused") AltRepClassDescriptor classDescriptor,
                                      @Cached("classDescriptor.getLengthMethodDescriptor()") AltrepMethodDescriptor lengthMethod) {
-            Object retVal = downCallNode.execute(lengthMethod, AltIntegerClassDescriptor.lengthMethodUnwrapResult,
-                    AltIntegerClassDescriptor.lengthMethodWrapArguments, new Object[]{altIntVector});
+            Object retVal = downCallNode.execute(lengthMethod, AltRepClassDescriptor.lengthMethodUnwrapResult,
+                    AltRepClassDescriptor.lengthMethodWrapArguments, new Object[]{altrepVector});
             return expectInteger(returnValueInterop, retVal);
         }
 
-        @Specialization(replaces = "lengthOfAltInt")
-        protected int lengthOfAltIntUncached(RIntVector altIntVector,
+        @Specialization(replaces = "lengthOfAltrep")
+        protected int lengthOfAltrepUncached(RAbstractAtomicVector altrepVector,
                                              @Cached AltrepDownCallNode downCallNode,
                                              @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
-            return lengthOfAltInt(altIntVector, downCallNode, returnValueInterop, AltrepUtilities.getAltIntDescriptor(altIntVector),
-                    AltrepUtilities.getLengthMethodDescriptor(altIntVector));
-        }
-
-        @Specialization
-        protected int lengthOfAltString(RStringVector altStringVector,
-                                        @Cached AltrepDownCallNode downCallNode,
-                                        @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
-            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getLengthMethodDescriptor(altStringVector);
-            Object retVal = downCallNode.execute(altrepMethodDescriptor, AltStringClassDescriptor.lengthMethodUnwrapResult,
-                    AltStringClassDescriptor.lengthMethodWrapArguments, new Object[]{altStringVector});
-            return expectInteger(returnValueInterop, retVal);
+            AltRepClassDescriptor classDescriptor = AltrepUtilities.getDescriptorFromAltrepObj(altrepVector);
+            AltrepMethodDescriptor lengthMethod = classDescriptor.getLengthMethodDescriptor();
+            return lengthOfAltrep(altrepVector, downCallNode, returnValueInterop, classDescriptor, lengthMethod);
         }
     }
 
