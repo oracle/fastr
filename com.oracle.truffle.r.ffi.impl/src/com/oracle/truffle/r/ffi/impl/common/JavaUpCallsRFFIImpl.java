@@ -2825,7 +2825,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int REAL_IS_SORTED(Object x) {
-        return 0;
+        throw implementedAsNode();
     }
 
     @Override
@@ -2835,7 +2835,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int LOGICAL_IS_SORTED(Object x) {
-        return 0;
+        throw implementedAsNode();
     }
 
     @Override
@@ -2845,7 +2845,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int STRING_IS_SORTED(Object x) {
-        return 0;
+        throw implementedAsNode();
     }
 
     @Override

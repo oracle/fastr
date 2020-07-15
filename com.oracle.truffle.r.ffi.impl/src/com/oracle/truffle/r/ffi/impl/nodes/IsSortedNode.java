@@ -6,22 +6,48 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 
 @GenerateUncached
 @ImportStatic(DSLConfig.class)
-public abstract class IntegerIsSortedNode extends FFIUpCallNode.Arg1 {
+public abstract class IsSortedNode extends FFIUpCallNode.Arg1 {
 
-    public static IntegerIsSortedNode create() {
-        return IntegerIsSortedNodeGen.create();
+    public static IsSortedNode create() {
+        return IsSortedNodeGen.create();
     }
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
-    public int doForVector(RIntVector intVec,
+    public int isIntSorted(RIntVector intVec,
                            @CachedLibrary("intVec.getData()") VectorDataLibrary dataLibrary) {
-        Object vecData = intVec.getData();
+        return isVectorSorted(intVec, dataLibrary);
+    }
+
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    public int isDoubleSorted(RDoubleVector doubleVector,
+                            @CachedLibrary("doubleVector.getData()") VectorDataLibrary dataLibrary) {
+        return isVectorSorted(doubleVector, dataLibrary);
+    }
+
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    public int isLogicalSorted(RLogicalVector logicalVector,
+                               @CachedLibrary("logicalVector.getData()") VectorDataLibrary dataLibrary) {
+        return isVectorSorted(logicalVector, dataLibrary);
+    }
+
+    @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
+    public int isStringSorted(RStringVector stringVector,
+                              @CachedLibrary("stringVector.getData()") VectorDataLibrary dataLibrary) {
+        return isVectorSorted(stringVector, dataLibrary);
+    }
+
+    private static int isVectorSorted(RAbstractAtomicVector vector, VectorDataLibrary dataLibrary) {
+        Object vecData = vector.getData();
         // The translation between (boolean descending, boolean naLast) to AltrepSortedness enum is
         // inspired by code in GNU-R (sort.c : makeSortEnum).
         AltrepSortedness sortedness = null;
