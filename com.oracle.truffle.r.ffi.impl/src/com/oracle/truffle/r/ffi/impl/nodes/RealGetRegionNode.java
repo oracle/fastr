@@ -29,7 +29,6 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.ffi.util.NativeArrayWrapper;
 
@@ -49,7 +48,7 @@ public abstract class RealGetRegionNode extends GetRegionNode {
     }
 
     @Specialization(guards = "!bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
-    public long doGenericBuffer(RIntVector vec, long fromIdx, long size, Object buffer,
+    public long doGenericBuffer(RDoubleVector vec, long fromIdx, long size, Object buffer,
                                 @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
                                 @CachedLibrary("buffer") InteropLibrary bufferInterop,
                                 @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {

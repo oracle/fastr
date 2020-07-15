@@ -28,8 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.ffi.util.NativeArrayWrapper;
 
@@ -41,15 +40,15 @@ public abstract class LogicalGetRegionNode extends GetRegionNode {
     }
 
     @Specialization(guards = "bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
-    public long doBufferArray(RDoubleVector doubleVec, long fromIdx, long size, Object buffer,
-                              @CachedLibrary("doubleVec.getData()") VectorDataLibrary dataLibrary,
+    public long doBufferArray(RLogicalVector logicalVector, long fromIdx, long size, Object buffer,
+                              @CachedLibrary("logicalVector.getData()") VectorDataLibrary dataLibrary,
                               @CachedLibrary("buffer") InteropLibrary bufferInterop) {
         validateArguments(fromIdx, size);
-        return dataLibrary.getLogicalRegion(doubleVec.getData(), (int) fromIdx, (int) size, buffer, bufferInterop);
+        return dataLibrary.getLogicalRegion(logicalVector.getData(), (int) fromIdx, (int) size, buffer, bufferInterop);
     }
 
     @Specialization(guards = "!bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
-    public long doGenericBuffer(RIntVector vec, long fromIdx, long size, Object buffer,
+    public long doGenericBuffer(RLogicalVector vec, long fromIdx, long size, Object buffer,
                                 @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
                                 @CachedLibrary("buffer") InteropLibrary bufferInterop,
                                 @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {
