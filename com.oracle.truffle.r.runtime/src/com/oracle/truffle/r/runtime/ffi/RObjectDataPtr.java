@@ -118,19 +118,17 @@ public abstract class RObjectDataPtr implements TruffleObject {
             return new RNullDataPtr();
         }
 
+        @Specialization(guards = {"isAltrep(altrepVector)", "getNativeWrapper(altrepVector) == null"})
+        protected AltrepVectorDataPtr getAltrepVectorDataPtr(RAbstractVector altrepVector,
+                                                             @Cached AltrepRFFI.DataptrNode dataptrNode) {
+            return createAltrepVectorDataPtr(altrepVector, dataptrNode);
+        }
+
         @Specialization(guards = "getNativeWrapper(charWrapper) == null")
         protected CharSXPDataPtr getCharDataPtr(CharSXPWrapper charWrapper) {
             CharSXPDataPtr charSXPDataPtr = new CharSXPDataPtr(charWrapper);
             NativeDataAccess.setNativeWrapper(charWrapper, charSXPDataPtr);
             return charSXPDataPtr;
-        }
-
-        @Specialization(guards = {"isAltrep(altIntVector)", "getNativeWrapper(altIntVector) == null"})
-        protected AltrepVectorDataPtr getAltIntVectorDataPtr(RIntVector altIntVector,
-                @Cached AltrepRFFI.DataptrNode dataptrNode) {
-            long dataptrAddr = dataptrNode.execute(altIntVector, true);
-            AltrepVectorDataPtr altrepVectorDataPtr = new AltrepVectorDataPtr(altIntVector, dataptrAddr);
-            return setNativeWrapper(altIntVector, altrepVectorDataPtr);
         }
 
         @Specialization(guards = {"!isAltrep(intVector)", "getNativeWrapper(intVector) == null"})
@@ -139,31 +137,31 @@ public abstract class RObjectDataPtr implements TruffleObject {
             return setNativeWrapper(intVector, intVectorDataPtr);
         }
 
-        @Specialization(guards = "getNativeWrapper(doubleVector) == null")
+        @Specialization(guards = {"!isAltrep(doubleVector)","getNativeWrapper(doubleVector) == null"})
         protected DoubleVectorDataPtr getDoubleVectorDataPtr(RDoubleVector doubleVector) {
             DoubleVectorDataPtr doubleVectorDataPtr = new DoubleVectorDataPtr(doubleVector);
             return setNativeWrapper(doubleVector, doubleVectorDataPtr);
         }
 
-        @Specialization(guards = "getNativeWrapper(logicalVector) == null")
+        @Specialization(guards = {"!isAltrep(logicalVector)", "getNativeWrapper(logicalVector) == null"})
         protected LogicalVectorDataPtr getLogicalVectorDataPtr(RLogicalVector logicalVector) {
             LogicalVectorDataPtr logicalVectorDataPtr = new LogicalVectorDataPtr(logicalVector);
             return setNativeWrapper(logicalVector, logicalVectorDataPtr);
         }
 
-        @Specialization(guards = "getNativeWrapper(rawVector) == null")
+        @Specialization(guards = {"!isAltrep(rawVector)", "getNativeWrapper(rawVector) == null"})
         protected RawVectorDataPtr getRawVectorDataPtr(RRawVector rawVector) {
             RawVectorDataPtr rawVectorDataPtr = new RawVectorDataPtr(rawVector);
             return setNativeWrapper(rawVector, rawVectorDataPtr);
         }
 
-        @Specialization(guards = "getNativeWrapper(complexVector) == null")
+        @Specialization(guards = {"!isAltrep(complexVector)", "getNativeWrapper(complexVector) == null"})
         protected ComplexVectorDataPtr getComplexVectorDataPtr(RComplexVector complexVector) {
             ComplexVectorDataPtr complexVectorDataPtr = new ComplexVectorDataPtr(complexVector);
             return setNativeWrapper(complexVector, complexVectorDataPtr);
         }
 
-        @Specialization(guards = "getNativeWrapper(stringVector) == null")
+        @Specialization(guards = {"!isAltrep(stringVector)", "getNativeWrapper(stringVector) == null"})
         protected StringVectorDataPtr getStringVectorDataPtr(RStringVector stringVector) {
             StringVectorDataPtr stringVectorDataPtr = new StringVectorDataPtr(stringVector);
             return setNativeWrapper(stringVector, stringVectorDataPtr);
@@ -178,6 +176,12 @@ public abstract class RObjectDataPtr implements TruffleObject {
         private static <T extends RObjectDataPtr> T setNativeWrapper(RBaseObject object, T nativeWrapper) {
             NativeDataAccess.setNativeWrapper(object, nativeWrapper);
             return nativeWrapper;
+        }
+
+        private static AltrepVectorDataPtr createAltrepVectorDataPtr(RAbstractVector altrepVector, AltrepRFFI.DataptrNode dataptrNode) {
+            long dataptrAddr = dataptrNode.execute(altrepVector, true);
+            AltrepVectorDataPtr altrepVectorDataPtr = new AltrepVectorDataPtr(altrepVector, dataptrAddr);
+            return setNativeWrapper(altrepVector, altrepVectorDataPtr);
         }
     }
 
