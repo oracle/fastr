@@ -82,7 +82,7 @@ public class AltRealClassDescriptor extends AltVecClassDescriptor {
         return noNAMethod != null;
     }
 
-    public boolean issumMethodMethodRegistered() {
+    public boolean isSumMethodRegistered() {
         return sumMethod != null;
     }
 

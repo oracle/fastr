@@ -3,11 +3,10 @@ package com.oracle.truffle.r.runtime.data.altrep;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
+import com.oracle.truffle.r.runtime.data.RAltRealVectorData;
 import com.oracle.truffle.r.runtime.data.RAltStringVectorData;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -17,8 +16,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFIFactory;
-import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
-import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
 
 public class AltrepUtilities {
     public static boolean isAltrep(Object object) {
@@ -30,6 +27,11 @@ public class AltrepUtilities {
         return (RAltIntVectorData) altIntVector.getData();
     }
 
+    public static RAltRealVectorData getAltRealVectorData(RDoubleVector altRealVector) {
+        assert altRealVector.isAltRep();
+        return (RAltRealVectorData) altRealVector.getData();
+    }
+
     private static RAltStringVectorData getAltStringVectorData(RStringVector altStringVector) {
         assert altStringVector.isAltRep();
         return (RAltStringVectorData) altStringVector.getData();
@@ -38,6 +40,11 @@ public class AltrepUtilities {
     public static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVector) {
         assert altIntVector.isAltRep();
         return getAltIntVectorData(altIntVector).getDescriptor();
+    }
+
+    public static AltRealClassDescriptor getAltRealDescriptor(RDoubleVector altRealVector) {
+        assert altRealVector.isAltRep();
+        return getAltRealVectorData(altRealVector).getDescriptor();
     }
 
     public static AltStringClassDescriptor getAltStringDescriptor(RStringVector altStringVector) {
@@ -64,6 +71,8 @@ public class AltrepUtilities {
             return getAltIntDescriptor((RIntVector) altrepObject);
         } else if (altrepObject instanceof RStringVector) {
             return getAltStringDescriptor((RStringVector) altrepObject);
+        } else if (altrepObject instanceof RDoubleVector) {
+            return getAltRealDescriptor((RDoubleVector) altrepObject);
         } else {
             throw RInternalError.unimplemented();
         }
@@ -141,9 +150,10 @@ public class AltrepUtilities {
         if (!isAltrep(object)) {
             return false;
         }
-
         if (object instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) object).isCoerceMethodRegistered();
+        } else if (object instanceof RDoubleVector)  {
+            return getAltRealDescriptor((RDoubleVector) object).isCoerceMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -153,9 +163,10 @@ public class AltrepUtilities {
         if (!isAltrep(object)) {
             return false;
         }
-
         if (object instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) object).isDuplicateMethodRegistered();
+        } else if (object instanceof RDoubleVector) {
+            return getAltRealDescriptor((RDoubleVector) object).isDuplicateMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -167,6 +178,8 @@ public class AltrepUtilities {
         }
         if (object instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) object).isEltMethodRegistered();
+        } else if (object instanceof RDoubleVector) {
+            return getAltRealDescriptor((RDoubleVector) object).isEltMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -176,9 +189,10 @@ public class AltrepUtilities {
         if (!isAltrep(object)) {
             return false;
         }
-
         if (object instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) object).isMaxMethodRegistered();
+        } else if (object instanceof RDoubleVector) {
+            return getAltRealDescriptor((RDoubleVector) object).isMaxMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -188,9 +202,10 @@ public class AltrepUtilities {
         if (!isAltrep(object)) {
             return false;
         }
-
         if (object instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) object).isMinMethodRegistered();
+        } else if (object instanceof RDoubleVector) {
+            return getAltRealDescriptor((RDoubleVector) object).isMinMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -200,9 +215,10 @@ public class AltrepUtilities {
         if (!isAltrep(object)) {
             return false;
         }
-
         if (object instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) object).isSumMethodRegistered();
+        } else if (object instanceof RDoubleVector) {
+            return getAltRealDescriptor((RDoubleVector) object).isSumMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -212,9 +228,10 @@ public class AltrepUtilities {
         if (!isAltrep(object)) {
             return false;
         }
-
         if (object instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) object).isGetRegionMethodRegistered();
+        } else if (object instanceof RDoubleVector) {
+            return getAltRealDescriptor((RDoubleVector) object).isGetRegionMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -224,9 +241,10 @@ public class AltrepUtilities {
         if (!isAltrep(object)) {
             return false;
         }
-
         if (object instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) object).isIsSortedMethodRegistered();
+        } else if (object instanceof RDoubleVector) {
+            return getAltRealDescriptor((RDoubleVector) object).isIsSortedMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -236,9 +254,10 @@ public class AltrepUtilities {
         if (!isAltrep(object)) {
             return false;
         }
-
         if (object instanceof RIntVector) {
             return getAltIntDescriptor((RIntVector) object).isNoNAMethodRegistered();
+        } else if (object instanceof RDoubleVector) {
+            return getAltRealDescriptor((RDoubleVector) object).isNoNAMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -304,37 +323,6 @@ public class AltrepUtilities {
         @Fallback
         Object fallback(Object vector, @SuppressWarnings("unused") boolean naRm) {
             throw RInternalError.shouldNotReachHere("AltrepMinMethodInvokerNode: Unknown type of vector: " + vector.toString());
-        }
-    }
-
-    public abstract static class AltrepReadArrayElement extends Node {
-        public abstract Object execute(Object altrepVector, int index);
-
-        public static AltrepReadArrayElement create() {
-            return AltrepUtilitiesFactory.AltrepReadArrayElementNodeGen.create();
-        }
-
-        protected static boolean hasEltMethodRegistered(Object object) {
-            return AltrepUtilities.hasEltMethodRegistered(object);
-        }
-
-        @Specialization(guards = "hasEltMethodRegistered(altIntVec)")
-        Object doAltIntWithEltMethod(RIntVector altIntVec, int index,
-                                     @Cached AltrepRFFI.EltNode eltNode) {
-            return eltNode.execute(altIntVec, index);
-        }
-
-        @Specialization(guards = "!hasEltMethodRegistered(altIntVec)")
-        Object doAltIntWithoutEltMethod(RIntVector altIntVec, int index,
-                                        @Cached AltrepRFFI.DataptrNode dataptrNode) {
-            long address = dataptrNode.execute(altIntVec, false);
-            return NativeMemory.getInt(address, index);
-        }
-
-        @Specialization
-        Object doAltString(RStringVector altStringVector, int index,
-                           @Cached AltrepRFFI.EltNode eltNode) {
-            return eltNode.execute(altStringVector, index);
         }
     }
 }
