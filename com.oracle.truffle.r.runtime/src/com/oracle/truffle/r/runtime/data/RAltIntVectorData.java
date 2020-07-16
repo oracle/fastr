@@ -79,7 +79,6 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
                                                   InteropLibrary bufferInterop,
                                                   @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
                                                   @Shared("naCheck") @Cached NACheck naCheck) {
-            // TODO: Fallback to VectorDataLibrary.getIntRegion
             int bufferIdx = 0;
             for (int index = startIdx; index < startIdx + size; index++) {
                 try {
