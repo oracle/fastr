@@ -45,7 +45,7 @@ public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
 
     @Specialization
     public Object newAltLogical(AltLogicalClassDescriptor descriptor, Object data1, Object data2) {
-        throw RInternalError.unimplemented();
+        return RDataFactory.createAltLogicalVector(descriptor, new RAltRepData(data1, data2));
     }
 
     @Specialization

@@ -35,6 +35,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.altrep.AltLogicalClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosure;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
@@ -86,6 +89,17 @@ public final class RLogicalVector extends RAbstractAtomicVector implements RMate
     public static RLogicalVector createForeignWrapper(Object foreign) {
         RLogicalForeignObjData data = new RLogicalForeignObjData(foreign);
         return new RLogicalVector(data, VectorDataLibrary.getFactory().getUncached().getLength(data));
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    public static RLogicalVector createAltLogical(AltLogicalClassDescriptor classDescriptor, RAltRepData altRepData) {
+        RAltLogicalVectorData altLogicalVecData = new RAltLogicalVectorData(classDescriptor, altRepData);
+        RLogicalVector logicalVec = new RLogicalVector();
+        logicalVec.setAltRep();
+        logicalVec.data = altLogicalVecData;
+        int length = AltrepUtilities.getLengthUncached(logicalVec);
+        logicalVec.setData(altLogicalVecData, length);
+        return logicalVec;
     }
 
     static RLogicalVector fromNative(long address, int length) {

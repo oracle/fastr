@@ -26,7 +26,9 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltLogicalClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltVecClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepSortedness;
@@ -35,7 +37,7 @@ import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
- * Base class for altintegers and altreals
+ * Base class for altintegers, altreals and altlogicals
  */
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltrepNumericVectorData extends RAltrepVectorData {
@@ -43,7 +45,8 @@ public class RAltrepNumericVectorData extends RAltrepVectorData {
 
     public RAltrepNumericVectorData(AltVecClassDescriptor descriptor, RAltRepData altrepData) {
         super(altrepData);
-        assert descriptor instanceof AltIntegerClassDescriptor || descriptor instanceof AltRealClassDescriptor;
+        assert descriptor instanceof AltIntegerClassDescriptor || descriptor instanceof AltRealClassDescriptor
+                || descriptor instanceof AltLogicalClassDescriptor;
         this.descriptor = descriptor;
         assert hasDescriptorRegisteredNecessaryMethods(descriptor);
     }
@@ -75,8 +78,12 @@ public class RAltrepNumericVectorData extends RAltrepVectorData {
         protected static boolean hasNoNAMethodRegistered(RAltrepNumericVectorData vectorData) {
             if (vectorData.descriptor instanceof AltIntegerClassDescriptor) {
                 return ((AltIntegerClassDescriptor) vectorData.descriptor).isNoNAMethodRegistered();
-            } else {
+            } else if (vectorData.descriptor instanceof AltRealClassDescriptor) {
                 return ((AltRealClassDescriptor) vectorData.descriptor).isNoNAMethodRegistered();
+            } else if (vectorData.descriptor instanceof AltLogicalClassDescriptor) {
+                return ((AltLogicalClassDescriptor) vectorData.descriptor).isNoNAMethodRegistered();
+            } else {
+                throw RInternalError.shouldNotReachHere();
             }
         }
     }
@@ -121,10 +128,13 @@ public class RAltrepNumericVectorData extends RAltrepVectorData {
         protected static boolean hasIsSortedMethod(RAltrepNumericVectorData vectorData) {
             if (vectorData.descriptor instanceof AltIntegerClassDescriptor) {
                 return ((AltIntegerClassDescriptor) vectorData.descriptor).isIsSortedMethodRegistered();
-            } else {
+            } else if (vectorData.descriptor instanceof AltRealClassDescriptor){
                 return ((AltRealClassDescriptor) vectorData.descriptor).isIsSortedMethodRegistered();
+            } else if (vectorData.descriptor instanceof AltLogicalClassDescriptor) {
+                return ((AltLogicalClassDescriptor) vectorData.descriptor).isIsSortedMethodRegistered();
+            } else {
+                throw RInternalError.shouldNotReachHere();
             }
         }
     }
-
 }

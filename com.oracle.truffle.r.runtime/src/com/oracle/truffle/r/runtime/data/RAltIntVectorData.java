@@ -207,9 +207,9 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
 
         @Specialization(guards = "!hasEltMethodRegistered(altIntVector)")
         protected int doAltIntWithoutElt(RIntVector altIntVector, int index,
-                                      @Cached AltrepRFFI.DataptrNode altIntDataptrNode) {
+                                      @Cached AltrepRFFI.DataptrNode dataptrNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
-            long dataptrAddr = altIntDataptrNode.execute(altIntVector, false);
+            long dataptrAddr = dataptrNode.execute(altIntVector, false);
             return NativeMemory.getInt(dataptrAddr, index);
         }
 
