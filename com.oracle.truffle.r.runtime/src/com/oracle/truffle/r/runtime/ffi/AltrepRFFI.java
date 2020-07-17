@@ -14,6 +14,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
+import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
@@ -179,15 +180,14 @@ public final class AltrepRFFI {
                 public long execute(Object altrepVector, boolean writeable) {
                     AltrepDownCallNode downCallNode = AltrepDownCallNode.getUncached();
                     InteropLibrary retValueInterop = InteropLibrary.getUncached();
-                    if (altrepVector instanceof RIntVector) {
-                        AltIntegerClassDescriptor classDescriptor = AltrepUtilities.getAltIntDescriptor((RIntVector) altrepVector);
-                        AltrepMethodDescriptor dataptrMethodDescriptor = classDescriptor.getDataptrMethodDescriptor();
-                        Object ret = downCallNode.execute(dataptrMethodDescriptor, AltIntegerClassDescriptor.dataptrMethodUnwrapResult,
-                                AltIntegerClassDescriptor.dataptrMethodWrapArguments, new Object[]{altrepVector, writeable});
-                        return expectPointer(retValueInterop, ret);
-                    } else {
-                        throw RInternalError.unimplemented();
-                    }
+
+                    AltRepClassDescriptor classDescriptor = AltrepUtilities.getDescriptorFromAltrepObj((RBaseObject) altrepVector);
+                    // Currently all AltRepClassDescriptors are also AltVecClassDescriptor (GNU-R version 3.5.2)
+                    assert classDescriptor instanceof AltVecClassDescriptor;
+                    AltrepMethodDescriptor dataptrMethodDescriptor = ((AltVecClassDescriptor) classDescriptor).getDataptrMethodDescriptor();
+                    Object ret = downCallNode.execute(dataptrMethodDescriptor, AltVecClassDescriptor.dataptrMethodUnwrapResult,
+                            AltVecClassDescriptor.dataptrMethodWrapArguments, new Object[]{altrepVector, writeable});
+                    return expectPointer(retValueInterop, ret);
                 }
             };
         }
