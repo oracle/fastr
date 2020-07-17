@@ -59,7 +59,8 @@ public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
     }
 
     @Fallback
-    public Object unknownAltrepType(Object classDescriptor, Object data1, Object data2) {
+    public Object unknownAltrepType(@SuppressWarnings("unused") Object classDescriptor, @SuppressWarnings("unused") Object data1,
+                                    @SuppressWarnings("unused") Object data2) {
         throw RInternalError.shouldNotReachHere("Unknown class descriptor");
     }
 }
