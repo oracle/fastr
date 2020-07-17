@@ -46,6 +46,8 @@ R_altrep_class_t VecWrapper::createDescriptor(int type, const Args &args)
             return SimpleIntVecWrapper::createDescriptor(args);
         case REALSXP:
             return SimpleRealVecWrapper::createDescriptor(args);
+        case LGLSXP:
+            return SimpleLogicalVecWrapper::createDescriptor(args);
         default:
             error("Not yet implemented");
     }
@@ -168,7 +170,7 @@ int SimpleIntVecWrapper::Is_sorted(SEXP instance)
 
 R_altrep_class_t SimpleRealVecWrapper::createDescriptor(const Args &args)
 {
-    R_altrep_class_t desc = R_make_altreal_class("real_class", "altreprffitests", NULL);
+    R_altrep_class_t desc = R_make_altreal_class("SimpleRealVecWrapper", "altreprffitests", NULL);
     registerCommonMethods(desc, args);
     if (args.gen_Elt) R_set_altreal_Elt_method(desc, Elt);
     if (args.gen_Sum) R_set_altreal_Sum_method(desc, Sum);
@@ -181,7 +183,7 @@ R_altrep_class_t SimpleRealVecWrapper::createDescriptor(const Args &args)
 
 double SimpleRealVecWrapper::Elt(SEXP instance, R_xlen_t idx)
 {
-    return INTEGER_ELT(R_altrep_data1(instance), idx);
+    return REAL_ELT(R_altrep_data1(instance), idx);
 }
 
 SEXP SimpleRealVecWrapper::Sum(SEXP instance, Rboolean na_rm)
@@ -189,31 +191,31 @@ SEXP SimpleRealVecWrapper::Sum(SEXP instance, Rboolean na_rm)
     SEXP data = R_altrep_data1(instance);
     int acc = 0;
     for (int i = 0; i < LENGTH(data); i++) {
-        acc += INTEGER_ELT(data, i);
+        acc += REAL_ELT(data, i);
     }
-    return ScalarInteger(acc);
+    return ScalarReal(acc);
 }
 
 SEXP SimpleRealVecWrapper::Max(SEXP instance, Rboolean na_rm)
 {
-    int max = -1000000;
+    double max = 0;
     SEXP data = R_altrep_data1(instance);
     for (int i = 0; i < LENGTH(data); i++) {
-        if (INTEGER_ELT(data, i) > max)
-            max = INTEGER_ELT(data, i);
+        if (REAL_ELT(data, i) > max)
+            max = REAL_ELT(data, i);
     }
-    return ScalarInteger(max);
+    return ScalarReal(max);
 }
 
 SEXP SimpleRealVecWrapper::Min(SEXP instance, Rboolean na_rm)
 {
-    int min = 1000000;
+    double min = 1000000;
     SEXP data = R_altrep_data1(instance);
     for (int i = 0; i < LENGTH(data); i++) {
-        if (INTEGER_ELT(data, i) < min)
-            min = INTEGER_ELT(data, i);
+        if (REAL_ELT(data, i) < min)
+            min = REAL_ELT(data, i);
     }
-    return ScalarInteger(min);
+    return ScalarReal(min);
 }
 
 R_xlen_t SimpleRealVecWrapper::Get_region(SEXP instance, R_xlen_t from_idx, R_xlen_t size, double *buffer)
@@ -233,7 +235,7 @@ R_xlen_t SimpleRealVecWrapper::Get_region(SEXP instance, R_xlen_t from_idx, R_xl
 int SimpleRealVecWrapper::Is_sorted(SEXP instance)
 {
     SEXP data = R_altrep_data1(instance);
-    int *data_ptr = INTEGER(data);
+    double *data_ptr = REAL(data);
 
     Rboolean ascending = TRUE;
     for (int i = 1; i < LENGTH(data); i++) {
@@ -252,6 +254,43 @@ int SimpleRealVecWrapper::Is_sorted(SEXP instance)
         return SORTED_DECR;
     
     return KNOWN_UNSORTED;
+}
+
+
+R_altrep_class_t SimpleLogicalVecWrapper::createDescriptor(const Args &args)
+{
+    R_altrep_class_t desc = R_make_altlogical_class("SimpleLogicalVecWrapper", "altreprffitests", nullptr);
+    registerCommonMethods(desc, args);
+    if (args.gen_Elt) R_set_altlogical_Elt_method(desc, Elt);
+    if (args.gen_Sum) R_set_altlogical_Sum_method(desc, Sum);
+    if (args.gen_Get_region) R_set_altlogical_Get_region_method(desc, Get_region);
+    if (args.gen_Is_sorted) R_set_altlogical_Is_sorted_method(desc, Is_sorted);
+    return desc;
+}
+
+int SimpleLogicalVecWrapper::Elt(SEXP instance, R_xlen_t idx)
+{
+    return LOGICAL_ELT(R_altrep_data1(instance), idx);
+}
+
+SEXP SimpleLogicalVecWrapper::Sum(SEXP instance, Rboolean na_rm)
+{
+    SEXP data = R_altrep_data1(instance);
+    int acc = 0;
+    for (int i = 0; i < LENGTH(data); i++) {
+        acc += LOGICAL_ELT(data, i);
+    }
+    return ScalarLogical(acc);
+}
+
+R_xlen_t SimpleLogicalVecWrapper::Get_region(SEXP instance, R_xlen_t from_idx, R_xlen_t size, int *buffer)
+{
+    return LOGICAL_GET_REGION(R_altrep_data1(instance), from_idx, size, buffer);
+}
+
+int SimpleLogicalVecWrapper::Is_sorted(SEXP instance)
+{
+    return UNKNOWN_SORTEDNESS;
 }
 
 /***********************************************************************/

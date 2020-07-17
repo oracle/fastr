@@ -96,6 +96,16 @@ protected:
     static int Is_sorted(SEXP instnace);
 };
 
+class SimpleLogicalVecWrapper : public VecWrapper {
+public:
+    static R_altrep_class_t createDescriptor(const Args &args);
+protected:
+    static int Elt(SEXP instance, R_xlen_t idx);
+    static SEXP Sum(SEXP instance, Rboolean na_rm);
+    static R_xlen_t Get_region(SEXP instance, R_xlen_t from_idx, R_xlen_t size, int *buffer);
+    static int Is_sorted(SEXP instance);
+};
+
 
 /**
  * Base class for altrep classes that should log their altrep method calls, ie. they have

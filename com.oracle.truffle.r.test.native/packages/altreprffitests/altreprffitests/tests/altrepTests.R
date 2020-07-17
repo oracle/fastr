@@ -214,19 +214,31 @@ test_trivial <- function() {
     check_equal(instance, expected_data)
 }
 
-test_simple <- function() {
+test_simple_altint <- function() {
     data <- 1:10
     instance <- simple_vec_wrapper.create_instance(data)
     check_equal(instance, data)
 }
 
-test_two_instances <- function() {
+test_two_altints <- function() {
     data <- 1:15
     instance_1 <- simple_vec_wrapper.create_instance(data)
     instance_2 <- simple_vec_wrapper.create_instance(data)
     check_equal(instance_1, data)
     check_equal(instance_2, data)
     check_equal(instance_1, instance_2)
+}
+
+test_altreal <- function() {
+    data <- as.double(c(1,2,3,4,5,6,7,8,9,10))
+    instance <- simple_vec_wrapper.create_instance(data)
+    check_equal(instance, data)
+}
+
+test_altlogical <- function() {
+    data <- c(TRUE, FALSE, FALSE, TRUE, TRUE, FALSE)
+    instance <- simple_vec_wrapper.create_instance(data)
+    check_equal(instance, data)
 }
 
 test_mmap <- function() {
@@ -296,8 +308,10 @@ test_no_na <- function() {
 
 TESTS <- list(
     list("test_trivial", test_trivial),
-    list("test_simple", test_simple),
-    list("test_two_instances", test_two_instances),
+    list("test_simple_altint", test_simple_altint),
+    list("test_two_altints", test_two_altints),
+    list("test_altreal", test_altreal),
+    list("test_altlogical", test_altlogical),
     list("test_default_implementations", test_default_implementations),
     list("test_calls_to_altrep_methods", test_calls_to_altrep_methods),
     list("test_framework_behavior", test_framework_behavior),
