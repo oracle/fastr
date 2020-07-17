@@ -6,8 +6,6 @@ public class AltLogicalClassDescriptor extends AltVecClassDescriptor {
     private Object isSortedMethod;
     private Object noNAMethod;
     private Object sumMethod;
-    private Object maxMethod;
-    private Object minMethod;
 
     public AltLogicalClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);
@@ -33,14 +31,6 @@ public class AltLogicalClassDescriptor extends AltVecClassDescriptor {
         this.sumMethod = sumMethod;
     }
 
-    public void registerMaxMethod(Object maxMethod) {
-        this.maxMethod = maxMethod;
-    }
-
-    public void registerMinMethod(Object minMethod) {
-        this.minMethod = minMethod;
-    }
-
     public boolean isEltMethodRegistered() {
         return eltMethod != null;
     }
@@ -53,16 +43,8 @@ public class AltLogicalClassDescriptor extends AltVecClassDescriptor {
         return noNAMethod != null;
     }
 
-    public boolean issumMethodMethodRegistered() {
+    public boolean isSumMethodMethodRegistered() {
         return sumMethod != null;
-    }
-
-    public boolean isMaxMethodRegistered() {
-        return maxMethod != null;
-    }
-
-    public boolean isMinMethodRegistered() {
-        return minMethod != null;
     }
 
     public boolean isIsSortedMethodRegistered() {
