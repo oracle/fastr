@@ -8,11 +8,13 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RAltRealVectorData;
 import com.oracle.truffle.r.runtime.data.RAltStringVectorData;
+import com.oracle.truffle.r.runtime.data.RAltrepVectorData;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFIFactory;
@@ -20,6 +22,11 @@ import com.oracle.truffle.r.runtime.ffi.AltrepRFFIFactory;
 public class AltrepUtilities {
     public static boolean isAltrep(Object object) {
         return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
+    }
+
+    public static RAltrepVectorData getAltRepVectorData(RAbstractAtomicVector altrepVector) {
+        assert altrepVector.isAltRep();
+        return (RAltrepVectorData) altrepVector.getData();
     }
 
     public static RAltIntVectorData getAltIntVectorData(RIntVector altIntVector) {
