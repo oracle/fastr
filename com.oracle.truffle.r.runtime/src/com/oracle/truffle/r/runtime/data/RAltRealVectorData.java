@@ -27,8 +27,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
@@ -73,8 +73,19 @@ public class RAltRealVectorData extends RAltrepNumericVectorData {
         @Specialization(guards = "!hasGetRegionMethod(altRealVecData)")
         public static int doWithoutNativeFunction(RAltRealVectorData altRealVecData, int startIdx, int size, Object buffer,
                                                   InteropLibrary bufferInterop,
-                                                  @CachedLibrary("altRealVecData") VectorDataLibrary dataLibrary) {
-            return dataLibrary.getIntRegion(altRealVecData, startIdx, size, buffer, bufferInterop);
+                                                  @Shared("getDoubleAtNode") @Cached GetDoubleAtNode getDoubleAtNode,
+                                                  @Shared("naCheck") @Cached NACheck naCheck) {
+            int bufferIdx = 0;
+            for (int index = startIdx; index < startIdx + size; index++) {
+                try {
+                    double value = altRealVecData.getDoubleAt(index, getDoubleAtNode, naCheck);
+                    bufferInterop.writeArrayElement(buffer, bufferIdx, value);
+                    bufferIdx++;
+                } catch (InteropException e) {
+                    throw RInternalError.shouldNotReachHere(e);
+                }
+            }
+            return bufferIdx;
         }
 
         protected static boolean hasGetRegionMethod(RAltRealVectorData vecData) {
