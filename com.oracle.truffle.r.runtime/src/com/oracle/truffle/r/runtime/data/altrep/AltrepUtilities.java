@@ -90,6 +90,13 @@ public class AltrepUtilities {
         return (AltVecClassDescriptor) getAltRepClassDescriptor(altrepObject);
     }
 
+    public static RPairList getPairListData(RAbstractAtomicVector altrepVec) {
+        assert altrepVec.isAltRep();
+        assert altrepVec.getData() instanceof RAltrepVectorData;
+        RAltrepVectorData vectorData = (RAltrepVectorData) altrepVec.getData();
+        return vectorData.getAltrepData().getDataPairList();
+    }
+
     public static RPairList getPairListDataFromVec(RIntVector altIntVec) {
         assert altIntVec.isAltRep();
         assert altIntVec.getData() instanceof RAltIntVectorData;

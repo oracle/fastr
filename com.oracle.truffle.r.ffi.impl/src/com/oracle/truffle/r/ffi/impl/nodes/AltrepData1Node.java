@@ -1,48 +1,42 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 
 @GenerateUncached
+@ImportStatic({AltrepUtilities.class, DSLConfig.class})
 public abstract class AltrepData1Node extends FFIUpCallNode.Arg1 {
     public static AltrepData1Node create() {
         return AltrepData1NodeGen.create();
     }
 
-    @Specialization(limit = "3", guards = "isAltrep(altIntVec)")
-    public Object doAltInt(RIntVector altIntVec,
-                           @CachedLibrary("getPairListDataFromVec(altIntVec)") RPairListLibrary pairListLibrary) {
-        return pairListLibrary.car(getPairListDataFromVec(altIntVec));
+    @Specialization(guards = "altrepVec == cachedAltrepVec", limit = "getGenericDataLibraryCacheSize()")
+    public Object getData1FromAltrepCached(RAbstractAtomicVector altrepVec,
+                     @Cached("altrepVec") RAbstractAtomicVector cachedAltrepVec,
+                     @Cached("getPairListData(altrepVec)") RPairList pairListData,
+                     @CachedLibrary("pairListData") RPairListLibrary pairListLibrary) {
+        return pairListLibrary.car(pairListData);
     }
 
-    @Specialization(limit = "3", guards = "isAltrep(altStringVec)")
-    public Object doAltString(RStringVector altStringVec,
-                              @CachedLibrary("getPairListDataFromVec(altStringVec)") RPairListLibrary pairListLibrary) {
-        return pairListLibrary.car(getPairListDataFromVec(altStringVec));
+    @Specialization(replaces = "getData1FromAltrepCached")
+    public Object getData1FromAltrepUncached(RAbstractAtomicVector altrepVec) {
+        RPairList pairListData = AltrepUtilities.getPairListData(altrepVec);
+        // TODO: Do this via uncached RPairListLibrary?
+        return pairListData.car();
     }
 
     @Fallback
     public Object fallback(Object object) {
         throw RInternalError.shouldNotReachHere("Unknown type " + object.getClass().getSimpleName() + " for R_altrep_data1");
-    }
-
-    protected static boolean isAltrep(Object object) {
-        return AltrepUtilities.isAltrep(object);
-    }
-
-    protected static RPairList getPairListDataFromVec(RIntVector altIntVec) {
-        return AltrepUtilities.getPairListDataFromVec(altIntVec);
-    }
-
-    protected static RPairList getPairListDataFromVec(RStringVector altStringVec) {
-        return AltrepUtilities.getPairListDataFromVec(altStringVec);
     }
 }
