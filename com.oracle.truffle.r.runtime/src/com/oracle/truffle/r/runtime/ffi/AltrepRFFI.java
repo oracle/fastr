@@ -86,12 +86,12 @@ public final class AltrepRFFI {
     public abstract static class LengthNode extends Node {
         public abstract int execute(Object altrepVector);
 
-        @Specialization(guards = "classDescriptor == getDescriptorFromAltrepObj(altrepVector)",
+        @Specialization(guards = "classDescriptor == getAltRepClassDescriptor(altrepVector)",
                         assumptions = "getNoMethodRedefinedAssumption()")
         protected int lengthOfAltrep(RAbstractAtomicVector altrepVector,
                                      @Cached AltrepDownCallNode downCallNode,
                                      @CachedLibrary(limit = "1") InteropLibrary returnValueInterop,
-                                     @Cached("getDescriptorFromAltrepObj(altrepVector)") @SuppressWarnings("unused") AltRepClassDescriptor classDescriptor,
+                                     @Cached("getAltRepClassDescriptor(altrepVector)") @SuppressWarnings("unused") AltRepClassDescriptor classDescriptor,
                                      @Cached("classDescriptor.getLengthMethodDescriptor()") AltrepMethodDescriptor lengthMethod) {
             Object retVal = downCallNode.execute(lengthMethod, AltRepClassDescriptor.lengthMethodUnwrapResult,
                     AltRepClassDescriptor.lengthMethodWrapArguments, new Object[]{altrepVector});
@@ -102,7 +102,7 @@ public final class AltrepRFFI {
         protected int lengthOfAltrepUncached(RAbstractAtomicVector altrepVector,
                                              @Cached AltrepDownCallNode downCallNode,
                                              @CachedLibrary(limit = "1") InteropLibrary returnValueInterop) {
-            AltRepClassDescriptor classDescriptor = AltrepUtilities.getDescriptorFromAltrepObj(altrepVector);
+            AltRepClassDescriptor classDescriptor = AltrepUtilities.getAltRepClassDescriptor(altrepVector);
             AltrepMethodDescriptor lengthMethod = classDescriptor.getLengthMethodDescriptor();
             return lengthOfAltrep(altrepVector, downCallNode, returnValueInterop, classDescriptor, lengthMethod);
         }
@@ -181,10 +181,8 @@ public final class AltrepRFFI {
                     AltrepDownCallNode downCallNode = AltrepDownCallNode.getUncached();
                     InteropLibrary retValueInterop = InteropLibrary.getUncached();
 
-                    AltRepClassDescriptor classDescriptor = AltrepUtilities.getDescriptorFromAltrepObj((RBaseObject) altrepVector);
-                    // Currently all AltRepClassDescriptors are also AltVecClassDescriptor (GNU-R version 3.5.2)
-                    assert classDescriptor instanceof AltVecClassDescriptor;
-                    AltrepMethodDescriptor dataptrMethodDescriptor = ((AltVecClassDescriptor) classDescriptor).getDataptrMethodDescriptor();
+                    AltVecClassDescriptor classDescriptor = AltrepUtilities.getAltVecClassDescriptor((RBaseObject) altrepVector);
+                    AltrepMethodDescriptor dataptrMethodDescriptor = classDescriptor.getDataptrMethodDescriptor();
                     Object ret = downCallNode.execute(dataptrMethodDescriptor, AltVecClassDescriptor.dataptrMethodUnwrapResult,
                             AltVecClassDescriptor.dataptrMethodWrapArguments, new Object[]{altrepVector, writeable});
                     return expectPointer(retValueInterop, ret);
@@ -245,9 +243,8 @@ public final class AltrepRFFI {
         protected Object doIt(RAbstractAtomicVector altVec,
                               @CachedLibrary(limit = "1") InteropLibrary interopLib,
                               @Cached AltrepDownCallNode downCallNode) {
-            AltRepClassDescriptor classDescriptor = AltrepUtilities.getDescriptorFromAltrepObj(altVec);
-            assert classDescriptor instanceof AltVecClassDescriptor;
-            AltrepMethodDescriptor dataptrOrNullMethod = ((AltVecClassDescriptor) classDescriptor).getDataptrOrNullMethodDescriptor();
+            AltVecClassDescriptor classDescriptor = AltrepUtilities.getAltVecClassDescriptor(altVec);
+            AltrepMethodDescriptor dataptrOrNullMethod = classDescriptor.getDataptrOrNullMethodDescriptor();
             Object ret = downCallNode.execute(dataptrOrNullMethod, AltVecClassDescriptor.dataptrOrNullMethodUnwrapResult,
                     AltVecClassDescriptor.dataptrOrNullMethodWrapArguments, new Object[] {altVec});
             assert interopLib.isPointer(ret);

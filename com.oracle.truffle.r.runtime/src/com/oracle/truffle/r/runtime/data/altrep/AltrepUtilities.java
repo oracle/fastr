@@ -64,7 +64,7 @@ public class AltrepUtilities {
         return data.getAltrepData();
     }
 
-    public static AltRepClassDescriptor getDescriptorFromAltrepObj(RBaseObject altrepObject) {
+    public static AltRepClassDescriptor getAltRepClassDescriptor(RBaseObject altrepObject) {
         assert altrepObject.isAltRep();
 
         if (altrepObject instanceof RIntVector) {
@@ -76,6 +76,11 @@ public class AltrepUtilities {
         } else {
             throw RInternalError.unimplemented();
         }
+    }
+
+    public static AltVecClassDescriptor getAltVecClassDescriptor(RBaseObject altrepObject) {
+        // Currently all the AltRepClassDescriptors are also AltVecClassDescriptors (GNU-R version 3.6.1)
+        return (AltVecClassDescriptor) getAltRepClassDescriptor(altrepObject);
     }
 
     public static RPairList getPairListDataFromVec(RIntVector altIntVec) {

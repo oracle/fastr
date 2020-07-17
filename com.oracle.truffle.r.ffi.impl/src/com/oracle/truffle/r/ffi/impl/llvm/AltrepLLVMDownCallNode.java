@@ -20,6 +20,7 @@ import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
+// TODO: Remove this node
 @GenerateUncached
 public abstract class AltrepLLVMDownCallNode extends LLVMDownCallNode {
 
@@ -48,7 +49,7 @@ public abstract class AltrepLLVMDownCallNode extends LLVMDownCallNode {
     }
 
     private static AltRepClassDescriptor getDescriptorFromAltrepObj(RBaseObject altrepObject) {
-        return AltrepUtilities.getDescriptorFromAltrepObj(altrepObject);
+        return AltrepUtilities.getAltRepClassDescriptor(altrepObject);
     }
 
     @ExplodeLoop
