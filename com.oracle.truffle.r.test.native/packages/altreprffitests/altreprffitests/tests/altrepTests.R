@@ -113,9 +113,13 @@ check_equal <- function(instance, expected_data) {
         assert_equals( as.double(instance), as.double(expected_data))
     }
 
-    test_is_sorted <- function() {
+    test_is_unsorted <- function() {
         assert_equals( is.unsorted(instance), is.unsorted(expected_data))
         assert_equals( is.unsorted(instance, strictly=TRUE), is.unsorted(expected_data, strictly=TRUE))
+    }
+
+    test_is_sorted <- function() {
+        assert_equals( is_sorted(instance), is_sorted(expected_data))
     }
 
     test_length()
@@ -124,6 +128,7 @@ check_equal <- function(instance, expected_data) {
     test_min()
     test_max()
     test_coerce()
+    test_is_unsorted()
     test_is_sorted()
     return (TRUE)
 }

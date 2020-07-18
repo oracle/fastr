@@ -25,6 +25,13 @@ no_na <- function(x) {
     }
 }
 
+is_sorted <- function(x) {
+    if (typeof(x) == "complex" || typeof(x) == "raw") {
+        return (FALSE)
+    }
+    .Call("is_sorted", x)
+}
+
 trivial_class.create_instance <- function() {
     .Call("trivial_class_create_instance")
 }

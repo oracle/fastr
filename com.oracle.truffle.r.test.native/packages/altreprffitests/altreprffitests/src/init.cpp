@@ -11,6 +11,7 @@ static SEXP altrep_get_data1(SEXP x);
 static SEXP altrep_get_data2(SEXP x);
 static SEXP integer_no_na(SEXP x);
 static SEXP real_no_na(SEXP x);
+static SEXP is_sorted(SEXP x);
 extern "C" SEXP my_test(SEXP vec);
 
 static const R_CallMethodDef CallEntries[] = {
@@ -19,6 +20,7 @@ static const R_CallMethodDef CallEntries[] = {
         {"altrep_get_data2", (DL_FUNC) &altrep_get_data2, 1},
         {"integer_no_na", (DL_FUNC) &integer_no_na, 1},
         {"real_no_na", (DL_FUNC) &real_no_na, 1},
+        {"is_sorted", (DL_FUNC) &is_sorted, 1},
         {"trivial_class_create_instance", (DL_FUNC) &TrivialClass::createInstance, 0},
         {"simple_vec_wrapper_create_instance", (DL_FUNC) &VecWrapper::createInstance, 9},
         {"logging_vec_wrapper_create_instance", (DL_FUNC) &LoggingVecWrapper::createInstance, 9},
@@ -60,6 +62,34 @@ static SEXP real_no_na(SEXP x)
 {
     int no_na = REAL_NO_NA(x);
     return ScalarLogical(no_na);
+}
+
+static SEXP is_sorted(SEXP x)
+{
+    int sortedness = UNKNOWN_SORTEDNESS;
+    switch (TYPEOF(x)) {
+        case INTSXP:
+            sortedness = INTEGER_IS_SORTED(x);
+            break;
+        case REALSXP:
+            sortedness = REAL_IS_SORTED(x);
+            break;
+        case LGLSXP:
+            sortedness = LOGICAL_IS_SORTED(x);
+            break;
+        case STRSXP:
+            sortedness = STRING_IS_SORTED(x);
+            break;
+        default:
+            Rf_error("is_sorted: Unknown type");
+    }
+
+    if (KNOWN_INCR(sortedness)) {
+        return ScalarLogical(TRUE);
+    }
+    else {
+        return ScalarLogical(FALSE);
+    }
 }
 
 /*static int my_elt_method(SEXP instance, R_xlen_t idx)

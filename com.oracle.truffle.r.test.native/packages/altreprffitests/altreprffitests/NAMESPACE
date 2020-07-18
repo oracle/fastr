@@ -7,6 +7,7 @@ export(
     altrep.get_data1,
     altrep.get_data2,
     no_na,
+    is_sorted,
     trivial_class.create_instance,
     simple_vec_wrapper.create_instance,
     logging_vec_wrapper.create_instance,
