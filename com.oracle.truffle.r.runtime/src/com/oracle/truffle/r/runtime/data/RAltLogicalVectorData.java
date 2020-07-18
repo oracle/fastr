@@ -33,6 +33,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
@@ -148,7 +149,7 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
     private void writeViaDataptrNode(AltrepRFFI.DataptrNode dataptrNode,
                                      int index, byte value) {
         long addr = dataptrNode.execute(owner, true);
-        NativeMemory.putByte(addr, index, value);
+        NativeMemory.putInt(addr, index, RRuntime.logical2int(value));
     }
 
     @GenerateUncached
@@ -166,7 +167,8 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
         protected byte getLogicalAtWithoutElt(RLogicalVector altLogicalVec, int index,
                              @Cached AltrepRFFI.DataptrNode dataptrNode) {
             long dataptrAddr = dataptrNode.execute(altLogicalVec, false);
-            return NativeMemory.getByte(dataptrAddr, index);
+            int intValue = NativeMemory.getInt(dataptrAddr, index);
+            return RRuntime.int2logical(intValue);
         }
     }
 }
