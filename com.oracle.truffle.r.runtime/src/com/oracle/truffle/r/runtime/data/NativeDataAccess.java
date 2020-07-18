@@ -334,11 +334,11 @@ public final class NativeDataAccess {
         }
 
         @TruffleBoundary
-        void initializeAltrep(RBaseObject altrepVec, long address, int length) {
+        void initializeAltrep(RBaseObject altrepVec, long address, int altrepLength) {
             assert altrepVec.isAltRep();
             assert address != 0;
             assert dataAddress == null;
-            this.length = length;
+            this.length = altrepLength;
             setExternalDataAddress(address);
         }
 
