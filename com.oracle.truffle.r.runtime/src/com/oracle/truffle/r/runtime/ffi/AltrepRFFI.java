@@ -12,12 +12,17 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAltrepVectorData;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltLogicalClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltVecClassDescriptor;
@@ -55,6 +60,15 @@ public final class AltrepRFFI {
         RInternalError.guarantee(interop.isNumber(value), "Value from downcall should be an integer");
         try {
             return interop.asInt(value);
+        } catch (UnsupportedMessageException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+    }
+
+    private static double expectDouble(InteropLibrary interop, Object value) {
+        RInternalError.guarantee(interop.isNumber(value), "Value from downcall should be double");
+        try {
+            return interop.asDouble(value);
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
@@ -131,6 +145,47 @@ public final class AltrepRFFI {
                 @Cached AltrepDownCallNode downCallNode) {
             return eltOfAltInt(altIntVector, index, downCallNode, retValueInterop,
                    AltrepUtilities.getAltIntDescriptor(altIntVector), AltrepUtilities.getEltMethodDescriptor(altIntVector));
+        }
+
+        @Specialization(guards = "classDescriptor == getAltRealDescriptor(altRealVector)",
+                        assumptions = "getNoMethodRedefinedAssumption()")
+        protected double eltOfAltReal(RDoubleVector altRealVector, int index,
+                                  @Cached AltrepDownCallNode downCallNode,
+                                  @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
+                                  @Cached("getAltRealDescriptor(altRealVector)") @SuppressWarnings("unused") AltRealClassDescriptor classDescriptor,
+                                  @Cached("classDescriptor.getEltMethodDescriptor()") AltrepMethodDescriptor eltMethod) {
+            Object retValue = downCallNode.execute(eltMethod, AltRealClassDescriptor.eltMethodUnwrapResult,
+                    AltRealClassDescriptor.eltMethodWrapArguments, new Object[]{altRealVector, index});
+            return expectDouble(retValueInterop, retValue);
+        }
+
+        @Specialization(replaces = "eltOfAltReal")
+        protected double eltOfAltRealUncached(RDoubleVector altRealVector, int index,
+                                          @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
+                                          @Cached AltrepDownCallNode downCallNode) {
+            return eltOfAltReal(altRealVector, index, downCallNode, retValueInterop,
+                    AltrepUtilities.getAltRealDescriptor(altRealVector), AltrepUtilities.getEltMethodDescriptor(altRealVector));
+        }
+
+        @Specialization(guards = "classDescriptor == getAltLogicalDescriptor(altLogicalVector)",
+                        assumptions = "getNoMethodRedefinedAssumption()")
+        protected byte eltOfAltLogical(RLogicalVector altLogicalVector, int index,
+                                         @Cached AltrepDownCallNode downCallNode,
+                                         @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
+                                         @Cached("getAltLogicalDescriptor(altLogicalVector)") @SuppressWarnings("unused") AltLogicalClassDescriptor classDescriptor,
+                                         @Cached("classDescriptor.getEltMethodDescriptor()") AltrepMethodDescriptor eltMethod) {
+            Object retValue = downCallNode.execute(eltMethod, AltLogicalClassDescriptor.eltMethodUnwrapResult,
+                    AltLogicalClassDescriptor.eltMethodWrapArguments, new Object[]{altLogicalVector, index});
+            int intValue = expectInteger(retValueInterop, retValue);
+            return RRuntime.int2logical(intValue);
+        }
+
+        @Specialization(replaces = "eltOfAltLogical")
+        protected byte eltOfAltLogicalUncached(RLogicalVector altLogicalVector, int index,
+                                              @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
+                                              @Cached AltrepDownCallNode downCallNode) {
+            return eltOfAltLogical(altLogicalVector, index, downCallNode, retValueInterop,
+                    AltrepUtilities.getAltLogicalDescriptor(altLogicalVector), AltrepUtilities.getEltMethodDescriptor(altLogicalVector));
         }
 
         @Specialization
@@ -303,6 +358,8 @@ public final class AltrepRFFI {
     @GenerateUncached
     public abstract static class DuplicateNode extends Node {
         public abstract Object execute(Object altrepVector, boolean deep);
+
+        // TODO: More specializations, or one general
 
         @Specialization
         protected Object doIt(RIntVector altIntVector, boolean deep,

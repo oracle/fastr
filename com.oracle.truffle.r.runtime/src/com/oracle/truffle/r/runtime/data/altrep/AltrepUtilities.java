@@ -125,6 +125,8 @@ public class AltrepUtilities {
         return data.getAltrepData().getDataPairList();
     }
 
+    // Method descriptor getters from altinteger vectors:
+
     public static AltrepMethodDescriptor getLengthMethodDescriptor(RIntVector altIntVector) {
         return getAltIntDescriptor(altIntVector).getLengthMethodDescriptor();
     }
@@ -165,6 +167,19 @@ public class AltrepUtilities {
         return getAltIntDescriptor(altIntVector).getDuplicateMethodDescriptor();
     }
 
+    // Method descriptor getters from altreal vectors:
+
+    public static AltrepMethodDescriptor getEltMethodDescriptor(RDoubleVector altRealVector) {
+        return getAltRealDescriptor(altRealVector).getEltMethodDescriptor();
+    }
+
+    // Method descriptor getters from altlogical vectors:
+
+    public static AltrepMethodDescriptor getEltMethodDescriptor(RLogicalVector altLogicalVector) {
+        return getAltLogicalDescriptor(altLogicalVector).getEltMethodDescriptor();
+    }
+
+    // Method descriptor getters from altstring vectors:
 
     public static AltrepMethodDescriptor getEltMethodDescriptor(RStringVector altStringVector) {
         return getAltStringDescriptor(altStringVector).getEltMethodDescriptor();

@@ -128,6 +128,34 @@ public class AltRealClassDescriptor extends AltVecClassDescriptor {
         return isSortedMethodDescriptor != null;
     }
 
+    public AltrepMethodDescriptor getEltMethodDescriptor() {
+        return eltMethodDescriptor;
+    }
+
+    public AltrepMethodDescriptor getGetRegionMethodDescriptor() {
+        return getRegionMethodDescriptor;
+    }
+
+    public AltrepMethodDescriptor getIsSortedMethodDescriptor() {
+        return isSortedMethodDescriptor;
+    }
+
+    public AltrepMethodDescriptor getNoNAMethodDescriptor() {
+        return noNAMethodDescriptor;
+    }
+
+    public AltrepMethodDescriptor getSumMethodDescriptor() {
+        return sumMethodDescriptor;
+    }
+
+    public AltrepMethodDescriptor getMinMethodDescriptor() {
+        return minMethodDescriptor;
+    }
+
+    public AltrepMethodDescriptor getMaxMethodDescriptor() {
+        return maxMethodDescriptor;
+    }
+
     @Override
     public String toString() {
         return "ALTREAL class descriptor for " + super.toString();
