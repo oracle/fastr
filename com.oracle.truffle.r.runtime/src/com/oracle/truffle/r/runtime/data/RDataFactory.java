@@ -43,8 +43,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
+import com.oracle.truffle.r.runtime.data.altrep.AltComplexClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltLogicalClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltRawClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
@@ -999,6 +1001,14 @@ public final class RDataFactory {
 
     public static RLogicalVector createAltLogicalVector(AltLogicalClassDescriptor descriptor, RAltRepData altRepData) {
         return traceDataCreated(RLogicalVector.createAltLogical(descriptor, altRepData));
+    }
+
+    public static RRawVector createAltRawVector(AltRawClassDescriptor descriptor, RAltRepData altRepData) {
+        return traceDataCreated(RRawVector.createAltRaw(descriptor, altRepData));
+    }
+
+    public static RComplexVector createAltComplexVector(AltComplexClassDescriptor descriptor, RAltRepData altRepData) {
+        return traceDataCreated(RComplexVector.createAltComplex(descriptor, altRepData));
     }
 
     public static RStringVector createAltStringVector(AltStringClassDescriptor descriptor, RAltRepData altRepData) {

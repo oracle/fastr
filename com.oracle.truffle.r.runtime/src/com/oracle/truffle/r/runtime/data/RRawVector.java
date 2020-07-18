@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.library.CachedLibrary;
@@ -32,6 +33,9 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage.Shareable;
+import com.oracle.truffle.r.runtime.data.altrep.AltRawClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractNumericVector;
@@ -85,6 +89,17 @@ public final class RRawVector extends RAbstractNumericVector implements RMateria
         NativeDataAccess.setNativeContents(result, address, length);
         result.setData(new RRawNativeVectorData(result), length);
         return result;
+    }
+
+    @CompilerDirectives.TruffleBoundary
+    public static RRawVector createAltRaw(AltRawClassDescriptor descriptor, RAltRepData altRepData) {
+        RAltRawVectorData altRawVectorData = new RAltRawVectorData(descriptor, altRepData);
+        RRawVector rawVector = new RRawVector();
+        rawVector.setAltRep();
+        rawVector.data = altRawVectorData;
+        int length = AltrepUtilities.getLengthUncached(rawVector);
+        rawVector.setData(altRawVectorData, length);
+        return rawVector;
     }
 
     @Override

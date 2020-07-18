@@ -50,12 +50,12 @@ public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
 
     @Specialization
     public Object newAltRaw(AltRawClassDescriptor descriptor, Object data1, Object data2) {
-        throw RInternalError.unimplemented();
+        return RDataFactory.createAltRawVector(descriptor, new RAltRepData(data1, data2));
     }
 
     @Specialization
     public Object newAltComplex(AltComplexClassDescriptor descriptor, Object data1, Object data2) {
-        throw RInternalError.unimplemented();
+        return RDataFactory.createAltComplexVector(descriptor, new RAltRepData(data1, data2));
     }
 
     @Fallback
