@@ -28,10 +28,20 @@ public abstract class IsSortedNode extends FFIUpCallNode.Arg1 {
         return isVectorSorted(intVec, dataLibrary);
     }
 
+    @Specialization(replaces = "isIntSorted")
+    public int isIntSortedUncached(RIntVector intVec) {
+        return isVectorSorted(intVec, VectorDataLibrary.getFactory().getUncached(intVec.getData()));
+    }
+
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     public int isDoubleSorted(RDoubleVector doubleVector,
                             @CachedLibrary("doubleVector.getData()") VectorDataLibrary dataLibrary) {
         return isVectorSorted(doubleVector, dataLibrary);
+    }
+
+    @Specialization(replaces = "isDoubleSorted")
+    public int isDoubleSortedUncached(RDoubleVector doubleVector) {
+        return isVectorSorted(doubleVector, VectorDataLibrary.getFactory().getUncached(doubleVector.getData()));
     }
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
@@ -40,10 +50,25 @@ public abstract class IsSortedNode extends FFIUpCallNode.Arg1 {
         return isVectorSorted(logicalVector, dataLibrary);
     }
 
+    @Specialization(replaces = "isLogicalSorted")
+    public int isLogicalSortedUncached(RLogicalVector logicalVector) {
+        return isVectorSorted(logicalVector, VectorDataLibrary.getFactory().getUncached(logicalVector.getData()));
+    }
+
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     public int isStringSorted(RStringVector stringVector,
                               @CachedLibrary("stringVector.getData()") VectorDataLibrary dataLibrary) {
         return isVectorSorted(stringVector, dataLibrary);
+    }
+
+    @Specialization(replaces = "isStringSorted")
+    public int isStringSortedUncached(RStringVector stringVector) {
+        return isVectorSorted(stringVector, VectorDataLibrary.getFactory().getUncached(stringVector.getData()));
+    }
+
+    @Fallback
+    public int isSortedFallback(@SuppressWarnings("unused") Object x) {
+        return AltrepSortedness.UNKNOWN_SORTEDNESS.getValue();
     }
 
     private static int isVectorSorted(RAbstractAtomicVector vector, VectorDataLibrary dataLibrary) {
@@ -63,10 +88,5 @@ public abstract class IsSortedNode extends FFIUpCallNode.Arg1 {
             sortedness = AltrepSortedness.UNKNOWN_SORTEDNESS;
         }
         return sortedness.getValue();
-    }
-
-    @Fallback
-    public int isSortedFallback(@SuppressWarnings("unused") Object x) {
-        return AltrepSortedness.UNKNOWN_SORTEDNESS.getValue();
     }
 }
