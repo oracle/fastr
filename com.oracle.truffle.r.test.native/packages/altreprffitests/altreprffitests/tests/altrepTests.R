@@ -131,19 +131,32 @@ check_equal <- function(instance, expected_data) {
 #' Checks two instances for equality. One of these instances has certain altrep method
 #' overriden, the second does not.
 test_default_implementations <- function() {
+    DATA_LIST <- list(
+        # Integers
+        1:10,
+        c(2L, 5L, 6L, 1L, 2L),
+        # Reals
+        c(1,2,3,4,5,6,7,42,-10),
+        # Logical
+        c(TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, TRUE, FALSE, FALSE)
+    )
+
     for (param_name in c("gen.Duplicate", "gen.Coerce", "gen.Elt", "gen.Sum", "gen.Min", "gen.Max",
                          "gen.Get_region", "gen.Is_sorted"))
     {
-        for (data in list(1:10, c(2L,5L,6L,1L,2L))) {
+        for (data in DATA_LIST) {
             params_with <- list(data, TRUE)
             names(params_with) <- c("", param_name)
+            # gen.* = TRUE
             instance_with_method <- do.call(simple_vec_wrapper.create_instance, params_with)
 
             params_without <- list(data, FALSE)
             names(params_without) <- c("", param_name)
+            # gen.* = FALSE
             instance_without_method <- do.call(simple_vec_wrapper.create_instance, params_without)
 
-            cat("Checking whether instance1 with", param_name, "equals instance2 with data =", data, "\n")
+            cat("Checking whether instance1 with", param_name, "equals instance2 with data =", data,
+                " typeof(data) =", typeof(data), "\n")
             check_equal(instance_with_method, instance_without_method)
         }
     }
