@@ -36,7 +36,9 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
 import com.oracle.truffle.r.runtime.data.altrep.AltLogicalClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
@@ -112,7 +114,7 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
     }
 
     @ExportMessage
-    public byte getLogical(RandomAccessIterator it, int index,
+    public byte getLogical(@SuppressWarnings("unused") RandomAccessIterator it, int index,
                            @Shared("getLogicalAtNode") @Cached GetLogicalAtNode getLogicalAtNode,
                            @Shared("naCheck") @Cached NACheck naCheck) {
         byte value = getLogicalAtNode.execute(owner, index);
@@ -131,7 +133,7 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
     }
 
     @ExportMessage
-    public void setNextLogical(VectorDataLibrary.SeqWriteIterator it, byte value,
+    public void setNextLogical(SeqWriteIterator it, byte value,
                                @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                                @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
@@ -139,7 +141,7 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
     }
 
     @ExportMessage
-    public void setLogical(VectorDataLibrary.RandomAccessWriteIterator it, int index, byte value,
+    public void setLogical(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, byte value,
                            @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                            @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);

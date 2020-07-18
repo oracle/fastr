@@ -99,7 +99,7 @@ public class RAltRawVectorData extends RAltrepVectorData {
     }
 
     @ExportMessage
-    public byte getRaw(VectorDataLibrary.RandomAccessIterator it, int index,
+    public byte getRaw(@SuppressWarnings("unused") VectorDataLibrary.RandomAccessIterator it, int index,
                        @Shared("getRawAtNode") @Cached GetRawAtNode getRawAtNode) {
         return getRawAtNode.execute(owner, index);
     }
@@ -117,7 +117,7 @@ public class RAltRawVectorData extends RAltrepVectorData {
     }
 
     @ExportMessage
-    public void setRaw(VectorDataLibrary.RandomAccessWriteIterator it, int index, byte value,
+    public void setRaw(@SuppressWarnings("unused") VectorDataLibrary.RandomAccessWriteIterator it, int index, byte value,
                        @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
         writeViaDataptrNode(dataptrNode, index, value);
     }

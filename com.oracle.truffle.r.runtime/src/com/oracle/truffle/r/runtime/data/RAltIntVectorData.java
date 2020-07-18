@@ -148,7 +148,7 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
     }
 
     @ExportMessage
-    public int getInt(RandomAccessIterator it, int index,
+    public int getInt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
                       @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
                       @Shared("naCheck") @Cached NACheck naCheck) {
         int value = getIntAtNode.execute(owner, index);
@@ -175,7 +175,7 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
     }
 
     @ExportMessage
-    public void setInt(RandomAccessWriteIterator it, int index, int value,
+    public void setInt(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, int value,
                        @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                        @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);

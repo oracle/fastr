@@ -122,7 +122,7 @@ public class RAltRealVectorData extends RAltrepNumericVectorData {
     }
 
     @ExportMessage
-    public double getDouble(RandomAccessIterator it, int index,
+    public double getDouble(@SuppressWarnings("unused") RandomAccessIterator it, int index,
                             @Shared("getDoubleAtNode") @Cached GetDoubleAtNode getDoubleAtNode,
                             @Shared("naCheck") @Cached NACheck naCheck) {
         double value = getDoubleAtNode.execute(owner, index);
@@ -149,7 +149,7 @@ public class RAltRealVectorData extends RAltrepNumericVectorData {
     }
 
     @ExportMessage
-    public void setDouble(VectorDataLibrary.RandomAccessWriteIterator it, int index, double value,
+    public void setDouble(@SuppressWarnings("unused") VectorDataLibrary.RandomAccessWriteIterator it, int index, double value,
                           @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
                           @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
