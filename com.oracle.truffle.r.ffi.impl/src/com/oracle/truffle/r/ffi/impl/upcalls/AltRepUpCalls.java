@@ -72,8 +72,6 @@ public interface AltRepUpCalls {
     void R_set_altlogical_Is_sorted_method(Object classDescriptor, @RFFICpointer Object method);
     void R_set_altlogical_No_NA_method(Object classDescriptor, @RFFICpointer Object method);
     void R_set_altlogical_Sum_method(Object classDescriptor, @RFFICpointer Object method);
-    void R_set_altlogical_Min_method(Object classDescriptor, @RFFICpointer Object method);
-    void R_set_altlogical_Max_method(Object classDescriptor, @RFFICpointer Object method);
 
     void R_set_altraw_Elt_method(Object classDescriptor, @RFFICpointer Object eltMethod);
     void R_set_altraw_Get_region_method(Object classDescriptor, @RFFICpointer Object getRegionMethod);

@@ -82,7 +82,10 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RWeakRef;
+import com.oracle.truffle.r.runtime.data.altrep.AltComplexClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltLogicalClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltRawClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
@@ -1611,57 +1614,65 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public void R_set_altlogical_Elt_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltLogicalClassDescriptor.eltMethodSignature);
+        classDescr.registerEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altlogical_Get_region_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltLogicalClassDescriptor.getRegionMethodSignature);
+        classDescr.registerGetRegionMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altlogical_Is_sorted_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltLogicalClassDescriptor.isSortedMethodSignature);
+        classDescr.registerIsSortedMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altlogical_No_NA_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltLogicalClassDescriptor.noNAMethodSignature);
+        classDescr.registerNoNAMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altlogical_Sum_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
-    }
-
-    @Override
-    public void R_set_altlogical_Min_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
-    }
-
-    @Override
-    public void R_set_altlogical_Max_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
+        AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltLogicalClassDescriptor.sumMethodSignature);
+        classDescr.registerSumMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altraw_Elt_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
+        AltRawClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRawClassDescriptor.class);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRawClassDescriptor.eltMethodSignature);
+        classDescr.registerEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altraw_Get_region_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
+        AltRawClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRawClassDescriptor.class);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRawClassDescriptor.getRegionMethodSignature);
+        classDescr.registerGetRegionMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altcomplex_Elt_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
+        AltComplexClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltComplexClassDescriptor.class);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltComplexClassDescriptor.eltMethodSignature);
+        classDescr.registerEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altcomplex_Get_region_method(Object classDescriptor, Object method) {
-        throw RInternalError.unimplemented("");
+        AltComplexClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltComplexClassDescriptor.class);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltComplexClassDescriptor.getRegionMethodSignature);
+        classDescr.registerGetRegionMethod(altrepMethodDescriptor);
     }
 
     @Override

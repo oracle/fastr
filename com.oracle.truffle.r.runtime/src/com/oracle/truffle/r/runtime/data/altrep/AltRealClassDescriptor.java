@@ -22,80 +22,110 @@
  */
 package com.oracle.truffle.r.runtime.data.altrep;
 
+import com.oracle.truffle.api.CompilerDirectives;
+
 public class AltRealClassDescriptor extends AltVecClassDescriptor {
     public static final String eltMethodSignature = "(pointer, sint32): double";
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean eltMethodUnwrapResult = false;
+
     public static final String getRegionMethodSignature = "(pointer, sint32, sint32, [double]): sint32";
-    public static final String isSortedMethodSignature = "(pointer): sint32";
-    public static final String noNAMethodSignature = "(pointer): sint32";
-    public static final String sumMethodSignature = "(pointer, sint32): pointer";
-    public static final String minMethodSignature = "(pointer, sint32): pointer";
-    public static final String maxMethodSignature = "(pointer, sint32): pointer";
-    private Object eltMethod;
-    private Object getRegionMethod;
-    private Object isSortedMethod;
-    private Object noNAMethod;
-    private Object sumMethod;
-    private Object minMethod;
-    private Object maxMethod;
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    public static final boolean[] getRegionMethodWrapArguments = new boolean[]{true, false, false, false};
+    public static final boolean getRegionMethodUnwrapResult = false;
+
+    public static final String isSortedMethodSignature = AltIntegerClassDescriptor.isSortedMethodSignature;
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    public static final boolean[] isSortedMethodWrapArguments = AltIntegerClassDescriptor.isSortedMethodWrapArguments;
+    public static final boolean isSortedMethodUnwrapResult = AltIntegerClassDescriptor.isSortedMethodUnwrapResult;
+
+    public static final String noNAMethodSignature = AltIntegerClassDescriptor.noNAMethodSignature;
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    public static final boolean[] noNAMethodWrapArguments = AltIntegerClassDescriptor.noNAMethodWrapArguments;
+    public static final boolean noNAMethodUnwrapResult = AltIntegerClassDescriptor.noNAMethodUnwrapResult;
+
+    public static final String sumMethodSignature = AltIntegerClassDescriptor.sumMethodSignature;
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    public static final boolean[] sumMethodWrapArguments = AltIntegerClassDescriptor.sumMethodWrapArguments;
+    public static final boolean sumMethodUnwrapResult = AltIntegerClassDescriptor.sumMethodUnwrapResult;
+
+    public static final String minMethodSignature = AltIntegerClassDescriptor.minMethodSignature;
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    public static final boolean[] minMethodWrapArguments = AltIntegerClassDescriptor.minMethodWrapArguments;
+    public static final boolean minMethodUnwrapResult = AltIntegerClassDescriptor.minMethodUnwrapResult;
+
+    public static final String maxMethodSignature = AltIntegerClassDescriptor.maxMethodSignature;
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    public static final boolean[] maxMethodWrapArguments = AltIntegerClassDescriptor.maxMethodWrapArguments;
+    public static final boolean maxMethodUnwrapResult = AltIntegerClassDescriptor.maxMethodUnwrapResult;
+
+    private AltrepMethodDescriptor eltMethodDescriptor;
+    private AltrepMethodDescriptor getRegionMethodDescriptor;
+    private AltrepMethodDescriptor isSortedMethodDescriptor;
+    private AltrepMethodDescriptor noNAMethodDescriptor;
+    private AltrepMethodDescriptor sumMethodDescriptor;
+    private AltrepMethodDescriptor minMethodDescriptor;
+    private AltrepMethodDescriptor maxMethodDescriptor;
 
     public AltRealClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);
     }
 
-    public void registerEltMethod(Object eltMethod) {
-        this.eltMethod = eltMethod;
+    public void registerEltMethod(AltrepMethodDescriptor eltMethod) {
+        this.eltMethodDescriptor = eltMethod;
     }
 
-    public void registerGetRegionMethod(Object getRegionMethod) {
-        this.getRegionMethod = getRegionMethod;
+    public void registerGetRegionMethod(AltrepMethodDescriptor getRegionMethod) {
+        this.getRegionMethodDescriptor = getRegionMethod;
     }
 
-    public void registerIsSortedMethod(Object isSortedMethod) {
-        this.isSortedMethod = isSortedMethod;
+    public void registerIsSortedMethod(AltrepMethodDescriptor isSortedMethod) {
+        this.isSortedMethodDescriptor = isSortedMethod;
     }
 
-    public void registerNoNAMethod(Object noNAMethod) {
-        this.noNAMethod = noNAMethod;
+    public void registerNoNAMethod(AltrepMethodDescriptor noNAMethod) {
+        this.noNAMethodDescriptor = noNAMethod;
     }
 
-    public void registerSumMethod(Object sumMethod) {
-        this.sumMethod = sumMethod;
+    public void registerSumMethod(AltrepMethodDescriptor sumMethod) {
+        this.sumMethodDescriptor = sumMethod;
     }
 
-    public void registerMaxMethod(Object maxMethod) {
-        this.maxMethod = maxMethod;
+    public void registerMaxMethod(AltrepMethodDescriptor maxMethod) {
+        this.maxMethodDescriptor = maxMethod;
     }
 
-    public void registerMinMethod(Object minMethod) {
-        this.minMethod = minMethod;
+    public void registerMinMethod(AltrepMethodDescriptor minMethod) {
+        this.minMethodDescriptor = minMethod;
     }
 
     public boolean isEltMethodRegistered() {
-        return eltMethod != null;
+        return eltMethodDescriptor != null;
     }
 
     public boolean isGetRegionMethodRegistered() {
-        return getRegionMethod != null;
+        return getRegionMethodDescriptor != null;
     }
 
     public boolean isNoNAMethodRegistered() {
-        return noNAMethod != null;
+        return noNAMethodDescriptor != null;
     }
 
     public boolean isSumMethodRegistered() {
-        return sumMethod != null;
+        return sumMethodDescriptor != null;
     }
 
     public boolean isMaxMethodRegistered() {
-        return maxMethod != null;
+        return maxMethodDescriptor != null;
     }
 
     public boolean isMinMethodRegistered() {
-        return minMethod != null;
+        return minMethodDescriptor != null;
     }
 
     public boolean isIsSortedMethodRegistered() {
-        return isSortedMethod != null;
+        return isSortedMethodDescriptor != null;
     }
 
     @Override

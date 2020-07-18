@@ -1,26 +1,43 @@
 package com.oracle.truffle.r.runtime.data.altrep;
 
+import com.oracle.truffle.api.CompilerDirectives;
+
 public class AltComplexClassDescriptor extends AltVecClassDescriptor {
-    private Object eltMethod;
-    private Object getRegionMethod;
+    public static final String eltMethodSignature = "(pointer, sint32):object";
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
+    public static final boolean eltMethodUnwrapResult = true;
+
+    public static final String getRegionMethodSignature = "(pointer, sint32, sint32, [object]):sint32";
+    @CompilerDirectives.CompilationFinal(dimensions = 1)
+    public static final boolean[] getRegionMethodWrapArguments = new boolean[]{true, false, false, false};
+    public static final boolean getRegionMethodUnwrapResult = false;
+
+    private AltrepMethodDescriptor eltMethodDescriptor;
+    private AltrepMethodDescriptor getRegionMethodDescriptor;
 
     public AltComplexClassDescriptor(String className, String packageName, Object dllInfo) {
         super(className, packageName, dllInfo);
     }
 
-    public void registerEltMethod(Object eltMethod) {
-        this.eltMethod = eltMethod;
+    public void registerEltMethod(AltrepMethodDescriptor eltMethod) {
+        this.eltMethodDescriptor = eltMethod;
     }
 
-    public void registerGetRegionMethod(Object getRegionMethod) {
-        this.getRegionMethod = getRegionMethod;
+    public void registerGetRegionMethod(AltrepMethodDescriptor getRegionMethod) {
+        this.getRegionMethodDescriptor = getRegionMethod;
     }
 
     public boolean isGetRegionMethodRegistered() {
-        return getRegionMethod != null;
+        return getRegionMethodDescriptor != null;
     }
 
     public boolean isEltMethodRegistered() {
-        return eltMethod != null;
+        return eltMethodDescriptor != null;
+    }
+
+    @Override
+    public String toString() {
+        return "ALTCOMPLEX class descriptor for " + super.toString();
     }
 }
