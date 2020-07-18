@@ -301,8 +301,7 @@ public final class AltrepRFFI {
             AltrepMethodDescriptor dataptrOrNullMethod = classDescriptor.getDataptrOrNullMethodDescriptor();
             Object ret = downCallNode.execute(dataptrOrNullMethod, AltVecClassDescriptor.dataptrOrNullMethodUnwrapResult,
                     AltVecClassDescriptor.dataptrOrNullMethodWrapArguments, new Object[] {altVec});
-            assert interopLib.isPointer(ret);
-            return ret;
+            return expectPointer(interopLib, ret);
         }
     }
 
