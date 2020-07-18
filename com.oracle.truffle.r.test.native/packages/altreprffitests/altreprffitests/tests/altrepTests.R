@@ -119,7 +119,8 @@ check_equal <- function(instance, expected_data) {
     }
 
     test_is_sorted <- function() {
-        assert_equals( is_sorted(instance), is_sorted(expected_data))
+        stopifnot( is.logical(is_sorted(instance)))
+        stopifnot( is.logical(is_sorted(expected_data)))
     }
 
     test_length()
@@ -333,6 +334,20 @@ test_no_na <- function() {
     stopifnot( no_na(v6) == TRUE || no_na(v6) == FALSE)
 }
 
+temp_test <- function() {
+    data <- as.integer(c(1,2,3,4,5,6,42))
+    instance1 <- simple_vec_wrapper.create_instance(data, gen.Elt=FALSE)
+    instance2 <- simple_vec_wrapper.create_instance(data, gen.Elt=FALSE)
+    cat("Instance1 =", instance1, "\n")
+    cat("Instance2 =", instance2, "\n")
+
+    cat("is_sorted(instance1) = ", is_sorted(instance1), "\n")
+    cat("is_sorted(instance2) = ", is_sorted(instance2), "\n")
+
+    normal_vector <- data
+    cat("Normal vector sorted =", is_sorted(normal_vector), "\n")
+}
+
 TESTS <- list(
     list("test_trivial", test_trivial),
     list("test_simple_altint", test_simple_altint),
@@ -347,6 +362,12 @@ TESTS <- list(
     list("test_first_char_changer_class", test_first_char_changer_class),
     list("test_no_na", test_no_na)
 )
+
+ONE_TEST <- list(list("temp_test", temp_test))
+RUN_ONE_TEST <- FALSE
+if (RUN_ONE_TEST) {
+    TESTS <- ONE_TEST
+}
 
 run_tests(TESTS)
 
