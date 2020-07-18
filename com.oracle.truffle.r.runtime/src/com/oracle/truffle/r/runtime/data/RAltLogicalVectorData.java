@@ -96,6 +96,25 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
     }
 
     @ExportMessage
+    public byte[] getLogicalDataCopy(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                                     @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+        int length = lengthNode.execute(owner);
+        return getDataCopy(dataptrNode, length);
+    }
+
+    private byte[] getDataCopy(AltrepRFFI.DataptrNode dataptrNode, int length) {
+        long addr = dataptrNode.execute(owner, false);
+        int[] intDataCopy = new int[length];
+        NativeMemory.copyMemory(addr, intDataCopy, NativeMemory.ElementType.INT, length);
+
+        byte[] dataCopy = new byte[length];
+        for (int i = 0; i < length; i++) {
+            dataCopy[i] = RRuntime.int2logical(intDataCopy[i]);
+        }
+        return dataCopy;
+    }
+
+    @ExportMessage
     public byte getLogicalAt(int index,
                              @Shared("getLogicalAtNode") @Cached GetLogicalAtNode getLogicalAtNode,
                              @Shared("naCheck") @Cached NACheck naCheck) {
