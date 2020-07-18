@@ -254,6 +254,15 @@ test_altlogical <- function() {
     check_equal(instance, data)
 }
 
+test_two_altlogicals <- function() {
+    data <- c(TRUE, FALSE, FALSE, TRUE, FALSE, TRUE, TRUE, FALSE)
+    instance_1 <- simple_vec_wrapper.create_instance(data)
+    instance_2 <- simple_vec_wrapper.create_instance(data)
+    check_equal(instance_1, data)
+    check_equal(instance_2, data)
+    check_equal(instance_1, instance_2)
+}
+
 test_mmap <- function() {
     stopifnot(require(simplemmap))
     # TODO: finish ...
@@ -325,6 +334,7 @@ TESTS <- list(
     list("test_two_altints", test_two_altints),
     list("test_altreal", test_altreal),
     list("test_altlogical", test_altlogical),
+    list("test_two_altlogicals", test_two_altlogicals),
     list("test_default_implementations", test_default_implementations),
     list("test_calls_to_altrep_methods", test_calls_to_altrep_methods),
     list("test_framework_behavior", test_framework_behavior),
