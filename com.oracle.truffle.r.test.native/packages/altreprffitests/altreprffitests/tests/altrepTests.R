@@ -109,8 +109,9 @@ check_equal <- function(instance, expected_data) {
     }
 
     test_coerce <- function() {
-        assert_equals( as.integer(instance), as.integer(expected_data))
-        assert_equals( as.double(instance), as.double(expected_data))
+        # This test may cause many warnings of type: "Introduced NAs". We do not care about that.
+        suppressWarnings(assert_equals( as.integer(instance), as.integer(expected_data)))
+        suppressWarnings(assert_equals( as.double(instance), as.double(expected_data)))
     }
 
     test_is_unsorted <- function() {
@@ -127,11 +128,15 @@ check_equal <- function(instance, expected_data) {
     test_elt()
     test_coerce()
     if (!is.raw(instance) && !is.raw(expected_data)) {
-        test_sum()
-        test_min()
-        test_max()
+        if (!is.character(instance) && !is.character(instance)) {
+            test_sum()
+        }
+        if (!is.complex(instance) && !is.complex(expected_data)) {
+            test_min()
+            test_max()
+            test_is_sorted()
+        }
         test_is_unsorted()
-        test_is_sorted()
     }
     return (TRUE)
 }
@@ -148,7 +153,9 @@ test_default_implementations <- function() {
         # Logical
         c(TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, TRUE, FALSE, FALSE),
         # Raw
-        as.raw(c(1,2,3,4,56,215,113))
+        as.raw(c(1,2,3,4,56,215,113)),
+        # String
+        c("Hello", "World", "!", "How", " ", "are", " ", "you", "?")
     )
 
     for (param_name in c("gen.Duplicate", "gen.Coerce", "gen.Elt", "gen.Sum", "gen.Min", "gen.Max",
@@ -279,6 +286,27 @@ test_altraw <- function() {
     check_equal(instance, data)
 }
 
+test_altcomplex <- function() {
+    data <- complex(real=c(1,15,-6,4,10), imaginary=c(5,3,10,-6,-4))
+    instance <- simple_vec_wrapper.create_instance(data)
+    check_equal(instance, data)
+}
+
+test_altstring <- function() {
+    data <- c("Hello", "World", "!")
+    instance <- simple_vec_wrapper.create_instance(data)
+    check_equal(instance, data)
+}
+
+test_two_altstrings <- function() {
+    data <- c("Hello", "World", "!")
+    instance_1 <- simple_vec_wrapper.create_instance(data)
+    instance_2 <- simple_vec_wrapper.create_instance(data)
+    check_equal(instance_1, data)
+    check_equal(instance_2, data)
+    check_equal(instance_1, instance_2)
+}
+
 test_mmap <- function() {
     stopifnot(require(simplemmap))
     # TODO: finish ...
@@ -366,6 +394,9 @@ TESTS <- list(
     list("test_altlogical", test_altlogical),
     list("test_two_altlogicals", test_two_altlogicals),
     list("test_altraw", test_altraw),
+    list("test_altcomplex", test_altcomplex),
+    list("test_altstring", test_altstring),
+    list("test_two_altstrings", test_two_altstrings),
     list("test_default_implementations", test_default_implementations),
     list("test_calls_to_altrep_methods", test_calls_to_altrep_methods),
     list("test_framework_behavior", test_framework_behavior),
