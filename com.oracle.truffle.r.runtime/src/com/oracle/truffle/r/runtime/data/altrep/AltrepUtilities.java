@@ -30,6 +30,8 @@ public class AltrepUtilities {
         return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
     }
 
+    // Helper methods for getting altrep vector data from vectors:
+
     public static RAltrepVectorData getAltRepVectorData(RAbstractAtomicVector altrepVector) {
         assert altrepVector.isAltRep();
         return (RAltrepVectorData) altrepVector.getData();
@@ -65,6 +67,8 @@ public class AltrepUtilities {
         return (RAltStringVectorData) altStringVector.getData();
     }
 
+    // Helper methods for getting class descriptors from vectors:
+
     public static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVector) {
         assert altIntVector.isAltRep();
         return getAltIntVectorData(altIntVector).getDescriptor();
@@ -95,18 +99,6 @@ public class AltrepUtilities {
         return getAltStringVectorData(altStringVector).getDescriptor();
     }
 
-    public static RAltRepData getAltrepData(RIntVector altIntVector) {
-        assert altIntVector.isAltRep();
-        RAltIntVectorData altIntVectorData = getAltIntVectorData(altIntVector);
-        return altIntVectorData.getAltrepData();
-    }
-
-    public static RAltRepData getAltrepData(RStringVector altStringVector) {
-        assert altStringVector.isAltRep();
-        RAltStringVectorData data = getAltStringVectorData(altStringVector);
-        return data.getAltrepData();
-    }
-
     public static AltRepClassDescriptor getAltRepClassDescriptor(RBaseObject altrepObject) {
         assert altrepObject.isAltRep();
 
@@ -134,21 +126,6 @@ public class AltrepUtilities {
         RAltrepVectorData vectorData = (RAltrepVectorData) altrepVec.getData();
         return vectorData.getAltrepData().getDataPairList();
     }
-
-    public static RPairList getPairListDataFromVec(RIntVector altIntVec) {
-        assert altIntVec.isAltRep();
-        assert altIntVec.getData() instanceof RAltIntVectorData;
-        RAltIntVectorData data = (RAltIntVectorData) altIntVec.getData();
-        return data.getAltrepData().getDataPairList();
-    }
-
-    public static RPairList getPairListDataFromVec(RStringVector altStringVec) {
-        assert altStringVec.isAltRep();
-        assert altStringVec.getData() instanceof RAltStringVectorData;
-        RAltStringVectorData data = (RAltStringVectorData) altStringVec.getData();
-        return data.getAltrepData().getDataPairList();
-    }
-
 
     public static AltrepMethodDescriptor getDuplicateMethodDescriptor(RAbstractAtomicVector altrepVector) {
         return getAltRepClassDescriptor(altrepVector).getDuplicateMethodDescriptor();

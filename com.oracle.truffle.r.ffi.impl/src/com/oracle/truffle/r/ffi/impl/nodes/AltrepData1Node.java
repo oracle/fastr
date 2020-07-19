@@ -31,7 +31,6 @@ public abstract class AltrepData1Node extends FFIUpCallNode.Arg1 {
     @Specialization(replaces = "getData1FromAltrepCached")
     public Object getData1FromAltrepUncached(RAbstractAtomicVector altrepVec) {
         RPairList pairListData = AltrepUtilities.getPairListData(altrepVec);
-        // TODO: Do this via uncached RPairListLibrary?
         return pairListData.car();
     }
 
