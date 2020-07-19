@@ -69,6 +69,30 @@ public class AltrepUtilities {
 
     // Helper methods for getting class descriptors from vectors:
 
+    public static AltRepClassDescriptor getAltRepClassDescriptor(RBaseObject altrepObject) {
+        assert altrepObject.isAltRep();
+        if (altrepObject instanceof RIntVector) {
+            return getAltIntDescriptor((RIntVector) altrepObject);
+        } else if (altrepObject instanceof RStringVector) {
+            return getAltStringDescriptor((RStringVector) altrepObject);
+        } else if (altrepObject instanceof RDoubleVector) {
+            return getAltRealDescriptor((RDoubleVector) altrepObject);
+        } else if (altrepObject instanceof RLogicalVector) {
+            return getAltLogicalDescriptor((RLogicalVector) altrepObject);
+        } else if (altrepObject instanceof RRawVector) {
+            return getAltRawDescriptor((RRawVector) altrepObject);
+        } else if (altrepObject instanceof RComplexVector) {
+            return getAltComplexDescriptor((RComplexVector) altrepObject);
+        } else {
+            throw RInternalError.unimplemented();
+        }
+    }
+
+    public static AltVecClassDescriptor getAltVecClassDescriptor(RBaseObject altrepObject) {
+        // Currently all the AltRepClassDescriptors are also AltVecClassDescriptors (GNU-R version 3.6.1)
+        return (AltVecClassDescriptor) getAltRepClassDescriptor(altrepObject);
+    }
+
     public static AltIntegerClassDescriptor getAltIntDescriptor(RIntVector altIntVector) {
         assert altIntVector.isAltRep();
         return getAltIntVectorData(altIntVector).getDescriptor();
@@ -97,27 +121,6 @@ public class AltrepUtilities {
     public static AltStringClassDescriptor getAltStringDescriptor(RStringVector altStringVector) {
         assert altStringVector.isAltRep();
         return getAltStringVectorData(altStringVector).getDescriptor();
-    }
-
-    public static AltRepClassDescriptor getAltRepClassDescriptor(RBaseObject altrepObject) {
-        assert altrepObject.isAltRep();
-
-        if (altrepObject instanceof RIntVector) {
-            return getAltIntDescriptor((RIntVector) altrepObject);
-        } else if (altrepObject instanceof RStringVector) {
-            return getAltStringDescriptor((RStringVector) altrepObject);
-        } else if (altrepObject instanceof RDoubleVector) {
-            return getAltRealDescriptor((RDoubleVector) altrepObject);
-        } else if (altrepObject instanceof RLogicalVector) {
-            return getAltLogicalDescriptor((RLogicalVector) altrepObject);
-        } else {
-            throw RInternalError.unimplemented();
-        }
-    }
-
-    public static AltVecClassDescriptor getAltVecClassDescriptor(RBaseObject altrepObject) {
-        // Currently all the AltRepClassDescriptors are also AltVecClassDescriptors (GNU-R version 3.6.1)
-        return (AltVecClassDescriptor) getAltRepClassDescriptor(altrepObject);
     }
 
     public static RPairList getPairListData(RAbstractAtomicVector altrepVec) {
@@ -270,6 +273,12 @@ public class AltrepUtilities {
             return getAltRealDescriptor((RDoubleVector) object).isCoerceMethodRegistered();
         } else if (object instanceof RLogicalVector) {
             return getAltLogicalDescriptor((RLogicalVector) object).isCoerceMethodRegistered();
+        } else if (object instanceof RRawVector) {
+            return getAltRawDescriptor((RRawVector) object).isCoerceMethodRegistered();
+        } else if (object instanceof RComplexVector) {
+            return getAltComplexDescriptor((RComplexVector) object).isCoerceMethodRegistered();
+        } else if (object instanceof RStringVector) {
+            return getAltStringDescriptor((RStringVector) object).isCoerceMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -285,6 +294,12 @@ public class AltrepUtilities {
             return getAltRealDescriptor((RDoubleVector) object).isDuplicateMethodRegistered();
         } else if (object instanceof RLogicalVector) {
             return getAltLogicalDescriptor((RLogicalVector) object).isDuplicateMethodRegistered();
+        } else if (object instanceof RRawVector) {
+            return getAltRawDescriptor((RRawVector) object).isDuplicateMethodRegistered();
+        } else if (object instanceof RComplexVector) {
+            return getAltComplexDescriptor((RComplexVector) object).isDuplicateMethodRegistered();
+        } else if (object instanceof RStringVector) {
+            return getAltStringDescriptor((RStringVector) object).isDuplicateMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -300,6 +315,12 @@ public class AltrepUtilities {
             return getAltRealDescriptor((RDoubleVector) object).isEltMethodRegistered();
         } else if (object instanceof RLogicalVector) {
             return getAltLogicalDescriptor((RLogicalVector) object).isEltMethodRegistered();
+        } else if (object instanceof RRawVector) {
+            return getAltRawDescriptor((RRawVector) object).isEltMethodRegistered();
+        } else if (object instanceof RComplexVector) {
+            return getAltComplexDescriptor((RComplexVector) object).isEltMethodRegistered();
+        } else if (object instanceof RStringVector) {
+            return getAltStringDescriptor((RStringVector) object).isEltMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
@@ -341,51 +362,6 @@ public class AltrepUtilities {
             return getAltRealDescriptor((RDoubleVector) object).isSumMethodRegistered();
         } else if (object instanceof RLogicalVector) {
             return getAltLogicalDescriptor((RLogicalVector) object).isSumMethodMethodRegistered();
-        } else {
-            throw RInternalError.shouldNotReachHere("Unexpected altrep type");
-        }
-    }
-
-    public static boolean hasGetRegionMethodRegistered(Object object) {
-        if (!isAltrep(object)) {
-            return false;
-        }
-        if (object instanceof RIntVector) {
-            return getAltIntDescriptor((RIntVector) object).isGetRegionMethodRegistered();
-        } else if (object instanceof RDoubleVector) {
-            return getAltRealDescriptor((RDoubleVector) object).isGetRegionMethodRegistered();
-        } else if (object instanceof RLogicalVector) {
-            return getAltLogicalDescriptor((RLogicalVector) object).isGetRegionMethodRegistered();
-        } else {
-            throw RInternalError.shouldNotReachHere("Unexpected altrep type");
-        }
-    }
-
-    public static boolean hasSortedMethodRegistered(Object object) {
-        if (!isAltrep(object)) {
-            return false;
-        }
-        if (object instanceof RIntVector) {
-            return getAltIntDescriptor((RIntVector) object).isIsSortedMethodRegistered();
-        } else if (object instanceof RDoubleVector) {
-            return getAltRealDescriptor((RDoubleVector) object).isIsSortedMethodRegistered();
-        } else if (object instanceof RLogicalVector) {
-            return getAltLogicalDescriptor((RLogicalVector) object).isIsSortedMethodRegistered();
-        } else {
-            throw RInternalError.shouldNotReachHere("Unexpected altrep type");
-        }
-    }
-
-    public static boolean hasNoNAMethodRegistered(Object object) {
-        if (!isAltrep(object)) {
-            return false;
-        }
-        if (object instanceof RIntVector) {
-            return getAltIntDescriptor((RIntVector) object).isNoNAMethodRegistered();
-        } else if (object instanceof RDoubleVector) {
-            return getAltRealDescriptor((RDoubleVector) object).isNoNAMethodRegistered();
-        } else if (object instanceof RLogicalVector) {
-            return getAltLogicalDescriptor((RLogicalVector) object).isNoNAMethodRegistered();
         } else {
             throw RInternalError.shouldNotReachHere("Unexpected altrep type");
         }
