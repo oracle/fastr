@@ -48,8 +48,14 @@ R_altrep_class_t VecWrapper::createDescriptor(int type, const Args &args)
             return SimpleRealVecWrapper::createDescriptor(args);
         case LGLSXP:
             return SimpleLogicalVecWrapper::createDescriptor(args);
+        case RAWSXP:
+            return SimpleRawVecWrapper::createDescriptor(args);
+        case CPLXSXP:
+            return SimpleComplexVecWrapper::createDescriptor(args);
+        case STRSXP:
+            return SimpleStringVecWrapper::createDescriptor(args);
         default:
-            error("Not yet implemented");
+            error("Not implemented");
     }
 }
 
@@ -291,6 +297,71 @@ R_xlen_t SimpleLogicalVecWrapper::Get_region(SEXP instance, R_xlen_t from_idx, R
 int SimpleLogicalVecWrapper::Is_sorted(SEXP instance)
 {
     return UNKNOWN_SORTEDNESS;
+}
+
+R_altrep_class_t SimpleRawVecWrapper::createDescriptor(const Args &args)
+{
+    R_altrep_class_t descr = R_make_altraw_class("SimpleRawVecWrapper", "altreprffitests", nullptr);
+    registerCommonMethods(descr, args);
+    if (args.gen_Elt) R_set_altraw_Elt_method(descr, Elt);
+    if (args.gen_Get_region) R_set_altraw_Get_region_method(descr, Get_region);
+    return descr;
+}
+
+Rbyte SimpleRawVecWrapper::Elt(SEXP instance, R_xlen_t idx)
+{
+    return RAW_ELT(R_altrep_data1(instance), idx);
+}
+
+R_xlen_t SimpleRawVecWrapper::Get_region(SEXP instance, R_xlen_t from_idx, R_xlen_t size, Rbyte *buffer)
+{
+    return RAW_GET_REGION(R_altrep_data1(instance), from_idx, size, buffer);
+}
+
+R_altrep_class_t SimpleComplexVecWrapper::createDescriptor(const Args &args)
+{
+    R_altrep_class_t descr = R_make_altcomplex_class("SimpleComplexVecWrapper", "altreprffitests", nullptr);
+    registerCommonMethods(descr, args);
+    if (args.gen_Elt) R_set_altcomplex_Elt_method(descr, Elt);
+    if (args.gen_Get_region) R_set_altcomplex_Get_region_method(descr, Get_region);
+    return descr;
+}
+
+Rcomplex SimpleComplexVecWrapper::Elt(SEXP instance, R_xlen_t idx)
+{
+    return COMPLEX_ELT(R_altrep_data1(instance), idx);
+}
+
+R_xlen_t SimpleComplexVecWrapper::Get_region(SEXP instance, R_xlen_t from_idx, R_xlen_t size, Rcomplex *buffer)
+{
+    return COMPLEX_GET_REGION(R_altrep_data1(instance), from_idx, size, buffer);
+}
+
+
+R_altrep_class_t SimpleStringVecWrapper::createDescriptor(const Args &args)
+{
+    R_altrep_class_t descr = R_make_altstring_class("SimpleStringVecWrapper", "altreprffitests", nullptr);
+    registerCommonMethods(descr, args);
+    // Altstring must have Elt, Set_Elt defined
+    R_set_altstring_Elt_method(descr, Elt);
+    R_set_altstring_Set_elt_method(descr, Set_elt);
+    if (args.gen_Is_sorted) R_set_altstring_Is_sorted_method(descr, Is_sorted);
+    return descr;
+}
+
+SEXP SimpleStringVecWrapper::Elt(SEXP instance, R_xlen_t idx)
+{
+    return STRING_ELT(R_altrep_data1(instance), idx);
+}
+
+void SimpleStringVecWrapper::Set_elt(SEXP instance, R_xlen_t idx, SEXP value)
+{
+    SET_STRING_ELT(R_altrep_data1(instance), idx, value);
+}
+
+int SimpleStringVecWrapper::Is_sorted(SEXP instance)
+{
+    return STRING_IS_SORTED(R_altrep_data1(instance));
 }
 
 /***********************************************************************/

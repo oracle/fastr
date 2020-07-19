@@ -99,10 +99,35 @@ protected:
 class SimpleLogicalVecWrapper : public VecWrapper {
 public:
     static R_altrep_class_t createDescriptor(const Args &args);
-protected:
+private:
     static int Elt(SEXP instance, R_xlen_t idx);
     static SEXP Sum(SEXP instance, Rboolean na_rm);
     static R_xlen_t Get_region(SEXP instance, R_xlen_t from_idx, R_xlen_t size, int *buffer);
+    static int Is_sorted(SEXP instance);
+};
+
+class SimpleRawVecWrapper : public VecWrapper {
+public:
+    static R_altrep_class_t createDescriptor(const Args &args);
+private:
+    static Rbyte Elt(SEXP instance, R_xlen_t idx);
+    static R_xlen_t Get_region(SEXP instance, R_xlen_t from_idx, R_xlen_t size, Rbyte *buffer);
+};
+
+class SimpleComplexVecWrapper : public VecWrapper {
+public:
+    static R_altrep_class_t createDescriptor(const Args &args);
+private:
+    static Rcomplex Elt(SEXP instance, R_xlen_t idx);
+    static R_xlen_t Get_region(SEXP instance, R_xlen_t from_idx, R_xlen_t size, Rcomplex *buffer);
+};
+
+class SimpleStringVecWrapper : public VecWrapper {
+public:
+    static R_altrep_class_t createDescriptor(const Args &args);
+private:
+    static SEXP Elt(SEXP instance, R_xlen_t idx);
+    static void Set_elt(SEXP instance, R_xlen_t idx, SEXP value);
     static int Is_sorted(SEXP instance);
 };
 
