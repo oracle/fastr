@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -40,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -54,6 +56,7 @@ import static com.oracle.truffle.r.runtime.context.FastROptions.FullPrecisionSum
  * Sum has combine semantics (TBD: exactly?) and uses a reduce operation on the resulting array.
  */
 @RBuiltin(name = "sum", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE_SUMMARY)
+@ImportStatic(AltrepUtilities.class)
 public abstract class Sum extends RBuiltinNode.Arg2 {
 
     private static final ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, true, false, false);
@@ -76,14 +79,6 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
 
     protected boolean fullPrecision() {
         return RContext.getInstance().getOption(FullPrecisionSum);
-    }
-
-    protected boolean isAltrep(Object object) {
-        return AltrepUtilities.isAltrep(object);
-    }
-
-    protected boolean isSumMethodRegistered(Object object) {
-        return AltrepUtilities.hasSumMethodRegistered(object);
     }
 
     @Child private MiscRFFI.ExactSumNode exactSumNode;
@@ -140,10 +135,10 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
      * to corresponding method, if there are more S4 instances, no dispatching is done.
      */
     @Specialization(replaces = "sumLengthOneRDoubleVector",
-            guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "isSumMethodRegistered(args.getArgument(0))"})
+            guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "hasSumMethodRegistered(args.getArgument(0))"})
     protected Object sumLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
-                                        @Cached AltrepUtilities.AltrepSumMethodInvokerNode altrepSumInvokerNode) {
-        return altrepSumInvokerNode.execute(args.getArgument(0), naRm);
+                                        @Cached AltrepRFFI.SumNode sumNode) {
+        return sumNode.execute(args.getArgument(0), naRm);
     }
 
     @Specialization(replaces = {"sumLengthOneRDoubleVector", "sumLengthOneAltrep"}, guards = "args.getLength() == 1")

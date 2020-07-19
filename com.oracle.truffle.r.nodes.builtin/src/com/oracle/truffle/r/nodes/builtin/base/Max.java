@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode;
@@ -33,6 +34,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -41,6 +43,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUMMARY;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "max", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE_SUMMARY)
+@ImportStatic(AltrepUtilities.class)
 public abstract class Max extends RBuiltinNode.Arg2 {
 
     private static final ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX, RError.Message.NO_NONMISSING_MAX_NA,
@@ -53,28 +56,20 @@ public abstract class Max extends RBuiltinNode.Arg2 {
         casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
-    protected boolean isAltrep(Object object) {
-        return AltrepUtilities.isAltrep(object);
-    }
-
-    protected boolean isMaxMethodRegistered(Object object) {
-        return AltrepUtilities.hasMaxMethodRegistered(object);
-    }
-
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
-    @Specialization(guards = "args.getLength() == 1")
+    @Specialization(guards = {"args.getLength() == 1", "!isAltrep(args.getArgument(0))"})
     protected Object maxLengthOne(RArgsValuesAndNames args, boolean naRm) {
         return reduce.executeReduce(args.getArgument(0), naRm, false);
     }
 
-    @Specialization(guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "isMaxMethodRegistered(args.getArgument(0))"})
+    @Specialization(guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "hasMaxMethodRegistered(args.getArgument(0))"})
     protected Object maxLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
-                                        @Cached AltrepUtilities.AltrepMaxMethodInvokerNode altrepMaxInvokerNode) {
-        return altrepMaxInvokerNode.execute(args.getArgument(0), naRm);
+                                        @Cached AltrepRFFI.MaxNode maxNode) {
+        return maxNode.execute(args.getArgument(0), naRm);
     }
 
     @Specialization(replaces = {"maxLengthOne", "maxLengthOneAltrep"})

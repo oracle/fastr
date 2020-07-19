@@ -1,9 +1,5 @@
 package com.oracle.truffle.r.runtime.data.altrep;
 
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RAltComplexVectorData;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
@@ -371,62 +367,5 @@ public class AltrepUtilities {
         assert altrepVec.isAltRep();
         AltrepRFFI.LengthNode lengthNode = AltrepRFFIFactory.LengthNodeGen.getUncached();
         return lengthNode.execute(altrepVec);
-    }
-
-    public abstract static class AltrepSumMethodInvokerNode extends Node {
-        public abstract Object execute(Object altrepVector, boolean naRm);
-
-        public static AltrepSumMethodInvokerNode create() {
-            return AltrepUtilitiesFactory.AltrepSumMethodInvokerNodeGen.create();
-        }
-
-        @Specialization
-        Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @Cached AltrepRFFI.SumNode sumNode) {
-            return sumNode.execute(altIntVec, naRm);
-        }
-
-        @Fallback
-        Object fallback(Object vector, @SuppressWarnings("unused") boolean naRm) {
-            throw RInternalError.shouldNotReachHere("AltrepSumMethodInvoker: Unknown type of vector: " + vector.toString());
-        }
-    }
-
-    public abstract static class AltrepMaxMethodInvokerNode extends Node {
-        public abstract Object execute(Object altrepVector, boolean naRm);
-
-        public static AltrepMaxMethodInvokerNode create() {
-            return AltrepUtilitiesFactory.AltrepMaxMethodInvokerNodeGen.create();
-        }
-
-        @Specialization
-        Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @Cached AltrepRFFI.MaxNode maxNode) {
-            return maxNode.execute(altIntVec, naRm);
-        }
-
-        @Fallback
-        Object fallback(Object vector, @SuppressWarnings("unused") boolean naRm) {
-            throw RInternalError.shouldNotReachHere("AltrepMaxMethodInvoker: Unknown type of vector: " + vector.toString());
-        }
-    }
-
-    public abstract static class AltrepMinMethodInvokerNode extends Node {
-        public abstract Object execute(Object altrepVector, boolean naRm);
-
-        public static AltrepMinMethodInvokerNode create() {
-            return AltrepUtilitiesFactory.AltrepMinMethodInvokerNodeGen.create();
-        }
-
-        @Specialization
-        Object doAltInt(RIntVector altIntVec, boolean naRm,
-                        @Cached AltrepRFFI.MinNode minNode) {
-            return minNode.execute(altIntVec, naRm);
-        }
-
-        @Fallback
-        Object fallback(Object vector, @SuppressWarnings("unused") boolean naRm) {
-            throw RInternalError.shouldNotReachHere("AltrepMinMethodInvokerNode: Unknown type of vector: " + vector.toString());
-        }
     }
 }

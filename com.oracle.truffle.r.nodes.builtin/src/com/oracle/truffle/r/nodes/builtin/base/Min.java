@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode;
@@ -33,6 +34,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
+import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -41,6 +43,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUMMARY;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "min", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE_SUMMARY)
+@ImportStatic(AltrepUtilities.class)
 public abstract class Min extends RBuiltinNode.Arg2 {
 
     private static final ReduceSemantics semantics = new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN, RError.Message.NO_NONMISSING_MIN_NA,
@@ -53,28 +56,20 @@ public abstract class Min extends RBuiltinNode.Arg2 {
         casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 
-    protected boolean isAltrep(Object object) {
-        return AltrepUtilities.isAltrep(object);
-    }
-
-    protected boolean isMinMethodRegistered(Object object) {
-        return AltrepUtilities.hasMinMethodRegistered(object);
-    }
-
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
-    @Specialization(guards = "args.getLength() == 1")
+    @Specialization(guards = {"args.getLength() == 1", "!isAltrep(args.getArgument(0))"})
     protected Object minLengthOne(RArgsValuesAndNames args, boolean naRm) {
         return reduce.executeReduce(args.getArgument(0), naRm, false);
     }
 
-    @Specialization(guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "isMinMethodRegistered(args.getArgument(0))"})
+    @Specialization(guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "hasMinMethodRegistered(args.getArgument(0))"})
     protected Object minLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
-                                        @Cached AltrepUtilities.AltrepMinMethodInvokerNode altrepMinMethodInvokerNode) {
-        return altrepMinMethodInvokerNode.execute(args.getArgument(0), naRm);
+                                        @Cached AltrepRFFI.MinNode minNode) {
+        return minNode.execute(args.getArgument(0), naRm);
     }
 
     @Specialization(replaces = {"minLengthOne", "minLengthOneAltrep"})
