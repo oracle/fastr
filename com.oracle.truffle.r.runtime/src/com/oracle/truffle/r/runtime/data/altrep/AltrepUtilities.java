@@ -5,16 +5,20 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RAltComplexVectorData;
 import com.oracle.truffle.r.runtime.data.RAltIntVectorData;
 import com.oracle.truffle.r.runtime.data.RAltLogicalVectorData;
+import com.oracle.truffle.r.runtime.data.RAltRawVectorData;
 import com.oracle.truffle.r.runtime.data.RAltRealVectorData;
 import com.oracle.truffle.r.runtime.data.RAltStringVectorData;
 import com.oracle.truffle.r.runtime.data.RAltrepVectorData;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -46,6 +50,16 @@ public class AltrepUtilities {
         return (RAltLogicalVectorData) altLogicalVector.getData();
     }
 
+    public static RAltComplexVectorData getAltComplexVectorData(RComplexVector altComplexVector) {
+        assert altComplexVector.isAltRep();
+        return (RAltComplexVectorData) altComplexVector.getData();
+    }
+
+    public static RAltRawVectorData getAltRawVectorData(RRawVector altRawVector) {
+        assert altRawVector.isAltRep();
+        return (RAltRawVectorData) altRawVector.getData();
+    }
+
     private static RAltStringVectorData getAltStringVectorData(RStringVector altStringVector) {
         assert altStringVector.isAltRep();
         return (RAltStringVectorData) altStringVector.getData();
@@ -64,6 +78,16 @@ public class AltrepUtilities {
     public static AltLogicalClassDescriptor getAltLogicalDescriptor(RLogicalVector altLogicalVector) {
         assert altLogicalVector.isAltRep();
         return getAltLogicalVectorData(altLogicalVector).getDescriptor();
+    }
+
+    public static AltComplexClassDescriptor getAltComplexDescriptor(RComplexVector altComplexVector) {
+        assert altComplexVector.isAltRep();
+        return getAltComplexVectorData(altComplexVector).getDescriptor();
+    }
+
+    public static AltRawClassDescriptor getAltRawDescriptor(RRawVector altRawVector) {
+        assert altRawVector.isAltRep();
+        return getAltRawVectorData(altRawVector).getDescriptor();
     }
 
     public static AltStringClassDescriptor getAltStringDescriptor(RStringVector altStringVector) {
@@ -125,6 +149,11 @@ public class AltrepUtilities {
         return data.getAltrepData().getDataPairList();
     }
 
+
+    public static AltrepMethodDescriptor getDuplicateMethodDescriptor(RAbstractAtomicVector altrepVector) {
+        return getAltRepClassDescriptor(altrepVector).getDuplicateMethodDescriptor();
+    }
+
     // Method descriptor getters from altinteger vectors:
 
     public static AltrepMethodDescriptor getLengthMethodDescriptor(RIntVector altIntVector) {
@@ -163,20 +192,72 @@ public class AltrepUtilities {
         return getAltIntDescriptor(altIntVector).getMinMethodDescriptor();
     }
 
-    public static AltrepMethodDescriptor getDuplicateMethodDescriptor(RIntVector altIntVector) {
-        return getAltIntDescriptor(altIntVector).getDuplicateMethodDescriptor();
-    }
-
     // Method descriptor getters from altreal vectors:
 
     public static AltrepMethodDescriptor getEltMethodDescriptor(RDoubleVector altRealVector) {
         return getAltRealDescriptor(altRealVector).getEltMethodDescriptor();
     }
 
+    public static AltrepMethodDescriptor getIsSortedMethodDescriptor(RDoubleVector altRealVector) {
+        return getAltRealDescriptor(altRealVector).getIsSortedMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getNoNAMethodDescriptor(RDoubleVector altRealVector) {
+        return getAltRealDescriptor(altRealVector).getNoNAMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getSumMethodDescriptor(RDoubleVector altRealVector) {
+        return getAltRealDescriptor(altRealVector).getSumMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getMaxMethodDescriptor(RDoubleVector altRealVector) {
+        return getAltRealDescriptor(altRealVector).getMaxMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getMinMethodDescriptor(RDoubleVector altRealVector) {
+        return getAltRealDescriptor(altRealVector).getMinMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getGetRegionMethodDescriptor(RDoubleVector altRealVector) {
+        return getAltRealDescriptor(altRealVector).getGetRegionMethodDescriptor();
+    }
+
     // Method descriptor getters from altlogical vectors:
 
     public static AltrepMethodDescriptor getEltMethodDescriptor(RLogicalVector altLogicalVector) {
         return getAltLogicalDescriptor(altLogicalVector).getEltMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getNoNAMethodDescriptor(RLogicalVector altLogicalVector) {
+        return getAltLogicalDescriptor(altLogicalVector).getNoNAMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getSumMethodDescriptor(RLogicalVector altLogicalVector) {
+        return getAltLogicalDescriptor(altLogicalVector).getSumMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getGetRegionMethodDescriptor(RLogicalVector altLogicalVector) {
+        return getAltLogicalDescriptor(altLogicalVector).getGetRegionMethodDescriptor();
+    }
+
+    // Method descriptor getter for altcomplex vectors:
+
+    public static AltrepMethodDescriptor getEltMethodDescriptor(RComplexVector altComplexVector) {
+        return getAltComplexDescriptor(altComplexVector).getEltMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getGetRegionMethodDescriptor(RComplexVector altComplexVector) {
+        return getAltComplexDescriptor(altComplexVector).getGetRegionMethodDescriptor();
+    }
+
+    // Method descriptor getter for altraw vectors:
+
+    public static AltrepMethodDescriptor getEltMethodDescriptor(RRawVector altRawVector) {
+        return getAltRawDescriptor(altRawVector).getEltMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getGetRegionMethodDescriptor(RRawVector altRawVector) {
+        return getAltRawDescriptor(altRawVector).getGetRegionMethodDescriptor();
     }
 
     // Method descriptor getters from altstring vectors:
@@ -191,6 +272,14 @@ public class AltrepUtilities {
 
     public static AltrepMethodDescriptor getLengthMethodDescriptor(RStringVector altStringVector) {
         return getAltStringDescriptor(altStringVector).getLengthMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getIsSortedMethodDescriptor(RStringVector altStringVector) {
+        return getAltStringDescriptor(altStringVector).getIsSortedMethodDescriptor();
+    }
+
+    public static AltrepMethodDescriptor getNoNAMethodDescriptor(RStringVector altStringVector) {
+        return getAltStringDescriptor(altStringVector).getNoNAMethodDescriptor();
     }
 
 

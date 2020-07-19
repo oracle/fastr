@@ -16,12 +16,17 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAltrepVectorData;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.altrep.AltComplexClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltLogicalClassDescriptor;
+import com.oracle.truffle.r.runtime.data.altrep.AltRawClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
@@ -47,19 +52,19 @@ public final class AltrepRFFI {
         return RFFIFactory.getAltrepRFFI().downCallNodeFactory.getUncached();
     }
 
-    private static boolean expectBoolean(InteropLibrary interop, Object value) {
-        RInternalError.guarantee(interop.isBoolean(value), "Value from downcall should be boolean");
+    private static int expectInteger(InteropLibrary interop, Object value) {
+        RInternalError.guarantee(interop.isNumber(value), "Value from downcall should be an integer");
         try {
-            return interop.asBoolean(value);
+            return interop.asInt(value);
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
     }
 
-    private static int expectInteger(InteropLibrary interop, Object value) {
-        RInternalError.guarantee(interop.isNumber(value), "Value from downcall should be an integer");
+    private static byte expectByte(InteropLibrary interop, Object value) {
+        RInternalError.guarantee(interop.isNumber(value), "Value from downcall should be byte");
         try {
-            return interop.asInt(value);
+            return interop.asByte(value);
         } catch (UnsupportedMessageException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
@@ -197,6 +202,26 @@ public final class AltrepRFFI {
                     AltStringClassDescriptor.eltMethodWrapArguments, new Object[]{altStringVector, index});
             return expectString(retValueInterop, retValue);
         }
+
+        @Specialization
+        protected RComplex eltOfAltComplex(RComplexVector altComplexVector, int index,
+                                           @Cached AltrepDownCallNode downCallNode) {
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getEltMethodDescriptor(altComplexVector);
+            Object retValue = downCallNode.execute(methodDescr, AltComplexClassDescriptor.eltMethodUnwrapResult,
+                    AltComplexClassDescriptor.eltMethodWrapArguments, new Object[]{altComplexVector, index});
+            assert retValue instanceof RComplex;
+            return (RComplex) retValue;
+        }
+
+        @Specialization
+        protected byte eltOfAltRaw(RRawVector altRawVector, int index,
+                                        @Cached AltrepDownCallNode downCallNode,
+                                        @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getEltMethodDescriptor(altRawVector);
+            Object retValue = downCallNode.execute(methodDescr, AltRawClassDescriptor.eltMethodUnwrapResult,
+                    AltRawClassDescriptor.eltMethodWrapArguments, new Object[]{altRawVector, index});
+            return expectByte(retValueInterop, retValue);
+        }
     }
 
     @GenerateUncached
@@ -294,7 +319,7 @@ public final class AltrepRFFI {
         public abstract Object execute(RAbstractAtomicVector altrepVector);
 
         @Specialization
-        protected Object doIt(RAbstractAtomicVector altVec,
+        protected Object dataptrOrNullUncached(RAbstractAtomicVector altVec,
                               @CachedLibrary(limit = "1") InteropLibrary interopLib,
                               @Cached AltrepDownCallNode downCallNode) {
             AltVecClassDescriptor classDescriptor = AltrepUtilities.getAltVecClassDescriptor(altVec);
@@ -306,18 +331,90 @@ public final class AltrepRFFI {
     }
 
     @GenerateUncached
+    @ImportStatic({AltrepUtilities.class, AltRepClassDescriptor.class})
     public abstract static class IsSortedNode extends Node {
         public abstract AltrepSortedness execute(Object altrepVector);
 
-        @Specialization
-        protected AltrepSortedness doIt(RIntVector altIntVector,
-                                     @Cached AltrepDownCallNode downCallNode,
-                                     @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
-            assert AltrepUtilities.isAltrep(altIntVector);
-            AltrepMethodDescriptor methodDescr = AltrepUtilities.getIsSortedMethodDescriptor(altIntVector);
-            Object retValue = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.isSortedMethodUnwrapResult,
+        // Alt integers:
+
+        @Specialization(guards = "altIntClassDescriptor == getAltIntDescriptor(altIntVector)",
+                        assumptions = "getNoMethodRedefinedAssumption()")
+        protected AltrepSortedness isAltIntSorted(RIntVector altIntVector,
+                          @Cached AltrepDownCallNode downCallNode,
+                          @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
+                          @Cached("getAltIntDescriptor(altIntVector)") @SuppressWarnings("unused") AltIntegerClassDescriptor altIntClassDescriptor,
+                          @Cached("altIntClassDescriptor.getIsSortedMethodDescriptor()") AltrepMethodDescriptor isSortedMethod) {
+            Object retValue = downCallNode.execute(isSortedMethod, AltIntegerClassDescriptor.isSortedMethodUnwrapResult,
                     AltIntegerClassDescriptor.isSortedMethodWrapArguments, new Object[]{altIntVector});
             return AltrepSortedness.fromInt(expectInteger(retValueInterop, retValue));
+        }
+
+        @Specialization(replaces = "isAltIntSorted")
+        protected AltrepSortedness isAltIntSortedUncached(RIntVector altIntVector,
+                          @Cached AltrepDownCallNode downCallNode,
+                          @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            return isAltIntSorted(altIntVector, downCallNode, retValueInterop,
+                    AltrepUtilities.getAltIntDescriptor(altIntVector),
+                    AltrepUtilities.getIsSortedMethodDescriptor(altIntVector));
+        }
+
+        // Alt reals:
+
+        @Specialization(guards = "altRealClassDescriptor == getAltRealDescriptor(altRealVector)",
+                        assumptions = "getNoMethodRedefinedAssumption()")
+        protected AltrepSortedness isAltRealSorted(RDoubleVector altRealVector,
+                          @Cached AltrepDownCallNode downCallNode,
+                          @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
+                          @Cached("getAltRealDescriptor(altRealVector)") @SuppressWarnings("unused") AltRealClassDescriptor altRealClassDescriptor,
+                          @Cached("altRealClassDescriptor.getIsSortedMethodDescriptor()") AltrepMethodDescriptor isSortedMethod) {
+            Object retValue = downCallNode.execute(isSortedMethod, AltRealClassDescriptor.isSortedMethodUnwrapResult,
+                    AltRealClassDescriptor.isSortedMethodWrapArguments, new Object[]{altRealVector});
+            return AltrepSortedness.fromInt(expectInteger(retValueInterop, retValue));
+        }
+
+        @Specialization(replaces = "isAltRealSorted")
+        protected AltrepSortedness isAltRealSortedUncached(RDoubleVector altRealVector,
+                                  @Cached AltrepDownCallNode downCallNode,
+                                  @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            return isAltRealSorted(altRealVector, downCallNode, retValueInterop,
+                    AltrepUtilities.getAltRealDescriptor(altRealVector),
+                    AltrepUtilities.getIsSortedMethodDescriptor(altRealVector));
+        }
+
+        // Alt logicals:
+
+        @Specialization
+        protected AltrepSortedness isAltLogicalSortedUncached(RLogicalVector altLogicalVector,
+                              @Cached AltrepDownCallNode downCallNode,
+                              @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            AltLogicalClassDescriptor altLogicalClassDescriptor = AltrepUtilities.getAltLogicalDescriptor(altLogicalVector);
+            AltrepMethodDescriptor isSortedMethod = altLogicalClassDescriptor.getIsSortedMethodDescriptor();
+            Object retValue = downCallNode.execute(isSortedMethod, AltLogicalClassDescriptor.isSortedMethodUnwrapResult,
+                    AltLogicalClassDescriptor.isSortedMethodWrapArguments, new Object[]{altLogicalVector});
+            return AltrepSortedness.fromInt(expectInteger(retValueInterop, retValue));
+        }
+
+        // Alt strings:
+
+        @Specialization(guards = "altStringClassDescriptor == getAltStringDescriptor(altStringVector)",
+                        assumptions = "getNoMethodRedefinedAssumption()")
+        protected AltrepSortedness isAltStringSorted(RStringVector altStringVector,
+                                   @Cached AltrepDownCallNode downCallNode,
+                                   @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
+                                   @Cached("getAltStringDescriptor(altStringVector)") @SuppressWarnings("unused") AltStringClassDescriptor altStringClassDescriptor,
+                                   @Cached("altStringClassDescriptor.getIsSortedMethodDescriptor()") AltrepMethodDescriptor isSortedMethod) {
+            Object retValue = downCallNode.execute(isSortedMethod, AltStringClassDescriptor.isSortedMethodUnwrapResult,
+                    AltStringClassDescriptor.isSortedMethodWrapArguments, new Object[]{altStringVector});
+            return AltrepSortedness.fromInt(expectInteger(retValueInterop, retValue));
+        }
+
+        @Specialization(replaces = "isAltStringSorted")
+        protected AltrepSortedness isAltStringSortedUncached(RStringVector altStringVector,
+                                                           @Cached AltrepDownCallNode downCallNode,
+                                                           @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            return isAltStringSorted(altStringVector, downCallNode, retValueInterop,
+                    AltrepUtilities.getAltStringDescriptor(altStringVector),
+                    AltrepUtilities.getIsSortedMethodDescriptor(altStringVector));
         }
     }
 
@@ -326,47 +423,154 @@ public final class AltrepRFFI {
         public abstract boolean execute(Object altrepVector);
 
         @Specialization
-        protected boolean doIt(RIntVector altIntVector,
+        protected boolean altIntNoNA(RIntVector altIntVector,
                             @Cached AltrepDownCallNode downCallNode,
                             @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
-            assert AltrepUtilities.isAltrep(altIntVector);
             AltrepMethodDescriptor methodDescr = AltrepUtilities.getNoNAMethodDescriptor(altIntVector);
             Object retValue = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.noNAMethodUnwrapResult,
                     AltIntegerClassDescriptor.noNAMethodWrapArguments, new Object[]{altIntVector});
-            return expectInteger(retValueInterop, retValue) == 1;
+            return expectBoolean(retValueInterop, retValue);
+        }
+
+        @Specialization
+        protected boolean altRealNoNA(RDoubleVector altRealVector,
+                                     @Cached AltrepDownCallNode downCallNode,
+                                     @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getNoNAMethodDescriptor(altRealVector);
+            Object retValue = downCallNode.execute(methodDescr, AltRealClassDescriptor.noNAMethodUnwrapResult,
+                    AltRealClassDescriptor.noNAMethodWrapArguments, new Object[]{altRealVector});
+            return expectBoolean(retValueInterop, retValue);
+        }
+
+        @Specialization
+        protected boolean altLogicalNoNA(RLogicalVector altLogicalVector,
+                                      @Cached AltrepDownCallNode downCallNode,
+                                      @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getNoNAMethodDescriptor(altLogicalVector);
+            Object retValue = downCallNode.execute(methodDescr, AltLogicalClassDescriptor.noNAMethodUnwrapResult,
+                    AltLogicalClassDescriptor.noNAMethodWrapArguments, new Object[]{altLogicalVector});
+            return expectBoolean(retValueInterop, retValue);
+        }
+
+        @Specialization
+        protected boolean altStringNoNA(RStringVector altStringVector,
+                                         @Cached AltrepDownCallNode downCallNode,
+                                         @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            AltrepMethodDescriptor methodDescr = AltrepUtilities.getNoNAMethodDescriptor(altStringVector);
+            Object retValue = downCallNode.execute(methodDescr, AltStringClassDescriptor.noNAMethodUnwrapResult,
+                    AltStringClassDescriptor.noNAMethodWrapArguments, new Object[]{altStringVector});
+            return expectBoolean(retValueInterop, retValue);
+        }
+
+        private static boolean expectBoolean(InteropLibrary interop, Object value) {
+            return expectInteger(interop, value) == 1;
         }
     }
 
     @GenerateUncached
+    @ImportStatic({AltrepUtilities.class, AltRepClassDescriptor.class})
     public abstract static class GetRegionNode extends Node {
         public abstract int execute(Object altrepVector, int fromIdx, int size, Object buffer);
 
-        @Specialization
-        protected int doIt(RIntVector altIntVector, int fromIdx, int size, Object buffer,
+        @Specialization(guards = "classDescriptor == getAltIntDescriptor(altIntVector)",
+                        assumptions = "getNoMethodRedefinedAssumption()")
+        protected int getRegionAltInt(RIntVector altIntVector, int fromIdx, int size, Object buffer,
                         @Cached AltrepDownCallNode downCallNode,
-                        @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
-            assert AltrepUtilities.isAltrep(altIntVector);
-            assert InteropLibrary.getUncached().hasArrayElements(buffer);
-            AltrepMethodDescriptor methodDescr = AltrepUtilities.getGetRegionMethodDescriptor(altIntVector);
-            Object ret = downCallNode.execute(methodDescr, AltIntegerClassDescriptor.getRegionMethodUnwrapResult,
+                        @CachedLibrary(limit = "1") InteropLibrary retValueInterop,
+                          @Cached("getAltIntDescriptor(altIntVector)") @SuppressWarnings("unused") AltIntegerClassDescriptor classDescriptor,
+                          @Cached("classDescriptor.getGetRegionMethodDescriptor()") AltrepMethodDescriptor getRegionMethod) {
+            Object ret = downCallNode.execute(getRegionMethod, AltIntegerClassDescriptor.getRegionMethodUnwrapResult,
                     AltIntegerClassDescriptor.getRegionMethodWrapArguments, new Object[]{altIntVector, fromIdx, size, buffer});
+            return expectInteger(retValueInterop, ret);
+        }
+
+        @Specialization(replaces = "getRegionAltInt")
+        protected int getRegionAltIntUncached(RIntVector altIntVector, int fromIdx, int size, Object buffer,
+                                              @Cached AltrepDownCallNode downCallNode,
+                                              @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            return getRegionAltInt(altIntVector, fromIdx, size, buffer, downCallNode, retValueInterop,
+                    AltrepUtilities.getAltIntDescriptor(altIntVector),
+                    AltrepUtilities.getGetRegionMethodDescriptor(altIntVector));
+        }
+
+        @Specialization(guards = "classDescriptor == getAltRealDescriptor(altRealVector)",
+                assumptions = "getNoMethodRedefinedAssumption()")
+        protected int getRegionAltReal(RDoubleVector altRealVector, int fromIdx, int size, Object buffer,
+                                      @Cached AltrepDownCallNode downCallNode,
+                                      @CachedLibrary(limit = "1") InteropLibrary retValueRealerop,
+                                      @Cached("getAltRealDescriptor(altRealVector)") @SuppressWarnings("unused") AltRealClassDescriptor classDescriptor,
+                                      @Cached("classDescriptor.getGetRegionMethodDescriptor()") AltrepMethodDescriptor getRegionMethod) {
+            Object ret = downCallNode.execute(getRegionMethod, AltRealClassDescriptor.getRegionMethodUnwrapResult,
+                    AltRealClassDescriptor.getRegionMethodWrapArguments, new Object[]{altRealVector, fromIdx, size, buffer});
+            return expectInteger(retValueRealerop, ret);
+        }
+
+        @Specialization(replaces = "getRegionAltReal")
+        protected int getRegionAltRealUncached(RDoubleVector altRealVector, int fromIdx, int size, Object buffer,
+                                              @Cached AltrepDownCallNode downCallNode,
+                                              @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            return getRegionAltReal(altRealVector, fromIdx, size, buffer, downCallNode, retValueInterop,
+                    AltrepUtilities.getAltRealDescriptor(altRealVector),
+                    AltrepUtilities.getGetRegionMethodDescriptor(altRealVector));
+        }
+
+        @Specialization
+        protected int getRegionAltLogicalUncached(RLogicalVector altLogicalVector, int fromIdx, int size, Object buffer,
+                                                  @Cached AltrepDownCallNode downCallNode,
+                                                  @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            AltLogicalClassDescriptor classDescriptor = AltrepUtilities.getAltLogicalDescriptor(altLogicalVector);
+            Object ret = downCallNode.execute(classDescriptor.getGetRegionMethodDescriptor(),
+                    AltLogicalClassDescriptor.getRegionMethodUnwrapResult,
+                    AltLogicalClassDescriptor.getRegionMethodWrapArguments,
+                    new Object[]{altLogicalVector, fromIdx, size, buffer});
+            return expectInteger(retValueInterop, ret);
+        }
+
+        @Specialization
+        protected int getRegionAltComplexUncached(RComplexVector altComplexVector, int fromIdx, int size, Object buffer,
+                                                  @Cached AltrepDownCallNode downCallNode,
+                                                  @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            AltComplexClassDescriptor classDescriptor = AltrepUtilities.getAltComplexDescriptor(altComplexVector);
+            Object ret = downCallNode.execute(classDescriptor.getGetRegionMethodDescriptor(),
+                    AltComplexClassDescriptor.getRegionMethodUnwrapResult,
+                    AltComplexClassDescriptor.getRegionMethodWrapArguments,
+                    new Object[]{altComplexVector, fromIdx, size, buffer});
+            return expectInteger(retValueInterop, ret);
+        }
+
+        @Specialization
+        protected int getRegionAltRawUncached(RRawVector altRawVector, int fromIdx, int size, Object buffer,
+                                              @Cached AltrepDownCallNode downCallNode,
+                                              @CachedLibrary(limit = "1") InteropLibrary retValueInterop) {
+            AltRawClassDescriptor classDescriptor = AltrepUtilities.getAltRawDescriptor(altRawVector);
+            Object ret = downCallNode.execute(classDescriptor.getGetRegionMethodDescriptor(),
+                    AltRawClassDescriptor.getRegionMethodUnwrapResult,
+                    AltRawClassDescriptor.getRegionMethodWrapArguments,
+                    new Object[]{altRawVector, fromIdx, size, buffer});
             return expectInteger(retValueInterop, ret);
         }
     }
 
     @GenerateUncached
+    @ImportStatic({AltrepUtilities.class, AltRepClassDescriptor.class})
     public abstract static class DuplicateNode extends Node {
         public abstract Object execute(Object altrepVector, boolean deep);
 
-        // TODO: More specializations, or one general
+        @Specialization(guards = "classDescriptor == getAltRepClassDescriptor(altrepVector)",
+                        assumptions = "getNoMethodRedefinedAssumption()")
+        protected Object duplicateAltrepVec(RAbstractAtomicVector altrepVector, boolean deep,
+                               @Cached AltrepDownCallNode downCallNode,
+                               @Cached("getAltRepClassDescriptor(altrepVector)") @SuppressWarnings("unused") AltRepClassDescriptor classDescriptor,
+                               @Cached("classDescriptor.getDuplicateMethodDescriptor()") AltrepMethodDescriptor duplicateMethod) {
+            return downCallNode.execute(duplicateMethod, AltRepClassDescriptor.duplicateMethodUnwrapResult,
+                    AltRepClassDescriptor.duplicateMethodWrapArguments, new Object[]{altrepVector, deep});
+        }
 
-        @Specialization
-        protected Object doIt(RIntVector altIntVector, boolean deep,
-                           @Cached AltrepDownCallNode downCallNode) {
-            assert AltrepUtilities.isAltrep(altIntVector);
-            AltrepMethodDescriptor methodDescriptor = AltrepUtilities.getDuplicateMethodDescriptor(altIntVector);
-            return downCallNode.execute(methodDescriptor, AltIntegerClassDescriptor.duplicateMethodUnwrapResult,
-                    AltIntegerClassDescriptor.duplicateMethodWrapArguments, new Object[]{altIntVector, deep});
+        @Specialization(replaces = "duplicateAltrepVec")
+        protected Object duplicateAltrepVecUncached(RAbstractAtomicVector altrepVector, boolean deep,
+                                                    @Cached AltrepDownCallNode downCallNode) {
+            return duplicateAltrepVec(altrepVector, deep, downCallNode, AltrepUtilities.getAltRepClassDescriptor(altrepVector),
+                    AltrepUtilities.getDuplicateMethodDescriptor(altrepVector));
         }
     }
 
@@ -375,13 +579,32 @@ public final class AltrepRFFI {
         public abstract Object execute(Object altrepVector, boolean naRm);
 
         @Specialization
-        protected int doIt(RIntVector altIntVec, boolean naRm,
-                           @Cached AltrepDownCallNode downCallNode,
-                           @CachedLibrary(limit = "1") InteropLibrary interopLib) {
-            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getSumMethodDescriptor(altIntVec);
-            Object ret = downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.sumMethodUnwrapResult,
-                    AltIntegerClassDescriptor.sumMethodWrapArguments, new Object[]{altIntVec, naRm});
-            return expectInteger(interopLib, ret);
+        protected Object altIntSum(RIntVector altIntVec, boolean naRm,
+                           @Cached AltrepDownCallNode downCallNode) {
+            AltrepMethodDescriptor sumMethod = AltrepUtilities.getSumMethodDescriptor(altIntVec);
+            return invokeSumMethod(downCallNode, sumMethod, altIntVec, naRm);
+        }
+
+        @Specialization
+        protected Object altRealSum(RDoubleVector altRealVec, boolean naRm,
+                                   @Cached AltrepDownCallNode downCallNode) {
+            AltrepMethodDescriptor sumMethod = AltrepUtilities.getSumMethodDescriptor(altRealVec);
+            return invokeSumMethod(downCallNode, sumMethod, altRealVec, naRm);
+        }
+
+        @Specialization
+        protected Object altLogicalSum(RLogicalVector altLogicalVec, boolean naRm,
+                                    @Cached AltrepDownCallNode downCallNode) {
+            AltrepMethodDescriptor sumMethod = AltrepUtilities.getSumMethodDescriptor(altLogicalVec);
+            return invokeSumMethod(downCallNode, sumMethod, altLogicalVec, naRm);
+        }
+
+        private static Object invokeSumMethod(AltrepDownCallNode downCallNode, AltrepMethodDescriptor sumMethod,
+                                              RAbstractAtomicVector altrepVec, boolean naRm) {
+            // Sum method has same signature in every class descriptor, therefore we can use just wrapping/unwrapping
+            // argument constants from AltIntegerClassDescriptor.
+            return downCallNode.execute(sumMethod, AltIntegerClassDescriptor.sumMethodUnwrapResult,
+                    AltIntegerClassDescriptor.sumMethodWrapArguments, new Object[]{altrepVec, naRm});
         }
     }
 
@@ -390,11 +613,19 @@ public final class AltrepRFFI {
         public abstract Object execute(Object altrepVector, boolean naRm);
 
         @Specialization
-        protected Object doIt(RIntVector altIntVec, boolean naRm,
+        protected Object altIntMax(RIntVector altIntVec, boolean naRm,
                            @Cached AltrepDownCallNode downCallNode) {
-            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getMaxMethodDescriptor(altIntVec);
-            return downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.maxMethodUnwrapResult,
+            AltrepMethodDescriptor maxMethod = AltrepUtilities.getMaxMethodDescriptor(altIntVec);
+            return downCallNode.execute(maxMethod, AltIntegerClassDescriptor.maxMethodUnwrapResult,
                     AltIntegerClassDescriptor.maxMethodWrapArguments, new Object[]{altIntVec, naRm});
+        }
+
+        @Specialization
+        protected Object altRealMax(RDoubleVector altRealVec, boolean naRm,
+                                    @Cached AltrepDownCallNode downCallNode) {
+            AltrepMethodDescriptor maxMethod = AltrepUtilities.getMaxMethodDescriptor(altRealVec);
+            return downCallNode.execute(maxMethod, AltRealClassDescriptor.maxMethodUnwrapResult,
+                    AltRealClassDescriptor.maxMethodWrapArguments, new Object[]{altRealVec, naRm});
         }
     }
 
@@ -403,11 +634,19 @@ public final class AltrepRFFI {
         public abstract Object execute(Object altrepVector, boolean naRm);
 
         @Specialization
-        protected Object doIt(RIntVector altIntVec, boolean naRm,
-                              @Cached AltrepDownCallNode downCallNode) {
-            AltrepMethodDescriptor altrepMethodDescriptor = AltrepUtilities.getMinMethodDescriptor(altIntVec);
-            return downCallNode.execute(altrepMethodDescriptor, AltIntegerClassDescriptor.minMethodUnwrapResult,
+        protected Object altIntMin(RIntVector altIntVec, boolean naRm,
+                                   @Cached AltrepDownCallNode downCallNode) {
+            AltrepMethodDescriptor minMethod = AltrepUtilities.getMinMethodDescriptor(altIntVec);
+            return downCallNode.execute(minMethod, AltIntegerClassDescriptor.minMethodUnwrapResult,
                     AltIntegerClassDescriptor.minMethodWrapArguments, new Object[]{altIntVec, naRm});
+        }
+
+        @Specialization
+        protected Object altRealMin(RDoubleVector altRealVec, boolean naRm,
+                                    @Cached AltrepDownCallNode downCallNode) {
+            AltrepMethodDescriptor minMethod = AltrepUtilities.getMinMethodDescriptor(altRealVec);
+            return downCallNode.execute(minMethod, AltRealClassDescriptor.minMethodUnwrapResult,
+                    AltRealClassDescriptor.minMethodWrapArguments, new Object[]{altRealVec, naRm});
         }
     }
 }

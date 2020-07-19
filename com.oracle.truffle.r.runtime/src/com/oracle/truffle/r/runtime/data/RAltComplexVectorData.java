@@ -56,6 +56,10 @@ public class RAltComplexVectorData extends RAltrepVectorData {
         return RType.Complex;
     }
 
+    public AltComplexClassDescriptor getDescriptor() {
+        return classDescriptor;
+    }
+
     @ExportMessage
     public static class GetComplexRegion {
         @Specialization(guards = "hasGetRegionMethod(altComplexVecData)")

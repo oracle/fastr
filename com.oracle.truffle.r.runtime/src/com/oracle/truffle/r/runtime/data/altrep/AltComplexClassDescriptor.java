@@ -36,6 +36,14 @@ public class AltComplexClassDescriptor extends AltVecClassDescriptor {
         return eltMethodDescriptor != null;
     }
 
+    public AltrepMethodDescriptor getEltMethodDescriptor() {
+        return eltMethodDescriptor;
+    }
+
+    public AltrepMethodDescriptor getGetRegionMethodDescriptor() {
+        return getRegionMethodDescriptor;
+    }
+
     @Override
     public String toString() {
         return "ALTCOMPLEX class descriptor for " + super.toString();

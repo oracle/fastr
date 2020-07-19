@@ -55,6 +55,10 @@ public class RAltRawVectorData extends RAltrepVectorData {
         return RType.Raw;
     }
 
+    public AltRawClassDescriptor getDescriptor() {
+        return classDescriptor;
+    }
+
     @ExportMessage
     public static class GetRawRegion {
         @Specialization(guards = "hasGetRegionMethod(altRawVectorData)")
