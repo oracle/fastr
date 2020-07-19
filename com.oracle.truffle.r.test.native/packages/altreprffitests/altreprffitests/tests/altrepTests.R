@@ -202,14 +202,40 @@ test_calls_to_altrep_methods <- function() {
     }
 
     test_sum_called <- function() {
-        logging_vec_wrapper.clear_called_methods()
-        instance <- logging_vec_wrapper.create_instance(1:10, gen.Sum = TRUE)
-        sum(instance)
-        stopifnot( logging_vec_wrapper.was_Sum_called(instance))
+        DATA_LIST <- list(
+            as.integer(1:10),
+            as.double(1:10)
+        )
+        for (data in DATA_LIST) {
+            logging_vec_wrapper.clear_called_methods()
+            instance <- logging_vec_wrapper.create_instance(data, gen.Sum = TRUE)
+            sum(instance)
+            stopifnot( logging_vec_wrapper.was_Sum_called(instance))
+        }
+    }
+
+    test_max_called <- function() {
+        for (data in list(as.integer(1:10), as.double(1:10))) {
+            logging_vec_wrapper.clear_called_methods()
+            instance <- logging_vec_wrapper.create_instance(data, gen.Max = TRUE)
+            max(instance)
+            stopifnot( logging_vec_wrapper.was_Max_called(instance))
+        }
+    }
+
+    test_min_called <- function() {
+        for (data in list(as.integer(1:10), as.double(1:10))) {
+            logging_vec_wrapper.clear_called_methods()
+            instance <- logging_vec_wrapper.create_instance(data, gen.Min = TRUE)
+            min(instance)
+            stopifnot( logging_vec_wrapper.was_Min_called(instance))
+        }
     }
 
     test_duplicate_called()
     test_sum_called()
+    test_max_called()
+    test_min_called()
 }
 
 test_framework_behavior <- function() {
