@@ -21,10 +21,12 @@ public class AltComplexClassDescriptor extends AltVecClassDescriptor {
     }
 
     public void registerEltMethod(AltrepMethodDescriptor eltMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.eltMethodDescriptor);
         this.eltMethodDescriptor = eltMethod;
     }
 
     public void registerGetRegionMethod(AltrepMethodDescriptor getRegionMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.getRegionMethodDescriptor);
         this.getRegionMethodDescriptor = getRegionMethod;
     }
 

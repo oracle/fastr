@@ -33,18 +33,22 @@ public class AltStringClassDescriptor extends AltVecClassDescriptor {
     }
 
     public void registerEltMethod(AltrepMethodDescriptor eltMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.eltMethodDescriptor);
         this.eltMethodDescriptor = eltMethod;
     }
 
     public void registerSetEltMethod(AltrepMethodDescriptor setEltMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.setEltMethodDescriptor);
         this.setEltMethodDescriptor = setEltMethod;
     }
 
     public void registerIsSortedMethod(AltrepMethodDescriptor isSortedMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.isSortedMethodDescriptor);
         this.isSortedMethodDescriptor = isSortedMethod;
     }
 
     public void registerNoNAMethod(AltrepMethodDescriptor noNAMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.noNAMethodDescriptor);
         this.noNAMethodDescriptor = noNAMethod;
     }
 

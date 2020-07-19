@@ -112,6 +112,12 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
         return noMethodRedefinedAssumption;
     }
 
+    protected void maybeInvalidateMethodRedefinedAssumption(AltrepMethodDescriptor oldDescriptor) {
+        if (oldDescriptor != null) {
+            noMethodRedefinedAssumption.invalidate();
+        }
+    }
+
     protected void logRegisterMethod(String methodName) {
         logger.finer(() -> "Register " + methodName + " on " + toString());
     }

@@ -73,30 +73,37 @@ public class AltRealClassDescriptor extends AltVecClassDescriptor {
     }
 
     public void registerEltMethod(AltrepMethodDescriptor eltMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.eltMethodDescriptor);
         this.eltMethodDescriptor = eltMethod;
     }
 
     public void registerGetRegionMethod(AltrepMethodDescriptor getRegionMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.getRegionMethodDescriptor);
         this.getRegionMethodDescriptor = getRegionMethod;
     }
 
     public void registerIsSortedMethod(AltrepMethodDescriptor isSortedMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.isSortedMethodDescriptor);
         this.isSortedMethodDescriptor = isSortedMethod;
     }
 
     public void registerNoNAMethod(AltrepMethodDescriptor noNAMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.noNAMethodDescriptor);
         this.noNAMethodDescriptor = noNAMethod;
     }
 
     public void registerSumMethod(AltrepMethodDescriptor sumMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.sumMethodDescriptor);
         this.sumMethodDescriptor = sumMethod;
     }
 
     public void registerMaxMethod(AltrepMethodDescriptor maxMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.maxMethodDescriptor);
         this.maxMethodDescriptor = maxMethod;
     }
 
     public void registerMinMethod(AltrepMethodDescriptor minMethod) {
+        maybeInvalidateMethodRedefinedAssumption(this.minMethodDescriptor);
         this.minMethodDescriptor = minMethod;
     }
 

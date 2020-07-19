@@ -104,36 +104,43 @@ public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
 
     public void registerEltMethod(AltrepMethodDescriptor eltMethod) {
         logRegisterMethod("Elt");
+        maybeInvalidateMethodRedefinedAssumption(this.eltMethodDescriptor);
         this.eltMethodDescriptor = eltMethod;
     }
 
     public void registerGetRegionMethod(AltrepMethodDescriptor getRegionMethod) {
         logRegisterMethod("Get_region");
+        maybeInvalidateMethodRedefinedAssumption(this.getRegionMethodDescriptor);
         this.getRegionMethodDescriptor = getRegionMethod;
     }
 
     public void registerIsSortedMethod(AltrepMethodDescriptor isSortedMethod) {
         logRegisterMethod("Is_sorted");
+        maybeInvalidateMethodRedefinedAssumption(this.isSortedMethodDescriptor);
         this.isSortedMethodDescriptor = isSortedMethod;
     }
 
     public void registerNoNAMethod(AltrepMethodDescriptor noNAMethod) {
         logRegisterMethod("No_NA");
+        maybeInvalidateMethodRedefinedAssumption(this.noNAMethodDescriptor);
         this.noNAMethodDescriptor = noNAMethod;
     }
 
     public void registerSumMethod(AltrepMethodDescriptor sumMethod) {
         logRegisterMethod("Sum");
+        maybeInvalidateMethodRedefinedAssumption(this.sumMethodDescriptor);
         this.sumMethodDescriptor = sumMethod;
     }
 
     public void registerMaxMethod(AltrepMethodDescriptor maxMethod) {
         logRegisterMethod("Max");
+        maybeInvalidateMethodRedefinedAssumption(this.maxMethodDescriptor);
         this.maxMethodDescriptor = maxMethod;
     }
 
     public void registerMinMethod(AltrepMethodDescriptor minMethod) {
         logRegisterMethod("Min");
+        maybeInvalidateMethodRedefinedAssumption(this.minMethodDescriptor);
         this.minMethodDescriptor = minMethod;
     }
 
