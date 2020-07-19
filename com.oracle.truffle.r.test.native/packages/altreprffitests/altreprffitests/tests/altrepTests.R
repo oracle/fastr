@@ -125,12 +125,14 @@ check_equal <- function(instance, expected_data) {
 
     test_length()
     test_elt()
-    test_sum()
-    test_min()
-    test_max()
     test_coerce()
-    test_is_unsorted()
-    test_is_sorted()
+    if (!is.raw(instance) && !is.raw(expected_data)) {
+        test_sum()
+        test_min()
+        test_max()
+        test_is_unsorted()
+        test_is_sorted()
+    }
     return (TRUE)
 }
 
@@ -144,7 +146,9 @@ test_default_implementations <- function() {
         # Reals
         c(1,2,3,4,5,6,7,42,-10),
         # Logical
-        c(TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, TRUE, FALSE, FALSE)
+        c(TRUE, TRUE, FALSE, FALSE, TRUE, FALSE, TRUE, FALSE, FALSE),
+        # Raw
+        as.raw(c(1,2,3,4,56,215,113))
     )
 
     for (param_name in c("gen.Duplicate", "gen.Coerce", "gen.Elt", "gen.Sum", "gen.Min", "gen.Max",
@@ -269,6 +273,12 @@ test_two_altlogicals <- function() {
     check_equal(instance_1, instance_2)
 }
 
+test_altraw <- function() {
+    data <- as.raw(c(42, 23, 15, 213, 156, 13, 20))
+    instance <- simple_vec_wrapper.create_instance(data)
+    check_equal(instance, data)
+}
+
 test_mmap <- function() {
     stopifnot(require(simplemmap))
     # TODO: finish ...
@@ -355,6 +365,7 @@ TESTS <- list(
     list("test_altreal", test_altreal),
     list("test_altlogical", test_altlogical),
     list("test_two_altlogicals", test_two_altlogicals),
+    list("test_altraw", test_altraw),
     list("test_default_implementations", test_default_implementations),
     list("test_calls_to_altrep_methods", test_calls_to_altrep_methods),
     list("test_framework_behavior", test_framework_behavior),
