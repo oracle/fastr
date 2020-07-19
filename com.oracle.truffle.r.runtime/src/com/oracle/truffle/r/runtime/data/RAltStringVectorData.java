@@ -1,12 +1,12 @@
 package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessWriteIterator;
+import com.oracle.truffle.r.runtime.data.VectorDataLibrary.RandomAccessIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqIterator;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary.SeqWriteIterator;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
@@ -53,6 +53,12 @@ public class RAltStringVectorData extends RAltrepVectorData {
     }
 
     @ExportMessage
+    public String getString(@SuppressWarnings("unused") RandomAccessIterator it, int index,
+                            @Shared("eltNode") @Cached AltrepRFFI.EltNode eltNode) {
+        return (String) eltNode.execute(owner, index);
+    }
+
+    @ExportMessage
     public String getStringAt(int index,
                               @Shared("eltNode") @Cached AltrepRFFI.EltNode eltNode) {
         return (String) eltNode.execute(owner, index);
@@ -66,19 +72,19 @@ public class RAltStringVectorData extends RAltrepVectorData {
 
     @ExportMessage
     public void setStringAt(int index, String value,
-                            @Exclusive @Cached AltrepRFFI.SetEltNode setEltNode) {
+                            @Shared("setEltNode") @Cached AltrepRFFI.SetEltNode setEltNode) {
         setEltNode.execute((RStringVector) owner, index, value);
     }
 
     @ExportMessage
     public void setNextString(SeqWriteIterator it, String value,
-                              @Exclusive @Cached AltrepRFFI.SetEltNode setEltNode) {
-            setEltNode.execute((RStringVector) owner, it.getIndex(), value);
+                              @Shared("setEltNode") @Cached AltrepRFFI.SetEltNode setEltNode) {
+        setEltNode.execute((RStringVector) owner, it.getIndex(), value);
     }
 
     @ExportMessage
     public void setString(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, String value,
-                          @Exclusive @Cached AltrepRFFI.SetEltNode setEltNode) {
+                          @Shared("setEltNode") @Cached AltrepRFFI.SetEltNode setEltNode) {
         setEltNode.execute((RStringVector) owner, index, value);
     }
 }
