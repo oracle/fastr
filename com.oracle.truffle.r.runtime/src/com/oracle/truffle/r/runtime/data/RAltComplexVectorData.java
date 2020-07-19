@@ -140,9 +140,11 @@ public class RAltComplexVectorData extends RAltrepVectorData {
         public abstract RComplex execute(Object altComplexVec, int index);
 
         @Specialization(guards = "hasEltMethodRegistered(altComplexVec)")
-        protected RComplex getComplexAtWithElt(RComplexVector altComplexVec, int index,
-                                       @Cached AltrepRFFI.EltNode eltNode) {
-            return (RComplex) eltNode.execute(altComplexVec, index);
+        protected RComplex getComplexAtWithElt(@SuppressWarnings("unused") RComplexVector altComplexVec,
+                                               @SuppressWarnings("unused") int index,
+                                       @SuppressWarnings("unused") @Cached AltrepRFFI.EltNode eltNode) {
+            // TODO: We should convert Rcomplex type in native code for this to work.
+            throw RInternalError.unimplemented("getComplexAtWithElt");
         }
 
         @Specialization(guards = "!hasEltMethodRegistered(altComplexVec)")
