@@ -58,10 +58,11 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
         assert methodInterop.isExecutable(altrepMethodDescriptor.method);
         RContext ctx = ctxRef.get();
 
+        Object before = null;
         if (isLLVMProfile.profile(altrepMethodDescriptor.rffiType == Type.LLVM)) {
             ctx.getRFFI(TruffleLLVM_Context.class).beforeDowncall(null, altrepMethodDescriptor.rffiType);
         } else {
-            ctx.getRFFI(TruffleNFI_Context.class).beforeDowncall(null, altrepMethodDescriptor.rffiType);
+            before = ctx.getRFFI(TruffleNFI_Context.class).beforeDowncall(null, altrepMethodDescriptor.rffiType);
         }
 
         Object ret;
@@ -79,7 +80,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
         if (isLLVMProfile.profile(altrepMethodDescriptor.rffiType == Type.LLVM)) {
             ctx.getRFFI(TruffleLLVM_Context.class).afterDowncall(null, altrepMethodDescriptor.rffiType, afterDownCallProfiles);
         } else {
-            ctx.getRFFI(TruffleNFI_Context.class).afterDowncall(null, altrepMethodDescriptor.rffiType, afterDownCallProfiles);
+            ctx.getRFFI(TruffleNFI_Context.class).afterDowncall(before, altrepMethodDescriptor.rffiType, afterDownCallProfiles);
         }
 
         return ret;
