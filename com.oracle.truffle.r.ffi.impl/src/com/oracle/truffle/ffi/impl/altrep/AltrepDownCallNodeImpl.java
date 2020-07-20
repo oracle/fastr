@@ -60,7 +60,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
 
         Object before = null;
         if (isLLVMProfile.profile(altrepMethodDescriptor.rffiType == Type.LLVM)) {
-            ctx.getRFFI(TruffleLLVM_Context.class).beforeDowncall(null, altrepMethodDescriptor.rffiType);
+            before = ctx.getRFFI(TruffleLLVM_Context.class).beforeDowncall(null, altrepMethodDescriptor.rffiType);
         } else {
             before = ctx.getRFFI(TruffleNFI_Context.class).beforeDowncall(null, altrepMethodDescriptor.rffiType);
         }
@@ -78,7 +78,7 @@ public abstract class AltrepDownCallNodeImpl extends AltrepDownCallNode {
         }
 
         if (isLLVMProfile.profile(altrepMethodDescriptor.rffiType == Type.LLVM)) {
-            ctx.getRFFI(TruffleLLVM_Context.class).afterDowncall(null, altrepMethodDescriptor.rffiType, afterDownCallProfiles);
+            ctx.getRFFI(TruffleLLVM_Context.class).afterDowncall(before, altrepMethodDescriptor.rffiType, afterDownCallProfiles);
         } else {
             ctx.getRFFI(TruffleNFI_Context.class).afterDowncall(before, altrepMethodDescriptor.rffiType, afterDownCallProfiles);
         }
