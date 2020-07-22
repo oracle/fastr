@@ -25,6 +25,7 @@ public abstract class NativeArrayWrapper implements TruffleObject {
     }
 
     public abstract void writeElement(long arrayAddr, long index, Object value);
+
     public abstract Object readElement(long arrayAddr, long index);
 
     @ExportMessage
@@ -61,7 +62,6 @@ public abstract class NativeArrayWrapper implements TruffleObject {
     public long getArraySize() {
         return size;
     }
-
 
     @ExportMessage(name = "isArrayElementModifiable")
     @ExportMessage(name = "isArrayElementReadable")

@@ -119,25 +119,22 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
     }
 
     /**
-     * The behavior of this specialization for altrep instances is currently copied from GNU-R (summary.c) and is
-     * as follows:
+     * The behavior of this specialization for altrep instances is currently copied from GNU-R
+     * (summary.c) and is as follows:
      * <ol>
-     *     <li>
-     *         If sum gets one altrep instance argument, it dispatches to Sum altrep method.
-     *     </li>
-     *     <li>
-     *         If sum gets more instances (both altrep instances and "normal" instances) it processess them with
-     *         <code>ITERATE_BY_REGION</code> and does not dispatch to Sum altrep method at all.
-     *     </li>
+     * <li>If sum gets one altrep instance argument, it dispatches to Sum altrep method.</li>
+     * <li>If sum gets more instances (both altrep instances and "normal" instances) it processess
+     * them with <code>ITERATE_BY_REGION</code> and does not dispatch to Sum altrep method at all.
+     * </li>
      * </ol>
      *
-     * Note that this behavior is same for S4 instances - when there is just one S4 instance argument, sum dispatches
-     * to corresponding method, if there are more S4 instances, no dispatching is done.
+     * Note that this behavior is same for S4 instances - when there is just one S4 instance
+     * argument, sum dispatches to corresponding method, if there are more S4 instances, no
+     * dispatching is done.
      */
-    @Specialization(replaces = "sumLengthOneRDoubleVector",
-            guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "hasSumMethodRegistered(args.getArgument(0))"})
+    @Specialization(replaces = "sumLengthOneRDoubleVector", guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "hasSumMethodRegistered(args.getArgument(0))"})
     protected Object sumLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
-                                        @Cached AltrepRFFI.SumNode sumNode) {
+                    @Cached AltrepRFFI.SumNode sumNode) {
         return sumNode.execute(args.getArgument(0), naRm);
     }
 

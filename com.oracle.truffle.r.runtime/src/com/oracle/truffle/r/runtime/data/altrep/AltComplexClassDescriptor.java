@@ -4,13 +4,11 @@ import com.oracle.truffle.api.CompilerDirectives;
 
 public class AltComplexClassDescriptor extends AltVecClassDescriptor {
     public static final String eltMethodSignature = "(pointer, sint32):object";
-    @CompilerDirectives.CompilationFinal(dimensions = 1)
-    public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
+    @CompilerDirectives.CompilationFinal(dimensions = 1) public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
     public static final boolean eltMethodUnwrapResult = true;
 
     public static final String getRegionMethodSignature = "(pointer, sint32, sint32, [object]):sint32";
-    @CompilerDirectives.CompilationFinal(dimensions = 1)
-    public static final boolean[] getRegionMethodWrapArguments = new boolean[]{true, false, false, false};
+    @CompilerDirectives.CompilationFinal(dimensions = 1) public static final boolean[] getRegionMethodWrapArguments = new boolean[]{true, false, false, false};
     public static final boolean getRegionMethodUnwrapResult = false;
 
     private AltrepMethodDescriptor eltMethodDescriptor;

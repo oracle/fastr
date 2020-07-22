@@ -45,8 +45,8 @@ public abstract class DATAPTR_OR_NULLNode extends FFIUpCallNode.Arg1 {
 
     @Specialization(guards = "isAltrep(altVec)")
     protected Object doForAltrep(RAbstractAtomicVector altVec,
-                                 @Cached ConditionProfile hasDataptrOrNullRegisteredProfile,
-                                 @Cached AltrepRFFI.DataptrOrNullNode dataptrOrNullNode) {
+                    @Cached ConditionProfile hasDataptrOrNullRegisteredProfile,
+                    @Cached AltrepRFFI.DataptrOrNullNode dataptrOrNullNode) {
         AltVecClassDescriptor classDescriptor = AltrepUtilities.getAltVecClassDescriptor(altVec);
         if (hasDataptrOrNullRegisteredProfile.profile(classDescriptor.isDataptrOrNullMethodRegistered())) {
             return dataptrOrNullNode.execute(altVec);

@@ -27,23 +27,25 @@ public class AltRepInterfaceTests extends TestBase {
     }
 
     /**
-     * int *data = INTEGER(instance);
-     * data[0];
+     * int *data = INTEGER(instance); data[0];
      *
-     * This code snippet does not have to materialize instance, because it has Elt method registered.
+     * This code snippet does not have to materialize instance, because it has Elt method
+     * registered.
      */
     @Test
     public void readNativeIntData() throws Exception {
         SimpleDescriptorWrapper simpleDescriptorWrapper = new SimpleDescriptorWrapper();
         RIntVector altIntVec = simpleDescriptorWrapper.getAltIntVector();
-                //RDataFactory.createAltIntVector(simpleDescriptorWrapper.getDescriptor(), simpleDescriptorWrapper.getAltIntVectorData().getData());
+        // RDataFactory.createAltIntVector(simpleDescriptorWrapper.getDescriptor(),
+        // simpleDescriptorWrapper.getAltIntVectorData().getData());
 
         // int *data = INTEGER(instance);
         RObjectDataPtr objDataPtr = RObjectDataPtr.getUncached(altIntVec);
         // int elem = data[0];
         Object elem = InteropLibrary.getFactory().getUncached(objDataPtr).readArrayElement(objDataPtr, 0);
 
-        // altIntVec does not have to be materialized, because it has Elt method registered, therefore code
+        // altIntVec does not have to be materialized, because it has Elt method registered,
+        // therefore code
         // snippet "int elem = data[0]" downcalls into Elt method rather than into Dataptr method.
         Assert.assertFalse(altIntVec.isMaterialized());
         Assert.assertTrue(elem instanceof Integer);
@@ -51,8 +53,7 @@ public class AltRepInterfaceTests extends TestBase {
     }
 
     /**
-     * int *data = INTEGER(instance);
-     * data[0] = 42;
+     * int *data = INTEGER(instance); data[0] = 42;
      */
     @Test
     public void writeNativeIntData() throws Exception {
@@ -69,4 +70,3 @@ public class AltRepInterfaceTests extends TestBase {
         Assert.assertEquals(42, altIntVec.getDataAt(0));
     }
 }
-

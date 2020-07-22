@@ -40,7 +40,7 @@ public abstract class COMPLEX_ELTNode extends FFIUpCallNode.Arg2 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected RComplex doIt(RAbstractAtomicVector vector, long index,
-                            @CachedLibrary("vector.getData()")VectorDataLibrary dataLibrary) {
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLibrary) {
         return dataLibrary.getComplexAt(vector.getData(), (int) index);
     }
 }

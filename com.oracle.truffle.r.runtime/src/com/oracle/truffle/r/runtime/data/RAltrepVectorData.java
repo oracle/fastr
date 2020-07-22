@@ -113,14 +113,14 @@ public class RAltrepVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public Object copy(boolean deep,
-                       @Cached AltrepDuplicateNode duplicateNode) {
+                    @Cached AltrepDuplicateNode duplicateNode) {
         return duplicateNode.execute(owner, deep);
     }
 
     @ExportMessage
     public VectorDataLibrary.SeqIterator iterator(
-            @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
-            @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
+                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         int length = lengthNode.execute(owner);
         VectorDataLibrary.SeqIterator it = new VectorDataLibrary.SeqIterator(this, length);
         it.initLoopConditionProfile(loopProfile);
@@ -134,13 +134,13 @@ public class RAltrepVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public boolean nextImpl(VectorDataLibrary.SeqIterator it, boolean loopCondition,
-                            @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         return it.next(loopCondition, loopProfile);
     }
 
     @ExportMessage
     public void nextWithWrap(VectorDataLibrary.SeqIterator it,
-                             @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
+                    @Shared("SeqItLoopProfile") @Cached("createCountingProfile()") LoopConditionProfile loopProfile) {
         it.nextWithWrap(loopProfile);
     }
 

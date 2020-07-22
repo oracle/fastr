@@ -85,7 +85,8 @@ public class AltrepUtilities {
     }
 
     public static AltVecClassDescriptor getAltVecClassDescriptor(RBaseObject altrepObject) {
-        // Currently all the AltRepClassDescriptors are also AltVecClassDescriptors (GNU-R version 3.6.1)
+        // Currently all the AltRepClassDescriptors are also AltVecClassDescriptors (GNU-R version
+        // 3.6.1)
         return (AltVecClassDescriptor) getAltRepClassDescriptor(altrepObject);
     }
 
@@ -257,7 +258,6 @@ public class AltrepUtilities {
     public static AltrepMethodDescriptor getNoNAMethodDescriptor(RStringVector altStringVector) {
         return getAltStringDescriptor(altStringVector).getNoNAMethodDescriptor();
     }
-
 
     public static boolean hasCoerceMethodRegistered(Object object) {
         if (!isAltrep(object)) {

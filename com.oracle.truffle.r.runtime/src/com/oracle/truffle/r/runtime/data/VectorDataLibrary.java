@@ -450,6 +450,7 @@ public abstract class VectorDataLibrary extends Library {
 
     /**
      * This method is Java-equivalent of INTEGER_GET_REGION C function.
+     * 
      * @return count of elements that were actually copied.
      */
     public int getIntRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {

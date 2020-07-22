@@ -68,7 +68,7 @@ public abstract class Min extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "hasMinMethodRegistered(args.getArgument(0))"})
     protected Object minLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
-                                        @Cached AltrepRFFI.MinNode minNode) {
+                    @Cached AltrepRFFI.MinNode minNode) {
         return minNode.execute(args.getArgument(0), naRm);
     }
 

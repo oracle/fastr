@@ -41,17 +41,17 @@ public abstract class ComplexGetRegionNode extends GetRegionNode {
 
     @Specialization(guards = "bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
     public long doBufferArray(RComplexVector complexVector, long fromIdx, long size, Object buffer,
-                              @CachedLibrary("complexVector.getData()") VectorDataLibrary dataLibrary,
-                              @CachedLibrary("buffer") InteropLibrary bufferInterop) {
+                    @CachedLibrary("complexVector.getData()") VectorDataLibrary dataLibrary,
+                    @CachedLibrary("buffer") InteropLibrary bufferInterop) {
         validateArguments(fromIdx, size);
         return dataLibrary.getComplexRegion(complexVector.getData(), (int) fromIdx, (int) size, buffer, bufferInterop);
     }
 
     @Specialization(guards = "!bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
     public long doGenericBuffer(RComplexVector vec, long fromIdx, long size, Object buffer,
-                                @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
-                                @CachedLibrary("buffer") InteropLibrary bufferInterop,
-                                @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {
+                    @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
+                    @CachedLibrary("buffer") InteropLibrary bufferInterop,
+                    @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {
         validateArguments(fromIdx, size);
         long bufferAddr = bufferToNative(buffer, bufferInterop);
         Object bufferWrapper = NativeArrayWrapper.createDoubleWrapper(bufferAddr, (int) size);

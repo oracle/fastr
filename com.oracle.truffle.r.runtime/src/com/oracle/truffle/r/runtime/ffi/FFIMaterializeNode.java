@@ -152,7 +152,7 @@ public abstract class FFIMaterializeNode extends Node {
 
     @Specialization(guards = "!isAltrep(value)", limit = "getGenericDataLibraryCacheSize()")
     protected static Object wrap(RAbstractContainer value, @SuppressWarnings("unused") boolean protect,
-                                 @CachedLibrary("value") AbstractContainerLibrary containerLibrary) {
+                    @CachedLibrary("value") AbstractContainerLibrary containerLibrary) {
         // TODO specialize only for sequences (and maybe some other)
         return containerLibrary.cachedMaterialize(value);
     }

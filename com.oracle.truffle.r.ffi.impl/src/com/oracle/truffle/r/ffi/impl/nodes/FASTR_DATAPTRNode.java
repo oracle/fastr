@@ -39,16 +39,16 @@ public abstract class FASTR_DATAPTRNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     protected RObjectDataPtr doForStringVector(RStringVector stringVector,
-            @Cached ConditionProfile isNativized,
-            @Cached ConditionProfile needsWrapping,
-            @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+                    @Cached ConditionProfile isNativized,
+                    @Cached ConditionProfile needsWrapping,
+                    @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         stringVector.wrapStrings(isNativized, needsWrapping);
         return getObjectDataPtrNode.execute(stringVector);
     }
 
     @Specialization
     protected RObjectDataPtr doForList(RList list,
-            @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+                    @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         return getObjectDataPtrNode.execute(list);
     }
 }

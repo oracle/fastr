@@ -69,16 +69,16 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
     public static class GetIntRegion {
         @Specialization(guards = "hasGetRegionMethod(altIntVecData)")
         public static int doWithNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, Object buffer,
-                                        @SuppressWarnings("unused") InteropLibrary bufferInterop,
-                                        @Cached AltrepRFFI.GetRegionNode getRegionNode) {
+                        @SuppressWarnings("unused") InteropLibrary bufferInterop,
+                        @Cached AltrepRFFI.GetRegionNode getRegionNode) {
             return getRegionNode.execute(altIntVecData.owner, startIdx, size, buffer);
         }
 
         @Specialization(guards = "!hasGetRegionMethod(altIntVecData)")
         public static int doWithoutNativeFunction(RAltIntVectorData altIntVecData, int startIdx, int size, Object buffer,
-                                                  InteropLibrary bufferInterop,
-                                                  @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
-                                                  @Shared("naCheck") @Cached NACheck naCheck) {
+                        InteropLibrary bufferInterop,
+                        @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
+                        @Shared("naCheck") @Cached NACheck naCheck) {
             int bufferIdx = 0;
             for (int index = startIdx; index < startIdx + size; index++) {
                 try {
@@ -99,8 +99,8 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public int[] getIntDataCopy(@Cached AltrepDuplicateNode duplicateNode,
-                                @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                                @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         // TODO: deep?
         int length = lengthNode.execute(owner);
         Object duplicatedObject = duplicateNode.execute(owner, false);
@@ -110,16 +110,15 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
             return ((RIntArrayVectorData) duplicatedObject).getIntDataCopy();
         } else {
             throw RInternalError.shouldNotReachHere(
-                    "RAltIntVectorData.getIntDataCopy: Unexpected returned object = " + duplicatedObject.toString()
-            );
+                            "RAltIntVectorData.getIntDataCopy: Unexpected returned object = " + duplicatedObject.toString());
         }
     }
 
     @ExportMessage
     public int[] getReadonlyIntData(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-            @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         int length = lengthNode.execute(owner);
-        return getDataCopy(dataptrNode,length);
+        return getDataCopy(dataptrNode, length);
     }
 
     private int[] getDataCopy(AltrepRFFI.DataptrNode dataptrNode, int length) {
@@ -131,8 +130,8 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public int getIntAt(int index,
-                        @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
-                        @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         int value = getIntAtNode.execute(owner, index);
         naCheck.check(value);
         return value;
@@ -140,8 +139,8 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public int getNextInt(SeqIterator it,
-                          @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
-                          @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         int value = getIntAtNode.execute(owner, it.getIndex());
         naCheck.check(value);
         return value;
@@ -149,8 +148,8 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public int getInt(@SuppressWarnings("unused") RandomAccessIterator it, int index,
-                      @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
-                      @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("getIntAtNode") @Cached GetIntAtNode getIntAtNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         int value = getIntAtNode.execute(owner, index);
         naCheck.check(value);
         return value;
@@ -160,30 +159,30 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public void setIntAt(int index, int value,
-                         @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                         @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
         writeViaDataptrNode(dataptrNode, index, value);
     }
 
     @ExportMessage
     public void setNextInt(SeqWriteIterator it, int value,
-                           @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                           @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
         writeViaDataptrNode(dataptrNode, it.getIndex(), value);
     }
 
     @ExportMessage
     public void setInt(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, int value,
-                       @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                       @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
         writeViaDataptrNode(dataptrNode, index, value);
     }
 
     private void writeViaDataptrNode(AltrepRFFI.DataptrNode dataptrNode,
-            int index, int value) {
+                    int index, int value) {
         long addr = dataptrNode.execute(owner, true);
         NativeMemory.putInt(addr, index, value);
     }
@@ -200,14 +199,14 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
 
         @Specialization(guards = "hasEltMethodRegistered(altIntVector)")
         protected int doAltIntWithElt(RIntVector altIntVector, int index,
-                                   @Cached AltrepRFFI.EltNode eltNode) {
+                        @Cached AltrepRFFI.EltNode eltNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             return (int) eltNode.execute(altIntVector, index);
         }
 
         @Specialization(guards = "!hasEltMethodRegistered(altIntVector)")
         protected int doAltIntWithoutElt(RIntVector altIntVector, int index,
-                                      @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                        @Cached AltrepRFFI.DataptrNode dataptrNode) {
             assert AltrepUtilities.isAltrep(altIntVector);
             long dataptrAddr = dataptrNode.execute(altIntVector, false);
             return NativeMemory.getInt(dataptrAddr, index);

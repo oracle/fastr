@@ -24,7 +24,7 @@ public class NewAltrepNodeTests extends TestBase {
     public NewAltrepNodeTests() {
         execInContext(() -> {
             newAltRepNodeHandle = createHandle(NewAltRepNode.create(),
-                    (node, args) -> node.executeObject(args[0], args[1], args[2]));
+                            (node, args) -> node.executeObject(args[0], args[1], args[2]));
             return null;
         });
     }

@@ -60,53 +60,53 @@ public final class Managed_RFFIFactory extends RFFIFactory {
                     throw unsupported("invoke");
                 }
             }, new BaseRFFI(Managed_DownCallNodeFactory.INSTANCE, Managed_DownCallNodeFactory.INSTANCE),
-            new AltrepRFFI(AltrepDownCallNodeFactoryImpl.INSTANCE),
-            new CallRFFI() {
-                @Override
-                public InvokeCallNode createInvokeCallNode() {
-                    throw unsupported("native code invocation");
-                }
+                            new AltrepRFFI(AltrepDownCallNodeFactoryImpl.INSTANCE),
+                            new CallRFFI() {
+                                @Override
+                                public InvokeCallNode createInvokeCallNode() {
+                                    throw unsupported("native code invocation");
+                                }
 
-                @Override
-                public InvokeVoidCallNode createInvokeVoidCallNode() {
-                    throw unsupported("native code invocation");
-                }
-            }, new DLLRFFI() {
-                @Override
-                public DLOpenNode createDLOpenNode() {
-                    throw unsupported("DLL open");
-                }
+                                @Override
+                                public InvokeVoidCallNode createInvokeVoidCallNode() {
+                                    throw unsupported("native code invocation");
+                                }
+                            }, new DLLRFFI() {
+                                @Override
+                                public DLOpenNode createDLOpenNode() {
+                                    throw unsupported("DLL open");
+                                }
 
-                @Override
-                public DLSymNode createDLSymNode() {
-                    throw unsupported("createDLSym");
-                }
+                                @Override
+                                public DLSymNode createDLSymNode() {
+                                    throw unsupported("createDLSym");
+                                }
 
-                @Override
-                public DLCloseNode createDLCloseNode() {
-                    throw unsupported("createDLClose");
-                }
-            }, new UserRngRFFI() {
-                @Override
-                public InitNode createInitNode() {
-                    throw unsupported("user defined RNG");
-                }
+                                @Override
+                                public DLCloseNode createDLCloseNode() {
+                                    throw unsupported("createDLClose");
+                                }
+                            }, new UserRngRFFI() {
+                                @Override
+                                public InitNode createInitNode() {
+                                    throw unsupported("user defined RNG");
+                                }
 
-                @Override
-                public RandNode createRandNode() {
-                    throw unsupported("user defined RNG");
-                }
+                                @Override
+                                public RandNode createRandNode() {
+                                    throw unsupported("user defined RNG");
+                                }
 
-                @Override
-                public NSeedNode createNSeedNode() {
-                    throw unsupported("user defined RNG");
-                }
+                                @Override
+                                public NSeedNode createNSeedNode() {
+                                    throw unsupported("user defined RNG");
+                                }
 
-                @Override
-                public SeedsNode createSeedsNode() {
-                    throw unsupported("user defined RNG");
-                }
-            }, new ZipRFFI(Managed_DownCallNodeFactory.INSTANCE), new PCRERFFI(Managed_DownCallNodeFactory.INSTANCE), new LapackRFFI(Managed_DownCallNodeFactory.INSTANCE),
+                                @Override
+                                public SeedsNode createSeedsNode() {
+                                    throw unsupported("user defined RNG");
+                                }
+                            }, new ZipRFFI(Managed_DownCallNodeFactory.INSTANCE), new PCRERFFI(Managed_DownCallNodeFactory.INSTANCE), new LapackRFFI(Managed_DownCallNodeFactory.INSTANCE),
                             new StatsRFFI(Managed_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(Managed_DownCallNodeFactory.INSTANCE),
                             new MiscRFFI(Managed_DownCallNodeFactory.INSTANCE));
 

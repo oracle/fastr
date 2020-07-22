@@ -27,38 +27,31 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
     // TODO: Fix signature (sint64?)
     public static final String eltMethodSignature = "(pointer, sint32):sint32";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
+    @CompilationFinal(dimensions = 1) public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
     public static final boolean eltMethodUnwrapResult = false;
 
     public static final String getRegionMethodSignature = "(pointer, sint32, sint32, [sint32]):sint32";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] getRegionMethodWrapArguments = new boolean[]{true, false, false, false};
+    @CompilationFinal(dimensions = 1) public static final boolean[] getRegionMethodWrapArguments = new boolean[]{true, false, false, false};
     public static final boolean getRegionMethodUnwrapResult = false;
 
     public static final String isSortedMethodSignature = "(pointer):sint32";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] isSortedMethodWrapArguments = new boolean[]{true};
+    @CompilationFinal(dimensions = 1) public static final boolean[] isSortedMethodWrapArguments = new boolean[]{true};
     public static final boolean isSortedMethodUnwrapResult = false;
 
     public static final String noNAMethodSignature = "(pointer):sint32";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] noNAMethodWrapArguments = new boolean[]{true};
+    @CompilationFinal(dimensions = 1) public static final boolean[] noNAMethodWrapArguments = new boolean[]{true};
     public static final boolean noNAMethodUnwrapResult = false;
 
     public static final String sumMethodSignature = "(pointer, sint32):pointer";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] sumMethodWrapArguments = new boolean[]{true, false};
+    @CompilationFinal(dimensions = 1) public static final boolean[] sumMethodWrapArguments = new boolean[]{true, false};
     public static final boolean sumMethodUnwrapResult = true;
 
     public static final String minMethodSignature = "(pointer, sint32):pointer";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] minMethodWrapArguments = new boolean[]{true, false};
+    @CompilationFinal(dimensions = 1) public static final boolean[] minMethodWrapArguments = new boolean[]{true, false};
     public static final boolean minMethodUnwrapResult = true;
 
     public static final String maxMethodSignature = "(pointer, sint32):pointer";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] maxMethodWrapArguments = new boolean[]{true, false};
+    @CompilationFinal(dimensions = 1) public static final boolean[] maxMethodWrapArguments = new boolean[]{true, false};
     public static final boolean maxMethodUnwrapResult = true;
 
     private AltrepMethodDescriptor eltMethodDescriptor;

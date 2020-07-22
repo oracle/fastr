@@ -123,7 +123,8 @@ public final class RStringVector extends RAbstractAtomicVector implements RMater
         RStringVector altStringVector = new RStringVector();
         altStringVector.setAltRep();
         altStringVector.data = altStringVecData;
-        // This is a workaround, because we already have to invoke some altrep methods in getLengthMethodUncached
+        // This is a workaround, because we already have to invoke some altrep methods in
+        // getLengthMethodUncached
         // and for that we need non-null owner.
         altStringVecData.setOwner(altStringVector);
         int length = AltrepUtilities.getLengthUncached(altStringVector);

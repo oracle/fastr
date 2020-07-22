@@ -24,7 +24,7 @@ public abstract class IsSortedNode extends FFIUpCallNode.Arg1 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     public int isIntSorted(RIntVector intVec,
-                           @CachedLibrary("intVec.getData()") VectorDataLibrary dataLibrary) {
+                    @CachedLibrary("intVec.getData()") VectorDataLibrary dataLibrary) {
         return isVectorSorted(intVec, dataLibrary);
     }
 
@@ -35,7 +35,7 @@ public abstract class IsSortedNode extends FFIUpCallNode.Arg1 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     public int isDoubleSorted(RDoubleVector doubleVector,
-                            @CachedLibrary("doubleVector.getData()") VectorDataLibrary dataLibrary) {
+                    @CachedLibrary("doubleVector.getData()") VectorDataLibrary dataLibrary) {
         return isVectorSorted(doubleVector, dataLibrary);
     }
 
@@ -46,7 +46,7 @@ public abstract class IsSortedNode extends FFIUpCallNode.Arg1 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     public int isLogicalSorted(RLogicalVector logicalVector,
-                               @CachedLibrary("logicalVector.getData()") VectorDataLibrary dataLibrary) {
+                    @CachedLibrary("logicalVector.getData()") VectorDataLibrary dataLibrary) {
         return isVectorSorted(logicalVector, dataLibrary);
     }
 
@@ -57,7 +57,7 @@ public abstract class IsSortedNode extends FFIUpCallNode.Arg1 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     public int isStringSorted(RStringVector stringVector,
-                              @CachedLibrary("stringVector.getData()") VectorDataLibrary dataLibrary) {
+                    @CachedLibrary("stringVector.getData()") VectorDataLibrary dataLibrary) {
         return isVectorSorted(stringVector, dataLibrary);
     }
 

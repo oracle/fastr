@@ -120,7 +120,7 @@ public abstract class RObjectDataPtr implements TruffleObject {
 
         @Specialization(guards = {"isAltrep(altrepVector)", "getNativeWrapper(altrepVector) == null"})
         protected AltrepVectorDataPtr getAltrepVectorDataPtr(RAbstractVector altrepVector,
-                                                             @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                        @Cached AltrepRFFI.DataptrNode dataptrNode) {
             return createAltrepVectorDataPtr(altrepVector, dataptrNode);
         }
 
@@ -137,7 +137,7 @@ public abstract class RObjectDataPtr implements TruffleObject {
             return setNativeWrapper(intVector, intVectorDataPtr);
         }
 
-        @Specialization(guards = {"!isAltrep(doubleVector)","getNativeWrapper(doubleVector) == null"})
+        @Specialization(guards = {"!isAltrep(doubleVector)", "getNativeWrapper(doubleVector) == null"})
         protected DoubleVectorDataPtr getDoubleVectorDataPtr(RDoubleVector doubleVector) {
             DoubleVectorDataPtr doubleVectorDataPtr = new DoubleVectorDataPtr(doubleVector);
             return setNativeWrapper(doubleVector, doubleVectorDataPtr);

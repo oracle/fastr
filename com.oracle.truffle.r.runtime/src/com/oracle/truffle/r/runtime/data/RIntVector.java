@@ -310,8 +310,8 @@ public final class RIntVector extends RAbstractNumericVector {
     protected static class ToNative {
         @Specialization(guards = "!isAltrep(vector)")
         protected static void nativizeVector(RIntVector vector,
-                    @Cached ConditionProfile alreadyNativeProfile,
-                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+                        @Cached ConditionProfile alreadyNativeProfile,
+                        @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
             if (alreadyNativeProfile.profile(vector.data instanceof RIntNativeVectorData)) {
                 return;
             }
@@ -322,7 +322,7 @@ public final class RIntVector extends RAbstractNumericVector {
 
         @Specialization(guards = "isAltrep(altIntVec)")
         protected static void nativizeAltrep(RIntVector altIntVec,
-                    @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
+                        @CachedLibrary(limit = DATA_LIB_LIMIT) VectorDataLibrary dataLib) {
             Object vectorData = altIntVec.getData();
             int length = dataLib.getLength(vectorData);
             long address;

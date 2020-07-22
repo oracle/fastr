@@ -54,7 +54,7 @@ public final class DuplicateNodes {
 
         @Specialization(guards = "!isSequence(container)", limit = "getGenericDataLibraryCacheSize()")
         public Object duplicateContainer(RAbstractContainer container, int deep,
-                                         @CachedLibrary("container") AbstractContainerLibrary containerLibrary) {
+                        @CachedLibrary("container") AbstractContainerLibrary containerLibrary) {
             return containerLibrary.duplicate(container, deep == 1);
         }
 

@@ -45,8 +45,7 @@ public class RAltrepNumericVectorData extends RAltrepVectorData {
 
     public RAltrepNumericVectorData(AltVecClassDescriptor descriptor, RAltRepData altrepData) {
         super(altrepData);
-        assert descriptor instanceof AltIntegerClassDescriptor || descriptor instanceof AltRealClassDescriptor
-                || descriptor instanceof AltLogicalClassDescriptor;
+        assert descriptor instanceof AltIntegerClassDescriptor || descriptor instanceof AltRealClassDescriptor || descriptor instanceof AltLogicalClassDescriptor;
         this.descriptor = descriptor;
         assert hasDescriptorRegisteredNecessaryMethods(descriptor);
     }
@@ -66,7 +65,7 @@ public class RAltrepNumericVectorData extends RAltrepVectorData {
     public static class IsComplete {
         @Specialization(guards = "hasNoNAMethodRegistered(vectorData)")
         public static boolean isCompleteNativeFunction(RAltrepNumericVectorData vectorData,
-                                                   @Cached AltrepRFFI.NoNANode noNANode) {
+                        @Cached AltrepRFFI.NoNANode noNANode) {
             return vectorData.invokeNoNA(noNANode);
         }
 
@@ -101,7 +100,7 @@ public class RAltrepNumericVectorData extends RAltrepVectorData {
     public static class IsSorted {
         @Specialization(guards = "hasIsSortedMethod(vectorData)")
         public static boolean doWithNativeFunction(RAltrepNumericVectorData vectorData, boolean decreasing, boolean naLast,
-                                                   @Cached AltrepRFFI.IsSortedNode isSortedNode) {
+                        @Cached AltrepRFFI.IsSortedNode isSortedNode) {
             AltrepSortedness sortedness = isSortedNode.execute(vectorData.owner);
             if (decreasing) {
                 if (naLast && sortedness == AltrepSortedness.SORTED_DECR) {
@@ -120,15 +119,15 @@ public class RAltrepNumericVectorData extends RAltrepVectorData {
 
         @Specialization(guards = "!hasIsSortedMethod(vectorData)")
         public static boolean doWithoutNativeFunction(@SuppressWarnings("unused") RAltrepNumericVectorData vectorData,
-                                                      @SuppressWarnings("unused") boolean decreasing,
-                                                      @SuppressWarnings("unused") boolean naLast) {
+                        @SuppressWarnings("unused") boolean decreasing,
+                        @SuppressWarnings("unused") boolean naLast) {
             return false;
         }
 
         protected static boolean hasIsSortedMethod(RAltrepNumericVectorData vectorData) {
             if (vectorData.descriptor instanceof AltIntegerClassDescriptor) {
                 return ((AltIntegerClassDescriptor) vectorData.descriptor).isIsSortedMethodRegistered();
-            } else if (vectorData.descriptor instanceof AltRealClassDescriptor){
+            } else if (vectorData.descriptor instanceof AltRealClassDescriptor) {
                 return ((AltRealClassDescriptor) vectorData.descriptor).isIsSortedMethodRegistered();
             } else if (vectorData.descriptor instanceof AltLogicalClassDescriptor) {
                 return ((AltLogicalClassDescriptor) vectorData.descriptor).isIsSortedMethodRegistered();

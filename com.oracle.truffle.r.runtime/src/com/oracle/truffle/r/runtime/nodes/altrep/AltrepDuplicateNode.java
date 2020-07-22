@@ -26,11 +26,11 @@ public abstract class AltrepDuplicateNode extends RBaseNode {
 
     @Specialization(guards = "hasDuplicateMethodRegistered(altrepVec)")
     protected Object duplicateAltrepWithDuplicateMethod(RAbstractAtomicVector altrepVec, boolean deep,
-                        @Cached ConditionProfile duplicateReturnsNullProfile,
-                        @Cached FFIUnwrapNode unwrapNode,
-                        @Cached AltrepRFFI.DataptrNode dataptrNode,
-                        @Cached AltrepRFFI.LengthNode lengthNode,
-                        @Cached AltrepRFFI.DuplicateNode duplicateNode) {
+                    @Cached ConditionProfile duplicateReturnsNullProfile,
+                    @Cached FFIUnwrapNode unwrapNode,
+                    @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Cached AltrepRFFI.LengthNode lengthNode,
+                    @Cached AltrepRFFI.DuplicateNode duplicateNode) {
         assert altrepVec.isAltRep();
         Object duplicatedObject = duplicateNode.execute(altrepVec, deep);
         if (duplicateReturnsNullProfile.profile(duplicatedObject == null)) {
@@ -44,8 +44,8 @@ public abstract class AltrepDuplicateNode extends RBaseNode {
 
     @Specialization(replaces = {"duplicateAltrepWithDuplicateMethod"})
     protected Object doStandardDuplicate(RAbstractAtomicVector altrepVec, @SuppressWarnings("unused") boolean deep,
-                                      @Cached AltrepRFFI.DataptrNode dataptrNode,
-                                      @Cached AltrepRFFI.LengthNode lengthNode) {
+                    @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Cached AltrepRFFI.LengthNode lengthNode) {
         assert AltrepUtilities.isAltrep(altrepVec);
         int length = lengthNode.execute(altrepVec);
         long dataptrAddr = dataptrNode.execute(altrepVec, false);

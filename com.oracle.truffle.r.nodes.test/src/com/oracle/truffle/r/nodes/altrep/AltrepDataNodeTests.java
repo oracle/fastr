@@ -26,9 +26,9 @@ public class AltrepDataNodeTests extends TestBase {
     public AltrepDataNodeTests() {
         execInContext(() -> {
             altrepData1NodeNodeHandle = createHandle(AltrepData1Node.create(),
-                    (node, args) -> node.executeObject(args[0]));
+                            (node, args) -> node.executeObject(args[0]));
             altrepData2NodeNodeHandle = createHandle(AltrepData2Node.create(),
-                    (node, args) -> node.executeObject(args[0]));
+                            (node, args) -> node.executeObject(args[0]));
             return null;
         });
     }

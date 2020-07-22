@@ -60,7 +60,8 @@ public abstract class RFFIContext extends RFFI {
 
     public final RFFIContextState rffiContextState;
 
-    protected RFFIContext(RFFIContextState rffiContextState, CRFFI cRFFI, BaseRFFI baseRFFI, AltrepRFFI altrepRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI, PCRERFFI pcreRFFI,
+    protected RFFIContext(RFFIContextState rffiContextState, CRFFI cRFFI, BaseRFFI baseRFFI, AltrepRFFI altrepRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI,
+                    PCRERFFI pcreRFFI,
                     LapackRFFI lapackRFFI, StatsRFFI statsRFFI,
                     ToolsRFFI toolsRFFI, REmbedRFFI rEmbedRFFI, MiscRFFI miscRFFI) {
         super(cRFFI, baseRFFI, altrepRFFI, callRFFI, dllRFFI, userRngRFFI, zipRFFI, pcreRFFI, lapackRFFI, statsRFFI, toolsRFFI, rEmbedRFFI, miscRFFI);
@@ -191,8 +192,7 @@ public abstract class RFFIContext extends RFFI {
 
     /**
      * @param before the value returned by the corresponding call to
-     *            {@link #beforeDowncall(MaterializedFrame, RFFIFactory.Type)}
-     *            .
+     *            {@link #beforeDowncall(MaterializedFrame, RFFIFactory.Type)} .
      * @param profiles
      */
     public void afterDowncall(Object before, @SuppressWarnings("unused") RFFIFactory.Type rffiType, AfterDownCallProfiles profiles) {

@@ -65,16 +65,16 @@ public class RAltRealVectorData extends RAltrepNumericVectorData {
     public static class GetDoubleRegion {
         @Specialization(guards = "hasGetRegionMethod(altRealVecData)")
         public static int doWithNativeFunction(RAltRealVectorData altRealVecData, int startIdx, int size, Object buffer,
-                                               @SuppressWarnings("unused") InteropLibrary bufferInterop,
-                                               @Cached AltrepRFFI.GetRegionNode getRegionNode) {
+                        @SuppressWarnings("unused") InteropLibrary bufferInterop,
+                        @Cached AltrepRFFI.GetRegionNode getRegionNode) {
             return getRegionNode.execute(altRealVecData.owner, startIdx, size, buffer);
         }
 
         @Specialization(guards = "!hasGetRegionMethod(altRealVecData)")
         public static int doWithoutNativeFunction(RAltRealVectorData altRealVecData, int startIdx, int size, Object buffer,
-                                                  InteropLibrary bufferInterop,
-                                                  @Shared("getDoubleAtNode") @Cached GetDoubleAtNode getDoubleAtNode,
-                                                  @Shared("naCheck") @Cached NACheck naCheck) {
+                        InteropLibrary bufferInterop,
+                        @Shared("getDoubleAtNode") @Cached GetDoubleAtNode getDoubleAtNode,
+                        @Shared("naCheck") @Cached NACheck naCheck) {
             int bufferIdx = 0;
             for (int index = startIdx; index < startIdx + size; index++) {
                 try {
@@ -105,8 +105,8 @@ public class RAltRealVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public double getDoubleAt(int index,
-                              @Shared("getDoubleAtNode") @Cached GetDoubleAtNode getDoubleAtNode,
-                              @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("getDoubleAtNode") @Cached GetDoubleAtNode getDoubleAtNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         double value = getDoubleAtNode.execute(owner, index);
         naCheck.check(value);
         return value;
@@ -114,8 +114,8 @@ public class RAltRealVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public double getNextDouble(SeqIterator it,
-                                @Shared("getDoubleAtNode") @Cached GetDoubleAtNode getDoubleAtNode,
-                                @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("getDoubleAtNode") @Cached GetDoubleAtNode getDoubleAtNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         double value = getDoubleAtNode.execute(owner, it.getIndex());
         naCheck.check(value);
         return value;
@@ -123,8 +123,8 @@ public class RAltRealVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public double getDouble(@SuppressWarnings("unused") RandomAccessIterator it, int index,
-                            @Shared("getDoubleAtNode") @Cached GetDoubleAtNode getDoubleAtNode,
-                            @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("getDoubleAtNode") @Cached GetDoubleAtNode getDoubleAtNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         double value = getDoubleAtNode.execute(owner, index);
         naCheck.check(value);
         return value;
@@ -134,24 +134,24 @@ public class RAltRealVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public void setDoubleAt(int index, double value,
-                            @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                            @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
         writeViaDataptrNode(dataptrNode, index, value);
     }
 
     @ExportMessage
     public void setNextDouble(VectorDataLibrary.SeqWriteIterator it, double value,
-                              @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                              @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
         writeViaDataptrNode(dataptrNode, it.getIndex(), value);
     }
 
     @ExportMessage
     public void setDouble(@SuppressWarnings("unused") VectorDataLibrary.RandomAccessWriteIterator it, int index, double value,
-                          @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                          @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
         writeViaDataptrNode(dataptrNode, index, value);
     }
@@ -173,14 +173,14 @@ public class RAltRealVectorData extends RAltrepNumericVectorData {
 
         @Specialization(guards = "hasEltMethodRegistered(altRealVec)")
         protected double getDoubleWithElt(RDoubleVector altRealVec, int index,
-                                      @Cached AltrepRFFI.EltNode eltNode) {
+                        @Cached AltrepRFFI.EltNode eltNode) {
             assert AltrepUtilities.isAltrep(altRealVec);
             return (double) eltNode.execute(altRealVec, index);
         }
 
         @Specialization(guards = "!hasEltMethodRegistered(altRealVec)")
         protected double getDoubleWithoutElt(RDoubleVector altRealVec, int index,
-                                         @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                        @Cached AltrepRFFI.DataptrNode dataptrNode) {
             assert AltrepUtilities.isAltrep(altRealVec);
             long dataptrAddr = dataptrNode.execute(altRealVec, false);
             return NativeMemory.getDouble(dataptrAddr, index);

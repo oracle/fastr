@@ -63,15 +63,15 @@ public class RAltRawVectorData extends RAltrepVectorData {
     public static class GetRawRegion {
         @Specialization(guards = "hasGetRegionMethod(altRawVectorData)")
         public static int doWithNativeFunction(RAltRawVectorData altRawVectorData, int startIdx, int size, Object buffer,
-                                               @SuppressWarnings("unused") InteropLibrary bufferInterop,
-                                               @Cached AltrepRFFI.GetRegionNode getRegionNode) {
+                        @SuppressWarnings("unused") InteropLibrary bufferInterop,
+                        @Cached AltrepRFFI.GetRegionNode getRegionNode) {
             return getRegionNode.execute(altRawVectorData.owner, startIdx, size, buffer);
         }
 
         @Specialization(guards = "!hasGetRegionMethod(altRawVectorData)")
         public static int doWithoutNativeFunction(RAltRawVectorData altRawVectorData, int startIdx, int size, Object buffer,
-                                                  InteropLibrary bufferInterop,
-                                                  @Shared("getRawAtNode") @Cached GetRawAtNode getRawAtNode) {
+                        InteropLibrary bufferInterop,
+                        @Shared("getRawAtNode") @Cached GetRawAtNode getRawAtNode) {
             int bufferIdx = 0;
             for (int index = startIdx; index < startIdx + size; index++) {
                 try {
@@ -92,42 +92,42 @@ public class RAltRawVectorData extends RAltrepVectorData {
 
     @ExportMessage
     public byte getRawAt(int index,
-                         @Shared("getRawAtNode") @Cached GetRawAtNode getRawAtNode) {
+                    @Shared("getRawAtNode") @Cached GetRawAtNode getRawAtNode) {
         return getRawAtNode.execute(owner, index);
     }
 
     @ExportMessage
     public byte getNextRaw(VectorDataLibrary.SeqIterator it,
-                           @Shared("getRawAtNode") @Cached GetRawAtNode getRawAtNode) {
+                    @Shared("getRawAtNode") @Cached GetRawAtNode getRawAtNode) {
         return getRawAtNode.execute(owner, it.getIndex());
     }
 
     @ExportMessage
     public byte getRaw(@SuppressWarnings("unused") VectorDataLibrary.RandomAccessIterator it, int index,
-                       @Shared("getRawAtNode") @Cached GetRawAtNode getRawAtNode) {
+                    @Shared("getRawAtNode") @Cached GetRawAtNode getRawAtNode) {
         return getRawAtNode.execute(owner, index);
     }
 
     @ExportMessage
     public void setRawAt(int index, byte value,
-                         @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
         writeViaDataptrNode(dataptrNode, index, value);
     }
 
     @ExportMessage
     public void setNextRaw(VectorDataLibrary.SeqWriteIterator it, byte value,
-                           @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
         writeViaDataptrNode(dataptrNode, it.getIndex(), value);
     }
 
     @ExportMessage
     public void setRaw(@SuppressWarnings("unused") VectorDataLibrary.RandomAccessWriteIterator it, int index, byte value,
-                       @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
         writeViaDataptrNode(dataptrNode, index, value);
     }
 
     private void writeViaDataptrNode(AltrepRFFI.DataptrNode dataptrNode,
-                                     int index, byte value) {
+                    int index, byte value) {
         long addr = dataptrNode.execute(owner, true);
         NativeMemory.putByte(addr, index, value);
     }
@@ -139,13 +139,13 @@ public class RAltRawVectorData extends RAltrepVectorData {
 
         @Specialization(guards = "hasEltMethodRegistered(altRawVec)")
         protected byte getRawAtWithElt(RRawVector altRawVec, int index,
-                                       @Cached AltrepRFFI.EltNode eltNode) {
+                        @Cached AltrepRFFI.EltNode eltNode) {
             return (byte) eltNode.execute(altRawVec, index);
         }
 
         @Specialization(guards = "!hasEltMethodRegistered(altRawVec)")
         protected byte getRawAtWithoutElt(RRawVector altRawVec, int index,
-                                          @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                        @Cached AltrepRFFI.DataptrNode dataptrNode) {
             long dataptrAddr = dataptrNode.execute(altRawVec, false);
             return NativeMemory.getByte(dataptrAddr, index);
         }

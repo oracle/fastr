@@ -33,11 +33,11 @@ public class SimpleDescriptorWrapper {
 
     private AltIntegerClassDescriptor createDescriptor() {
         AltIntegerClassDescriptor descriptor = new AltIntegerClassDescriptor(SimpleDescriptorWrapper.class.getSimpleName(),
-                "packageName", null);
-        //descriptor.registerDataptrMethod(dataptrMethod);
-        //descriptor.registerLengthMethod(lengthMethod);
-        //descriptor.registerEltMethod(eltMethod);
-        //descriptor.registerSumMethod(sumMethod);
+                        "packageName", null);
+        // descriptor.registerDataptrMethod(dataptrMethod);
+        // descriptor.registerLengthMethod(lengthMethod);
+        // descriptor.registerEltMethod(eltMethod);
+        // descriptor.registerSumMethod(sumMethod);
         return descriptor;
     }
 

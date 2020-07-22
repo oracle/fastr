@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltComplexVectorData extends RAltrepVectorData {
     private final AltComplexClassDescriptor classDescriptor;
-    
+
     protected RAltComplexVectorData(AltComplexClassDescriptor classDescriptor, RAltRepData altrepData) {
         super(altrepData);
         this.classDescriptor = classDescriptor;
@@ -64,15 +64,15 @@ public class RAltComplexVectorData extends RAltrepVectorData {
     public static class GetComplexRegion {
         @Specialization(guards = "hasGetRegionMethod(altComplexVecData)")
         public static int doWithNativeFunction(RAltComplexVectorData altComplexVecData, int startIdx, int size, Object buffer,
-                                               @SuppressWarnings("unused") InteropLibrary bufferInterop,
-                                               @Cached AltrepRFFI.GetRegionNode getRegionNode) {
+                        @SuppressWarnings("unused") InteropLibrary bufferInterop,
+                        @Cached AltrepRFFI.GetRegionNode getRegionNode) {
             return getRegionNode.execute(altComplexVecData.owner, startIdx, size, buffer);
         }
 
         @Specialization(guards = "!hasGetRegionMethod(altComplexVecData)")
         public static int doWithoutNativeFunction(RAltComplexVectorData altComplexVecData, int startIdx, int size, Object buffer,
-                                                  InteropLibrary bufferInterop,
-                                                  @Cached.Shared("getComplexAtNode") @Cached GetComplexAtNode getComplexAtNode) {
+                        InteropLibrary bufferInterop,
+                        @Cached.Shared("getComplexAtNode") @Cached GetComplexAtNode getComplexAtNode) {
             int bufferIdx = 0;
             for (int index = startIdx; index < startIdx + size; index++) {
                 try {
@@ -93,42 +93,42 @@ public class RAltComplexVectorData extends RAltrepVectorData {
 
     @ExportMessage
     public RComplex getComplexAt(int index,
-                         @Cached.Shared("getComplexAtNode") @Cached GetComplexAtNode getComplexAtNode) {
+                    @Cached.Shared("getComplexAtNode") @Cached GetComplexAtNode getComplexAtNode) {
         return getComplexAtNode.execute(owner, index);
     }
 
     @ExportMessage
     public RComplex getNextComplex(VectorDataLibrary.SeqIterator it,
-                           @Cached.Shared("getComplexAtNode") @Cached GetComplexAtNode getComplexAtNode) {
+                    @Cached.Shared("getComplexAtNode") @Cached GetComplexAtNode getComplexAtNode) {
         return getComplexAtNode.execute(owner, it.getIndex());
     }
 
     @ExportMessage
     public RComplex getComplex(@SuppressWarnings("unused") RandomAccessIterator it, int index,
-                       @Cached.Shared("getComplexAtNode") @Cached GetComplexAtNode getComplexAtNode) {
+                    @Cached.Shared("getComplexAtNode") @Cached GetComplexAtNode getComplexAtNode) {
         return getComplexAtNode.execute(owner, index);
     }
 
     @ExportMessage
     public void setComplexAt(int index, RComplex value,
-                         @Cached.Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                    @Cached.Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
         writeViaDataptrNode(dataptrNode, index, value);
     }
 
     @ExportMessage
     public void setNextComplex(VectorDataLibrary.SeqWriteIterator it, RComplex value,
-                           @Cached.Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                    @Cached.Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
         writeViaDataptrNode(dataptrNode, it.getIndex(), value);
     }
 
     @ExportMessage
     public void setComplex(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, RComplex value,
-                       @Cached.Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                    @Cached.Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode) {
         writeViaDataptrNode(dataptrNode, index, value);
     }
 
     private void writeViaDataptrNode(AltrepRFFI.DataptrNode dataptrNode,
-                                     int index, RComplex value) {
+                    int index, RComplex value) {
         long addr = dataptrNode.execute(owner, true);
         NativeMemory.putDouble(addr, index * 2L, value.getRealPart());
         NativeMemory.putDouble(addr, index * 2L + 1L, value.getImaginaryPart());
@@ -141,20 +141,19 @@ public class RAltComplexVectorData extends RAltrepVectorData {
 
         @Specialization(guards = "hasEltMethodRegistered(altComplexVec)")
         protected RComplex getComplexAtWithElt(@SuppressWarnings("unused") RComplexVector altComplexVec,
-                                               @SuppressWarnings("unused") int index,
-                                       @SuppressWarnings("unused") @Cached AltrepRFFI.EltNode eltNode) {
+                        @SuppressWarnings("unused") int index,
+                        @SuppressWarnings("unused") @Cached AltrepRFFI.EltNode eltNode) {
             // TODO: We should convert Rcomplex type in native code for this to work.
             throw RInternalError.unimplemented("getComplexAtWithElt");
         }
 
         @Specialization(guards = "!hasEltMethodRegistered(altComplexVec)")
         protected RComplex getComplexAtWithoutElt(RComplexVector altComplexVec, int index,
-                                          @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                        @Cached AltrepRFFI.DataptrNode dataptrNode) {
             long dataptrAddr = dataptrNode.execute(altComplexVec, false);
             return RComplex.valueOf(
-                    NativeMemory.getDouble(dataptrAddr, index * 2L),
-                    NativeMemory.getDouble(dataptrAddr, index * 2L + 1L)
-            );
+                            NativeMemory.getDouble(dataptrAddr, index * 2L),
+                            NativeMemory.getDouble(dataptrAddr, index * 2L + 1L));
         }
     }
 }

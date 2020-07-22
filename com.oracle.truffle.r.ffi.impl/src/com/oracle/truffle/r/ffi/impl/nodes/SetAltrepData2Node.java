@@ -18,7 +18,7 @@ public abstract class SetAltrepData2Node extends FFIUpCallNode.Arg2 {
     }
 
     // TODO: There is not a cached version because RPairListLibrary does not yet implement
-    //  setCdr message.
+    // setCdr message.
 
     @Specialization
     public Object setData2Uncached(RAbstractAtomicVector altrepVec, Object data2) {

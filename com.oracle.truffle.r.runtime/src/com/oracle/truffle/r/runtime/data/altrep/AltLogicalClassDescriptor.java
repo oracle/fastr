@@ -3,32 +3,28 @@ package com.oracle.truffle.r.runtime.data.altrep;
 import com.oracle.truffle.api.CompilerDirectives;
 
 public class AltLogicalClassDescriptor extends AltVecClassDescriptor {
-    // All the signatures and wrap/unwrap argument information is same as for AltIntegerClassDescriptor.
+    // All the signatures and wrap/unwrap argument information is same as for
+    // AltIntegerClassDescriptor.
     // We still want to have these fields here for consistency.
 
     public static final String eltMethodSignature = AltIntegerClassDescriptor.eltMethodSignature;
-    @CompilerDirectives.CompilationFinal(dimensions = 1)
-    public static final boolean[] eltMethodWrapArguments = AltIntegerClassDescriptor.eltMethodWrapArguments;
+    @CompilerDirectives.CompilationFinal(dimensions = 1) public static final boolean[] eltMethodWrapArguments = AltIntegerClassDescriptor.eltMethodWrapArguments;
     public static final boolean eltMethodUnwrapResult = AltIntegerClassDescriptor.eltMethodUnwrapResult;
 
     public static final String getRegionMethodSignature = AltIntegerClassDescriptor.getRegionMethodSignature;
-    @CompilerDirectives.CompilationFinal(dimensions = 1)
-    public static final boolean[] getRegionMethodWrapArguments = AltIntegerClassDescriptor.getRegionMethodWrapArguments;
+    @CompilerDirectives.CompilationFinal(dimensions = 1) public static final boolean[] getRegionMethodWrapArguments = AltIntegerClassDescriptor.getRegionMethodWrapArguments;
     public static final boolean getRegionMethodUnwrapResult = AltIntegerClassDescriptor.getRegionMethodUnwrapResult;
 
     public static final String isSortedMethodSignature = AltIntegerClassDescriptor.isSortedMethodSignature;
-    @CompilerDirectives.CompilationFinal(dimensions = 1)
-    public static final boolean[] isSortedMethodWrapArguments = AltIntegerClassDescriptor.isSortedMethodWrapArguments;
+    @CompilerDirectives.CompilationFinal(dimensions = 1) public static final boolean[] isSortedMethodWrapArguments = AltIntegerClassDescriptor.isSortedMethodWrapArguments;
     public static final boolean isSortedMethodUnwrapResult = AltIntegerClassDescriptor.isSortedMethodUnwrapResult;
 
     public static final String noNAMethodSignature = AltIntegerClassDescriptor.noNAMethodSignature;
-    @CompilerDirectives.CompilationFinal(dimensions = 1)
-    public static final boolean[] noNAMethodWrapArguments = AltIntegerClassDescriptor.noNAMethodWrapArguments;
+    @CompilerDirectives.CompilationFinal(dimensions = 1) public static final boolean[] noNAMethodWrapArguments = AltIntegerClassDescriptor.noNAMethodWrapArguments;
     public static final boolean noNAMethodUnwrapResult = AltIntegerClassDescriptor.noNAMethodUnwrapResult;
 
     public static final String sumMethodSignature = AltIntegerClassDescriptor.sumMethodSignature;
-    @CompilerDirectives.CompilationFinal(dimensions = 1)
-    public static final boolean[] sumMethodWrapArguments = AltIntegerClassDescriptor.sumMethodWrapArguments;
+    @CompilerDirectives.CompilationFinal(dimensions = 1) public static final boolean[] sumMethodWrapArguments = AltIntegerClassDescriptor.sumMethodWrapArguments;
     public static final boolean sumMethodUnwrapResult = AltIntegerClassDescriptor.sumMethodUnwrapResult;
 
     private AltrepMethodDescriptor eltMethodDescriptor;

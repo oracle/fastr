@@ -43,7 +43,7 @@ public abstract class MakeAltIntegerClassNode extends FFIUpCallNode.Arg3 {
     @TruffleBoundary
     @Specialization
     public Object makeAltIntegerClass(String className, String packageName, Object dllInfo,
-                                      @CachedContext(TruffleRLanguage.class) RContext context) {
+                    @CachedContext(TruffleRLanguage.class) RContext context) {
         AltRepContext altRepCtx = context.altRepContext;
         altrepLogger.fine(() -> "Making new altint class " + packageName + ":" + className);
         return altRepCtx.registerNewAltIntClass(className, packageName, dllInfo);

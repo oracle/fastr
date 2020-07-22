@@ -4,23 +4,19 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 public class AltStringClassDescriptor extends AltVecClassDescriptor {
     public static final String eltMethodSignature = "(pointer, sint32) : string";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
+    @CompilationFinal(dimensions = 1) public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
     public static final boolean eltMethodUnwrapResult = true;
 
     public static final String setEltMethodSignature = "(pointer, sint32, pointer) : void";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] setEltMethodWrapArguments = new boolean[]{true, false, true};
+    @CompilationFinal(dimensions = 1) public static final boolean[] setEltMethodWrapArguments = new boolean[]{true, false, true};
     public static final boolean setEltMethodUnwrapResult = false;
 
     public static final String isSortedMethodSignature = "(pointer) : sint32";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] isSortedMethodWrapArguments = new boolean[]{true};
+    @CompilationFinal(dimensions = 1) public static final boolean[] isSortedMethodWrapArguments = new boolean[]{true};
     public static final boolean isSortedMethodUnwrapResult = false;
 
     public static final String noNAMethodSignature = "(pointer) : sint32";
-    @CompilationFinal(dimensions = 1)
-    public static final boolean[] noNAMethodWrapArguments = new boolean[]{true};
+    @CompilationFinal(dimensions = 1) public static final boolean[] noNAMethodWrapArguments = new boolean[]{true};
     public static final boolean noNAMethodUnwrapResult = false;
 
     private AltrepMethodDescriptor eltMethodDescriptor;

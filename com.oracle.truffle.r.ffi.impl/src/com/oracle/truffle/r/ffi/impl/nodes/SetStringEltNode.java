@@ -18,8 +18,8 @@ public abstract class SetStringEltNode extends FFIUpCallNode.Arg3 {
 
     @Specialization(limit = "3")
     Object doStringVector(RStringVector vector, long index, CharSXPWrapper element,
-                          @CachedLibrary("vector.getData()") VectorDataLibrary dataLibrary,
-                          @Cached("createBinaryProfile()") ConditionProfile isAltrepProfile) {
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLibrary,
+                    @Cached("createBinaryProfile()") ConditionProfile isAltrepProfile) {
         if (isAltrepProfile.profile(vector.isAltRep())) {
             dataLibrary.setStringAt(vector, (int) index, element.getContents());
         } else {

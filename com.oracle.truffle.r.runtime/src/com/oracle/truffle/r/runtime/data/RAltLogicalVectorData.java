@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.util.NativeMemory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltLogicalVectorData extends RAltrepNumericVectorData {
     public RAltLogicalVectorData(AltLogicalClassDescriptor descriptor, RAltRepData altrepData) {
@@ -67,16 +66,16 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
     public static class GetLogicalRegion {
         @Specialization(guards = "hasGetRegionMethod(altLogicalVecData)")
         public static int doWithNativeFunction(RAltLogicalVectorData altLogicalVecData, int startIdx, int size, Object buffer,
-                                               @SuppressWarnings("unused") InteropLibrary bufferInterop,
-                                               @Cached AltrepRFFI.GetRegionNode getRegionNode) {
+                        @SuppressWarnings("unused") InteropLibrary bufferInterop,
+                        @Cached AltrepRFFI.GetRegionNode getRegionNode) {
             return getRegionNode.execute(altLogicalVecData.owner, startIdx, size, buffer);
         }
 
         @Specialization(guards = "!hasGetRegionMethod(altLogicalVecData)")
         public static int doWithoutNativeFunction(RAltLogicalVectorData altLogicalVecData, int startIdx, int size, Object buffer,
-                                                  InteropLibrary bufferInterop,
-                                                  @Shared("getLogicalAtNode") @Cached GetLogicalAtNode getLogicalAtNode,
-                                                  @Shared("naCheck") @Cached NACheck naCheck) {
+                        InteropLibrary bufferInterop,
+                        @Shared("getLogicalAtNode") @Cached GetLogicalAtNode getLogicalAtNode,
+                        @Shared("naCheck") @Cached NACheck naCheck) {
             int bufferIdx = 0;
             for (int index = startIdx; index < startIdx + size; index++) {
                 try {
@@ -97,7 +96,7 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public byte[] getLogicalDataCopy(@Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                                     @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         int length = lengthNode.execute(owner);
         return getDataCopy(dataptrNode, length);
     }
@@ -116,8 +115,8 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public byte getLogicalAt(int index,
-                             @Shared("getLogicalAtNode") @Cached GetLogicalAtNode getLogicalAtNode,
-                             @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("getLogicalAtNode") @Cached GetLogicalAtNode getLogicalAtNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         byte value = getLogicalAtNode.execute(owner, index);
         naCheck.check(value);
         return value;
@@ -125,8 +124,8 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public byte getNextLogical(SeqIterator it,
-                               @Shared("getLogicalAtNode") @Cached GetLogicalAtNode getLogicalAtNode,
-                               @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("getLogicalAtNode") @Cached GetLogicalAtNode getLogicalAtNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         byte value = getLogicalAtNode.execute(owner, it.getIndex());
         naCheck.check(value);
         return value;
@@ -134,8 +133,8 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public byte getLogical(@SuppressWarnings("unused") RandomAccessIterator it, int index,
-                           @Shared("getLogicalAtNode") @Cached GetLogicalAtNode getLogicalAtNode,
-                           @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("getLogicalAtNode") @Cached GetLogicalAtNode getLogicalAtNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         byte value = getLogicalAtNode.execute(owner, index);
         naCheck.check(value);
         return value;
@@ -145,30 +144,30 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
 
     @ExportMessage
     public void setLogicalAt(int index, byte value,
-                             @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                             @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
         writeViaDataptrNode(dataptrNode, index, value);
     }
 
     @ExportMessage
     public void setNextLogical(SeqWriteIterator it, byte value,
-                               @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                               @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
         writeViaDataptrNode(dataptrNode, it.getIndex(), value);
     }
 
     @ExportMessage
     public void setLogical(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, byte value,
-                           @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                           @Shared("naCheck") @Cached NACheck naCheck) {
+                    @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         naCheck.check(value);
         writeViaDataptrNode(dataptrNode, index, value);
     }
 
     private void writeViaDataptrNode(AltrepRFFI.DataptrNode dataptrNode,
-                                     int index, byte value) {
+                    int index, byte value) {
         long addr = dataptrNode.execute(owner, true);
         NativeMemory.putInt(addr, index, RRuntime.logical2int(value));
     }
@@ -180,13 +179,13 @@ public class RAltLogicalVectorData extends RAltrepNumericVectorData {
 
         @Specialization(guards = "hasEltMethodRegistered(altLogicalVec)")
         protected byte getLogicalAtWithElt(RLogicalVector altLogicalVec, int index,
-                          @Cached AltrepRFFI.EltNode eltNode) {
+                        @Cached AltrepRFFI.EltNode eltNode) {
             return (byte) eltNode.execute(altLogicalVec, index);
         }
 
         @Specialization(guards = "!hasEltMethodRegistered(altLogicalVec)")
         protected byte getLogicalAtWithoutElt(RLogicalVector altLogicalVec, int index,
-                             @Cached AltrepRFFI.DataptrNode dataptrNode) {
+                        @Cached AltrepRFFI.DataptrNode dataptrNode) {
             long dataptrAddr = dataptrNode.execute(altLogicalVec, false);
             int intValue = NativeMemory.getInt(dataptrAddr, index);
             return RRuntime.int2logical(intValue);

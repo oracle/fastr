@@ -37,13 +37,13 @@ public abstract class RAWNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     protected RObjectDataPtr doForNull(RNull rNull,
-            @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+                    @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         return getObjectDataPtrNode.execute(rNull);
     }
 
     @Specialization
     protected RObjectDataPtr doForRawVector(RRawVector rawVector,
-            @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+                    @Cached.Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         return getObjectDataPtrNode.execute(rawVector);
     }
 }

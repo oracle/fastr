@@ -16,7 +16,7 @@ public abstract class MakeAltRealClassNode extends FFIUpCallNode.Arg3 {
 
     @Specialization
     public Object makeAltRealClass(String className, String packageName, Object dllInfo,
-                                   @CachedContext(TruffleRLanguage.class) RContext context) {
+                    @CachedContext(TruffleRLanguage.class) RContext context) {
         AltRepContext altRepCtx = context.altRepContext;
         return altRepCtx.registerNewAltRealClass(className, packageName, dllInfo);
     }

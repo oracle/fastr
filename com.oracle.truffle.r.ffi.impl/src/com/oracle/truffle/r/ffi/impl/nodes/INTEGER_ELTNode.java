@@ -39,7 +39,7 @@ public abstract class INTEGER_ELTNode extends FFIUpCallNode.Arg2 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected int doIt(RAbstractAtomicVector vector, long index,
-                       @CachedLibrary("vector.getData()") VectorDataLibrary dataLibrary) {
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLibrary) {
         // TODO: There should be no conversion of the element - just cast - as in GNU-R.
         return dataLibrary.getIntAt(vector.getData(), (int) index);
     }

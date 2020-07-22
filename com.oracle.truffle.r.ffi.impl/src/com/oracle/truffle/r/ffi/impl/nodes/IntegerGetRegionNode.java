@@ -42,17 +42,17 @@ public abstract class IntegerGetRegionNode extends GetRegionNode {
 
     @Specialization(guards = "bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
     public long doBufferArray(RIntVector vec, long fromIdx, long size, Object buffer,
-                              @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
-                              @CachedLibrary("buffer") InteropLibrary bufferInterop) {
+                    @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
+                    @CachedLibrary("buffer") InteropLibrary bufferInterop) {
         validateArguments(fromIdx, size);
         return dataLibrary.getIntRegion(vec.getData(), (int) fromIdx, (int) size, buffer, bufferInterop);
     }
 
     @Specialization(guards = "!bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
     public long doGenericBuffer(RIntVector vec, long fromIdx, long size, Object buffer,
-                                @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
-                                @CachedLibrary("buffer") InteropLibrary bufferInterop,
-                                @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {
+                    @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
+                    @CachedLibrary("buffer") InteropLibrary bufferInterop,
+                    @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {
         validateArguments(fromIdx, size);
         long bufferAddr = bufferToNative(buffer, bufferInterop);
         int sizeInt = (int) size;

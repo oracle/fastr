@@ -13,7 +13,6 @@ import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 
-
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltStringVectorData extends RAltrepVectorData {
     private final AltStringClassDescriptor descriptor;
@@ -25,10 +24,7 @@ public class RAltStringVectorData extends RAltrepVectorData {
     }
 
     private static boolean hasDescriptorRegisteredNecessaryMethods(AltStringClassDescriptor descriptor) {
-        return descriptor.isLengthMethodRegistered()
-                && descriptor.isDataptrMethodRegistered()
-                && descriptor.isEltMethodRegistered()
-                && descriptor.isSetEltMethodRegistered();
+        return descriptor.isLengthMethodRegistered() && descriptor.isDataptrMethodRegistered() && descriptor.isEltMethodRegistered() && descriptor.isSetEltMethodRegistered();
     }
 
     public AltStringClassDescriptor getDescriptor() {
@@ -43,7 +39,7 @@ public class RAltStringVectorData extends RAltrepVectorData {
 
     @ExportMessage
     public String[] getStringDataCopy(@Shared("eltNode") @Cached AltrepRFFI.EltNode eltNode,
-                                      @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
         final int length = getLength(lengthNode);
         String[] stringData = new String[length];
         for (int i = 0; i < length; i++) {
@@ -54,37 +50,37 @@ public class RAltStringVectorData extends RAltrepVectorData {
 
     @ExportMessage
     public String getString(@SuppressWarnings("unused") RandomAccessIterator it, int index,
-                            @Shared("eltNode") @Cached AltrepRFFI.EltNode eltNode) {
+                    @Shared("eltNode") @Cached AltrepRFFI.EltNode eltNode) {
         return (String) eltNode.execute(owner, index);
     }
 
     @ExportMessage
     public String getStringAt(int index,
-                              @Shared("eltNode") @Cached AltrepRFFI.EltNode eltNode) {
+                    @Shared("eltNode") @Cached AltrepRFFI.EltNode eltNode) {
         return (String) eltNode.execute(owner, index);
     }
 
     @ExportMessage
     public String getNextString(SeqIterator it,
-                                @Shared("eltNode") @Cached AltrepRFFI.EltNode eltNode) {
+                    @Shared("eltNode") @Cached AltrepRFFI.EltNode eltNode) {
         return (String) eltNode.execute(owner, it.getIndex());
     }
 
     @ExportMessage
     public void setStringAt(int index, String value,
-                            @Shared("setEltNode") @Cached AltrepRFFI.SetEltNode setEltNode) {
+                    @Shared("setEltNode") @Cached AltrepRFFI.SetEltNode setEltNode) {
         setEltNode.execute((RStringVector) owner, index, value);
     }
 
     @ExportMessage
     public void setNextString(SeqWriteIterator it, String value,
-                              @Shared("setEltNode") @Cached AltrepRFFI.SetEltNode setEltNode) {
+                    @Shared("setEltNode") @Cached AltrepRFFI.SetEltNode setEltNode) {
         setEltNode.execute((RStringVector) owner, it.getIndex(), value);
     }
 
     @ExportMessage
     public void setString(@SuppressWarnings("unused") RandomAccessWriteIterator it, int index, String value,
-                          @Shared("setEltNode") @Cached AltrepRFFI.SetEltNode setEltNode) {
+                    @Shared("setEltNode") @Cached AltrepRFFI.SetEltNode setEltNode) {
         setEltNode.execute((RStringVector) owner, index, value);
     }
 }

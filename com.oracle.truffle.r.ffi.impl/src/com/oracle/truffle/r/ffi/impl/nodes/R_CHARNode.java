@@ -38,13 +38,13 @@ public abstract class R_CHARNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     protected RObjectDataPtr doForNull(RNull rNull,
-            @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+                    @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         return getObjectDataPtrNode.execute(rNull);
     }
 
     @Specialization
     protected RObjectDataPtr doForCharSXPWrapper(CharSXPWrapper charSXPWrapper,
-            @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+                    @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         return getObjectDataPtrNode.execute(charSXPWrapper);
     }
 }

@@ -39,7 +39,7 @@ public abstract class LOGICAL_ELTNode extends FFIUpCallNode.Arg2 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected byte doIt(RAbstractAtomicVector vector, long index,
-                            @CachedLibrary("vector.getData()") VectorDataLibrary dataLibrary) {
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLibrary) {
         return dataLibrary.getLogicalAt(vector.getData(), (int) index);
     }
 }

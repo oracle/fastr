@@ -41,17 +41,17 @@ public abstract class RawGetRegionNode extends GetRegionNode {
 
     @Specialization(guards = "bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
     public long doBufferArray(RRawVector rawVector, long fromIdx, long size, Object buffer,
-                              @CachedLibrary("rawVector.getData()") VectorDataLibrary dataLibrary,
-                              @CachedLibrary("buffer") InteropLibrary bufferInterop) {
+                    @CachedLibrary("rawVector.getData()") VectorDataLibrary dataLibrary,
+                    @CachedLibrary("buffer") InteropLibrary bufferInterop) {
         validateArguments(fromIdx, size);
         return dataLibrary.getRawRegion(rawVector.getData(), (int) fromIdx, (int) size, buffer, bufferInterop);
     }
 
     @Specialization(guards = "!bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
     public long doGenericBuffer(RRawVector vec, long fromIdx, long size, Object buffer,
-                                @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
-                                @CachedLibrary("buffer") InteropLibrary bufferInterop,
-                                @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {
+                    @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
+                    @CachedLibrary("buffer") InteropLibrary bufferInterop,
+                    @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {
         validateArguments(fromIdx, size);
         long bufferAddr = bufferToNative(buffer, bufferInterop);
         Object bufferWrapper = NativeArrayWrapper.createIntWrapper(bufferAddr, (int) size);

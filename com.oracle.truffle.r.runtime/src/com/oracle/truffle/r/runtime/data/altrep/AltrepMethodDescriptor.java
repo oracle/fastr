@@ -10,8 +10,4 @@ public class AltrepMethodDescriptor {
         this.method = method;
         this.rffiType = rffiType;
     }
-
-    // TODO: Zapamatovat si to co delat s returnem
-    //  Pro SEXP navratovy hodnoty lze pouzit FFIUnwrapNode
-    //  To uz mame v DownCallNode.execute( unwrap)
 }

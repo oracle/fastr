@@ -55,8 +55,9 @@ public class AltRepContext implements RContext.ContextState {
     }
 
     /**
-     * Saves the given descriptor for some duration
-     * FIXME: This is an ugly hack and should be temporary solution.
+     * Saves the given descriptor for some duration.
+     *
+     * FIXME: This is an ugly hack and should be a temporary solution.
      */
     public void saveDescriptor(AltRepClassDescriptor altRepClassDescr) {
         assert this.descriptor == null : "Only one descriptor can be saved at a time";

@@ -39,7 +39,7 @@ public abstract class REAL_ELTNode extends FFIUpCallNode.Arg2 {
 
     @Specialization(limit = "getTypedVectorDataLibraryCacheSize()")
     protected double doIt(RAbstractAtomicVector vector, long index,
-                       @CachedLibrary("vector.getData()") VectorDataLibrary dataLibrary) {
+                    @CachedLibrary("vector.getData()") VectorDataLibrary dataLibrary) {
         return dataLibrary.getDoubleAt(vector.getData(), (int) index);
     }
 }

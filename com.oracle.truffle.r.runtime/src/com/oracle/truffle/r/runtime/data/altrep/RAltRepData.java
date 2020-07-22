@@ -60,6 +60,6 @@ public class RAltRepData {
     @Override
     public String toString() {
         return "data1=" + (data.car() == null ? "null" : data.car()) +
-                ", data2=" + (data.cdr() == null ? "null" : data.cdr());
+                        ", data2=" + (data.cdr() == null ? "null" : data.cdr());
     }
 }

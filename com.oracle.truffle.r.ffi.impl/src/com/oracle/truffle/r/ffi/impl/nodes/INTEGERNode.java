@@ -41,16 +41,16 @@ public abstract class INTEGERNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     protected RObjectDataPtr doForNull(RNull rNull,
-            @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
+                    @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode) {
         return getObjectDataPtrNode.execute(rNull);
     }
 
     @Specialization
     protected RObjectDataPtr doForAtomicVector(RAbstractAtomicVector atomicVector,
-            @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode,
-            @Cached ConditionProfile isStringProfile,
-            @Cached ConditionProfile isNativized,
-            @Cached ConditionProfile needsWrapping) {
+                    @Shared("getObjectDataPtrNode") @Cached RObjectDataPtr.GetObjectDataPtrNode getObjectDataPtrNode,
+                    @Cached ConditionProfile isStringProfile,
+                    @Cached ConditionProfile isNativized,
+                    @Cached ConditionProfile needsWrapping) {
         if (isStringProfile.profile(atomicVector instanceof RStringVector)) {
             ((RStringVector) atomicVector).wrapStrings(isNativized, needsWrapping);
         }

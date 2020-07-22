@@ -22,9 +22,9 @@ public abstract class AltrepData1Node extends FFIUpCallNode.Arg1 {
 
     @Specialization(guards = "altrepVec == cachedAltrepVec", limit = "getGenericDataLibraryCacheSize()")
     public Object getData1FromAltrepCached(@SuppressWarnings("unused") RAbstractAtomicVector altrepVec,
-                     @Cached("altrepVec") @SuppressWarnings("unused") RAbstractAtomicVector cachedAltrepVec,
-                     @Cached("getPairListData(altrepVec)") RPairList pairListData,
-                     @CachedLibrary("pairListData") RPairListLibrary pairListLibrary) {
+                    @Cached("altrepVec") @SuppressWarnings("unused") RAbstractAtomicVector cachedAltrepVec,
+                    @Cached("getPairListData(altrepVec)") RPairList pairListData,
+                    @CachedLibrary("pairListData") RPairListLibrary pairListLibrary) {
         return pairListLibrary.car(pairListData);
     }
 
