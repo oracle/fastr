@@ -9,7 +9,7 @@ import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import org.junit.Assert;
 
 public class IntVectorDescriptorWrapper {
-    private final static int vecLength = 10;
+    private static final int vecLength = 10;
     private final DataptrMethod dataptrMethod;
     private final Length lengthMethod;
     private final Elt eltMethod;

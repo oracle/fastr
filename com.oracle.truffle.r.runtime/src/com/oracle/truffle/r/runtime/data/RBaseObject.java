@@ -125,15 +125,15 @@ public abstract class RBaseObject extends RTruffleBaseObject {
         unsetMask(ALT_MASK_SHIFTED);
     }
 
-    private final boolean isMask(int mask) {
+    private boolean isMask(int mask) {
         return (getTypedValueInfo() & mask) != 0;
     }
 
-    private final void setMask(int mask) {
+    private void setMask(int mask) {
         setTypedValueInfo(getTypedValueInfo() | mask);
     }
 
-    private final void unsetMask(int mask) {
+    private void unsetMask(int mask) {
         setTypedValueInfo(getTypedValueInfo() & ~mask);
     }
 

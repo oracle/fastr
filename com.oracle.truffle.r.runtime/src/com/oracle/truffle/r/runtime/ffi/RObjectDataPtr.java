@@ -95,7 +95,7 @@ public abstract class RObjectDataPtr implements TruffleObject {
 
     @GenerateUncached
     @ImportStatic({NativeDataAccess.class, AltrepUtilities.class})
-    public static abstract class GetObjectDataPtrNode extends Node {
+    public abstract static class GetObjectDataPtrNode extends Node {
         public abstract RObjectDataPtr execute(RBaseObject object);
 
         public static GetObjectDataPtrNode create() {

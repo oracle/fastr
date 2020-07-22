@@ -15,6 +15,8 @@ import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 
 public interface AltRepUpCalls {
+    // Checkstyle: stop method name check
+
     int ALTREP(Object x);
 
     boolean R_altrep_inherits(Object instance, Object classDescriptor);

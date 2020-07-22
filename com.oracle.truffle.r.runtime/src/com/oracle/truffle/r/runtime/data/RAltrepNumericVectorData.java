@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
- * Base class for altintegers, altreals and altlogicals
+ * Base class for altintegers, altreals and altlogicals.
  */
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltrepNumericVectorData extends RAltrepVectorData {

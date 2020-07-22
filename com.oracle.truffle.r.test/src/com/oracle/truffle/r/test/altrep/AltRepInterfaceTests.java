@@ -53,7 +53,7 @@ public class AltRepInterfaceTests extends TestBase {
     }
 
     /**
-     * int *data = INTEGER(instance); data[0] = 42;
+     * int *data = INTEGER(instance); data[0] = 42;.
      */
     @Test
     public void writeNativeIntData() throws Exception {

@@ -11,7 +11,7 @@ import com.oracle.truffle.r.runtime.data.altrep.AltRepClassDescriptor;
 import com.oracle.truffle.r.runtime.data.altrep.AltStringClassDescriptor;
 import org.graalvm.collections.EconomicMap;
 
-public class AltRepContext implements RContext.ContextState {
+public final class AltRepContext implements RContext.ContextState {
     private static final TruffleLogger logger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
     private AltRepClassDescriptor descriptor;
     EconomicMap<String, AltIntegerClassDescriptor> altIntDescriptors = EconomicMap.create();

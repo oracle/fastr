@@ -24,7 +24,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
-public class AfterDownCallProfiles {
+public final class AfterDownCallProfiles {
     private final ConditionProfile nativeReferencesNotEmptyProfile;
 
     private AfterDownCallProfiles(ConditionProfile nativeReferencesNotEmptyProfile) {
