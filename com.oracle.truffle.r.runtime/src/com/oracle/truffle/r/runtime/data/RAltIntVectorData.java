@@ -100,7 +100,8 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
     @ExportMessage
     public int[] getIntDataCopy(@Cached AltrepDuplicateNode duplicateNode,
                     @Shared("dataptrNode") @Cached AltrepRFFI.DataptrNode dataptrNode,
-                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode) {
+                    @Shared("lengthNode") @Cached AltrepRFFI.LengthNode lengthNode,
+                    @Shared("naCheck") @Cached NACheck naCheck) {
         // TODO: deep?
         int length = lengthNode.execute(owner);
         Object duplicatedObject = duplicateNode.execute(owner, false);
@@ -108,6 +109,8 @@ public class RAltIntVectorData extends RAltrepNumericVectorData {
             return ((RAltIntVectorData) duplicatedObject).getDataCopy(dataptrNode, length);
         } else if (duplicatedObject instanceof RIntArrayVectorData) {
             return ((RIntArrayVectorData) duplicatedObject).getIntDataCopy();
+        } else if (duplicatedObject instanceof RIntSeqVectorData) {
+            return ((RIntSeqVectorData) duplicatedObject).getIntDataCopy(naCheck);
         } else {
             throw RInternalError.shouldNotReachHere(
                             "RAltIntVectorData.getIntDataCopy: Unexpected returned object = " + duplicatedObject.toString());
