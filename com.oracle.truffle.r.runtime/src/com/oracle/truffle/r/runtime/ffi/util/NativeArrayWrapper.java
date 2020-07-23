@@ -28,6 +28,9 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+/**
+ * A wrapper for a native array ie. a pointer to a valid address.
+ */
 @ExportLibrary(InteropLibrary.class)
 public abstract class NativeArrayWrapper implements TruffleObject {
     private final int size;
@@ -38,10 +41,18 @@ public abstract class NativeArrayWrapper implements TruffleObject {
         this.arrayPtr = arrayPtr;
     }
 
+    /**
+     * Creates a wrapper for integer native array.
+     * @param arrayPtr Address to the array.
+     */
     public static NativeArrayWrapper createIntWrapper(long arrayPtr, int size) {
         return new NativeIntArrayWrapper(arrayPtr, size);
     }
 
+    /**
+     * Creates a wrapper for double native array.
+     * @param arrayPtr Address to the array.
+     */
     public static NativeArrayWrapper createDoubleWrapper(long arrayPtr, int size) {
         return new NativeDoubleArrayWrapper(arrayPtr, size);
     }

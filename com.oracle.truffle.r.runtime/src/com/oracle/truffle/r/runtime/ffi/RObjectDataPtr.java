@@ -67,6 +67,9 @@ import java.util.Objects;
 @ExportLibrary(NativeTypeLibrary.class)
 public abstract class RObjectDataPtr implements TruffleObject {
 
+    /**
+     * Get a {@link RObjectDataPtr} for given object. Uncached version.
+     */
     public static RObjectDataPtr getUncached(RBaseObject obj) {
         GetObjectDataPtrNode getObjectDataPtrNode = GetObjectDataPtrNode.getUncached();
         return getObjectDataPtrNode.execute(obj);
@@ -186,8 +189,11 @@ public abstract class RObjectDataPtr implements TruffleObject {
     }
 
     /**
-     * Whenever DATAPTR C function is called on an altrep instance, an instance of this class is
-     * returned. In Sulong, it should resemble native array.
+     * A class that wraps a pointer to the data of an ALTREP vector. It just resembles a native
+     * pointer.
+     *
+     * The data pointer (return value of Dataptr ALTREP method) for a given ALTREP vector is
+     * already cached before {@link AltrepVectorDataPtr} is constructed for such a vector.
      */
     @ExportLibrary(InteropLibrary.class)
     protected static final class AltrepVectorDataPtr extends RObjectDataPtr {

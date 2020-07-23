@@ -111,44 +111,7 @@ public enum NativeFunction {
     initvar_obj("(env, sint32, pointer) : void", "Call_"),
     initvar_double("(sint32, double): void", "Call_"),
     initvar_string("(sint32, string): void", "Call_"),
-    initvar_int("(sint32, sint32) : void", "Call_"),
-    // AltInteger
-    // Dataptr(SEXP instance, Rboolean writeable)
-    AltInteger_Dataptr("(pointer, uint32) : pointer"),
-    AltInteger_Is_sorted("(pointer) : sint32"),
-    AltInteger_Elt("(pointer, sint32) : sint32"),
-    AltInteger_Get_region("(pointer, sint32, sint32, [sint32]) : sint32"),
-    AltInteger_Sum("(pointer, sint32) : pointer"),
-    AltInteger_Min("(pointer, sint32) : pointer"),
-    AltInteger_Max("(pointer, sint32) : pointer"),
-    AltInteger_No_NA("(pointer) : sint32"),
-    // AltReal
-    AltReal_Is_sorted("(pointer) : sint32"),
-    AltReal_Elt("(pointer, sint32) : sint32"),
-    AltReal_Get_region("(pointer, sint32, sint32, [sint32]) : sint32"),
-    AltReal_Sum("(pointer, sint32) : pointer"),
-    AltReal_Min("(pointer, sint32) : pointer"),
-    AltReal_Max("(pointer, sint32) : pointer"),
-    AltReal_No_NA("(pointer) : sint32"),
-    // AltRaw
-    AltRaw_Elt("(pointer, sint32) : sint32"),
-    AltRaw_Get_region("(pointer, sint32, sint32, [sint32]) : sint32"),
-    // AltComplex
-    AltComplex_Elt("(pointer, sint32) : sint32"),
-    AltComplex_Get_region("(pointer, sint32, sint32, [sint32]) : sint32"),
-    // AltString
-    AltString_Elt("(pointer, sint32) : pointer"),
-    AltString_Set_elt("(pointer, sint32, pointer) : void"),
-    AltString_Is_sorted("(pointer) : sint32"),
-    AltString_No_NA("(pointer) : sint32"),
-    // AltLogical
-    AltLogical_Is_sorted("(pointer) : sint32"),
-    AltLogical_Elt("(pointer, sint32) : sint32"),
-    AltLogical_Get_region("(pointer, sint32, sint32, [sint32]) : sint32"),
-    AltLogical_Sum("(pointer, sint32) : pointer"),
-    AltLogical_Min("(pointer, sint32) : pointer"),
-    AltLogical_Max("(pointer, sint32) : pointer"),
-    AltLogical_No_NA("(pointer) : sint32");
+    initvar_int("(sint32, sint32) : void", "Call_");
 
     private final String callName;
     private final String signature;

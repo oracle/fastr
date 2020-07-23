@@ -449,8 +449,13 @@ public abstract class VectorDataLibrary extends Library {
     }
 
     /**
-     * This method is Java-equivalent of INTEGER_GET_REGION C function.
-     * 
+     * Gets a region of integers from the data. It is a Java equivalent for INTEGER_GET_REGION C function.
+     *
+     * @param startIndex  Starting index of the region.
+     * @param size Size of the required region
+     * @param buffer Buffer into which the data will be copied, in C equivalent it is pointer to integer.
+     * @param bufferInterop InteropLibrary for the buffer through which the elements will be set into the
+     *                      buffer.
      * @return count of elements that were actually copied.
      */
     public int getIntRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
@@ -619,6 +624,9 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
+    /**
+     * See {@link #getIntRegion}.
+     */
     public int getDoubleRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
         return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Double);
     }
@@ -715,6 +723,9 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
+    /**
+     * See {@link #getIntRegion}.
+     */
     public int getLogicalRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
         return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Logical);
     }
@@ -811,6 +822,9 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
+    /**
+     * See {@link #getIntRegion}.
+     */
     public int getRawRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
         return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Raw);
     }
@@ -1006,6 +1020,9 @@ public abstract class VectorDataLibrary extends Library {
         throw notImplemented(receiver);
     }
 
+    /**
+     * See {@link #getIntRegion}.
+     */
     public int getComplexRegion(Object receiver, int startIndex, int size, Object buffer, InteropLibrary bufferInterop) {
         return getRegion(receiver, startIndex, size, buffer, bufferInterop, RType.Complex);
     }

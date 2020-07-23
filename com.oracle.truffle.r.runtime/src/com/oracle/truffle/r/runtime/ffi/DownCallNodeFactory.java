@@ -43,11 +43,6 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 public abstract class DownCallNodeFactory {
     public abstract DownCallNode createDownCallNode();
 
-    // TODO: Remove this method ASAP.
-    public DownCallNode getUncachedDownCallNode() {
-        throw RInternalError.shouldNotReachHere("This method makes sense only for TruffleAltrep_DownCallNodeFactory");
-    }
-
     /**
      * This node has RFFI backend (LLVM/NFI) specific implementation and its purpose is to provide
      * functionality to invoke functions from {@link NativeFunction}.

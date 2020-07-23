@@ -28,6 +28,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.altrep.RAltRepData;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -85,8 +86,7 @@ public class RAltrepVectorData implements TruffleObject, VectorDataWithOwner {
 
     @ExportMessage
     public RType getType() {
-        // TODO
-        return RType.Null;
+        throw RInternalError.shouldNotReachHere("Subclasses should override");
     }
 
     @ExportMessage

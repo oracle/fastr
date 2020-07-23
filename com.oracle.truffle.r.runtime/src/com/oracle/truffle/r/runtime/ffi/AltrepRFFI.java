@@ -59,6 +59,29 @@ import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
 
+/**
+ * A static class with static inner classes representing ALTREP down call nodes, ie. every inner
+ * class represents a particular ALTREP method down call. There is a node for every ALTREP method
+ * with specializations for ALTREP types that have such a method, eg. {@link SetEltNode} has only
+ * one specialization for {@link RStringVector}, because only altstrings have Set_elt method.
+ *
+ * The nodes in this class should be used only for ALTREP instances that have a corresponding
+ * method registered, ie. if we want to use {@link IsSortedNode}, Is_sorted ALTREP method should
+ * be registered.
+ *
+ * Nodes corresponding to ALTREP methods that are called frequently in a usual R application
+ * have cached and uncached specializations for all the ALTREP types they support. On the other
+ * hand nodes for not so important ALTREP methods do not have cached specializations like
+ * {@link NoNANode}.
+ *
+ * Most of the cached specializations have the same pattern - they cache the class descriptor of
+ * given ALTREP vector and it's corresponding {@link AltrepMethodDescriptor}. Caching of
+ * {@link AltrepMethodDescriptor} is important for performance, because for the compiler the actual
+ * method (native function) that will be called is a constant.
+ *
+ * Note that the same class descriptor may be shared by more ALTREP vectors.
+ *
+ */
 public final class AltrepRFFI {
     private final AltrepDownCallNodeFactory downCallNodeFactory;
 
@@ -261,6 +284,11 @@ public final class AltrepRFFI {
         }
     }
 
+    /**
+     * DataptrNode caches a data pointer for every ALTREP vector. We can do that because a Dataptr
+     * ALTREP method for a particular ALTREP vector should always return the same value.
+     * This is a huge performance optimization.
+     */
     @ImportStatic({AltrepUtilities.class, AltRepClassDescriptor.class})
     public abstract static class DataptrNode extends Node {
         public abstract long execute(Object altrepVector, boolean writeable);
@@ -611,8 +639,7 @@ public final class AltrepRFFI {
         private static Object invokeSumMethod(AltrepDownCallNode downCallNode, AltrepMethodDescriptor sumMethod,
                         RAbstractAtomicVector altrepVec, boolean naRm) {
             // Sum method has same signature in every class descriptor, therefore we can use just
-            // wrapping/unwrapping
-            // argument constants from AltIntegerClassDescriptor.
+            // wrapping/unwrapping argument constants from AltIntegerClassDescriptor.
             return downCallNode.execute(sumMethod, AltIntegerClassDescriptor.sumMethodUnwrapResult,
                             AltIntegerClassDescriptor.sumMethodWrapArguments, new Object[]{altrepVec, naRm});
         }

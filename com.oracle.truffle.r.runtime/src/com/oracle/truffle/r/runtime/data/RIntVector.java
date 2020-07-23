@@ -327,6 +327,7 @@ public final class RIntVector extends RAbstractNumericVector {
             int length = dataLib.getLength(vectorData);
             long address;
             try {
+                // Invoke Dataptr method
                 address = dataLib.asPointer(vectorData);
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
