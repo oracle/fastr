@@ -30,6 +30,14 @@ import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RBaseObject;
 
+/**
+ * A base class for all the class descriptors for ALTREP. The class hierarchy of these descriptors corresponds
+ * exactly to how the descriptors are managed in GNU-R.
+ *
+ * Every descriptor class contains public static final fields describing the ALTREP methods that might be registered
+ * into that descriptor. For each ALTREP method we have to know the signature, which arguments should be wrapped
+ * when we call this method, and whether to unwrap the return value.
+ */
 public abstract class AltRepClassDescriptor extends RBaseObject {
     public static final String unserializeMethodSignature = "(pointer, pointer): pointer";
     @CompilationFinal(dimensions = 1) public static final boolean[] unserializeMethodWrapArguments = new boolean[]{true, true};
@@ -88,7 +96,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
 
     @Override
     public RType getRType() {
-        // TODO: R_altrep_class_t native type is a wrapper for SEXP which is a pairlist.
+        // R_altrep_class_t native type is a wrapper for SEXP which is a pairlist.
         return RType.PairList;
     }
 
@@ -116,47 +124,49 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
 
     public void registerUnserializeMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Unserialize");
-        if (this.unserializeMethodDescriptor != null) {
-            noMethodRedefinedAssumption.invalidate();
-        }
+        maybeInvalidateMethodRedefinedAssumption(this.unserializeMethodDescriptor);
         this.unserializeMethodDescriptor = methodDescr;
     }
 
     public void registerUnserializeEXMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Unserialize_EX");
+        maybeInvalidateMethodRedefinedAssumption(this.unserializeEXMethodDescriptor);
         this.unserializeEXMethodDescriptor = methodDescr;
     }
 
     public void registerSerializedStateMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Serialized_state");
+        maybeInvalidateMethodRedefinedAssumption(this.serializedStateMethodDescriptor);
         this.serializedStateMethodDescriptor = methodDescr;
     }
 
     public void registerDuplicateMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Duplicate");
+        maybeInvalidateMethodRedefinedAssumption(this.duplicateMethodDescriptor);
         this.duplicateMethodDescriptor = methodDescr;
     }
 
     public void registerDuplicateEXMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Duplicate_EX");
+        maybeInvalidateMethodRedefinedAssumption(this.duplicateEXMethodDescriptor);
         this.duplicateEXMethodDescriptor = methodDescr;
     }
 
     public void registerCoerceMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Coerce");
+        maybeInvalidateMethodRedefinedAssumption(this.coerceMethodDescriptor);
         this.coerceMethodDescriptor = methodDescr;
     }
 
     public void registerInspectMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Inspect");
+        maybeInvalidateMethodRedefinedAssumption(this.inspectMethodDescriptor);
         this.inspectMethodDescriptor = methodDescr;
     }
 
     public void registerLengthMethod(AltrepMethodDescriptor methodDescr) {
         logRegisterMethod("Length");
-        if (this.lengthMethodDescriptor != null) {
-            noMethodRedefinedAssumption.invalidate();
-        }
+        maybeInvalidateMethodRedefinedAssumption(this.lengthMethodDescriptor);
         this.lengthMethodDescriptor = methodDescr;
     }
 

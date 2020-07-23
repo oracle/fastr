@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
- * Base class for IntegerGetRegionNode, RealGetRegionNode, etc.
+ * Base class for all the get regions nodes: IntegerGetRegionNode, RealGetRegionNode, etc.
  */
 abstract class GetRegionNode extends FFIUpCallNode.Arg4 {
     protected static void validateArguments(long fromIdx, long size) {

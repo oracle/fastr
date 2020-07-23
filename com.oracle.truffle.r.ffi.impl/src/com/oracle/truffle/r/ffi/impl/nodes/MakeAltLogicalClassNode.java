@@ -28,6 +28,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.context.AltRepContext;
 import com.oracle.truffle.r.runtime.context.RContext;
 
+/**
+ * This node represents R_make_altlogical_class upcall and returns a
+ * {@link com.oracle.truffle.r.runtime.data.altrep.AltLogicalClassDescriptor}.
+ */
 @GenerateUncached
 public abstract class MakeAltLogicalClassNode extends FFIUpCallNode.Arg3 {
 
@@ -37,7 +41,7 @@ public abstract class MakeAltLogicalClassNode extends FFIUpCallNode.Arg3 {
 
     @TruffleBoundary
     @Specialization
-    public Object makeAltLogicalClass(String className, String packageName, Object dllInfo) {
+    protected Object makeAltLogicalClass(String className, String packageName, Object dllInfo) {
         AltRepContext altRepCtx = RContext.getInstance().altRepContext;
         return altRepCtx.registerNewAltLogicalClass(className, packageName, dllInfo);
     }

@@ -25,7 +25,7 @@ package com.oracle.truffle.r.runtime.data.altrep;
 import com.oracle.truffle.r.runtime.RInternalError;
 
 /**
- * This enum is transcribed from Rinternals.h.
+ * This enum represents an information about sortedness of a vector and is transcribed from Rinternals.h.
  */
 public enum AltrepSortedness {
     SORTED_DECR_NA_1ST(-2),

@@ -24,6 +24,9 @@ package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.CompilerDirectives;
 
+/**
+ * See the documentation of {@link AltRepClassDescriptor}.
+ */
 public class AltLogicalClassDescriptor extends AltVecClassDescriptor {
     // All the signatures and wrap/unwrap argument information is same as for
     // AltIntegerClassDescriptor.

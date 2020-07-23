@@ -24,8 +24,10 @@ package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
+/**
+ * See the documentation of {@link AltRepClassDescriptor}.
+ */
 public class AltIntegerClassDescriptor extends AltVecClassDescriptor {
-    // TODO: Fix signature (sint64?)
     public static final String eltMethodSignature = "(pointer, sint32):sint32";
     @CompilationFinal(dimensions = 1) public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};
     public static final boolean eltMethodUnwrapResult = false;

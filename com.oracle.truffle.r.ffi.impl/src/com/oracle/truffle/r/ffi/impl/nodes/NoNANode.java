@@ -37,7 +37,7 @@ public abstract class NoNANode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization(limit = "getGenericDataLibraryCacheSize()")
-    public Object doContainer(RAbstractContainer container,
+    protected Object doContainer(RAbstractContainer container,
                     @CachedLibrary("container.getData()") VectorDataLibrary dataLibrary) {
         if (dataLibrary.isComplete(container.getData())) {
             return RRuntime.LOGICAL_TRUE;
@@ -47,7 +47,7 @@ public abstract class NoNANode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization(replaces = "doContainer")
-    public Object doOther(@SuppressWarnings("unused") RBaseObject rObject) {
+    protected Object doOther(@SuppressWarnings("unused") RBaseObject rObject) {
         return RRuntime.LOGICAL_FALSE;
     }
 }

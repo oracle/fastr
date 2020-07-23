@@ -26,6 +26,10 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 
+/**
+ * This class represent an instance data of an ALTREP. In GNU-R these data are represented as pairlist,
+ * where CAR is data1 and CDR is data2.
+ */
 public class RAltRepData {
     private RPairList data;
 

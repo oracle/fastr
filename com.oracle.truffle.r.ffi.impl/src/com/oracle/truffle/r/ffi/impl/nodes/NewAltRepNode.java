@@ -43,7 +43,7 @@ public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
     }
 
     @Specialization
-    public Object newIntAltRep(AltIntegerClassDescriptor classDescriptor, Object data1, Object data2) {
+    protected Object newIntAltRep(AltIntegerClassDescriptor classDescriptor, Object data1, Object data2) {
         RAltRepData altRepData = new RAltRepData(data1, data2);
         RLogger.getLogger(RLogger.LOGGER_ALTREP).fine(
                         () -> "R_new_altrep: Returning vector with descriptor=" + classDescriptor.toString() + " to native.");
@@ -51,7 +51,7 @@ public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
     }
 
     @Specialization
-    public Object newRealAltRep(AltRealClassDescriptor classDescriptor, Object data1, Object data2) {
+    protected Object newRealAltRep(AltRealClassDescriptor classDescriptor, Object data1, Object data2) {
         RAltRepData altRepData = new RAltRepData(data1, data2);
         RLogger.getLogger(RLogger.LOGGER_ALTREP).fine(
                         () -> "R_new_altrep: Returning vector with descriptor=" + classDescriptor.toString() + " to native.");
@@ -59,27 +59,27 @@ public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
     }
 
     @Specialization
-    public Object newStringAltRep(AltStringClassDescriptor classDescriptor, Object data1, Object data2) {
+    protected Object newStringAltRep(AltStringClassDescriptor classDescriptor, Object data1, Object data2) {
         return RDataFactory.createAltStringVector(classDescriptor, new RAltRepData(data1, data2));
     }
 
     @Specialization
-    public Object newAltLogical(AltLogicalClassDescriptor descriptor, Object data1, Object data2) {
+    protected Object newAltLogical(AltLogicalClassDescriptor descriptor, Object data1, Object data2) {
         return RDataFactory.createAltLogicalVector(descriptor, new RAltRepData(data1, data2));
     }
 
     @Specialization
-    public Object newAltRaw(AltRawClassDescriptor descriptor, Object data1, Object data2) {
+    protected Object newAltRaw(AltRawClassDescriptor descriptor, Object data1, Object data2) {
         return RDataFactory.createAltRawVector(descriptor, new RAltRepData(data1, data2));
     }
 
     @Specialization
-    public Object newAltComplex(AltComplexClassDescriptor descriptor, Object data1, Object data2) {
+    protected Object newAltComplex(AltComplexClassDescriptor descriptor, Object data1, Object data2) {
         return RDataFactory.createAltComplexVector(descriptor, new RAltRepData(data1, data2));
     }
 
     @Fallback
-    public Object unknownAltrepType(@SuppressWarnings("unused") Object classDescriptor, @SuppressWarnings("unused") Object data1,
+    protected Object unknownAltrepType(@SuppressWarnings("unused") Object classDescriptor, @SuppressWarnings("unused") Object data1,
                     @SuppressWarnings("unused") Object data2) {
         throw RInternalError.shouldNotReachHere("Unknown class descriptor");
     }

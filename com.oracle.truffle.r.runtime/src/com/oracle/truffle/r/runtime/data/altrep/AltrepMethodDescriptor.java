@@ -25,7 +25,9 @@ package com.oracle.truffle.r.runtime.data.altrep;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public class AltrepMethodDescriptor {
+    // A TruffleObject that is executable with InteropLibrary.execute.
     public final Object method;
+    // Currently either LLVM or NFI.
     public final RFFIFactory.Type rffiType;
 
     public AltrepMethodDescriptor(Object method, RFFIFactory.Type rffiType) {

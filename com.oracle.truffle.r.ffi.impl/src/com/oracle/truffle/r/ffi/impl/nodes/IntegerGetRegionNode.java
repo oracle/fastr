@@ -41,7 +41,7 @@ public abstract class IntegerGetRegionNode extends GetRegionNode {
     }
 
     @Specialization(guards = "bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
-    public long doBufferArray(RIntVector vec, long fromIdx, long size, Object buffer,
+    protected long doBufferArray(RIntVector vec, long fromIdx, long size, Object buffer,
                     @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
                     @CachedLibrary("buffer") InteropLibrary bufferInterop) {
         validateArguments(fromIdx, size);
@@ -49,7 +49,7 @@ public abstract class IntegerGetRegionNode extends GetRegionNode {
     }
 
     @Specialization(guards = "!bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
-    public long doGenericBuffer(RIntVector vec, long fromIdx, long size, Object buffer,
+    protected long doGenericBuffer(RIntVector vec, long fromIdx, long size, Object buffer,
                     @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
                     @CachedLibrary("buffer") InteropLibrary bufferInterop,
                     @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {

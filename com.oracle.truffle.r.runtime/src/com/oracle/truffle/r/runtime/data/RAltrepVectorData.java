@@ -36,12 +36,16 @@ import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDuplicateNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
- * Base class for all ALTREP vector data - altinteger, altreal, altlogical, altcomplex and altraw.
+ * Base class for all ALTREP vector data - altinteger, altreal, altlogical, altcomplex, altraw and altstring.
+ * It exports messages of {@link VectorDataLibrary} that are common to every ALTREP vector.
  */
 @ExportLibrary(VectorDataLibrary.class)
 public class RAltrepVectorData implements TruffleObject, VectorDataWithOwner {
     protected RAbstractContainer owner;
     protected final RAltRepData altrepData;
+    // A flag representing whether a Dataptr ALTREP method was already called. This information is
+    // useful, because we do not have to call Dataptr method multiple times and we can cache the
+    // result.
     private boolean dataptrCalled;
 
     protected RAltrepVectorData(RAltRepData altrepData) {
@@ -52,10 +56,16 @@ public class RAltrepVectorData implements TruffleObject, VectorDataWithOwner {
         return altrepData;
     }
 
+    /**
+     * Get the first ALTREP instance data.
+     */
     public Object getData1() {
         return altrepData.getData1();
     }
 
+    /**
+     * Get the second ALTREP instance data.
+     */
     public Object getData2() {
         return altrepData.getData2();
     }

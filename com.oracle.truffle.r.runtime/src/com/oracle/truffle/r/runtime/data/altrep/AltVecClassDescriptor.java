@@ -24,6 +24,9 @@ package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
+/**
+ * See the documentation of {@link AltRepClassDescriptor}.
+ */
 public abstract class AltVecClassDescriptor extends AltRepClassDescriptor {
     public static final String dataptrMethodSignature = "(pointer, sint32) : pointer";
     @CompilationFinal(dimensions = 1) public static final boolean[] dataptrMethodWrapArguments = new boolean[]{true, false};

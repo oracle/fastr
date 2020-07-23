@@ -35,6 +35,9 @@ import com.oracle.truffle.r.runtime.data.RPairListLibrary;
 import com.oracle.truffle.r.runtime.data.altrep.AltrepUtilities;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 
+/**
+ * Node for setting the first data of an ALTREP instance.
+ */
 @GenerateUncached
 @ImportStatic({AltrepUtilities.class, DSLConfig.class})
 public abstract class SetAltrepData1Node extends FFIUpCallNode.Arg2 {
@@ -43,7 +46,7 @@ public abstract class SetAltrepData1Node extends FFIUpCallNode.Arg2 {
     }
 
     @Specialization(guards = "altrepVec == cachedAltrepVec", limit = "getGenericDataLibraryCacheSize()")
-    public Object setData1Cached(@SuppressWarnings("unused") RAbstractAtomicVector altrepVec, Object data1,
+    protected Object setData1Cached(@SuppressWarnings("unused") RAbstractAtomicVector altrepVec, Object data1,
                     @Cached("altrepVec") @SuppressWarnings("unused") RAbstractAtomicVector cachedAltrepVec,
                     @Cached("getPairListData(altrepVec)") RPairList pairListData,
                     @CachedLibrary("pairListData") RPairListLibrary pairListLibrary) {
@@ -52,14 +55,14 @@ public abstract class SetAltrepData1Node extends FFIUpCallNode.Arg2 {
     }
 
     @Specialization(replaces = "setData1Cached")
-    public Object setData1Uncached(RAbstractAtomicVector altrepVec, Object data1) {
+    protected Object setData1Uncached(RAbstractAtomicVector altrepVec, Object data1) {
         RPairList pairListData = AltrepUtilities.getPairListData(altrepVec);
         pairListData.setCar(data1);
         return null;
     }
 
     @Fallback
-    public Object fallback(Object vector, @SuppressWarnings("unused") Object data1) {
+    protected Object fallback(Object vector, @SuppressWarnings("unused") Object data1) {
         throw RInternalError.shouldNotReachHere("R_set_altrep_data1: Unknown type = " + vector.getClass().getSimpleName());
     }
 }

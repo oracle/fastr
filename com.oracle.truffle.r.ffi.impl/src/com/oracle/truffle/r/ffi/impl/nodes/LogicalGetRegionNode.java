@@ -40,7 +40,7 @@ public abstract class LogicalGetRegionNode extends GetRegionNode {
     }
 
     @Specialization(guards = "bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
-    public long doBufferArray(RLogicalVector logicalVector, long fromIdx, long size, Object buffer,
+    protected long doBufferArray(RLogicalVector logicalVector, long fromIdx, long size, Object buffer,
                     @CachedLibrary("logicalVector.getData()") VectorDataLibrary dataLibrary,
                     @CachedLibrary("buffer") InteropLibrary bufferInterop) {
         validateArguments(fromIdx, size);
@@ -48,7 +48,7 @@ public abstract class LogicalGetRegionNode extends GetRegionNode {
     }
 
     @Specialization(guards = "!bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
-    public long doGenericBuffer(RLogicalVector vec, long fromIdx, long size, Object buffer,
+    protected long doGenericBuffer(RLogicalVector vec, long fromIdx, long size, Object buffer,
                     @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
                     @CachedLibrary("buffer") InteropLibrary bufferInterop,
                     @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {

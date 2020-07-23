@@ -55,13 +55,18 @@ public abstract class DATAPTR_OR_NULLNode extends FFIUpCallNode.Arg1 {
         }
     }
 
+    /**
+     * For normal vectors we want to return NULL by default, because we do not want to allocate any off-heap
+     * native memory.
+     * @return NULL
+     */
     @Specialization(guards = "!isAltrep(vector)")
     protected Object doForNormalVectors(@SuppressWarnings("unused") RAbstractAtomicVector vector) {
         return new NullPointer();
     }
 
     @ExportLibrary(InteropLibrary.class)
-    public static class NullPointer implements TruffleObject {
+    protected static class NullPointer implements TruffleObject {
         @ExportMessage
         public boolean isNull() {
             return true;

@@ -40,7 +40,7 @@ public abstract class RealGetRegionNode extends GetRegionNode {
     }
 
     @Specialization(guards = "bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
-    public long doBufferArray(RDoubleVector doubleVec, long fromIdx, long size, Object buffer,
+    protected long doBufferArray(RDoubleVector doubleVec, long fromIdx, long size, Object buffer,
                     @CachedLibrary("doubleVec.getData()") VectorDataLibrary dataLibrary,
                     @CachedLibrary("buffer") InteropLibrary bufferInterop) {
         validateArguments(fromIdx, size);
@@ -48,7 +48,7 @@ public abstract class RealGetRegionNode extends GetRegionNode {
     }
 
     @Specialization(guards = "!bufferInterop.hasArrayElements(buffer)", limit = "getGenericDataLibraryCacheSize()")
-    public long doGenericBuffer(RDoubleVector vec, long fromIdx, long size, Object buffer,
+    protected long doGenericBuffer(RDoubleVector vec, long fromIdx, long size, Object buffer,
                     @CachedLibrary("vec.getData()") VectorDataLibrary dataLibrary,
                     @CachedLibrary("buffer") InteropLibrary bufferInterop,
                     @CachedLibrary(limit = "1") InteropLibrary bufferWrapperInterop) {

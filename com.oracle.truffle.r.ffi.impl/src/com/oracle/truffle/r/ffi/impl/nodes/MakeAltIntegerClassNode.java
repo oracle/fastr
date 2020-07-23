@@ -32,6 +32,10 @@ import com.oracle.truffle.r.runtime.context.AltRepContext;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
+/**
+ * This node represents R_make_altinteger_class upcall and returns a
+ * {@link com.oracle.truffle.r.runtime.data.altrep.AltIntegerClassDescriptor}.
+ */
 @GenerateUncached
 public abstract class MakeAltIntegerClassNode extends FFIUpCallNode.Arg3 {
     private static final TruffleLogger altrepLogger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
@@ -42,7 +46,7 @@ public abstract class MakeAltIntegerClassNode extends FFIUpCallNode.Arg3 {
 
     @TruffleBoundary
     @Specialization
-    public Object makeAltIntegerClass(String className, String packageName, Object dllInfo,
+    protected Object makeAltIntegerClass(String className, String packageName, Object dllInfo,
                     @CachedContext(TruffleRLanguage.class) RContext context) {
         AltRepContext altRepCtx = context.altRepContext;
         altrepLogger.fine(() -> "Making new altint class " + packageName + ":" + className);

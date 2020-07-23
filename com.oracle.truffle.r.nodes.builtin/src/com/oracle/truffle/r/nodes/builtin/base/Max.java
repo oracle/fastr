@@ -66,6 +66,10 @@ public abstract class Max extends RBuiltinNode.Arg2 {
         return reduce.executeReduce(args.getArgument(0), naRm, false);
     }
 
+    /**
+     * We want to dispatch to the ALTREP Max method only when there is just one ALTREP instance.
+     * See {@link Sum#sumLengthOneAltrep}.
+     */
     @Specialization(guards = {"args.getLength() == 1", "isAltrep(args.getArgument(0))", "hasMaxMethodRegistered(args.getArgument(0))"})
     protected Object maxLengthOneAltrep(RArgsValuesAndNames args, boolean naRm,
                     @Cached AltrepRFFI.MaxNode maxNode) {

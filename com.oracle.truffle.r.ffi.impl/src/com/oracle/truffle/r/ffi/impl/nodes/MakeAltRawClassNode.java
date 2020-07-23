@@ -28,6 +28,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.context.AltRepContext;
 import com.oracle.truffle.r.runtime.context.RContext;
 
+/**
+ * This node represents R_make_altraw_class upcall and returns a
+ * {@link com.oracle.truffle.r.runtime.data.altrep.AltRawClassDescriptor}.
+ */
 @GenerateUncached
 public abstract class MakeAltRawClassNode extends FFIUpCallNode.Arg3 {
 
@@ -37,7 +41,7 @@ public abstract class MakeAltRawClassNode extends FFIUpCallNode.Arg3 {
 
     @TruffleBoundary
     @Specialization
-    public Object makeAltRawClass(String className, String packageName, Object dllInfo) {
+    protected Object makeAltRawClass(String className, String packageName, Object dllInfo) {
         AltRepContext altRepCtx = RContext.getInstance().altRepContext;
         return altRepCtx.registerNewAltRawClass(className, packageName, dllInfo);
     }

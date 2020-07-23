@@ -1200,6 +1200,14 @@ public final class NativeDataAccess {
         return mirror.dataAddress.getAddress();
     }
 
+    /**
+     * Prepares the given ALTREP vector for usage in native code. Does not allocate any native memory.
+     *
+     * Used by {@code toNative} messages.
+     * @param altrepVec an ALTREP vector.
+     * @param length length of the vector.
+     * @param address Data address of the ALTREP vector.
+     */
     static void initializeAltrep(RBaseObject altrepVec, int length, long address) {
         NativeMirror mirror = altrepVec.getNativeMirror();
         assert altrepVec.isAltRep();

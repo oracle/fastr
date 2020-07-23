@@ -32,6 +32,9 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.VectorDataLibrary;
 import com.oracle.truffle.r.runtime.ffi.util.NativeArrayWrapper;
 
+/**
+ * Represents the COMPLEX_GET_REGION up call.
+ */
 @GenerateUncached
 @ImportStatic(DSLConfig.class)
 public abstract class ComplexGetRegionNode extends GetRegionNode {

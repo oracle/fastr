@@ -1420,7 +1420,13 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         throw implementedAsNode();
     }
 
-    private static AltrepMethodDescriptor createAltrepDownCall(Object method, String signature) {
+    /**
+     * Converts the given {@code method} argument into an executable method and wraps it in
+     * {@link AltrepMethodDescriptor}.
+     * @param method A reference to a native function
+     * @param signature Signature of the {@code method}
+     */
+    private static AltrepMethodDescriptor createAltrepMethodDescriptor(Object method, String signature) {
         InteropLibrary interop = InteropLibrary.getUncached();
         if (!interop.isExecutable(method)) {
             if (interop.isMemberInvocable(method, "bind")) {
@@ -1440,266 +1446,266 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public void R_set_altrep_Unserialize_method(Object classDescriptor, Object method) {
         AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRepClassDescriptor.unserializeMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRepClassDescriptor.unserializeMethodSignature);
         classDescr.registerUnserializeMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altrep_Length_method(Object classDescriptor, Object method) {
         AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRepClassDescriptor.lengthMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRepClassDescriptor.lengthMethodSignature);
         classDescr.registerLengthMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altrep_UnserializeEX_method(Object classDescriptor, Object method) {
         AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRepClassDescriptor.unserializeEXMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRepClassDescriptor.unserializeEXMethodSignature);
         classDescr.registerUnserializeEXMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altrep_Serialized_state_method(Object classDescriptor, Object method) {
         AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRepClassDescriptor.serializedStateMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRepClassDescriptor.serializedStateMethodSignature);
         classDescr.registerSerializedStateMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altrep_Duplicate_method(Object classDescriptor, Object method) {
         AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRepClassDescriptor.duplicateMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRepClassDescriptor.duplicateMethodSignature);
         classDescr.registerDuplicateMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altrep_DuplicateEX_method(Object classDescriptor, Object method) {
         AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRepClassDescriptor.duplicateEXMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRepClassDescriptor.duplicateEXMethodSignature);
         classDescr.registerDuplicateEXMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altrep_Coerce_method(Object classDescriptor, Object method) {
         AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRepClassDescriptor.coerceMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRepClassDescriptor.coerceMethodSignature);
         classDescr.registerCoerceMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altrep_Inspect_method(Object classDescriptor, Object method) {
         AltRepClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRepClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRepClassDescriptor.inspectMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRepClassDescriptor.inspectMethodSignature);
         classDescr.registerInspectMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altvec_Dataptr_method(Object classDescriptor, Object method) {
         AltVecClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltVecClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltVecClassDescriptor.dataptrMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltVecClassDescriptor.dataptrMethodSignature);
         classDescr.registerDataptrMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altvec_Dataptr_or_null_method(Object classDescriptor, Object method) {
         AltVecClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltVecClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltVecClassDescriptor.dataptrOrNullMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltVecClassDescriptor.dataptrOrNullMethodSignature);
         classDescr.registerDataptrOrNullMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altvec_Extract_subset_method(Object classDescriptor, Object method) {
         AltVecClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltVecClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltVecClassDescriptor.extractSubsetMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltVecClassDescriptor.extractSubsetMethodSignature);
         classDescr.registerExtractSubsetMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altinteger_Elt_method(Object classDescriptor, Object method) {
         AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltIntegerClassDescriptor.eltMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltIntegerClassDescriptor.eltMethodSignature);
         classDescr.registerEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altinteger_Get_region_method(Object classDescriptor, Object method) {
         AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltIntegerClassDescriptor.getRegionMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltIntegerClassDescriptor.getRegionMethodSignature);
         classDescr.registerGetRegionMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altinteger_Is_sorted_method(Object classDescriptor, Object method) {
         AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltIntegerClassDescriptor.isSortedMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltIntegerClassDescriptor.isSortedMethodSignature);
         classDescr.registerIsSortedMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altinteger_No_NA_method(Object classDescriptor, Object method) {
         AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltIntegerClassDescriptor.noNAMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltIntegerClassDescriptor.noNAMethodSignature);
         classDescr.registerNoNAMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altinteger_Sum_method(Object classDescriptor, Object method) {
         AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltIntegerClassDescriptor.sumMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltIntegerClassDescriptor.sumMethodSignature);
         classDescr.registerSumMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altinteger_Min_method(Object classDescriptor, Object method) {
         AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltIntegerClassDescriptor.minMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltIntegerClassDescriptor.minMethodSignature);
         classDescr.registerMinMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altinteger_Max_method(Object classDescriptor, Object method) {
         AltIntegerClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltIntegerClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltIntegerClassDescriptor.maxMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltIntegerClassDescriptor.maxMethodSignature);
         classDescr.registerMaxMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altreal_Elt_method(Object classDescriptor, Object method) {
         AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRealClassDescriptor.eltMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRealClassDescriptor.eltMethodSignature);
         classDescr.registerEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altreal_Get_region_method(Object classDescriptor, Object method) {
         AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRealClassDescriptor.getRegionMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRealClassDescriptor.getRegionMethodSignature);
         classDescr.registerGetRegionMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altreal_Is_sorted_method(Object classDescriptor, Object method) {
         AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRealClassDescriptor.isSortedMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRealClassDescriptor.isSortedMethodSignature);
         classDescr.registerIsSortedMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altreal_No_NA_method(Object classDescriptor, Object method) {
         AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRealClassDescriptor.noNAMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRealClassDescriptor.noNAMethodSignature);
         classDescr.registerNoNAMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altreal_Sum_method(Object classDescriptor, Object method) {
         AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRealClassDescriptor.sumMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRealClassDescriptor.sumMethodSignature);
         classDescr.registerSumMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altreal_Min_method(Object classDescriptor, Object method) {
         AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRealClassDescriptor.minMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRealClassDescriptor.minMethodSignature);
         classDescr.registerMinMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altreal_Max_method(Object classDescriptor, Object method) {
         AltRealClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRealClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRealClassDescriptor.maxMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRealClassDescriptor.maxMethodSignature);
         classDescr.registerMaxMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altlogical_Elt_method(Object classDescriptor, Object method) {
         AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltLogicalClassDescriptor.eltMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltLogicalClassDescriptor.eltMethodSignature);
         classDescr.registerEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altlogical_Get_region_method(Object classDescriptor, Object method) {
         AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltLogicalClassDescriptor.getRegionMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltLogicalClassDescriptor.getRegionMethodSignature);
         classDescr.registerGetRegionMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altlogical_Is_sorted_method(Object classDescriptor, Object method) {
         AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltLogicalClassDescriptor.isSortedMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltLogicalClassDescriptor.isSortedMethodSignature);
         classDescr.registerIsSortedMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altlogical_No_NA_method(Object classDescriptor, Object method) {
         AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltLogicalClassDescriptor.noNAMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltLogicalClassDescriptor.noNAMethodSignature);
         classDescr.registerNoNAMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altlogical_Sum_method(Object classDescriptor, Object method) {
         AltLogicalClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltLogicalClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltLogicalClassDescriptor.sumMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltLogicalClassDescriptor.sumMethodSignature);
         classDescr.registerSumMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altraw_Elt_method(Object classDescriptor, Object method) {
         AltRawClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRawClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRawClassDescriptor.eltMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRawClassDescriptor.eltMethodSignature);
         classDescr.registerEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altraw_Get_region_method(Object classDescriptor, Object method) {
         AltRawClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltRawClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltRawClassDescriptor.getRegionMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltRawClassDescriptor.getRegionMethodSignature);
         classDescr.registerGetRegionMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altcomplex_Elt_method(Object classDescriptor, Object method) {
         AltComplexClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltComplexClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltComplexClassDescriptor.eltMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltComplexClassDescriptor.eltMethodSignature);
         classDescr.registerEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altcomplex_Get_region_method(Object classDescriptor, Object method) {
         AltComplexClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltComplexClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltComplexClassDescriptor.getRegionMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltComplexClassDescriptor.getRegionMethodSignature);
         classDescr.registerGetRegionMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altstring_Elt_method(Object classDescriptor, Object method) {
         AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltStringClassDescriptor.eltMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltStringClassDescriptor.eltMethodSignature);
         classDescr.registerEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altstring_Set_elt_method(Object classDescriptor, Object method) {
         AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltStringClassDescriptor.setEltMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltStringClassDescriptor.setEltMethodSignature);
         classDescr.registerSetEltMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altstring_Is_sorted_method(Object classDescriptor, Object method) {
         AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltStringClassDescriptor.isSortedMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltStringClassDescriptor.isSortedMethodSignature);
         classDescr.registerIsSortedMethod(altrepMethodDescriptor);
     }
 
     @Override
     public void R_set_altstring_No_NA_method(Object classDescriptor, Object method) {
         AltStringClassDescriptor classDescr = guaranteeInstanceOf(classDescriptor, AltStringClassDescriptor.class);
-        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepDownCall(method, AltStringClassDescriptor.noNAMethodSignature);
+        AltrepMethodDescriptor altrepMethodDescriptor = createAltrepMethodDescriptor(method, AltStringClassDescriptor.noNAMethodSignature);
         classDescr.registerNoNAMethod(altrepMethodDescriptor);
     }
 

@@ -29,6 +29,10 @@ import com.oracle.truffle.r.runtime.context.AltRepContext;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 
+/**
+ * This node represents R_make_altreal_class upcall and returns a
+ * {@link com.oracle.truffle.r.runtime.data.altrep.AltRealClassDescriptor}.
+ */
 @GenerateUncached
 public abstract class MakeAltRealClassNode extends FFIUpCallNode.Arg3 {
 
@@ -37,7 +41,7 @@ public abstract class MakeAltRealClassNode extends FFIUpCallNode.Arg3 {
     }
 
     @Specialization
-    public Object makeAltRealClass(String className, String packageName, Object dllInfo,
+    protected Object makeAltRealClass(String className, String packageName, Object dllInfo,
                     @CachedContext(TruffleRLanguage.class) RContext context) {
         AltRepContext altRepCtx = context.altRepContext;
         return altRepCtx.registerNewAltRealClass(className, packageName, dllInfo);

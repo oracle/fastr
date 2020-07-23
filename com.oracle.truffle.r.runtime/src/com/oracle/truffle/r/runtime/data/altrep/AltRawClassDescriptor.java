@@ -24,6 +24,9 @@ package com.oracle.truffle.r.runtime.data.altrep;
 
 import com.oracle.truffle.api.CompilerDirectives;
 
+/**
+ * See the documentation of {@link AltRepClassDescriptor}.
+ */
 public class AltRawClassDescriptor extends AltVecClassDescriptor {
     public static final String eltMethodSignature = "(pointer, sint32):uint8";
     @CompilerDirectives.CompilationFinal(dimensions = 1) public static final boolean[] eltMethodWrapArguments = new boolean[]{true, false};

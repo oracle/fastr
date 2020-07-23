@@ -43,6 +43,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFIFactory;
 
+/**
+ * A class containing some static helper methods for querying some information about ALTREP instances
+ * and class descriptors. Some of these helper methods are meant to be used from various guard
+ * statements in specializations.
+ */
 public class AltrepUtilities {
     public static boolean isAltrep(Object object) {
         return object instanceof RBaseObject && ((RBaseObject) object).isAltRep();
@@ -142,6 +147,10 @@ public class AltrepUtilities {
         return getAltStringVectorData(altStringVector).getDescriptor();
     }
 
+    /**
+     * Returns the instance data of given ALTREP vector as pairlist.
+     * Note that in GNU-R the instance data of an ALTREP vector is represented as a pairlist.
+     */
     public static RPairList getPairListData(RAbstractAtomicVector altrepVec) {
         assert altrepVec.isAltRep();
         assert altrepVec.getData() instanceof RAltrepVectorData;
