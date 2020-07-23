@@ -12,4 +12,5 @@
   * [Cast pipelines](casts.md): fluent API for configuration of coercion of builtins arguments
   * [Function calls](functions.md)
   * [Notes on upgrading R version](upgrading-r.md)
+  * [ALTREP](altrep.md): Implementation of ALTREP
 
