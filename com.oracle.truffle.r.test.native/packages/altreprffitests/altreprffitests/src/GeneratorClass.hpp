@@ -27,8 +27,20 @@
 #include <Rinternals.h>
 #include <R_ext/Altrep.h>
 
+/**
+ * Represents an ALTREP class that gets a reference to an R function f into its "constructor",
+ * and for every Elt(idx) query it returns f(idx) ie. evaluates the function with idx argument.
+ */
 class GeneratorClass {
 public:
+    /**
+     * Create instance of a generator ALTREP class.
+     * 
+     * @param data_length Length of the data. Every subsequent invocation of ALTREP method Length
+     *                    will return this number.
+     * @param generator_func Function that takes one integer argument - index.
+     * @param rho Environment of generator_func function.
+     */
     static SEXP createInstance(SEXP data_length, SEXP generator_func, SEXP rho);
 private:
     static int m_data_length;

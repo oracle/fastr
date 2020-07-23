@@ -31,7 +31,7 @@
 
 
 /**
- * Arguments passed from R side. Every member indicates whether certain altrep method should
+ * Arguments passed from R side. Every member indicates whether certain ALTREP method should
  * be registered or not.
  * TODO: "gen_" prefix is misleading, it should rather be "register_" prefix.
  */
@@ -60,23 +60,23 @@ enum class Method {
 };
 
 /**
- * Base class for all altrep classes that wrap some vector data. This class has some altrep
- * methods that are common for both altintegers and altreals.
+ * Base class for all the ALTREP classes that wrap some vector data - they have a standard vector
+ * as the only instance data. This class has some altrep methods that are common for both
+ * altintegers and altreals.
  */
 class VecWrapper {
 public:
 
     /**
-     * Creates and altrep instance of a wrapper that wraps given data. Dispatches either to
+     * Creates an ALTREP instance that wraps given data. Dispatches either to
      * SimpleIntVecWrapper::createDescriptor, or SimpleRealVecWrapper::createDescriptor.
      * 
-     * @param data Data that should be wrapped. Currently only integer and real vectors are supported.
+     * @param data Data that should be wrapped.
      * @param ... other parameters indicates whether certain altrep method should be registered.
      *            @see Args.
      */
     static SEXP createInstance(SEXP data, SEXP gen_Duplicate, SEXP gen_Coerce, SEXP gen_Elt, SEXP gen_Sum,
         SEXP gen_Min, SEXP gen_Max, SEXP gen_Get_region, SEXP gen_Is_sorted);
-    static SEXP createInstanceFromArgs(SEXP data, const Args &args);
 protected:
     static void registerCommonMethods(R_altrep_class_t descr, const Args &args);
 private:
@@ -213,28 +213,5 @@ private:
     static int Is_sorted(SEXP instnace);
 };
 
-
-/**
- * Altrep class that allocates native heap memory in its "constructor" (R_new_altrep),
- * and does not have any instance data.
- * 
- * This class is designed to have as low overhead for methods as possible.
- * 
- * Only one instance of this class should be used at one time, otherwise race
- * conditions may appear.
- * 
- * TODO: This C++ version is currently not used.
- */
-class NativeMemVec {
-public:
-    static SEXP createInstance(SEXP data_length);
-    static SEXP deleteInstance(SEXP instance);
-private:
-    static int *native_mem_ptr;
-    static int data_length;
-    static void * Dataptr(SEXP instance, Rboolean writeabble);
-    static R_xlen_t Length(SEXP instance);
-    static int Elt(SEXP instance, R_xlen_t idx);
-};
 
 #endif //ALTREP_CLASSES_HPP_

@@ -50,7 +50,6 @@ static const R_CallMethodDef CallEntries[] = {
         {"logging_vec_wrapper_clear_called_methods", (DL_FUNC) &LoggingVecWrapper::clearCalledMethods, 0},
         {"generator_class_new", (DL_FUNC)&GeneratorClass::createInstance, 3},
         {"first_char_changer_class_new", (DL_FUNC)&FirstCharChangerClass::createInstance, 2},
-        {"my_test", (DL_FUNC) &my_test, 1},
         {NULL, NULL, 0}
 };
 
@@ -112,32 +111,4 @@ static SEXP is_sorted(SEXP x)
     else {
         return ScalarLogical(FALSE);
     }
-}
-
-/*static int my_elt_method(SEXP instance, R_xlen_t idx)
-{
-    // instance should be NativeMirror
-    SEXP data1 = R_altrep_data1(instance);
-    return 42;
-}
-
-static void * my_dataptr_method(SEXP instance, Rboolean writeabble) {
-    return nullptr;
-}
-
-static R_xlen_t my_length_method(SEXP instance) {
-    return 42;
-}*/
-
-extern "C" SEXP my_test(SEXP vec)
-{
-    /*R_altrep_class_t descr = R_make_altinteger_class("MyClassName", "MyPackageName", nullptr);
-    R_set_altinteger_Elt_method(descr, &my_elt_method);
-    R_set_altrep_Length_method(descr, &my_length_method);
-    R_set_altvec_Dataptr_method(descr, &my_dataptr_method);
-    SEXP instance = R_new_altrep(descr, R_NilValue, R_NilValue);
-    // invokeEltMethod --> invokeNativeFunction --> R_altrep_data1Call --> ...
-    int first_elt = INTEGER_ELT(instance, 0);*/
-
-    return R_NilValue;
 }

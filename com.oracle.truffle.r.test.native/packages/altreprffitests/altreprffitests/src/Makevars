@@ -1,1 +1,1 @@
-PKG_CXXFLAGS = -Wall -O0
+PKG_CXXFLAGS = -Wall

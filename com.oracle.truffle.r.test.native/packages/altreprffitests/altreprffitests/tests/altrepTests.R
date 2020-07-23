@@ -1,58 +1,5 @@
 stopifnot(require(altreprffitests))
 
-MAX_NUMBER_OF_ERRORS <- 1
-
-#' Generates an ALTREP instance of vec_wrapper class with just a portion of methods registered.
-#' Note that this portion is randomly chosen.
-generate_random_instance <- function() {
-    generate_random_data <- function() {
-        len <- round( runif(1, min=2, max=30))
-        TYPES_COUNT <- 2
-        type_idx <- round( runif(1, min=1, max=2))
-        if (type_idx == 1) {
-            # int
-            return (as.integer( round( runif(len, min=1, max=10))))
-        } else if (type_idx == 2) {
-            # double
-            return (as.double( runif(len, min=1, max=10)))
-        } else {
-            stop("Wrong type specified")
-        }
-    }
-
-    # Will register random native methods as ALTREP overriden methods.
-    generate_random_params <- function() {
-        random_bool <- function() {
-            as.logical( round( runif(1, min=0, max=1)))
-        }
-        params <- list()
-        for (param_name in c("gen.Duplicate", "gen.Coerce", "gen.Elt", "gen.Sum", "gen.Min", "gen.Max",
-                             "gen.Get_region", "gen.Is_sorted"))
-        {
-            item <- list(random_bool())
-            names(item) <- param_name
-            params <- c(params, item)
-        }
-        return (params)
-    }
-
-    rnd_data <- generate_random_data()
-    rnd_params <- generate_random_params()
-    return (vec_wrapper.create_instance(rnd_data,
-                                        gen.Duplicate  = rnd_params$gen.Duplicate,
-                                        gen.Coerce     = rnd_params$gen.Coerce,
-                                        gen.Elt        = rnd_params$gen.Elt,
-                                        gen.Sum        = rnd_params$gen.Sum,
-                                        gen.Min        = rnd_params$gen.Min,
-                                        gen.Max        = rnd_params$gen.Max,
-                                        gen.Get_region = rnd_params$gen.Get_region,
-                                        gen.Is_sorted  = rnd_params$gen.Is_sorted,
-                                        )
-    )
-}
-
-CURR_NUMBER_OF_ERRORS <- 0
-
 run_tests <- function(tests) {
     for (test in tests) {
         func_name <- test[[1]]
@@ -76,11 +23,7 @@ check_equal <- function(instance, expected_data) {
         if (!identical(val1, val2)) {
             width <- 80L
             name <- substr(deparse(sys.call(), width)[[1L]], 1, width)
-            cat("Fail: ", name, "with val1=", val1, ", val2=", val2, "\n")
-            CURR_NUMBER_OF_ERRORS <- CURR_NUMBER_OF_ERRORS + 1
-            if (CURR_NUMBER_OF_ERRORS >= MAX_NUMBER_OF_ERRORS) {
-                stop("Maximum number of errors reached")
-            }
+            stop("Fail: ", name, "with val1=", val1, ", val2=", val2, "\n")
         }
     }
 
@@ -172,8 +115,6 @@ test_default_implementations <- function() {
             # gen.* = FALSE
             instance_without_method <- do.call(simple_vec_wrapper.create_instance, params_without)
 
-            cat("Checking whether instance1 with", param_name, "equals instance2 with data =", data,
-                " typeof(data) =", typeof(data), "\n")
             check_equal(instance_with_method, instance_without_method)
         }
     }
