@@ -32,7 +32,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
+import com.oracle.truffle.r.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_DLL;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;

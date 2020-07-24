@@ -28,7 +28,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
+import com.oracle.truffle.r.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.runtime.RInternalError;

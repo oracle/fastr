@@ -25,7 +25,7 @@ package com.oracle.truffle.r.ffi.impl.managed;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
+import com.oracle.truffle.r.ffi.impl.altrep.AltrepDownCallNodeFactoryImpl;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.ffi.AltrepRFFI;

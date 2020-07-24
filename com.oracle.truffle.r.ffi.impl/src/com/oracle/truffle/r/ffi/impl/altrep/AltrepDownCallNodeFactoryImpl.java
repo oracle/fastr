@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.ffi.impl.altrep;
+package com.oracle.truffle.r.ffi.impl.altrep;
 
 import com.oracle.truffle.r.runtime.ffi.AltrepDownCallNodeFactory;
 import com.oracle.truffle.r.runtime.nodes.altrep.AltrepDownCallNode;
