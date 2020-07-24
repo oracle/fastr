@@ -96,8 +96,7 @@ public abstract class AltRepClassDescriptor extends RBaseObject {
 
     @Override
     public RType getRType() {
-        // R_altrep_class_t native type is a wrapper for SEXP which is a pairlist.
-        return RType.PairList;
+        return RType.Raw;
     }
 
     public AltrepMethodDescriptor getDuplicateMethodDescriptor() {
