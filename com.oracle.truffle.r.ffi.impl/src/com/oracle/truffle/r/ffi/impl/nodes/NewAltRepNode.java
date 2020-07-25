@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.GenerateUncached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -42,19 +43,19 @@ public abstract class NewAltRepNode extends FFIUpCallNode.Arg3 {
         return NewAltRepNodeGen.create();
     }
 
+    private static final TruffleLogger altrepLogger = RLogger.getLogger(RLogger.LOGGER_ALTREP);
+
     @Specialization
     protected Object newIntAltRep(AltIntegerClassDescriptor classDescriptor, Object data1, Object data2) {
         RAltRepData altRepData = new RAltRepData(data1, data2);
-        RLogger.getLogger(RLogger.LOGGER_ALTREP).fine(
-                        () -> "R_new_altrep: Returning vector with descriptor=" + classDescriptor.toString() + " to native.");
+        altrepLogger.fine(() -> "R_new_altrep: Returning vector with descriptor=" + classDescriptor.toString() + " to native.");
         return RDataFactory.createAltIntVector(classDescriptor, altRepData);
     }
 
     @Specialization
     protected Object newRealAltRep(AltRealClassDescriptor classDescriptor, Object data1, Object data2) {
         RAltRepData altRepData = new RAltRepData(data1, data2);
-        RLogger.getLogger(RLogger.LOGGER_ALTREP).fine(
-                        () -> "R_new_altrep: Returning vector with descriptor=" + classDescriptor.toString() + " to native.");
+        altrepLogger.fine(() -> "R_new_altrep: Returning vector with descriptor=" + classDescriptor.toString() + " to native.");
         return RDataFactory.createAltRealVector(classDescriptor, altRepData);
     }
 
