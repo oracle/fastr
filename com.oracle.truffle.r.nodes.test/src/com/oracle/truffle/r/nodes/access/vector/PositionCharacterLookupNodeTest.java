@@ -91,12 +91,15 @@ public class PositionCharacterLookupNodeTest extends TestBase {
     public void vectorSubsetWithNameTest() {
         NodeHandle<PositionCharacterLookupNode> handle = createNodeHandle(1, 0);
 
-        RStringVector index = RDataFactory.createStringVector("b");
+        execInContext(() -> {
+            RStringVector index = RDataFactory.createStringVector("b");
 
-        RIntVector positionVector = (RIntVector) handle.call(vecWithNames, index);
+            RIntVector positionVector = (RIntVector) handle.call(vecWithNames, index);
 
-        Assert.assertEquals(1, positionVector.getLength());
-        Assert.assertEquals(2, positionVector.getDataAt(0));
+            Assert.assertEquals(1, positionVector.getLength());
+            Assert.assertEquals(2, positionVector.getDataAt(0));
+            return null;
+        });
     }
 
     /**
@@ -107,17 +110,20 @@ public class PositionCharacterLookupNodeTest extends TestBase {
         NodeHandle<PositionCharacterLookupNode> handleDimX = createNodeHandle(2, 0);
         NodeHandle<PositionCharacterLookupNode> handleDimY = createNodeHandle(2, 1);
 
-        RStringVector dimXIndex = RDataFactory.createStringVectorFromScalar("a");
-        RStringVector dimYIndex = RDataFactory.createStringVectorFromScalar("B");
+        execInContext(() -> {
+            RStringVector dimXIndex = RDataFactory.createStringVectorFromScalar("a");
+            RStringVector dimYIndex = RDataFactory.createStringVectorFromScalar("B");
 
-        // Check X dimension character lookup.
-        RIntVector dimXPositionVector = (RIntVector) handleDimX.call(matrix, dimXIndex);
-        Assert.assertEquals(1, dimXPositionVector.getLength());
-        Assert.assertEquals(1, dimXPositionVector.getDataAt(0));
+            // Check X dimension character lookup.
+            RIntVector dimXPositionVector = (RIntVector) handleDimX.call(matrix, dimXIndex);
+            Assert.assertEquals(1, dimXPositionVector.getLength());
+            Assert.assertEquals(1, dimXPositionVector.getDataAt(0));
 
-        // Check Y dimension character lookup.
-        RIntVector dimYPositionVector = (RIntVector) handleDimY.call(matrix, dimYIndex);
-        Assert.assertEquals(1, dimYPositionVector.getLength());
-        Assert.assertEquals(2, dimYPositionVector.getDataAt(0));
+            // Check Y dimension character lookup.
+            RIntVector dimYPositionVector = (RIntVector) handleDimY.call(matrix, dimYIndex);
+            Assert.assertEquals(1, dimYPositionVector.getLength());
+            Assert.assertEquals(2, dimYPositionVector.getDataAt(0));
+            return null;
+        });
     }
 }
